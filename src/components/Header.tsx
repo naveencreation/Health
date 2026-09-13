@@ -5,12 +5,15 @@ import { Colors } from '../theme/colors';
 import { Fonts } from '../theme/typography';
 import { useHealth } from '../context/HealthContext';
 
+import { DEFAULT_AVATAR_URL } from '../data/avatars';
+
 interface HeaderProps {
   onSearchPress?: () => void;
   onNotificationsPress?: () => void;
+  onAvatarPress?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSearchPress, onNotificationsPress }) => {
+export const Header: React.FC<HeaderProps> = ({ onSearchPress, onNotificationsPress, onAvatarPress }) => {
   const { userGoals } = useHealth();
   const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
 
@@ -19,14 +22,19 @@ export const Header: React.FC<HeaderProps> = ({ onSearchPress, onNotificationsPr
       {/* Left: Avatar + Welcome Text */}
       <View style={styles.userSection}>
         {/* Ellipse 3: 62px x 62px Avatar */}
-        <View style={styles.avatarContainer}>
+        <TouchableOpacity
+          style={styles.avatarContainer}
+          onPress={onAvatarPress}
+          activeOpacity={onAvatarPress ? 0.75 : 1}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        >
           <Image
             source={{
-              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
+              uri: userGoals.avatarUrl || DEFAULT_AVATAR_URL,
             }}
             style={styles.avatarImage}
           />
-        </View>
+        </TouchableOpacity>
 
         {/* Welcome & Name Stack */}
         <View style={styles.nameStack}>

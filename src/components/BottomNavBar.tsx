@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
+import { Fonts } from '../theme/typography';
 import { MealType } from '../types';
 
 export type TabType = 'today' | 'diary' | 'analytics' | 'profile';
@@ -100,12 +101,18 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       </View>
 
       {/* Quick Action Sheet Modal */}
-      <Modal visible={quickSheetVisible} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.sheetOverlay}
-          activeOpacity={1}
-          onPress={() => setQuickSheetVisible(false)}
-        >
+      <Modal
+        visible={quickSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setQuickSheetVisible(false)}
+      >
+        <View style={styles.sheetOverlay}>
+          <TouchableOpacity
+            style={styles.backdropDismiss}
+            activeOpacity={1}
+            onPress={() => setQuickSheetVisible(false)}
+          />
           <View style={styles.sheetContent}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Log Nutrition & Habits</Text>
@@ -115,6 +122,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <TouchableOpacity
                 style={styles.quickActionItem}
                 onPress={() => handleSelectQuickMeal('breakfast')}
+                activeOpacity={0.75}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: '#FFF7ED' }]}>
                   <Text style={{ fontSize: 24 }}>🍳</Text>
@@ -125,6 +133,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <TouchableOpacity
                 style={styles.quickActionItem}
                 onPress={() => handleSelectQuickMeal('lunch')}
+                activeOpacity={0.75}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: '#ECFDF5' }]}>
                   <Text style={{ fontSize: 24 }}>🥗</Text>
@@ -135,6 +144,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <TouchableOpacity
                 style={styles.quickActionItem}
                 onPress={() => handleSelectQuickMeal('snacks')}
+                activeOpacity={0.75}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
                   <Text style={{ fontSize: 24 }}>🍵</Text>
@@ -145,6 +155,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <TouchableOpacity
                 style={styles.quickActionItem}
                 onPress={() => handleSelectQuickMeal('dinner')}
+                activeOpacity={0.75}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: '#EDE9FE' }]}>
                   <Text style={{ fontSize: 24 }}>🍲</Text>
@@ -155,6 +166,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               <TouchableOpacity
                 style={styles.quickActionItem}
                 onPress={handleSelectQuickWater}
+                activeOpacity={0.75}
               >
                 <View style={[styles.quickActionIcon, { backgroundColor: '#E0F2FE' }]}>
                   <Ionicons name="water" size={24} color="#0284C7" />
@@ -163,7 +175,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </>
   );
@@ -216,32 +228,54 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   sheetOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  backdropDismiss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   sheetContent: {
+    width: '100%',
+    maxWidth: 480,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 16,
+    zIndex: 10000,
   },
   sheetHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
+    width: 36,
+    height: 4,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
   },
   sheetTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontFamily: Fonts.kurale,
+    fontSize: 19,
     color: Colors.textPrimary,
     textAlign: 'center',
   },
   sheetSubtitle: {
+    fontFamily: Fonts.poppins.regular,
     fontSize: 12,
     color: Colors.textSecondary,
     textAlign: 'center',
@@ -252,11 +286,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 16,
+    gap: 12,
   },
   quickActionItem: {
     alignItems: 'center',
-    width: 82,
+    width: 76,
   },
   quickActionIcon: {
     width: 56,
@@ -265,12 +299,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+    shadowColor: Colors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   quickActionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11,
     color: Colors.textPrimary,
+    textAlign: 'center',
   },
 });

@@ -62,6 +62,7 @@ export interface UserGoals {
   currentWeightKg: number;
   targetWeightKg: number;
   streakDays: number;
+  avatarUrl?: string;
 }
 
 export interface WeeklyTrendItem {

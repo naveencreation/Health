@@ -29,13 +29,22 @@ import { AnalyticsTab } from './src/components/AnalyticsTab';
 import { ProfileTab } from './src/components/ProfileTab';
 import { BottomNavBar, TabType } from './src/components/BottomNavBar';
 import { FoodLogModal } from './src/components/FoodLogModal';
+import { SearchFoodModal } from './src/components/SearchFoodModal';
+import { NotificationModal } from './src/components/NotificationModal';
+import { AvatarPickerModal } from './src/components/AvatarPickerModal';
+import { RiaChatModal } from './src/components/RiaChatModal';
+import { DEFAULT_AVATAR_URL } from './src/data/avatars';
 import { MealType } from './src/types';
 
 function MainApp() {
-  const { addWater } = useHealth();
+  const { addWater, userGoals, updateGoals } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+  const [riaChatVisible, setRiaChatVisible] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Kurale_400Regular,
@@ -92,7 +101,11 @@ function MainApp() {
       <StatusBar style="dark" />
       <View style={styles.phoneContainer}>
         {/* Top Header */}
-        <Header />
+        <Header
+          onSearchPress={() => setSearchModalVisible(true)}
+          onNotificationsPress={() => setNotificationsVisible(true)}
+          onAvatarPress={() => setAvatarModalVisible(true)}
+        />
 
         {/* Tab Content */}
         <View style={styles.contentArea}>
@@ -112,7 +125,7 @@ function MainApp() {
               <MealSection onAddFood={handleOpenFoodLogger} />
 
               {/* Ria AI Nutritionist Coach Insights */}
-              <RiaCoachCard />
+              <RiaCoachCard onOpenChat={() => setRiaChatVisible(true)} />
 
               {/* Side-by-Side Habits: Hydration & Activity Dual Dials */}
               <DailyHabitsCard />
@@ -134,11 +147,37 @@ function MainApp() {
           onQuickLogWater={handleQuickWater}
         />
 
-        {/* Search & Food Logging Modal */}
+        {/* Food Logging Modal (from meal slots or '+' button) */}
         <FoodLogModal
           visible={foodModalVisible}
           mealType={activeMealType}
           onClose={() => setFoodModalVisible(false)}
+        />
+
+        {/* Global Food Search Modal (from Header search icon) */}
+        <SearchFoodModal
+          visible={searchModalVisible}
+          onClose={() => setSearchModalVisible(false)}
+        />
+
+        {/* Notification Center Modal (from Header bell icon) */}
+        <NotificationModal
+          visible={notificationsVisible}
+          onClose={() => setNotificationsVisible(false)}
+        />
+
+        {/* Avatar Picker Modal (from Header avatar or Profile avatar) */}
+        <AvatarPickerModal
+          visible={avatarModalVisible}
+          currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
+          onClose={() => setAvatarModalVisible(false)}
+          onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
+        />
+
+        {/* Ria AI Interactive Chat Modal (from Ria Coach card) */}
+        <RiaChatModal
+          visible={riaChatVisible}
+          onClose={() => setRiaChatVisible(false)}
         />
       </View>
     </SafeAreaView>

@@ -43,7 +43,11 @@ const RIA_PROMPTS: SuggestionPrompt[] = [
   },
 ];
 
-export const RiaCoachCard: React.FC = () => {
+interface RiaCoachCardProps {
+  onOpenChat?: (promptText?: string) => void;
+}
+
+export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
   const { totalProtein, userGoals, remainingCalories, currentLog } = useHealth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
 
@@ -98,15 +102,15 @@ export const RiaCoachCard: React.FC = () => {
           </View>
         </View>
 
-        {/* Action button: Reset or Chat icon */}
+        {/* Action button: Open full conversation */}
         <TouchableOpacity
           style={styles.chatActionBtn}
-          onPress={() => setActivePromptId(null)}
+          onPress={() => (onOpenChat ? onOpenChat() : setActivePromptId(null))}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
-            name={activePromptId ? 'refresh-outline' : 'chatbubble-ellipses-outline'}
+            name="chatbubble-ellipses-outline"
             size={18}
             color="#F47551"
           />
@@ -118,18 +122,24 @@ export const RiaCoachCard: React.FC = () => {
         {/* Pointer Arrow Tail pointing to Ria */}
         <View style={styles.bubbleTail} />
 
-        <View style={styles.bubbleCard}>
+        <TouchableOpacity
+          style={styles.bubbleCard}
+          onPress={() => onOpenChat && onOpenChat(activeMessage)}
+          activeOpacity={onOpenChat ? 0.85 : 1}
+        >
           {/* Subtle Insight Tag */}
           <View style={styles.insightTagRow}>
             <Text style={styles.insightTag}>
               {activePromptId ? '💡 RIA SUGGESTS' : '✨ DAILY NUTRITION INSIGHT'}
             </Text>
-            <Text style={styles.insightTimestamp}>Just now</Text>
+            <View style={styles.askRiaPill}>
+              <Text style={styles.askRiaPillText}>Tap to chat 💬</Text>
+            </View>
           </View>
 
           {/* Dynamic Coach Message */}
           <Text style={styles.messageText}>{activeMessage}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Suggestion Chips: Quick Prompt Carousel */}
@@ -313,6 +323,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.regular,
     fontSize: 10,
     color: '#94A3B8',
+  },
+  askRiaPill: {
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  askRiaPillText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 9,
+    color: '#EA580C',
   },
   messageText: {
     fontFamily: Fonts.poppins.medium,

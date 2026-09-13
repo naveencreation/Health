@@ -87,29 +87,29 @@ export const DailyHabitsCard: React.FC = () => {
         {/* LEFT COLUMN: Water Tracker 💧 */}
         <View style={styles.habitColumn}>
           <View style={styles.gaugeCanvas}>
-            <Svg width={dialSize} height={dialSize}>
-              <Circle
-                cx={dialSize / 2}
-                cy={dialSize / 2}
-                r={radius}
-                stroke="#E2E8F0"
-                strokeWidth={strokeWidth}
-                fill="none"
-              />
-              <Circle
-                cx={dialSize / 2}
-                cy={dialSize / 2}
-                r={radius}
-                stroke="#2563EB"
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${circumference} ${circumference}`}
-                strokeDashoffset={waterOffset}
-                strokeLinecap="round"
-                fill="none"
-                origin={`${dialSize / 2}, ${dialSize / 2}`}
-                rotation="-90"
-              />
-            </Svg>
+            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+              <Svg width={dialSize} height={dialSize}>
+                <Circle
+                  cx={dialSize / 2}
+                  cy={dialSize / 2}
+                  r={radius}
+                  stroke="#E2E8F0"
+                  strokeWidth={strokeWidth}
+                  fill="none"
+                />
+                <Circle
+                  cx={dialSize / 2}
+                  cy={dialSize / 2}
+                  r={radius}
+                  stroke="#2563EB"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  strokeDashoffset={waterOffset}
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </Svg>
+            </View>
 
             {/* Inner Content */}
             <View style={styles.gaugeInner}>
@@ -153,29 +153,29 @@ export const DailyHabitsCard: React.FC = () => {
         {/* RIGHT COLUMN: Activity & Burn 🔥 */}
         <View style={styles.habitColumn}>
           <View style={styles.gaugeCanvas}>
-            <Svg width={dialSize} height={dialSize}>
-              <Circle
-                cx={dialSize / 2}
-                cy={dialSize / 2}
-                r={radius}
-                stroke="#E2E8F0"
-                strokeWidth={strokeWidth}
-                fill="none"
-              />
-              <Circle
-                cx={dialSize / 2}
-                cy={dialSize / 2}
-                r={radius}
-                stroke="#EA580C"
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${circumference} ${circumference}`}
-                strokeDashoffset={stepOffset}
-                strokeLinecap="round"
-                fill="none"
-                origin={`${dialSize / 2}, ${dialSize / 2}`}
-                rotation="-90"
-              />
-            </Svg>
+            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+              <Svg width={dialSize} height={dialSize}>
+                <Circle
+                  cx={dialSize / 2}
+                  cy={dialSize / 2}
+                  r={radius}
+                  stroke="#E2E8F0"
+                  strokeWidth={strokeWidth}
+                  fill="none"
+                />
+                <Circle
+                  cx={dialSize / 2}
+                  cy={dialSize / 2}
+                  r={radius}
+                  stroke="#EA580C"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  strokeDashoffset={stepOffset}
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </Svg>
+            </View>
 
             {/* Inner Content */}
             <View style={styles.gaugeInner}>

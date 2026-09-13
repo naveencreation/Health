@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { Fonts } from '../theme/typography';
 import { useHealth } from '../context/HealthContext';
+import { AvatarPickerModal } from './AvatarPickerModal';
+import { DEFAULT_AVATAR_URL } from '../data/avatars';
 
 type ProfileSubTab = 'goals' | 'body' | 'settings';
 
@@ -20,6 +22,7 @@ export const ProfileTab: React.FC = () => {
   const { userGoals, updateGoals } = useHealth();
 
   const [activeSubTab, setActiveSubTab] = useState<ProfileSubTab>('goals');
+  const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
 
   // Core Goal Inputs
   const [name, setName] = useState(userGoals.name);
@@ -128,17 +131,22 @@ export const ProfileTab: React.FC = () => {
       {/* 1. HERO MEMBER PROFILE CARD */}
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
-          <View style={styles.avatarWrapper}>
+          <TouchableOpacity
+            style={styles.avatarWrapper}
+            onPress={() => setAvatarPickerVisible(true)}
+            activeOpacity={0.8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Image
               source={{
-                uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
+                uri: userGoals.avatarUrl || DEFAULT_AVATAR_URL,
               }}
               style={styles.avatarImg}
             />
             <View style={styles.cameraIconBadge}>
               <Ionicons name="camera" size={12} color="#FFFFFF" />
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.heroInfo}>
             <Text style={styles.heroName}>{name || 'Akshay Rajput'}</Text>
@@ -816,6 +824,14 @@ export const ProfileTab: React.FC = () => {
         <Ionicons name="checkmark-sharp" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
         <Text style={styles.saveBtnText}>Save Goals & Preferences</Text>
       </TouchableOpacity>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        visible={avatarPickerVisible}
+        currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
+        onClose={() => setAvatarPickerVisible(false)}
+        onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
+      />
     </ScrollView>
   );
 };

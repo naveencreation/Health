@@ -109,10 +109,24 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
   const mealTitle = mealType.charAt(0).toUpperCase() + mealType.slice(1);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.container}>
-        {/* Top App Bar */}
-        <View style={styles.header}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalBackdrop}>
+        <TouchableOpacity
+          style={styles.backdropDismiss}
+          onPress={onClose}
+          activeOpacity={1}
+        />
+        <View style={styles.sheetContainer}>
+          <View style={styles.handleContainer}>
+            <View style={styles.dragHandle} />
+          </View>
+          {/* Top App Bar */}
+          <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
@@ -411,11 +425,58 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
           </View>
         )}
       </View>
-    </Modal>
+    </View>
+  </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  backdropDismiss: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  sheetContainer: {
+    width: '100%',
+    maxWidth: 480,
+    height: '92%',
+    maxHeight: 780,
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 16,
+    zIndex: 10000,
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 4,
+    backgroundColor: Colors.card,
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,

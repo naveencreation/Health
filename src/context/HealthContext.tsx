@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem } from '../types';
 import { INITIAL_FOOD_DATABASE } from '../data/foodDatabase';
+import { DEFAULT_AVATAR_URL } from '../data/avatars';
 
 const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -10,7 +11,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_GOALS: UserGoals = {
-  name: 'Naveen',
+  name: 'Akshay Rajput',
   dailyCalorieBudget: 1950,
   targetCarbs: 220,    // 45%
   targetProtein: 75,   // ~15-20%
@@ -21,6 +22,7 @@ const DEFAULT_GOALS: UserGoals = {
   currentWeightKg: 74.2,
   targetWeightKg: 68.0,
   streakDays: 7,
+  avatarUrl: DEFAULT_AVATAR_URL,
 };
 
 const getTodayDateString = (date = new Date()): string => {
