@@ -451,6 +451,13 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     height: '100%',
     paddingVertical: 0,
+    ...(Platform.OS === 'web'
+      ? ({
+          outline: 'none',
+          outlineStyle: 'none',
+          outlineWidth: 0,
+        } as any)
+      : {}),
   },
   androidPasswordInput: {
     fontFamily: undefined,

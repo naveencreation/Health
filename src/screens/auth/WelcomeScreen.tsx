@@ -103,6 +103,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         initialData={{
           age: biometrics.age,
           weight: biometrics.weight,
+          weightUnit: biometrics.weightUnit,
           goal: biometrics.goal,
           gender: biometrics.gender,
         }}

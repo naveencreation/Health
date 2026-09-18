@@ -250,8 +250,16 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (userDoc.exists()) {
             const data = userDoc.data();
             if (data?.goals) {
-              setUserGoals((prev) => ({ ...prev, ...data.goals }));
-              await AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(data.goals));
+              const mergedGoals: UserGoals = {
+                ...userGoals,
+                ...data.goals,
+                age: data.age ?? data.goals.age,
+                gender: data.gender ?? data.goals.gender,
+                goal: data.goal ?? data.goals.goal,
+                weightUnit: data.weightUnit ?? data.goals.weightUnit,
+              };
+              setUserGoals(mergedGoals);
+              await AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals));
             }
           }
           // Sync active date daily log from Firestore
@@ -653,7 +661,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (userDoc.exists()) {
             const data = userDoc.data();
             if (data?.goals) {
-              updateGoals(data.goals);
+              updateGoals({
+                ...data.goals,
+                age: data.age ?? data.goals.age,
+                gender: data.gender ?? data.goals.gender,
+                goal: data.goal ?? data.goals.goal,
+                weightUnit: data.weightUnit ?? data.goals.weightUnit,
+              });
             }
           }
         } catch (fsErr) {
@@ -695,6 +709,99 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  /**
+   * Scientific Calorie & Macro Target Calibration based on Mifflin-St Jeor Equation
+   */
+  const calculateCalibratedGoals = (
+    data: {
+      name: string;
+      age?: number;
+      weight?: number;
+      weightUnit?: 'kg' | 'lbs';
+      goal?: string;
+      gender?: string;
+    },
+    baseGoals: UserGoals = userGoals
+  ): UserGoals => {
+    const userAge = data.age && data.age > 0 ? data.age : (baseGoals.age || 24);
+    const rawWeight = data.weight && data.weight > 0 ? data.weight : (baseGoals.currentWeightKg || 68);
+    const weightUnit = data.weightUnit || baseGoals.weightUnit || 'kg';
+
+    // Normalize weight to kilograms
+    const weightKg = weightUnit === 'lbs'
+      ? Math.round((rawWeight / 2.20462) * 10) / 10
+      : rawWeight;
+
+    const gender = data.gender || baseGoals.gender || 'male';
+    const goal = data.goal || baseGoals.goal || 'maintain';
+
+    // Standard height assumption (175cm male / 163cm female / 170cm other)
+    const heightCm = gender === 'female' ? 163 : gender === 'other' ? 170 : 175;
+
+    // Gender constant s in Mifflin-St Jeor equation
+    const s = gender === 'female' ? -161 : gender === 'other' ? -78 : 5;
+
+    // BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age + s
+    const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * userAge + s);
+
+    // Moderate physical activity factor (1.375)
+    const tdee = Math.round(bmr * 1.375);
+
+    // Calorie target adjusted for goal
+    let dailyCalorieBudget: number;
+    let targetWeightKg: number;
+
+    if (goal === 'lose') {
+      // 400 kcal deficit for sustainable fat loss (~0.4 - 0.5 kg/week)
+      dailyCalorieBudget = Math.max(1250, tdee - 400);
+      targetWeightKg = Math.max(35, Math.round((weightKg - 5) * 10) / 10);
+    } else if (goal === 'gain') {
+      // 350 kcal surplus for lean muscle hypertrophy
+      dailyCalorieBudget = tdee + 350;
+      targetWeightKg = Math.round((weightKg + 4) * 10) / 10;
+    } else {
+      // Maintenance equilibrium
+      dailyCalorieBudget = tdee;
+      targetWeightKg = weightKg;
+    }
+
+    // Macro split calculation:
+    // Protein: 1.8g per kg body weight
+    const targetProtein = Math.round(weightKg * 1.8);
+    const proteinCalories = targetProtein * 4;
+
+    // Fat: 25% of daily calories
+    const targetFat = Math.round((dailyCalorieBudget * 0.25) / 9);
+    const fatCalories = targetFat * 9;
+
+    // Carbs: Remaining calories
+    const remainingCalories = Math.max(200, dailyCalorieBudget - proteinCalories - fatCalories);
+    const targetCarbs = Math.round(remainingCalories / 4);
+
+    // Water goal: ~35ml per kg body weight rounded to nearest 250ml
+    const rawWaterMl = weightKg * 35;
+    const waterGoalMl = Math.max(2000, Math.round(rawWaterMl / 250) * 250);
+
+    return {
+      ...baseGoals,
+      name: data.name || baseGoals.name,
+      dailyCalorieBudget,
+      targetProtein,
+      targetCarbs,
+      targetFat,
+      targetFiber: 30,
+      waterGoalMl,
+      stepGoal: 10000,
+      currentWeightKg: weightKg,
+      targetWeightKg,
+      streakDays: 1,
+      age: userAge,
+      gender,
+      goal,
+      weightUnit,
+    };
+  };
+
   const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       const normalizedEmail = data.email.toLowerCase().trim();
@@ -712,11 +819,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentUser(userObj);
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
-        const newGoals: UserGoals = {
-          ...userGoals,
-          name: data.name,
-          currentWeightKg: data.weight || userGoals.currentWeightKg,
-        };
+        // Scientifically calibrate personalized calorie budget and macro ratios
+        const newGoals: UserGoals = calculateCalibratedGoals(data, userGoals);
         updateGoals(newGoals);
 
         // Save profile and goals to Cloud Firestore
@@ -725,13 +829,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             id: fbUser.uid,
             name: data.name,
             email: normalizedEmail,
-            age: data.age,
-            weight: data.weight,
-            goal: data.goal,
-            gender: data.gender,
+            age: data.age || newGoals.age,
+            weight: data.weight || newGoals.currentWeightKg,
+            weightUnit: data.weightUnit || newGoals.weightUnit || 'kg',
+            goal: data.goal || newGoals.goal,
+            gender: data.gender || newGoals.gender,
             goals: newGoals,
             createdAt: new Date().toISOString(),
-          });
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
         } catch (fsErr) {
           console.log('Firestore register doc write error:', fsErr);
         }
@@ -757,10 +863,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
         setCurrentUser(userObj);
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
-        updateGoals({
-          name: data.name,
-          currentWeightKg: data.weight || userGoals.currentWeightKg,
-        });
+        const newGoals = calculateCalibratedGoals(data, userGoals);
+        updateGoals(newGoals);
         return { success: true };
       }
     } catch (err: any) {

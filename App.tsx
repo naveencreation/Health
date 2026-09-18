@@ -89,6 +89,19 @@ function MainApp() {
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
           }
+          /* Eliminate default browser square focus ring on all text inputs */
+          input, textarea, select {
+            outline: none !important;
+            outline-style: none !important;
+            outline-width: 0 !important;
+            box-shadow: none !important;
+          }
+          input:focus, textarea:focus, select:focus {
+            outline: none !important;
+            outline-style: none !important;
+            outline-width: 0 !important;
+            box-shadow: none !important;
+          }
         `;
         document.head.appendChild(style);
       }

@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches request.auth.uid)
+    // Fields:
+    //   - id: string (required, matches request.auth.uid)
+    //   - name: string (required, 1-100 chars)
+    //   - email: string (required, valid email format)
+    //   - age: number (optional, 1-120)
+    //   - weight: number (optional, 20-500)
+    //   - weightUnit: string (optional, 'kg' | 'lbs')
+    //   - goal: string (optional, 'lose' | 'maintain' | 'gain')
+    //   - gender: string (optional, 'female' | 'male' | 'other')
+    //   - goals: map (required, containing dailyCalorieBudget, macros, etc.)
+    //   - createdAt: string (required ISO timestamp)
+    //   - updatedAt: string (optional ISO timestamp)
+    //
+    // Subcollection: users/{userId}/dailyLogs
+    // Document ID: {date} (YYYY-MM-DD pattern)
+    // Fields:
+    //   - date: string (required, matching document ID)
+    //   - meals: list (optional list of LoggedMealItems)
+    //   - waterMl: number (optional, >= 0)
+    //   - steps: number (optional, >= 0)
+    //   - activities: list (optional list of WorkoutActivity items)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUserDoc() {
+      let data = request.resource.data;
+      return data.id == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() > 3 &&
+        data.goals is map;
+    }
+
+    function isValidDailyLogDoc() {
+      let data = request.resource.data;
+      return data.date is string &&
+        (!('waterMl' in data) || data.waterMl is number) &&
+        (!('steps' in data) || data.steps is number);
+    }
+
+    // Match Root Collection: users
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserDoc();
+      allow update: if isOwner(userId) && isValidUserDoc();
+      allow delete: if false;
+
+      // Match Subcollection: dailyLogs
+      match /dailyLogs/{date} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidDailyLogDoc();
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Default Deny Rule
+    match /{document=**} {
+      allow read, write: false;
+    }
+  }
+}

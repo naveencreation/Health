@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  StatusBar as RNStatusBar,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +23,7 @@ interface SignUpScreenProps {
   initialData?: {
     age?: number;
     weight?: number;
+    weightUnit?: 'kg' | 'lbs';
     goal?: string;
     gender?: string;
   };
@@ -89,6 +89,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         password,
         age: initialData?.age,
         weight: initialData?.weight,
+        weightUnit: initialData?.weightUnit,
         goal: initialData?.goal,
         gender: initialData?.gender,
       });
@@ -105,7 +106,6 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     }
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
@@ -119,7 +119,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             accessibilityLabel="Go back"
             testID="btn-signup-back"
           >
-            <Ionicons name="arrow-back" size={22} color="#1C274C" />
+            <Ionicons name="arrow-back" size={20} color="#1C274C" />
           </Pressable>
 
           <View style={styles.logoBadgeContainer}>
@@ -141,15 +141,22 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Title Section */}
+            {/* Centered Title Section */}
             <View style={styles.titleSection}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="person-add" size={24} color={Colors.primary} />
-              </View>
               <Text style={styles.titleText}>Create Account</Text>
               <Text style={styles.subtitleText}>
-                Join Calori to track nutrition, calculate macros, and hit your fitness goals
+                Your personalized calorie & macro targets are ready to be linked to your profile
               </Text>
+
+              {/* Endowed Progress Badge */}
+              {initialData?.age ? (
+                <View style={styles.biometricsPill}>
+                  <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+                  <Text style={styles.biometricsPillText}>
+                    Onboarding Complete • Targets Calibrated
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             {/* Error Banner */}
@@ -172,7 +179,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="person-outline"
                   size={20}
-                  color={focusedField === 'name' ? Colors.primary : '#94A3B8'}
+                  color={focusedField === 'name' ? '#0F172A' : '#94A3B8'}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -207,7 +214,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="mail-outline"
                   size={20}
-                  color={focusedField === 'email' ? Colors.primary : '#94A3B8'}
+                  color={focusedField === 'email' ? '#0F172A' : '#94A3B8'}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -254,7 +261,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={focusedField === 'password' ? Colors.primary : '#94A3B8'}
+                  color={focusedField === 'password' ? '#0F172A' : '#94A3B8'}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -289,7 +296,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={focusedField === 'password' ? Colors.primary : '#94A3B8'}
+                    color={focusedField === 'password' ? '#0F172A' : '#94A3B8'}
                   />
                 </Pressable>
               </View>
@@ -354,7 +361,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={20}
-                  color={passwordsMatch ? '#10B981' : focusedField === 'confirm' ? Colors.primary : '#94A3B8'}
+                  color={passwordsMatch ? '#10B981' : focusedField === 'confirm' ? '#0F172A' : '#94A3B8'}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -389,13 +396,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={focusedField === 'confirm' ? Colors.primary : '#94A3B8'}
+                    color={focusedField === 'confirm' ? '#0F172A' : '#94A3B8'}
                   />
                 </Pressable>
               </View>
             </View>
 
-            {/* Submit Action Button */}
+            {/* Standardized 52px High-Contrast CTA Button (Lime #CDE26D / Slate #0F172A) */}
             <Pressable
               style={({ pressed }) => [
                 styles.submitButton,
@@ -404,14 +411,16 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               ]}
               onPress={handleRegister}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Create Account"
               testID="btn-signup-submit"
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color="#0F172A" />
               ) : (
                 <View style={styles.btnContentRow}>
                   <Text style={styles.submitButtonText}>Create Account</Text>
-                  <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={18} color="#0F172A" />
                 </View>
               )}
             </Pressable>
@@ -441,101 +450,117 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   phoneFrame: {
-    flex: 1,
-    maxWidth: 440,
     width: '100%',
-    alignSelf: 'center',
+    maxWidth: 375,
+    height: 812,
     backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 24 : 16,
+    paddingBottom: 20,
+    justifyContent: 'space-between',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',
+        } as any)
+      : {}),
   },
   flexOne: {
     flex: 1,
   },
   headerBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    paddingHorizontal: 4,
+    marginBottom: 4,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F8FAFC',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   pressedBack: {
-    backgroundColor: '#E2E8F0',
-    transform: [{ scale: 0.96 }],
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
   },
   logoBadgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    gap: 6,
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingVertical: 5,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#F1F5F9',
   },
   logoDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.primary,
-    marginRight: 6,
+    backgroundColor: '#CDE26D',
   },
   logoBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 13,
-    color: Colors.primary,
+    color: '#0F172A',
   },
   headerPlaceholder: {
-    width: 44,
+    width: 36,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 4,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
   titleSection: {
-    marginBottom: 24,
-  },
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: 20,
   },
   titleText: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 26,
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 28,
+    lineHeight: 36,
     color: '#0F172A',
     letterSpacing: -0.5,
+    textAlign: 'center',
     marginBottom: 6,
   },
   subtitleText: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
     color: '#64748B',
-    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 290,
+  },
+  biometricsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  biometricsPillText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 11,
+    color: '#166534',
   },
   errorAlert: {
     flexDirection: 'row',
@@ -547,23 +572,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   errorAlertText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: 'Poppins_500Medium',
     fontSize: 13,
     color: '#B91C1C',
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   inputLabel: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 11,
     color: '#64748B',
     letterSpacing: 0.6,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -573,30 +598,43 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     paddingHorizontal: 14,
-    height: 52,
+    height: 50,
   },
   inputWrapperFocused: {
-    borderColor: Colors.primary,
+    borderColor: '#0F172A',
     backgroundColor: '#FFFFFF',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0px 2px 8px rgba(15, 23, 42, 0.08)',
+        } as any)
+      : {
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 6,
+          elevation: 2,
+        }),
   },
   inputWrapperSuccess: {
     borderColor: '#10B981',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   textInput: {
     flex: 1,
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 15,
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
     color: '#0F172A',
     height: '100%',
     paddingVertical: 0,
+    ...(Platform.OS === 'web'
+      ? ({
+          outline: 'none',
+          outlineStyle: 'none',
+          outlineWidth: 0,
+        } as any)
+      : {}),
   },
   androidPasswordInput: {
     fontFamily: undefined,
@@ -604,9 +642,9 @@ const styles = StyleSheet.create({
   requirementsBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    gap: 6,
+    padding: 10,
+    marginBottom: 14,
+    gap: 5,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
@@ -616,27 +654,37 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reqText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     color: '#94A3B8',
   },
   reqTextActive: {
     color: '#10B981',
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: 'Poppins_500Medium',
   },
+
+  // Standardized 52px CTA Button (#CDE26D / #0F172A)
   submitButton: {
-    backgroundColor: Colors.primary,
-    height: 54,
+    backgroundColor: '#CDE26D',
+    height: 52,
     borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.primary,
+    gap: 8,
+    shadowColor: '#CDE26D',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
-    marginTop: 10,
-    marginBottom: 20,
+    shadowRadius: 12,
+    elevation: 4,
+    marginTop: 8,
+    marginBottom: 16,
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+          boxShadow: '0px 6px 18px rgba(205, 226, 109, 0.45)',
+        } as any)
+      : {}),
   },
   pressedButton: {
     opacity: 0.9,
@@ -651,26 +699,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#0F172A',
     letterSpacing: 0.2,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
+    paddingBottom: 8,
   },
   footerText: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
     color: '#64748B',
   },
   footerLinkText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
-    color: Colors.primary,
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+    color: '#F47551',
   },
   pressedSubtle: {
     opacity: 0.7,

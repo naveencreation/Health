@@ -63,6 +63,10 @@ export interface UserGoals {
   targetWeightKg: number;
   streakDays: number;
   avatarUrl?: string;
+  age?: number;
+  gender?: string;
+  goal?: string;
+  weightUnit?: 'kg' | 'lbs';
 }
 
 export interface WeeklyTrendItem {
@@ -92,7 +96,9 @@ export interface RegisterData {
   password: string;
   age?: number;
   weight?: number;
+  weightUnit?: 'kg' | 'lbs';
   goal?: string;
   gender?: string;
 }
+
 
