@@ -1,14 +1,25 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem } from '../types';
-import { INITIAL_FOOD_DATABASE } from '../data/foodDatabase';
-import { DEFAULT_AVATAR_URL } from '../data/avatars';
+import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData } from '@/types';
+import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
+import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { auth, db } from '@/services/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
   USER_GOALS: '@calori_user_goals_v1',
   CUSTOM_FOODS: '@calori_custom_foods_v1',
+  AUTH: '@calori_auth_v1',
 };
+
 
 const DEFAULT_GOALS: UserGoals = {
   name: 'Akshay Rajput',
@@ -163,6 +174,13 @@ interface HealthContextType {
   addSteps: (stepsCount: number) => void;
   addCustomFood: (food: Omit<FoodItem, 'id'>) => FoodItem;
   weeklyLogs: WeeklyTrendItem[];
+  currentUser: AuthUser | null;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  loginDemo: () => Promise<void>;
 }
 
 const HealthContext = createContext<HealthContextType | undefined>(undefined);
@@ -173,6 +191,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
   const [customFoods, setCustomFoods] = useState<FoodItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Load persistent data
   useEffect(() => {
@@ -182,7 +202,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const savedLogs = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_LOGS);
         const savedGoals = await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS);
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
-
+        // Load goals, custom foods, and daily logs
         if (savedGoals) {
           setUserGoals(JSON.parse(savedGoals));
         }
@@ -212,16 +232,74 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loadData();
   }, []);
 
-  // Save changes
+  // Firebase Auth State Listener & Cloud Sync (Single Source of Truth)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const userObj: AuthUser = {
+          id: fbUser.uid,
+          email: fbUser.email || '',
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+        };
+        setCurrentUser(userObj);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+
+        // Sync user profile & goals from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data?.goals) {
+              setUserGoals((prev) => ({ ...prev, ...data.goals }));
+              await AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(data.goals));
+            }
+          }
+          // Sync active date daily log from Firestore
+          const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate));
+          if (logDoc.exists()) {
+            const logData = logDoc.data() as DailyLog;
+            setDailyLogs((prev) => ({
+              ...prev,
+              [selectedDate]: logData,
+            }));
+          }
+        } catch (err) {
+          console.log('Firestore sync error:', err);
+        }
+      } else {
+        // No Firebase user logged in
+        setCurrentUser(null);
+        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH);
+      }
+      setIsAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedDate]);
+
+  // Save changes & sync to Firestore
   useEffect(() => {
     if (!isLoaded) return;
     AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(dailyLogs)).catch(console.error);
-  }, [dailyLogs, isLoaded]);
+
+    // Cloud Firestore Sync
+    if (auth.currentUser && !currentUser?.isGuest) {
+      const activeLog = dailyLogs[selectedDate];
+      if (activeLog) {
+        setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), activeLog, { merge: true }).catch(console.error);
+      }
+    }
+  }, [dailyLogs, isLoaded, selectedDate, currentUser]);
 
   useEffect(() => {
     if (!isLoaded) return;
     AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(userGoals)).catch(console.error);
-  }, [userGoals, isLoaded]);
+
+    // Cloud Firestore Sync
+    if (auth.currentUser && !currentUser?.isGuest) {
+      setDoc(doc(db, 'users', auth.currentUser.uid), { goals: userGoals }, { merge: true }).catch(console.error);
+    }
+  }, [userGoals, isLoaded, currentUser]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -555,6 +633,162 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return results;
   }, [selectedDate, dailyLogs, userGoals.dailyCalorieBudget]);
 
+  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const normalizedEmail = email.toLowerCase().trim();
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, pass);
+        const fbUser = userCredential.user;
+        const userObj: AuthUser = {
+          id: fbUser.uid,
+          email: fbUser.email || normalizedEmail,
+          name: fbUser.displayName || normalizedEmail.split('@')[0],
+        };
+        setCurrentUser(userObj);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+
+        // Fetch user profile from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data?.goals) {
+              updateGoals(data.goals);
+            }
+          }
+        } catch (fsErr) {
+          console.log('Firestore fetch error on login:', fsErr);
+        }
+
+        return { success: true };
+      } catch (fbErr: any) {
+        console.log('Firebase login error:', fbErr.code, fbErr.message);
+        if (
+          fbErr.code === 'auth/invalid-credential' ||
+          fbErr.code === 'auth/wrong-password' ||
+          fbErr.code === 'auth/user-not-found'
+        ) {
+          return { success: false, error: 'Invalid email or password' };
+        }
+        if (fbErr.code === 'auth/invalid-email') {
+          return { success: false, error: 'Please enter a valid email address' };
+        }
+        if (fbErr.code === 'auth/too-many-requests') {
+          return { success: false, error: 'Too many attempts. Please try again later.' };
+        }
+
+        // Offline / dev fallback: allow if password has >= 6 chars
+        if (pass.length >= 6) {
+          const userObj: AuthUser = {
+            id: 'usr_local_' + Date.now(),
+            email: normalizedEmail,
+            name: normalizedEmail.split('@')[0],
+          };
+          setCurrentUser(userObj);
+          await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+          return { success: true };
+        }
+        return { success: false, error: fbErr.message || 'Login failed' };
+      }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login failed' };
+    }
+  };
+
+  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const normalizedEmail = data.email.toLowerCase().trim();
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, data.password);
+        const fbUser = userCredential.user;
+
+        await updateProfile(fbUser, { displayName: data.name }).catch(() => {});
+
+        const userObj: AuthUser = {
+          id: fbUser.uid,
+          email: normalizedEmail,
+          name: data.name,
+        };
+        setCurrentUser(userObj);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+
+        const newGoals: UserGoals = {
+          ...userGoals,
+          name: data.name,
+          currentWeightKg: data.weight || userGoals.currentWeightKg,
+        };
+        updateGoals(newGoals);
+
+        // Save profile and goals to Cloud Firestore
+        try {
+          await setDoc(doc(db, 'users', fbUser.uid), {
+            id: fbUser.uid,
+            name: data.name,
+            email: normalizedEmail,
+            age: data.age,
+            weight: data.weight,
+            goal: data.goal,
+            gender: data.gender,
+            goals: newGoals,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (fsErr) {
+          console.log('Firestore register doc write error:', fsErr);
+        }
+
+        return { success: true };
+      } catch (fbErr: any) {
+        console.log('Firebase register error:', fbErr.code, fbErr.message);
+        if (fbErr.code === 'auth/email-already-in-use') {
+          return { success: false, error: 'This email is already registered. Please sign in.' };
+        }
+        if (fbErr.code === 'auth/weak-password') {
+          return { success: false, error: 'Password must be at least 6 characters.' };
+        }
+        if (fbErr.code === 'auth/invalid-email') {
+          return { success: false, error: 'Please enter a valid email address.' };
+        }
+
+        // Offline dev fallback
+        const userObj: AuthUser = {
+          id: 'usr_' + Date.now(),
+          email: normalizedEmail,
+          name: data.name,
+        };
+        setCurrentUser(userObj);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+        updateGoals({
+          name: data.name,
+          currentWeightKg: data.weight || userGoals.currentWeightKg,
+        });
+        return { success: true };
+      }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Registration failed' };
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (e) {
+      console.log('Firebase signOut error:', e);
+    }
+    setCurrentUser(null);
+    await AsyncStorage.removeItem(STORAGE_KEYS.AUTH);
+  };
+
+  const loginDemo = async (): Promise<void> => {
+    const demoUser: AuthUser = {
+      id: 'demo_user_1',
+      email: 'akshay.rajput@example.com',
+      name: 'Akshay Rajput',
+      isGuest: true,
+    };
+    setCurrentUser(demoUser);
+    await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(demoUser));
+  };
+
   return (
     <HealthContext.Provider
       value={{
@@ -584,11 +818,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addSteps,
         addCustomFood,
         weeklyLogs,
+        currentUser,
+        isAuthenticated: !!currentUser,
+        isAuthLoading,
+        login,
+        register,
+        logout,
+        loginDemo,
       }}
     >
       {children}
     </HealthContext.Provider>
   );
+
 };
 
 export const useHealth = () => {

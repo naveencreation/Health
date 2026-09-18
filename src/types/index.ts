@@ -78,3 +78,21 @@ export interface WeeklyTrendItem {
   steps: number;
   burned: number;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  isGuest?: boolean;
+}
+
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  age?: number;
+  weight?: number;
+  goal?: string;
+  gender?: string;
+}
+

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  SafeAreaView,
-  ScrollView,
   Platform,
   StatusBar as RNStatusBar,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Kurale_400Regular } from '@expo-google-fonts/kurale';
 import {
@@ -16,28 +16,34 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
-import { HealthProvider, useHealth } from './src/context/HealthContext';
-import { Colors } from './src/theme/colors';
-import { Header } from './src/components/Header';
-import { CalorieBudgetCard } from './src/components/CalorieBudgetCard';
-import { DietJourneyChart } from './src/components/DietJourneyChart';
-import { RiaCoachCard } from './src/components/RiaCoachCard';
-import { MealSection } from './src/components/MealSection';
-import { DailyHabitsCard } from './src/components/DailyHabitsCard';
-import { DiaryTab } from './src/components/DiaryTab';
-import { AnalyticsTab } from './src/components/AnalyticsTab';
-import { ProfileTab } from './src/components/ProfileTab';
-import { BottomNavBar, TabType } from './src/components/BottomNavBar';
-import { FoodLogModal } from './src/components/FoodLogModal';
-import { SearchFoodModal } from './src/components/SearchFoodModal';
-import { NotificationModal } from './src/components/NotificationModal';
-import { AvatarPickerModal } from './src/components/AvatarPickerModal';
-import { RiaChatModal } from './src/components/RiaChatModal';
-import { DEFAULT_AVATAR_URL } from './src/data/avatars';
-import { MealType } from './src/types';
+import { HealthProvider, useHealth } from '@/context/HealthContext';
+import { Colors } from '@/theme/colors';
+import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { MealType } from '@/types';
+
+// Structured Screens
+import {
+  WelcomeScreen,
+  TodayScreen,
+  DiaryScreen,
+  AnalyticsScreen,
+  ProfileScreen,
+} from '@/screens';
+
+// Components, Navigation & Modals
+import {
+  Header,
+  BottomNavBar,
+  TabType,
+  FoodLogModal,
+  SearchFoodModal,
+  NotificationModal,
+  AvatarPickerModal,
+  RiaChatModal,
+} from '@/components';
 
 function MainApp() {
-  const { addWater, userGoals, updateGoals } = useHealth();
+  const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
@@ -45,6 +51,8 @@ function MainApp() {
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [riaChatVisible, setRiaChatVisible] = useState(false);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
 
   const [fontsLoaded] = useFonts({
     Kurale_400Regular,
@@ -96,6 +104,55 @@ function MainApp() {
     addWater(250);
   };
 
+  const handleOpenSignIn = () => {
+    setAuthInitialMode('signin');
+    setAuthModalVisible(true);
+  };
+
+  const handleSignOut = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to sign out of Calori?');
+      if (confirmed) {
+        await logout();
+        setAuthModalVisible(false);
+      }
+      return;
+    }
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of Calori?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            setAuthModalVisible(false);
+          },
+        },
+      ]
+    );
+  };
+
+  if (isAuthLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated || authModalVisible) {
+    return (
+      <WelcomeScreen
+        initialMode={!isAuthenticated ? 'signin' : authInitialMode}
+        onLoginSuccess={() => setAuthModalVisible(false)}
+        onClose={isAuthenticated ? () => setAuthModalVisible(false) : undefined}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
@@ -105,38 +162,29 @@ function MainApp() {
           onSearchPress={() => setSearchModalVisible(true)}
           onNotificationsPress={() => setNotificationsVisible(true)}
           onAvatarPress={() => setAvatarModalVisible(true)}
+          onSignInPress={handleOpenSignIn}
+          onSignOutPress={handleSignOut}
         />
 
         {/* Tab Content */}
         <View style={styles.contentArea}>
           {activeTab === 'today' && (
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Figma Hero Widget: Calorie Arc & Macro Triad */}
-              <CalorieBudgetCard />
-
-              {/* Figma Section: Track your diet journey area wave & days */}
-              <DietJourneyChart />
-
-              {/* Figma Frame 299 & Meal Slots: Date Picker situated directly above Meals */}
-              <MealSection onAddFood={handleOpenFoodLogger} />
-
-              {/* Ria AI Nutritionist Coach Insights */}
-              <RiaCoachCard onOpenChat={() => setRiaChatVisible(true)} />
-
-              {/* Side-by-Side Habits: Hydration & Activity Dual Dials */}
-              <DailyHabitsCard />
-            </ScrollView>
+            <TodayScreen
+              onAddFood={handleOpenFoodLogger}
+              onOpenRiaChat={() => setRiaChatVisible(true)}
+            />
           )}
 
-          {activeTab === 'diary' && <DiaryTab onAddFood={handleOpenFoodLogger} />}
+          {activeTab === 'diary' && <DiaryScreen onAddFood={handleOpenFoodLogger} />}
 
-          {activeTab === 'analytics' && <AnalyticsTab />}
+          {activeTab === 'analytics' && <AnalyticsScreen />}
 
-          {activeTab === 'profile' && <ProfileTab />}
+          {activeTab === 'profile' && (
+            <ProfileScreen
+              onSignIn={handleOpenSignIn}
+              onSignOut={handleSignOut}
+            />
+          )}
         </View>
 
         {/* Bottom Navigation */}
@@ -147,26 +195,26 @@ function MainApp() {
           onQuickLogWater={handleQuickWater}
         />
 
-        {/* Food Logging Modal (from meal slots or '+' button) */}
+        {/* Food Logging Modal */}
         <FoodLogModal
           visible={foodModalVisible}
           mealType={activeMealType}
           onClose={() => setFoodModalVisible(false)}
         />
 
-        {/* Global Food Search Modal (from Header search icon) */}
+        {/* Global Food Search Modal */}
         <SearchFoodModal
           visible={searchModalVisible}
           onClose={() => setSearchModalVisible(false)}
         />
 
-        {/* Notification Center Modal (from Header bell icon) */}
+        {/* Notification Center Modal */}
         <NotificationModal
           visible={notificationsVisible}
           onClose={() => setNotificationsVisible(false)}
         />
 
-        {/* Avatar Picker Modal (from Header avatar or Profile avatar) */}
+        {/* Avatar Picker Modal */}
         <AvatarPickerModal
           visible={avatarModalVisible}
           currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
@@ -174,7 +222,7 @@ function MainApp() {
           onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
         />
 
-        {/* Ria AI Interactive Chat Modal (from Ria Coach card) */}
+        {/* Ria AI Interactive Chat Modal */}
         <RiaChatModal
           visible={riaChatVisible}
           onClose={() => setRiaChatVisible(false)}
@@ -186,13 +234,21 @@ function MainApp() {
 
 export default function App() {
   return (
-    <HealthProvider>
-      <MainApp />
-    </HealthProvider>
+    <SafeAreaProvider>
+      <HealthProvider>
+        <MainApp />
+      </HealthProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: Colors.card,
@@ -202,9 +258,8 @@ const styles = StyleSheet.create({
   phoneContainer: {
     flex: 1,
     width: '100%',
-    maxWidth: 480, // Clean mobile viewport frame on desktop browsers
+    maxWidth: 480,
     backgroundColor: Colors.background,
-    // Add subtle shadow and border when viewed on wide desktop monitors
     ...(Platform.OS === 'web'
       ? {
           shadowColor: '#0F172A',
@@ -219,11 +274,5 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 24,
   },
 });

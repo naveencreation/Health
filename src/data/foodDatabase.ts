@@ -1,4 +1,4 @@
-import { FoodItem } from '../types';
+import { FoodItem } from '@/types';
 
 export const INITIAL_FOOD_DATABASE: FoodItem[] = [
   // --- INDIAN BREADS ---
