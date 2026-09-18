@@ -22,6 +22,7 @@ interface GenderSelectionScreenProps {
 interface GenderOption {
   id: GenderType;
   title: string;
+  subtitle: string;
   iconName: string;
   iconBg: string;
   iconColor: string;
@@ -31,6 +32,7 @@ const GENDER_OPTIONS: GenderOption[] = [
   {
     id: 'female',
     title: 'Female',
+    subtitle: 'Calibrates metabolic rate formula for female biology',
     iconName: 'female',
     iconBg: '#FDF2F8',
     iconColor: '#EC4899',
@@ -38,6 +40,7 @@ const GENDER_OPTIONS: GenderOption[] = [
   {
     id: 'male',
     title: 'Male',
+    subtitle: 'Calibrates metabolic rate formula for male biology',
     iconName: 'male',
     iconBg: '#EFF6FF',
     iconColor: '#2563EB',
@@ -45,6 +48,7 @@ const GENDER_OPTIONS: GenderOption[] = [
   {
     id: 'other',
     title: 'Other',
+    subtitle: 'Uses a balanced metabolic median for your calculations',
     iconName: 'sparkles',
     iconBg: '#F5F3FF',
     iconColor: '#7C3AED',
@@ -67,14 +71,16 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Frame 12: Top Bar */}
+        {/* Frame 12: Top Navigation Bar */}
         <View style={styles.headerBar}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={onBack}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
-            <Ionicons name="arrow-back" size={22} color="#1C274C" />
+            <Ionicons name="arrow-back" size={20} color="#1C274C" />
           </TouchableOpacity>
 
           <View style={styles.logoBadgeContainer}>
@@ -82,21 +88,20 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
             <Text style={styles.logoBadgeText}>Calori</Text>
           </View>
 
-          {onSignIn ? (
-            <TouchableOpacity onPress={onSignIn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.headerSignInLink}>Sign In</Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.stepIndicatorText}>4 of 4</Text>
-          )}
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepIndicatorText}>Step 4 of 4</Text>
+          </View>
         </View>
 
-        {/* Title: What’s your gender? */}
+        {/* Header Title & Cognitive Context */}
         <View style={styles.titleContainer}>
           <Text style={styles.screenTitle}>What’s your gender?</Text>
+          <Text style={styles.screenSubtitle}>
+            Calibrates your basal metabolic rate (BMR) calculation
+          </Text>
         </View>
 
-        {/* Gender Selection Cards (3 Options) */}
+        {/* Gender Selection Cards */}
         <View style={styles.cardsContainer}>
           {GENDER_OPTIONS.map((option) => {
             const isSelected = selectedGender === option.id;
@@ -104,29 +109,35 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
             return (
               <TouchableOpacity
                 key={option.id}
-                activeOpacity={0.85}
+                activeOpacity={0.88}
                 onPress={() => setSelectedGender(option.id)}
                 style={[
                   styles.genderCard,
                   isSelected ? styles.genderCardSelected : styles.genderCardUnselected,
                 ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`${option.title}: ${option.subtitle}`}
               >
                 {/* Left Visual Icon Badge */}
                 <View style={[styles.iconBadge, { backgroundColor: option.iconBg }]}>
-                  <Ionicons name={option.iconName as any} size={24} color={option.iconColor} />
+                  <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
                 </View>
 
-                {/* Option Title */}
-                <Text
-                  style={[
-                    styles.genderTitle,
-                    isSelected && styles.genderTitleSelected,
-                  ]}
-                >
-                  {option.title}
-                </Text>
+                {/* Option Content: Title & Benefit Subtitle */}
+                <View style={styles.cardTextContent}>
+                  <Text
+                    style={[
+                      styles.genderTitle,
+                      isSelected && styles.genderTitleSelected,
+                    ]}
+                  >
+                    {option.title}
+                  </Text>
+                  <Text style={styles.genderSubtitle}>{option.subtitle}</Text>
+                </View>
 
-                {/* Radio Indicator (Ellipse 6, 7, 8) */}
+                {/* Accessible Radio Indicator */}
                 <View
                   style={[
                     styles.radioCircle,
@@ -134,7 +145,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
                   ]}
                 >
                   {isSelected && (
-                    <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                   )}
                 </View>
               </TouchableOpacity>
@@ -142,24 +153,17 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
           })}
         </View>
 
-        {/* Frame 9: Continue CTA Button (Figma Coral #F47551) */}
+        {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinuePress}
             activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel="Continue with selected gender"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-
-            {/* Decorative Ellipses and Stars from Figma */}
-            <View style={styles.decorCluster}>
-              <View style={styles.decorCircleOuter}>
-                <View style={styles.decorCircleInner} />
-              </View>
-              <View style={styles.starsRow}>
-                <Ionicons name="sparkles" size={13} color="#FFFFFF" />
-              </View>
-            </View>
+            <Ionicons name="arrow-forward" size={18} color="#0F172A" />
           </TouchableOpacity>
 
           {/* Skip & Sign In Actions */}
@@ -168,14 +172,19 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
               style={styles.skipContainer}
               onPress={onSkip}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Skip gender selection"
             >
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
+
             {onSignIn && (
               <TouchableOpacity
                 onPress={onSignIn}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={styles.signInBottomBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Sign in to existing account"
               >
                 <Text style={styles.signInLinkText}>
                   Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
@@ -213,7 +222,7 @@ const styles = StyleSheet.create({
       : {}),
   },
 
-  // Frame 12: Header
+  // Header Bar
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -243,199 +252,202 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F47551',
+    backgroundColor: '#CDE26D',
   },
   logoBadgeText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 13,
     color: '#0F172A',
   },
+  stepBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
   stepIndicatorText: {
-    fontFamily: 'Poppins_500Medium',
-    fontSize: 15,
-    color: '#626262',
-    lineHeight: 22,
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 12,
+    color: '#64748B',
+    letterSpacing: 0.2,
   },
 
-  // Title: What’s your gender?
+  // Title & Context
   titleContainer: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 16,
     paddingHorizontal: 16,
   },
   screenTitle: {
     fontFamily: 'Poppins_700Bold',
-    fontSize: 32,
-    lineHeight: 38,
-    color: '#000000',
+    fontSize: 28,
+    lineHeight: 36,
+    color: '#0F172A',
     textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  screenSubtitle: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 8,
+    maxWidth: 290,
   },
 
-  // Cards Container: 316px wide cards
+  // Cards Container
   cardsContainer: {
-    width: 316,
+    width: '100%',
+    maxWidth: 335,
     alignSelf: 'center',
-    gap: 24,
-    marginTop: 24,
+    gap: 14,
+    marginVertical: 12,
   },
   genderCard: {
-    width: 316,
-    height: 64,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    width: '100%',
+    height: 76,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        } as any)
+      : {}),
   },
   genderCardSelected: {
+    backgroundColor: '#FFFBF9',
     borderWidth: 1.5,
     borderColor: '#F47551',
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0px 10px 24px rgba(244, 117, 81, 0.16)',
+          boxShadow: '0px 8px 20px rgba(244, 117, 81, 0.14)',
         } as any)
       : {
           shadowColor: '#F47551',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.18,
-          shadowRadius: 14,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 10,
+          elevation: 4,
         }),
   },
   genderCardUnselected: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.18)',
+    borderColor: '#F1F5F9',
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)',
         } as any)
       : {
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 6,
-          elevation: 2,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 4,
+          elevation: 1,
         }),
   },
   iconBadge: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  genderTitle: {
+  cardTextContent: {
     flex: 1,
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 18,
-    lineHeight: 26,
-    color: 'rgba(0, 0, 0, 0.8)',
     marginLeft: 14,
+    marginRight: 10,
+    justifyContent: 'center',
+  },
+  genderTitle: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#334155',
   },
   genderTitleSelected: {
-    color: '#000000',
+    color: '#0F172A',
+  },
+  genderSubtitle: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
+    marginTop: 2,
   },
   radioCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioUnselected: {
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 0, 0, 0.32)',
+    borderColor: '#CBD5E1',
+    backgroundColor: 'transparent',
   },
   radioSelected: {
     backgroundColor: '#F47551',
+    borderWidth: 0,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0px 4px 10px rgba(244, 117, 81, 0.4)',
+          boxShadow: '0px 2px 6px rgba(244, 117, 81, 0.3)',
         } as any)
       : {
           shadowColor: '#F47551',
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.35,
+          shadowOpacity: 0.25,
           shadowRadius: 4,
-          elevation: 3,
+          elevation: 2,
         }),
   },
 
-  // Frame 9: Continue CTA Button (Figma coral: #F47551)
+  // Footer & Continue CTA
   footerContainer: {
     alignItems: 'center',
     gap: 16,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   continueButton: {
-    width: 195,
-    height: 48,
-    backgroundColor: '#F47551', // Coral from Figma Frame 9 on Screen 4
-    borderRadius: 20,
+    width: 220,
+    height: 52,
+    backgroundColor: '#CDE26D',
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#CDE26D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 4,
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0px 10px 24px rgba(244, 117, 81, 0.35)',
+          cursor: 'pointer',
+          boxShadow: '0px 6px 18px rgba(205, 226, 109, 0.45)',
         } as any)
-      : {
-          shadowColor: '#F47551',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.35,
-          shadowRadius: 14,
-          elevation: 5,
-        }),
+      : {}),
   },
   continueButtonText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#FFFDFD',
-    lineHeight: 24,
+    color: '#0F172A',
+    letterSpacing: 0.2,
   },
-  decorCluster: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  decorCircleOuter: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFB29C', // Figma Ellipse 1
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  decorCircleInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#FFFFFF', // Figma Ellipse 2
-  },
-  starsRow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Skip Action
   skipContainer: {
     paddingVertical: 6,
   },
   skipText: {
-    fontFamily: 'Kurale_400Regular',
-    fontSize: 20,
-    lineHeight: 30,
-    color: 'rgba(0, 0, 0, 0.5)',
-    letterSpacing: 0.2,
-  },
-  headerSignInLink: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 14,
-    color: '#F47551',
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 15,
+    color: '#64748B',
   },
   footerLinksRow: {
     flexDirection: 'row',
