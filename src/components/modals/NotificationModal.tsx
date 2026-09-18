@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { useHealth } from '@/context/HealthContext';
 
 interface NotificationItem {
   id: string;
@@ -27,61 +28,129 @@ interface NotificationModalProps {
   onClose: () => void;
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n_streak',
-    type: 'streak',
-    title: '🔥 7-Day Streak Achieved!',
-    description: 'Outstanding discipline, Akshay! You have logged all your daily meals for a full week.',
-    timeAgo: '10m ago',
-    isUnread: true,
-    accentColor: '#EA580C',
-    iconName: 'flame',
-  },
-  {
-    id: 'n_water',
-    type: 'water',
-    title: '💧 Hydration Check-in',
-    description: "You're at 1,250 ml of your 2,500 ml target. Drink a glass of water to keep your metabolism humming.",
-    timeAgo: '1h ago',
-    isUnread: true,
-    accentColor: '#2563EB',
-    iconName: 'water',
-  },
-  {
-    id: 'n_cals',
-    type: 'calorie',
-    title: '🎯 Calorie Deficit on Track',
-    description: 'You have 680 kcal remaining for dinner. Your protein intake is already at 80% of goal!',
-    timeAgo: '3h ago',
-    isUnread: false,
-    accentColor: '#10B981',
-    iconName: 'pie-chart',
-  },
-  {
-    id: 'n_steps',
-    type: 'step',
-    title: '👟 Step Goal Opportunity',
-    description: 'You have reached 4,620 steps today. An evening 25-minute brisk walk will get you to 10k.',
-    timeAgo: '5h ago',
-    isUnread: false,
-    accentColor: '#F59E0B',
-    iconName: 'footsteps',
-  },
-  {
-    id: 'n_ria',
-    type: 'ria',
-    title: '✨ Ria AI Coach Insight',
-    description: 'Adding 10g more dietary fiber at dinner will slow glucose spikes and improve sleep quality.',
-    timeAgo: 'Yesterday',
-    isUnread: false,
-    accentColor: '#8B5CF6',
-    iconName: 'sparkles',
-  },
-];
 
 export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const { userGoals, currentUser, currentLog, remainingCalories } = useHealth();
+
+  const firstName = (currentUser?.name || userGoals.name || 'there').split(' ')[0];
+
+  // Generate real dynamic notifications from live user data
+  const dynamicNotifications = useMemo((): NotificationItem[] => {
+    const notifs: NotificationItem[] = [];
+
+    // Streak notification — only show if user has a meaningful streak
+    const streak = userGoals.streakDays || 0;
+    if (streak >= 3) {
+      notifs.push({
+        id: 'n_streak',
+        type: 'streak',
+        title: `🔥 ${streak}-Day Streak!`,
+        description: `Outstanding discipline, ${firstName}! You have logged your meals for ${streak} days straight. Keep going!`,
+        timeAgo: 'Today',
+        isUnread: true,
+        accentColor: '#EA580C',
+        iconName: 'flame',
+      });
+    }
+
+    // Hydration check — based on actual water logged today
+    const waterMl = currentLog.waterMl || 0;
+    const waterGoal = userGoals.waterGoalMl || 2500;
+    if (waterMl < waterGoal) {
+      const pct = Math.round((waterMl / waterGoal) * 100);
+      notifs.push({
+        id: 'n_water',
+        type: 'water',
+        title: '💧 Hydration Check-in',
+        description: `You're at ${waterMl.toLocaleString()} ml of your ${waterGoal.toLocaleString()} ml target (${pct}%). Drink water to stay on track!`,
+        timeAgo: 'Now',
+        isUnread: waterMl === 0,
+        accentColor: '#2563EB',
+        iconName: 'water',
+      });
+    } else {
+      notifs.push({
+        id: 'n_water_done',
+        type: 'water',
+        title: '💧 Hydration Goal Hit!',
+        description: `Amazing, ${firstName}! You've reached your ${waterGoal.toLocaleString()} ml water goal for today.`,
+        timeAgo: 'Today',
+        isUnread: false,
+        accentColor: '#2563EB',
+        iconName: 'water',
+      });
+    }
+
+    // Calorie budget status — how many kcal remain
+    const budget = userGoals.dailyCalorieBudget || 2000;
+    if (remainingCalories > 0 && remainingCalories < budget) {
+      notifs.push({
+        id: 'n_cals',
+        type: 'calorie',
+        title: '🎯 Calorie Budget Update',
+        description: `You have ${remainingCalories} kcal remaining today. Plan your meals wisely to hit your ${budget} kcal target!`,
+        timeAgo: 'Today',
+        isUnread: false,
+        accentColor: '#10B981',
+        iconName: 'pie-chart',
+      });
+    } else if (remainingCalories <= 0) {
+      notifs.push({
+        id: 'n_cals_over',
+        type: 'calorie',
+        title: '⚠️ Calorie Budget Reached',
+        description: `You've hit your ${budget} kcal budget for today. Light snacks like fruits or salads are a safe choice now.`,
+        timeAgo: 'Today',
+        isUnread: true,
+        accentColor: '#F59E0B',
+        iconName: 'pie-chart',
+      });
+    }
+
+    // Step goal progress
+    const steps = currentLog.steps || 0;
+    const stepGoal = userGoals.stepGoal || 10000;
+    if (steps > 0 && steps < stepGoal) {
+      const stepsLeft = stepGoal - steps;
+      notifs.push({
+        id: 'n_steps',
+        type: 'step',
+        title: '👟 Step Goal Progress',
+        description: `You've reached ${steps.toLocaleString()} steps today. Just ${stepsLeft.toLocaleString()} more to hit your ${stepGoal.toLocaleString()} step goal!`,
+        timeAgo: 'Today',
+        isUnread: false,
+        accentColor: '#F59E0B',
+        iconName: 'footsteps',
+      });
+    } else if (steps >= stepGoal) {
+      notifs.push({
+        id: 'n_steps_done',
+        type: 'step',
+        title: '👟 Step Goal Achieved!',
+        description: `Incredible, ${firstName}! You've hit ${steps.toLocaleString()} steps today — your ${stepGoal.toLocaleString()} step goal is crushed!`,
+        timeAgo: 'Today',
+        isUnread: true,
+        accentColor: '#F59E0B',
+        iconName: 'footsteps',
+      });
+    }
+
+    // Ria AI tip — always shown as a contextual insight
+    notifs.push({
+      id: 'n_ria',
+      type: 'ria',
+      title: '✨ Ria AI Insight',
+      description: 'Adding 10g more dietary fiber at dinner slows glucose spikes and improves sleep quality.',
+      timeAgo: 'Yesterday',
+      isUnread: false,
+      accentColor: '#8B5CF6',
+      iconName: 'sparkles',
+    });
+
+    return notifs;
+  }, [firstName, userGoals, currentLog, remainingCalories]);
+
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => dynamicNotifications);
 
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isUnread: false })));

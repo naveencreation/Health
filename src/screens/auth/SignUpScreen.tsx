@@ -630,7 +630,6 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     ...(Platform.OS === 'web'
       ? ({
-          outline: 'none',
           outlineStyle: 'none',
           outlineWidth: 0,
         } as any)

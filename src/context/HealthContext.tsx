@@ -20,9 +20,29 @@ const STORAGE_KEYS = {
   AUTH: '@calori_auth_v1',
 };
 
+/**
+ * Recursively strips any keys with `undefined` values from an object or array.
+ * Firestore crashes if any property value is `undefined`.
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) return data;
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (typeof data === 'object' && !(data instanceof Date)) {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
 
 const DEFAULT_GOALS: UserGoals = {
-  name: 'Akshay Rajput',
+  name: 'User',
   dailyCalorieBudget: 1950,
   targetCarbs: 220,    // 45%
   targetProtein: 75,   // ~15-20%
@@ -32,8 +52,14 @@ const DEFAULT_GOALS: UserGoals = {
   stepGoal: 10000,
   currentWeightKg: 74.2,
   targetWeightKg: 68.0,
-  streakDays: 7,
+  streakDays: 1,
   avatarUrl: DEFAULT_AVATAR_URL,
+  age: 24,
+  gender: 'male',
+  goal: 'maintain',
+  weightUnit: 'kg',
+  heightCm: 175,
+  startWeightKg: 74.2,
 };
 
 const getTodayDateString = (date = new Date()): string => {
@@ -154,6 +180,7 @@ interface HealthContextType {
   userGoals: UserGoals;
   updateGoals: (goals: Partial<UserGoals>) => void;
   foodDatabase: FoodItem[];
+  dailyLogs: Record<string, DailyLog>;
   currentLog: DailyLog;
   totalConsumed: number;
   totalBurned: number;
@@ -216,9 +243,29 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           parsedLogs = JSON.parse(savedLogs);
         }
 
+        // Check if an authenticated real user is already active
+        const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
+        const parsedAuth = savedAuth ? JSON.parse(savedAuth) : null;
+        const isRealUser = parsedAuth && !parsedAuth.isGuest;
+
         // Initialize today if not present
         if (!parsedLogs[todayStr]) {
-          parsedLogs[todayStr] = createInitialSampleLog(todayStr);
+          parsedLogs[todayStr] = isRealUser
+            ? { date: todayStr, meals: [], waterMl: 0, steps: 0, activities: [] }
+            : createInitialSampleLog(todayStr);
+        } else if (isRealUser) {
+          // Purge any dev sample data (1250ml water, 4620 steps, act_1 workout, sample_ meals)
+          const cur = parsedLogs[todayStr];
+          const hasMock = (cur.activities || []).some((a) => a.id === 'act_1') || (cur.meals || []).some((m) => m.id.startsWith('sample_'));
+          if (hasMock) {
+            parsedLogs[todayStr] = {
+              date: todayStr,
+              meals: (cur.meals || []).filter((m) => !m.id.startsWith('sample_')),
+              waterMl: cur.waterMl === 1250 ? 0 : (cur.waterMl || 0),
+              steps: cur.steps === 4620 ? 0 : (cur.steps || 0),
+              activities: (cur.activities || []).filter((a) => a.id !== 'act_1'),
+            };
+          }
         }
 
         setDailyLogs(parsedLogs);
@@ -266,10 +313,39 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate));
           if (logDoc.exists()) {
             const logData = logDoc.data() as DailyLog;
+            // Purge any dev placeholder sample data (meals, 1250ml water, 4620 steps, act_1)
+            const cleanMeals = (logData.meals || []).filter((m) => !m.id.startsWith('sample_'));
+            const cleanActivities = (logData.activities || []).filter((a) => a.id !== 'act_1');
+            const isMockLog = (logData.activities || []).some((a) => a.id === 'act_1') || (logData.meals || []).some((m) => m.id.startsWith('sample_'));
+
             setDailyLogs((prev) => ({
               ...prev,
-              [selectedDate]: logData,
+              [selectedDate]: {
+                ...logData,
+                meals: cleanMeals,
+                activities: cleanActivities,
+                steps: isMockLog && logData.steps === 4620 ? 0 : (logData.steps || 0),
+                waterMl: isMockLog && logData.waterMl === 1250 ? 0 : (logData.waterMl || 0),
+              },
             }));
+          } else {
+            // Real new user without cloud logs: start with a fresh clean 0-kcal slate
+            const cleanLog: DailyLog = {
+              date: selectedDate,
+              meals: [],
+              waterMl: 0,
+              steps: 0,
+              activities: [],
+            };
+            setDailyLogs((prev) => ({
+              ...prev,
+              [selectedDate]: cleanLog,
+            }));
+            try {
+              await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate), cleanLog, { merge: true });
+            } catch (e) {
+              console.warn('Initial clean log write error:', e);
+            }
           }
         } catch (err) {
           console.log('Firestore sync error:', err);
@@ -294,7 +370,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (auth.currentUser && !currentUser?.isGuest) {
       const activeLog = dailyLogs[selectedDate];
       if (activeLog) {
-        setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), activeLog, { merge: true }).catch(console.error);
+        try {
+          const payload = sanitizeForFirestore(activeLog);
+          setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), payload, { merge: true }).catch((err) => {
+            console.warn('dailyLogs setDoc async error:', err);
+          });
+        } catch (err) {
+          console.warn('dailyLogs setDoc sync error:', err);
+        }
       }
     }
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
@@ -305,7 +388,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Cloud Firestore Sync
     if (auth.currentUser && !currentUser?.isGuest) {
-      setDoc(doc(db, 'users', auth.currentUser.uid), { goals: userGoals }, { merge: true }).catch(console.error);
+      try {
+        const payload = sanitizeForFirestore({ goals: userGoals });
+        setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
+          console.warn('userGoals setDoc async error:', err);
+        });
+      } catch (err) {
+        console.warn('userGoals setDoc sync error:', err);
+      }
     }
   }, [userGoals, isLoaded, currentUser]);
 
@@ -319,17 +409,16 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return [...customFoods, ...INITIAL_FOOD_DATABASE];
   }, [customFoods]);
 
-  // Current active date log
+  // Current active date log with safe fallback guarantees
   const currentLog = useMemo((): DailyLog => {
-    return (
-      dailyLogs[selectedDate] || {
-        date: selectedDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
-      }
-    );
+    const raw = dailyLogs[selectedDate];
+    return {
+      date: raw?.date || selectedDate,
+      meals: Array.isArray(raw?.meals) ? raw.meals : [],
+      waterMl: typeof raw?.waterMl === 'number' ? raw.waterMl : 0,
+      steps: typeof raw?.steps === 'number' ? raw.steps : 0,
+      activities: Array.isArray(raw?.activities) ? raw.activities : [],
+    };
   }, [dailyLogs, selectedDate]);
 
   // Shift date helper
@@ -388,10 +477,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Steps burned calories estimate (~0.04 kcal per step) + logged workouts
   const totalBurned = useMemo(() => {
-    const workoutBurn = currentLog.activities.reduce((sum, act) => sum + act.caloriesBurned, 0);
-    const stepBurn = Math.round(currentLog.steps * 0.04);
+    const activities = Array.isArray(currentLog?.activities) ? currentLog.activities : [];
+    const workoutBurn = activities.reduce((sum, act) => sum + (act.caloriesBurned || 0), 0);
+    const stepBurn = Math.round((currentLog?.steps || 0) * 0.04);
     return workoutBurn + stepBurn;
-  }, [currentLog.activities, currentLog.steps]);
+  }, [currentLog?.activities, currentLog?.steps]);
 
   // Healthify formula: Remaining = Goal - Consumed + Burned
   const remainingCalories = useMemo(() => {
@@ -596,7 +686,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const parts = selectedDate.split('-');
     const curr = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
 
-    // Realistic baseline templates for prior unlogged days to give a rich Healthify experience
+    // Only in Demo Guest mode do we use baseline preview days
+    const isGuest = currentUser?.isGuest;
     const baselineDays = [
       { cals: 1840, carbs: 195, protein: 72, fat: 46, fiber: 26, water: 2250, steps: 9400, burn: 376 },
       { cals: 1720, carbs: 180, protein: 68, fat: 42, fiber: 24, water: 1750, steps: 8100, burn: 324 },
@@ -612,17 +703,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       d.setDate(curr.getDate() - i);
       const dateStr = getTodayDateString(d);
       const log = dailyLogs[dateStr];
-      const fallback = baselineDays[i % baselineDays.length];
+      const fallback = isGuest ? baselineDays[i % baselineDays.length] : null;
 
-      const cals = log && log.meals.length > 0 ? log.meals.reduce((sum, m) => sum + m.calories, 0) : fallback.cals;
-      const carbs = log && log.meals.length > 0 ? log.meals.reduce((sum, m) => sum + m.carbs, 0) : fallback.carbs;
-      const protein = log && log.meals.length > 0 ? log.meals.reduce((sum, m) => sum + m.protein, 0) : fallback.protein;
-      const fat = log && log.meals.length > 0 ? log.meals.reduce((sum, m) => sum + m.fat, 0) : fallback.fat;
-      const fiber = log && log.meals.length > 0 ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0) : fallback.fiber;
-      const waterMl = log && log.waterMl > 0 ? log.waterMl : fallback.water;
-      const steps = log && log.steps > 0 ? log.steps : fallback.steps;
-      const workoutBurn = log ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
-      const burned = (log && log.steps > 0 ? Math.round(steps * 0.04) : fallback.burn) + workoutBurn;
+      const hasMeals = log && Array.isArray(log.meals) && log.meals.length > 0;
+      const cals = hasMeals ? log.meals.reduce((sum, m) => sum + m.calories, 0) : (fallback ? fallback.cals : 0);
+      const carbs = hasMeals ? log.meals.reduce((sum, m) => sum + m.carbs, 0) : (fallback ? fallback.carbs : 0);
+      const protein = hasMeals ? log.meals.reduce((sum, m) => sum + m.protein, 0) : (fallback ? fallback.protein : 0);
+      const fat = hasMeals ? log.meals.reduce((sum, m) => sum + m.fat, 0) : (fallback ? fallback.fat : 0);
+      const fiber = hasMeals ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0) : (fallback ? fallback.fiber : 0);
+      const waterMl = log && typeof log.waterMl === 'number' && log.waterMl > 0 ? log.waterMl : (fallback ? fallback.water : 0);
+      const steps = log && typeof log.steps === 'number' && log.steps > 0 ? log.steps : (fallback ? fallback.steps : 0);
+      const workoutBurn = log && Array.isArray(log.activities) ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
+      const stepBurn = steps > 0 ? Math.round(steps * 0.04) : (fallback ? fallback.burn : 0);
+      const burned = stepBurn + workoutBurn;
 
       results.push({
         date: dateStr,
@@ -639,7 +732,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
     return results;
-  }, [selectedDate, dailyLogs, userGoals.dailyCalorieBudget]);
+  }, [selectedDate, dailyLogs, userGoals.dailyCalorieBudget, currentUser]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -799,6 +892,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       gender,
       goal,
       weightUnit,
+      heightCm,
+      startWeightKg: baseGoals.startWeightKg || weightKg,
     };
   };
 
@@ -825,21 +920,37 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // Save profile and goals to Cloud Firestore
         try {
-          await setDoc(doc(db, 'users', fbUser.uid), {
+          const profilePayload = sanitizeForFirestore({
             id: fbUser.uid,
             name: data.name,
             email: normalizedEmail,
-            age: data.age || newGoals.age,
-            weight: data.weight || newGoals.currentWeightKg,
+            age: data.age || newGoals.age || 24,
+            weight: data.weight || newGoals.currentWeightKg || 68,
             weightUnit: data.weightUnit || newGoals.weightUnit || 'kg',
-            goal: data.goal || newGoals.goal,
-            gender: data.gender || newGoals.gender,
-            goals: newGoals,
+            goal: data.goal || newGoals.goal || 'maintain',
+            gender: data.gender || newGoals.gender || 'male',
+            heightCm: newGoals.heightCm || 175,
+            startWeightKg: newGoals.startWeightKg || (data.weight || newGoals.currentWeightKg || 68),
+            goals: sanitizeForFirestore(newGoals),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-          }, { merge: true });
+          });
+          await setDoc(doc(db, 'users', fbUser.uid), profilePayload, { merge: true });
+
+          // Initialize a fresh clean 0-kcal day for the new user
+          const todayStr = getTodayDateString();
+          const cleanLog: DailyLog = {
+            date: todayStr,
+            meals: [],
+            waterMl: 0,
+            steps: 0,
+            activities: [],
+          };
+          setDailyLogs({ [todayStr]: cleanLog });
+          await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify({ [todayStr]: cleanLog }));
+          await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, { merge: true });
         } catch (fsErr) {
-          console.log('Firestore register doc write error:', fsErr);
+          console.warn('Firestore register doc write error:', fsErr);
         }
 
         return { success: true };
@@ -902,6 +1013,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         userGoals,
         updateGoals,
         foodDatabase,
+        dailyLogs,
         currentLog,
         totalConsumed,
         totalBurned,

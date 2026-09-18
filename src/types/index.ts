@@ -67,6 +67,8 @@ export interface UserGoals {
   gender?: string;
   goal?: string;
   weightUnit?: 'kg' | 'lbs';
+  heightCm?: number;
+  startWeightKg?: number;
 }
 
 export interface WeeklyTrendItem {

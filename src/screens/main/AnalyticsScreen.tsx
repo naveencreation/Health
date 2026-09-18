@@ -34,6 +34,8 @@ export const AnalyticsScreen: React.FC = () => {
     totalProtein,
     totalFat,
     totalFiber,
+    dailyLogs,
+    selectedDate,
   } = useHealth();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
@@ -48,118 +50,132 @@ export const AnalyticsScreen: React.FC = () => {
   const waterGoal = userGoals.waterGoalMl || 2000;
   const stepGoal = userGoals.stepGoal || 10000;
 
-  // 14-Day Dataset: 7 actual/recent logs + 7 previous historical days
+  const getDateString = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // 14-Day Dataset: dynamically built from actual dailyLogs
   const fourteenDayData = useMemo((): DailyDataPoint[] => {
-    const historicalWeek: DailyDataPoint[] = [
-      { id: 'd14', label: '1', calories: 1850, waterMl: 1900, steps: 8200, burned: 328 },
-      { id: 'd13', label: '2', calories: 1790, waterMl: 1850, steps: 8600, burned: 344 },
-      { id: 'd12', label: '3', calories: 1920, waterMl: 2100, steps: 9400, burned: 376 },
-      { id: 'd11', label: '4', calories: 1740, waterMl: 1750, steps: 7800, burned: 312 },
-      { id: 'd10', label: '5', calories: 1880, waterMl: 2200, steps: 10100, burned: 404 },
-      { id: 'd9', label: '6', calories: 1810, waterMl: 2000, steps: 8900, burned: 356 },
-      { id: 'd8', label: '7', calories: 1760, waterMl: 1800, steps: 8500, burned: 340 },
-    ];
+    const parts = (selectedDate || '').split('-');
+    const curr = parts.length === 3
+      ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
+      : new Date();
 
-    const currentWeek: DailyDataPoint[] = weeklyLogs.map((l, idx) => ({
-      id: l.date,
-      label: String(idx + 8),
-      calories: l.calories,
-      waterMl: l.waterMl,
-      steps: l.steps,
-      burned: l.burned,
-      isToday: idx === weeklyLogs.length - 1,
-    }));
+    const points: DailyDataPoint[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(curr);
+      d.setDate(curr.getDate() - i);
+      const dateStr = getDateString(d);
+      const log = dailyLogs[dateStr];
 
-    return [...historicalWeek, ...currentWeek];
-  }, [weeklyLogs]);
+      const cals = log && Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + m.calories, 0) : 0;
+      const waterMl = log?.waterMl || 0;
+      const steps = log?.steps || 0;
+      const workoutBurn = log && Array.isArray(log.activities) ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
+      const burned = Math.round(steps * 0.04) + workoutBurn;
 
-  // 30-Day Dataset: 4 Consolidated Weekly Clusters
+      points.push({
+        id: dateStr,
+        label: String(14 - i),
+        calories: cals,
+        waterMl,
+        steps,
+        burned,
+        isToday: i === 0,
+      });
+    }
+    return points;
+  }, [dailyLogs, selectedDate]);
+
+  // 30-Day Dataset: 4 Weekly Clusters computed dynamically from actual dailyLogs
   const thirtyDayClusters = useMemo((): WeeklyCluster[] => {
-    return [
-      { id: 'w1', label: 'Week 1', avgCalories: 1860, avgWaterMl: 1820, avgSteps: 8350, totalBurn: 2450 },
-      { id: 'w2', label: 'Week 2', avgCalories: 1810, avgWaterMl: 1950, avgSteps: 8890, totalBurn: 2620 },
-      { id: 'w3', label: 'Week 3', avgCalories: 1770, avgWaterMl: 2100, avgSteps: 9450, totalBurn: 2810 },
-      { id: 'w4', label: 'Week 4', avgCalories: 1730, avgWaterMl: 2250, avgSteps: 9920, totalBurn: 2980 },
-    ];
-  }, []);
+    const parts = (selectedDate || '').split('-');
+    const curr = parts.length === 3
+      ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
+      : new Date();
 
-  // Summary Metrics
+    const clusters: WeeklyCluster[] = [];
+    for (let w = 3; w >= 0; w--) {
+      let sumCals = 0;
+      let sumWater = 0;
+      let sumSteps = 0;
+      let sumBurn = 0;
+
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const d = new Date(curr);
+        d.setDate(curr.getDate() - (w * 7 + dayOffset));
+        const dateStr = getDateString(d);
+        const log = dailyLogs[dateStr];
+        if (log) {
+          const cals = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + m.calories, 0) : 0;
+          sumCals += cals;
+          sumWater += log.waterMl || 0;
+          sumSteps += log.steps || 0;
+          const workoutBurn = Array.isArray(log.activities) ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
+          sumBurn += Math.round((log.steps || 0) * 0.04) + workoutBurn;
+        }
+      }
+
+      clusters.push({
+        id: `w_${4 - w}`,
+        label: `Week ${4 - w}`,
+        avgCalories: Math.round(sumCals / 7),
+        avgWaterMl: Math.round(sumWater / 7),
+        avgSteps: Math.round(sumSteps / 7),
+        totalBurn: sumBurn,
+      });
+    }
+    return clusters;
+  }, [dailyLogs, selectedDate]);
+
+  // Summary Metrics calculated honestly on actual tracked data
   const analyticsSummary = useMemo(() => {
+    let dataset: { calories: number; waterMl: number; steps: number; burned: number }[] = [];
+    let dayCount = 7;
+
     if (timeRange === '7d') {
-      const totalCals = weeklyLogs.reduce((acc, l) => acc + l.calories, 0);
-      const totalWater = weeklyLogs.reduce((acc, l) => acc + l.waterMl, 0);
-      const totalSteps = weeklyLogs.reduce((acc, l) => acc + l.steps, 0);
-      const totalBurn = weeklyLogs.reduce((acc, l) => acc + l.burned, 0);
-
-      const avgCals = Math.round(totalCals / 7);
-      const avgWater = Math.round(totalWater / 7);
-      const avgSteps = Math.round(totalSteps / 7);
-
-      const netDeficit = Math.max(0, ((budget + 350) * 7) - totalCals);
-      const projectedFatLoss = (netDeficit / 7700).toFixed(2);
-      const budgetMetDays = weeklyLogs.filter((l) => l.calories <= budget).length;
-      const waterMetDays = weeklyLogs.filter((l) => l.waterMl >= waterGoal).length;
-      const stepMetDays = weeklyLogs.filter((l) => l.steps >= stepGoal).length;
-
-      return {
-        avgCals,
-        avgWater,
-        avgSteps,
-        totalWaterL: (totalWater / 1000).toFixed(1),
-        totalDistanceKm: ((totalSteps * 0.75) / 1000).toFixed(1),
-        totalBurn,
-        netDeficit,
-        projectedFatLoss,
-        adherenceText: `${budgetMetDays}/7 Days`,
-        waterAdherenceText: `${waterMetDays}/7 Days`,
-        stepAdherenceText: `${stepMetDays}/7 Days`,
-        comparisonText: 'On track with your weekly calorie target',
-      };
+      dataset = weeklyLogs;
+      dayCount = 7;
+    } else if (timeRange === '14d') {
+      dataset = fourteenDayData;
+      dayCount = 14;
+    } else {
+      dataset = thirtyDayClusters.map((c) => ({
+        calories: c.avgCalories,
+        waterMl: c.avgWaterMl,
+        steps: c.avgSteps,
+        burned: Math.round(c.totalBurn / 7),
+      }));
+      dayCount = 30;
     }
 
-    if (timeRange === '14d') {
-      const totalCals = fourteenDayData.reduce((acc, l) => acc + l.calories, 0);
-      const totalWater = fourteenDayData.reduce((acc, l) => acc + l.waterMl, 0);
-      const totalSteps = fourteenDayData.reduce((acc, l) => acc + l.steps, 0);
-      const totalBurn = fourteenDayData.reduce((acc, l) => acc + l.burned, 0);
+    const totalCals = dataset.reduce((acc, l) => acc + l.calories, 0);
+    const totalWater = dataset.reduce((acc, l) => acc + l.waterMl, 0);
+    const totalSteps = dataset.reduce((acc, l) => acc + l.steps, 0);
+    const totalBurn = dataset.reduce((acc, l) => acc + l.burned, 0);
 
-      const avgCals = Math.round(totalCals / 14);
-      const avgWater = Math.round(totalWater / 14);
-      const avgSteps = Math.round(totalSteps / 14);
+    const loggedDays = dataset.filter((l) => l.calories > 0);
+    const loggedCount = loggedDays.length;
 
-      const netDeficit = Math.max(0, ((budget + 350) * 14) - totalCals);
-      const projectedFatLoss = (netDeficit / 7700).toFixed(2);
-      const budgetMetDays = fourteenDayData.filter((l) => l.calories <= budget).length;
-      const waterMetDays = fourteenDayData.filter((l) => l.waterMl >= waterGoal).length;
-      const stepMetDays = fourteenDayData.filter((l) => l.steps >= stepGoal).length;
+    const avgCals = loggedCount > 0 ? Math.round(totalCals / loggedCount) : 0;
+    const avgWater = loggedCount > 0 ? Math.round(totalWater / loggedCount) : (totalWater > 0 ? Math.round(totalWater / dayCount) : 0);
+    const avgSteps = loggedCount > 0 ? Math.round(totalSteps / loggedCount) : (totalSteps > 0 ? Math.round(totalSteps / dayCount) : 0);
 
-      return {
-        avgCals,
-        avgWater,
-        avgSteps,
-        totalWaterL: (totalWater / 1000).toFixed(1),
-        totalDistanceKm: ((totalSteps * 0.75) / 1000).toFixed(1),
-        totalBurn,
-        netDeficit,
-        projectedFatLoss,
-        adherenceText: `${budgetMetDays}/14 Days`,
-        waterAdherenceText: `${waterMetDays}/14 Days`,
-        stepAdherenceText: `${stepMetDays}/14 Days`,
-        comparisonText: 'Week 2 intake dropped 4% with 9% more movement',
-      };
-    }
-
-    const totalCals = thirtyDayClusters.reduce((acc, c) => acc + c.avgCalories * 7.5, 0);
-    const totalWater = thirtyDayClusters.reduce((acc, c) => acc + c.avgWaterMl * 7.5, 0);
-    const totalSteps = thirtyDayClusters.reduce((acc, c) => acc + c.avgSteps * 7.5, 0);
-    const totalBurn = thirtyDayClusters.reduce((acc, c) => acc + c.totalBurn, 0);
-
-    const avgCals = Math.round(totalCals / 30);
-    const avgWater = Math.round(totalWater / 30);
-    const avgSteps = Math.round(totalSteps / 30);
-
-    const netDeficit = Math.max(0, ((budget + 350) * 30) - totalCals);
+    // Deficit only calculated on days meals were actively logged
+    const netDeficit = loggedCount > 0 ? Math.max(0, (budget * loggedCount) - totalCals) : 0;
     const projectedFatLoss = (netDeficit / 7700).toFixed(2);
+    const budgetMetDays = dataset.filter((l) => l.calories > 0 && l.calories <= budget).length;
+    const waterMetDays = dataset.filter((l) => l.waterMl >= waterGoal).length;
+    const stepMetDays = dataset.filter((l) => l.steps >= stepGoal).length;
+
+    const comparisonText = loggedCount === 0
+      ? 'Start logging meals to unlock personalized health trends!'
+      : budgetMetDays === loggedCount
+      ? 'Consistent discipline — on track with your calorie targets!'
+      : `${budgetMetDays} of ${loggedCount} logged days within your budget`;
 
     return {
       avgCals,
@@ -167,13 +183,13 @@ export const AnalyticsScreen: React.FC = () => {
       avgSteps,
       totalWaterL: (totalWater / 1000).toFixed(1),
       totalDistanceKm: ((totalSteps * 0.75) / 1000).toFixed(1),
-      totalBurn: Math.round(totalBurn * 4),
-      netDeficit: Math.round(netDeficit),
+      totalBurn,
+      netDeficit,
       projectedFatLoss,
-      adherenceText: '24/30 Days (80%)',
-      waterAdherenceText: '25/30 Days (83%)',
-      stepAdherenceText: '22/30 Days (73%)',
-      comparisonText: 'Steady downward calorie slope with progressive step increases',
+      adherenceText: `${budgetMetDays}/${loggedCount > 0 ? loggedCount : dayCount} Days`,
+      waterAdherenceText: `${waterMetDays}/${dayCount} Days`,
+      stepAdherenceText: `${stepMetDays}/${dayCount} Days`,
+      comparisonText,
     };
   }, [timeRange, weeklyLogs, fourteenDayData, thirtyDayClusters, budget, waterGoal, stepGoal]);
 

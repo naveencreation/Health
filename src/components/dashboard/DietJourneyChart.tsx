@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
@@ -16,29 +16,78 @@ const DAYS = [
 ];
 
 export const DietJourneyChart: React.FC = () => {
-  const { totalConsumed, totalCarbs, totalProtein, totalFat } = useHealth();
-  const [selectedDay, setSelectedDay] = useState<'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'>('wed');
+  const { totalConsumed, totalCarbs, totalProtein, totalFat, userGoals, weeklyLogs } = useHealth();
+  const todayDayIndex = new Date().getDay();
+  const initialDayId = (DAYS.find((d) => d.dayIndex === todayDayIndex)?.id || 'wed') as any;
+  const [selectedDay, setSelectedDay] = useState<'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'>(initialDayId);
 
   // Wave Chart Dimensions
-  const chartWidth = 280;
+  const chartWidth = 275;
   const chartHeight = 140;
 
-  // Exact Figma coordinates for smooth Bezier curve
-  // Points: (0, 110), (45, 105), (90, 80), (135, 30 - Active Peak), (180, 50), (225, 35), (270, 70)
-  const activePointX = 135;
-  const activePointY = 42;
+  // Selected Day Item lookup in weeklyLogs (Sunday to Saturday)
+  const selectedDayObj = DAYS.find((d) => d.id === selectedDay) || DAYS[3];
+  const selectedDayIdx = selectedDayObj.dayIndex;
 
-  const curvePath = `M 0 110 C 45 110, 60 90, 95 85 C 115 80, 125 45, ${activePointX} ${activePointY} C 150 40, 165 65, 195 55 C 225 45, 245 40, 275 60`;
-  const areaPath = `${curvePath} L 275 ${chartHeight} L 0 ${chartHeight} Z`;
+  // Compute 7 real day coordinates
+  const dayPoints = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      // Find log item whose day matches day index i (0 = Sun, 6 = Sat)
+      const dayLog = weeklyLogs.find((l) => {
+        const parts = l.date.split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          return d.getDay() === i;
+        }
+        return false;
+      });
+
+      const cals = dayLog ? dayLog.calories : 0;
+      const x = Math.round(i * (chartWidth / 6));
+      // Max scale 2500 kcal, baseline at 125, top peak at 25
+      const y = Math.round(125 - Math.min(1, cals / 2500) * 95);
+      return {
+        x,
+        y,
+        cals,
+        fat: dayLog ? dayLog.fat : 0,
+        carbs: dayLog ? dayLog.carbs : 0,
+        protein: dayLog ? dayLog.protein : 0,
+      };
+    });
+  }, [weeklyLogs]);
+
+  // Active Point coordinates for selected day
+  const activePoint = dayPoints[selectedDayIdx] || dayPoints[3];
+  const activePointX = activePoint.x;
+  const activePointY = activePoint.y;
+
+  // Build smooth bezier curve through the 7 real points
+  const hasAnyCalories = dayPoints.some((p) => p.cals > 0);
+  const curvePath = useMemo(() => {
+    if (!hasAnyCalories) {
+      return `M 0 125 L ${chartWidth} 125`;
+    }
+    let path = `M ${dayPoints[0].x} ${dayPoints[0].y}`;
+    for (let i = 0; i < dayPoints.length - 1; i++) {
+      const p0 = dayPoints[i];
+      const p1 = dayPoints[i + 1];
+      const cpX = (p0.x + p1.x) / 2;
+      path += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+    return path;
+  }, [dayPoints, hasAnyCalories]);
+
+  const areaPath = `${curvePath} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
 
   return (
     <View style={styles.container}>
       {/* Figma: "Track your diet journey" (32px Kurale/Serif) */}
       <Text style={styles.sectionHeading}>Track your diet journey</Text>
 
-      {/* Figma: "Today Calorie: 1721" (#F47551) */}
+      {/* Dynamic Today Calorie */}
       <Text style={styles.todayCalorieText}>
-        Today Calorie: {totalConsumed || 1721}
+        Today Calorie: {totalConsumed ?? 0}
       </Text>
 
       {/* Chart Canvas with Y-Axis and Wave */}
@@ -93,18 +142,18 @@ export const DietJourneyChart: React.FC = () => {
           </Svg>
 
           {/* Floating Tooltip: Rectangle 28 (#F8D558 Gold Box) */}
-          <View style={[styles.tooltipBox, { left: activePointX - 35, top: activePointY - 70 }]}>
+          <View style={[styles.tooltipBox, { left: Math.min(chartWidth - 65, Math.max(10, activePointX - 35)), top: Math.max(10, activePointY - 70) }]}>
             <View style={styles.tooltipRow}>
               <Text style={styles.tooltipKey}>Fat</Text>
-              <Text style={styles.tooltipVal}>{totalFat || 40}g</Text>
+              <Text style={styles.tooltipVal}>{activePoint.fat}g</Text>
             </View>
             <View style={styles.tooltipRow}>
               <Text style={styles.tooltipKey}>Carbs</Text>
-              <Text style={styles.tooltipVal}>{totalCarbs || 20}g</Text>
+              <Text style={styles.tooltipVal}>{activePoint.carbs}g</Text>
             </View>
             <View style={styles.tooltipRow}>
               <Text style={styles.tooltipKey}>Protein</Text>
-              <Text style={styles.tooltipVal}>{totalProtein || 4}g</Text>
+              <Text style={styles.tooltipVal}>{activePoint.protein}g</Text>
             </View>
             {/* Tooltip Triangle Arrow */}
             <View style={styles.tooltipArrow} />

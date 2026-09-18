@@ -125,7 +125,7 @@ export const ActivityCard: React.FC = () => {
       </View>
 
       {/* Logged Workouts List (Clean UXPeak Flat Rows) */}
-      {currentLog.activities.length > 0 && (
+      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 && (
         <View style={styles.workoutList}>
           {currentLog.activities.map((act, index) => {
             const isLast = index === currentLog.activities.length - 1;

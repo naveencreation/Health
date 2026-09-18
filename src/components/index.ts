@@ -29,3 +29,7 @@ export { BodyCompositionCard } from './profile/BodyCompositionCard';
 export { DailyTargetsCard } from './profile/DailyTargetsCard';
 export { PreferencesCard } from './profile/PreferencesCard';
 export { ProfileHeaderCard } from './profile/ProfileHeaderCard';
+
+// Common Components
+export { ErrorBoundary } from './common/ErrorBoundary';
+

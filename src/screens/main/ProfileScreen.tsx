@@ -46,7 +46,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignIn, onSignOu
   const [stepGoal, setStepGoal] = useState(String(userGoals.stepGoal));
   const [currentWeight, setCurrentWeight] = useState(String(userGoals.currentWeightKg));
   const [targetWeight, setTargetWeight] = useState(String(userGoals.targetWeightKg));
-  const [userHeightCm, setUserHeightCm] = useState('178');
+  const [userHeightCm, setUserHeightCm] = useState(String(userGoals.heightCm || 175));
 
   // App & AI Preferences State
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>('supportive');
@@ -84,25 +84,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignIn, onSignOu
   };
 
   const bmiStatus = getBmiStatus(bmiNum);
-  const bmrEst = Math.round(10 * weightNum + 6.25 * heightNum - 5 * 28 + 5);
+  // BMR uses user's real age and gender from onboarding data
+  const userAge = userGoals.age || 24;
+  const genderConstant = userGoals.gender === 'female' ? -161 : userGoals.gender === 'other' ? -78 : 5;
+  const bmrEst = Math.round(10 * weightNum + 6.25 * heightNum - 5 * userAge + genderConstant);
   const tdeeEst = Math.round(bmrEst * 1.375);
-  const startWeight = 78.0;
-  const totalToLose = Math.max(0.1, startWeight - targetWeightNum);
+  // Start weight from onboarding — the weight the user entered when they registered
+  const startWeight = userGoals.startWeightKg || userGoals.currentWeightKg || weightNum;
+  const totalToLose = Math.max(0.1, Math.abs(startWeight - targetWeightNum));
   const lostSoFar = Math.max(0, startWeight - weightNum);
   const weightProgressPct = Math.min(100, Math.round((lostSoFar / totalToLose) * 100));
 
   const handleSave = () => {
     updateGoals({
-      name: name.trim() || 'Akshay Rajput',
-      dailyCalorieBudget: parseInt(calorieBudget, 10) || 1950,
-      targetProtein: parseInt(targetProtein, 10) || 75,
-      targetCarbs: parseInt(targetCarbs, 10) || 220,
-      targetFat: parseInt(targetFat, 10) || 50,
-      targetFiber: parseInt(targetFiber, 10) || 30,
-      waterGoalMl: parseInt(waterGoal, 10) || 2500,
-      stepGoal: parseInt(stepGoal, 10) || 10000,
+      name: name.trim() || currentUser?.name || 'User',
+      dailyCalorieBudget: parseInt(calorieBudget, 10) || userGoals.dailyCalorieBudget,
+      targetProtein: parseInt(targetProtein, 10) || userGoals.targetProtein,
+      targetCarbs: parseInt(targetCarbs, 10) || userGoals.targetCarbs,
+      targetFat: parseInt(targetFat, 10) || userGoals.targetFat,
+      targetFiber: parseInt(targetFiber, 10) || userGoals.targetFiber,
+      waterGoalMl: parseInt(waterGoal, 10) || userGoals.waterGoalMl,
+      stepGoal: parseInt(stepGoal, 10) || userGoals.stepGoal,
       currentWeightKg: weightNum,
       targetWeightKg: targetWeightNum,
+      heightCm: parseFloat(userHeightCm) || userGoals.heightCm || 175,
     });
     setSavedMessage(true);
     setTimeout(() => setSavedMessage(false), 2500);
@@ -168,7 +173,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onSignIn, onSignOu
       {/* 1. HERO MEMBER PROFILE CARD */}
       <ProfileHeaderCard
         name={name}
-        email={currentUser?.email || (currentUser?.isGuest ? 'guest.user@calori.fit' : 'akshay.rajput@calori.fit')}
+        email={currentUser?.email || (currentUser?.isGuest ? 'guest.user@calori.fit' : '')}
         avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
         onEditAvatar={() => setAvatarPickerVisible(true)}
         weightNum={weightNum}

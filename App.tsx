@@ -40,6 +40,7 @@ import {
   NotificationModal,
   AvatarPickerModal,
   RiaChatModal,
+  ErrorBoundary,
 } from '@/components';
 
 function MainApp() {
@@ -247,11 +248,13 @@ function MainApp() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <HealthProvider>
-        <MainApp />
-      </HealthProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <HealthProvider>
+          <MainApp />
+        </HealthProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

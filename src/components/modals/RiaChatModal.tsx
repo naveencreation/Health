@@ -41,15 +41,17 @@ export const RiaChatModal: React.FC<RiaChatModalProps> = ({
   onClose,
   initialPrompt,
 }) => {
-  const { userGoals, totalConsumed, remainingCalories, totalProtein } = useHealth();
+  const { userGoals, currentUser, totalConsumed, remainingCalories, totalProtein } = useHealth();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [inputQuery, setInputQuery] = useState('');
+  const firstName = (userGoals.name || currentUser?.name || 'there').split(' ')[0];
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg_1',
       sender: 'ria',
-      text: `Hi ${userGoals.name || 'Akshay'}! 👋 I am Ria, your AI Nutrition Coach. You have ${remainingCalories} kcal left today and your protein is at ${totalProtein}g. What can I help you plan or calculate?`,
+      text: `Hi ${firstName}! 👋 I am Ria, your AI Nutrition Coach. You have ${remainingCalories} kcal left today and your protein is at ${totalProtein}g. What can I help you plan or calculate?`,
       timestamp: 'Just now',
     },
   ]);

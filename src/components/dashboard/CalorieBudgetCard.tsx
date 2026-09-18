@@ -24,7 +24,7 @@ export const CalorieBudgetCard: React.FC = () => {
   // Semi-circle from 180 deg to 0 deg (or 200 deg to -20 deg for open bottom)
   // Let's create an elegant upper arc (from angle 180 to 0)
   const targetBudget = userGoals.dailyCalorieBudget || 2213;
-  const consumed = totalConsumed || 1721;
+  const consumed = totalConsumed ?? 0;
   const progressRatio = Math.min(1, Math.max(0, consumed / targetBudget));
 
   // Polar to Cartesian helper
@@ -53,9 +53,9 @@ export const CalorieBudgetCard: React.FC = () => {
   const thumbPos = polarToCartesian(cx, cy, radius, activeAngle);
 
   // Macro progress widths (Figma specifies max width 65px for track)
-  const proteinWidth = Math.min(65, Math.max(10, Math.round((totalProtein / (userGoals.targetProtein || 90)) * 65)));
-  const fatWidth = Math.min(65, Math.max(10, Math.round((totalFat / (userGoals.targetFat || 70)) * 65)));
-  const carbsWidth = Math.min(65, Math.max(10, Math.round((totalCarbs / (userGoals.targetCarbs || 110)) * 65)));
+  const proteinWidth = Math.min(65, Math.max(0, Math.round(((totalProtein || 0) / (userGoals.targetProtein || 90)) * 65)));
+  const fatWidth = Math.min(65, Math.max(0, Math.round(((totalFat || 0) / (userGoals.targetFat || 70)) * 65)));
+  const carbsWidth = Math.min(65, Math.max(0, Math.round(((totalCarbs || 0) / (userGoals.targetCarbs || 110)) * 65)));
 
   return (
     <View style={styles.container}>

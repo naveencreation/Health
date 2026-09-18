@@ -202,7 +202,7 @@ export const DailyHabitsCard: React.FC = () => {
       </View>
 
       {/* Logged Workouts Strip (if any logged) */}
-      {currentLog.activities.length > 0 && (
+      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 && (
         <View style={styles.activitiesStrip}>
           <Text style={styles.activitiesStripTitle}>Today's Workouts:</Text>
           {currentLog.activities.map((act) => (

@@ -25,9 +25,10 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
   const center = 100;
 
   // Mode 1: Activity Rings (KokonutUI Specs)
-  const workoutMinutes = currentLog.activities.reduce((acc, a) => acc + a.durationMinutes, 0) || 24;
+  const activities = Array.isArray(currentLog?.activities) ? currentLog.activities : [];
+  const workoutMinutes = activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0) || 24;
   const moveCalories = totalBurned > 0 ? totalBurned : 479;
-  const standHours = Math.min(12, Math.max(1, Math.round((currentLog.steps || 4620) / 800))) || 6;
+  const standHours = Math.min(12, Math.max(1, Math.round((currentLog?.steps || 4620) / 800))) || 6;
 
   const activityRings: ActivityRingData[] = [
     {
@@ -63,11 +64,11 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
   ];
 
   // Mode 2: Nutrition & Calorie Rings
-  const consumedCalories = totalConsumed || 1721;
-  const calorieBudget = userGoals.dailyCalorieBudget || 2213;
-  const proteinCurrent = totalProtein || 78;
+  const consumedCalories = totalConsumed ?? 0;
+  const calorieBudget = userGoals.dailyCalorieBudget || 2000;
+  const proteinCurrent = totalProtein ?? 0;
   const proteinTarget = userGoals.targetProtein || 90;
-  const waterCurrent = currentLog.waterMl || 1500;
+  const waterCurrent = currentLog.waterMl ?? 0;
   const waterTarget = userGoals.waterGoalMl || 2500;
 
   const nutritionRings: ActivityRingData[] = [
