@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
 import { useHealth } from '@/context/HealthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface FoodLogModalProps {
   visible: boolean;
@@ -278,40 +280,31 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <TouchableOpacity
-          style={styles.backdropDismiss}
-          onPress={onClose}
-          activeOpacity={1}
-        />
-        <View style={styles.sheetContainer}>
-          <View style={styles.handleContainer}>
-            <View style={styles.dragHandle} />
-          </View>
+      <View style={styles.modalRoot}>
+        <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
+        {/* 1. Header with Title & Live Budget Anchors */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Close food logger"
+          >
+            <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          </TouchableOpacity>
 
-          {/* 1. Header with Title & Live Budget Anchors */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityLabel="Close food logger"
-            >
-              <Ionicons name="close" size={24} color="#0F172A" />
-            </TouchableOpacity>
-
-            <View style={styles.headerTitleCenter}>
-              <Text style={styles.headerTitle}>Log {mealTitle}</Text>
-              <Text style={styles.headerSubtitle}>
-                Budget: <Text style={styles.headerBoldVal}>{mealTarget} cal</Text> • {currentMealLogged} logged •{' '}
-                <Text style={{ color: mealRemaining < 0 ? '#EF4444' : '#16A34A', fontWeight: '700' }}>
-                  {mealRemaining >= 0 ? `${mealRemaining} cal left` : `${Math.abs(mealRemaining)} cal over`}
-                </Text>
+          <View style={styles.headerTitleCenter}>
+            <Text style={styles.headerTitle}>Log {mealTitle}</Text>
+            <Text style={styles.headerSubtitle}>
+              Budget: <Text style={styles.headerBoldVal}>{mealTarget} cal</Text> • {currentMealLogged} logged •{' '}
+              <Text style={{ color: mealRemaining < 0 ? '#EF4444' : '#16A34A', fontWeight: '700' }}>
+                {mealRemaining >= 0 ? `${mealRemaining} cal left` : `${Math.abs(mealRemaining)} cal over`}
               </Text>
-            </View>
+            </Text>
+          </View>
 
             <TouchableOpacity
               style={styles.customToggleBtn}
@@ -727,58 +720,37 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    justifyContent: 'flex-end',
+  modalRoot: {
+    flex: 1,
+    backgroundColor: Platform.OS === 'web' ? 'rgba(15, 23, 42, 0.65)' : '#FFFFFF',
     alignItems: 'center',
-    zIndex: 9999,
+    justifyContent: 'center',
   },
-  backdropDismiss: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sheetContainer: {
+  phoneScreenContainer: {
+    flex: 1,
     width: '100%',
     maxWidth: 480,
-    height: '92%',
-    maxHeight: 780,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 16,
-    zIndex: 10000,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
-    backgroundColor: '#FFFFFF',
-  },
-  dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
+    ...(Platform.OS === 'web'
+      ? {
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 24,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: '#E2E8F0',
+        }
+      : {}),
   },
   header: {
     flexDirection: 'row',
@@ -797,6 +769,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   headerTitleCenter: {
     alignItems: 'center',

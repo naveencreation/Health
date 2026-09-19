@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { MealCard } from '../diary/MealCard';
 import { MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
+import { Fonts } from '@/theme/typography';
 
 interface MealSectionProps {
   onAddFood: (mealType: MealType) => void;
@@ -21,6 +22,9 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
 
   return (
     <View style={styles.container}>
+      {/* Section Header: Eaten */}
+      <Text style={styles.sectionTitle}>Eaten</Text>
+
       {/* Breakfast */}
       <MealCard
         mealType="breakfast"
@@ -60,7 +64,17 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
+    marginTop: 12,
     marginBottom: 8,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 4,
   },
 });

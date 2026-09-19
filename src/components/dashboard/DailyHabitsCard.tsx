@@ -36,16 +36,21 @@ export const DailyHabitsCard: React.FC = () => {
   const targetMl = userGoals.waterGoalMl || 2000;
   const waterRatio = Math.min(1, Math.max(0, currentMl / targetMl));
   const waterPercent = Math.min(100, Math.round((currentMl / targetMl) * 100));
+  const glassesTarget = Math.max(1, Math.round(targetMl / 250));
 
   // Activity calculations
   const steps = currentLog.steps || 0;
   const stepGoal = userGoals.stepGoal || 10000;
   const stepRatio = Math.min(1, Math.max(0, steps / stepGoal));
   const stepPercent = Math.min(100, Math.round((steps / stepGoal) * 100));
+  const stepBurnKcal = Math.round(steps * 0.04);
+  const workoutBurnKcal = Array.isArray(currentLog?.activities)
+    ? currentLog.activities.reduce((sum, act) => sum + (act.caloriesBurned || 0), 0)
+    : 0;
 
   // Circular Gauge Specs (Optimized for side-by-side)
-  const dialSize = 118;
-  const strokeWidth = 10;
+  const dialSize = 114;
+  const strokeWidth = 9;
   const radius = (dialSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -82,10 +87,14 @@ export const DailyHabitsCard: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Side-by-Side Dual Gauges Row */}
-      <View style={styles.gaugesContainer}>
-        {/* LEFT COLUMN: Water Tracker 💧 */}
-        <View style={styles.habitColumn}>
+      {/* Side-by-Side Habit Pods */}
+      <View style={styles.podsRow}>
+        {/* LEFT POD: Water Tracker 💧 */}
+        <View style={styles.waterPod}>
+          <View style={styles.waterPodBadge}>
+            <Text style={styles.waterPodBadgeText}>💧 Hydration</Text>
+          </View>
+
           <View style={styles.gaugeCanvas}>
             <View style={{ transform: [{ rotate: '-90deg' }] }}>
               <Svg width={dialSize} height={dialSize}>
@@ -113,45 +122,53 @@ export const DailyHabitsCard: React.FC = () => {
 
             {/* Inner Content */}
             <View style={styles.gaugeInner}>
-              <Ionicons name="water" size={18} color="#2563EB" />
               <Text style={styles.innerValueText}>{currentMl.toLocaleString()}</Text>
               <Text style={styles.innerSubText}>ml</Text>
             </View>
           </View>
 
-          {/* Metric Below */}
-          <Text style={styles.metricBigTextBlue}>{waterPercent}%</Text>
-          <Text style={styles.metricLabelText}>of {targetMl.toLocaleString()} ml</Text>
+          {/* Metric Below: Ratio */}
+          <Text style={styles.metricRatioTextBlue}>
+            {currentMl.toLocaleString()}{' '}
+            <Text style={styles.metricRatioUnit}>/ {targetMl.toLocaleString()} ml</Text>
+          </Text>
+          {/* Subtitle: Progress context */}
+          <Text style={styles.metricContextText}>
+            {waterPercent}% • {Math.round(currentMl / 250)} of {glassesTarget} glasses
+          </Text>
 
-          {/* Quick Action Button */}
-          <View style={styles.quickBtnGroup}>
-            <TouchableOpacity
-              style={styles.waterQuickBtn}
-              onPress={() => addWater(250)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={14} color="#1D4ED8" />
-              <Text style={styles.waterQuickBtnText}>+250 ml</Text>
-            </TouchableOpacity>
-
+          {/* Quick Action Stepper */}
+          <View style={styles.stepperActionRow}>
             {currentMl > 0 && (
               <TouchableOpacity
                 style={styles.waterMinusBtn}
                 onPress={() => addWater(-250)}
                 activeOpacity={0.7}
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Decrease water by 250 ml"
               >
-                <Ionicons name="remove" size={13} color="#64748B" />
+                <Ionicons name="remove" size={16} color="#2563EB" />
               </TouchableOpacity>
             )}
+            <TouchableOpacity
+              style={styles.waterAddBtn}
+              onPress={() => addWater(250)}
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Add 250 ml water"
+            >
+              <Ionicons name="add" size={15} color="#FFFFFF" />
+              <Text style={styles.waterAddBtnText}>250 ml</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Vertical Hairline Divider */}
-        <View style={styles.verticalDivider} />
+        {/* RIGHT POD: Movement 👟 */}
+        <View style={styles.stepPod}>
+          <View style={styles.stepPodBadge}>
+            <Text style={styles.stepPodBadgeText}>👟 Movement</Text>
+          </View>
 
-        {/* RIGHT COLUMN: Activity & Burn 🔥 */}
-        <View style={styles.habitColumn}>
           <View style={styles.gaugeCanvas}>
             <View style={{ transform: [{ rotate: '-90deg' }] }}>
               <Svg width={dialSize} height={dialSize}>
@@ -179,32 +196,59 @@ export const DailyHabitsCard: React.FC = () => {
 
             {/* Inner Content */}
             <View style={styles.gaugeInner}>
-              <Ionicons name="flame" size={18} color="#EA580C" />
               <Text style={styles.innerValueText}>{steps.toLocaleString()}</Text>
               <Text style={styles.innerSubText}>steps</Text>
             </View>
           </View>
 
-          {/* Metric Below */}
-          <Text style={styles.metricBigTextOrange}>{totalBurned} kcal</Text>
-          <Text style={styles.metricLabelText}>{stepPercent}% of 10k goal</Text>
+          {/* Metric Below: Ratio */}
+          <Text style={styles.metricRatioTextOrange}>
+            {steps.toLocaleString()}{' '}
+            <Text style={styles.metricRatioUnit}>/ {stepGoal.toLocaleString()}</Text>
+          </Text>
+          {/* Subtitle: Progress context */}
+          <Text style={styles.metricContextText}>
+            {stepPercent}% • ~{stepBurnKcal} kcal burn
+          </Text>
 
-          {/* Quick Action Button */}
-          <TouchableOpacity
-            style={styles.stepQuickBtn}
-            onPress={() => addSteps(1000)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="footsteps" size={13} color="#C2410C" />
-            <Text style={styles.stepQuickBtnText}>+1,000 Steps</Text>
-          </TouchableOpacity>
+          {/* Quick Action Stepper */}
+          <View style={styles.stepperActionRow}>
+            {steps > 0 && (
+              <TouchableOpacity
+                style={styles.stepMinusBtn}
+                onPress={() => addSteps(-1000)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Decrease steps by 1,000"
+              >
+                <Ionicons name="remove" size={16} color="#EA580C" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.stepAddBtn}
+              onPress={() => addSteps(1000)}
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Add 1,000 steps"
+            >
+              <Ionicons name="add" size={15} color="#FFFFFF" />
+              <Text style={styles.stepAddBtnText}>1k steps</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       {/* Logged Workouts Strip (if any logged) */}
       {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 && (
         <View style={styles.activitiesStrip}>
-          <Text style={styles.activitiesStripTitle}>Today's Workouts:</Text>
+          <View style={styles.activitiesHeaderRow}>
+            <Text style={styles.activitiesStripTitle}>
+              Today's Workouts ({currentLog.activities.length})
+            </Text>
+            <Text style={styles.activitiesTotalBurn}>
+              +{workoutBurnKcal} kcal total
+            </Text>
+          </View>
           {currentLog.activities.map((act) => (
             <View key={act.id} style={styles.activityChip}>
               <Text style={styles.activityChipText}>
@@ -213,8 +257,9 @@ export const DailyHabitsCard: React.FC = () => {
               <TouchableOpacity
                 onPress={() => removeWorkout(act.id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel={`Remove workout ${act.name}`}
               >
-                <Ionicons name="close-circle" size={14} color="#94A3B8" />
+                <Ionicons name="close-circle" size={16} color="#94A3B8" />
               </TouchableOpacity>
             </View>
           ))}
@@ -352,27 +397,63 @@ const styles = StyleSheet.create({
     color: '#EA580C',
     fontWeight: '600',
   },
-  // Side-by-Side Dual Gauges
-  gaugesContainer: {
+  // Side-by-Side Habit Pods
+  podsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  habitColumn: {
+  waterPod: {
     flex: 1,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
   },
-  verticalDivider: {
-    width: 1,
-    height: 170,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
-    marginHorizontal: 8,
+  stepPod: {
+    flex: 1,
+    backgroundColor: '#FFF7ED',
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  waterPodBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  waterPodBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 11,
+    color: '#0284C7',
+  },
+  stepPodBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  stepPodBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 11,
+    color: '#EA580C',
   },
   gaugeCanvas: {
     position: 'relative',
-    width: 118,
-    height: 118,
+    width: 114,
+    height: 114,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -383,91 +464,97 @@ const styles = StyleSheet.create({
   },
   innerValueText: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    marginTop: 2,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   innerSubText: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 9.5,
+    fontSize: 10,
     color: '#64748B',
     textTransform: 'uppercase',
   },
-  // Bottom Big Metric
-  metricBigTextBlue: {
+  metricRatioTextBlue: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2563EB',
+    fontSize: 13.5,
+    color: '#0284C7',
     marginTop: 8,
-    lineHeight: 24,
+    textAlign: 'center',
   },
-  metricBigTextOrange: {
+  metricRatioTextOrange: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 13.5,
     color: '#EA580C',
     marginTop: 8,
-    lineHeight: 24,
+    textAlign: 'center',
   },
-  metricLabelText: {
+  metricRatioUnit: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 11,
     color: '#64748B',
-    marginTop: 1,
+  },
+  metricContextText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10.5,
+    color: '#64748B',
+    marginTop: 2,
     marginBottom: 10,
+    textAlign: 'center',
   },
-  // Quick Action Buttons
-  quickBtnGroup: {
+  // Quick Action Stepper Controls
+  stepperActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  waterQuickBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    gap: 3,
-  },
-  waterQuickBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11.5,
-    color: '#1D4ED8',
-    fontWeight: '600',
+    gap: 6,
   },
   waterMinusBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepQuickBtn: {
+  waterAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    backgroundColor: '#0284C7',
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 9,
     gap: 3,
   },
-  stepQuickBtnText: {
+  waterAddBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#C2410C',
-    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  stepMinusBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EA580C',
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 9,
+    gap: 3,
+  },
+  stepAddBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11.5,
+    color: '#FFFFFF',
   },
   // Logged Activities Strip
   activitiesStrip: {
@@ -477,11 +564,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     width: '100%',
   },
-  activitiesStripTitle: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
-    color: '#64748B',
+  activitiesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 6,
+  },
+  activitiesStripTitle: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11.5,
+    color: '#475569',
+  },
+  activitiesTotalBurn: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 11.5,
+    color: '#EA580C',
   },
   activityChip: {
     flexDirection: 'row',
