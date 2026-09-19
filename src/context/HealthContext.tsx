@@ -373,6 +373,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
 
             // Clean local dailyLogs and merge cloud logs
+            const todayKey = getTodayDateString();
             setDailyLogs((prev) => {
               const merged: Record<string, DailyLog> = {};
               for (const [k, v] of Object.entries(prev)) {
@@ -381,9 +382,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               for (const [k, v] of Object.entries(cloudLogs)) {
                 merged[k] = v;
               }
-              if (!merged[selectedDate]) {
-                merged[selectedDate] = {
-                  date: selectedDate,
+              if (!merged[todayKey]) {
+                merged[todayKey] = {
+                  date: todayKey,
                   meals: [],
                   waterMl: 0,
                   steps: 0,
@@ -395,8 +396,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             });
           } catch (colErr) {
             console.warn('Firestore dailyLogs collection query error:', colErr);
-            // Fallback: sync active date daily log from Firestore
-            const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate));
+            const todayKey = getTodayDateString();
+            // Fallback: sync today's daily log from Firestore
+            const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayKey));
             if (logDoc.exists()) {
               const logData = cleanDailyLog(logDoc.data() as DailyLog);
               setDailyLogs((prev) => {
@@ -404,13 +406,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 for (const [k, v] of Object.entries(prev)) {
                   cleaned[k] = cleanDailyLog(v);
                 }
-                cleaned[selectedDate] = logData;
+                cleaned[todayKey] = logData;
                 AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
                 return cleaned;
               });
             } else {
               const cleanLog: DailyLog = {
-                date: selectedDate,
+                date: todayKey,
                 meals: [],
                 waterMl: 0,
                 steps: 0,
@@ -421,11 +423,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 for (const [k, v] of Object.entries(prev)) {
                   cleaned[k] = cleanDailyLog(v);
                 }
-                cleaned[selectedDate] = cleanLog;
+                cleaned[todayKey] = cleanLog;
                 AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
                 return cleaned;
               });
-              setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate), cleanLog, { merge: true }).catch(() => {});
+              setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayKey), cleanLog, { merge: true }).catch(() => {});
             }
           }
         } catch (err) {
@@ -440,7 +442,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, []);
 
   // Save changes & sync to Firestore
   useEffect(() => {
@@ -865,19 +867,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (fbErr.code === 'auth/too-many-requests') {
           return { success: false, error: 'Too many attempts. Please try again later.' };
         }
-
-        // Offline / dev fallback: allow if password has >= 6 chars
-        if (pass.length >= 6) {
-          const userObj: AuthUser = {
-            id: 'usr_local_' + Date.now(),
-            email: normalizedEmail,
-            name: normalizedEmail.split('@')[0],
-          };
-          setCurrentUser(userObj);
-          await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
-          return { success: true };
+        if (fbErr.code === 'auth/user-disabled') {
+          return { success: false, error: 'This account has been disabled. Please contact support.' };
         }
-        return { success: false, error: fbErr.message || 'Login failed' };
+        if (fbErr.code === 'auth/network-request-failed') {
+          return { success: false, error: 'Network error. Please check your internet connection and try again.' };
+        }
+        return { success: false, error: fbErr.message || 'Login failed. Please try again.' };
       }
     } catch (err: any) {
       return { success: false, error: err.message || 'Login failed' };
@@ -1047,18 +1043,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (fbErr.code === 'auth/invalid-email') {
           return { success: false, error: 'Please enter a valid email address.' };
         }
-
-        // Offline dev fallback
-        const userObj: AuthUser = {
-          id: 'usr_' + Date.now(),
-          email: normalizedEmail,
-          name: data.name,
-        };
-        setCurrentUser(userObj);
-        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
-        const newGoals = calculateCalibratedGoals(data, userGoals);
-        updateGoals(newGoals);
-        return { success: true };
+        if (fbErr.code === 'auth/operation-not-allowed') {
+          return { success: false, error: 'Email/password registration is not enabled. Please contact support.' };
+        }
+        if (fbErr.code === 'auth/network-request-failed') {
+          return { success: false, error: 'Network error. Please check your internet connection and try again.' };
+        }
+        return { success: false, error: fbErr.message || 'Registration failed. Please try again.' };
       }
     } catch (err: any) {
       return { success: false, error: err.message || 'Registration failed' };
@@ -1071,8 +1062,27 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (e) {
       console.log('Firebase signOut error:', e);
     }
+    const todayStr = getTodayDateString();
+    const emptyLog: DailyLog = {
+      date: todayStr,
+      meals: [],
+      waterMl: 0,
+      steps: 0,
+      activities: [],
+    };
     setCurrentUser(null);
-    await AsyncStorage.removeItem(STORAGE_KEYS.AUTH);
+    setUserGoals(DEFAULT_GOALS);
+    setDailyLogs({ [todayStr]: emptyLog });
+    setSelectedDate(todayStr);
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.AUTH,
+        STORAGE_KEYS.DAILY_LOGS,
+        STORAGE_KEYS.USER_GOALS,
+      ]);
+    } catch (storageErr) {
+      console.warn('AsyncStorage clear error on logout:', storageErr);
+    }
   };
 
   const loginDemo = async (): Promise<void> => {

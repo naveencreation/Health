@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -27,93 +27,45 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
   onBack,
   onSuccess,
 }) => {
-  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSent, setIsSent] = useState(false);
 
-  const passwordRef = useRef<TextInput>(null);
-  const confirmRef = useRef<TextInput>(null);
-
-  const handleRequestCode = async () => {
-    if (!email.trim()) {
+  const handleSendResetEmail = async (isResend = false) => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
       setErrorMessage('Please enter your email address.');
       return;
     }
-    setLoading(true);
+
+    if (isResend) {
+      setResending(true);
+    } else {
+      setLoading(true);
+    }
     setErrorMessage(null);
+
     try {
-      await sendPasswordResetEmail(auth, email.trim().toLowerCase());
-      setSuccessMessage('Password reset link sent to your email! Check your inbox.');
+      await sendPasswordResetEmail(auth, trimmedEmail);
+      setIsSent(true);
     } catch (err: any) {
       console.log('Firebase password reset error:', err.code, err.message);
       if (err.code === 'auth/user-not-found') {
         setErrorMessage('No account found with this email address.');
       } else if (err.code === 'auth/invalid-email') {
         setErrorMessage('Please enter a valid email address.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setErrorMessage('Too many reset attempts. Please wait a few minutes and try again.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setErrorMessage('Network error. Please check your internet connection and try again.');
       } else {
-        // Fallback for offline / dev
-        setSuccessMessage('Reset link dispatched! (Dev test code: 123456)');
-        setStep(2);
+        setErrorMessage(err.message || 'Failed to send password reset email. Please try again.');
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!code.trim() || code.length < 6) {
-      setErrorMessage('Please enter the 6-digit code.');
-      return;
-    }
-    if (!newPassword || newPassword.length < 8) {
-      setErrorMessage('New password must be at least 8 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      try {
-        const res = await fetch('https://health-backend-62kd.onrender.com/api/v1/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            code: code.trim(),
-            newPassword,
-          }),
-        });
-        if (res.ok) {
-          setSuccessMessage('Password reset successfully! You can now sign in.');
-          setLoading(false);
-          setTimeout(() => {
-            onSuccess();
-          }, 1500);
-          return;
-        }
-      } catch (e) {
-        console.log('Backend unreachable for reset-password, completing locally:', e);
-      }
-
-      setSuccessMessage('Password reset successfully! Returning to sign in...');
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to reset password.');
-    } finally {
-      setLoading(false);
+      setResending(false);
     }
   };
 
@@ -124,7 +76,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         <View style={styles.headerBar}>
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
-            onPress={step === 2 ? () => setStep(1) : onBack}
+            onPress={isSent ? () => setIsSent(false) : onBack}
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -151,43 +103,29 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Title Section */}
-            <View style={styles.titleSection}>
-              <View style={styles.iconCircle}>
-                <Ionicons
-                  name={step === 1 ? 'key-outline' : 'shield-checkmark-outline'}
-                  size={26}
-                  color={Colors.primary}
-                />
-              </View>
-              <Text style={styles.titleText}>
-                {step === 1 ? 'Forgot Password' : 'Enter Reset Code'}
-              </Text>
-              <Text style={styles.subtitleText}>
-                {step === 1
-                  ? 'Enter your registered email address to receive a 6-digit recovery code.'
-                  : `Enter the code sent to ${email} and choose a new password.`}
-              </Text>
-            </View>
-
-            {/* Error / Success Alerts */}
-            {errorMessage ? (
-              <View style={styles.errorAlert}>
-                <Ionicons name="alert-circle" size={18} color="#DC2626" />
-                <Text style={styles.errorAlertText}>{errorMessage}</Text>
-              </View>
-            ) : null}
-
-            {successMessage ? (
-              <View style={styles.successAlert}>
-                <Ionicons name="checkmark-circle" size={18} color="#059669" />
-                <Text style={styles.successAlertText}>{successMessage}</Text>
-              </View>
-            ) : null}
-
-            {step === 1 ? (
-              /* Step 1: Enter Email */
+            {!isSent ? (
+              /* Request Reset Link State */
               <View>
+                {/* Title Section */}
+                <View style={styles.titleSection}>
+                  <View style={styles.iconCircle}>
+                    <Ionicons name="key-outline" size={26} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.titleText}>Forgot Password</Text>
+                  <Text style={styles.subtitleText}>
+                    Enter your registered email address and we'll send you a secure link to reset your password.
+                  </Text>
+                </View>
+
+                {/* Error Alert */}
+                {errorMessage ? (
+                  <View style={styles.errorAlert}>
+                    <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                    <Text style={styles.errorAlertText}>{errorMessage}</Text>
+                  </View>
+                ) : null}
+
+                {/* Email Input */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
                   <View style={styles.inputWrapper}>
@@ -205,161 +143,123 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       autoCorrect={false}
                       keyboardType="email-address"
                       returnKeyType="done"
-                      onSubmitEditing={handleRequestCode}
+                      onSubmitEditing={() => handleSendResetEmail(false)}
                       testID="input-forgot-email"
                       accessibilityLabel="Email Address"
                     />
                   </View>
                 </View>
 
+                {/* Submit Button */}
                 <Pressable
                   style={({ pressed }) => [
                     styles.submitButton,
                     pressed ? styles.pressedButton : null,
                     loading ? styles.disabledButton : null,
                   ]}
-                  onPress={handleRequestCode}
+                  onPress={() => handleSendResetEmail(false)}
                   disabled={loading}
-                  testID="btn-forgot-send-code"
+                  testID="btn-forgot-send-link"
                   accessibilityRole="button"
-                  accessibilityLabel="Send Reset Code"
+                  accessibilityLabel="Send Password Reset Link"
                 >
                   {loading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <View style={styles.btnContentRow}>
-                      <Text style={styles.submitButtonText}>Send Reset Code</Text>
+                      <Text style={styles.submitButtonText}>Send Reset Link</Text>
                       <Ionicons name="paper-plane-outline" size={18} color="#FFFFFF" />
                     </View>
                   )}
                 </Pressable>
+
+                {/* Back to sign in link */}
+                <Pressable
+                  style={styles.textLinkButton}
+                  onPress={onBack}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remember your password? Sign in"
+                >
+                  <Text style={styles.textLinkMuted}>Remember your password? </Text>
+                  <Text style={styles.textLinkPrimary}>Sign In</Text>
+                </Pressable>
               </View>
             ) : (
-              /* Step 2: Code + New Password */
-              <View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>6-DIGIT VERIFICATION CODE</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="key-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.textInput}
-                      placeholder="e.g. 123456"
-                      placeholderTextColor="#94A3B8"
-                      value={code}
-                      onChangeText={(t) => {
-                        setCode(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      keyboardType="number-pad"
-                      maxLength={6}
-                      returnKeyType="next"
-                      onSubmitEditing={() => passwordRef.current?.focus()}
-                      testID="input-forgot-code"
-                      accessibilityLabel="Verification Code"
-                    />
-                  </View>
+              /* Confirmation Link Sent State */
+              <View style={styles.confirmationContainer}>
+                <View style={[styles.iconCircle, styles.successCircle]}>
+                  <Ionicons name="mail-unread-outline" size={32} color="#059669" />
                 </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>NEW PASSWORD</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                    <TextInput
-                      ref={passwordRef}
-                      style={[
-                        styles.textInput,
-                        Platform.OS === 'android' && !showPassword ? styles.androidPasswordInput : null,
-                      ]}
-                      placeholder="Min. 8 characters"
-                      placeholderTextColor="#94A3B8"
-                      secureTextEntry={!showPassword}
-                      value={newPassword}
-                      onChangeText={(t) => {
-                        setNewPassword(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      autoCapitalize="none"
-                      returnKeyType="next"
-                      onSubmitEditing={() => confirmRef.current?.focus()}
-                      testID="input-forgot-new-password"
-                      accessibilityLabel="New Password"
-                    />
-                    <Pressable
-                      onPress={() => setShowPassword(!showPassword)}
-                      hitSlop={8}
-                      style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
-                      accessibilityRole="button"
-                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      <Ionicons
-                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={20}
-                        color="#94A3B8"
-                      />
-                    </Pressable>
-                  </View>
+                <Text style={styles.titleText}>Check Your Email</Text>
+                <Text style={styles.confirmationDescription}>
+                  We've sent a password reset link to:
+                </Text>
+                <View style={styles.emailHighlightBox}>
+                  <Text style={styles.emailHighlightText}>{email.trim().toLowerCase()}</Text>
                 </View>
+                <Text style={styles.subtitleTextCenter}>
+                  Click the link inside the email to securely choose a new password, then return here to log in.
+                </Text>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>CONFIRM NEW PASSWORD</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="shield-checkmark-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                    <TextInput
-                      ref={confirmRef}
-                      style={[
-                        styles.textInput,
-                        Platform.OS === 'android' && !showConfirmPassword ? styles.androidPasswordInput : null,
-                      ]}
-                      placeholder="Repeat new password"
-                      placeholderTextColor="#94A3B8"
-                      secureTextEntry={!showConfirmPassword}
-                      value={confirmPassword}
-                      onChangeText={(t) => {
-                        setConfirmPassword(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      autoCapitalize="none"
-                      returnKeyType="done"
-                      onSubmitEditing={handleResetPassword}
-                      testID="input-forgot-confirm-new-password"
-                      accessibilityLabel="Confirm New Password"
-                    />
-                    <Pressable
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                      hitSlop={8}
-                      style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
-                      accessibilityRole="button"
-                      accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    >
-                      <Ionicons
-                        name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={20}
-                        color="#94A3B8"
-                      />
-                    </Pressable>
+                {/* Error Alert on Resend */}
+                {errorMessage ? (
+                  <View style={styles.errorAlert}>
+                    <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                    <Text style={styles.errorAlertText}>{errorMessage}</Text>
                   </View>
-                </View>
+                ) : null}
 
+                {/* Primary Action: Return to Sign In */}
                 <Pressable
                   style={({ pressed }) => [
                     styles.submitButton,
                     pressed ? styles.pressedButton : null,
-                    loading ? styles.disabledButton : null,
                   ]}
-                  onPress={handleResetPassword}
-                  disabled={loading}
-                  testID="btn-forgot-reset-submit"
+                  onPress={onSuccess}
+                  testID="btn-forgot-back-to-signin"
                   accessibilityRole="button"
-                  accessibilityLabel="Reset Password"
+                  accessibilityLabel="Back to Sign In"
                 >
-                  {loading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  <View style={styles.btnContentRow}>
+                    <Text style={styles.submitButtonText}>Back to Sign In</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  </View>
+                </Pressable>
+
+                {/* Secondary Action: Resend Link */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    pressed ? styles.pressedSecondary : null,
+                    resending ? styles.disabledButton : null,
+                  ]}
+                  onPress={() => handleSendResetEmail(true)}
+                  disabled={resending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Resend Email Link"
+                >
+                  {resending ? (
+                    <ActivityIndicator size="small" color={Colors.primary} />
                   ) : (
                     <View style={styles.btnContentRow}>
-                      <Text style={styles.submitButtonText}>Reset Password</Text>
-                      <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                      <Ionicons name="refresh-outline" size={18} color={Colors.primary} />
+                      <Text style={styles.secondaryButtonText}>Resend Email Link</Text>
                     </View>
                   )}
+                </Pressable>
+
+                {/* Change Email Action */}
+                <Pressable
+                  style={styles.textLinkButton}
+                  onPress={() => setIsSent(false)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Use a different email address"
+                >
+                  <Text style={styles.textLinkMuted}>Wrong email address? </Text>
+                  <Text style={styles.textLinkPrimary}>Change Email</Text>
                 </Pressable>
               </View>
             )}
@@ -447,15 +347,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#FFF7ED',
     borderWidth: 1,
     borderColor: '#FFEDD5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
+  },
+  successCircle: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   titleText: {
     fontFamily: Fonts.poppins.bold,
@@ -470,6 +376,39 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 22,
   },
+  subtitleTextCenter: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  confirmationContainer: {
+    alignItems: 'center',
+    paddingTop: 16,
+  },
+  confirmationDescription: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  emailHighlightBox: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+  emailHighlightText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: '#0F172A',
+  },
   errorAlert: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,29 +420,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 10,
     marginBottom: 18,
+    width: '100%',
   },
   errorAlertText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 13,
     color: '#B91C1C',
-    flex: 1,
-  },
-  successAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    gap: 10,
-    marginBottom: 18,
-  },
-  successAlertText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 13,
-    color: '#047857',
     flex: 1,
   },
   inputGroup: {
@@ -537,9 +459,6 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingVertical: 0,
   },
-  androidPasswordInput: {
-    fontFamily: undefined,
-  },
   submitButton: {
     backgroundColor: Colors.primary,
     height: 54,
@@ -552,10 +471,26 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 6,
     marginTop: 10,
+    marginBottom: 16,
+    width: '100%',
+  },
+  secondaryButton: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#FFEDD5',
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
+    width: '100%',
   },
   pressedButton: {
     opacity: 0.9,
+    transform: [{ scale: 0.985 }],
+  },
+  pressedSecondary: {
+    backgroundColor: '#FFEDD5',
     transform: [{ scale: 0.985 }],
   },
   disabledButton: {
@@ -572,7 +507,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },
-  pressedSubtle: {
-    opacity: 0.7,
+  secondaryButtonText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: Colors.primary,
+  },
+  textLinkButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  textLinkMuted: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 14,
+    color: '#64748B',
+  },
+  textLinkPrimary: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 14,
+    color: Colors.primary,
   },
 });
