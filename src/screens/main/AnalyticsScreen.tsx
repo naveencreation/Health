@@ -214,12 +214,106 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
   };
 
   const getMetricTopLabel = (val: number): string => {
-    if (val <= 0) return '—';
+    if (val <= 0) return '';
     if (activeMetric === 'calories') return `${val}`;
     if (activeMetric === 'hydration') return `${(val / 1000).toFixed(1)}L`;
     if (activeMetric === 'movement') return val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
     return `${val}`;
   };
+
+  // Unified Hero Telemetry Display (Apple Health / WHOOP Model)
+  const heroDisplay = useMemo(() => {
+    if (timeRange === '7d') {
+      const item = activeItem || weeklyLogs[weeklyLogs.length - 1];
+      const val = getMetricValue(item);
+      const isToday = selectedCalIdx === weeklyLogs.length - 1;
+      const dayLabel = isToday ? 'Today' : item?.dayName || 'Day';
+
+      if (activeMetric === 'calories') {
+        const remaining = budget - val;
+        let contextText = `${dayLabel} • `;
+        if (val === 0) {
+          contextText += 'No meals logged yet';
+        } else if (remaining >= 0) {
+          contextText += `${remaining.toLocaleString()} kcal under budget`;
+        } else {
+          contextText += `${Math.abs(remaining).toLocaleString()} kcal over budget`;
+        }
+        return {
+          category: 'CALORIE INTAKE',
+          value: val.toLocaleString(),
+          unit: 'kcal',
+          contextText,
+          goalText: `${budget.toLocaleString()} kcal goal`,
+        };
+      }
+
+      if (activeMetric === 'hydration') {
+        const remaining = waterGoal - val;
+        let contextText = `${dayLabel} • `;
+        if (val === 0) {
+          contextText += 'No water logged yet';
+        } else if (remaining <= 0) {
+          contextText += 'Daily goal achieved!';
+        } else {
+          contextText += `${remaining.toLocaleString()} ml remaining`;
+        }
+        return {
+          category: 'HYDRATION',
+          value: val.toLocaleString(),
+          unit: 'ml',
+          contextText,
+          goalText: `${(waterGoal / 1000).toFixed(1)}L goal`,
+        };
+      }
+
+      // Movement
+      const burned = item?.burned || Math.round(val * 0.04);
+      let contextText = `${dayLabel} • `;
+      if (val === 0) {
+        contextText += 'No movement logged yet';
+      } else {
+        contextText += `+${burned.toLocaleString()} kcal active burn`;
+      }
+      return {
+        category: 'DAILY MOVEMENT',
+        value: val.toLocaleString(),
+        unit: 'steps',
+        contextText,
+        goalText: `${stepGoal.toLocaleString()} steps goal`,
+      };
+    } else {
+      // 30-Day Cluster
+      const cluster = activeCluster || thirtyDayClusters[thirtyDayClusters.length - 1];
+      const val = getMetricValue(cluster);
+
+      if (activeMetric === 'calories') {
+        return {
+          category: '30-DAY INTAKE',
+          value: val.toLocaleString(),
+          unit: 'kcal/day',
+          contextText: `${cluster?.label} • 7-day rolling average`,
+          goalText: `${budget.toLocaleString()} kcal goal`,
+        };
+      }
+      if (activeMetric === 'hydration') {
+        return {
+          category: '30-DAY HYDRATION',
+          value: (val / 1000).toFixed(1),
+          unit: 'L/day',
+          contextText: `${cluster?.label} • 7-day rolling average`,
+          goalText: `${(waterGoal / 1000).toFixed(1)}L goal`,
+        };
+      }
+      return {
+        category: '30-DAY MOVEMENT',
+        value: val.toLocaleString(),
+        unit: 'steps/day',
+        contextText: `${cluster?.label} • 7-day rolling average`,
+        goalText: `${(stepGoal / 1000).toFixed(0)}k steps goal`,
+      };
+    }
+  }, [timeRange, activeItem, activeCluster, activeMetric, weeklyLogs, thirtyDayClusters, budget, waterGoal, stepGoal]);
 
   const getBarColor = (val: number, isSelected: boolean): string => {
     const goal = getMetricGoal();
@@ -290,7 +384,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
       {/* 1. Screen Title & Horizon Switcher */}
       <View style={styles.topSection}>
         <Text style={styles.screenTitle}>Nutrition & Health Trends</Text>
-        <Text style={styles.screenSubtitle}>Multi-horizon health & habit telemetry</Text>
+        <Text style={styles.screenSubtitle}>Your weekly nutrition & habit consistency</Text>
 
         {/* Time-Horizon Segmented Switcher: 7D | 30D */}
         <View style={styles.timeFilterContainer}>
@@ -324,11 +418,9 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         </View>
       </View>
 
-      {/* 2. Executive Trajectory Callout Pill */}
+      {/* 2. Executive Trajectory Callout Banner */}
       <View style={styles.trajectoryCard}>
-        <View style={styles.trajectoryIconBadge}>
-          <Ionicons name="trending-up" size={16} color="#16A34A" />
-        </View>
+        <Ionicons name="trending-up" size={15} color="#15803D" />
         <Text style={styles.trajectoryText}>{analyticsSummary.comparisonText}</Text>
       </View>
 
@@ -406,89 +498,29 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Dynamic Card Header based on Active Metric */}
-        <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.cardTitle}>
-              {activeMetric === 'calories' && (timeRange === '7d' ? '7-Day Calorie Intake' : '30-Day Weekly Intake')}
-              {activeMetric === 'hydration' && (timeRange === '7d' ? '7-Day Hydration Trends' : '30-Day Weekly Hydration')}
-              {activeMetric === 'movement' && (timeRange === '7d' ? '7-Day Movement & Steps' : '30-Day Weekly Movement')}
-            </Text>
-            <Text style={styles.cardSubtitle}>
-              {activeMetric === 'calories' && `Avg: ${analyticsSummary.avgCals} kcal/day • Target: ${budget}`}
-              {activeMetric === 'hydration' && `Avg: ${(analyticsSummary.avgWater / 1000).toFixed(1)} L/day • Target: ${(waterGoal / 1000).toFixed(1)} L`}
-              {activeMetric === 'movement' && `Avg: ${analyticsSummary.avgSteps.toLocaleString()} steps/day • Target: ${(stepGoal / 1000).toFixed(0)}k`}
-            </Text>
+        {/* Dynamic Hero Telemetry Display (Apple Health / WHOOP Model) */}
+        <View style={styles.heroTelemetryBox}>
+          <View style={styles.heroTelemetryTopRow}>
+            <Text style={styles.heroCategoryText}>{heroDisplay.category}</Text>
+            <View style={styles.heroGoalBadge}>
+              <View style={[styles.heroGoalDot, { backgroundColor: getMetricThemeColor() }]} />
+              <Text style={styles.heroGoalText}>{heroDisplay.goalText}</Text>
+            </View>
           </View>
-          <View style={styles.targetLegend}>
-            <View style={[styles.targetLineDot, { backgroundColor: getMetricThemeColor() }]} />
-            <Text style={styles.targetLegendText}>
-              {activeMetric === 'calories' && `${budget} goal`}
-              {activeMetric === 'hydration' && `${waterGoal} ml goal`}
-              {activeMetric === 'movement' && `${(stepGoal / 1000).toFixed(0)}k goal`}
-            </Text>
+
+          <View style={styles.heroMainValueRow}>
+            <Text style={styles.heroMainValue}>{heroDisplay.value}</Text>
+            <Text style={styles.heroUnit}>{heroDisplay.unit}</Text>
           </View>
+
+          <Text style={styles.heroContextText}>{heroDisplay.contextText}</Text>
         </View>
-
-        {/* Interactive Tap-to-Inspect Tooltip Banner */}
-        {timeRange !== '30d' && activeItem && (
-          <View style={styles.inspectPill}>
-            <Text style={styles.inspectPillText}>
-              {activeMetric === 'calories' && '📅 '}
-              {activeMetric === 'hydration' && '💧 '}
-              {activeMetric === 'movement' && '👟 '}
-              {getItemLabel(activeItem)}:{' '}
-              <Text style={styles.inspectBoldText}>
-                {getMetricValue(activeItem) > 0
-                  ? activeMetric === 'calories'
-                    ? `${getMetricValue(activeItem)} kcal`
-                    : activeMetric === 'hydration'
-                    ? `${getMetricValue(activeItem).toLocaleString()} ml`
-                    : `${getMetricValue(activeItem).toLocaleString()} steps`
-                  : 'No logs recorded'}
-              </Text>
-              {getMetricValue(activeItem) > 0 && (
-                <>
-                  {' • '}
-                  {activeMetric === 'calories' && (
-                    getMetricValue(activeItem) <= budget ? (
-                      <Text style={{ color: '#16A34A' }}>{budget - getMetricValue(activeItem)} under budget 🎯</Text>
-                    ) : (
-                      <Text style={{ color: '#EF4444' }}>{getMetricValue(activeItem) - budget} over budget ⚠️</Text>
-                    )
-                  )}
-                  {activeMetric === 'hydration' && (
-                    getMetricValue(activeItem) >= waterGoal ? (
-                      <Text style={{ color: '#2563EB' }}>Goal Achieved! 🎉</Text>
-                    ) : (
-                      <Text style={{ color: '#64748B' }}>{waterGoal - getMetricValue(activeItem)} ml remaining</Text>
-                    )
-                  )}
-                  {activeMetric === 'movement' && (
-                    <Text style={{ color: '#EA580C' }}>+{activeItem.burned || Math.round(getMetricValue(activeItem) * 0.04)} kcal burn 🔥</Text>
-                  )}
-                </>
-              )}
-            </Text>
-          </View>
-        )}
-
-        {timeRange === '30d' && activeCluster && (
-          <View style={styles.inspectPill}>
-            <Text style={styles.inspectPillText}>
-              📊 <Text style={styles.inspectBoldText}>{activeCluster.label}:</Text>{' '}
-              {activeMetric === 'calories' && `${activeCluster.avgCalories} kcal/day avg`}
-              {activeMetric === 'hydration' && `${(activeCluster.avgWaterMl / 1000).toFixed(1)} L/day avg`}
-              {activeMetric === 'movement' && `${activeCluster.avgSteps.toLocaleString()} steps/day avg`}
-            </Text>
-          </View>
-        )}
 
         {/* Chart View with Dynamic Horizontal Goal Benchmark Line */}
         <View style={styles.chartWrapper}>
-          {/* Subtle Horizontal Dashed Goal Line */}
+          {/* Subtle Horizontal Dashed Goal Benchmark Line */}
           <View style={styles.benchmarkLineContainer}>
-            <View style={[styles.benchmarkDashedLine, { borderColor: `${getMetricThemeColor()}55` }]} />
+            <View style={[styles.benchmarkDashedLine, { borderColor: `${getMetricThemeColor()}35` }]} />
           </View>
 
           {/* 7-Day Chart */}
@@ -515,8 +547,16 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                     <View
                       style={[
                         styles.barTrack,
-                        isSelected && { borderColor: '#0F172A', borderWidth: 1.5 },
                         !hasData && styles.barTrackEmpty,
+                        isSelected && {
+                          borderColor: getMetricThemeColor(),
+                          borderWidth: 1.5,
+                          shadowColor: getMetricThemeColor(),
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.25,
+                          shadowRadius: 5,
+                          elevation: 3,
+                        },
                       ]}
                     >
                       {hasData && (
@@ -532,8 +572,11 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                       )}
                     </View>
                     <Text style={[styles.barBottomText, isSelected && styles.barDayActive]}>
-                      {item.dayName}
+                      {index === weeklyLogs.length - 1 ? 'Today' : item.dayName}
                     </Text>
+                    {isSelected && (
+                      <View style={[styles.activeDayDot, { backgroundColor: getMetricThemeColor() }]} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -564,8 +607,16 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                     <View
                       style={[
                         styles.barTrack30,
-                        isSelected && { borderColor: '#0F172A', borderWidth: 1.5 },
                         !hasData && styles.barTrackEmpty,
+                        isSelected && {
+                          borderColor: getMetricThemeColor(),
+                          borderWidth: 1.5,
+                          shadowColor: getMetricThemeColor(),
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.25,
+                          shadowRadius: 5,
+                          elevation: 3,
+                        },
                       ]}
                     >
                       {hasData && (
@@ -583,6 +634,9 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                     <Text style={[styles.barBottomText30, isSelected && styles.barDayActive]}>
                       {cluster.label}
                     </Text>
+                    {isSelected && (
+                      <View style={[styles.activeDayDot, { backgroundColor: getMetricThemeColor() }]} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -594,11 +648,15 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         {activeMetric === 'calories' && (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: analyticsSummary.isDeficit ? '#16A34A' : '#EF4444' }]}>
-                {analyticsSummary.isDeficit ? `-${analyticsSummary.netDiff.toLocaleString()}` : `+${analyticsSummary.netDiff.toLocaleString()}`}
+              <Text style={[styles.kpiValue, { color: '#16A34A' }]}>
+                {analyticsSummary.hasSufficientTrendData
+                  ? `${analyticsSummary.netDiff.toLocaleString()}`
+                  : `${Math.max(0, budget - (weeklyLogs[weeklyLogs.length - 1]?.calories || 0)).toLocaleString()}`}
               </Text>
               <Text style={styles.kpiLabel}>
-                {analyticsSummary.isDeficit ? 'Net Deficit (kcal)' : 'Net Surplus (kcal)'}
+                {analyticsSummary.hasSufficientTrendData
+                  ? (analyticsSummary.isDeficit ? 'Weekly Deficit (kcal)' : 'Weekly Surplus (kcal)')
+                  : 'Remaining Today (kcal)'}
               </Text>
             </View>
 
@@ -613,10 +671,10 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.kpiValue}>
                 {analyticsSummary.hasSufficientTrendData
                   ? `~${analyticsSummary.projectedFatLoss} kg`
-                  : `${analyticsSummary.daysWithCals}/${analyticsSummary.dayCount}`}
+                  : `${analyticsSummary.daysWithCals} of ${analyticsSummary.dayCount}`}
               </Text>
               <Text style={styles.kpiLabel}>
-                {analyticsSummary.hasSufficientTrendData ? 'Est. Fat Loss' : 'Days Logged'}
+                {analyticsSummary.hasSufficientTrendData ? 'Est. Fat Loss' : 'Logged Days'}
               </Text>
             </View>
           </View>
@@ -970,28 +1028,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0FDF4',
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#DCFCE7',
     gap: 8,
-  },
-  trajectoryIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#DCFCE7',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   trajectoryText: {
     flex: 1,
     fontFamily: Fonts.poppins.medium,
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#15803D',
-    lineHeight: 16,
+    lineHeight: 15,
     fontWeight: '500',
   },
   heroSection: {
@@ -1061,70 +1111,73 @@ const styles = StyleSheet.create({
     color: '#EA580C',
     fontWeight: '700',
   },
-  cardHeader: {
+  heroTelemetryBox: {
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  heroTelemetryTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 4,
   },
-  cardTitle: {
+  heroCategoryText: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-  },
-  cardSubtitle: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748B',
-    marginTop: 1,
+    letterSpacing: 0.8,
   },
-  targetLegend: {
+  heroGoalBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     paddingHorizontal: 9,
-    paddingVertical: 4.5,
-    borderRadius: 10,
+    paddingVertical: 3.5,
+    borderRadius: 8,
     gap: 5,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  targetLineDot: {
+  heroGoalDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  targetLegendText: {
+  heroGoalText: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 10.5,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  inspectPill: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  inspectPillText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#475569',
   },
-  inspectBoldText: {
+  heroMainValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  heroMainValue: {
     fontFamily: Fonts.poppins.bold,
+    fontSize: 32,
     fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.8,
+    lineHeight: 38,
+  },
+  heroUnit: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 15,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  heroContextText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 12.5,
+    color: '#475569',
+    marginTop: 2,
+  },
+  activeDayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 3,
   },
   chartWrapper: {
     position: 'relative',
@@ -1183,10 +1236,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   barTrackEmpty: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderStyle: 'dashed',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: 'rgba(0, 0, 0, 0.04)',
     shadowOpacity: 0,
     elevation: 0,
   },
