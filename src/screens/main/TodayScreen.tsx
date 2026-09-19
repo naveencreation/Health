@@ -4,7 +4,6 @@ import {
   Header,
   TopDateStrip,
   HeroCalorieCard,
-  DietJourneyChart,
   MealSection,
   RiaCoachCard,
   DailyHabitsCard,
@@ -62,9 +61,6 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
 
       {/* 5. Side-by-Side Habits: Hydration & Activity Dual Dials */}
       <DailyHabitsCard />
-
-      {/* 6. Track your diet journey wave chart */}
-      <DietJourneyChart />
     </ScrollView>
   );
 };
