@@ -33,6 +33,12 @@
     "plugins": [
       "expo-font",
       "expo-image"
-    ]
+    ],
+    "owner": "naveen0004",
+    "extra": {
+      "eas": {
+        "projectId": "b9a9bbaf-deb3-4e7b-bd12-3a8425fd7083"
+      }
+    }
   }
 }

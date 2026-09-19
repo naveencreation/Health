@@ -41,3 +41,19 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# installers, executables, archives & partial downloads
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.apk
+*.aab
+*.crdownload
+*.download
+*.part
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
