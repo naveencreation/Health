@@ -94,6 +94,10 @@ const DEFAULT_GOALS: UserGoals = {
   weightUnit: 'kg',
   heightCm: 175,
   startWeightKg: 68.0,
+  riaTone: 'supportive',
+  waterReminder: true,
+  mealReminder: true,
+  stepReminder: false,
 };
 
 const getTodayDateString = (date = new Date()): string => {
@@ -265,7 +269,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
         // Load goals, custom foods, and daily logs
         if (savedGoals) {
-          setUserGoals(JSON.parse(savedGoals));
+          const parsed = JSON.parse(savedGoals);
+          const validUrls = ['asset:men', 'asset:women', 'asset:boy', 'asset:girl', 'asset:grandpa', 'asset:grandma'];
+          if (!parsed.avatarUrl || !validUrls.includes(parsed.avatarUrl)) {
+            parsed.avatarUrl = DEFAULT_AVATAR_URL;
+          }
+          setUserGoals(parsed);
         }
 
         if (savedCustomFoods) {

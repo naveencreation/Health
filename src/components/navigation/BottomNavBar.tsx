@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -37,10 +37,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       {/* Figma Frame 297: Bottom Bar */}
       <View style={styles.barContainer}>
         {/* Tab 1: Home Angle */}
-        <TouchableOpacity
-          style={styles.tabButton}
+        <Pressable
+          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
           onPress={() => onTabChange('today')}
-          activeOpacity={0.7}
           accessibilityRole="tab"
           accessibilityLabel="Home"
           accessibilityState={{ selected: activeTab === 'today' }}
@@ -50,14 +49,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             size={23}
             color={activeTab === 'today' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'today' && <View style={styles.activeDot} />}
-        </TouchableOpacity>
+          {activeTab === 'today' ? <View style={styles.activeDot} /> : null}
+        </Pressable>
 
         {/* Tab 2: Chef Hat (Meals & Recipes) */}
-        <TouchableOpacity
-          style={styles.tabButton}
+        <Pressable
+          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
           onPress={() => onTabChange('diary')}
-          activeOpacity={0.7}
           accessibilityRole="tab"
           accessibilityLabel="Meals Diary"
           accessibilityState={{ selected: activeTab === 'diary' }}
@@ -67,27 +65,25 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             size={24}
             color={activeTab === 'diary' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'diary' && <View style={styles.activeDot} />}
-        </TouchableOpacity>
+          {activeTab === 'diary' ? <View style={styles.activeDot} /> : null}
+        </Pressable>
 
         {/* Center Floating Action Button: Ellipse 7 (56.49px x 56.49px, #CDE26D Lime/Avocado Green) */}
         <View style={styles.centerFabAnchor}>
-          <TouchableOpacity
-            style={styles.centerFab}
+          <Pressable
+            style={({ pressed }) => [styles.centerFab, pressed && styles.fabPressed]}
             onPress={() => setQuickSheetVisible(true)}
-            activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Log food or water"
           >
             <Ionicons name="add" size={30} color="#FFFFFF" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Tab 3: Chart 2 (Analytics & Statistics) */}
-        <TouchableOpacity
-          style={styles.tabButton}
+        <Pressable
+          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
           onPress={() => onTabChange('analytics')}
-          activeOpacity={0.7}
           accessibilityRole="tab"
           accessibilityLabel="Analytics and Trends"
           accessibilityState={{ selected: activeTab === 'analytics' }}
@@ -97,14 +93,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             size={23}
             color={activeTab === 'analytics' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'analytics' && <View style={styles.activeDot} />}
-        </TouchableOpacity>
+          {activeTab === 'analytics' ? <View style={styles.activeDot} /> : null}
+        </Pressable>
 
         {/* Tab 4: User Profile */}
-        <TouchableOpacity
-          style={styles.tabButton}
+        <Pressable
+          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
           onPress={() => onTabChange('profile')}
-          activeOpacity={0.7}
           accessibilityRole="tab"
           accessibilityLabel="Profile and Goals"
           accessibilityState={{ selected: activeTab === 'profile' }}
@@ -114,8 +109,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             size={23}
             color={activeTab === 'profile' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'profile' && <View style={styles.activeDot} />}
-        </TouchableOpacity>
+          {activeTab === 'profile' ? <View style={styles.activeDot} /> : null}
+        </Pressable>
       </View>
 
       {/* Quick Action Sheet Modal */}
@@ -126,10 +121,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         onRequestClose={() => setQuickSheetVisible(false)}
       >
         <View style={styles.sheetOverlay}>
-          <TouchableOpacity
+          <Pressable
             style={styles.backdropDismiss}
-            activeOpacity={1}
             onPress={() => setQuickSheetVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss quick log sheet"
           />
           <View style={styles.sheetContent}>
             <View style={styles.sheetHandle} />
@@ -137,60 +133,65 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             <Text style={styles.sheetSubtitle}>Choose what you want to add</Text>
 
             <View style={styles.quickGrid}>
-              <TouchableOpacity
-                style={styles.quickActionItem}
+              <Pressable
+                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
                 onPress={() => handleSelectQuickMeal('breakfast')}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Log breakfast"
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#FFF7ED' }]}>
-                  <Text style={{ fontSize: 24 }}>🍳</Text>
+                <View style={[styles.quickActionIcon, styles.iconBgBreakfast]}>
+                  <Text style={styles.quickActionEmoji}>🍳</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>Breakfast</Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
-                style={styles.quickActionItem}
+              <Pressable
+                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
                 onPress={() => handleSelectQuickMeal('lunch')}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Log lunch"
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#ECFDF5' }]}>
-                  <Text style={{ fontSize: 24 }}>🥗</Text>
+                <View style={[styles.quickActionIcon, styles.iconBgLunch]}>
+                  <Text style={styles.quickActionEmoji}>🥗</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>Lunch</Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
-                style={styles.quickActionItem}
+              <Pressable
+                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
                 onPress={() => handleSelectQuickMeal('snacks')}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Log snacks"
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#FEF3C7' }]}>
-                  <Text style={{ fontSize: 24 }}>🍵</Text>
+                <View style={[styles.quickActionIcon, styles.iconBgSnacks]}>
+                  <Text style={styles.quickActionEmoji}>🍵</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>Snacks</Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
-                style={styles.quickActionItem}
+              <Pressable
+                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
                 onPress={() => handleSelectQuickMeal('dinner')}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Log dinner"
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#EDE9FE' }]}>
-                  <Text style={{ fontSize: 24 }}>🍲</Text>
+                <View style={[styles.quickActionIcon, styles.iconBgDinner]}>
+                  <Text style={styles.quickActionEmoji}>🍲</Text>
                 </View>
                 <Text style={styles.quickActionLabel}>Dinner</Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
-                style={styles.quickActionItem}
+              <Pressable
+                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
                 onPress={handleSelectQuickWater}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Log 250ml water"
               >
-                <View style={[styles.quickActionIcon, { backgroundColor: '#E0F2FE' }]}>
+                <View style={[styles.quickActionIcon, styles.iconBgWater]}>
                   <Ionicons name="water" size={24} color="#0284C7" />
                 </View>
                 <Text style={styles.quickActionLabel}>+250ml Water</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -225,6 +226,10 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'relative',
   },
+  pressedTab: {
+    opacity: 0.65,
+    transform: [{ scale: 0.94 }],
+  },
   activeDot: {
     width: 4,
     height: 4,
@@ -254,6 +259,10 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 3,
     borderColor: '#FFFFFF',
+  },
+  fabPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.93 }],
   },
   sheetOverlay: {
     position: 'absolute',
@@ -319,6 +328,28 @@ const styles = StyleSheet.create({
   quickActionItem: {
     alignItems: 'center',
     width: 76,
+  },
+  quickActionItemPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.95 }],
+  },
+  quickActionEmoji: {
+    fontSize: 24,
+  },
+  iconBgBreakfast: {
+    backgroundColor: '#FFF7ED',
+  },
+  iconBgLunch: {
+    backgroundColor: '#ECFDF5',
+  },
+  iconBgSnacks: {
+    backgroundColor: '#FEF3C7',
+  },
+  iconBgDinner: {
+    backgroundColor: '#EDE9FE',
+  },
+  iconBgWater: {
+    backgroundColor: '#E0F2FE',
   },
   quickActionIcon: {
     width: 56,

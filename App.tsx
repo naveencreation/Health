@@ -37,7 +37,6 @@ import {
   BottomNavBar,
   TabType,
   FoodLogModal,
-  SearchFoodModal,
   NotificationModal,
   AvatarPickerModal,
   RiaChatModal,
@@ -52,7 +51,6 @@ function MainApp() {
   const analyticsScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [riaChatVisible, setRiaChatVisible] = useState(false);
@@ -113,9 +111,19 @@ function MainApp() {
     }
   }, []);
 
-  const handleOpenFoodLogger = (mealType: MealType) => {
+  const handleOpenFoodLogger = (mealType: MealType = 'lunch') => {
     setActiveMealType(mealType);
     setFoodModalVisible(true);
+  };
+
+  const handleGlobalSearchPress = () => {
+    const hour = new Date().getHours();
+    let slot: MealType = 'lunch';
+    if (hour < 11) slot = 'breakfast';
+    else if (hour < 16) slot = 'lunch';
+    else if (hour < 19) slot = 'snacks';
+    else slot = 'dinner';
+    handleOpenFoodLogger(slot);
   };
 
   const handleQuickWater = () => {
@@ -183,13 +191,13 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, (activeTab === 'today' || activeTab === 'diary' || activeTab === 'analytics') && { backgroundColor: '#EDFAF6' }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: '#EDFAF6' }]}>
       <StatusBar style="dark" />
-      <View style={[styles.phoneContainer, (activeTab === 'today' || activeTab === 'diary' || activeTab === 'analytics') && styles.phoneContainerToday]}>
-        {/* Top Header for tabs that do not have internal header (Profile) */}
+      <View style={[styles.phoneContainer, styles.phoneContainerToday]}>
+        {/* Top Header for tabs that do not have internal header */}
         {activeTab !== 'today' && activeTab !== 'diary' && activeTab !== 'analytics' && activeTab !== 'profile' && (
           <Header
-            onSearchPress={() => setSearchModalVisible(true)}
+            onSearchPress={handleGlobalSearchPress}
             onNotificationsPress={() => setNotificationsVisible(true)}
             onAvatarPress={() => setAvatarModalVisible(true)}
             onSignInPress={handleOpenSignIn}
@@ -204,7 +212,7 @@ function MainApp() {
               scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
               onOpenRiaChat={() => setRiaChatVisible(true)}
-              onSearchPress={() => setSearchModalVisible(true)}
+              onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
@@ -216,7 +224,7 @@ function MainApp() {
             <DiaryScreen
               scrollRef={diaryScrollRef}
               onAddFood={handleOpenFoodLogger}
-              onSearchPress={() => setSearchModalVisible(true)}
+              onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
@@ -227,7 +235,7 @@ function MainApp() {
           {activeTab === 'analytics' && (
             <AnalyticsScreen
               scrollRef={analyticsScrollRef}
-              onSearchPress={() => setSearchModalVisible(true)}
+              onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
@@ -239,6 +247,7 @@ function MainApp() {
             <ProfileScreen
               onSignIn={handleOpenSignIn}
               onSignOut={handleSignOut}
+              onBack={() => handleTabChange('today')}
             />
           )}
         </View>
@@ -256,12 +265,6 @@ function MainApp() {
           visible={foodModalVisible}
           mealType={activeMealType}
           onClose={() => setFoodModalVisible(false)}
-        />
-
-        {/* Global Food Search Modal */}
-        <SearchFoodModal
-          visible={searchModalVisible}
-          onClose={() => setSearchModalVisible(false)}
         />
 
         {/* Notification Center Modal */}

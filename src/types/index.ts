@@ -69,6 +69,10 @@ export interface UserGoals {
   weightUnit?: 'kg' | 'lbs';
   heightCm?: number;
   startWeightKg?: number;
+  riaTone?: 'supportive' | 'focused' | 'scientific';
+  waterReminder?: boolean;
+  mealReminder?: boolean;
+  stepReminder?: boolean;
 }
 
 export interface WeeklyTrendItem {

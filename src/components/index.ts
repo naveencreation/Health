@@ -31,7 +31,15 @@ export { BodyCompositionCard } from './profile/BodyCompositionCard';
 export { DailyTargetsCard } from './profile/DailyTargetsCard';
 export { PreferencesCard } from './profile/PreferencesCard';
 export { ProfileHeaderCard } from './profile/ProfileHeaderCard';
+export { ProfileQuickNavGrid } from './profile/ProfileQuickNavGrid';
+export { ClinicalBmiGauge } from './profile/ClinicalBmiGauge';
+export { ProfileMetricInspector } from './profile/ProfileMetricInspector';
+export { GoalsModalSheet } from './profile/modals/GoalsModalSheet';
+export { PreferencesModalSheet } from './profile/modals/PreferencesModalSheet';
+export { MetabolicSummaryModalSheet } from './profile/modals/MetabolicSummaryModalSheet';
+export { AwardsModalSheet } from './profile/modals/AwardsModalSheet';
 
 // Common Components
 export { ErrorBoundary } from './common/ErrorBoundary';
+export { UserAvatar } from './common/UserAvatar';
 

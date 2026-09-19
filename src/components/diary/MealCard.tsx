@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { LoggedMealItem, MealType } from '@/types';
@@ -53,10 +54,19 @@ export const MealCard: React.FC<MealCardProps> = ({
     >
       {/* 1. Header Row */}
       <View style={styles.headerRow}>
-        <TouchableOpacity
-          style={styles.headerLeft}
-          onPress={() => hasItems && setIsExpanded(!isExpanded)}
-          activeOpacity={hasItems ? 0.7 : 1}
+        <Pressable
+          style={({ pressed }) => [
+            styles.headerLeft,
+            pressed && hasItems && styles.pressedSubtle,
+          ]}
+          onPress={() => {
+            if (hasItems) {
+              setIsExpanded((prev) => !prev);
+            }
+          }}
+          disabled={!hasItems}
+          accessibilityRole="button"
+          accessibilityLabel={`${title}, ${hasItems ? (isExpanded ? 'collapse details' : 'expand details') : 'no items logged'}`}
         >
           {/* Circular Thumbnail with Crisp Border */}
           <View style={styles.thumbnailCircle}>
@@ -64,6 +74,9 @@ export const MealCard: React.FC<MealCardProps> = ({
               <Image
                 source={{ uri: imageUrl }}
                 style={styles.thumbnailImg}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={150}
                 onError={() => setImgError(true)}
               />
             ) : (
@@ -77,7 +90,7 @@ export const MealCard: React.FC<MealCardProps> = ({
               <Text style={styles.mealTitle}>
                 {hasItems ? title.replace('Add ', '') : title}
               </Text>
-              {hasItems && (
+              {hasItems ? (
                 <View style={styles.chevronPill}>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -85,7 +98,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                     color="#475569"
                   />
                 </View>
-              )}
+              ) : null}
             </View>
 
             {/* Zero Decision Fatigue: Single Clear Target */}
@@ -98,42 +111,42 @@ export const MealCard: React.FC<MealCardProps> = ({
               <View
                 style={[
                   styles.progressBarFill,
-                  {
-                    width: `${Math.round(mealProgress * 100)}%`,
-                    backgroundColor: isOverBudget ? '#F97316' : '#22C55E',
-                  },
+                  { width: `${Math.round(mealProgress * 100)}%` },
+                  isOverBudget ? styles.progressBarFillOver : styles.progressBarFillNormal,
                 ]}
               />
             </View>
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Right Action: Calorie Badge & Lime Green Add Button */}
         <View style={styles.headerRight}>
-          {hasItems && (
+          {hasItems ? (
             <View style={styles.calorieBadge}>
               <Text style={styles.calorieNumber}>{totalMealCals}</Text>
               <Text style={styles.calorieUnit}>cal</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Round Lime Green Add Button (#CDE26D) */}
-          <TouchableOpacity
-            style={[
+          <Pressable
+            style={({ pressed }) => [
               styles.addButtonCircle,
               isDimmed && !hasItems && styles.dimmedAddButton,
+              pressed && styles.pressedAddButton,
             ]}
             onPress={() => onAddPress(mealType)}
-            activeOpacity={0.8}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={`Add food to ${title}`}
           >
             <Ionicons name="add" size={22} color="#16A34A" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
       {/* 2. Expanded Items List: Flat Rows (No Nested Cards) */}
-      {isExpanded && hasItems && (
+      {isExpanded && hasItems ? (
         <View style={styles.itemsContainer}>
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
@@ -159,29 +172,33 @@ export const MealCard: React.FC<MealCardProps> = ({
                 <View style={styles.foodActions}>
                   {/* Capsule Stepper */}
                   <View style={styles.stepperCapsule}>
-                    <TouchableOpacity
-                      style={styles.stepperBtn}
+                    <Pressable
+                      style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressedSubtle]}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => {
                         if (item.quantity > 0.5) {
-                          updateMealQuantity(item.id, Math.max(0.5, item.quantity - 0.5));
+                          updateMealQuantity(item.id, Math.max(0.5, Math.round((item.quantity - 0.5) * 10) / 10));
                         } else {
                           removeMealItem(item.id);
                         }
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Decrease quantity"
                     >
                       <Ionicons name="remove" size={13} color="#475569" />
-                    </TouchableOpacity>
+                    </Pressable>
 
                     <Text style={styles.stepperQty}>{item.quantity}</Text>
 
-                    <TouchableOpacity
-                      style={styles.stepperBtn}
+                    <Pressable
+                      style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressedSubtle]}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={() => updateMealQuantity(item.id, item.quantity + 0.5)}
+                      onPress={() => updateMealQuantity(item.id, Math.round((item.quantity + 0.5) * 10) / 10)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Increase quantity"
                     >
                       <Ionicons name="add" size={13} color="#475569" />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
 
                   {/* Single Clean Calorie Metric */}
@@ -190,13 +207,15 @@ export const MealCard: React.FC<MealCardProps> = ({
                   </Text>
 
                   {/* Delete Button */}
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
+                  <Pressable
+                    style={({ pressed }) => [styles.deleteBtn, pressed && styles.pressedSubtle]}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => removeMealItem(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${item.name}`}
                   >
                     <Ionicons name="close" size={15} color="#94A3B8" />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             );
@@ -205,26 +224,26 @@ export const MealCard: React.FC<MealCardProps> = ({
           {/* 3. Meal-Level Macro Summary Bar */}
           <View style={styles.macroSummaryBar}>
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: '#22C55E' }]} />
+              <View style={[styles.macroDot, styles.macroDotProtein]} />
               <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
             </View>
 
             <Text style={styles.macroSummaryDivider}>•</Text>
 
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: '#F97316' }]} />
+              <View style={[styles.macroDot, styles.macroDotFat]} />
               <Text style={styles.macroSummaryText}>{totalFat}g Fats</Text>
             </View>
 
             <Text style={styles.macroSummaryDivider}>•</Text>
 
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: '#EAB308' }]} />
+              <View style={[styles.macroDot, styles.macroDotCarbs]} />
               <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
             </View>
           </View>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -279,7 +298,6 @@ const styles = StyleSheet.create({
   thumbnailImg: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   fallbackEmoji: {
     fontSize: 22,
@@ -324,6 +342,19 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 2.5,
+  },
+  progressBarFillNormal: {
+    backgroundColor: '#22C55E',
+  },
+  progressBarFillOver: {
+    backgroundColor: '#F97316',
+  },
+  pressedSubtle: {
+    opacity: 0.65,
+  },
+  pressedAddButton: {
+    opacity: 0.8,
+    transform: [{ scale: 0.94 }],
   },
   headerRight: {
     flexDirection: 'row',
@@ -466,6 +497,15 @@ const styles = StyleSheet.create({
     width: 6.5,
     height: 6.5,
     borderRadius: 3.5,
+  },
+  macroDotProtein: {
+    backgroundColor: '#22C55E',
+  },
+  macroDotFat: {
+    backgroundColor: '#F97316',
+  },
+  macroDotCarbs: {
+    backgroundColor: '#EAB308',
   },
   macroSummaryText: {
     fontFamily: Fonts.poppins.semiBold,

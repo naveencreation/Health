@@ -4,16 +4,15 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
-  Image,
   Platform,
-  ImageStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { AVATAR_PRESETS, AVATAR_CATEGORIES, DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { AVATAR_PRESETS, DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { UserAvatar } from '@/components/common/UserAvatar';
 
 interface AvatarPickerModalProps {
   visible: boolean;
@@ -28,21 +27,20 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onClose,
   onSelectAvatar,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(currentAvatarUrl);
+  const sanitizeUrl = (url?: string) => {
+    if (!url) return DEFAULT_AVATAR_URL;
+    const exists = AVATAR_PRESETS.some((a) => a.url === url);
+    return exists ? url : DEFAULT_AVATAR_URL;
+  };
+
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(sanitizeUrl(currentAvatarUrl));
 
   // Synchronize when modal opens
   React.useEffect(() => {
     if (visible) {
-      setSelectedAvatarUrl(currentAvatarUrl);
+      setSelectedAvatarUrl(sanitizeUrl(currentAvatarUrl));
     }
   }, [visible, currentAvatarUrl]);
-
-  // Filter avatars by active category
-  const filteredAvatars = useMemo(() => {
-    if (selectedCategory === 'all') return AVATAR_PRESETS;
-    return AVATAR_PRESETS.filter((a) => a.category === selectedCategory);
-  }, [selectedCategory]);
 
   // Find currently selected preset details for hero preview
   const activePreset = useMemo(() => {
@@ -57,6 +55,30 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     onClose();
   };
 
+  const getPresetBorder = (id?: string) => {
+    switch (id) {
+      case 'avatar_men': return styles.borderMen;
+      case 'avatar_women': return styles.borderWomen;
+      case 'avatar_boy': return styles.borderBoy;
+      case 'avatar_girl': return styles.borderGirl;
+      case 'avatar_grandpa': return styles.borderGrandpa;
+      case 'avatar_grandma': return styles.borderGrandma;
+      default: return styles.borderDefault;
+    }
+  };
+
+  const getPresetBg = (id?: string) => {
+    switch (id) {
+      case 'avatar_men': return styles.bgMen;
+      case 'avatar_women': return styles.bgWomen;
+      case 'avatar_boy': return styles.bgBoy;
+      case 'avatar_girl': return styles.bgGirl;
+      case 'avatar_grandpa': return styles.bgGrandpa;
+      case 'avatar_grandma': return styles.bgGrandma;
+      default: return styles.bgDefault;
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -66,10 +88,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     >
       <View style={styles.modalBackdrop}>
         {/* Click outside to dismiss backdrop */}
-        <TouchableOpacity
+        <Pressable
           style={styles.backdropDismiss}
           onPress={onClose}
-          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss avatar picker modal backdrop"
         />
 
         {/* Mobile-Constrained Bottom Sheet Container */}
@@ -81,20 +104,22 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
           {/* Header Bar */}
           <View style={styles.header}>
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
-              style={styles.closeBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Close avatar picker"
             >
               <Ionicons name="close" size={20} color={Colors.textPrimary} />
-            </TouchableOpacity>
+            </Pressable>
 
             <View style={styles.headerTitleCenter}>
               <Text style={styles.headerTitle}>Select Avatar</Text>
-              <Text style={styles.headerSubtitle}>Choose your fitness persona</Text>
+              <Text style={styles.headerSubtitle}>Choose your persona</Text>
             </View>
 
-            <View style={{ width: 34 }} />
+            <View style={styles.headerSpacer} />
           </View>
 
           <ScrollView
@@ -103,95 +128,52 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           >
             {/* Hero Live Preview Card */}
             <View style={styles.heroPreviewCard}>
-              <View
-                style={[
-                  styles.heroAvatarRing,
-                  { borderColor: activePreset?.accentColor || Colors.primary },
-                ]}
-              >
-                <Image source={{ uri: selectedAvatarUrl }} style={styles.heroAvatarImg as ImageStyle} />
-                <View
-                  style={[
-                    styles.heroCheckBadge,
-                    { backgroundColor: activePreset?.accentColor || Colors.primary },
-                  ]}
-                >
+              <View style={[styles.heroAvatarRing, getPresetBorder(activePreset?.id)]}>
+                <UserAvatar avatarUrl={selectedAvatarUrl} size={72} />
+                <View style={[styles.heroCheckBadge, getPresetBg(activePreset?.id)]}>
                   <Ionicons name="checkmark" size={12} color="#FFFFFF" />
                 </View>
               </View>
 
               <Text style={styles.heroAvatarName}>{activePreset?.name || 'Selected Avatar'}</Text>
-              <View style={styles.heroTagBadge}>
-                <Text style={styles.heroTagBadgeText}>{activePreset?.categoryLabel || 'Profile'}</Text>
-              </View>
             </View>
 
-            {/* Category Filter Pills Carousel */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryScroll}
-            >
-              {AVATAR_CATEGORIES.map((cat) => {
-                const isSelected = selectedCategory === cat.id;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[styles.categoryPill, isSelected && styles.categoryPillActive]}
-                    onPress={() => setSelectedCategory(cat.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.categoryText, isSelected && styles.categoryTextActive]}>
-                      {cat.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* 3-Column Compact Avatar Grid */}
+            {/* 3-Column Compact Avatar Grid (Curated Avatars) */}
             <View style={styles.gridContainer}>
-              {filteredAvatars.map((item) => {
+              {AVATAR_PRESETS.map((item) => {
                 const isSelected = selectedAvatarUrl === item.url;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={item.id}
-                    style={[
+                    style={({ pressed }) => [
                       styles.avatarGridCard,
-                      isSelected && [
-                        styles.avatarGridCardActive,
-                        { borderColor: item.accentColor || Colors.primary },
-                      ],
+                      isSelected ? styles.avatarGridCardActive : null,
+                      isSelected ? getPresetBorder(item.id) : null,
+                      pressed ? styles.pressedGridCard : null,
                     ]}
                     onPress={() => setSelectedAvatarUrl(item.url)}
-                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`Select ${item.name} avatar`}
                   >
                     <View
                       style={[
                         styles.avatarThumbWrapper,
-                        isSelected && { borderColor: item.accentColor || Colors.primary },
+                        isSelected ? getPresetBorder(item.id) : null,
                       ]}
                     >
-                      <Image source={{ uri: item.url }} style={styles.gridAvatarImg as ImageStyle} />
-                      {isSelected && (
-                        <View
-                          style={[
-                            styles.selectedOverlayBadge,
-                            { backgroundColor: item.accentColor || Colors.primary },
-                          ]}
-                        >
+                      <UserAvatar avatarUrl={item.url} size={56} />
+                      {isSelected ? (
+                        <View style={[styles.selectedOverlayBadge, getPresetBg(item.id)]}>
                           <Ionicons name="checkmark" size={11} color="#FFFFFF" />
                         </View>
-                      )}
+                      ) : null}
                     </View>
 
-                    <Text style={styles.gridAvatarName} numberOfLines={1}>
+                    <Text style={styles.gridAvatarName} numberOfLines={2}>
                       {item.name}
                     </Text>
-                    <Text style={styles.gridAvatarCategory} numberOfLines={1}>
-                      {item.categoryLabel}
-                    </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -199,10 +181,15 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
           {/* Sticky Bottom Confirmation Bar */}
           <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.85}>
-              <Ionicons name="checkmark-sharp" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Pressable
+              style={({ pressed }) => [styles.confirmBtn, pressed ? styles.pressedConfirmBtn : null]}
+              onPress={handleConfirm}
+              accessibilityRole="button"
+              accessibilityLabel="Use this avatar"
+            >
+              <Ionicons name="checkmark-sharp" size={18} color="#FFFFFF" style={styles.confirmIcon} />
               <Text style={styles.confirmBtnText}>Use This Avatar</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -231,9 +218,9 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     width: '100%',
-    maxWidth: 480, // Strictly constrained to phone width on all screens
-    height: '88%',
-    maxHeight: 740,
+    maxWidth: 480,
+    height: '84%',
+    maxHeight: 700,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
@@ -276,6 +263,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedCloseBtn: {
+    opacity: 0.7,
+    backgroundColor: '#E2E8F0',
+  },
+  headerSpacer: {
+    width: 34,
+  },
   headerTitleCenter: {
     alignItems: 'center',
   },
@@ -300,7 +294,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     marginHorizontal: 16,
     marginTop: 12,
-    marginBottom: 8,
+    marginBottom: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 18,
@@ -323,11 +317,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  heroAvatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 36,
-  },
   heroCheckBadge: {
     position: 'absolute',
     bottom: 0,
@@ -346,48 +335,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     marginTop: 8,
   },
-  heroTagBadge: {
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 3,
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-  },
-  heroTagBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 10,
-    color: '#EA580C',
-  },
-
-  // Category Pills
-  categoryScroll: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  categoryPill: {
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  categoryPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  categoryText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
-    color: Colors.textSecondary,
-  },
-  categoryTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
-    color: '#FFFFFF',
-  },
 
   // Grid
   gridContainer: {
@@ -395,11 +342,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 14,
     gap: 8,
-    marginTop: 4,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   avatarGridCard: {
-    width: '31%',
+    width: '31.3%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 12,
@@ -407,7 +353,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#F1F5F9',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   avatarGridCardActive: {
     backgroundColor: '#FFFBF9',
@@ -417,6 +363,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  pressedGridCard: {
+    opacity: 0.8,
+    transform: [{ scale: 0.97 }],
+  },
   avatarThumbWrapper: {
     position: 'relative',
     width: 64,
@@ -425,13 +375,9 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: 'transparent',
     padding: 2,
-    marginBottom: 4,
-  },
-  gridAvatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 30,
-    backgroundColor: '#F1F5F9',
+    marginBottom: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedOverlayBadge: {
     position: 'absolute',
@@ -446,18 +392,11 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   gridAvatarName: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.poppins.medium,
     fontSize: 11,
     color: Colors.textPrimary,
-    marginTop: 4,
     textAlign: 'center',
-  },
-  gridAvatarCategory: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 9,
-    color: Colors.textSecondary,
-    marginTop: 1,
-    textAlign: 'center',
+    lineHeight: 14,
   },
 
   // Bottom Sticky Bar
@@ -481,9 +420,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedConfirmBtn: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  confirmIcon: {
+    marginRight: 6,
+  },
   confirmBtnText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 15,
     color: '#FFFFFF',
   },
+
+  // Preset Colors
+  borderMen: { borderColor: '#1E293B' },
+  borderWomen: { borderColor: '#EA580C' },
+  borderBoy: { borderColor: '#3B82F6' },
+  borderGirl: { borderColor: '#F43F5E' },
+  borderGrandpa: { borderColor: '#475569' },
+  borderGrandma: { borderColor: '#059669' },
+  borderDefault: { borderColor: Colors.primary },
+  bgMen: { backgroundColor: '#1E293B' },
+  bgWomen: { backgroundColor: '#EA580C' },
+  bgBoy: { backgroundColor: '#3B82F6' },
+  bgGirl: { backgroundColor: '#F43F5E' },
+  bgGrandpa: { backgroundColor: '#475569' },
+  bgGrandma: { backgroundColor: '#059669' },
+  bgDefault: { backgroundColor: Colors.primary },
 });

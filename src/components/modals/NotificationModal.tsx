@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,7 +27,6 @@ interface NotificationModalProps {
   visible: boolean;
   onClose: () => void;
 }
-
 
 export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
   const { userGoals, currentUser, currentLog, remainingCalories } = useHealth();
@@ -160,7 +159,22 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, o
     setNotifications([]);
   };
 
-  const hasUnread = notifications.some((n) => n.isUnread);
+  const getIconBoxStyle = (type: NotificationItem['type']) => {
+    switch (type) {
+      case 'streak':
+        return styles.iconBoxStreak;
+      case 'water':
+        return styles.iconBoxWater;
+      case 'calorie':
+        return styles.iconBoxCalorie;
+      case 'step':
+        return styles.iconBoxStep;
+      case 'ria':
+        return styles.iconBoxRia;
+      default:
+        return styles.iconBoxDefault;
+    }
+  };
 
   return (
     <Modal
@@ -170,10 +184,11 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, o
       onRequestClose={onClose}
     >
       <View style={styles.modalBackdrop}>
-        <TouchableOpacity
+        <Pressable
           style={styles.backdropDismiss}
           onPress={onClose}
-          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss notifications backdrop"
         />
         <View style={styles.sheetContainer}>
           <View style={styles.handleContainer}>
@@ -181,70 +196,82 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, o
           </View>
           {/* Header */}
           <View style={styles.header}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.closeBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="close" size={24} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerTitleCenter}>
-            <Text style={styles.headerTitle}>Notifications</Text>
-            <Text style={styles.headerSubtitle}>
-              {notifications.length > 0 ? `${notifications.length} updates` : 'No notifications'}
-            </Text>
-          </View>
-          {notifications.length > 0 ? (
-            <TouchableOpacity onPress={markAllAsRead} style={styles.actionBtn}>
-              <Text style={styles.actionBtnText}>Read all</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 44 }} />
-          )}
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          {notifications.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconCircle}>
-                <Ionicons name="notifications-off-outline" size={32} color="#94A3B8" />
-              </View>
-              <Text style={styles.emptyTitle}>All Caught Up!</Text>
-              <Text style={styles.emptyDesc}>No new alerts or reminders. Keep up the great health habits!</Text>
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Close notifications modal"
+            >
+              <Ionicons name="close" size={24} color={Colors.textPrimary} />
+            </Pressable>
+            <View style={styles.headerTitleCenter}>
+              <Text style={styles.headerTitle}>Notifications</Text>
+              <Text style={styles.headerSubtitle}>
+                {notifications.length > 0 ? `${notifications.length} updates` : 'No notifications'}
+              </Text>
             </View>
-          ) : (
-            notifications.map((item) => (
-              <View
-                key={item.id}
-                style={[styles.notifCard, item.isUnread && styles.notifCardUnread]}
+            {notifications.length > 0 ? (
+              <Pressable
+                onPress={markAllAsRead}
+                style={({ pressed }) => [styles.actionBtn, pressed ? styles.pressedActionBtn : null]}
+                accessibilityRole="button"
+                accessibilityLabel="Mark all notifications as read"
               >
-                <View style={[styles.iconBox, { backgroundColor: item.accentColor + '18' }]}>
-                  <Ionicons name={item.iconName} size={20} color={item.accentColor} />
-                </View>
+                <Text style={styles.actionBtnText}>Read all</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.headerSpacer} />
+            )}
+          </View>
 
-                <View style={styles.notifMain}>
-                  <View style={styles.notifTopRow}>
-                    <Text style={styles.notifTitle}>{item.title}</Text>
-                    <Text style={styles.timeAgo}>{item.timeAgo}</Text>
-                  </View>
-                  <Text style={styles.notifDesc}>{item.description}</Text>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+            {notifications.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="notifications-off-outline" size={32} color="#94A3B8" />
                 </View>
-
-                {item.isUnread && <View style={styles.unreadDot} />}
+                <Text style={styles.emptyTitle}>All Caught Up!</Text>
+                <Text style={styles.emptyDesc}>No new alerts or reminders. Keep up the great health habits!</Text>
               </View>
-            ))
-          )}
+            ) : (
+              notifications.map((item) => (
+                <View
+                  key={item.id}
+                  style={[styles.notifCard, item.isUnread ? styles.notifCardUnread : null]}
+                >
+                  <View style={[styles.iconBox, getIconBoxStyle(item.type)]}>
+                    <Ionicons name={item.iconName} size={20} color={item.accentColor} />
+                  </View>
 
-          {notifications.length > 0 && (
-            <TouchableOpacity style={styles.clearAllBtn} onPress={clearAll} activeOpacity={0.7}>
-              <Ionicons name="trash-outline" size={14} color="#94A3B8" style={{ marginRight: 4 }} />
-              <Text style={styles.clearAllText}>Clear All Notifications</Text>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
+                  <View style={styles.notifMain}>
+                    <View style={styles.notifTopRow}>
+                      <Text style={styles.notifTitle}>{item.title}</Text>
+                      <Text style={styles.timeAgo}>{item.timeAgo}</Text>
+                    </View>
+                    <Text style={styles.notifDesc}>{item.description}</Text>
+                  </View>
+
+                  {item.isUnread ? <View style={styles.unreadDot} /> : null}
+                </View>
+              ))
+            )}
+
+            {notifications.length > 0 ? (
+              <Pressable
+                style={({ pressed }) => [styles.clearAllBtn, pressed ? styles.pressedSubtle : null]}
+                onPress={clearAll}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all notifications"
+              >
+                <Ionicons name="trash-outline" size={14} color="#94A3B8" style={styles.trashIcon} />
+                <Text style={styles.clearAllText}>Clear All Notifications</Text>
+              </Pressable>
+            ) : null}
+          </ScrollView>
+        </View>
       </View>
-    </View>
-  </Modal>
+    </Modal>
   );
 };
 
@@ -314,6 +341,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedCloseBtn: {
+    opacity: 0.7,
+    backgroundColor: '#E2E8F0',
+  },
+  headerSpacer: {
+    width: 44,
+  },
   headerTitleCenter: {
     alignItems: 'center',
   },
@@ -333,6 +367,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#F1F5F9',
+  },
+  pressedActionBtn: {
+    opacity: 0.75,
+    backgroundColor: '#E2E8F0',
   },
   actionBtnText: {
     fontFamily: Fonts.poppins.semiBold,
@@ -369,6 +407,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  iconBoxStreak: {
+    backgroundColor: 'rgba(234, 88, 12, 0.12)',
+  },
+  iconBoxWater: {
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+  },
+  iconBoxCalorie: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+  },
+  iconBoxStep: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  },
+  iconBoxRia: {
+    backgroundColor: 'rgba(139, 92, 246, 0.12)',
+  },
+  iconBoxDefault: {
+    backgroundColor: '#F1F5F9',
   },
   notifMain: {
     flex: 1,
@@ -411,6 +467,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 14,
     paddingVertical: 10,
+  },
+  pressedSubtle: {
+    opacity: 0.6,
+  },
+  trashIcon: {
+    marginRight: 4,
   },
   clearAllText: {
     fontFamily: Fonts.poppins.medium,

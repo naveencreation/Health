@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Modal,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   FlatList,
   Platform,
@@ -60,14 +60,93 @@ const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
   ],
 };
 
+const MEAL_TABS: { id: MealType; label: string; icon: string }[] = [
+  { id: 'breakfast', label: 'Breakfast', icon: '🍳' },
+  { id: 'lunch', label: 'Lunch', icon: '🥗' },
+  { id: 'snacks', label: 'Snacks', icon: '🍵' },
+  { id: 'dinner', label: 'Dinner', icon: '🍲' },
+];
+
+interface FoodItemRowProps {
+  item: FoodItem;
+  onSelect: (item: FoodItem) => void;
+  onQuickAdd: (item: FoodItem) => void;
+}
+
+const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }) => {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.foodItemCard, pressed && styles.foodItemCardPressed]}
+      onPress={() => onSelect(item)}
+    >
+      {/* Food Thumbnail Icon */}
+      <View style={styles.foodItemIcon}>
+        <Text style={{ fontSize: 22 }}>{item.icon || '🍽️'}</Text>
+      </View>
+
+      {/* Food Details & Color-Coded Macro Badges */}
+      <View style={styles.foodItemMain}>
+        <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.foodItemUnit}>
+          1 {item.servingUnit} • {item.categoryLabel}
+        </Text>
+
+        {/* Clean Color-Coded Macro Badges with Static Styles */}
+        <View style={styles.macroPillRow}>
+          <View style={styles.macroBadge}>
+            <View style={[styles.macroDot, styles.macroDotProtein]} />
+            <Text style={styles.macroText}>{item.protein}g P</Text>
+          </View>
+          <View style={styles.macroBadge}>
+            <View style={[styles.macroDot, styles.macroDotCarbs]} />
+            <Text style={styles.macroText}>{item.carbs}g C</Text>
+          </View>
+          <View style={styles.macroBadge}>
+            <View style={[styles.macroDot, styles.macroDotFat]} />
+            <Text style={styles.macroText}>{item.fat}g F</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Calories Stack + 44x44px Touch Target Quick Add */}
+      <View style={styles.foodItemRight}>
+        <View style={styles.caloriesStack}>
+          <Text style={styles.foodItemCals}>{item.calories}</Text>
+          <Text style={styles.foodItemCalUnit}>kcal</Text>
+        </View>
+
+        {/* 44x44px Touch Target Button */}
+        <Pressable
+          style={({ pressed }) => [styles.quickAddButton, pressed && styles.quickAddButtonPressed]}
+          onPress={(e) => {
+            e.stopPropagation && e.stopPropagation();
+            onQuickAdd(item);
+          }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={`Quick add 1 serving of ${item.name}`}
+        >
+          <View style={styles.quickAddIconCircle}>
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+          </View>
+        </Pressable>
+      </View>
+    </Pressable>
+  );
+});
+
 export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose }) => {
   const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories } = useHealth();
 
+  const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('popular');
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isCustomMode, setIsCustomMode] = useState(false);
+
+  useEffect(() => {
+    setSelectedMealType(mealType);
+  }, [mealType, visible]);
 
   // In-modal Toast & Undo State for 2-Speed Fast Path
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -87,10 +166,10 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     lunch: 0.35,
     snacks: 0.12,
     dinner: 0.28,
-  }[mealType] || 0.25;
+  }[selectedMealType] || 0.25;
 
   const mealTarget = Math.round(budget * mealRatio);
-  const currentMealLogged = mealCalories[mealType] || 0;
+  const currentMealLogged = mealCalories[selectedMealType] || 0;
   const mealRemaining = mealTarget - currentMealLogged;
 
   // Custom food form state
@@ -117,7 +196,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
 
     // Category filtering
     if (selectedCategory === 'popular') {
-      if (mealType === 'breakfast') {
+      if (selectedMealType === 'breakfast') {
         const priorityIds = [
           'idli_steamed',
           'plain_dosa',
@@ -142,7 +221,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
           });
       }
 
-      if (mealType === 'lunch') {
+      if (selectedMealType === 'lunch') {
         const priorityIds = [
           'roti_chapati',
           'dal_tadka',
@@ -158,7 +237,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
         );
       }
 
-      if (mealType === 'dinner') {
+      if (selectedMealType === 'dinner') {
         const priorityIds = [
           'roti_chapati',
           'dal_tadka',
@@ -184,12 +263,12 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     if (selectedCategory === 'all') return list;
     if (selectedCategory === 'high_protein') return list.filter((item) => item.protein >= 8);
     return list.filter((item) => item.category === selectedCategory);
-  }, [foodDatabase, searchQuery, selectedCategory, mealType]);
+  }, [foodDatabase, searchQuery, selectedCategory, selectedMealType]);
 
-  const handleSelectFood = (food: FoodItem) => {
+  const handleSelectFood = useCallback((food: FoodItem) => {
     setSelectedFood(food);
     setQuantity(1);
-  };
+  }, []);
 
   const handleUndo = () => {
     if (lastAddedMeal) {
@@ -204,7 +283,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     if (!selectedFood) return;
     if (toastTimer) clearTimeout(toastTimer);
     const cals = Math.round(selectedFood.calories * quantity);
-    const addedItem = addMealItem(mealType, selectedFood, quantity);
+    const addedItem = addMealItem(selectedMealType, selectedFood, quantity);
     setLastAddedMeal(addedItem);
     setToastMessage(`Added ${quantity > 1 ? `${quantity}x ` : ''}${selectedFood.name} (${cals} kcal)`);
     setSelectedFood(null);
@@ -217,9 +296,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
   };
 
   // Speed 1 (Fast Path): 1-Tap Quick Add logs immediately without drawer friction
-  const handleQuickAdd = (food: FoodItem) => {
+  const handleQuickAdd = useCallback((food: FoodItem) => {
     if (toastTimer) clearTimeout(toastTimer);
-    const addedItem = addMealItem(mealType, food, 1);
+    const addedItem = addMealItem(selectedMealType, food, 1);
     setLastAddedMeal(addedItem);
     setToastMessage(`Added ${food.name} (${food.calories} kcal)`);
 
@@ -228,7 +307,18 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
       setLastAddedMeal(null);
     }, 4500);
     setToastTimer(timer);
-  };
+  }, [addMealItem, selectedMealType, toastTimer]);
+
+  const renderFoodItem = useCallback(
+    ({ item }: { item: FoodItem }) => (
+      <FoodItemRow
+        item={item}
+        onSelect={handleSelectFood}
+        onQuickAdd={handleQuickAdd}
+      />
+    ),
+    [handleSelectFood, handleQuickAdd]
+  );
 
   const handleCreateCustomFood = () => {
     if (!customName.trim() || !customCals) return;
@@ -247,7 +337,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
       icon: '🍽️',
     });
 
-    const addedItem = addMealItem(mealType, newFood, 1);
+    const addedItem = addMealItem(selectedMealType, newFood, 1);
     setLastAddedMeal(addedItem);
     setToastMessage(`Added ${newFood.name} (${newFood.calories} kcal)`);
 
@@ -266,8 +356,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     setCustomFiber('');
   };
 
-  const mealTitle = mealType.charAt(0).toUpperCase() + mealType.slice(1);
-  const categoriesList = MEAL_CATEGORIES[mealType] || MEAL_CATEGORIES.breakfast;
+  const mealTitle = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+  const categoriesList = MEAL_CATEGORIES[selectedMealType] || MEAL_CATEGORIES.breakfast;
 
   // Projected Live Budget Impact for Speed 2 Portion Drawer
   const projectedAddedCals = selectedFood ? Math.round(selectedFood.calories * quantity) : 0;
@@ -287,14 +377,15 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
         <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
         {/* 1. Header with Title & Live Budget Anchors */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             onPress={onClose}
-            style={styles.closeBtn}
+            style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressedSubtle]}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
             accessibilityLabel="Close food logger"
           >
-            <Ionicons name="arrow-back" size={22} color="#0F172A" />
-          </TouchableOpacity>
+            <Ionicons name="close" size={22} color="#0F172A" />
+          </Pressable>
 
           <View style={styles.headerTitleCenter}>
             <Text style={styles.headerTitle}>Log {mealTitle}</Text>
@@ -306,16 +397,51 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
             </Text>
           </View>
 
-            <TouchableOpacity
-              style={styles.customToggleBtn}
-              onPress={() => setIsCustomMode(!isCustomMode)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.customToggleText}>
-                {isCustomMode ? 'Search' : '+ Custom'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Pressable
+            style={({ pressed }) => [styles.customToggleBtn, pressed && styles.btnPressedSubtle]}
+            onPress={() => setIsCustomMode(!isCustomMode)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+          >
+            <Text style={styles.customToggleText}>
+              {isCustomMode ? 'Search' : '+ Custom'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Meal Switcher Strip (Add to: Breakfast | Lunch | Snacks | Dinner) */}
+        <View style={styles.mealSwitcherRow}>
+          <Text style={styles.mealSwitcherLabel}>Add to:</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.mealSwitcherScroll}
+          >
+            {MEAL_TABS.map((slot) => {
+              const isSelected = selectedMealType === slot.id;
+              return (
+                <Pressable
+                  key={slot.id}
+                  style={({ pressed }) => [
+                    styles.mealTabPill,
+                    isSelected && styles.mealTabPillActive,
+                    pressed && styles.btnPressedPill,
+                  ]}
+                  onPress={() => {
+                    setSelectedMealType(slot.id);
+                    setSelectedCategory('popular');
+                  }}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.mealTabEmoji}>{slot.icon}</Text>
+                  <Text style={[styles.mealTabLabel, isSelected && styles.mealTabLabelActive]}>
+                    {slot.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
 
           {isCustomMode ? (
             /* Custom Food Form */
@@ -404,9 +530,13 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.saveCustomBtn} onPress={handleCreateCustomFood}>
+              <Pressable
+                style={({ pressed }) => [styles.saveCustomBtn, pressed && styles.btnPressedPrimary]}
+                onPress={handleCreateCustomFood}
+                accessibilityRole="button"
+              >
                 <Text style={styles.saveCustomBtnText}>Save & Log Dish</Text>
-              </TouchableOpacity>
+              </Pressable>
             </ScrollView>
           ) : (
             <>
@@ -415,17 +545,22 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 <Ionicons name="search-outline" size={19} color="#64748B" style={{ marginRight: 8 }} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder={`Search ${mealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
+                  placeholder={`Search ${selectedMealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholderTextColor="#94A3B8"
                   clearButtonMode="while-editing"
                 />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                {searchQuery.length > 0 ? (
+                  <Pressable
+                    onPress={() => setSearchQuery('')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search input"
+                  >
                     <Ionicons name="close-circle" size={18} color="#94A3B8" />
-                  </TouchableOpacity>
-                )}
+                  </Pressable>
+                ) : null}
               </View>
 
               {/* 3. Non-Clipped Category Filter Tabs */}
@@ -436,14 +571,15 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   contentContainerStyle={styles.categoryScroll}
                 >
                   {categoriesList.map((cat) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={cat.id}
-                      style={[
+                      style={({ pressed }) => [
                         styles.categoryPill,
                         selectedCategory === cat.id && styles.categoryPillActive,
+                        pressed && styles.btnPressedPill,
                       ]}
                       onPress={() => setSelectedCategory(cat.id)}
-                      activeOpacity={0.75}
+                      accessibilityRole="button"
                     >
                       <Text
                         style={[
@@ -453,7 +589,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       >
                         {cat.label}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </ScrollView>
               </View>
@@ -464,74 +600,22 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.foodItemCard}
-                    onPress={() => handleSelectFood(item)}
-                    activeOpacity={0.7}
-                  >
-                    {/* Food Thumbnail Icon */}
-                    <View style={styles.foodItemIcon}>
-                      <Text style={{ fontSize: 22 }}>{item.icon || '🍽️'}</Text>
-                    </View>
-
-                    {/* Food Details & Color-Coded Macro Badges */}
-                    <View style={styles.foodItemMain}>
-                      <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
-                      <Text style={styles.foodItemUnit}>
-                        1 {item.servingUnit} • {item.categoryLabel}
-                      </Text>
-
-                      {/* Clean Color-Coded Macro Badges */}
-                      <View style={styles.macroPillRow}>
-                        <View style={styles.macroBadge}>
-                          <View style={[styles.macroDot, { backgroundColor: '#22C55E' }]} />
-                          <Text style={styles.macroText}>{item.protein}g P</Text>
-                        </View>
-                        <View style={styles.macroBadge}>
-                          <View style={[styles.macroDot, { backgroundColor: '#EAB308' }]} />
-                          <Text style={styles.macroText}>{item.carbs}g C</Text>
-                        </View>
-                        <View style={styles.macroBadge}>
-                          <View style={[styles.macroDot, { backgroundColor: '#F97316' }]} />
-                          <Text style={styles.macroText}>{item.fat}g F</Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Calories Stack + 44x44px Touch Target Quick Add */}
-                    <View style={styles.foodItemRight}>
-                      <View style={styles.caloriesStack}>
-                        <Text style={styles.foodItemCals}>{item.calories}</Text>
-                        <Text style={styles.foodItemCalUnit}>kcal</Text>
-                      </View>
-
-                      {/* 44x44px Touch Target Button */}
-                      <TouchableOpacity
-                        style={styles.quickAddButton}
-                        onPress={() => handleQuickAdd(item)}
-                        activeOpacity={0.8}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityLabel={`Quick add 1 serving of ${item.name}`}
-                      >
-                        <View style={styles.quickAddIconCircle}>
-                          <Ionicons name="add" size={20} color="#FFFFFF" />
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                )}
+                renderItem={renderFoodItem}
+                initialNumToRender={12}
+                maxToRenderPerBatch={10}
+                windowSize={5}
               />
             </>
           )}
 
           {/* 5. Portion Selector Drawer */}
-          {selectedFood && (
+          {selectedFood ? (
             <View style={styles.portionOverlay}>
-              <TouchableOpacity
+              <Pressable
                 style={styles.portionOverlayDismiss}
-                activeOpacity={1}
                 onPress={() => setSelectedFood(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss portion drawer"
               />
               <View style={styles.portionDrawer}>
                 <View style={styles.drawerHandleBar}>
@@ -545,42 +629,45 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       1 {selectedFood.servingUnit} = {selectedFood.calories} kcal
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    style={styles.drawerCloseBtn}
+                  <Pressable
+                    style={({ pressed }) => [styles.drawerCloseBtn, pressed && styles.btnPressedSubtle]}
                     onPress={() => setSelectedFood(null)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    accessibilityRole="button"
                     accessibilityLabel="Close portion drawer"
                   >
                     <Ionicons name="close" size={20} color="#64748B" />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
-                {/* Quantity Stepper */}
+                {/* Quantity Stepper with Functional State Updaters */}
                 <View style={styles.stepperContainer}>
                   <Text style={styles.stepperLabel}>Portion Size:</Text>
                   <View style={styles.stepperControls}>
-                    <TouchableOpacity
-                      style={styles.stepButton}
+                    <Pressable
+                      style={({ pressed }) => [styles.stepButton, pressed && styles.btnPressedSubtle]}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={() => setQuantity(Math.max(0.5, Math.round((quantity - 0.5) * 10) / 10))}
+                      onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
+                      accessibilityRole="button"
                       accessibilityLabel="Decrease portion by 0.5"
                     >
                       <Ionicons name="remove" size={20} color={Colors.primary} />
-                    </TouchableOpacity>
+                    </Pressable>
                     <View style={styles.quantityDisplayContainer}>
                       <Text style={styles.quantityDisplay}>{quantity}x</Text>
                       <Text style={styles.quantityUnitText} numberOfLines={1}>
                         {selectedFood.servingUnit}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.stepButton}
+                    <Pressable
+                      style={({ pressed }) => [styles.stepButton, pressed && styles.btnPressedSubtle]}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={() => setQuantity(Math.round((quantity + 0.5) * 10) / 10)}
+                      onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
+                      accessibilityRole="button"
                       accessibilityLabel="Increase portion by 0.5"
                     >
                       <Ionicons name="add" size={20} color={Colors.primary} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </View>
 
@@ -591,11 +678,15 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                     { val: 1, label: '1x (Standard)' },
                     { val: 2, label: '2x (Double)' },
                   ].map((preset) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={preset.val}
-                      style={[styles.presetBtn, quantity === preset.val && styles.presetBtnActive]}
+                      style={({ pressed }) => [
+                        styles.presetBtn,
+                        quantity === preset.val && styles.presetBtnActive,
+                        pressed && styles.btnPressedPill,
+                      ]}
                       onPress={() => setQuantity(preset.val)}
-                      activeOpacity={0.7}
+                      accessibilityRole="button"
                     >
                       <Text
                         style={[
@@ -605,7 +696,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       >
                         {preset.label}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
 
@@ -624,10 +715,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                     <View
                       style={[
                         styles.impactProgressBar,
-                        {
-                          width: `${projectedPct}%`,
-                          backgroundColor: isProjectedOver ? '#EF4444' : '#22C55E',
-                        },
+                        { width: `${projectedPct}%` },
+                        isProjectedOver ? styles.impactBarOver : styles.impactBarOk,
                       ]}
                     />
                   </View>
@@ -642,26 +731,26 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   </View>
                 </View>
 
-                {/* Live Nutrition Breakdown */}
+                {/* Live Nutrition Breakdown with Static Style Colors */}
                 <View style={styles.liveNutritionBox}>
                   <View style={styles.liveNutriItem}>
                     <Text style={styles.liveNutriVal}>{projectedAddedCals}</Text>
                     <Text style={styles.liveNutriKey}>Calories</Text>
                   </View>
                   <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, { color: '#22C55E' }]}>
+                    <Text style={[styles.liveNutriVal, styles.liveNutriProtein]}>
                       {(selectedFood.protein * quantity).toFixed(1)}g
                     </Text>
                     <Text style={styles.liveNutriKey}>Protein</Text>
                   </View>
                   <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, { color: '#EAB308' }]}>
+                    <Text style={[styles.liveNutriVal, styles.liveNutriCarbs]}>
                       {(selectedFood.carbs * quantity).toFixed(1)}g
                     </Text>
                     <Text style={styles.liveNutriKey}>Carbs</Text>
                   </View>
                   <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, { color: '#F97316' }]}>
+                    <Text style={[styles.liveNutriVal, styles.liveNutriFat]}>
                       {(selectedFood.fat * quantity).toFixed(1)}g
                     </Text>
                     <Text style={styles.liveNutriKey}>Fat</Text>
@@ -669,23 +758,23 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 </View>
 
                 {/* Confirm Button */}
-                <TouchableOpacity
-                  style={styles.confirmAddBtn}
+                <Pressable
+                  style={({ pressed }) => [styles.confirmAddBtn, pressed && styles.btnPressedPrimary]}
                   onPress={handleConfirmLog}
-                  activeOpacity={0.85}
+                  accessibilityRole="button"
                   accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
                 >
                   <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
                   <Text style={styles.confirmAddBtnText}>
                     Add to {mealTitle} • {projectedAddedCals} kcal
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
-          )}
+          ) : null}
 
           {/* 6. Floating In-Modal Toast Snackbar with Undo */}
-          {toastMessage && (
+          {toastMessage ? (
             <View style={styles.toastContainer}>
               <View style={styles.toastContent}>
                 <Ionicons name="checkmark-circle" size={18} color="#22C55E" style={{ marginRight: 8 }} />
@@ -694,32 +783,33 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 </Text>
               </View>
               <View style={styles.toastActions}>
-                {lastAddedMeal && (
-                  <TouchableOpacity
-                    style={styles.toastUndoBtn}
+                {lastAddedMeal ? (
+                  <Pressable
+                    style={({ pressed }) => [styles.toastUndoBtn, pressed && styles.btnPressedSubtle]}
                     onPress={handleUndo}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.8}
+                    accessibilityRole="button"
                     accessibilityLabel="Undo food log"
                   >
                     <Text style={styles.toastUndoText}>Undo</Text>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  style={styles.toastCloseBtn}
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  style={({ pressed }) => [styles.toastCloseBtn, pressed && styles.btnPressedSubtle]}
                   onPress={() => {
                     setToastMessage(null);
                     setLastAddedMeal(null);
                     if (toastTimer) clearTimeout(toastTimer);
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
                   accessibilityLabel="Dismiss toast"
                 >
                   <Ionicons name="close" size={16} color="#94A3B8" />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
-          )}
+          ) : null}
         </SafeAreaView>
       </View>
     </Modal>
@@ -807,6 +897,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#EA580C',
     fontWeight: '600',
+  },
+  mealSwitcherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  mealSwitcherLabel: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#475569',
+    marginRight: 8,
+    fontWeight: '600',
+  },
+  mealSwitcherScroll: {
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 16,
+  },
+  mealTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 5,
+  },
+  mealTabPillActive: {
+    backgroundColor: '#EA580C',
+    borderColor: '#EA580C',
+  },
+  mealTabEmoji: {
+    fontSize: 13,
+  },
+  mealTabLabel: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12.5,
+    color: '#475569',
+  },
+  mealTabLabelActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontFamily: Fonts.poppins.bold,
   },
   searchBarContainer: {
     flexDirection: 'row',
@@ -921,6 +1058,19 @@ const styles = StyleSheet.create({
     height: 5.5,
     borderRadius: 3,
   },
+  macroDotProtein: {
+    backgroundColor: '#22C55E',
+  },
+  macroDotCarbs: {
+    backgroundColor: '#EAB308',
+  },
+  macroDotFat: {
+    backgroundColor: '#F97316',
+  },
+  foodItemCardPressed: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+  },
   macroText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 11,
@@ -965,6 +1115,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 2,
+  },
+  quickAddButtonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
   },
   portionOverlay: {
     position: 'absolute',
@@ -1152,6 +1306,12 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
+  impactBarOk: {
+    backgroundColor: '#22C55E',
+  },
+  impactBarOver: {
+    backgroundColor: '#EF4444',
+  },
   impactFooterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1184,6 +1344,26 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.bold,
     fontSize: 15,
     color: '#0F172A',
+  },
+  liveNutriProtein: {
+    color: '#22C55E',
+  },
+  liveNutriCarbs: {
+    color: '#EAB308',
+  },
+  liveNutriFat: {
+    color: '#F97316',
+  },
+  btnPressedSubtle: {
+    opacity: 0.7,
+  },
+  btnPressedPill: {
+    opacity: 0.8,
+    transform: [{ scale: 0.97 }],
+  },
+  btnPressedPrimary: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   liveNutriKey: {
     fontFamily: Fonts.poppins.medium,

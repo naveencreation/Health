@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useHealth } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
@@ -69,11 +69,16 @@ export const TopDateStrip: React.FC = () => {
             const strokeDashoffset = circumference - circumference * Math.max(0.08, item.progress);
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={item.dateStr}
-                style={styles.activeCapsule}
+                style={({ pressed }) => [
+                  styles.activeCapsule,
+                  pressed && styles.pressedCapsule,
+                ]}
                 onPress={() => setSelectedDate(item.dateStr)}
-                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Selected ${item.dayName} ${item.dayNum}`}
+                accessibilityState={{ selected: true }}
               >
                 <View style={styles.activeCircleWrapper}>
                   <Svg width={size} height={size} style={styles.svgRing}>
@@ -102,23 +107,28 @@ export const TopDateStrip: React.FC = () => {
                 </View>
 
                 <Text style={styles.activeDayNameText}>{item.dayName}</Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           }
 
           // Unselected Translucent White Capsule
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.dateStr}
-              style={styles.capsule}
+              style={({ pressed }) => [
+                styles.capsule,
+                pressed && styles.pressedCapsule,
+              ]}
               onPress={() => setSelectedDate(item.dateStr)}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${item.dayName} ${item.dayNum}`}
+              accessibilityState={{ selected: false }}
             >
               <View style={styles.circleNumber}>
                 <Text style={styles.dayNumText}>{item.dayNum}</Text>
               </View>
               <Text style={styles.dayNameText}>{item.dayName}</Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -213,5 +223,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.3,
+  },
+  pressedCapsule: {
+    opacity: 0.75,
+    transform: [{ scale: 0.95 }],
   },
 });

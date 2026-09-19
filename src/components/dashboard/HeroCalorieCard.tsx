@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Dimensions,
   NativeSyntheticEvent,
@@ -205,26 +205,31 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
           <Text style={styles.goalTitle}>
             {activeSlide === 0 ? `${goalLabel} : ${budget} Cal` : '7-Day Diet Journey'}
           </Text>
-          {activeSlide === 0 && onEditGoal && (
-            <TouchableOpacity
+          {activeSlide === 0 && onEditGoal ? (
+            <Pressable
               onPress={onEditGoal}
-              activeOpacity={0.7}
-              style={styles.editBtn}
+              style={({ pressed }) => [styles.editBtn, pressed && styles.pressedBtnSubtle]}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityRole="button"
               accessibilityLabel="Edit calorie budget"
             >
               <Ionicons name="pencil-outline" size={15} color="#0F172A" />
-            </TouchableOpacity>
-          )}
+            </Pressable>
+          ) : null}
         </View>
 
         {/* Segmented Switcher Pill */}
         <View style={styles.segmentPill}>
-          <TouchableOpacity
-            style={[styles.segmentBtn, activeSlide === 0 && styles.segmentBtnActive]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.segmentBtn,
+              activeSlide === 0 && styles.segmentBtnActive,
+              pressed && styles.pressedSegment,
+            ]}
             onPress={() => handleSlideChange(0)}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
             accessibilityLabel="Show today's budget"
+            accessibilityState={{ selected: activeSlide === 0 }}
           >
             <Text
               style={[
@@ -234,13 +239,18 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             >
               Today
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[styles.segmentBtn, activeSlide === 1 && styles.segmentBtnActive]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.segmentBtn,
+              activeSlide === 1 && styles.segmentBtnActive,
+              pressed && styles.pressedSegment,
+            ]}
             onPress={() => handleSlideChange(1)}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
             accessibilityLabel="Show 7-day trend"
+            accessibilityState={{ selected: activeSlide === 1 }}
           >
             <Text
               style={[
@@ -250,7 +260,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             >
               7-Day Trend
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -277,7 +287,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
               <View style={styles.metricBlock}>
                 <View style={styles.metricLabelRow}>
                   <Text style={styles.metricLabel}>Eaten</Text>
-                  <Ionicons name="restaurant-outline" size={13} color="#0284C7" style={{ marginLeft: 4 }} />
+                  <Ionicons name="restaurant-outline" size={13} color="#0284C7" style={styles.metricIcon} />
                 </View>
                 <Text style={styles.metricValueText}>
                   {eaten} <Text style={styles.metricUnit}>Cal</Text>
@@ -285,10 +295,10 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
               </View>
 
               {/* Burned */}
-              <View style={[styles.metricBlock, { marginTop: 12 }]}>
+              <View style={[styles.metricBlock, styles.metricBlockBurned]}>
                 <View style={styles.metricLabelRow}>
                   <Text style={styles.metricLabel}>Burned</Text>
-                  <Ionicons name="flame" size={13} color="#EA580C" style={{ marginLeft: 4 }} />
+                  <Ionicons name="flame" size={13} color="#EA580C" style={styles.metricIcon} />
                 </View>
                 <Text style={styles.metricValueText}>
                   {burned} <Text style={styles.metricUnit}>Cal</Text>
@@ -338,7 +348,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Carb</Text>
               <View style={styles.macroTrack}>
-                <View style={[styles.macroFill, { width: `${Math.round(carbRatio * 100)}%`, backgroundColor: '#38BDF8' }]} />
+                <View
+                  style={[
+                    styles.macroFill,
+                    { width: `${Math.round(carbRatio * 100)}%` },
+                    styles.macroFillCarb,
+                  ]}
+                />
               </View>
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs}g
@@ -349,7 +365,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Proteins</Text>
               <View style={styles.macroTrack}>
-                <View style={[styles.macroFill, { width: `${Math.round(proteinRatio * 100)}%`, backgroundColor: '#22C55E' }]} />
+                <View
+                  style={[
+                    styles.macroFill,
+                    { width: `${Math.round(proteinRatio * 100)}%` },
+                    styles.macroFillProtein,
+                  ]}
+                />
               </View>
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein}g
@@ -360,7 +382,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Fat</Text>
               <View style={styles.macroTrack}>
-                <View style={[styles.macroFill, { width: `${Math.round(fatRatio * 100)}%`, backgroundColor: '#F97316' }]} />
+                <View
+                  style={[
+                    styles.macroFill,
+                    { width: `${Math.round(fatRatio * 100)}%` },
+                    styles.macroFillFat,
+                  ]}
+                />
               </View>
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat}g
@@ -392,7 +420,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                 name={isOnTrack ? 'checkmark-circle' : 'alert-circle'}
                 size={13}
                 color={isOnTrack ? '#16A34A' : '#EA580C'}
-                style={{ marginRight: 3 }}
+                style={styles.statusBadgeIcon}
               />
               <Text
                 style={[
@@ -511,12 +539,17 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             {trendDays.map((day, idx) => {
               const isSelected = selectedDayIdx === idx;
               return (
-                <TouchableOpacity
+                <Pressable
                   key={day.dateStr || idx}
-                  style={[styles.timelineBtn, isSelected && styles.timelineBtnSelected]}
+                  style={({ pressed }) => [
+                    styles.timelineBtn,
+                    isSelected && styles.timelineBtnSelected,
+                    pressed && styles.pressedTimelineBtn,
+                  ]}
                   onPress={() => setSelectedDayIdx(idx)}
-                  activeOpacity={0.7}
                   hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ${day.dayName}, ${day.cals} calories`}
                 >
                   <Text
                     style={[
@@ -526,7 +559,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                   >
                     {day.dayName}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
@@ -535,15 +568,27 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
 
       {/* 3. Bottom Micro Pagination Indicator */}
       <View style={styles.paginationRow}>
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleSlideChange(0)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={[styles.paginationDot, activeSlide === 0 && styles.paginationDotActive]}
+          style={({ pressed }) => [
+            styles.paginationDot,
+            activeSlide === 0 && styles.paginationDotActive,
+            pressed && styles.pressedDot,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Go to Today's budget slide"
         />
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleSlideChange(1)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={[styles.paginationDot, activeSlide === 1 && styles.paginationDotActive]}
+          style={({ pressed }) => [
+            styles.paginationDot,
+            activeSlide === 1 && styles.paginationDotActive,
+            pressed && styles.pressedDot,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Go to 7-Day Trend slide"
         />
       </View>
     </View>
@@ -591,6 +636,10 @@ const styles = StyleSheet.create({
   editBtn: {
     padding: 2,
   },
+  pressedBtnSubtle: {
+    opacity: 0.7,
+    transform: [{ scale: 0.94 }],
+  },
   // Segment Switcher Pill
   segmentPill: {
     flexDirection: 'row',
@@ -604,6 +653,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3.5,
     paddingHorizontal: 9,
     borderRadius: 11,
+  },
+  pressedSegment: {
+    opacity: 0.8,
   },
   segmentBtnActive: {
     backgroundColor: '#FFFFFF',
@@ -639,6 +691,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   metricBlock: {},
+  metricBlockBurned: {
+    marginTop: 12,
+  },
+  metricIcon: {
+    marginLeft: 4,
+  },
   metricLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -712,6 +770,15 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
+  macroFillCarb: {
+    backgroundColor: '#38BDF8',
+  },
+  macroFillProtein: {
+    backgroundColor: '#22C55E',
+  },
+  macroFillFat: {
+    backgroundColor: '#F97316',
+  },
   macroRatioText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 10.5,
@@ -751,6 +818,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 10,
+  },
+  statusBadgeIcon: {
+    marginRight: 3,
   },
   statusBadgeGreen: {
     backgroundColor: '#DCFCE7',
@@ -869,6 +939,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedTimelineBtn: {
+    opacity: 0.7,
+    transform: [{ scale: 0.93 }],
+  },
   timelineBtnSelected: {
     backgroundColor: '#0F172A', // Obsidian Black Pill!
     paddingHorizontal: 10,
@@ -901,6 +975,9 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: 'rgba(15, 23, 42, 0.2)',
+  },
+  pressedDot: {
+    opacity: 0.7,
   },
   paginationDotActive: {
     width: 16,

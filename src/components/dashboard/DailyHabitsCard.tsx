@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, TextInput } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -74,14 +74,18 @@ export const DailyHabitsCard: React.FC = () => {
       <View style={styles.headerRow}>
         <Text style={styles.sectionHeading}>Daily Habits & Activity</Text>
 
-        <TouchableOpacity
-          style={styles.logWorkoutHeaderBtn}
+        <Pressable
+          style={({ pressed }) => [
+            styles.logWorkoutHeaderBtn,
+            pressed && styles.pressedBtnSubtle,
+          ]}
           onPress={() => setWorkoutModalVisible(true)}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Log workout"
         >
           <Ionicons name="barbell-outline" size={14} color="#EA580C" />
           <Text style={styles.logWorkoutHeaderText}>Log Workout</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Side-by-Side Habit Pods */}
@@ -93,7 +97,7 @@ export const DailyHabitsCard: React.FC = () => {
           </View>
 
           <View style={styles.gaugeCanvas}>
-            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+            <View style={styles.gaugeRotate}>
               <Svg width={dialSize} height={dialSize}>
                 <Circle
                   cx={dialSize / 2}
@@ -136,27 +140,27 @@ export const DailyHabitsCard: React.FC = () => {
 
           {/* Quick Action Stepper */}
           <View style={styles.stepperActionRow}>
-            {currentMl > 0 && (
-              <TouchableOpacity
-                style={styles.waterMinusBtn}
+            {currentMl > 0 ? (
+              <Pressable
+                style={({ pressed }) => [styles.waterMinusBtn, pressed && styles.stepperPressed]}
                 onPress={() => addWater(-250)}
-                activeOpacity={0.7}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
                 accessibilityLabel="Decrease water by 250 ml"
               >
                 <Ionicons name="remove" size={16} color="#2563EB" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={styles.waterAddBtn}
+              </Pressable>
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [styles.waterAddBtn, pressed && styles.stepperPressed]}
               onPress={() => addWater(250)}
-              activeOpacity={0.8}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
               accessibilityLabel="Add 250 ml water"
             >
               <Ionicons name="add" size={15} color="#FFFFFF" />
               <Text style={styles.waterAddBtnText}>250 ml</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -167,7 +171,7 @@ export const DailyHabitsCard: React.FC = () => {
           </View>
 
           <View style={styles.gaugeCanvas}>
-            <View style={{ transform: [{ rotate: '-90deg' }] }}>
+            <View style={styles.gaugeRotate}>
               <Svg width={dialSize} height={dialSize}>
                 <Circle
                   cx={dialSize / 2}
@@ -210,33 +214,33 @@ export const DailyHabitsCard: React.FC = () => {
 
           {/* Quick Action Stepper */}
           <View style={styles.stepperActionRow}>
-            {steps > 0 && (
-              <TouchableOpacity
-                style={styles.stepMinusBtn}
+            {steps > 0 ? (
+              <Pressable
+                style={({ pressed }) => [styles.stepMinusBtn, pressed && styles.stepperPressed]}
                 onPress={() => addSteps(-1000)}
-                activeOpacity={0.7}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
                 accessibilityLabel="Decrease steps by 1,000"
               >
                 <Ionicons name="remove" size={16} color="#EA580C" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={styles.stepAddBtn}
+              </Pressable>
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [styles.stepAddBtn, pressed && styles.stepperPressed]}
               onPress={() => addSteps(1000)}
-              activeOpacity={0.8}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
               accessibilityLabel="Add 1,000 steps"
             >
               <Ionicons name="add" size={15} color="#FFFFFF" />
               <Text style={styles.stepAddBtnText}>1k steps</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>
 
       {/* Logged Workouts Strip (if any logged) */}
-      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 && (
+      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 ? (
         <View style={styles.activitiesStrip}>
           <View style={styles.activitiesHeaderRow}>
             <Text style={styles.activitiesStripTitle}>
@@ -251,17 +255,18 @@ export const DailyHabitsCard: React.FC = () => {
               <Text style={styles.activityChipText}>
                 🏃 {act.name} ({act.durationMinutes}m) • +{act.caloriesBurned} kcal
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => removeWorkout(act.id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
                 accessibilityLabel={`Remove workout ${act.name}`}
               >
                 <Ionicons name="close-circle" size={16} color="#94A3B8" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ))}
         </View>
-      )}
+      ) : null}
 
       {/* Workout Logging Modal */}
       <Modal visible={workoutModalVisible} transparent animationType="fade">
@@ -269,36 +274,39 @@ export const DailyHabitsCard: React.FC = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log Activity / Workout</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setWorkoutModalVisible(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close workout modal"
               >
                 <Ionicons name="close" size={22} color="#0F172A" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <Text style={styles.modalSubtitle}>Quick select an exercise:</Text>
             <View style={styles.quickGrid}>
               {QUICK_WORKOUTS.map((item, idx) => (
-                <TouchableOpacity
+                <Pressable
                   key={idx}
-                  style={styles.quickCard}
+                  style={({ pressed }) => [styles.quickCard, pressed && styles.quickCardPressed]}
                   onPress={() => {
                     addWorkout(item.name, item.mins, item.cals);
                     setWorkoutModalVisible(false);
                   }}
-                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Log ${item.name} workout`}
                 >
                   <Ionicons name={item.icon as any} size={20} color="#EA580C" />
                   <Text style={styles.quickName}>{item.name}</Text>
                   <Text style={styles.quickMeta}>
                     {item.mins}m • {item.cals} kcal
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
-            <Text style={[styles.modalSubtitle, { marginTop: 14 }]}>Or custom workout:</Text>
+            <Text style={styles.modalSubtitleMt14}>Or custom workout:</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g., Badminton, Swimming, HIIT"
@@ -328,13 +336,14 @@ export const DailyHabitsCard: React.FC = () => {
               </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.saveWorkoutBtn}
+            <Pressable
+              style={({ pressed }) => [styles.saveWorkoutBtn, pressed && styles.saveBtnPressed]}
               onPress={handleAddCustomWorkout}
-              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Save custom workout"
             >
               <Text style={styles.saveWorkoutBtnText}>Save Workout</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -383,6 +392,10 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#EA580C',
     fontWeight: '600',
+  },
+  pressedBtnSubtle: {
+    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
   },
   // Side-by-Side Habit Pods
   podsRow: {
@@ -454,6 +467,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  gaugeRotate: {
+    transform: [{ rotate: '-90deg' }],
+  },
   gaugeInner: {
     position: 'absolute',
     alignItems: 'center',
@@ -504,6 +520,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  stepperPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.95 }],
   },
   waterMinusBtn: {
     width: 32,
@@ -638,6 +658,14 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: 8,
   },
+  modalSubtitleMt14: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748B',
+    marginBottom: 8,
+    marginTop: 14,
+  },
   quickGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -650,6 +678,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  quickCardPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   quickName: {
     fontFamily: Fonts.poppins.semiBold,
@@ -694,6 +726,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 16,
+  },
+  saveBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   saveWorkoutBtnText: {
     fontFamily: Fonts.poppins.bold,

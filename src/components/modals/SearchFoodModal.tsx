@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Modal,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   FlatList,
   ScrollView,
 } from 'react-native';
@@ -55,7 +55,9 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
   const handleQuickAdd = (food: FoodItem) => {
     addMealItem(targetSlot, food, 1);
     setFeedbackDish(`Added ${food.name} to ${targetSlot.toUpperCase()}`);
-    onLoggedSuccess && onLoggedSuccess(food.name, targetSlot);
+    if (onLoggedSuccess) {
+      onLoggedSuccess(food.name, targetSlot);
+    }
     setTimeout(() => {
       setFeedbackDish(null);
     }, 2000);
@@ -69,10 +71,11 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalBackdrop}>
-        <TouchableOpacity
+        <Pressable
           style={styles.backdropDismiss}
           onPress={onClose}
-          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss food search modal backdrop"
         />
         <View style={styles.sheetContainer}>
           <View style={styles.handleContainer}>
@@ -80,127 +83,142 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
           </View>
           {/* Modal Header */}
           <View style={styles.header}>
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
-              style={styles.closeBtn}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Close food search"
             >
-            <Ionicons name="close" size={24} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerTitleCenter}>
-            <Text style={styles.headerTitle}>Search Foods</Text>
-            <Text style={styles.headerSubtitle}>Universal calorie & nutrition database</Text>
+              <Ionicons name="close" size={24} color={Colors.textPrimary} />
+            </Pressable>
+            <View style={styles.headerTitleCenter}>
+              <Text style={styles.headerTitle}>Search Foods</Text>
+              <Text style={styles.headerSubtitle}>Universal calorie & nutrition database</Text>
+            </View>
+            <View style={styles.headerSpacer} />
           </View>
-          <View style={{ width: 36 }} />
-        </View>
 
-        {/* Search Input Bar */}
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color={Colors.textSecondary} style={{ marginRight: 8 }} />
-          <TextInput
-            style={styles.input}
-            placeholder="Search dal, roti, paneer, oats, dosa, biryani..."
-            placeholderTextColor="#94A3B8"
-            value={query}
-            onChangeText={setQuery}
-            autoFocus={true}
-            clearButtonMode="while-editing"
-          />
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')}>
-              <Ionicons name="close-circle" size={18} color="#94A3B8" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Target Meal Slot Picker Strip */}
-        <View style={styles.slotStrip}>
-          <Text style={styles.slotStripLabel}>Add to:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.slotScroll}>
-            {MEAL_SLOTS.map((slot) => {
-              const isSelected = targetSlot === slot.id;
-              return (
-                <TouchableOpacity
-                  key={slot.id}
-                  style={[styles.slotPill, isSelected && styles.slotPillActive]}
-                  onPress={() => setTargetSlot(slot.id)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.slotEmoji}>{slot.icon}</Text>
-                  <Text style={[styles.slotText, isSelected && styles.slotTextActive]}>
-                    {slot.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Toast Feedback */}
-        {feedbackDish && (
-          <View style={styles.feedbackToast}>
-            <Ionicons name="checkmark-circle" size={16} color="#059669" />
-            <Text style={styles.feedbackToastText}>{feedbackDish} 🎯</Text>
+          {/* Search Input Bar */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Search dal, roti, paneer, oats, dosa, biryani..."
+              placeholderTextColor="#94A3B8"
+              value={query}
+              onChangeText={setQuery}
+              autoFocus={true}
+              clearButtonMode="while-editing"
+            />
+            {query.length > 0 ? (
+              <Pressable
+                onPress={() => setQuery('')}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search text"
+                style={({ pressed }) => (pressed ? styles.pressedSubtle : null)}
+              >
+                <Ionicons name="close-circle" size={18} color="#94A3B8" />
+              </Pressable>
+            ) : null}
           </View>
-        )}
 
-        {/* Search Results List */}
-        <FlatList
-          data={filteredFoods}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Text style={styles.resultsCount}>
-              {query.trim()
-                ? `Found ${filteredFoods.length} matching foods`
-                : 'Frequently logged foods'}
-            </Text>
-          }
-          renderItem={({ item }) => (
-            <View style={styles.foodRow}>
-              <View style={styles.foodIconBox}>
-                <Text style={{ fontSize: 22 }}>{item.icon || '🍽️'}</Text>
-              </View>
+          {/* Target Meal Slot Picker Strip */}
+          <View style={styles.slotStrip}>
+            <Text style={styles.slotStripLabel}>Add to:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.slotScroll}>
+              {MEAL_SLOTS.map((slot) => {
+                const isSelected = targetSlot === slot.id;
+                return (
+                  <Pressable
+                    key={slot.id}
+                    style={({ pressed }) => [
+                      styles.slotPill,
+                      isSelected ? styles.slotPillActive : null,
+                      pressed ? styles.pressedSlotPill : null,
+                    ]}
+                    onPress={() => setTargetSlot(slot.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`Add to ${slot.label}`}
+                  >
+                    <Text style={styles.slotEmoji}>{slot.icon}</Text>
+                    <Text style={[styles.slotText, isSelected ? styles.slotTextActive : null]}>
+                      {slot.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-              <View style={styles.foodMainInfo}>
-                <Text style={styles.foodName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={styles.foodUnit}>
-                  1 {item.servingUnit} • {item.categoryLabel}
-                </Text>
-                <View style={styles.macroPillRow}>
-                  <Text style={[styles.macroPill, { color: Colors.protein }]}>
-                    P: {item.protein}g
+          {/* Toast Feedback */}
+          {feedbackDish ? (
+            <View style={styles.feedbackToast} accessibilityLiveRegion="polite">
+              <Ionicons name="checkmark-circle" size={16} color="#059669" />
+              <Text style={styles.feedbackToastText}>{feedbackDish} 🎯</Text>
+            </View>
+          ) : null}
+
+          {/* Search Results List */}
+          <FlatList
+            data={filteredFoods}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <Text style={styles.resultsCount}>
+                {query.trim()
+                  ? `Found ${filteredFoods.length} matching foods`
+                  : 'Frequently logged foods'}
+              </Text>
+            }
+            renderItem={({ item }) => (
+              <View style={styles.foodRow}>
+                <View style={styles.foodIconBox}>
+                  <Text style={styles.foodIconText}>{item.icon || '🍽️'}</Text>
+                </View>
+
+                <View style={styles.foodMainInfo}>
+                  <Text style={styles.foodName} numberOfLines={1}>
+                    {item.name}
                   </Text>
-                  <Text style={[styles.macroPill, { color: Colors.carbs }]}>
-                    C: {item.carbs}g
+                  <Text style={styles.foodUnit}>
+                    1 {item.servingUnit} • {item.categoryLabel}
                   </Text>
-                  <Text style={[styles.macroPill, { color: Colors.fat }]}>
-                    F: {item.fat}g
-                  </Text>
+                  <View style={styles.macroPillRow}>
+                    <Text style={[styles.macroPill, styles.macroPillProtein]}>
+                      P: {item.protein}g
+                    </Text>
+                    <Text style={[styles.macroPill, styles.macroPillCarbs]}>
+                      C: {item.carbs}g
+                    </Text>
+                    <Text style={[styles.macroPill, styles.macroPillFat]}>
+                      F: {item.fat}g
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.foodRightCol}>
+                  <Text style={styles.foodCals}>{item.calories} <Text style={styles.calUnit}>kcal</Text></Text>
+                  <Pressable
+                    style={({ pressed }) => [styles.quickAddBtn, pressed ? styles.pressedQuickAdd : null]}
+                    onPress={() => handleQuickAdd(item)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Quick add ${item.name} to ${targetSlot}`}
+                  >
+                    <Ionicons name="add" size={18} color="#FFFFFF" />
+                    <Text style={styles.quickAddText}>Add</Text>
+                  </Pressable>
                 </View>
               </View>
-
-              <View style={styles.foodRightCol}>
-                <Text style={styles.foodCals}>{item.calories} <Text style={styles.calUnit}>kcal</Text></Text>
-                <TouchableOpacity
-                  style={styles.quickAddBtn}
-                  onPress={() => handleQuickAdd(item)}
-                  activeOpacity={0.8}
-                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                >
-                  <Ionicons name="add" size={18} color="#FFFFFF" />
-                  <Text style={styles.quickAddText}>Add</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        />
+            )}
+          />
+        </View>
       </View>
-    </View>
-  </Modal>
+    </Modal>
   );
 };
 
@@ -270,6 +288,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedCloseBtn: {
+    opacity: 0.7,
+    backgroundColor: '#E2E8F0',
+  },
+  headerSpacer: {
+    width: 36,
+  },
   headerTitleCenter: {
     alignItems: 'center',
   },
@@ -300,6 +325,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  pressedSubtle: {
+    opacity: 0.6,
   },
   input: {
     flex: 1,
@@ -336,6 +367,10 @@ const styles = StyleSheet.create({
   slotPillActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
+  },
+  pressedSlotPill: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
   slotEmoji: {
     fontSize: 13,
@@ -402,6 +437,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
+  foodIconText: {
+    fontSize: 22,
+  },
   foodMainInfo: {
     flex: 1,
   },
@@ -424,6 +462,15 @@ const styles = StyleSheet.create({
   macroPill: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 10,
+  },
+  macroPillProtein: {
+    color: Colors.protein,
+  },
+  macroPillCarbs: {
+    color: Colors.carbs,
+  },
+  macroPillFat: {
+    color: Colors.fat,
   },
   foodRightCol: {
     alignItems: 'flex-end',
@@ -448,6 +495,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
     gap: 2,
+  },
+  pressedQuickAdd: {
+    opacity: 0.85,
+    transform: [{ scale: 0.95 }],
   },
   quickAddText: {
     fontFamily: Fonts.poppins.bold,

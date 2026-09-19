@@ -219,7 +219,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           <View style={styles.heroSection}>
             <View style={styles.heroImageContainer}>
               <Image
-                source={require('../../../assets/ria_avatar.jpg')}
+                source={require('../../../assets/ria_avatar.png')}
                 style={styles.heroImage}
                 resizeMode="cover"
               />

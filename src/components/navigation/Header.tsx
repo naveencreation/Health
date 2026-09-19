@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { UserAvatar } from '@/components/common/UserAvatar';
 
 interface HeaderProps {
   onSearchPress?: () => void;
@@ -31,29 +32,31 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Left: Avatar + Welcome Text (Blended directly into screen) */}
         <View style={styles.userSection}>
           {/* Avatar with subtle white glow / border */}
-          <TouchableOpacity
-            style={styles.avatarContainer}
+          <Pressable
+            style={({ pressed }) => [
+              styles.avatarContainer,
+              pressed && styles.avatarPressed,
+            ]}
             onPress={onAvatarPress}
-            activeOpacity={onAvatarPress ? 0.75 : 1}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
           >
-            <Image
-              source={{
-                uri: userGoals.avatarUrl || DEFAULT_AVATAR_URL,
-              }}
-              style={styles.avatarImage}
+            <UserAvatar
+              avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
+              size={51}
             />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Welcome & Name Stack */}
           <View style={styles.nameStack}>
             <View style={styles.welcomeRow}>
               <Text style={styles.welcomeText}>Welcome</Text>
-              {currentUser?.isGuest && (
+              {currentUser?.isGuest ? (
                 <View style={styles.guestTag}>
                   <Text style={styles.guestTagText}>Guest</Text>
                 </View>
-              )}
+              ) : null}
             </View>
             <Text style={styles.userNameText} numberOfLines={1}>
               {currentUser?.isGuest ? 'Guest Explorer' : (currentUser?.name || userGoals.name || 'User')}
@@ -72,12 +75,16 @@ export const Header: React.FC<HeaderProps> = ({
           ) : null}
 
           {/* Auth Button */}
-          {(onSignInPress || onSignOutPress) && (
-            <TouchableOpacity
-              style={[styles.circleButton, currentUser?.isGuest && styles.authButtonHighlight]}
+          {(onSignInPress || onSignOutPress) ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.circleButton,
+                currentUser?.isGuest && styles.authButtonHighlight,
+                pressed && styles.circleButtonPressed,
+              ]}
               onPress={currentUser?.isGuest ? onSignInPress : onSignOutPress}
-              activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
               accessibilityLabel={currentUser?.isGuest ? "Sign In" : "Sign Out"}
             >
               <Ionicons
@@ -85,41 +92,55 @@ export const Header: React.FC<HeaderProps> = ({
                 size={18}
                 color={currentUser?.isGuest ? Colors.primary : "#EF4444"}
               />
-            </TouchableOpacity>
-          )}
+            </Pressable>
+          ) : null}
 
           {/* Search Button */}
-          <TouchableOpacity
-            style={styles.circleButton}
+          <Pressable
+            style={({ pressed }) => [
+              styles.circleButton,
+              pressed && styles.circleButtonPressed,
+            ]}
             onPress={onSearchPress}
-            activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Search foods and diary"
           >
             <Ionicons name="search-outline" size={18} color="#0F172A" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Notification Bell Button */}
-          <TouchableOpacity
-            style={styles.circleButton}
+          <Pressable
+            style={({ pressed }) => [
+              styles.circleButton,
+              pressed && styles.circleButtonPressed,
+            ]}
             onPress={() => {
               setHasUnreadNotification(false);
-              onNotificationsPress && onNotificationsPress();
+              if (onNotificationsPress) {
+                onNotificationsPress();
+              }
             }}
-            activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
           >
             <Ionicons name="notifications-outline" size={18} color="#0F172A" />
-            {hasUnreadNotification && <View style={styles.notificationDot} />}
-          </TouchableOpacity>
+            {hasUnreadNotification ? <View style={styles.notificationDot} /> : null}
+          </Pressable>
         </View>
       </View>
 
       {/* Guest Banner if exploring without registered account */}
-      {currentUser?.isGuest && onSignInPress && (
-        <TouchableOpacity
-          style={styles.guestBanner}
+      {currentUser?.isGuest && onSignInPress ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.guestBanner,
+            pressed && styles.guestBannerPressed,
+          ]}
           onPress={onSignInPress}
-          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Guest Mode, tap to sign in or create account"
         >
           <View style={styles.guestBannerLeft}>
             <Ionicons name="sparkles" size={14} color="#D97706" />
@@ -128,8 +149,8 @@ export const Header: React.FC<HeaderProps> = ({
             </Text>
           </View>
           <Ionicons name="arrow-forward" size={14} color="#D97706" />
-        </TouchableOpacity>
-      )}
+        </Pressable>
+      ) : null}
     </View>
   );
 };
@@ -143,8 +164,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: 14,
+    paddingBottom: 6,
   },
   userSection: {
     flexDirection: 'row',
@@ -153,26 +174,27 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   avatarContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+  avatarPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   nameStack: {
-    marginLeft: 10,
+    marginLeft: 12,
     justifyContent: 'center',
     flex: 1,
   },
@@ -183,14 +205,15 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13.5,
+    lineHeight: 18,
     color: '#64748B',
+    letterSpacing: -0.1,
   },
   guestTag: {
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
     borderRadius: 6,
   },
   guestTagText: {
@@ -200,10 +223,11 @@ const styles = StyleSheet.create({
   },
   userNameText: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 21,
+    lineHeight: 27,
     color: '#0F172A',
     fontWeight: '700',
+    letterSpacing: -0.4,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -251,6 +275,10 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
   },
+  circleButtonPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.94 }],
+  },
   authButtonHighlight: {
     borderColor: '#FED7AA',
     backgroundColor: '#FFF7ED',
@@ -278,6 +306,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 12,
     marginBottom: 6,
+  },
+  guestBannerPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   guestBannerLeft: {
     flexDirection: 'row',

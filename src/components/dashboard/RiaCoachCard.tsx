@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -82,8 +83,10 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           {/* Ria 3D Avatar with Ambient Glow Ring */}
           <View style={styles.avatarWrapper}>
             <Image
-              source={require('../../../assets/ria_avatar.jpg')}
+              source={require('../../../assets/ria_avatar.png')}
               style={styles.avatarImg}
+              contentFit="cover"
+              transition={150}
             />
             {/* Active Online Pulse Dot */}
             <View style={styles.onlineDot} />
@@ -103,18 +106,22 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
         </View>
 
         {/* Action button: Open full conversation */}
-        <TouchableOpacity
-          style={styles.chatActionBtn}
+        <Pressable
+          style={({ pressed }) => [
+            styles.chatActionBtn,
+            pressed && styles.pressedChatBtn,
+          ]}
           onPress={() => (onOpenChat ? onOpenChat() : setActivePromptId(null))}
-          activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Open chat with Ria"
         >
           <Ionicons
             name="chatbubble-ellipses-outline"
             size={18}
             color="#F47551"
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* The Conversational Speech Bubble */}
@@ -122,10 +129,14 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
         {/* Pointer Arrow Tail pointing to Ria */}
         <View style={styles.bubbleTail} />
 
-        <TouchableOpacity
-          style={styles.bubbleCard}
+        <Pressable
+          style={({ pressed }) => [
+            styles.bubbleCard,
+            pressed && styles.bubbleCardPressed,
+          ]}
           onPress={() => onOpenChat && onOpenChat(activeMessage)}
-          activeOpacity={onOpenChat ? 0.85 : 1}
+          accessibilityRole="button"
+          accessibilityLabel="Ask Ria about this insight"
         >
           {/* Subtle Insight Tag */}
           <View style={styles.insightTagRow}>
@@ -139,7 +150,7 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
           {/* Dynamic Coach Message */}
           <Text style={styles.messageText}>{activeMessage}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Suggestion Chips: Quick Prompt Carousel */}
@@ -153,17 +164,22 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           {RIA_PROMPTS.map((prompt) => {
             const isSelected = activePromptId === prompt.id;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={prompt.id}
-                style={[styles.chip, isSelected && styles.chipSelected]}
+                style={({ pressed }) => [
+                  styles.chip,
+                  isSelected && styles.chipSelected,
+                  pressed && styles.chipPressed,
+                ]}
                 onPress={() => setActivePromptId(isSelected ? null : prompt.id)}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={`Ask Ria: ${prompt.label}`}
               >
                 <Text style={styles.chipIcon}>{prompt.icon}</Text>
                 <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                   {prompt.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
@@ -273,6 +289,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pressedChatBtn: {
+    opacity: 0.7,
+    transform: [{ scale: 0.94 }],
+  },
   // Conversational Speech Bubble UX
   bubbleWrapper: {
     position: 'relative',
@@ -305,6 +325,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1,
+  },
+  bubbleCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
   },
   insightTagRow: {
     flexDirection: 'row',
@@ -374,6 +398,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.02,
     shadowRadius: 3,
     elevation: 1,
+  },
+  chipPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
   },
   chipSelected: {
     backgroundColor: '#F47551',

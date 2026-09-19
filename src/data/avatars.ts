@@ -1,149 +1,106 @@
 export interface AvatarPreset {
   id: string;
   name: string;
-  category: '3d_fitness' | 'athletes' | 'minimal' | 'mascots';
-  categoryLabel: string;
   url: string;
   accentColor: string;
 }
 
-export const AVATAR_CATEGORIES = [
-  { id: 'all', label: 'All Avatars' },
-  { id: '3d_fitness', label: '⚡ 3D Lifestyle' },
-  { id: 'athletes', label: '🏋️ Athletes' },
-  { id: 'minimal', label: '✨ Modern' },
-  { id: 'mascots', label: '🦁 Mascots' },
-];
+export interface SvgAvatarData {
+  id: string;
+  name: string;
+  color: string;
+  bgColor: string;
+  svgXml: string;
+}
 
-export const DEFAULT_AVATAR_URL =
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80';
+export const LOCAL_AVATAR_ASSETS: Record<string, any> = {
+  'asset:men': require('../../assets/avatars/men.png'),
+  'asset:women': require('../../assets/avatars/women.png'),
+  'asset:boy': require('../../assets/avatars/boy.png'),
+  'asset:girl': require('../../assets/avatars/girl.png'),
+  'asset:grandpa': require('../../assets/avatars/grandpa.png'),
+  'asset:grandma': require('../../assets/avatars/grandma.png'),
+  'asset:ria': require('../../assets/avatars/ria.png'),
+};
 
+export function isLocalAssetAvatar(urlOrId?: string | null): boolean {
+  if (!urlOrId) return false;
+  return urlOrId.startsWith('asset:') || urlOrId in LOCAL_AVATAR_ASSETS;
+}
+
+export function getLocalAssetSource(urlOrId?: string | null): any {
+  if (!urlOrId) return null;
+  return LOCAL_AVATAR_ASSETS[urlOrId] || null;
+}
+
+export const SVG_AVATARS: Record<string, SvgAvatarData> = {
+  'svg:accountant': {
+    id: 'svg:accountant',
+    name: 'Finance & Accounts',
+    color: '#047857',
+    bgColor: '#ECFDF5',
+    svgXml: `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="accountant" viewBox="0 0 193 227"><path d="M35.9 13.8a20 20 0 0 0-11.7 17.6c-.5 7.3 1.3 11.8 5.7 14.4 2.7 1.5 2.8 1.7 1.5 4.9a39 39 0 0 0 3.7 32.5c3.8 6 9.3 10.8 12.2 10.8 3.1 0 4.1.9 6.6 5.7 1.1 2.3 2.5 4.4 3.1 4.8 1.1.7 1.2 8.6.1 12.5-.6 2.1-1.9 2.8-8.3 4.6-21.3 5.9-32.1 17-36.3 37.4-3.5 16.6-3.9 54.7-.7 55.8 1.1.3 1.2-2.2.6-12.9-1.1-22.6 2-45.9 7.6-57 4.7-9 12.6-15.1 25.4-19.4l7.8-2.6 3.4 3.9c5.6 6.5 16.7 10.3 24.4 8.2 4.2-1.1 10.2-5.9 11.2-8.9 1.1-3.4 18.9 4.1 24.9 10.6 7.1 7.5 7 7 3.8 19.4-1.6 6.1-2.9 12.1-2.9 13.3-.1 3.3-1.5.1-2.9-6.7-.7-3.1-1.7-5.7-2.2-5.7-1.2 0-1.2 1 .7 10.3 1.5 7.3 1.5 8.8 0 19.1-1.9 12.5-1.8 26.7.2 27.4.9.3 1.2-2 1.2-9.3v-9.7l4.6 6.1c8 10.7 15.3 15.1 25 15.1q16.6 0 24.4-24.5a27 27 0 0 1 4.6-7.7 47 47 0 0 0 9-19.1c2.1-8 1.1-13.2-3.4-17.7l-3.5-3.5 2.2-9.9c2.8-12 2-15-3.9-16.6-7.2-1.9-33.3-7-36.2-7-4.6 0-6.1 2.6-9.7 17.4l-3.3 13.8-4.5-5.1A49 49 0 0 0 96.7 123c-4.9-1.3-6.3-2.1-6.5-3.8q-.4-2.3 1.5-2.2c1.1 0 4.3-1.2 7.2-2.6A32 32 0 0 0 114 95.2c2-6.5 2.3-13 2.2-44.8-.1-17.8-19.8-32-41.7-30-3.8.3-8.1.9-9.5 1.2-2.1.4-2.6.2-2.7-1.6-.7-8.3-15.6-11.8-26.4-6.2m61.2 27.3a35 35 0 0 1 14.4 17.2c.9 2.9 1.8 9.3 2.2 14.4 1.3 19.2-4.5 33.5-16.1 39.6-3.2 1.7-5.7 2.1-11.6 2-4.1 0-8.2-.2-9-.4q-1.4-.3-2 .5-.7 1.5 8.3 3.1c3.3.5 3.7.9 3.7 3.5q0 3 1.5 3c2.8 0-1 5.5-5.1 7.5-6.8 3.2-19.1.2-25-6.2-2.2-2.3-2.2-2.7-.8-3.8 1-.6 2.2-4.1 2.9-8l1.3-6.8-3.3-4.9a31 31 0 0 1-4-7.9c-.6-2.7-1-2.9-3.4-2.4-3.2.7-8.9-2.7-10.8-6.5-2-3.9-1.6-9.1.9-11.7q4-4.2 9.2-.2c3 2.4 4.2 1.9 5.1-2q.7-2.9 4.5-5.5c2.2-1.4 7.1-5.5 10.8-9.1 6.3-5.9 8.9-9.1 13.5-16.7 1.5-2.5 1.9-2.6 5.4-1.6 2.1.6 5.4 1.9 7.4 2.9m59.5 74.9c19.2 3.7 20.4 4.2 20.4 7.7q0 4.2-3.1 15.5c-.9 3.5-1.3 3.8-4.4 3.8-4.3 0-7.9 3.2-7 6.1q.7 2-.9 1.9c-.9 0-1.8 1.2-2.2 2.7-.3 1.6-1.2 4.1-1.9 5.8q-1.3 3-.4 4.7t-.1 1.8c-2.3 0-1 5.8 1.8 8.2 2.7 2.2 2.8 2.6 1.7 5.8-1.2 3.5-1.3 3.5-6.6 3.3a169 169 0 0 1-19.4-3.5c-14-3.3-14-3.3-14.3-6.3a293 293 0 0 1 6.7-31c7.2-28.8 8.1-31 12.5-30zm21 33.4c2.8 2.8 3.4 4.1 3.4 7.8 0 12.1-9.1 28.8-15.6 28.8-2.9 0-3.5-1.1-2.8-5q.7-3.1 2-2.6c2.9 1.1 1.3-2.5-2.1-4.6q-5.9-3.9-3.5-6.2 1-1 4.3.3c5.3 2.1 6.7 2.4 6.7 1.3 0-.6-2.5-2.2-5.6-3.7-3-1.4-5.4-3.2-5.1-3.8.6-1.9 5.3-2 8.7-.2 1.8.9 3.5 1.4 3.8 1 1-1-2.1-3.4-6.3-4.8-2.2-.8-4-2-4-2.8 0-2 5.9-2.3 9.7-.5q6.8 3.4 2.8-.8a11 11 0 0 0-5.1-3.1c-5.8-1.3-4.9-4.5 1.3-4.5 3.2 0 4.7.7 7.4 3.4m-46.8 32.2c4.5.9 8.2 1.9 8.2 2.1s-1 2.2-2.2 4.3-1.9 4.2-1.5 4.7c.9.8 2.1-.5 4.8-5.5l1.7-3 6.3 1.3c3.5.7 9.2 1.6 12.7 2q6.1.7 6.2 2c0 .7-1.8 4.9-4.1 9.4-6.4 12.8-13.5 16.8-24.3 13.7a37 37 0 0 1-18.6-15.7c-4-5.8-4-5.8-3.4-13.3l.7-7.5 2.6 1.9c1.4 1 6.3 2.6 10.9 3.6"></path><path d="M100.8 57.7c-2.6.6-2.2 2.3.5 2.3 1.2 0 3.3.3 4.7.6l2.5.6-2.4-2.1c-1.3-1.2-2.6-2-3-2zm-28.2 3.4c-1.4 1.1-2.4 2.5-2 3s1.7 0 3.1-1.1 3.6-2 4.9-2 2.4-.5 2.4-1c0-1.8-5.7-1.1-8.4 1.1m4.6 9.1c-1.8 1.8-1.5 6.8.4 7.5q1.5.4 2.5-.8c2.2-3.5-.3-9.3-2.9-6.7m24 2.5q.3 3.8 1.8 3.8t1.8-3.8c.3-3.2 0-3.7-1.8-3.7s-2.1.5-1.8 3.7M94.5 74c-.3.5.3 2.8 1.5 5.2 2.7 5.6 2.5 6.8-1 8.1-3.6 1.4-3.9 2.7-.5 2.7 2.4 0 6.5-3.1 6.5-4.9C101 84 96 73 95.5 73q-.4 0-1 1M80 96.9c0 2.7 8.6 5.6 12.4 4.1 4-1.5 3.2-3.3-1.1-2.6q-3.8.6-6.7-.9-4.7-2.6-4.6-.6m58.2 21.9c-1.7 1.1-3.9 11.9-2.7 13.1 1.1 1 19.8 5.5 27.7 6.6 4.6.7 4.8.6 5.9-2.1.6-1.6 1.2-4.9 1.2-7.4l.2-4.4-12.5-2.7c-17.4-3.8-18.3-4-19.8-3.1m17.3 5 13 2.8-.3 2.9a32 32 0 0 1-1.2 5.1l-.9 2.2-13.8-2.9c-7.6-1.7-14.1-3.3-14.5-3.7-1.3-1.3 1.3-9.2 3.1-9.2.9 0 7.5 1.3 14.6 2.8m-23.1 16.6c-1 2.6.1 5.1 2.3 5.4q2.3.5 2.9-2.2c.3-1.4.3-3-.1-3.5-.9-1.6-4.5-1.3-5.1.3m9.7 2.8c-1 2.7.3 4.8 3 4.8 2 0 3.6-4 2.4-5.9-1.1-1.9-4.5-1.2-5.4 1.1m10.5 1.4q-3.2 3.3.3 5.4c3.4 1.8 6.7-3 3.9-5.8-1.6-1.6-2.3-1.5-4.2.4m-23.2 7.8c-1 2.6.1 5.1 2.3 5.4q2.3.5 2.9-2.2c.3-1.4.3-3-.1-3.5-.9-1.6-4.5-1.3-5.1.3m9.7 2.5c-1.4 2.5-1.4 2.7.5 4.5 2.3 2.4 5.6.3 5.2-3.2-.4-3.4-4.1-4.3-5.7-1.3m10 2.3c-1.8 4.7 2.7 7.7 5.3 3.5q1.2-1.7 0-3.5c-1.7-2.6-4.3-2.7-5.3 0m-21.9 7c-2.8 2.8-.3 7.5 3 5.7 2.2-1.2 2.4-5.5.2-6.3-2-.8-1.8-.8-3.2.6m10 2c-1.7 1.7-1.5 5.5.4 6.2 2 .8 4.4-1 4.4-3.3 0-1.7-1.8-4.1-3-4.1q-.6 0-1.8 1.2m8.9 3.6c-1.2 2.3.4 5.2 3 5.2 2.3 0 4.2-3.9 2.7-5.8a3.5 3.5 0 0 0-5.7.6m-103.4-5.1c-.3.5-.7 11.6-.9 24.7-.2 17.1 0 24 .8 24.3s1.3-6.5 1.6-23.9c.5-21.9.1-27.7-1.5-25.1"></path></svg>`,
+  },
+};
+
+export function isSvgAvatar(urlOrId?: string | null): boolean {
+  if (!urlOrId) return false;
+  return urlOrId.startsWith('svg:') || urlOrId.trim().startsWith('<svg') || urlOrId in SVG_AVATARS;
+}
+
+export function getSvgAvatar(urlOrId?: string | null): SvgAvatarData | undefined {
+  if (!urlOrId) return undefined;
+  if (urlOrId in SVG_AVATARS) return SVG_AVATARS[urlOrId];
+  if (urlOrId.trim().startsWith('<svg')) {
+    return {
+      id: 'custom_svg',
+      name: 'Custom Vector',
+      color: '#047857',
+      bgColor: '#ECFDF5',
+      svgXml: urlOrId,
+    };
+  }
+  return undefined;
+}
+
+export const DEFAULT_AVATAR_URL = 'asset:men';
+
+// Curated Illustrated Avatars from Images (Man, Woman, Boy, Girl, Grandpa, Grandma)
 export const AVATAR_PRESETS: AvatarPreset[] = [
-  // 1. 3D Fitness & Lifestyle
   {
-    id: 'avatar_default',
-    name: 'Akshay (Active Runner)',
-    category: '3d_fitness',
-    categoryLabel: '3D Lifestyle',
-    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#F47551',
-  },
-  {
-    id: 'avatar_ria_coach',
-    name: 'Ria (Nutritionist)',
-    category: '3d_fitness',
-    categoryLabel: '3D Lifestyle',
-    url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#10B981',
-  },
-  {
-    id: 'avatar_tech_fit',
-    name: 'Neo (Fitness Geek)',
-    category: '3d_fitness',
-    categoryLabel: '3D Lifestyle',
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#2563EB',
-  },
-  {
-    id: 'avatar_calm_zen',
-    name: 'Aria (Mindful Living)',
-    category: '3d_fitness',
-    categoryLabel: '3D Lifestyle',
-    url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#8B5CF6',
-  },
-
-  // 2. Athletes & Training
-  {
-    id: 'avatar_runner',
-    name: 'Sprint Master',
-    category: 'athletes',
-    categoryLabel: 'Athletes',
-    url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#EA580C',
-  },
-  {
-    id: 'avatar_crossfit',
-    name: 'Kavya (Strength Pro)',
-    category: 'athletes',
-    categoryLabel: 'Athletes',
-    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#EF4444',
-  },
-  {
-    id: 'avatar_yoga',
-    name: 'Dev (Yoga & Mobility)',
-    category: 'athletes',
-    categoryLabel: 'Athletes',
-    url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#059669',
-  },
-  {
-    id: 'avatar_cyclist',
-    name: 'Rohan (Endurance)',
-    category: 'athletes',
-    categoryLabel: 'Athletes',
-    url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#0284C7',
-  },
-
-  // 3. Modern & Minimal
-  {
-    id: 'avatar_minimal_1',
-    name: 'Siddharth (Clean Cut)',
-    category: 'minimal',
-    categoryLabel: 'Modern',
-    url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=240&auto=format&fit=crop&q=80',
+    id: 'avatar_men',
+    name: 'Man',
+    url: 'asset:men',
     accentColor: '#1E293B',
   },
   {
-    id: 'avatar_minimal_2',
-    name: 'Meera (Executive)',
-    category: 'minimal',
-    categoryLabel: 'Modern',
-    url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#D97706',
+    id: 'avatar_women',
+    name: 'Woman',
+    url: 'asset:women',
+    accentColor: '#EA580C',
   },
   {
-    id: 'avatar_minimal_3',
-    name: 'Vikram (Urban)',
-    category: 'minimal',
-    categoryLabel: 'Modern',
-    url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=240&auto=format&fit=crop&q=80',
+    id: 'avatar_boy',
+    name: 'Boy',
+    url: 'asset:boy',
+    accentColor: '#3B82F6',
+  },
+  {
+    id: 'avatar_girl',
+    name: 'Girl',
+    url: 'asset:girl',
+    accentColor: '#F43F5E',
+  },
+  {
+    id: 'avatar_grandpa',
+    name: 'Grandpa',
+    url: 'asset:grandpa',
     accentColor: '#475569',
   },
   {
-    id: 'avatar_minimal_4',
-    name: 'Ananya (Vibrant)',
-    category: 'minimal',
-    categoryLabel: 'Modern',
-    url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#EC4899',
-  },
-
-  // 4. Mascots & Playful
-  {
-    id: 'avatar_mascot_lion',
-    name: 'Leo (Power Mascot)',
-    category: 'mascots',
-    categoryLabel: 'Mascots',
-    url: 'https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#F59E0B',
-  },
-  {
-    id: 'avatar_mascot_fox',
-    name: 'Blaze (Speed)',
-    category: 'mascots',
-    categoryLabel: 'Mascots',
-    url: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#F97316',
-  },
-  {
-    id: 'avatar_mascot_owl',
-    name: 'Athena (Wisdom)',
-    category: 'mascots',
-    categoryLabel: 'Mascots',
-    url: 'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?w=240&auto=format&fit=crop&q=80',
-    accentColor: '#6366F1',
+    id: 'avatar_grandma',
+    name: 'Grandma',
+    url: 'asset:grandma',
+    accentColor: '#059669',
   },
 ];

@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   TextInput,
   Image,
@@ -101,6 +101,8 @@ export const RiaChatModal: React.FC<RiaChatModalProps> = ({
     }, 600);
   };
 
+  const canSend = inputQuery.trim().length > 0;
+
   return (
     <Modal
       visible={visible}
@@ -109,10 +111,11 @@ export const RiaChatModal: React.FC<RiaChatModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalBackdrop}>
-        <TouchableOpacity
+        <Pressable
           style={styles.backdropDismiss}
           onPress={onClose}
-          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss Ria chat modal backdrop"
         />
         <View style={styles.sheetContainer}>
           <View style={styles.handleContainer}>
@@ -124,115 +127,121 @@ export const RiaChatModal: React.FC<RiaChatModalProps> = ({
           >
             {/* Header */}
             <View style={styles.header}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.closeBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="close" size={24} color={Colors.textPrimary} />
-          </TouchableOpacity>
-
-          <View style={styles.headerProfile}>
-            <Image
-              source={require('../../../assets/ria_avatar.jpg')}
-              style={styles.headerAvatar}
-            />
-            <View style={styles.headerTextGroup}>
-              <View style={styles.headerNameRow}>
-                <Text style={styles.headerName}>Ria AI Coach</Text>
-                <View style={styles.onlineDot} />
-              </View>
-              <Text style={styles.headerSub}>Healthify Intelligence • Active</Text>
-            </View>
-          </View>
-
-          <View style={{ width: 36 }} />
-        </View>
-
-        {/* Chat Scroll Area */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.chatArea}
-          contentContainerStyle={styles.chatContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {messages.map((msg) => {
-            const isRia = msg.sender === 'ria';
-            return (
-              <View
-                key={msg.id}
-                style={[
-                  styles.messageRow,
-                  isRia ? styles.messageRowRia : styles.messageRowUser,
-                ]}
+              <Pressable
+                onPress={onClose}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close Ria chat"
               >
-                {isRia && (
-                  <Image
-                    source={require('../../../assets/ria_avatar.jpg')}
-                    style={styles.bubbleAvatar}
-                  />
-                )}
-                <View
-                  style={[
-                    styles.bubble,
-                    isRia ? styles.bubbleRia : styles.bubbleUser,
-                  ]}
-                >
-                  <Text style={[styles.bubbleText, isRia ? styles.bubbleTextRia : styles.bubbleTextUser]}>
-                    {msg.text}
-                  </Text>
-                  <Text style={[styles.timestamp, isRia ? styles.timestampRia : styles.timestampUser]}>
-                    {msg.timestamp}
-                  </Text>
+                <Ionicons name="close" size={24} color={Colors.textPrimary} />
+              </Pressable>
+
+              <View style={styles.headerProfile}>
+                <Image
+                  source={require('../../../assets/ria_avatar.png')}
+                  style={styles.headerAvatar}
+                />
+                <View style={styles.headerTextGroup}>
+                  <View style={styles.headerNameRow}>
+                    <Text style={styles.headerName}>Ria AI Coach</Text>
+                    <View style={styles.onlineDot} />
+                  </View>
+                  <Text style={styles.headerSub}>Healthify Intelligence • Active</Text>
                 </View>
               </View>
-            );
-          })}
-        </ScrollView>
 
-        {/* Quick Suggestion Chips */}
-        <View style={styles.quickChipsWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChipsScroll}>
-            {QUICK_QUESTIONS.map((chip, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.quickChip}
-                onPress={() => handleSendMessage(chip)}
-                activeOpacity={0.75}
+              <View style={styles.headerSpacer} />
+            </View>
+
+            {/* Chat Scroll Area */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.chatArea}
+              contentContainerStyle={styles.chatContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {messages.map((msg) => {
+                const isRia = msg.sender === 'ria';
+                return (
+                  <View
+                    key={msg.id}
+                    style={[
+                      styles.messageRow,
+                      isRia ? styles.messageRowRia : styles.messageRowUser,
+                    ]}
+                  >
+                    {isRia ? (
+                      <Image
+                        source={require('../../../assets/ria_avatar.png')}
+                        style={styles.bubbleAvatar}
+                      />
+                    ) : null}
+                    <View
+                      style={[
+                        styles.bubble,
+                        isRia ? styles.bubbleRia : styles.bubbleUser,
+                      ]}
+                    >
+                      <Text style={[styles.bubbleText, isRia ? styles.bubbleTextRia : styles.bubbleTextUser]}>
+                        {msg.text}
+                      </Text>
+                      <Text style={[styles.timestamp, isRia ? styles.timestampRia : styles.timestampUser]}>
+                        {msg.timestamp}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+
+            {/* Quick Suggestion Chips */}
+            <View style={styles.quickChipsWrapper}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChipsScroll}>
+                {QUICK_QUESTIONS.map((chip, idx) => (
+                  <Pressable
+                    key={idx}
+                    style={({ pressed }) => [styles.quickChip, pressed ? styles.pressedQuickChip : null]}
+                    onPress={() => handleSendMessage(chip)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ask Ria: ${chip}`}
+                  >
+                    <Text style={styles.quickChipText}>{chip}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Input Bar */}
+            <View style={styles.inputBar}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Ask Ria about food, calories, or workouts..."
+                placeholderTextColor="#94A3B8"
+                value={inputQuery}
+                onChangeText={setInputQuery}
+                onSubmitEditing={() => handleSendMessage()}
+                returnKeyType="send"
+              />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.sendBtn,
+                  canSend ? styles.sendBtnActive : null,
+                  pressed && canSend ? styles.pressedSendBtn : null,
+                ]}
+                onPress={() => handleSendMessage()}
+                disabled={!canSend}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !canSend }}
+                accessibilityLabel="Send message to Ria"
               >
-                <Text style={styles.quickChipText}>{chip}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
         </View>
-
-        {/* Input Bar */}
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Ask Ria about food, calories, or workouts..."
-            placeholderTextColor="#94A3B8"
-            value={inputQuery}
-            onChangeText={setInputQuery}
-            onSubmitEditing={() => handleSendMessage()}
-            returnKeyType="send"
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendBtn,
-              inputQuery.trim().length > 0 && styles.sendBtnActive,
-            ]}
-            onPress={() => handleSendMessage()}
-            disabled={!inputQuery.trim()}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </View>
-  </View>
-</Modal>
+      </View>
+    </Modal>
   );
 };
 
@@ -305,6 +314,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pressedCloseBtn: {
+    opacity: 0.7,
+    backgroundColor: '#E2E8F0',
+  },
+  headerSpacer: {
+    width: 36,
   },
   headerProfile: {
     flexDirection: 'row',
@@ -430,6 +446,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  pressedQuickChip: {
+    opacity: 0.75,
+    backgroundColor: '#E2E8F0',
+    transform: [{ scale: 0.98 }],
+  },
   quickChipText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 11,
@@ -466,5 +487,9 @@ const styles = StyleSheet.create({
   },
   sendBtnActive: {
     backgroundColor: Colors.primary,
+  },
+  pressedSendBtn: {
+    opacity: 0.85,
+    transform: [{ scale: 0.95 }],
   },
 });
