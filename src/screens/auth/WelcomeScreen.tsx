@@ -260,20 +260,23 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
           {/* Hero Visual Area */}
           <View style={styles.heroSection}>
-            <View style={styles.heroImageContainer}>
-              <Image
-                source={require('../../../assets/ria_avatar.png')}
-                style={styles.heroImage}
-                resizeMode="cover"
-              />
+            <View style={styles.heroGlowRing}>
+              <View style={styles.heroImageContainer}>
+                <Image
+                  source={require('../../../assets/ria_avatar.png')}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                />
+              </View>
             </View>
           </View>
 
           {/* Messaging & Value Proposition */}
           <View style={styles.contentSection}>
             <Text style={styles.mainHeading}>Your Personal Nutrition Coach</Text>
+            <Text style={styles.headlineTagline}>Built around the food you actually eat.</Text>
             <Text style={styles.subHeading}>
-              Track authentic Indian meals, balance your macros, and receive daily coaching tailored to your lifestyle.
+              Track Indian meals, understand your nutrition, and get simple daily guidance that fits your lifestyle.
             </Text>
           </View>
 
@@ -299,7 +302,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
             {/* Secondary CTA */}
             <Pressable
-              style={({ pressed }) => [styles.demoButton, pressed ? styles.pressedSubtle : null]}
+              style={({ pressed }) => [styles.demoButton, pressed ? styles.pressedSecondary : null]}
               onPress={handleDemoSignIn}
               disabled={isDemoLoading}
               testID="btn-welcome-demo"
@@ -341,27 +344,27 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    minHeight: '100%',
+    justifyContent: 'center',
   },
   container: {
-    flex: 1,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    paddingTop: Platform.OS === 'android' ? 16 : 8,
     paddingBottom: Platform.OS === 'android' ? 24 : 16,
+    alignItems: 'center',
   },
   topHeader: {
-    paddingTop: 12,
     alignItems: 'center',
     position: 'relative',
     width: '100%',
+    marginBottom: 16,
   },
   headerCloseBtn: {
     position: 'absolute',
     right: 0,
-    top: 10,
+    top: 0,
     padding: 6,
     zIndex: 10,
   },
@@ -387,20 +390,28 @@ const styles = StyleSheet.create({
   heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 28,
+    marginBottom: 20,
+  },
+  heroGlowRing: {
+    padding: 10,
+    borderRadius: 125,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#FFEDD5',
   },
   heroImageContainer: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
+    width: 216,
+    height: 216,
+    borderRadius: 108,
     overflow: 'hidden',
     borderWidth: 4,
     borderColor: '#FFFFFF',
-    shadowColor: '#000000',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.16,
     shadowRadius: 20,
     elevation: 6,
+    backgroundColor: '#FED7AA',
   },
   heroImage: {
     width: '100%',
@@ -408,24 +419,33 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     alignItems: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 28,
+    paddingHorizontal: 8,
+    marginBottom: 26,
   },
   mainHeading: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 26,
+    fontSize: 25,
     color: '#0F172A',
     textAlign: 'center',
+    marginBottom: 4,
+    letterSpacing: -0.5,
+    lineHeight: 33,
+  },
+  headlineTagline: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: Colors.primary,
+    textAlign: 'center',
     marginBottom: 10,
-    letterSpacing: -0.6,
+    letterSpacing: -0.2,
   },
   subHeading: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 15,
+    fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 23,
-    maxWidth: 360,
+    lineHeight: 22,
+    maxWidth: 340,
   },
   ctaSection: {
     width: '100%',
@@ -447,18 +467,18 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 14,
+    height: 54,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 5,
   },
   pressedButton: {
-    opacity: 0.9,
+    opacity: 0.92,
     transform: [{ scale: 0.985 }],
   },
   primaryButtonText: {
@@ -468,24 +488,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   demoButton: {
-    height: 48,
-    borderRadius: 14,
+    height: 50,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
+  pressedSecondary: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    transform: [{ scale: 0.985 }],
+  },
   demoButtonText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 15,
-    color: '#475569',
+    color: '#334155',
   },
   signInRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   signInPromptText: {
     fontFamily: Fonts.poppins.regular,

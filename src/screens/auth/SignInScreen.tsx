@@ -78,13 +78,15 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             <Ionicons name="arrow-back" size={22} color="#1C274C" />
           </Pressable>
 
-          <View style={styles.logoBadgeContainer}>
-            <View style={styles.logoDot} />
-            <Text style={styles.logoBadgeText}>Calori</Text>
+          <View style={styles.headerCenterBrand}>
+            <View style={styles.headerLogoBadge}>
+              <Ionicons name="flame" size={16} color="#FFFFFF" />
+            </View>
+            <Text style={styles.headerBrandText}>Calori</Text>
           </View>
 
-          {/* Placeholder view to balance the header flex spacing */}
-          <View style={styles.headerPlaceholder} />
+          {/* Symmetrical placeholder balancing the 44px back button */}
+          <View style={styles.headerRightPlaceholder} />
         </View>
 
         {/* Keyboard Avoiding Container */}
@@ -100,12 +102,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           >
             {/* Title Section */}
             <View style={styles.titleSection}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="flame" size={26} color={Colors.primary} />
-              </View>
               <Text style={styles.titleText}>Welcome Back</Text>
               <Text style={styles.subtitleText}>
-                Sign in to track your calories, habits, and daily health goals
+                Pick up right where you left off with your daily nutrition.
               </Text>
             </View>
 
@@ -119,7 +118,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
             {/* Email Field */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+              <Text style={styles.inputLabel}>Email</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -145,6 +144,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   autoCorrect={false}
                   spellCheck={false}
                   keyboardType="email-address"
+                  autoComplete="email"
+                  textContentType="emailAddress"
                   returnKeyType="next"
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
@@ -169,7 +170,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             {/* Password Field */}
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={styles.inputLabel}>PASSWORD</Text>
+                <Text style={styles.inputLabel}>Password</Text>
                 {onForgotPassword ? (
                   <Pressable
                     onPress={onForgotPassword}
@@ -212,7 +213,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   autoCapitalize="none"
                   autoCorrect={false}
                   spellCheck={false}
-                  textContentType="none"
+                  autoComplete="password"
+                  textContentType="password"
                   returnKeyType="done"
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
@@ -253,10 +255,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <View style={styles.btnContentRow}>
-                  <Text style={styles.submitButtonText}>Sign In</Text>
-                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-                </View>
+                <Text style={styles.submitButtonText}>Sign In</Text>
               )}
             </Pressable>
 
@@ -276,21 +275,6 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 </Pressable>
               </View>
             ) : null}
-
-            {/* Quick Guest Exploration */}
-            <Pressable
-              style={({ pressed }) => [styles.guestRow, pressed ? styles.pressedSubtle : null]}
-              onPress={async () => {
-                await loginDemo();
-                if (onSuccess) onSuccess();
-              }}
-              testID="btn-signin-guest"
-              accessibilityRole="button"
-              accessibilityLabel="Explore as Guest"
-            >
-              <Ionicons name="flash-outline" size={14} color="#D97706" />
-              <Text style={styles.guestRowText}>Quick Preview / Explore as Guest</Text>
-            </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -316,13 +300,11 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingBottom: 12,
   },
   backButton: {
     width: 44,
@@ -338,29 +320,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     transform: [{ scale: 0.96 }],
   },
-  logoBadgeContainer: {
+  headerCenterBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
+    gap: 8,
   },
-  logoDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  headerLogoBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
-    marginRight: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    color: Colors.primary,
+  headerBrandText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 20,
+    color: '#0F172A',
+    letterSpacing: -0.4,
   },
-  headerPlaceholder: {
+  headerRightPlaceholder: {
     width: 44,
   },
   scrollView: {
@@ -368,22 +347,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   titleSection: {
+    marginTop: 8,
     marginBottom: 28,
-  },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
   },
   titleText: {
     fontFamily: Fonts.poppins.bold,
@@ -426,14 +395,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputLabel: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11,
-    color: '#64748B',
-    letterSpacing: 0.6,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 13,
+    color: '#334155',
+    marginBottom: 6,
   },
   forgotPasswordText: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.primary,
   },
   inputWrapper: {
@@ -482,11 +451,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
-    marginTop: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 5,
+    marginTop: 8,
     marginBottom: 20,
   },
   pressedButton: {
@@ -495,11 +464,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.65,
-  },
-  btnContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   submitButtonText: {
     fontFamily: Fonts.poppins.semiBold,
@@ -525,18 +489,5 @@ const styles = StyleSheet.create({
   },
   pressedSubtle: {
     opacity: 0.7,
-  },
-  guestRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 14,
-    paddingVertical: 6,
-  },
-  guestRowText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 13,
-    color: '#D97706',
   },
 });
