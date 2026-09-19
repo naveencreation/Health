@@ -69,13 +69,10 @@ export const DailyHabitsCard: React.FC = () => {
   };
 
   return (
-    <View style={styles.card}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.sectionHeading}>Daily Habits & Activity</Text>
-          <Text style={styles.sectionSubtitle}>Hydration & Movement</Text>
-        </View>
+        <Text style={styles.sectionHeading}>Daily Habits & Activity</Text>
 
         <TouchableOpacity
           style={styles.logWorkoutHeaderBtn}
@@ -346,54 +343,44 @@ export const DailyHabitsCard: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+  container: {
     marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    marginTop: 18,
+    marginBottom: 14,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
+    paddingHorizontal: 2,
   },
   sectionHeading: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 16,
+    fontSize: 18.5,
     fontWeight: '700',
     color: '#0F172A',
-  },
-  sectionSubtitle: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
-    color: '#64748B',
-    marginTop: 1,
+    letterSpacing: -0.3,
   },
   logWorkoutHeaderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#FED7AA',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     gap: 4,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
   },
   logWorkoutHeaderText: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#EA580C',
     fontWeight: '600',
   },
@@ -405,22 +392,32 @@ const styles = StyleSheet.create({
   waterPod: {
     flex: 1,
     backgroundColor: '#F0F9FF',
-    borderRadius: 18,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0F2FE',
+    borderColor: '#BAE6FD',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   stepPod: {
     flex: 1,
     backgroundColor: '#FFF7ED',
-    borderRadius: 18,
-    paddingVertical: 14,
+    borderRadius: 20,
+    paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#FED7AA',
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   waterPodBadge: {
     backgroundColor: '#FFFFFF',
@@ -558,10 +555,17 @@ const styles = StyleSheet.create({
   },
   // Logged Activities Strip
   activitiesStrip: {
-    marginTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
-    paddingTop: 10,
+    marginTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
     width: '100%',
   },
   activitiesHeaderRow: {
