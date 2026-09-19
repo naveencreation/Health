@@ -49,6 +49,7 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const todayScrollRef = useRef<ScrollView>(null);
   const diaryScrollRef = useRef<ScrollView>(null);
+  const analyticsScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
@@ -126,6 +127,8 @@ function MainApp() {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'diary' && activeTab === 'diary') {
       diaryScrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (tab === 'analytics' && activeTab === 'analytics') {
+      analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setActiveTab(tab);
   };
@@ -180,11 +183,11 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, (activeTab === 'today' || activeTab === 'diary') && { backgroundColor: '#EDFAF6' }]}>
+    <SafeAreaView style={[styles.safeArea, (activeTab === 'today' || activeTab === 'diary' || activeTab === 'analytics') && { backgroundColor: '#EDFAF6' }]}>
       <StatusBar style="dark" />
-      <View style={[styles.phoneContainer, (activeTab === 'today' || activeTab === 'diary') && styles.phoneContainerToday]}>
-        {/* Top Header for tabs that do not have internal header (Analytics) */}
-        {activeTab !== 'today' && activeTab !== 'diary' && activeTab !== 'profile' && (
+      <View style={[styles.phoneContainer, (activeTab === 'today' || activeTab === 'diary' || activeTab === 'analytics') && styles.phoneContainerToday]}>
+        {/* Top Header for tabs that do not have internal header (Profile) */}
+        {activeTab !== 'today' && activeTab !== 'diary' && activeTab !== 'analytics' && activeTab !== 'profile' && (
           <Header
             onSearchPress={() => setSearchModalVisible(true)}
             onNotificationsPress={() => setNotificationsVisible(true)}
@@ -221,7 +224,16 @@ function MainApp() {
             />
           )}
 
-          {activeTab === 'analytics' && <AnalyticsScreen />}
+          {activeTab === 'analytics' && (
+            <AnalyticsScreen
+              scrollRef={analyticsScrollRef}
+              onSearchPress={() => setSearchModalVisible(true)}
+              onNotificationsPress={() => setNotificationsVisible(true)}
+              onAvatarPress={() => setAvatarModalVisible(true)}
+              onSignInPress={handleOpenSignIn}
+              onSignOutPress={handleSignOut}
+            />
+          )}
 
           {activeTab === 'profile' && (
             <ProfileScreen

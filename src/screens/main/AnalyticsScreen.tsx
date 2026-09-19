@@ -1,21 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { Header } from '@/components';
 
-type TimeRange = '7d' | '14d' | '30d';
-
-interface DailyDataPoint {
-  id: string;
-  label: string;
-  calories: number;
-  waterMl: number;
-  steps: number;
-  burned: number;
-  isToday?: boolean;
-}
+type TimeRange = '7d' | '30d';
+type ActiveMetric = 'calories' | 'hydration' | 'movement';
 
 interface WeeklyCluster {
   id: string;
@@ -26,7 +17,23 @@ interface WeeklyCluster {
   totalBurn: number;
 }
 
-export const AnalyticsScreen: React.FC = () => {
+interface AnalyticsScreenProps {
+  onSearchPress?: () => void;
+  onNotificationsPress?: () => void;
+  onAvatarPress?: () => void;
+  onSignInPress?: () => void;
+  onSignOutPress?: () => void;
+  scrollRef?: React.RefObject<ScrollView | null>;
+}
+
+export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
+  onSearchPress,
+  onNotificationsPress,
+  onAvatarPress,
+  onSignInPress,
+  onSignOutPress,
+  scrollRef,
+}) => {
   const {
     weeklyLogs,
     userGoals,
@@ -40,16 +47,19 @@ export const AnalyticsScreen: React.FC = () => {
   } = useHealth();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
+  const [activeMetric, setActiveMetric] = useState<ActiveMetric>('calories');
 
   // Interactive Selected Bar Indexes
   const [selectedCalIdx, setSelectedCalIdx] = useState<number>(6);
-  const [selectedWaterIdx, setSelectedWaterIdx] = useState<number>(6);
-  const [selectedStepIdx, setSelectedStepIdx] = useState<number>(6);
-  const [selectedClusterIdx, setSelectedClusterIdx] = useState<number>(3); // 30-day week cluster index (0: W1, 1: W2, 2: W3, 3: W4)
+  const [selectedClusterIdx, setSelectedClusterIdx] = useState<number>(3);
 
-  const budget = userGoals.dailyCalorieBudget;
+  const budget = userGoals.dailyCalorieBudget || 2200;
   const waterGoal = userGoals.waterGoalMl || 2000;
   const stepGoal = userGoals.stepGoal || 10000;
+  const targetProtein = userGoals.targetProtein || 90;
+  const targetCarbs = userGoals.targetCarbs || 110;
+  const targetFat = userGoals.targetFat || 70;
+  const targetFiber = userGoals.targetFiber || 30;
 
   const getDateString = (date: Date): string => {
     const y = date.getFullYear();
@@ -57,39 +67,6 @@ export const AnalyticsScreen: React.FC = () => {
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   };
-
-  // 14-Day Dataset: dynamically built from actual dailyLogs
-  const fourteenDayData = useMemo((): DailyDataPoint[] => {
-    const parts = (selectedDate || '').split('-');
-    const curr = parts.length === 3
-      ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
-      : new Date();
-
-    const points: DailyDataPoint[] = [];
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(curr);
-      d.setDate(curr.getDate() - i);
-      const dateStr = getDateString(d);
-      const log = dailyLogs[dateStr];
-
-      const cals = log && Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + m.calories, 0) : 0;
-      const waterMl = log?.waterMl || 0;
-      const steps = log?.steps || 0;
-      const workoutBurn = log && Array.isArray(log.activities) ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
-      const burned = Math.round(steps * 0.04) + workoutBurn;
-
-      points.push({
-        id: dateStr,
-        label: String(14 - i),
-        calories: cals,
-        waterMl,
-        steps,
-        burned,
-        isToday: i === 0,
-      });
-    }
-    return points;
-  }, [dailyLogs, selectedDate]);
 
   // 30-Day Dataset: 4 Weekly Clusters computed dynamically from actual dailyLogs
   const thirtyDayClusters = useMemo((): WeeklyCluster[] => {
@@ -132,7 +109,7 @@ export const AnalyticsScreen: React.FC = () => {
     return clusters;
   }, [dailyLogs, selectedDate]);
 
-  // Summary Metrics calculated honestly on actual tracked data
+  // Summary Metrics calculated with mathematical & statistical integrity
   const analyticsSummary = useMemo(() => {
     let dataset: { calories: number; waterMl: number; steps: number; burned: number }[] = [];
     let dayCount = 7;
@@ -140,9 +117,6 @@ export const AnalyticsScreen: React.FC = () => {
     if (timeRange === '7d') {
       dataset = weeklyLogs;
       dayCount = 7;
-    } else if (timeRange === '14d') {
-      dataset = fourteenDayData;
-      dayCount = 14;
     } else {
       dataset = thirtyDayClusters.map((c) => ({
         calories: c.avgCalories,
@@ -166,17 +140,26 @@ export const AnalyticsScreen: React.FC = () => {
     const avgWater = daysWithWater > 0 ? Math.round(totalWater / daysWithWater) : 0;
     const avgSteps = daysWithSteps > 0 ? Math.round(totalSteps / daysWithSteps) : 0;
 
-    // Deficit only calculated on days meals were actively logged
-    const netDeficit = daysWithCals > 0 ? Math.max(0, (budget * daysWithCals) - totalCals) : 0;
-    const projectedFatLoss = (netDeficit / 7700).toFixed(2);
+    // Scientifically honest energetic balance: (Budget * logged days + Active Burn) - Consumed
+    const effectiveBudget = (budget * (daysWithCals > 0 ? daysWithCals : 1)) + totalBurn;
+    const netBalance = effectiveBudget - totalCals;
+    const isDeficit = netBalance >= 0;
+    const netDiff = Math.abs(netBalance);
+
+    // Only project weekly fat loss if at least 3 days are logged in window
+    const hasSufficientTrendData = daysWithCals >= 3;
+    const projectedFatLoss = hasSufficientTrendData ? (netDiff / 7700).toFixed(2) : null;
+
     const budgetMetDays = dataset.filter((l) => l.calories > 0 && l.calories <= budget).length;
     const waterMetDays = dataset.filter((l) => l.waterMl >= waterGoal).length;
     const stepMetDays = dataset.filter((l) => l.steps >= stepGoal).length;
 
     const comparisonText = daysWithCals === 0
       ? 'Start logging meals to unlock personalized health trends!'
+      : daysWithCals < 3
+      ? `${daysWithCals} of ${dayCount} days logged • Track 3+ days for weekly fat loss trajectory`
       : budgetMetDays === daysWithCals
-      ? `${budgetMetDays} of ${daysWithCals} logged ${daysWithCals === 1 ? 'day' : 'days'} on budget — keep it up!`
+      ? `${budgetMetDays} of ${daysWithCals} logged days on budget — excellent adherence!`
       : `${budgetMetDays} of ${daysWithCals} logged days within your budget`;
 
     return {
@@ -186,33 +169,24 @@ export const AnalyticsScreen: React.FC = () => {
       totalWaterL: (totalWater / 1000).toFixed(1),
       totalDistanceKm: ((totalSteps * 0.75) / 1000).toFixed(1),
       totalBurn,
-      netDeficit,
+      isDeficit,
+      netDiff,
+      hasSufficientTrendData,
       projectedFatLoss,
-      adherenceText: `${budgetMetDays}/${daysWithCals > 0 ? daysWithCals : dayCount} Days`,
-      waterAdherenceText: `${waterMetDays}/${dayCount} Days`,
-      stepAdherenceText: `${stepMetDays}/${dayCount} Days`,
+      daysWithCals,
+      dayCount,
+      adherenceText: `${budgetMetDays} of ${dayCount} Days`,
+      waterAdherenceText: `${waterMetDays} of ${dayCount} Days`,
+      stepAdherenceText: `${stepMetDays} of ${dayCount} Days`,
       comparisonText,
     };
-  }, [timeRange, weeklyLogs, fourteenDayData, thirtyDayClusters, budget, waterGoal, stepGoal]);
+  }, [timeRange, weeklyLogs, thirtyDayClusters, budget, waterGoal, stepGoal]);
 
   // Selected Inspect Item Helpers
-  const activeCalItem = useMemo(() => {
+  const activeItem = useMemo(() => {
     if (timeRange === '7d') return weeklyLogs[selectedCalIdx] || weeklyLogs[weeklyLogs.length - 1];
-    if (timeRange === '14d') return fourteenDayData[selectedCalIdx] || fourteenDayData[fourteenDayData.length - 1];
     return null;
-  }, [timeRange, selectedCalIdx, weeklyLogs, fourteenDayData]);
-
-  const activeWaterItem = useMemo(() => {
-    if (timeRange === '7d') return weeklyLogs[selectedWaterIdx] || weeklyLogs[weeklyLogs.length - 1];
-    if (timeRange === '14d') return fourteenDayData[selectedWaterIdx] || fourteenDayData[fourteenDayData.length - 1];
-    return null;
-  }, [timeRange, selectedWaterIdx, weeklyLogs, fourteenDayData]);
-
-  const activeStepItem = useMemo(() => {
-    if (timeRange === '7d') return weeklyLogs[selectedStepIdx] || weeklyLogs[weeklyLogs.length - 1];
-    if (timeRange === '14d') return fourteenDayData[selectedStepIdx] || fourteenDayData[fourteenDayData.length - 1];
-    return null;
-  }, [timeRange, selectedStepIdx, weeklyLogs, fourteenDayData]);
+  }, [timeRange, selectedCalIdx, weeklyLogs]);
 
   const activeCluster = useMemo(() => {
     return thirtyDayClusters[selectedClusterIdx] || thirtyDayClusters[thirtyDayClusters.length - 1];
@@ -221,6 +195,57 @@ export const AnalyticsScreen: React.FC = () => {
   const getItemLabel = (item: any): string => {
     if (!item) return '';
     return item.dayName ? item.dayName : `Day ${item.label}`;
+  };
+
+  // Helper getters for Active Metric (Calories, Hydration, Movement)
+  const getMetricValue = (item: any): number => {
+    if (!item) return 0;
+    if (activeMetric === 'calories') return item.calories ?? item.avgCalories ?? 0;
+    if (activeMetric === 'hydration') return item.waterMl ?? item.avgWaterMl ?? 0;
+    if (activeMetric === 'movement') return item.steps ?? item.avgSteps ?? 0;
+    return 0;
+  };
+
+  const getMetricGoal = (): number => {
+    if (activeMetric === 'calories') return budget;
+    if (activeMetric === 'hydration') return waterGoal;
+    if (activeMetric === 'movement') return stepGoal;
+    return 2000;
+  };
+
+  const getMetricTopLabel = (val: number): string => {
+    if (val <= 0) return '—';
+    if (activeMetric === 'calories') return `${val}`;
+    if (activeMetric === 'hydration') return `${(val / 1000).toFixed(1)}L`;
+    if (activeMetric === 'movement') return val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
+    return `${val}`;
+  };
+
+  const getBarColor = (val: number, isSelected: boolean): string => {
+    const goal = getMetricGoal();
+    if (activeMetric === 'calories') {
+      const isOver = val > goal;
+      if (isOver) return '#EF4444';
+      return isSelected ? '#16A34A' : '#4ADE80';
+    }
+    if (activeMetric === 'hydration') {
+      const isMet = val >= goal;
+      if (isMet) return '#2563EB';
+      return isSelected ? '#3B82F6' : '#93C5FD';
+    }
+    if (activeMetric === 'movement') {
+      const isMet = val >= goal;
+      if (isMet) return '#EA580C';
+      return isSelected ? '#F97316' : '#FDBA74';
+    }
+    return '#16A34A';
+  };
+
+  const getMetricThemeColor = (): string => {
+    if (activeMetric === 'calories') return '#16A34A';
+    if (activeMetric === 'hydration') return '#2563EB';
+    if (activeMetric === 'movement') return '#EA580C';
+    return '#16A34A';
   };
 
   // Macro calorie contributions
@@ -238,24 +263,41 @@ export const AnalyticsScreen: React.FC = () => {
   const mealTotal = (mealCalories?.breakfast || 0) + (mealCalories?.lunch || 0) + (mealCalories?.snacks || 0) + (mealCalories?.dinner || 0);
   const getSlotPct = (cals: number) => (mealTotal > 0 ? Math.round((cals / mealTotal) * 100) : 0);
 
+  // Latest Day Habit Snapshots for Glance Pods
+  const todayWater = weeklyLogs[weeklyLogs.length - 1]?.waterMl || 0;
+  const waterPct = Math.min(100, Math.round((todayWater / waterGoal) * 100));
+  const todaySteps = weeklyLogs[weeklyLogs.length - 1]?.steps || 0;
+  const stepPct = Math.min(100, Math.round((todaySteps / stepGoal) * 100));
+
+  const currentGoal = getMetricGoal();
+
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Top Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Nutrition & Health Trends</Text>
-        <Text style={styles.headerSubtitle}>Multi-horizon health & habit analysis</Text>
+      {/* 0. Blended Natural-Scroll Header */}
+      <Header
+        onSearchPress={onSearchPress}
+        onNotificationsPress={onNotificationsPress}
+        onAvatarPress={onAvatarPress}
+        onSignInPress={onSignInPress}
+        onSignOutPress={onSignOutPress}
+      />
 
-        {/* Time-Horizon Switcher: 7D | 14D | 30D */}
-        <View style={styles.timeFilterRow}>
-          {(['7d', '14d', '30d'] as TimeRange[]).map((r) => {
+      {/* 1. Screen Title & Horizon Switcher */}
+      <View style={styles.topSection}>
+        <Text style={styles.screenTitle}>Nutrition & Health Trends</Text>
+        <Text style={styles.screenSubtitle}>Multi-horizon health & habit telemetry</Text>
+
+        {/* Time-Horizon Segmented Switcher: 7D | 30D */}
+        <View style={styles.timeFilterContainer}>
+          {(['7d', '30d'] as TimeRange[]).map((r) => {
             const isSelected = timeRange === r;
             const labels: Record<TimeRange, string> = {
               '7d': '7 Days',
-              '14d': '14 Days',
               '30d': '30 Days',
             };
             return (
@@ -264,9 +306,7 @@ export const AnalyticsScreen: React.FC = () => {
                 style={[styles.timeFilterBtn, isSelected && styles.timeFilterBtnSelected]}
                 onPress={() => {
                   setTimeRange(r);
-                  setSelectedCalIdx(r === '14d' ? 13 : 6);
-                  setSelectedWaterIdx(r === '14d' ? 13 : 6);
-                  setSelectedStepIdx(r === '14d' ? 13 : 6);
+                  if (r === '7d') setSelectedCalIdx(6);
                 }}
                 activeOpacity={0.75}
               >
@@ -284,44 +324,150 @@ export const AnalyticsScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Trajectory Callout Banner */}
-      <View style={styles.trajectoryBanner}>
-        <Ionicons name="trending-up" size={18} color="#EA580C" />
+      {/* 2. Executive Trajectory Callout Pill */}
+      <View style={styles.trajectoryCard}>
+        <View style={styles.trajectoryIconBadge}>
+          <Ionicons name="trending-up" size={16} color="#16A34A" />
+        </View>
         <Text style={styles.trajectoryText}>{analyticsSummary.comparisonText}</Text>
       </View>
 
-      {/* 1. CALORIE INTAKE & DEFICIT TRENDS */}
-      <View style={styles.card}>
+      {/* 3. PRIMARY HERO CHART WITH INTERACTIVE METRIC SELECTOR (Apple Health / WHOOP Model) */}
+      <View style={styles.heroSection}>
+        {/* Interactive Metric Switcher Tabs: Calories | Hydration | Movement */}
+        <View style={styles.metricSwitcherRow}>
+          <TouchableOpacity
+            style={[
+              styles.metricTab,
+              activeMetric === 'calories' && styles.metricTabActiveCalories,
+            ]}
+            onPress={() => setActiveMetric('calories')}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="flame"
+              size={15}
+              color={activeMetric === 'calories' ? '#16A34A' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.metricTabText,
+                activeMetric === 'calories' && styles.metricTabTextActiveCalories,
+              ]}
+            >
+              Calories
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.metricTab,
+              activeMetric === 'hydration' && styles.metricTabActiveHydration,
+            ]}
+            onPress={() => setActiveMetric('hydration')}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="water"
+              size={15}
+              color={activeMetric === 'hydration' ? '#2563EB' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.metricTabText,
+                activeMetric === 'hydration' && styles.metricTabTextActiveHydration,
+              ]}
+            >
+              Hydration
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.metricTab,
+              activeMetric === 'movement' && styles.metricTabActiveMovement,
+            ]}
+            onPress={() => setActiveMetric('movement')}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="footsteps"
+              size={15}
+              color={activeMetric === 'movement' ? '#EA580C' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.metricTabText,
+                activeMetric === 'movement' && styles.metricTabTextActiveMovement,
+              ]}
+            >
+              Movement
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Dynamic Card Header based on Active Metric */}
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.cardTitle}>
-              {timeRange === '7d'
-                ? '7-Day Calorie Intake'
-                : timeRange === '14d'
-                ? '14-Day Intake Trajectory'
-                : '30-Day Weekly Intake Average'}
+              {activeMetric === 'calories' && (timeRange === '7d' ? '7-Day Calorie Intake' : '30-Day Weekly Intake')}
+              {activeMetric === 'hydration' && (timeRange === '7d' ? '7-Day Hydration Trends' : '30-Day Weekly Hydration')}
+              {activeMetric === 'movement' && (timeRange === '7d' ? '7-Day Movement & Steps' : '30-Day Weekly Movement')}
             </Text>
             <Text style={styles.cardSubtitle}>
-              Avg: {analyticsSummary.avgCals} kcal/day • Budget: {budget}
+              {activeMetric === 'calories' && `Avg: ${analyticsSummary.avgCals} kcal/day • Target: ${budget}`}
+              {activeMetric === 'hydration' && `Avg: ${(analyticsSummary.avgWater / 1000).toFixed(1)} L/day • Target: ${(waterGoal / 1000).toFixed(1)} L`}
+              {activeMetric === 'movement' && `Avg: ${analyticsSummary.avgSteps.toLocaleString()} steps/day • Target: ${(stepGoal / 1000).toFixed(0)}k`}
             </Text>
           </View>
           <View style={styles.targetLegend}>
-            <View style={styles.targetLineDot} />
-            <Text style={styles.targetLegendText}>{budget} goal</Text>
+            <View style={[styles.targetLineDot, { backgroundColor: getMetricThemeColor() }]} />
+            <Text style={styles.targetLegendText}>
+              {activeMetric === 'calories' && `${budget} goal`}
+              {activeMetric === 'hydration' && `${waterGoal} ml goal`}
+              {activeMetric === 'movement' && `${(stepGoal / 1000).toFixed(0)}k goal`}
+            </Text>
           </View>
         </View>
 
         {/* Interactive Tap-to-Inspect Tooltip Banner */}
-        {timeRange !== '30d' && activeCalItem && (
+        {timeRange !== '30d' && activeItem && (
           <View style={styles.inspectPill}>
             <Text style={styles.inspectPillText}>
-              📅 {getItemLabel(activeCalItem)}:{' '}
-              <Text style={styles.inspectBoldText}>{activeCalItem.calories} kcal</Text>
-              {' • '}
-              {activeCalItem.calories <= budget ? (
-                <Text style={{ color: '#10B981' }}>{budget - activeCalItem.calories} under budget 🎯</Text>
-              ) : (
-                <Text style={{ color: '#EF4444' }}>{activeCalItem.calories - budget} over budget ⚠️</Text>
+              {activeMetric === 'calories' && '📅 '}
+              {activeMetric === 'hydration' && '💧 '}
+              {activeMetric === 'movement' && '👟 '}
+              {getItemLabel(activeItem)}:{' '}
+              <Text style={styles.inspectBoldText}>
+                {getMetricValue(activeItem) > 0
+                  ? activeMetric === 'calories'
+                    ? `${getMetricValue(activeItem)} kcal`
+                    : activeMetric === 'hydration'
+                    ? `${getMetricValue(activeItem).toLocaleString()} ml`
+                    : `${getMetricValue(activeItem).toLocaleString()} steps`
+                  : 'No logs recorded'}
+              </Text>
+              {getMetricValue(activeItem) > 0 && (
+                <>
+                  {' • '}
+                  {activeMetric === 'calories' && (
+                    getMetricValue(activeItem) <= budget ? (
+                      <Text style={{ color: '#16A34A' }}>{budget - getMetricValue(activeItem)} under budget 🎯</Text>
+                    ) : (
+                      <Text style={{ color: '#EF4444' }}>{getMetricValue(activeItem) - budget} over budget ⚠️</Text>
+                    )
+                  )}
+                  {activeMetric === 'hydration' && (
+                    getMetricValue(activeItem) >= waterGoal ? (
+                      <Text style={{ color: '#2563EB' }}>Goal Achieved! 🎉</Text>
+                    ) : (
+                      <Text style={{ color: '#64748B' }}>{waterGoal - getMetricValue(activeItem)} ml remaining</Text>
+                    )
+                  )}
+                  {activeMetric === 'movement' && (
+                    <Text style={{ color: '#EA580C' }}>+{activeItem.burned || Math.round(getMetricValue(activeItem) * 0.04)} kcal burn 🔥</Text>
+                  )}
+                </>
               )}
             </Text>
           </View>
@@ -331,593 +477,427 @@ export const AnalyticsScreen: React.FC = () => {
           <View style={styles.inspectPill}>
             <Text style={styles.inspectPillText}>
               📊 <Text style={styles.inspectBoldText}>{activeCluster.label}:</Text>{' '}
-              {activeCluster.avgCalories} kcal/day avg •{' '}
-              {activeCluster.avgCalories <= budget ? (
-                <Text style={{ color: '#10B981' }}>{budget - activeCluster.avgCalories} under budget 🎯</Text>
-              ) : (
-                <Text style={{ color: '#EF4444' }}>{activeCluster.avgCalories - budget} over budget ⚠️</Text>
-              )}
+              {activeMetric === 'calories' && `${activeCluster.avgCalories} kcal/day avg`}
+              {activeMetric === 'hydration' && `${(activeCluster.avgWaterMl / 1000).toFixed(1)} L/day avg`}
+              {activeMetric === 'movement' && `${activeCluster.avgSteps.toLocaleString()} steps/day avg`}
             </Text>
           </View>
         )}
 
-        {/* Chart View */}
-        {timeRange === '7d' && (
-          <View style={styles.chartContainer}>
-            {weeklyLogs.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.calories / (budget * 1.25)) * 100));
-              const isSelected = selectedCalIdx === index;
-              const isOver = item.calories > budget;
-              return (
-                <TouchableOpacity
-                  key={item.date}
-                  style={styles.barCol}
-                  onPress={() => setSelectedCalIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
-                    {item.calories > 0 ? item.calories : '-'}
-                  </Text>
-                  <View style={[styles.barTrack, isSelected && styles.barTrackActive]}>
+        {/* Chart View with Dynamic Horizontal Goal Benchmark Line */}
+        <View style={styles.chartWrapper}>
+          {/* Subtle Horizontal Dashed Goal Line */}
+          <View style={styles.benchmarkLineContainer}>
+            <View style={[styles.benchmarkDashedLine, { borderColor: `${getMetricThemeColor()}55` }]} />
+          </View>
+
+          {/* 7-Day Chart */}
+          {timeRange === '7d' && (
+            <View style={styles.chartContainer}>
+              {weeklyLogs.map((item, index) => {
+                const isSelected = selectedCalIdx === index;
+                const val = getMetricValue(item);
+                const hasData = val > 0;
+                const heightPct = hasData
+                  ? Math.min(100, Math.round((val / (currentGoal * 1.25)) * 100))
+                  : 0;
+
+                return (
+                  <TouchableOpacity
+                    key={item.date}
+                    style={styles.barCol}
+                    onPress={() => setSelectedCalIdx(index)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
+                      {getMetricTopLabel(val)}
+                    </Text>
                     <View
                       style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isOver ? Colors.danger : isSelected ? Colors.primary : '#94A3B8',
-                        },
+                        styles.barTrack,
+                        isSelected && { borderColor: '#0F172A', borderWidth: 1.5 },
+                        !hasData && styles.barTrackEmpty,
                       ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText, isSelected && styles.barDayToday]}>
-                    {item.dayName}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+                    >
+                      {hasData && (
+                        <View
+                          style={[
+                            styles.barFill,
+                            {
+                              height: `${Math.max(10, heightPct)}%`,
+                              backgroundColor: getBarColor(val, isSelected),
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+                    <Text style={[styles.barBottomText, isSelected && styles.barDayActive]}>
+                      {item.dayName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
-        {timeRange === '14d' && (
-          <View style={styles.chartContainer}>
-            {fourteenDayData.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.calories / (budget * 1.25)) * 100));
-              const isSelected = selectedCalIdx === index;
-              const isOver = item.calories > budget;
-              const showLabel = index % 2 === 0 || item.isToday;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.barCol14}
-                  onPress={() => setSelectedCalIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.barTrack14, isSelected && styles.barTrackActive]}>
+          {/* 30-Day Cluster Chart */}
+          {timeRange === '30d' && (
+            <View style={styles.chartContainer}>
+              {thirtyDayClusters.map((cluster, index) => {
+                const isSelected = selectedClusterIdx === index;
+                const val = getMetricValue(cluster);
+                const hasData = val > 0;
+                const heightPct = hasData
+                  ? Math.min(100, Math.round((val / (currentGoal * 1.25)) * 100))
+                  : 0;
+
+                return (
+                  <TouchableOpacity
+                    key={cluster.id}
+                    style={styles.barCol30}
+                    onPress={() => setSelectedClusterIdx(index)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
+                      {getMetricTopLabel(val)}
+                    </Text>
                     <View
                       style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isOver ? Colors.danger : isSelected ? Colors.primary : '#94A3B8',
-                        },
+                        styles.barTrack30,
+                        isSelected && { borderColor: '#0F172A', borderWidth: 1.5 },
+                        !hasData && styles.barTrackEmpty,
                       ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText14, isSelected && styles.barDayToday]}>
-                    {showLabel ? (item.isToday ? 'Now' : `D${item.label}`) : ''}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {timeRange === '30d' && (
-          <View style={styles.chartContainer}>
-            {thirtyDayClusters.map((cluster, index) => {
-              const heightPct = Math.min(100, Math.round((cluster.avgCalories / (budget * 1.25)) * 100));
-              const isSelected = selectedClusterIdx === index;
-              const isOver = cluster.avgCalories > budget;
-              return (
-                <TouchableOpacity
-                  key={cluster.id}
-                  style={styles.barCol30}
-                  onPress={() => setSelectedClusterIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
-                    {cluster.avgCalories}
-                  </Text>
-                  <View style={[styles.barTrack30, isSelected && styles.barTrackActive]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isOver ? Colors.danger : isSelected ? Colors.primary : '#94A3B8',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText30, isSelected && styles.barDayToday]}>
-                    {cluster.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Dynamic Energy & Weight Loss KPIs */}
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiBox}>
-            <Text style={styles.kpiValue}>-{analyticsSummary.netDeficit.toLocaleString()}</Text>
-            <Text style={styles.kpiLabel}>Net Deficit (kcal)</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#10B981' }]}>
-              ~{analyticsSummary.projectedFatLoss} kg
-            </Text>
-            <Text style={styles.kpiLabel}>Est. Fat Loss</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={styles.kpiValue}>{analyticsSummary.adherenceText}</Text>
-            <Text style={styles.kpiLabel}>Budget Adherence</Text>
-          </View>
+                    >
+                      {hasData && (
+                        <View
+                          style={[
+                            styles.barFill,
+                            {
+                              height: `${Math.max(10, heightPct)}%`,
+                              backgroundColor: getBarColor(val, isSelected),
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+                    <Text style={[styles.barBottomText30, isSelected && styles.barDayActive]}>
+                      {cluster.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
+
+        {/* Dynamic Context-Aware KPIs for Active Metric */}
+        {activeMetric === 'calories' && (
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: analyticsSummary.isDeficit ? '#16A34A' : '#EF4444' }]}>
+                {analyticsSummary.isDeficit ? `-${analyticsSummary.netDiff.toLocaleString()}` : `+${analyticsSummary.netDiff.toLocaleString()}`}
+              </Text>
+              <Text style={styles.kpiLabel}>
+                {analyticsSummary.isDeficit ? 'Net Deficit (kcal)' : 'Net Surplus (kcal)'}
+              </Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#0F172A' }]}>
+                +{analyticsSummary.totalBurn.toLocaleString()}
+              </Text>
+              <Text style={styles.kpiLabel}>Active Burn (kcal)</Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={styles.kpiValue}>
+                {analyticsSummary.hasSufficientTrendData
+                  ? `~${analyticsSummary.projectedFatLoss} kg`
+                  : `${analyticsSummary.daysWithCals}/${analyticsSummary.dayCount}`}
+              </Text>
+              <Text style={styles.kpiLabel}>
+                {analyticsSummary.hasSufficientTrendData ? 'Est. Fat Loss' : 'Days Logged'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {activeMetric === 'hydration' && (
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+                {analyticsSummary.avgWater.toLocaleString()} ml
+              </Text>
+              <Text style={styles.kpiLabel}>Daily Average</Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+                {analyticsSummary.totalWaterL} L
+              </Text>
+              <Text style={styles.kpiLabel}>Total Volume</Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+                {analyticsSummary.waterAdherenceText}
+              </Text>
+              <Text style={styles.kpiLabel}>Goal Consistency</Text>
+            </View>
+          </View>
+        )}
+
+        {activeMetric === 'movement' && (
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+                {analyticsSummary.avgSteps.toLocaleString()}
+              </Text>
+              <Text style={styles.kpiLabel}>Daily Avg Steps</Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+                {analyticsSummary.totalDistanceKm} km
+              </Text>
+              <Text style={styles.kpiLabel}>Total Distance</Text>
+            </View>
+
+            <View style={styles.kpiBox}>
+              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+                +{analyticsSummary.totalBurn.toLocaleString()} kcal
+              </Text>
+              <Text style={styles.kpiLabel}>Active Energy Burn</Text>
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* 2. DEDICATED HYDRATION TRENDS (WATER 💧) */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.titleWithIcon}>
-            <View style={[styles.iconBadge, { backgroundColor: '#EFF6FF' }]}>
+      {/* 4. VITALITY HABIT GLANCE ROW (Tap either to switch the main graph instantly) */}
+      <View style={styles.dualPodRow}>
+        {/* Hydration Glance Card */}
+        <TouchableOpacity
+          style={[
+            styles.habitPod,
+            activeMetric === 'hydration' && styles.habitPodActiveHydration,
+          ]}
+          onPress={() => setActiveMetric('hydration')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.habitHeader}>
+            <View style={[styles.habitIconCircle, { backgroundColor: '#EFF6FF' }]}>
               <Ionicons name="water" size={16} color="#2563EB" />
             </View>
-            <View>
-              <Text style={styles.cardTitle}>
-                {timeRange === '7d'
-                  ? 'Hydration Trends'
-                  : timeRange === '14d'
-                  ? '14-Day Hydration Trajectory'
-                  : '30-Day Weekly Hydration'}
-              </Text>
-              <Text style={styles.cardSubtitle}>
-                Avg: {(analyticsSummary.avgWater / 1000).toFixed(1)} L/day • Goal: {(waterGoal / 1000).toFixed(1)} L
-              </Text>
-            </View>
+            <Text style={[styles.habitTitle, { color: '#2563EB' }]}>HYDRATION</Text>
           </View>
-          <View style={styles.targetLegend}>
-            <View style={[styles.targetLineDot, { backgroundColor: '#2563EB' }]} />
-            <Text style={styles.targetLegendText}>{waterGoal} ml</Text>
-          </View>
-        </View>
 
-        {/* Interactive Tap-to-Inspect Tooltip Banner for Water */}
-        {timeRange !== '30d' && activeWaterItem && (
-          <View style={[styles.inspectPill, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
-            <Text style={[styles.inspectPillText, { color: '#1D4ED8' }]}>
-              💧 {getItemLabel(activeWaterItem)}:{' '}
-              <Text style={styles.inspectBoldText}>{activeWaterItem.waterMl.toLocaleString()} ml</Text>
-              {' • '}
-              {activeWaterItem.waterMl >= waterGoal ? (
-                <Text style={{ color: '#10B981' }}>Target Achieved! 🎉</Text>
-              ) : (
-                <Text style={{ color: '#64748B' }}>{waterGoal - activeWaterItem.waterMl} ml remaining</Text>
-              )}
+          <Text style={styles.habitMainVal}>
+            {todayWater > 0 ? `${todayWater.toLocaleString()} ml` : '0 ml'}
+          </Text>
+          <Text style={styles.habitGoalSub}>Goal: {waterGoal} ml</Text>
+
+          {/* Micro Progress Bar */}
+          <View style={styles.habitTrack}>
+            <View style={[styles.habitFill, { width: `${waterPct}%`, backgroundColor: '#2563EB' }]} />
+          </View>
+
+          <View style={styles.habitFooterRow}>
+            <Text style={styles.habitFooterText}>
+              Avg: {(analyticsSummary.avgWater / 1000).toFixed(1)}L/day
             </Text>
+            <Text style={styles.habitFooterHighlight}>{waterPct}%</Text>
           </View>
-        )}
+        </TouchableOpacity>
 
-        {timeRange === '30d' && activeCluster && (
-          <View style={[styles.inspectPill, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
-            <Text style={[styles.inspectPillText, { color: '#1D4ED8' }]}>
-              💧 <Text style={styles.inspectBoldText}>{activeCluster.label}:</Text>{' '}
-              {(activeCluster.avgWaterMl / 1000).toFixed(1)} L/day avg •{' '}
-              {activeCluster.avgWaterMl >= waterGoal ? (
-                <Text style={{ color: '#10B981' }}>Hydration Target Met 🎉</Text>
-              ) : (
-                <Text style={{ color: '#64748B' }}>{waterGoal - activeCluster.avgWaterMl} ml/day gap</Text>
-              )}
-            </Text>
-          </View>
-        )}
-
-        {/* Water Chart View */}
-        {timeRange === '7d' && (
-          <View style={styles.chartContainer}>
-            {weeklyLogs.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.waterMl / (waterGoal * 1.25)) * 100));
-              const isSelected = selectedWaterIdx === index;
-              const isMet = item.waterMl >= waterGoal;
-              return (
-                <TouchableOpacity
-                  key={item.date}
-                  style={styles.barCol}
-                  onPress={() => setSelectedWaterIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && { color: '#2563EB', fontWeight: '700' }]}>
-                    {item.waterMl > 0 ? (item.waterMl / 1000).toFixed(1) + 'L' : '-'}
-                  </Text>
-                  <View style={[styles.barTrack, isSelected && { borderColor: '#2563EB', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isMet ? '#2563EB' : isSelected ? '#3B82F6' : '#BFDBFE',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText, isSelected && { color: '#2563EB', fontWeight: '700' }]}>
-                    {item.dayName}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {timeRange === '14d' && (
-          <View style={styles.chartContainer}>
-            {fourteenDayData.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.waterMl / (waterGoal * 1.25)) * 100));
-              const isSelected = selectedWaterIdx === index;
-              const isMet = item.waterMl >= waterGoal;
-              const showLabel = index % 2 === 0 || item.isToday;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.barCol14}
-                  onPress={() => setSelectedWaterIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.barTrack14, isSelected && { borderColor: '#2563EB', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isMet ? '#2563EB' : isSelected ? '#3B82F6' : '#BFDBFE',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText14, isSelected && { color: '#2563EB', fontWeight: '700' }]}>
-                    {showLabel ? (item.isToday ? 'Now' : `D${item.label}`) : ''}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {timeRange === '30d' && (
-          <View style={styles.chartContainer}>
-            {thirtyDayClusters.map((cluster, index) => {
-              const heightPct = Math.min(100, Math.round((cluster.avgWaterMl / (waterGoal * 1.25)) * 100));
-              const isSelected = selectedClusterIdx === index;
-              return (
-                <TouchableOpacity
-                  key={cluster.id}
-                  style={styles.barCol30}
-                  onPress={() => setSelectedClusterIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && { color: '#2563EB', fontWeight: '700' }]}>
-                    {(cluster.avgWaterMl / 1000).toFixed(1)}L
-                  </Text>
-                  <View style={[styles.barTrack30, isSelected && { borderColor: '#2563EB', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isSelected ? '#2563EB' : '#BFDBFE',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText30, isSelected && { color: '#2563EB', fontWeight: '700' }]}>
-                    {cluster.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Dynamic Water KPIs */}
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
-              {analyticsSummary.avgWater.toLocaleString()} ml
-            </Text>
-            <Text style={styles.kpiLabel}>Daily Average</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
-              {analyticsSummary.totalWaterL} L
-            </Text>
-            <Text style={styles.kpiLabel}>Total Volume</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
-              {analyticsSummary.waterAdherenceText}
-            </Text>
-            <Text style={styles.kpiLabel}>Goal Consistency</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* 3. DEDICATED STEPS & ACTIVITY TRENDS (🔥) */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.titleWithIcon}>
-            <View style={[styles.iconBadge, { backgroundColor: '#FFF7ED' }]}>
+        {/* Movement Glance Card */}
+        <TouchableOpacity
+          style={[
+            styles.habitPod,
+            activeMetric === 'movement' && styles.habitPodActiveMovement,
+          ]}
+          onPress={() => setActiveMetric('movement')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.habitHeader}>
+            <View style={[styles.habitIconCircle, { backgroundColor: '#FFF7ED' }]}>
               <Ionicons name="footsteps" size={16} color="#EA580C" />
             </View>
-            <View>
-              <Text style={styles.cardTitle}>
-                {timeRange === '7d'
-                  ? 'Activity & Steps Trends'
-                  : timeRange === '14d'
-                  ? '14-Day Steps Trajectory'
-                  : '30-Day Weekly Movement'}
-              </Text>
-              <Text style={styles.cardSubtitle}>
-                Avg: {analyticsSummary.avgSteps.toLocaleString()} steps/day • Goal: 10k
-              </Text>
-            </View>
+            <Text style={[styles.habitTitle, { color: '#EA580C' }]}>MOVEMENT</Text>
           </View>
-          <View style={styles.targetLegend}>
-            <View style={[styles.targetLineDot, { backgroundColor: '#EA580C' }]} />
-            <Text style={styles.targetLegendText}>10k goal</Text>
-          </View>
-        </View>
 
-        {/* Interactive Tap-to-Inspect Tooltip Banner for Steps */}
-        {timeRange !== '30d' && activeStepItem && (
-          <View style={[styles.inspectPill, { backgroundColor: '#FFF7ED', borderColor: '#FED7AA' }]}>
-            <Text style={[styles.inspectPillText, { color: '#C2410C' }]}>
-              🔥 {getItemLabel(activeStepItem)}:{' '}
-              <Text style={styles.inspectBoldText}>{activeStepItem.steps.toLocaleString()} steps</Text>
-              {' • '}
-              +{activeStepItem.burned} kcal burned
+          <Text style={styles.habitMainVal}>
+            {todaySteps > 0 ? todaySteps.toLocaleString() : '0'}
+          </Text>
+          <Text style={styles.habitGoalSub}>Goal: {stepGoal.toLocaleString()} steps</Text>
+
+          {/* Micro Progress Bar */}
+          <View style={styles.habitTrack}>
+            <View style={[styles.habitFill, { width: `${stepPct}%`, backgroundColor: '#EA580C' }]} />
+          </View>
+
+          <View style={styles.habitFooterRow}>
+            <Text style={styles.habitFooterText}>
+              Avg: {(analyticsSummary.avgSteps / 1000).toFixed(1)}k/day
             </Text>
+            <Text style={[styles.habitFooterHighlight, { color: '#EA580C' }]}>{stepPct}%</Text>
           </View>
-        )}
-
-        {timeRange === '30d' && activeCluster && (
-          <View style={[styles.inspectPill, { backgroundColor: '#FFF7ED', borderColor: '#FED7AA' }]}>
-            <Text style={[styles.inspectPillText, { color: '#C2410C' }]}>
-              🔥 <Text style={styles.inspectBoldText}>{activeCluster.label}:</Text>{' '}
-              {activeCluster.avgSteps.toLocaleString()} steps/day avg •{' '}
-              <Text style={styles.inspectBoldText}>{activeCluster.totalBurn.toLocaleString()} kcal</Text> active burn
-            </Text>
-          </View>
-        )}
-
-        {/* Steps Chart View */}
-        {timeRange === '7d' && (
-          <View style={styles.chartContainer}>
-            {weeklyLogs.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.steps / (stepGoal * 1.25)) * 100));
-              const isSelected = selectedStepIdx === index;
-              const isMet = item.steps >= stepGoal;
-              return (
-                <TouchableOpacity
-                  key={item.date}
-                  style={styles.barCol}
-                  onPress={() => setSelectedStepIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && { color: '#EA580C', fontWeight: '700' }]}>
-                    {item.steps > 0 ? (item.steps / 1000).toFixed(1) + 'k' : '-'}
-                  </Text>
-                  <View style={[styles.barTrack, isSelected && { borderColor: '#EA580C', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isMet ? '#EA580C' : isSelected ? '#FB923C' : '#FED7AA',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText, isSelected && { color: '#EA580C', fontWeight: '700' }]}>
-                    {item.dayName}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {timeRange === '14d' && (
-          <View style={styles.chartContainer}>
-            {fourteenDayData.map((item, index) => {
-              const heightPct = Math.min(100, Math.round((item.steps / (stepGoal * 1.25)) * 100));
-              const isSelected = selectedStepIdx === index;
-              const isMet = item.steps >= stepGoal;
-              const showLabel = index % 2 === 0 || item.isToday;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.barCol14}
-                  onPress={() => setSelectedStepIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.barTrack14, isSelected && { borderColor: '#EA580C', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isMet ? '#EA580C' : isSelected ? '#FB923C' : '#FED7AA',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText14, isSelected && { color: '#EA580C', fontWeight: '700' }]}>
-                    {showLabel ? (item.isToday ? 'Now' : `D${item.label}`) : ''}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {timeRange === '30d' && (
-          <View style={styles.chartContainer}>
-            {thirtyDayClusters.map((cluster, index) => {
-              const heightPct = Math.min(100, Math.round((cluster.avgSteps / (stepGoal * 1.25)) * 100));
-              const isSelected = selectedClusterIdx === index;
-              return (
-                <TouchableOpacity
-                  key={cluster.id}
-                  style={styles.barCol30}
-                  onPress={() => setSelectedClusterIdx(index)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.barTopText, isSelected && { color: '#EA580C', fontWeight: '700' }]}>
-                    {(cluster.avgSteps / 1000).toFixed(1)}k
-                  </Text>
-                  <View style={[styles.barTrack30, isSelected && { borderColor: '#EA580C', borderWidth: 1 }]}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(8, heightPct)}%`,
-                          backgroundColor: isSelected ? '#EA580C' : '#FED7AA',
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.barBottomText30, isSelected && { color: '#EA580C', fontWeight: '700' }]}>
-                    {cluster.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Dynamic Activity KPIs */}
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
-              {analyticsSummary.avgSteps.toLocaleString()}
-            </Text>
-            <Text style={styles.kpiLabel}>Avg Steps/Day</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
-              {analyticsSummary.totalDistanceKm} km
-            </Text>
-            <Text style={styles.kpiLabel}>Total Distance</Text>
-          </View>
-          <View style={styles.kpiBox}>
-            <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
-              {analyticsSummary.totalBurn.toLocaleString()} kcal
-            </Text>
-            <Text style={styles.kpiLabel}>Active Burn</Text>
-          </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
-      {/* 4. MACRONUTRIENT & DIETARY FIBER BALANCE */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Macronutrient & Fiber Quality</Text>
-        <Text style={styles.cardSubtitle}>Daily intake vs target goals</Text>
+      {/* 5. MACRONUTRIENT & DIETARY FIBER QUALITY (Blended Section) */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Macronutrient & Fiber Quality</Text>
+        <Text style={styles.sectionSubtitle}>Nutrient balance vs daily targets</Text>
+      </View>
 
+      {/* Proportional Split Bar Card */}
+      <View style={styles.splitBarCard}>
         <View style={styles.splitBar}>
           {hasMacros ? (
             <>
-              <View style={[styles.splitSegment, { width: `${carbPct}%`, backgroundColor: Colors.carbs }]} />
-              <View style={[styles.splitSegment, { width: `${proteinPct}%`, backgroundColor: Colors.protein }]} />
-              <View style={[styles.splitSegment, { width: `${fatPct}%`, backgroundColor: Colors.fat }]} />
+              <View style={[styles.splitSegment, { width: `${carbPct}%`, backgroundColor: '#0284C7' }]} />
+              <View style={[styles.splitSegment, { width: `${proteinPct}%`, backgroundColor: '#16A34A' }]} />
+              <View style={[styles.splitSegment, { width: `${fatPct}%`, backgroundColor: '#EA580C' }]} />
             </>
           ) : (
             <View style={[styles.splitSegment, { width: '100%', backgroundColor: '#E2E8F0' }]} />
           )}
         </View>
 
-        <View style={styles.macroGrid}>
-          <View style={styles.macroBox}>
-            <View style={styles.macroBoxHeader}>
-              <View style={[styles.dot, { backgroundColor: Colors.protein }]} />
-              <Text style={styles.macroName}>Protein</Text>
-            </View>
-            <Text style={styles.macroGramsVal}>{totalProtein}g</Text>
-            <Text style={styles.macroGoalVal}>Goal: {userGoals.targetProtein}g</Text>
-          </View>
-
-          <View style={styles.macroBox}>
-            <View style={styles.macroBoxHeader}>
-              <View style={[styles.dot, { backgroundColor: Colors.carbs }]} />
-              <Text style={styles.macroName}>Carbs</Text>
-            </View>
-            <Text style={styles.macroGramsVal}>{totalCarbs}g</Text>
-            <Text style={styles.macroGoalVal}>Goal: {userGoals.targetCarbs}g</Text>
-          </View>
-
-          <View style={styles.macroBox}>
-            <View style={styles.macroBoxHeader}>
-              <View style={[styles.dot, { backgroundColor: Colors.fat }]} />
-              <Text style={styles.macroName}>Fats</Text>
-            </View>
-            <Text style={styles.macroGramsVal}>{totalFat}g</Text>
-            <Text style={styles.macroGoalVal}>Goal: {userGoals.targetFat}g</Text>
-          </View>
-
-          <View style={styles.macroBox}>
-            <View style={styles.macroBoxHeader}>
-              <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-              <Text style={styles.macroName}>Fiber</Text>
-            </View>
-            <Text style={styles.macroGramsVal}>{totalFiber}g</Text>
-            <Text style={styles.macroGoalVal}>Goal: {userGoals.targetFiber || 30}g</Text>
-          </View>
+        {/* Proportional Split Legend */}
+        <View style={styles.splitLegendRow}>
+          <Text style={styles.splitLegendText}>
+            <Text style={{ color: '#0284C7', fontWeight: '700' }}>● {carbPct}%</Text> Carbs
+          </Text>
+          <Text style={styles.splitLegendText}>
+            <Text style={{ color: '#16A34A', fontWeight: '700' }}>● {proteinPct}%</Text> Protein
+          </Text>
+          <Text style={styles.splitLegendText}>
+            <Text style={{ color: '#EA580C', fontWeight: '700' }}>● {fatPct}%</Text> Fat
+          </Text>
         </View>
       </View>
 
-      {/* 5. MEAL-TIMING CALORIE DISTRIBUTION */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Calorie Intake by Meal Slot</Text>
-        <Text style={styles.cardSubtitle}>Distribution across the day</Text>
-
-        <View style={styles.mealDistRow}>
-          <View style={styles.mealDistItem}>
-            <Text style={styles.mealDistEmoji}>🍳</Text>
-            <Text style={styles.mealDistName}>Breakfast</Text>
-            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.breakfast || 0)}%</Text>
-            <Text style={styles.mealDistCals}>{mealCalories?.breakfast || 0} kcal</Text>
+      {/* 4 Floating Pastel Macro Pods */}
+      <View style={styles.macroGrid}>
+        {/* Protein Pod */}
+        <View style={[styles.macroPod, styles.proteinPod]}>
+          <View style={styles.macroPodHeader}>
+            <View style={[styles.macroDot, { backgroundColor: '#16A34A' }]} />
+            <Text style={[styles.macroPodLabel, { color: '#16A34A' }]}>PROTEIN</Text>
           </View>
-
-          <View style={styles.mealDistItem}>
-            <Text style={styles.mealDistEmoji}>🥗</Text>
-            <Text style={styles.mealDistName}>Lunch</Text>
-            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.lunch || 0)}%</Text>
-            <Text style={styles.mealDistCals}>{mealCalories?.lunch || 0} kcal</Text>
+          <Text style={styles.macroPodVal}>{Math.round(totalProtein)}g</Text>
+          <View style={[styles.podTrack, { backgroundColor: '#DCFCE7' }]}>
+            <View
+              style={[
+                styles.podFill,
+                {
+                  width: `${Math.min(100, Math.round((totalProtein / targetProtein) * 100))}%`,
+                  backgroundColor: '#16A34A',
+                },
+              ]}
+            />
           </View>
+          <Text style={styles.macroPodSub}>of {targetProtein}g</Text>
+        </View>
 
-          <View style={styles.mealDistItem}>
-            <Text style={styles.mealDistEmoji}>🍵</Text>
-            <Text style={styles.mealDistName}>Snacks</Text>
-            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.snacks || 0)}%</Text>
-            <Text style={styles.mealDistCals}>{mealCalories?.snacks || 0} kcal</Text>
+        {/* Carbs Pod */}
+        <View style={[styles.macroPod, styles.carbsPod]}>
+          <View style={styles.macroPodHeader}>
+            <View style={[styles.macroDot, { backgroundColor: '#0284C7' }]} />
+            <Text style={[styles.macroPodLabel, { color: '#0284C7' }]}>CARBS</Text>
           </View>
+          <Text style={styles.macroPodVal}>{Math.round(totalCarbs)}g</Text>
+          <View style={[styles.podTrack, { backgroundColor: '#E0F2FE' }]}>
+            <View
+              style={[
+                styles.podFill,
+                {
+                  width: `${Math.min(100, Math.round((totalCarbs / targetCarbs) * 100))}%`,
+                  backgroundColor: '#0284C7',
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.macroPodSub}>of {targetCarbs}g</Text>
+        </View>
 
-          <View style={styles.mealDistItem}>
-            <Text style={styles.mealDistEmoji}>🍲</Text>
-            <Text style={styles.mealDistName}>Dinner</Text>
-            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.dinner || 0)}%</Text>
-            <Text style={styles.mealDistCals}>{mealCalories?.dinner || 0} kcal</Text>
+        {/* Fat Pod */}
+        <View style={[styles.macroPod, styles.fatPod]}>
+          <View style={styles.macroPodHeader}>
+            <View style={[styles.macroDot, { backgroundColor: '#EA580C' }]} />
+            <Text style={[styles.macroPodLabel, { color: '#EA580C' }]}>FAT</Text>
           </View>
+          <Text style={styles.macroPodVal}>{Math.round(totalFat)}g</Text>
+          <View style={[styles.podTrack, { backgroundColor: '#FFEDD5' }]}>
+            <View
+              style={[
+                styles.podFill,
+                {
+                  width: `${Math.min(100, Math.round((totalFat / targetFat) * 100))}%`,
+                  backgroundColor: '#EA580C',
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.macroPodSub}>of {targetFat}g</Text>
+        </View>
+
+        {/* Fiber Pod */}
+        <View style={[styles.macroPod, styles.fiberPod]}>
+          <View style={styles.macroPodHeader}>
+            <View style={[styles.macroDot, { backgroundColor: '#059669' }]} />
+            <Text style={[styles.macroPodLabel, { color: '#059669' }]}>FIBER</Text>
+          </View>
+          <Text style={styles.macroPodVal}>{Math.round(totalFiber)}g</Text>
+          <View style={[styles.podTrack, { backgroundColor: '#D1FAE5' }]}>
+            <View
+              style={[
+                styles.podFill,
+                {
+                  width: `${Math.min(100, Math.round((totalFiber / targetFiber) * 100))}%`,
+                  backgroundColor: '#059669',
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.macroPodSub}>of {targetFiber}g</Text>
+        </View>
+      </View>
+
+      {/* 6. MEAL-TIMING CALORIE DISTRIBUTION (Blended Section) */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Calorie Intake by Meal Slot</Text>
+        <Text style={styles.sectionSubtitle}>Chronological energy distribution</Text>
+      </View>
+
+      <View style={styles.mealDistRow}>
+        <View style={styles.mealDistItem}>
+          <Text style={styles.mealDistEmoji}>🍳</Text>
+          <Text style={styles.mealDistName}>Breakfast</Text>
+          <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.breakfast || 0)}%</Text>
+          <Text style={styles.mealDistCals}>{mealCalories?.breakfast || 0} kcal</Text>
+        </View>
+
+        <View style={styles.mealDistItem}>
+          <Text style={styles.mealDistEmoji}>🥗</Text>
+          <Text style={styles.mealDistName}>Lunch</Text>
+          <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.lunch || 0)}%</Text>
+          <Text style={styles.mealDistCals}>{mealCalories?.lunch || 0} kcal</Text>
+        </View>
+
+        <View style={styles.mealDistItem}>
+          <Text style={styles.mealDistEmoji}>🍵</Text>
+          <Text style={styles.mealDistName}>Snacks</Text>
+          <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.snacks || 0)}%</Text>
+          <Text style={styles.mealDistCals}>{mealCalories?.snacks || 0} kcal</Text>
+        </View>
+
+        <View style={styles.mealDistItem}>
+          <Text style={styles.mealDistEmoji}>🍲</Text>
+          <Text style={styles.mealDistName}>Dinner</Text>
+          <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.dinner || 0)}%</Text>
+          <Text style={styles.mealDistCals}>{mealCalories?.dinner || 0} kcal</Text>
         </View>
       </View>
     </ScrollView>
@@ -927,154 +907,218 @@ export const AnalyticsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#EDFAF6',
   },
   content: {
-    padding: 16,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 120, // Full clearance above floating bottom navigation bar
   },
-  header: {
-    marginBottom: 14,
+  topSection: {
+    marginTop: 8,
+    marginBottom: 12,
   },
-  headerTitle: {
+  screenTitle: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.4,
   },
-  headerSubtitle: {
+  screenSubtitle: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#64748B',
     marginTop: 2,
   },
-  // Time Filter Switcher
-  timeFilterRow: {
+  timeFilterContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 14,
     padding: 3,
     marginTop: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   timeFilterBtn: {
     flex: 1,
     paddingVertical: 7,
     alignItems: 'center',
-    borderRadius: 9,
+    justifyContent: 'center',
+    borderRadius: 11,
   },
   timeFilterBtnSelected: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
     elevation: 2,
   },
   timeFilterBtnText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 12,
     color: '#64748B',
-    fontWeight: '500',
-  },
-  timeFilterBtnTextSelected: {
-    fontFamily: Fonts.poppins.semiBold,
-    color: '#0F172A',
     fontWeight: '600',
   },
-  // Trajectory Callout Banner
-  trajectoryBanner: {
+  timeFilterBtnTextSelected: {
+    fontFamily: Fonts.poppins.bold,
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  trajectoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
+    backgroundColor: '#F0FDF4',
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    marginBottom: 14,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
     gap: 8,
   },
+  trajectoryIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   trajectoryText: {
+    flex: 1,
     fontFamily: Fonts.poppins.medium,
     fontSize: 12,
-    color: '#C2410C',
-    flex: 1,
+    color: '#15803D',
+    lineHeight: 16,
+    fontWeight: '500',
   },
-  // Card Common Styles
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
+  heroSection: {
+    marginBottom: 16,
+  },
+  metricSwitcherRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 14,
+    padding: 3,
     marginBottom: 14,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  metricTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    borderRadius: 11,
+  },
+  metricTabActiveCalories: {
+    backgroundColor: '#FFFFFF',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 2,
+  },
+  metricTabActiveHydration: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  metricTabActiveMovement: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  metricTabText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 11.5,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  metricTabTextActiveCalories: {
+    fontFamily: Fonts.poppins.bold,
+    color: '#16A34A',
+    fontWeight: '700',
+  },
+  metricTabTextActiveHydration: {
+    fontFamily: Fonts.poppins.bold,
+    color: '#2563EB',
+    fontWeight: '700',
+  },
+  metricTabTextActiveMovement: {
+    fontFamily: Fonts.poppins.bold,
+    color: '#EA580C',
+    fontWeight: '700',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  titleWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  iconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   cardTitle: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.3,
   },
   cardSubtitle: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
     marginTop: 1,
   },
   targetLegend: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 10,
     gap: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   targetLineDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: Colors.primary,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   targetLegendText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 10.5,
-    color: '#64748B',
+    color: '#475569',
+    fontWeight: '600',
   },
-  // Inspect Pill Banner
   inspectPill: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignSelf: 'flex-start',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   inspectPillText: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 11.5,
     color: '#475569',
   },
   inspectBoldText: {
@@ -1082,14 +1126,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
   },
-  // 7-Day Chart Elements
+  chartWrapper: {
+    position: 'relative',
+    height: 142,
+    marginBottom: 16,
+  },
+  benchmarkLineContainer: {
+    position: 'absolute',
+    top: 28, // Corresponds to ~100% budget mark
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  },
+  benchmarkDashedLine: {
+    height: 1,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
   chartContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 145,
-    paddingTop: 12,
-    paddingHorizontal: 4,
+    alignItems: 'flex-end',
+    height: '100%',
+    zIndex: 2,
   },
   barCol: {
     flex: 1,
@@ -1100,105 +1159,96 @@ const styles = StyleSheet.create({
   barTopText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 9.5,
-    color: '#64748B',
+    color: '#94A3B8',
     marginBottom: 4,
   },
   barTopTextActive: {
     fontFamily: Fonts.poppins.bold,
-    color: Colors.primary,
+    color: '#0F172A',
+    fontWeight: '700',
   },
   barTrack: {
-    width: 18,
-    height: 105,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
+    width: 26,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 13,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.04)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  barTrackActive: {
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
+  barTrackEmpty: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   barFill: {
     width: '100%',
-    borderRadius: 6,
+    borderRadius: 13,
   },
   barBottomText: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
+    fontSize: 10.5,
     color: '#64748B',
     marginTop: 6,
   },
-  barDayToday: {
-    color: Colors.primary,
+  barDayActive: {
     fontFamily: Fonts.poppins.bold,
+    color: '#0F172A',
     fontWeight: '700',
   },
-  // 14-Day Slim Bar Elements
-  barCol14: {
-    flex: 1,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  barTrack14: {
-    width: 10,
-    height: 105,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 5,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  barBottomText14: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 9,
-    color: '#94A3B8',
-    marginTop: 6,
-    height: 14,
-  },
-  // 30-Day 4-Cluster Bar Elements
   barCol30: {
     flex: 1,
     alignItems: 'center',
     height: '100%',
     justifyContent: 'flex-end',
-    paddingHorizontal: 4,
+    marginHorizontal: 4,
   },
   barTrack30: {
-    width: '85%',
-    maxWidth: 38,
-    height: 105,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
+    width: 44,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.04)',
   },
   barBottomText30: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11,
-    color: '#334155',
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10,
+    color: '#64748B',
     marginTop: 6,
   },
-  // KPI Row
   kpiRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
-    paddingTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   kpiBox: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 12,
     alignItems: 'center',
   },
   kpiValue: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
+    fontSize: 16.5,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -1209,93 +1259,245 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: 'center',
   },
-  // Macro Elements
+  dualPodRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  habitPod: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  habitPodActiveHydration: {
+    borderColor: '#93C5FD',
+    backgroundColor: '#F0F9FF',
+  },
+  habitPodActiveMovement: {
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+  },
+  habitHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  habitIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  habitTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  habitMainVal: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  habitGoalSub: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 10.5,
+    color: '#94A3B8',
+    marginTop: 1,
+    marginBottom: 10,
+  },
+  habitTrack: {
+    height: 5,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  habitFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  habitFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  habitFooterText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 10,
+    color: '#64748B',
+  },
+  habitFooterHighlight: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 10,
+    color: '#2563EB',
+    fontWeight: '700',
+  },
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 16.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  splitBarCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
   splitBar: {
     flexDirection: 'row',
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
-    marginTop: 12,
-    marginBottom: 14,
+    marginBottom: 8,
   },
   splitSegment: {
     height: '100%',
   },
-  macroGrid: {
+  splitLegendRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-around',
   },
-  macroBox: {
-    width: '48%',
-    backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
-  },
-  macroBoxHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 4,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  macroName: {
-    fontFamily: Fonts.poppins.medium,
+  splitLegendText: {
+    fontFamily: Fonts.poppins.regular,
     fontSize: 11,
     color: '#64748B',
   },
-  macroGramsVal: {
+  macroGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  macroPod: {
+    flex: 1,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  proteinPod: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#DCFCE7',
+  },
+  carbsPod: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#E0F2FE',
+  },
+  fatPod: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FFEDD5',
+  },
+  fiberPod: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#D1FAE5',
+  },
+  macroPodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginBottom: 4,
+  },
+  macroDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  macroPodLabel: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
+    fontSize: 8.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  macroPodVal: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14.5,
     fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 5,
   },
-  macroGoalVal: {
+  podTrack: {
+    height: 3.5,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  podFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  macroPodSub: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 10,
+    fontSize: 9,
     color: '#94A3B8',
-    marginTop: 1,
   },
-  // Meal Timing Distribution
   mealDistRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    gap: 6,
+    gap: 8,
   },
   mealDistItem: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 12,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   mealDistEmoji: {
     fontSize: 18,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   mealDistName: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#64748B',
   },
   mealDistPct: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
     marginTop: 2,
   },
   mealDistCals: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 9.5,
+    fontSize: 9,
     color: '#94A3B8',
     marginTop: 1,
   },
