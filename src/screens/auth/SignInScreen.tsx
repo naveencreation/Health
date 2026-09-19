@@ -93,6 +93,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         <KeyboardAvoidingView
           style={styles.flexOne}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}
         >
           <ScrollView
             style={styles.scrollView}
@@ -144,8 +145,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   autoCorrect={false}
                   spellCheck={false}
                   keyboardType="email-address"
-                  autoComplete="email"
-                  textContentType="emailAddress"
+                  autoComplete={Platform.OS === 'android' ? 'off' : 'email'}
+                  textContentType={Platform.OS === 'ios' ? 'emailAddress' : undefined}
                   returnKeyType="next"
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
@@ -213,8 +214,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   autoCapitalize="none"
                   autoCorrect={false}
                   spellCheck={false}
-                  autoComplete="password"
-                  textContentType="password"
+                  autoComplete={Platform.OS === 'android' ? 'off' : 'password'}
+                  textContentType={Platform.OS === 'ios' ? 'password' : undefined}
                   returnKeyType="done"
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
@@ -286,7 +287,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
   },
   phoneFrame: {
     flex: 1,
@@ -418,11 +418,6 @@ const styles = StyleSheet.create({
   inputWrapperFocused: {
     borderColor: Colors.primary,
     backgroundColor: '#FFFFFF',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
   },
   inputIcon: {
     marginRight: 12,
@@ -432,8 +427,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.regular,
     fontSize: 15,
     color: '#0F172A',
-    height: '100%',
-    paddingVertical: 0,
+    paddingVertical: Platform.OS === 'android' ? 6 : 0,
     ...(Platform.OS === 'web'
       ? ({
           outlineStyle: 'none',

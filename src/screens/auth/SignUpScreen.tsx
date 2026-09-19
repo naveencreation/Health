@@ -134,6 +134,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         <KeyboardAvoidingView
           style={styles.flexOne}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}
         >
           <ScrollView
             style={styles.scrollView}
@@ -615,17 +616,6 @@ const styles = StyleSheet.create({
   inputWrapperFocused: {
     borderColor: '#0F172A',
     backgroundColor: '#FFFFFF',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 2px 8px rgba(15, 23, 42, 0.08)',
-        } as any)
-      : {
-          shadowColor: '#0F172A',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 6,
-          elevation: 2,
-        }),
   },
   inputWrapperSuccess: {
     borderColor: '#10B981',
