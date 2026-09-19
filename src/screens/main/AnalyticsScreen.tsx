@@ -36,6 +36,7 @@ export const AnalyticsScreen: React.FC = () => {
     totalFiber,
     dailyLogs,
     selectedDate,
+    mealCalories,
   } = useHealth();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
@@ -157,25 +158,26 @@ export const AnalyticsScreen: React.FC = () => {
     const totalSteps = dataset.reduce((acc, l) => acc + l.steps, 0);
     const totalBurn = dataset.reduce((acc, l) => acc + l.burned, 0);
 
-    const loggedDays = dataset.filter((l) => l.calories > 0);
-    const loggedCount = loggedDays.length;
+    const daysWithCals = dataset.filter((l) => l.calories > 0).length;
+    const daysWithWater = dataset.filter((l) => l.waterMl > 0).length;
+    const daysWithSteps = dataset.filter((l) => l.steps > 0).length;
 
-    const avgCals = loggedCount > 0 ? Math.round(totalCals / loggedCount) : 0;
-    const avgWater = loggedCount > 0 ? Math.round(totalWater / loggedCount) : (totalWater > 0 ? Math.round(totalWater / dayCount) : 0);
-    const avgSteps = loggedCount > 0 ? Math.round(totalSteps / loggedCount) : (totalSteps > 0 ? Math.round(totalSteps / dayCount) : 0);
+    const avgCals = daysWithCals > 0 ? Math.round(totalCals / daysWithCals) : 0;
+    const avgWater = daysWithWater > 0 ? Math.round(totalWater / daysWithWater) : 0;
+    const avgSteps = daysWithSteps > 0 ? Math.round(totalSteps / daysWithSteps) : 0;
 
     // Deficit only calculated on days meals were actively logged
-    const netDeficit = loggedCount > 0 ? Math.max(0, (budget * loggedCount) - totalCals) : 0;
+    const netDeficit = daysWithCals > 0 ? Math.max(0, (budget * daysWithCals) - totalCals) : 0;
     const projectedFatLoss = (netDeficit / 7700).toFixed(2);
     const budgetMetDays = dataset.filter((l) => l.calories > 0 && l.calories <= budget).length;
     const waterMetDays = dataset.filter((l) => l.waterMl >= waterGoal).length;
     const stepMetDays = dataset.filter((l) => l.steps >= stepGoal).length;
 
-    const comparisonText = loggedCount === 0
+    const comparisonText = daysWithCals === 0
       ? 'Start logging meals to unlock personalized health trends!'
-      : budgetMetDays === loggedCount
-      ? 'Consistent discipline — on track with your calorie targets!'
-      : `${budgetMetDays} of ${loggedCount} logged days within your budget`;
+      : budgetMetDays === daysWithCals
+      ? `${budgetMetDays} of ${daysWithCals} logged ${daysWithCals === 1 ? 'day' : 'days'} on budget — keep it up!`
+      : `${budgetMetDays} of ${daysWithCals} logged days within your budget`;
 
     return {
       avgCals,
@@ -186,7 +188,7 @@ export const AnalyticsScreen: React.FC = () => {
       totalBurn,
       netDeficit,
       projectedFatLoss,
-      adherenceText: `${budgetMetDays}/${loggedCount > 0 ? loggedCount : dayCount} Days`,
+      adherenceText: `${budgetMetDays}/${daysWithCals > 0 ? daysWithCals : dayCount} Days`,
       waterAdherenceText: `${waterMetDays}/${dayCount} Days`,
       stepAdherenceText: `${stepMetDays}/${dayCount} Days`,
       comparisonText,
@@ -225,11 +227,16 @@ export const AnalyticsScreen: React.FC = () => {
   const carbCals = totalCarbs * 4;
   const proteinCals = totalProtein * 4;
   const fatCals = totalFat * 9;
-  const macroCalTotal = carbCals + proteinCals + fatCals || 1;
+  const macroCalTotal = carbCals + proteinCals + fatCals;
+  const hasMacros = macroCalTotal > 0;
 
-  const carbPct = Math.round((carbCals / macroCalTotal) * 100);
-  const proteinPct = Math.round((proteinCals / macroCalTotal) * 100);
-  const fatPct = Math.max(0, 100 - carbPct - proteinPct);
+  const carbPct = hasMacros ? Math.round((carbCals / macroCalTotal) * 100) : 0;
+  const proteinPct = hasMacros ? Math.round((proteinCals / macroCalTotal) * 100) : 0;
+  const fatPct = hasMacros ? Math.max(0, 100 - carbPct - proteinPct) : 0;
+
+  // Real Meal-Timing Distribution
+  const mealTotal = (mealCalories?.breakfast || 0) + (mealCalories?.lunch || 0) + (mealCalories?.snacks || 0) + (mealCalories?.dinner || 0);
+  const getSlotPct = (cals: number) => (mealTotal > 0 ? Math.round((cals / mealTotal) * 100) : 0);
 
   return (
     <ScrollView
@@ -825,12 +832,18 @@ export const AnalyticsScreen: React.FC = () => {
       {/* 4. MACRONUTRIENT & DIETARY FIBER BALANCE */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Macronutrient & Fiber Quality</Text>
-        <Text style={styles.cardSubtitle}>Daily average intake vs target goals</Text>
+        <Text style={styles.cardSubtitle}>Daily intake vs target goals</Text>
 
         <View style={styles.splitBar}>
-          <View style={[styles.splitSegment, { width: `${carbPct}%`, backgroundColor: Colors.carbs }]} />
-          <View style={[styles.splitSegment, { width: `${proteinPct}%`, backgroundColor: Colors.protein }]} />
-          <View style={[styles.splitSegment, { width: `${fatPct}%`, backgroundColor: Colors.fat }]} />
+          {hasMacros ? (
+            <>
+              <View style={[styles.splitSegment, { width: `${carbPct}%`, backgroundColor: Colors.carbs }]} />
+              <View style={[styles.splitSegment, { width: `${proteinPct}%`, backgroundColor: Colors.protein }]} />
+              <View style={[styles.splitSegment, { width: `${fatPct}%`, backgroundColor: Colors.fat }]} />
+            </>
+          ) : (
+            <View style={[styles.splitSegment, { width: '100%', backgroundColor: '#E2E8F0' }]} />
+          )}
         </View>
 
         <View style={styles.macroGrid}>
@@ -866,7 +879,7 @@ export const AnalyticsScreen: React.FC = () => {
               <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
               <Text style={styles.macroName}>Fiber</Text>
             </View>
-            <Text style={styles.macroGramsVal}>{totalFiber || 24}g</Text>
+            <Text style={styles.macroGramsVal}>{totalFiber}g</Text>
             <Text style={styles.macroGoalVal}>Goal: {userGoals.targetFiber || 30}g</Text>
           </View>
         </View>
@@ -881,29 +894,29 @@ export const AnalyticsScreen: React.FC = () => {
           <View style={styles.mealDistItem}>
             <Text style={styles.mealDistEmoji}>🍳</Text>
             <Text style={styles.mealDistName}>Breakfast</Text>
-            <Text style={styles.mealDistPct}>25%</Text>
-            <Text style={styles.mealDistCals}>~450 kcal</Text>
+            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.breakfast || 0)}%</Text>
+            <Text style={styles.mealDistCals}>{mealCalories?.breakfast || 0} kcal</Text>
           </View>
 
           <View style={styles.mealDistItem}>
             <Text style={styles.mealDistEmoji}>🥗</Text>
             <Text style={styles.mealDistName}>Lunch</Text>
-            <Text style={styles.mealDistPct}>35%</Text>
-            <Text style={styles.mealDistCals}>~630 kcal</Text>
+            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.lunch || 0)}%</Text>
+            <Text style={styles.mealDistCals}>{mealCalories?.lunch || 0} kcal</Text>
           </View>
 
           <View style={styles.mealDistItem}>
             <Text style={styles.mealDistEmoji}>🍵</Text>
             <Text style={styles.mealDistName}>Snacks</Text>
-            <Text style={styles.mealDistPct}>12%</Text>
-            <Text style={styles.mealDistCals}>~220 kcal</Text>
+            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.snacks || 0)}%</Text>
+            <Text style={styles.mealDistCals}>{mealCalories?.snacks || 0} kcal</Text>
           </View>
 
           <View style={styles.mealDistItem}>
             <Text style={styles.mealDistEmoji}>🍲</Text>
             <Text style={styles.mealDistName}>Dinner</Text>
-            <Text style={styles.mealDistPct}>28%</Text>
-            <Text style={styles.mealDistCals}>~500 kcal</Text>
+            <Text style={styles.mealDistPct}>{getSlotPct(mealCalories?.dinner || 0)}%</Text>
+            <Text style={styles.mealDistCals}>{mealCalories?.dinner || 0} kcal</Text>
           </View>
         </View>
       </View>

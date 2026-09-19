@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </View>
             <Text style={styles.userNameText} numberOfLines={1}>
-              {currentUser?.isGuest ? 'Guest Explorer' : (userGoals.name || 'Akshay Rajput')}
+              {currentUser?.isGuest ? 'Guest Explorer' : (currentUser?.name || userGoals.name || 'User')}
             </Text>
           </View>
         </View>

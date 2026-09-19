@@ -11,13 +11,47 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
   USER_GOALS: '@calori_user_goals_v1',
   CUSTOM_FOODS: '@calori_custom_foods_v1',
   AUTH: '@calori_auth_v1',
+};
+
+/**
+ * Universal cleaner to purge any developer or sample mock data from a DailyLog.
+ * Guarantees that real users never see injected sample meals (Idli, Sambar, etc.)
+ * or fake 1,250ml water / 4,620 steps.
+ */
+export const cleanDailyLog = (log?: DailyLog): DailyLog => {
+  if (!log) {
+    return { date: '', meals: [], waterMl: 0, steps: 0, activities: [] };
+  }
+  const cleanMeals = (log.meals || []).filter(
+    (m) =>
+      !m.id.startsWith('sample_') &&
+      m.id !== 'sample_1' &&
+      m.id !== 'sample_2' &&
+      m.id !== 'sample_3' &&
+      m.id !== 'sample_4' &&
+      m.id !== 'sample_5' &&
+      m.id !== 'sample_6'
+  );
+  const cleanActivities = (log.activities || []).filter((a) => a.id !== 'act_1');
+  const isMockLog =
+    (log.activities || []).some((a) => a.id === 'act_1') ||
+    (log.meals || []).some((m) => m.id.startsWith('sample_'));
+  const cleanWater = (isMockLog && log.waterMl === 1250) || log.waterMl === 1250 ? 0 : (log.waterMl || 0);
+  const cleanSteps = (isMockLog && log.steps === 4620) || log.steps === 4620 ? 0 : (log.steps || 0);
+  return {
+    ...log,
+    meals: cleanMeals,
+    activities: cleanActivities,
+    waterMl: cleanWater,
+    steps: cleanSteps,
+  };
 };
 
 /**
@@ -42,24 +76,24 @@ export function sanitizeForFirestore<T>(data: T): T {
 }
 
 const DEFAULT_GOALS: UserGoals = {
-  name: 'User',
-  dailyCalorieBudget: 1950,
-  targetCarbs: 220,    // 45%
-  targetProtein: 75,   // ~15-20%
-  targetFat: 50,       // ~25%
-  targetFiber: 30,     // 30g daily health target
-  waterGoalMl: 2500,   // 10 glasses
+  dailyCalorieBudget: 2213,
+  targetProtein: 90,
+  targetCarbs: 110,
+  targetFat: 70,
+  targetFiber: 30,
+  waterGoalMl: 2000,
   stepGoal: 10000,
-  currentWeightKg: 74.2,
-  targetWeightKg: 68.0,
+  currentWeightKg: 68.0,
+  targetWeightKg: 65.0,
   streakDays: 1,
   avatarUrl: DEFAULT_AVATAR_URL,
+  name: 'User',
   age: 24,
   gender: 'male',
   goal: 'maintain',
   weightUnit: 'kg',
   heightCm: 175,
-  startWeightKg: 74.2,
+  startWeightKg: 68.0,
 };
 
 const getTodayDateString = (date = new Date()): string => {
@@ -246,26 +280,23 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Check if an authenticated real user is already active
         const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
         const parsedAuth = savedAuth ? JSON.parse(savedAuth) : null;
-        const isRealUser = parsedAuth && !parsedAuth.isGuest;
+        const isGuest = parsedAuth?.isGuest;
+
+        // For non-guest users, thoroughly cleanse ALL historical dates of mock data
+        if (!isGuest) {
+          const cleaned: Record<string, DailyLog> = {};
+          for (const [key, val] of Object.entries(parsedLogs)) {
+            cleaned[key] = cleanDailyLog(val);
+          }
+          parsedLogs = cleaned;
+          await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned));
+        }
 
         // Initialize today if not present
         if (!parsedLogs[todayStr]) {
-          parsedLogs[todayStr] = isRealUser
-            ? { date: todayStr, meals: [], waterMl: 0, steps: 0, activities: [] }
-            : createInitialSampleLog(todayStr);
-        } else if (isRealUser) {
-          // Purge any dev sample data (1250ml water, 4620 steps, act_1 workout, sample_ meals)
-          const cur = parsedLogs[todayStr];
-          const hasMock = (cur.activities || []).some((a) => a.id === 'act_1') || (cur.meals || []).some((m) => m.id.startsWith('sample_'));
-          if (hasMock) {
-            parsedLogs[todayStr] = {
-              date: todayStr,
-              meals: (cur.meals || []).filter((m) => !m.id.startsWith('sample_')),
-              waterMl: cur.waterMl === 1250 ? 0 : (cur.waterMl || 0),
-              steps: cur.steps === 4620 ? 0 : (cur.steps || 0),
-              activities: (cur.activities || []).filter((a) => a.id !== 'act_1'),
-            };
-          }
+          parsedLogs[todayStr] = isGuest
+            ? createInitialSampleLog(todayStr)
+            : { date: todayStr, meals: [], waterMl: 0, steps: 0, activities: [] };
         }
 
         setDailyLogs(parsedLogs);
@@ -309,42 +340,83 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               await AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals));
             }
           }
-          // Sync active date daily log from Firestore
-          const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate));
-          if (logDoc.exists()) {
-            const logData = logDoc.data() as DailyLog;
-            // Purge any dev placeholder sample data (meals, 1250ml water, 4620 steps, act_1)
-            const cleanMeals = (logData.meals || []).filter((m) => !m.id.startsWith('sample_'));
-            const cleanActivities = (logData.activities || []).filter((a) => a.id !== 'act_1');
-            const isMockLog = (logData.activities || []).some((a) => a.id === 'act_1') || (logData.meals || []).some((m) => m.id.startsWith('sample_'));
 
-            setDailyLogs((prev) => ({
-              ...prev,
-              [selectedDate]: {
-                ...logData,
-                meals: cleanMeals,
-                activities: cleanActivities,
-                steps: isMockLog && logData.steps === 4620 ? 0 : (logData.steps || 0),
-                waterMl: isMockLog && logData.waterMl === 1250 ? 0 : (logData.waterMl || 0),
-              },
-            }));
-          } else {
-            // Real new user without cloud logs: start with a fresh clean 0-kcal slate
-            const cleanLog: DailyLog = {
-              date: selectedDate,
-              meals: [],
-              waterMl: 0,
-              steps: 0,
-              activities: [],
-            };
-            setDailyLogs((prev) => ({
-              ...prev,
-              [selectedDate]: cleanLog,
-            }));
-            try {
-              await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate), cleanLog, { merge: true });
-            } catch (e) {
-              console.warn('Initial clean log write error:', e);
+          // Fetch ALL dailyLogs subcollection documents from Cloud Firestore
+          try {
+            const logsCollectionRef = collection(db, 'users', fbUser.uid, 'dailyLogs');
+            const logsSnap = await getDocs(logsCollectionRef);
+            const cloudLogs: Record<string, DailyLog> = {};
+
+            for (const d of logsSnap.docs) {
+              const rawLog = d.data() as DailyLog;
+              const cleansed = cleanDailyLog(rawLog);
+              cloudLogs[d.id] = cleansed;
+
+              // If legacy document in cloud had mock data, sanitize and overwrite it
+              const hadMock =
+                (rawLog.activities || []).some((a) => a.id === 'act_1') ||
+                (rawLog.meals || []).some((m) => m.id.startsWith('sample_')) ||
+                rawLog.waterMl === 1250 ||
+                rawLog.steps === 4620;
+              if (hadMock) {
+                setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', d.id), sanitizeForFirestore(cleansed), { merge: true }).catch(() => {});
+              }
+            }
+
+            // Clean local dailyLogs and merge cloud logs
+            setDailyLogs((prev) => {
+              const merged: Record<string, DailyLog> = {};
+              for (const [k, v] of Object.entries(prev)) {
+                merged[k] = cleanDailyLog(v);
+              }
+              for (const [k, v] of Object.entries(cloudLogs)) {
+                merged[k] = v;
+              }
+              if (!merged[selectedDate]) {
+                merged[selectedDate] = {
+                  date: selectedDate,
+                  meals: [],
+                  waterMl: 0,
+                  steps: 0,
+                  activities: [],
+                };
+              }
+              AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(merged)).catch(() => {});
+              return merged;
+            });
+          } catch (colErr) {
+            console.warn('Firestore dailyLogs collection query error:', colErr);
+            // Fallback: sync active date daily log from Firestore
+            const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate));
+            if (logDoc.exists()) {
+              const logData = cleanDailyLog(logDoc.data() as DailyLog);
+              setDailyLogs((prev) => {
+                const cleaned: Record<string, DailyLog> = {};
+                for (const [k, v] of Object.entries(prev)) {
+                  cleaned[k] = cleanDailyLog(v);
+                }
+                cleaned[selectedDate] = logData;
+                AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
+                return cleaned;
+              });
+            } else {
+              const cleanLog: DailyLog = {
+                date: selectedDate,
+                meals: [],
+                waterMl: 0,
+                steps: 0,
+                activities: [],
+              };
+              setDailyLogs((prev) => {
+                const cleaned: Record<string, DailyLog> = {};
+                for (const [k, v] of Object.entries(prev)) {
+                  cleaned[k] = cleanDailyLog(v);
+                }
+                cleaned[selectedDate] = cleanLog;
+                AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
+                return cleaned;
+              });
+              setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', selectedDate), cleanLog, { merge: true }).catch(() => {});
             }
           }
         } catch (err) {

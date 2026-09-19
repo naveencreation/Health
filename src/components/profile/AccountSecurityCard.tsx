@@ -59,7 +59,7 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
         <View style={styles.flexOne}>
           <Text style={styles.infoLabel}>Signed In As</Text>
           <Text style={styles.infoValue}>
-            {currentUser?.email || (currentUser?.isGuest ? 'Guest Explorer' : 'akshay.rajput@calori.fit')}
+            {currentUser?.email || (currentUser?.isGuest ? 'Guest Explorer' : 'Not Provided')}
           </Text>
         </View>
         <View style={[styles.statusPill, currentUser?.isGuest && styles.statusPillGuest]}>

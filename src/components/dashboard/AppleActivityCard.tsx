@@ -24,11 +24,10 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
   const strokeWidth = 15;
   const center = 100;
 
-  // Mode 1: Activity Rings (KokonutUI Specs)
   const activities = Array.isArray(currentLog?.activities) ? currentLog.activities : [];
-  const workoutMinutes = activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0) || 24;
-  const moveCalories = totalBurned > 0 ? totalBurned : 479;
-  const standHours = Math.min(12, Math.max(1, Math.round((currentLog?.steps || 4620) / 800))) || 6;
+  const workoutMinutes = activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0);
+  const moveCalories = totalBurned ?? 0;
+  const standHours = Math.min(12, Math.round((currentLog?.steps || 0) / 800));
 
   const activityRings: ActivityRingData[] = [
     {

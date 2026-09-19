@@ -58,7 +58,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
 
         <View style={styles.heroInfo}>
           <View style={styles.nameHeaderRow}>
-            <Text style={styles.heroName} numberOfLines={1}>{name || 'Akshay Rajput'}</Text>
+            <Text style={styles.heroName} numberOfLines={1}>{name || (isGuest ? 'Guest Explorer' : 'User')}</Text>
             {isGuest ? (
               onSignIn ? (
                 <Pressable
@@ -83,7 +83,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               ) : null
             )}
           </View>
-          <Text style={styles.heroEmail} numberOfLines={1}>{email || 'akshay.rajput@calori.fit'}</Text>
+          <Text style={styles.heroEmail} numberOfLines={1}>{email || (isGuest ? 'Guest Mode' : '')}</Text>
           <View style={styles.badgesRow}>
             <View style={styles.proBadge}>
               <Ionicons name="sparkles" size={11} color="#B45309" />
