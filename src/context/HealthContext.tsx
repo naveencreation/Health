@@ -225,7 +225,7 @@ interface HealthContextType {
   totalFiber: number;
   mealsByType: Record<MealType, LoggedMealItem[]>;
   mealCalories: Record<MealType, number>;
-  addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => void;
+  addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => LoggedMealItem;
   removeMealItem: (mealId: string) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
   addWater: (ml: number) => void;
@@ -593,6 +593,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
+    return newItem;
   };
 
   const removeMealItem = (mealId: string) => {
