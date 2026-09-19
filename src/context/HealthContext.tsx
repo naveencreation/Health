@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData } from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
@@ -14,12 +14,15 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
   USER_GOALS: '@calori_user_goals_v1',
   CUSTOM_FOODS: '@calori_custom_foods_v1',
   AUTH: '@calori_auth_v1',
 };
+
+export const getUserLogsKey = (uid: string) => `@calori_daily_logs_${uid}`;
+export const getUserGoalsKey = (uid: string) => `@calori_user_goals_${uid}`;
 
 /**
  * Universal cleaner to purge any developer or sample mock data from a DailyLog.
@@ -261,37 +264,187 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // Load persistent data
+  // Synchronization and lifecycle protection refs
+  const isLoggingOutRef = useRef(false);
+  const isHydratingRef = useRef(false);
+  const hydratedUidRef = useRef<string | null>(null);
+
+  // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
+  const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
+    if (!uid) return;
+    isHydratingRef.current = true;
+    try {
+      const userLogsKey = getUserLogsKey(uid);
+      const userGoalsKey = getUserGoalsKey(uid);
+
+      // 1. Fast local cache load for this specific user
+      let initialUserLogs: Record<string, DailyLog> = {};
+      try {
+        const [cachedLogsStr, cachedGoalsStr] = await Promise.all([
+          AsyncStorage.getItem(userLogsKey),
+          AsyncStorage.getItem(userGoalsKey),
+        ]);
+
+        if (cachedGoalsStr) {
+          const parsedCachedGoals = JSON.parse(cachedGoalsStr);
+          setUserGoals((prev) => ({ ...prev, ...parsedCachedGoals }));
+        }
+
+        if (cachedLogsStr) {
+          const parsedCachedLogs = JSON.parse(cachedLogsStr);
+          for (const [k, v] of Object.entries(parsedCachedLogs)) {
+            initialUserLogs[k] = cleanDailyLog(v as DailyLog);
+          }
+          if (Object.keys(initialUserLogs).length > 0) {
+            setDailyLogs(initialUserLogs);
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('User cache read error:', cacheErr);
+      }
+
+      // 2. Fetch User Profile & Goals from Cloud Firestore
+      try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data?.goals) {
+            const mergedGoals: UserGoals = {
+              ...DEFAULT_GOALS,
+              ...data.goals,
+              age: data.age ?? data.goals.age,
+              gender: data.gender ?? data.goals.gender,
+              goal: data.goal ?? data.goals.goal,
+              weightUnit: data.weightUnit ?? data.goals.weightUnit,
+            };
+            setUserGoals(mergedGoals);
+            AsyncStorage.setItem(userGoalsKey, JSON.stringify(mergedGoals)).catch(() => {});
+            AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals)).catch(() => {});
+          }
+        }
+      } catch (userDocErr) {
+        console.warn('Firestore fetch user doc error:', userDocErr);
+      }
+
+      // 3. Fetch ALL DailyLogs subcollection from Cloud Firestore
+      const cloudLogs: Record<string, DailyLog> = {};
+      try {
+        const logsCollectionRef = collection(db, 'users', uid, 'dailyLogs');
+        const logsSnap = await getDocs(logsCollectionRef);
+
+        for (const d of logsSnap.docs) {
+          const rawLog = d.data() as DailyLog;
+          const cleansed = cleanDailyLog(rawLog);
+          cloudLogs[d.id] = cleansed;
+
+          // If legacy document in cloud had mock data, sanitize and overwrite it
+          const hadMock =
+            (rawLog.activities || []).some((a) => a.id === 'act_1') ||
+            (rawLog.meals || []).some((m) => m.id.startsWith('sample_')) ||
+            rawLog.waterMl === 1250 ||
+            rawLog.steps === 4620;
+          if (hadMock) {
+            setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), sanitizeForFirestore(cleansed), { merge: true }).catch(() => {});
+          }
+        }
+      } catch (colErr) {
+        console.warn('Firestore dailyLogs collection query error:', colErr);
+        // Fallback: try fetching today's document directly
+        try {
+          const todayKey = getTodayDateString();
+          const logDoc = await getDoc(doc(db, 'users', uid, 'dailyLogs', todayKey));
+          if (logDoc.exists()) {
+            cloudLogs[todayKey] = cleanDailyLog(logDoc.data() as DailyLog);
+          }
+        } catch (todayErr) {
+          console.warn('Firestore fetch today log fallback error:', todayErr);
+        }
+      }
+
+      // 4. Merge cloud logs with any local logs
+      const todayKey = getTodayDateString();
+      const merged: Record<string, DailyLog> = { ...initialUserLogs };
+
+      for (const [dateKey, log] of Object.entries(cloudLogs)) {
+        merged[dateKey] = log;
+      }
+
+      // Guarantee today has an entry if not present
+      if (!merged[todayKey]) {
+        merged[todayKey] = {
+          date: todayKey,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+        };
+      }
+
+      setDailyLogs(merged);
+
+      // Persist to user-scoped storage & active storage
+      await Promise.all([
+        AsyncStorage.setItem(userLogsKey, JSON.stringify(merged)),
+        AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(merged)),
+      ]);
+
+      hydratedUidRef.current = uid;
+    } catch (err) {
+      console.error('fetchAndHydrateUserData error:', err);
+    } finally {
+      isHydratingRef.current = false;
+    }
+  };
+
+  // Load persistent data on cold start
   useEffect(() => {
     const loadData = async () => {
       try {
         const todayStr = getTodayDateString();
-        const savedLogs = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_LOGS);
+        const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
+        const parsedAuth: AuthUser | null = savedAuth ? JSON.parse(savedAuth) : null;
+        const isGuest = parsedAuth?.isGuest;
+
         const savedGoals = await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS);
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
-        // Load goals, custom foods, and daily logs
+
         if (savedGoals) {
-          const parsed = JSON.parse(savedGoals);
-          const validUrls = ['asset:men', 'asset:women', 'asset:boy', 'asset:girl', 'asset:grandpa', 'asset:grandma'];
-          if (!parsed.avatarUrl || !validUrls.includes(parsed.avatarUrl)) {
-            parsed.avatarUrl = DEFAULT_AVATAR_URL;
-          }
-          setUserGoals(parsed);
+          try {
+            const parsed = JSON.parse(savedGoals);
+            const validUrls = ['asset:men', 'asset:women', 'asset:boy', 'asset:girl', 'asset:grandpa', 'asset:grandma'];
+            if (!parsed.avatarUrl || !validUrls.includes(parsed.avatarUrl)) {
+              parsed.avatarUrl = DEFAULT_AVATAR_URL;
+            }
+            setUserGoals(parsed);
+          } catch (e) {}
         }
 
         if (savedCustomFoods) {
-          setCustomFoods(JSON.parse(savedCustomFoods));
+          try {
+            setCustomFoods(JSON.parse(savedCustomFoods));
+          } catch (e) {}
         }
 
         let parsedLogs: Record<string, DailyLog> = {};
-        if (savedLogs) {
-          parsedLogs = JSON.parse(savedLogs);
+
+        // If a real user is already active, try their user-scoped logs first
+        if (parsedAuth && !isGuest && parsedAuth.id) {
+          const userLogs = await AsyncStorage.getItem(getUserLogsKey(parsedAuth.id));
+          if (userLogs) {
+            try {
+              parsedLogs = JSON.parse(userLogs);
+            } catch (e) {}
+          }
         }
 
-        // Check if an authenticated real user is already active
-        const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
-        const parsedAuth = savedAuth ? JSON.parse(savedAuth) : null;
-        const isGuest = parsedAuth?.isGuest;
+        if (Object.keys(parsedLogs).length === 0) {
+          const savedLogs = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_LOGS);
+          if (savedLogs) {
+            try {
+              parsedLogs = JSON.parse(savedLogs);
+            } catch (e) {}
+          }
+        }
 
         // For non-guest users, thoroughly cleanse ALL historical dates of mock data
         if (!isGuest) {
@@ -300,7 +453,6 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             cleaned[key] = cleanDailyLog(val);
           }
           parsedLogs = cleaned;
-          await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned));
         }
 
         // Initialize today if not present
@@ -333,112 +485,20 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentUser(userObj);
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
-        // Sync user profile & goals from Firestore
-        try {
-          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data?.goals) {
-              const mergedGoals: UserGoals = {
-                ...userGoals,
-                ...data.goals,
-                age: data.age ?? data.goals.age,
-                gender: data.gender ?? data.goals.gender,
-                goal: data.goal ?? data.goals.goal,
-                weightUnit: data.weightUnit ?? data.goals.weightUnit,
-              };
-              setUserGoals(mergedGoals);
-              await AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals));
-            }
-          }
-
-          // Fetch ALL dailyLogs subcollection documents from Cloud Firestore
-          try {
-            const logsCollectionRef = collection(db, 'users', fbUser.uid, 'dailyLogs');
-            const logsSnap = await getDocs(logsCollectionRef);
-            const cloudLogs: Record<string, DailyLog> = {};
-
-            for (const d of logsSnap.docs) {
-              const rawLog = d.data() as DailyLog;
-              const cleansed = cleanDailyLog(rawLog);
-              cloudLogs[d.id] = cleansed;
-
-              // If legacy document in cloud had mock data, sanitize and overwrite it
-              const hadMock =
-                (rawLog.activities || []).some((a) => a.id === 'act_1') ||
-                (rawLog.meals || []).some((m) => m.id.startsWith('sample_')) ||
-                rawLog.waterMl === 1250 ||
-                rawLog.steps === 4620;
-              if (hadMock) {
-                setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', d.id), sanitizeForFirestore(cleansed), { merge: true }).catch(() => {});
-              }
-            }
-
-            // Clean local dailyLogs and merge cloud logs
-            const todayKey = getTodayDateString();
-            setDailyLogs((prev) => {
-              const merged: Record<string, DailyLog> = {};
-              for (const [k, v] of Object.entries(prev)) {
-                merged[k] = cleanDailyLog(v);
-              }
-              for (const [k, v] of Object.entries(cloudLogs)) {
-                merged[k] = v;
-              }
-              if (!merged[todayKey]) {
-                merged[todayKey] = {
-                  date: todayKey,
-                  meals: [],
-                  waterMl: 0,
-                  steps: 0,
-                  activities: [],
-                };
-              }
-              AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(merged)).catch(() => {});
-              return merged;
-            });
-          } catch (colErr) {
-            console.warn('Firestore dailyLogs collection query error:', colErr);
-            const todayKey = getTodayDateString();
-            // Fallback: sync today's daily log from Firestore
-            const logDoc = await getDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayKey));
-            if (logDoc.exists()) {
-              const logData = cleanDailyLog(logDoc.data() as DailyLog);
-              setDailyLogs((prev) => {
-                const cleaned: Record<string, DailyLog> = {};
-                for (const [k, v] of Object.entries(prev)) {
-                  cleaned[k] = cleanDailyLog(v);
-                }
-                cleaned[todayKey] = logData;
-                AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
-                return cleaned;
-              });
-            } else {
-              const cleanLog: DailyLog = {
-                date: todayKey,
-                meals: [],
-                waterMl: 0,
-                steps: 0,
-                activities: [],
-              };
-              setDailyLogs((prev) => {
-                const cleaned: Record<string, DailyLog> = {};
-                for (const [k, v] of Object.entries(prev)) {
-                  cleaned[k] = cleanDailyLog(v);
-                }
-                cleaned[todayKey] = cleanLog;
-                AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(cleaned)).catch(() => {});
-                return cleaned;
-              });
-              setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayKey), cleanLog, { merge: true }).catch(() => {});
-            }
-          }
-        } catch (err) {
-          console.log('Firestore sync error:', err);
+        // Hydrate from cloud if not already hydrated for this user
+        if (hydratedUidRef.current !== fbUser.uid) {
+          await fetchAndHydrateUserData(fbUser.uid, userObj);
         }
       } else {
         // No Firebase user logged in
-        setCurrentUser(null);
-        await AsyncStorage.removeItem(STORAGE_KEYS.AUTH);
+        if (!isLoggingOutRef.current) {
+          const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
+          const parsed = savedAuth ? JSON.parse(savedAuth) : null;
+          if (!parsed?.isGuest) {
+            setCurrentUser(null);
+            hydratedUidRef.current = null;
+          }
+        }
       }
       setIsAuthLoading(false);
     });
@@ -446,13 +506,23 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => unsubscribe();
   }, []);
 
-  // Save changes & sync to Firestore
+  // Save changes & sync dailyLogs to Firestore
   useEffect(() => {
     if (!isLoaded) return;
     AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(dailyLogs)).catch(console.error);
 
-    // Cloud Firestore Sync
     if (auth.currentUser && !currentUser?.isGuest) {
+      AsyncStorage.setItem(getUserLogsKey(auth.currentUser.uid), JSON.stringify(dailyLogs)).catch(console.error);
+    }
+
+    // Cloud Firestore Sync - STRICTLY GUARDED against logout / unhydrated states
+    if (
+      !isLoggingOutRef.current &&
+      !isHydratingRef.current &&
+      auth.currentUser &&
+      !currentUser?.isGuest &&
+      hydratedUidRef.current === auth.currentUser.uid
+    ) {
       const activeLog = dailyLogs[selectedDate];
       if (activeLog) {
         try {
@@ -467,12 +537,23 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
 
+  // Save changes & sync userGoals to Firestore
   useEffect(() => {
     if (!isLoaded) return;
     AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(userGoals)).catch(console.error);
 
-    // Cloud Firestore Sync
     if (auth.currentUser && !currentUser?.isGuest) {
+      AsyncStorage.setItem(getUserGoalsKey(auth.currentUser.uid), JSON.stringify(userGoals)).catch(console.error);
+    }
+
+    // Cloud Firestore Sync - STRICTLY GUARDED against logout / unhydrated states
+    if (
+      !isLoggingOutRef.current &&
+      !isHydratingRef.current &&
+      auth.currentUser &&
+      !currentUser?.isGuest &&
+      hydratedUidRef.current === auth.currentUser.uid
+    ) {
       try {
         const payload = sanitizeForFirestore({ goals: userGoals });
         setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
@@ -822,6 +903,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      isLoggingOutRef.current = false;
       const normalizedEmail = email.toLowerCase().trim();
       try {
         const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, pass);
@@ -834,24 +916,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentUser(userObj);
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
-        // Fetch user profile from Firestore
-        try {
-          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data?.goals) {
-              updateGoals({
-                ...data.goals,
-                age: data.age ?? data.goals.age,
-                gender: data.gender ?? data.goals.gender,
-                goal: data.goal ?? data.goals.goal,
-                weightUnit: data.weightUnit ?? data.goals.weightUnit,
-              });
-            }
-          }
-        } catch (fsErr) {
-          console.log('Firestore fetch error on login:', fsErr);
-        }
+        // Await full hydration of profile, goals, and all historical dailyLogs from Firestore
+        await fetchAndHydrateUserData(fbUser.uid, userObj);
 
         return { success: true };
       } catch (fbErr: any) {
@@ -1028,7 +1094,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
           setDailyLogs({ [todayStr]: cleanLog });
           await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify({ [todayStr]: cleanLog }));
+          await AsyncStorage.setItem(getUserLogsKey(fbUser.uid), JSON.stringify({ [todayStr]: cleanLog }));
           await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, { merge: true });
+          hydratedUidRef.current = fbUser.uid;
         } catch (fsErr) {
           console.warn('Firestore register doc write error:', fsErr);
         }
@@ -1059,41 +1127,51 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const logout = async (): Promise<void> => {
+    isLoggingOutRef.current = true;
+    hydratedUidRef.current = null;
     try {
       await firebaseSignOut(auth);
     } catch (e) {
       console.log('Firebase signOut error:', e);
-    }
-    const todayStr = getTodayDateString();
-    const emptyLog: DailyLog = {
-      date: todayStr,
-      meals: [],
-      waterMl: 0,
-      steps: 0,
-      activities: [],
-    };
-    setCurrentUser(null);
-    setUserGoals(DEFAULT_GOALS);
-    setDailyLogs({ [todayStr]: emptyLog });
-    setSelectedDate(todayStr);
-    try {
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.AUTH,
-        STORAGE_KEYS.DAILY_LOGS,
-        STORAGE_KEYS.USER_GOALS,
-      ]);
-    } catch (storageErr) {
-      console.warn('AsyncStorage clear error on logout:', storageErr);
+    } finally {
+      const todayStr = getTodayDateString();
+      const emptyLog: DailyLog = {
+        date: todayStr,
+        meals: [],
+        waterMl: 0,
+        steps: 0,
+        activities: [],
+      };
+      setCurrentUser(null);
+      setUserGoals(DEFAULT_GOALS);
+      setDailyLogs({ [todayStr]: emptyLog });
+      setSelectedDate(todayStr);
+      try {
+        await AsyncStorage.multiRemove([
+          STORAGE_KEYS.AUTH,
+          STORAGE_KEYS.DAILY_LOGS,
+          STORAGE_KEYS.USER_GOALS,
+        ]);
+      } catch (storageErr) {
+        console.warn('AsyncStorage clear error on logout:', storageErr);
+      }
+
+      setTimeout(() => {
+        isLoggingOutRef.current = false;
+      }, 500);
     }
   };
 
   const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
     try {
+      isLoggingOutRef.current = true;
+      hydratedUidRef.current = null;
       const fbUser = auth.currentUser;
       if (fbUser) {
+        const uid = fbUser.uid;
         // 1. Delete Firestore user document
         try {
-          await deleteDoc(doc(db, 'users', fbUser.uid));
+          await deleteDoc(doc(db, 'users', uid));
         } catch (fsErr) {
           console.warn('Error deleting Firestore user document:', fsErr);
         }
@@ -1103,6 +1181,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await deleteUser(fbUser);
         } catch (authErr: any) {
           console.log('Firebase deleteUser error:', authErr.code, authErr.message);
+          isLoggingOutRef.current = false;
           if (authErr.code === 'auth/requires-recent-login') {
             return {
               success: false,
@@ -1114,9 +1193,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             error: authErr.message || 'Failed to delete account. Please try again.',
           };
         }
+
+        // 3. Clear user-scoped offline storage
+        try {
+          await AsyncStorage.removeItem(getUserLogsKey(uid));
+          await AsyncStorage.removeItem(getUserGoalsKey(uid));
+        } catch (e) {}
       }
 
-      // 3. Clear local state and cache
+      // 4. Clear local state and cache
       const todayStr = getTodayDateString();
       const emptyLog: DailyLog = {
         date: todayStr,
@@ -1142,6 +1227,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || 'Failed to delete account' };
+    } finally {
+      setTimeout(() => {
+        isLoggingOutRef.current = false;
+      }, 500);
     }
   };
 
