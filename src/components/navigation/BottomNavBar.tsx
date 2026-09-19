@@ -41,12 +41,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           style={styles.tabButton}
           onPress={() => onTabChange('today')}
           activeOpacity={0.7}
+          accessibilityRole="tab"
+          accessibilityLabel="Home"
+          accessibilityState={{ selected: activeTab === 'today' }}
         >
           <Ionicons
             name={activeTab === 'today' ? 'home' : 'home-outline'}
             size={23}
             color={activeTab === 'today' ? Colors.iconNavy : '#8E95A2'}
           />
+          {activeTab === 'today' && <View style={styles.activeDot} />}
         </TouchableOpacity>
 
         {/* Tab 2: Chef Hat (Meals & Recipes) */}
@@ -54,12 +58,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           style={styles.tabButton}
           onPress={() => onTabChange('diary')}
           activeOpacity={0.7}
+          accessibilityRole="tab"
+          accessibilityLabel="Meals Diary"
+          accessibilityState={{ selected: activeTab === 'diary' }}
         >
           <MaterialCommunityIcons
-            name={activeTab === 'diary' ? 'chef-hat' : 'chef-hat'}
+            name="chef-hat"
             size={24}
             color={activeTab === 'diary' ? Colors.iconNavy : '#8E95A2'}
           />
+          {activeTab === 'diary' && <View style={styles.activeDot} />}
         </TouchableOpacity>
 
         {/* Center Floating Action Button: Ellipse 7 (56.49px x 56.49px, #CDE26D Lime/Avocado Green) */}
@@ -68,6 +76,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             style={styles.centerFab}
             onPress={() => setQuickSheetVisible(true)}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Log food or water"
           >
             <Ionicons name="add" size={30} color="#FFFFFF" />
           </TouchableOpacity>
@@ -78,12 +88,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           style={styles.tabButton}
           onPress={() => onTabChange('analytics')}
           activeOpacity={0.7}
+          accessibilityRole="tab"
+          accessibilityLabel="Analytics and Trends"
+          accessibilityState={{ selected: activeTab === 'analytics' }}
         >
           <Ionicons
             name={activeTab === 'analytics' ? 'bar-chart' : 'bar-chart-outline'}
             size={23}
             color={activeTab === 'analytics' ? Colors.iconNavy : '#8E95A2'}
           />
+          {activeTab === 'analytics' && <View style={styles.activeDot} />}
         </TouchableOpacity>
 
         {/* Tab 4: User Profile */}
@@ -91,12 +105,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           style={styles.tabButton}
           onPress={() => onTabChange('profile')}
           activeOpacity={0.7}
+          accessibilityRole="tab"
+          accessibilityLabel="Profile and Goals"
+          accessibilityState={{ selected: activeTab === 'profile' }}
         >
           <Ionicons
             name={activeTab === 'profile' ? 'person' : 'person-outline'}
             size={23}
             color={activeTab === 'profile' ? Colors.iconNavy : '#8E95A2'}
           />
+          {activeTab === 'profile' && <View style={styles.activeDot} />}
         </TouchableOpacity>
       </View>
 
@@ -182,11 +200,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Frame 297: height 61px, background #FFFFFF, border: 1px solid #D0D5DD
+  // Frame 297: height 64px (76px on iOS for safe area), background #FFFFFF, border: 1px solid #D0D5DD
   barContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    height: 64,
+    height: Platform.OS === 'ios' ? 76 : 64,
+    paddingBottom: Platform.OS === 'ios' ? 12 : 0,
     borderTopWidth: 1,
     borderTopColor: '#D0D5DD',
     alignItems: 'center',
@@ -204,6 +223,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
+    position: 'relative',
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.iconNavy,
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 16 : 8,
   },
   centerFabAnchor: {
     width: 64,

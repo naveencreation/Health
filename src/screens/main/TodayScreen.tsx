@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import {
-  CalorieBudgetCard,
+  Header,
+  TopDateStrip,
+  HeroCalorieCard,
   DietJourneyChart,
   MealSection,
   RiaCoachCard,
@@ -12,29 +14,57 @@ import { MealType } from '@/types';
 interface TodayScreenProps {
   onAddFood: (mealType: MealType) => void;
   onOpenRiaChat: () => void;
+  onSearchPress?: () => void;
+  onNotificationsPress?: () => void;
+  onAvatarPress?: () => void;
+  onSignInPress?: () => void;
+  onSignOutPress?: () => void;
+  scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export const TodayScreen: React.FC<TodayScreenProps> = ({ onAddFood, onOpenRiaChat }) => {
+export const TodayScreen: React.FC<TodayScreenProps> = ({
+  onAddFood,
+  onOpenRiaChat,
+  onSearchPress,
+  onNotificationsPress,
+  onAvatarPress,
+  onSignInPress,
+  onSignOutPress,
+  scrollRef,
+}) => {
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* Calorie Arc & Macro Triad */}
-      <CalorieBudgetCard />
+      {/* 0. Blended Header (Scrolls naturally off-screen with content) */}
+      <Header
+        onSearchPress={onSearchPress}
+        onNotificationsPress={onNotificationsPress}
+        onAvatarPress={onAvatarPress}
+        onSignInPress={onSignInPress}
+        onSignOutPress={onSignOutPress}
+      />
 
-      {/* Track your diet journey area wave & days */}
-      <DietJourneyChart />
+      {/* 1. Top 7-Day Date Selector Strip (SUN to SAT with active obsidian capsule & circular ring) */}
+      <TopDateStrip />
 
-      {/* Date Picker situated directly above Meals */}
+      {/* 2. Hero Calorie Card (Goal, Eaten & Burned, Cal left circular dial, Carb/Proteins/Fat bars) */}
+      <HeroCalorieCard />
+
+      {/* 3. Meals Section (Breakfast, Lunch, Dinner with live items & quick-add) */}
       <MealSection onAddFood={onAddFood} />
 
-      {/* Ria AI Nutritionist Coach Insights */}
+      {/* 4. Ria AI Nutritionist Coach Insights */}
       <RiaCoachCard onOpenChat={onOpenRiaChat} />
 
-      {/* Side-by-Side Habits: Hydration & Activity Dual Dials */}
+      {/* 5. Side-by-Side Habits: Hydration & Activity Dual Dials */}
       <DailyHabitsCard />
+
+      {/* 6. Track your diet journey wave chart */}
+      <DietJourneyChart />
     </ScrollView>
   );
 };
@@ -42,8 +72,10 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onAddFood, onOpenRiaCh
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
+    backgroundColor: '#EDFAF6',
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
 });
+

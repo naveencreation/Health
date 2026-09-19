@@ -1,5 +1,7 @@
 // Dashboard Components
 export { CalorieBudgetCard } from './dashboard/CalorieBudgetCard';
+export { HeroCalorieCard } from './dashboard/HeroCalorieCard';
+export { TopDateStrip } from './dashboard/TopDateStrip';
 export { DietJourneyChart } from './dashboard/DietJourneyChart';
 export { MealSection } from './dashboard/MealSection';
 export { DailyHabitsCard } from './dashboard/DailyHabitsCard';

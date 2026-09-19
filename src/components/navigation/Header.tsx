@@ -28,9 +28,9 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.headerWrapper}>
       <View style={styles.topBar}>
-        {/* Left: Avatar + Welcome Text */}
+        {/* Left: Avatar + Welcome Text (Blended directly into screen) */}
         <View style={styles.userSection}>
-          {/* Ellipse 3: 62px x 62px Avatar */}
+          {/* Avatar with subtle white glow / border */}
           <TouchableOpacity
             style={styles.avatarContainer}
             onPress={onAvatarPress}
@@ -61,8 +61,16 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Action Buttons (Auth, Search & Notifications) */}
+        {/* Right: Floating Action Buttons (Streak, Auth, Search, Notifications) */}
         <View style={styles.actionButtonsRow}>
+          {/* Streak pill if available */}
+          {userGoals.streakDays ? (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakIcon}>🔥</Text>
+              <Text style={styles.streakCount}>{userGoals.streakDays}</Text>
+            </View>
+          ) : null}
+
           {/* Auth Button */}
           {(onSignInPress || onSignOutPress) && (
             <TouchableOpacity
@@ -74,23 +82,23 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Ionicons
                 name={currentUser?.isGuest ? "log-in-outline" : "log-out-outline"}
-                size={20}
+                size={18}
                 color={currentUser?.isGuest ? Colors.primary : "#EF4444"}
               />
             </TouchableOpacity>
           )}
 
-          {/* Ellipse 4: Search Button (38px x 38px) */}
+          {/* Search Button */}
           <TouchableOpacity
             style={styles.circleButton}
             onPress={onSearchPress}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="search-outline" size={20} color={Colors.iconNavy} />
+            <Ionicons name="search-outline" size={18} color="#0F172A" />
           </TouchableOpacity>
 
-          {/* Ellipse 5: Notification Bell Button (38px x 38px) */}
+          {/* Notification Bell Button */}
           <TouchableOpacity
             style={styles.circleButton}
             onPress={() => {
@@ -100,8 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="notifications-outline" size={21} color={Colors.iconNavyAlt} />
-            {/* Ellipse 6: Notification Dot (#FFB20B) */}
+            <Ionicons name="notifications-outline" size={18} color="#0F172A" />
             {hasUnreadNotification && <View style={styles.notificationDot} />}
           </TouchableOpacity>
         </View>
@@ -129,18 +136,15 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    backgroundColor: 'transparent',
   },
-  // Frame 19: Top Bar (Clean, height 62px, background #FFFFFF)
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 12,
+    paddingBottom: 4,
   },
   userSection: {
     flexDirection: 'row',
@@ -148,15 +152,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
-  // Ellipse 3: 58px x 58px
   avatarContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   avatarImage: {
     width: '100%',
@@ -164,7 +172,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   nameStack: {
-    marginLeft: 12,
+    marginLeft: 10,
     justifyContent: 'center',
     flex: 1,
   },
@@ -174,10 +182,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   welcomeText: {
-    fontFamily: Fonts.kurale,
-    fontSize: 14,
-    lineHeight: 18,
-    color: Colors.textMuted,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
   },
   guestTag: {
     backgroundColor: '#FEF3C7',
@@ -191,31 +199,56 @@ const styles = StyleSheet.create({
     color: '#D97706',
   },
   userNameText: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.poppins.bold,
     fontSize: 18,
     lineHeight: 24,
-    color: Colors.textPrimary,
-    fontWeight: '400',
+    color: '#0F172A',
+    fontWeight: '700',
   },
   actionButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 18,
+    gap: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  streakIcon: {
+    fontSize: 13,
+  },
+  streakCount: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 12,
+    color: '#EA580C',
+    fontWeight: '700',
+  },
   circleButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderWidth: 1,
-    borderColor: Colors.buttonBorder,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowRadius: 5,
     elevation: 2,
   },
   authButtonHighlight: {
@@ -224,12 +257,12 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: 'absolute',
-    top: 6,
-    right: 7,
+    top: 7,
+    right: 8,
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: Colors.badgeOrange,
+    backgroundColor: '#F97316',
     borderWidth: 1,
     borderColor: '#FFFFFF',
   },
@@ -242,6 +275,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: '#FEF3C7',
+    marginHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 6,
   },
   guestBannerLeft: {
     flexDirection: 'row',

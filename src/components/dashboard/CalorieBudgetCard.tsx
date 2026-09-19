@@ -12,6 +12,7 @@ export const CalorieBudgetCard: React.FC = () => {
     totalCarbs,
     totalProtein,
     totalFat,
+    remainingCalories,
   } = useHealth();
 
   // Figma Specs: 224px x 224px Arc Gauge
@@ -95,7 +96,11 @@ export const CalorieBudgetCard: React.FC = () => {
         <View style={styles.arcCenterContent}>
           <Text style={styles.flameEmoji}>🔥</Text>
           <Text style={styles.calorieNumberText}>{consumed} Kcal</Text>
-          <Text style={styles.calorieSubText}>of {targetBudget} kcal</Text>
+          <Text style={styles.calorieSubText}>
+            {consumed === 0
+              ? `${targetBudget.toLocaleString()} kcal remaining`
+              : `${Math.max(0, remainingCalories).toLocaleString()} kcal left of ${targetBudget}`}
+          </Text>
         </View>
       </View>
 

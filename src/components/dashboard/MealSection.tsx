@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { MealCard } from '../diary/MealCard';
-import { FigmaDatePicker } from './FigmaDatePicker';
 import { MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
 
@@ -22,10 +21,7 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
 
   return (
     <View style={styles.container}>
-      {/* Figma Frame 299: Date Picker placed directly above the Meal cards */}
-      <FigmaDatePicker />
-
-      {/* Figma Rectangle 31: Add Breakfast */}
+      {/* Add Breakfast */}
       <MealCard
         mealType="breakfast"
         title="Add Breakfast"

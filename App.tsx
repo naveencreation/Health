@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
+  ScrollView,
   Platform,
   StatusBar as RNStatusBar,
   ActivityIndicator,
@@ -46,6 +47,7 @@ import {
 function MainApp() {
   const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
+  const todayScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
@@ -118,6 +120,13 @@ function MainApp() {
     addWater(250);
   };
 
+  const handleTabChange = (tab: TabType) => {
+    if (tab === 'today' && activeTab === 'today') {
+      todayScrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+    setActiveTab(tab);
+  };
+
   const handleOpenSignIn = () => {
     setAuthInitialMode('signin');
     setAuthModalVisible(true);
@@ -168,24 +177,32 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, activeTab === 'today' && { backgroundColor: '#EDFAF6' }]}>
       <StatusBar style="dark" />
-      <View style={styles.phoneContainer}>
-        {/* Top Header */}
-        <Header
-          onSearchPress={() => setSearchModalVisible(true)}
-          onNotificationsPress={() => setNotificationsVisible(true)}
-          onAvatarPress={() => setAvatarModalVisible(true)}
-          onSignInPress={handleOpenSignIn}
-          onSignOutPress={handleSignOut}
-        />
+      <View style={[styles.phoneContainer, activeTab === 'today' && styles.phoneContainerToday]}>
+        {/* Top Header for tabs that do not have internal header (Diary, Analytics) */}
+        {activeTab !== 'today' && activeTab !== 'profile' && (
+          <Header
+            onSearchPress={() => setSearchModalVisible(true)}
+            onNotificationsPress={() => setNotificationsVisible(true)}
+            onAvatarPress={() => setAvatarModalVisible(true)}
+            onSignInPress={handleOpenSignIn}
+            onSignOutPress={handleSignOut}
+          />
+        )}
 
         {/* Tab Content */}
         <View style={styles.contentArea}>
           {activeTab === 'today' && (
             <TodayScreen
+              scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
               onOpenRiaChat={() => setRiaChatVisible(true)}
+              onSearchPress={() => setSearchModalVisible(true)}
+              onNotificationsPress={() => setNotificationsVisible(true)}
+              onAvatarPress={() => setAvatarModalVisible(true)}
+              onSignInPress={handleOpenSignIn}
+              onSignOutPress={handleSignOut}
             />
           )}
 
@@ -204,7 +221,7 @@ function MainApp() {
         {/* Bottom Navigation */}
         <BottomNavBar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onQuickLogFood={handleOpenFoodLogger}
           onQuickLogWater={handleQuickWater}
         />
@@ -287,6 +304,9 @@ const styles = StyleSheet.create({
           borderColor: Colors.border,
         }
       : {}),
+  },
+  phoneContainerToday: {
+    backgroundColor: '#EDFAF6',
   },
   contentArea: {
     flex: 1,

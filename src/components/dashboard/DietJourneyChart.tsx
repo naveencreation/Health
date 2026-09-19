@@ -87,7 +87,7 @@ export const DietJourneyChart: React.FC = () => {
 
       {/* Dynamic Today Calorie */}
       <Text style={styles.todayCalorieText}>
-        Today Calorie: {totalConsumed ?? 0}
+        Today: {totalConsumed ?? 0} kcal consumed
       </Text>
 
       {/* Chart Canvas with Y-Axis and Wave */}
@@ -310,10 +310,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary, // #F47551
   },
   dayLetter: {
-    fontFamily: Fonts.kurale,
-    fontSize: 16,
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
     color: 'rgba(0, 0, 0, 0.65)',
-    fontWeight: '400',
+    fontWeight: '600',
   },
   dayLetterSelected: {
     color: '#FFFFFF',
