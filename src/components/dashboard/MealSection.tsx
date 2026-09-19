@@ -21,38 +21,38 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
 
   return (
     <View style={styles.container}>
-      {/* Add Breakfast */}
+      {/* Breakfast */}
       <MealCard
         mealType="breakfast"
-        title="Add Breakfast"
-        recommendedCals={recommended.breakfast || 550}
-        imageUrl="https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=150&auto=format&fit=crop&q=80"
+        title="Breakfast"
+        recommendedCals={recommended.breakfast || 588}
+        imageUrl="https://images.unsplash.com/photo-1525351484163-7529414344d8?w=150&auto=format&fit=crop&q=80"
         iconFallback="🍳"
         items={mealsByType.breakfast}
         onAddPress={onAddFood}
       />
 
-      {/* Figma Rectangle 32: Add Lunch */}
+      {/* Lunch */}
       <MealCard
         mealType="lunch"
-        title="Add Lunch"
-        recommendedCals={recommended.lunch || 650}
+        title="Lunch"
+        recommendedCals={recommended.lunch || 822}
         imageUrl="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=80"
         iconFallback="🥗"
         items={mealsByType.lunch}
         onAddPress={onAddFood}
       />
 
-      {/* Figma Rectangle 33: Add Dinner (dimmed opacity 0.2 when empty per Figma) */}
+      {/* Dinner */}
       <MealCard
         mealType="dinner"
-        title="Add Dinner"
-        recommendedCals={recommended.dinner || 550}
+        title="Dinner"
+        recommendedCals={recommended.dinner || 658}
         imageUrl="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=150&auto=format&fit=crop&q=80"
         iconFallback="🍲"
         items={mealsByType.dinner}
         onAddPress={onAddFood}
-        isDimmed={true}
+        isDimmed={false}
       />
     </View>
   );

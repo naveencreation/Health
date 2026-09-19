@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { LoggedMealItem, MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
@@ -34,30 +33,27 @@ export const MealCard: React.FC<MealCardProps> = ({
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
   const hasItems = items.length > 0;
 
-  // Aggregate macros for the entire meal (UXPeak Principle: Meal-level macro summary)
+  // Aggregate macros for the entire meal (Meal-level macro summary)
   const totalProtein = Math.round(items.reduce((sum, item) => sum + (item.protein || 0), 0) * 10) / 10;
   const totalCarbs = Math.round(items.reduce((sum, item) => sum + (item.carbs || 0), 0) * 10) / 10;
   const totalFat = Math.round(items.reduce((sum, item) => sum + (item.fat || 0), 0) * 10) / 10;
 
-  // Curated premium pastel accents per meal type
-  const mealTheme = {
-    breakfast: { tint: '#FFF7ED', border: 'rgba(249, 115, 22, 0.18)', badge: '#F97316' },
-    lunch: { tint: '#F0FDF4', border: 'rgba(34, 197, 94, 0.18)', badge: '#22C55E' },
-    snacks: { tint: '#FEF3C7', border: 'rgba(245, 158, 11, 0.18)', badge: '#F59E0B' },
-    dinner: { tint: '#F5F3FF', border: 'rgba(139, 92, 246, 0.18)', badge: '#8B5CF6' },
-  }[mealType] || { tint: '#F3F4F6', border: 'rgba(0,0,0,0.1)', badge: '#64748B' };
+  // Meal progress calculation (Single average target vs range)
+  const targetCals = recommendedCals || 500;
+  const mealProgress = Math.min(1, Math.max(0, totalMealCals / targetCals));
+  const isOverBudget = totalMealCals > targetCals;
 
   return (
     <View style={[styles.card, isDimmed && !hasItems && styles.dimmedCard]}>
-      {/* Figma Slot Header (Rectangle 31/32/33: #FAFAFA, border: 1px solid #3F7E03) */}
+      {/* 1. Header Row */}
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.headerLeft}
           onPress={() => hasItems && setIsExpanded(!isExpanded)}
           activeOpacity={hasItems ? 0.7 : 1}
         >
-          {/* Premium Circular Thumbnail with Glass/Card Ring */}
-          <View style={[styles.thumbnailCircle, { backgroundColor: mealTheme.tint, borderColor: mealTheme.border }]}>
+          {/* Circular Thumbnail with Crisp Border */}
+          <View style={styles.thumbnailCircle}>
             {!imgError ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -69,7 +65,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             )}
           </View>
 
-          {/* Title & Subtitle */}
+          {/* Title, Single Target Subtitle & Informative Progress Bar */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
               <Text style={styles.mealTitle}>
@@ -80,19 +76,33 @@ export const MealCard: React.FC<MealCardProps> = ({
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
                     size={14}
-                    color="rgba(0, 0, 0, 0.45)"
+                    color="#475569"
                   />
                 </View>
               )}
             </View>
 
+            {/* Zero Decision Fatigue: Single Clear Target */}
             <Text style={styles.recommendedText}>
-              Recommended {Math.max(350, recommendedCals - 100)}–{recommendedCals + 100} cal
+              Recommended: {targetCals} cal
             </Text>
+
+            {/* Visual Calorie Consumption Progress Bar */}
+            <View style={styles.progressBarTrack}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${Math.round(mealProgress * 100)}%`,
+                    backgroundColor: isOverBudget ? '#F97316' : '#22C55E',
+                  },
+                ]}
+              />
+            </View>
           </View>
         </TouchableOpacity>
 
-        {/* Right Action: Clean Calorie Badge & Lime Green Add Button */}
+        {/* Right Action: Calorie Badge & Lime Green Add Button */}
         <View style={styles.headerRight}>
           {hasItems && (
             <View style={styles.calorieBadge}>
@@ -101,7 +111,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             </View>
           )}
 
-          {/* Figma Ellipse 21/22: 38px circle in #CDE26D with sleek lime glow */}
+          {/* Round Lime Green Add Button (#CDE26D) */}
           <TouchableOpacity
             style={[
               styles.addButtonCircle,
@@ -111,12 +121,12 @@ export const MealCard: React.FC<MealCardProps> = ({
             activeOpacity={0.8}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="add" size={22} color="#1E293B" />
+            <Ionicons name="add" size={24} color="#1E293B" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Expanded Items List: Clean, Flat Rows (NO "Russian Doll" Nested Boxes) */}
+      {/* 2. Expanded Items List: Flat Rows (No Nested Cards) */}
       {isExpanded && hasItems && (
         <View style={styles.itemsContainer}>
           {items.map((item, index) => {
@@ -129,7 +139,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                   !isLast && styles.foodRowBorder,
                 ]}
               >
-                {/* Left: Food Name & Clean Serving Info (No duplicate calories!) */}
+                {/* Left: Food Name & Serving */}
                 <View style={styles.foodInfo}>
                   <Text style={styles.foodName} numberOfLines={1}>
                     {item.name}
@@ -139,13 +149,13 @@ export const MealCard: React.FC<MealCardProps> = ({
                   </Text>
                 </View>
 
-                {/* Right: Sleek Unified Capsule Stepper + Single Calorie + Trash */}
+                {/* Right: Stepper + Single Calorie + Delete */}
                 <View style={styles.foodActions}>
-                  {/* Unified Apple-Style Capsule Stepper */}
+                  {/* Capsule Stepper */}
                   <View style={styles.stepperCapsule}>
                     <TouchableOpacity
                       style={styles.stepperBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => {
                         if (item.quantity > 0.5) {
                           updateMealQuantity(item.id, Math.max(0.5, item.quantity - 0.5));
@@ -161,7 +171,7 @@ export const MealCard: React.FC<MealCardProps> = ({
 
                     <TouchableOpacity
                       style={styles.stepperBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       onPress={() => updateMealQuantity(item.id, item.quantity + 0.5)}
                     >
                       <Ionicons name="add" size={13} color="#475569" />
@@ -173,10 +183,10 @@ export const MealCard: React.FC<MealCardProps> = ({
                     {item.calories} <Text style={styles.foodCaloriesUnit}>cal</Text>
                   </Text>
 
-                  {/* Refined Delete Button */}
+                  {/* Delete Button */}
                   <TouchableOpacity
                     style={styles.deleteBtn}
-                    hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={() => removeMealItem(item.id)}
                   >
                     <Ionicons name="close" size={15} color="#94A3B8" />
@@ -186,24 +196,24 @@ export const MealCard: React.FC<MealCardProps> = ({
             );
           })}
 
-          {/* UXPeak Single Macro Summary Bar at Meal Level */}
+          {/* 3. Meal-Level Macro Summary Bar */}
           <View style={styles.macroSummaryBar}>
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: Colors.protein }]} />
+              <View style={[styles.macroDot, { backgroundColor: '#22C55E' }]} />
               <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
             </View>
 
             <Text style={styles.macroSummaryDivider}>•</Text>
 
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: Colors.fat }]} />
+              <View style={[styles.macroDot, { backgroundColor: '#F97316' }]} />
               <Text style={styles.macroSummaryText}>{totalFat}g Fats</Text>
             </View>
 
             <Text style={styles.macroSummaryDivider}>•</Text>
 
             <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, { backgroundColor: Colors.carbs }]} />
+              <View style={[styles.macroDot, { backgroundColor: '#EAB308' }]} />
               <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
             </View>
           </View>
@@ -214,37 +224,36 @@ export const MealCard: React.FC<MealCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Figma Rectangle 31/32: 354px wide, #FAFAFA surface, 1px solid #3F7E03 green border
   card: {
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#3F7E03',
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#4ADE80', // Fresh natural herbal green outline matching reference
+    borderRadius: 20,
     marginHorizontal: 16,
-    marginBottom: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    marginBottom: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
   },
   dimmedCard: {
-    opacity: 0.4,
+    opacity: 0.75,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 48,
+    minHeight: 52,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: 10,
   },
-  // Ellipse 19/20/23: 48px circle with subtle inner border and soft ambient shadow
   thumbnailCircle: {
     width: 48,
     height: 48,
@@ -254,15 +263,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   thumbnailImg: {
     width: '100%',
     height: '100%',
-    borderRadius: 24,
+    resizeMode: 'cover',
   },
   fallbackEmoji: {
     fontSize: 22,
@@ -276,27 +283,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  // Figma: font-family: 'Poppins'; font-size: 15px; color: #000000;
   mealTitle: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 15,
-    fontWeight: '600',
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#0F172A',
   },
   chevronPill: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Figma: font-family: 'Poppins'; font-size: 11px; color: rgba(0, 0, 0, 0.4);
   recommendedText: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
-    color: 'rgba(0, 0, 0, 0.45)',
+    fontSize: 11.5,
+    color: '#64748B',
     marginTop: 2,
+  },
+  progressBarTrack: {
+    height: 4.5,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 2.5,
+    marginTop: 6,
+    maxWidth: 160,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2.5,
   },
   headerRight: {
     flexDirection: 'row',
@@ -308,21 +325,20 @@ const styles = StyleSheet.create({
   },
   calorieNumber: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   calorieUnit: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 10,
-    color: 'rgba(0, 0, 0, 0.45)',
+    fontSize: 11,
+    color: '#94A3B8',
   },
-  // Figma Ellipse 21/22: 38px circle in #CDE26D with sleek lime ambient glow
   addButtonCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#CDE26D',
     alignItems: 'center',
     justifyContent: 'center',
@@ -333,58 +349,54 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   dimmedAddButton: {
-    backgroundColor: '#E2E8F0',
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: '#CDE26D',
+    opacity: 0.9,
   },
-  // Items Container: Clean list without inner card borders
   itemsContainer: {
-    marginTop: 10,
+    marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.06)',
+    borderTopColor: '#F1F5F9',
     paddingTop: 4,
   },
-  // Flat, uncluttered list row (UXPeak: Zero Russian-Doll Cards)
   foodRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 9,
-    paddingHorizontal: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 2,
   },
   foodRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.04)',
+    borderBottomColor: '#F8FAFC',
   },
   foodInfo: {
     flex: 1,
     marginRight: 10,
   },
   foodName: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 13.5,
-    fontWeight: '500',
-    color: '#1E293B',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   foodServing: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
-    marginTop: 1.5,
+    marginTop: 2,
   },
   foodActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  // Unified Minimalist Apple-Style Capsule Stepper
   stepperCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 13,
-    height: 26,
-    paddingHorizontal: 4,
+    borderRadius: 14,
+    height: 28,
+    paddingHorizontal: 5,
     gap: 4,
   },
   stepperBtn: {
@@ -395,65 +407,63 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepperQty: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11.5,
-    fontWeight: '600',
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 12.5,
+    fontWeight: '700',
     color: '#0F172A',
-    minWidth: 14,
+    minWidth: 16,
     textAlign: 'center',
   },
-  // Single Clean Calorie Display
   foodCalories: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13.5,
-    fontWeight: '600',
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#0F172A',
-    minWidth: 48,
+    minWidth: 54,
     textAlign: 'right',
   },
   foodCaloriesUnit: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '400',
     color: '#64748B',
   },
   deleteBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.035)',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Single UXPeak Macro Summary Bar at Meal Level
   macroSummaryBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.025)',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginTop: 8,
-    gap: 8,
+    backgroundColor: '#F8FAF8',
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    marginTop: 10,
+    gap: 10,
   },
   macroSummaryPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   macroDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 6.5,
+    height: 6.5,
+    borderRadius: 3.5,
   },
   macroSummaryText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#475569',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#334155',
   },
   macroSummaryDivider: {
     fontSize: 10,
-    color: 'rgba(0, 0, 0, 0.25)',
+    color: '#CBD5E1',
   },
 });
