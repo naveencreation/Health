@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,8 @@ import {
   Pressable,
   Platform,
   ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +26,56 @@ const ITEM_HEIGHT = 80;
 const CONTAINER_HEIGHT = 400;
 const PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2; // 160px
 const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
+const SNAP_OFFSETS = AGES.map((_, i) => i * ITEM_HEIGHT);
 const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
+
+interface AgeItemProps {
+  age: number;
+  selectedAge: number;
+  onSelect: (age: number) => void;
+}
+
+const AgeItem = React.memo<AgeItemProps>(
+  ({ age, selectedAge, onSelect }) => {
+    const diff = Math.abs(age - selectedAge);
+    let textStyle = styles.ageTextDim;
+    if (diff === 0) {
+      textStyle = styles.selectedAgeText;
+    } else if (diff === 1) {
+      textStyle = styles.ageTextMid;
+    }
+    const isFar = diff > 2;
+
+    const handlePress = useCallback(() => {
+      onSelect(age);
+    }, [age, onSelect]);
+
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.numberRow,
+          isFar ? styles.numberRowFar : null,
+          pressed && !isFar && diff !== 0 ? styles.numberRowPressed : null,
+        ]}
+        onPress={handlePress}
+        disabled={isFar}
+        accessibilityRole="button"
+        accessibilityLabel={`Age ${age}`}
+        accessibilityState={{ selected: diff === 0 }}
+      >
+        <Text style={textStyle}>{age}</Text>
+      </Pressable>
+    );
+  },
+  (prev, next) => {
+    if (prev.age !== next.age || prev.onSelect !== next.onSelect) return false;
+    const prevDiff = Math.abs(prev.age - prev.selectedAge);
+    const nextDiff = Math.abs(next.age - next.selectedAge);
+    const prevRank = prevDiff === 0 ? 0 : prevDiff === 1 ? 1 : prevDiff === 2 ? 2 : 3;
+    const nextRank = nextDiff === 0 ? 0 : nextDiff === 1 ? 1 : nextDiff === 2 ? 2 : 3;
+    return prevRank === nextRank;
+  }
+);
 
 export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
   onBack,
@@ -35,30 +86,35 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
 }) => {
   const [selectedAge, setSelectedAge] = useState<number>(initialAge);
   const scrollViewRef = useRef<ScrollView>(null);
-  const scrollTimeoutRef = useRef<any>(null);
+  const isLayoutReadyRef = useRef(false);
 
   // References for live tracking & web drag support
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
   const startScrollYRef = useRef((initialAge - MIN_AGE) * ITEM_HEIGHT);
   const currentScrollYRef = useRef((initialAge - MIN_AGE) * ITEM_HEIGHT);
+  const selectedAgeRef = useRef(initialAge);
 
-  // Initialize scroll position to initialAge
+  const initialOffset = Math.max(0, (initialAge - MIN_AGE) * ITEM_HEIGHT);
+
   useEffect(() => {
-    const initialOffset = Math.max(0, (initialAge - MIN_AGE) * ITEM_HEIGHT);
-    const timer = setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: initialOffset, animated: false });
-      currentScrollYRef.current = initialOffset;
-    }, 60);
-    return () => clearTimeout(timer);
+    selectedAgeRef.current = selectedAge;
+  }, [selectedAge]);
+
+  // Sync scroll position if initialAge changes dynamically
+  useEffect(() => {
+    const targetOffset = Math.max(0, (initialAge - MIN_AGE) * ITEM_HEIGHT);
+    currentScrollYRef.current = targetOffset;
+    scrollViewRef.current?.scrollTo({ y: targetOffset, animated: false });
+    setSelectedAge(initialAge);
   }, [initialAge]);
 
-  // Clean up timers on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, []);
+  const handleLayout = useCallback(() => {
+    if (!isLayoutReadyRef.current) {
+      isLayoutReadyRef.current = true;
+      scrollViewRef.current?.scrollTo({ y: initialOffset, animated: false });
+    }
+  }, [initialOffset]);
 
   // Desktop Web: Smooth click-and-drag gesture support
   useEffect(() => {
@@ -76,7 +132,10 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
         // Update selected age live during drag
         const liveIndex = Math.round(targetY / ITEM_HEIGHT);
         const clampedIndex = Math.max(0, Math.min(AGES.length - 1, liveIndex));
-        setSelectedAge(AGES[clampedIndex]);
+        const newAge = AGES[clampedIndex];
+        if (newAge !== undefined && newAge !== selectedAgeRef.current) {
+          setSelectedAge(newAge);
+        }
       };
 
       const onGlobalMouseUp = () => {
@@ -86,7 +145,10 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
           const clampedIndex = Math.max(0, Math.min(AGES.length - 1, snapIndex));
           const snapY = clampedIndex * ITEM_HEIGHT;
           scrollViewRef.current?.scrollTo({ y: snapY, animated: true });
-          setSelectedAge(AGES[clampedIndex]);
+          const finalAge = AGES[clampedIndex];
+          if (finalAge !== undefined) {
+            setSelectedAge(finalAge);
+          }
         }
       };
 
@@ -99,53 +161,64 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
     }
   }, []);
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = useCallback((e: any) => {
     if (Platform.OS !== 'web') return;
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     isDraggingRef.current = true;
     const clientY = e.clientY || (e.nativeEvent && e.nativeEvent.pageY) || 0;
     startYRef.current = clientY;
     startScrollYRef.current = currentScrollYRef.current;
-  };
+  }, []);
 
-  const handleScroll = (event: any) => {
+  // Real-time scroll updates: update selected age only when crossing item boundaries
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = event.nativeEvent.contentOffset.y;
     currentScrollYRef.current = y;
     const index = Math.round(y / ITEM_HEIGHT);
     const clampedIndex = Math.max(0, Math.min(AGES.length - 1, index));
     const newAge = AGES[clampedIndex];
-    if (newAge !== selectedAge) {
+    if (newAge !== undefined && newAge !== selectedAgeRef.current) {
       setSelectedAge(newAge);
     }
+  }, []);
 
-    // Auto-snap debounce: smoothly center number after scrolling ceases
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      if (!isDraggingRef.current) {
-        const snapY = clampedIndex * ITEM_HEIGHT;
-        if (Math.abs(currentScrollYRef.current - snapY) > 1) {
-          scrollViewRef.current?.scrollTo({ y: snapY, animated: true });
-        }
-      }
-    }, 80);
-  };
-
-  const handleScrollEnd = (event: any) => {
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+  // When momentum fling completes natively, commit final selected age
+  const handleMomentumScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = event.nativeEvent.contentOffset.y;
     const index = Math.round(y / ITEM_HEIGHT);
     const clampedIndex = Math.max(0, Math.min(AGES.length - 1, index));
-    const snapY = clampedIndex * ITEM_HEIGHT;
-    scrollViewRef.current?.scrollTo({ y: snapY, animated: true });
-    setSelectedAge(AGES[clampedIndex]);
-  };
+    currentScrollYRef.current = clampedIndex * ITEM_HEIGHT;
+    const finalAge = AGES[clampedIndex];
+    if (finalAge !== undefined && finalAge !== selectedAgeRef.current) {
+      setSelectedAge(finalAge);
+    }
+  }, []);
 
-  const handleSelectAge = (age: number) => {
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+  // Handle slow drag release without momentum
+  const handleScrollEndDrag = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const velocityY = event.nativeEvent?.velocity?.y ?? 0;
+    if (Math.abs(velocityY) < 0.08) {
+      const y = event.nativeEvent.contentOffset.y;
+      const index = Math.round(y / ITEM_HEIGHT);
+      const clampedIndex = Math.max(0, Math.min(AGES.length - 1, index));
+      const snapY = clampedIndex * ITEM_HEIGHT;
+      currentScrollYRef.current = snapY;
+      const finalAge = AGES[clampedIndex];
+      if (finalAge !== undefined && finalAge !== selectedAgeRef.current) {
+        setSelectedAge(finalAge);
+      }
+      if (Platform.OS === 'web') {
+        scrollViewRef.current?.scrollTo({ y: snapY, animated: true });
+      }
+    }
+  }, []);
+
+  const handleSelectAge = useCallback((age: number) => {
     const index = age - MIN_AGE;
-    scrollViewRef.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: true });
+    const snapY = index * ITEM_HEIGHT;
+    currentScrollYRef.current = snapY;
+    scrollViewRef.current?.scrollTo({ y: snapY, animated: true });
     setSelectedAge(age);
-  };
+  }, []);
 
   const handleContinuePress = () => {
     if (onContinue) onContinue(selectedAge);
@@ -202,43 +275,27 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
             style={styles.pickerScrollView}
             contentContainerStyle={styles.pickerScrollContent}
             showsVerticalScrollIndicator={false}
-            snapToInterval={ITEM_HEIGHT}
-            snapToAlignment="center"
+            snapToOffsets={SNAP_OFFSETS}
+            snapToAlignment="start"
             decelerationRate="fast"
+            nestedScrollEnabled={true}
+            overScrollMode="never"
+            bounces={Platform.OS === 'ios'}
+            contentOffset={{ x: 0, y: initialOffset }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
-            onMomentumScrollEnd={handleScrollEnd}
-            onScrollEndDrag={handleScrollEnd}
-            bounces={true}
+            onMomentumScrollEnd={handleMomentumScrollEnd}
+            onScrollEndDrag={handleScrollEndDrag}
+            onLayout={handleLayout}
           >
-            {AGES.map((age) => {
-              const diff = Math.abs(age - selectedAge);
-              let textStyle = styles.ageTextDim;
-              if (diff === 0) {
-                textStyle = styles.selectedAgeText;
-              } else if (diff === 1) {
-                textStyle = styles.ageTextMid;
-              }
-              const isFar = diff > 2;
-
-              return (
-                <Pressable
-                  key={age}
-                  style={({ pressed }) => [
-                    styles.numberRow,
-                    isFar ? styles.numberRowFar : null,
-                    pressed && !isFar ? styles.btnPressedSubtle : null,
-                  ]}
-                  onPress={() => handleSelectAge(age)}
-                  disabled={isFar}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Age ${age}`}
-                  accessibilityState={{ selected: diff === 0 }}
-                >
-                  <Text style={textStyle}>{age}</Text>
-                </Pressable>
-              );
-            })}
+            {AGES.map((age) => (
+              <AgeItem
+                key={age}
+                age={age}
+                selectedAge={selectedAge}
+                onSelect={handleSelectAge}
+              />
+            ))}
           </ScrollView>
         </View>
 
@@ -444,6 +501,9 @@ const styles = StyleSheet.create({
   },
   numberRowFar: {
     opacity: 0,
+  },
+  numberRowPressed: {
+    opacity: 0.7,
   },
   btnPressedSubtle: {
     opacity: 0.65,
