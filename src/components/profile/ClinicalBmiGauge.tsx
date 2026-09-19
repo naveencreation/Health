@@ -20,8 +20,37 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
   const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmiNum));
   const thumbPercent = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * 100;
 
+  const getStatusTextStyle = (label?: string) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('under')) return styles.statusUnder;
+    if (l.includes('over')) return styles.statusOver;
+    if (l.includes('obese')) return styles.statusObese;
+    return styles.statusNormal;
+  };
+
+  const getThumbBorderStyle = (label?: string) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('under')) return styles.thumbBorderUnder;
+    if (l.includes('over')) return styles.thumbBorderOver;
+    if (l.includes('obese')) return styles.thumbBorderObese;
+    return styles.thumbBorderNormal;
+  };
+
+  const getThumbBgStyle = (label?: string) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('under')) return styles.thumbBgUnder;
+    if (l.includes('over')) return styles.thumbBgOver;
+    if (l.includes('obese')) return styles.thumbBgObese;
+    return styles.thumbBgNormal;
+  };
+
   return (
-    <View style={styles.gaugeContainer}>
+    <View
+      style={styles.gaugeContainer}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: minBmi, max: maxBmi, now: clampedBmi }}
+      accessibilityLabel={`Current BMI is ${bmi}, categorized as ${bmiStatus.label.replace(' 🟢', '')}`}
+    >
       {/* Title */}
       <Text style={styles.title}>Current BMI</Text>
 
@@ -29,7 +58,7 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
       <View style={styles.valueRow}>
         <Text style={styles.bigValue}>{bmi}</Text>
         <View style={styles.statusBadge}>
-          <Text style={[styles.statusText, { color: bmiStatus.color }]}>
+          <Text style={[styles.statusText, getStatusTextStyle(bmiStatus.label)]}>
             {bmiStatus.label.replace(' 🟢', '')}
           </Text>
         </View>
@@ -40,17 +69,17 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
         {/* Spectrum Bar Segments */}
         <View style={styles.spectrumBar}>
           {/* 15 - 16: Deep Blue */}
-          <View style={[styles.barSegment, { flex: 1, backgroundColor: '#3B82F6' }]} />
+          <View style={[styles.barSegment, styles.segDeepBlue]} />
           {/* 16 - 18.5: Cyan/Light Blue */}
-          <View style={[styles.barSegment, { flex: 2.5, backgroundColor: '#38BDF8' }]} />
+          <View style={[styles.barSegment, styles.segLightBlue]} />
           {/* 18.5 - 25: Vibrant Healthy Green */}
-          <View style={[styles.barSegment, { flex: 6.5, backgroundColor: '#22C55E' }]} />
+          <View style={[styles.barSegment, styles.segGreen]} />
           {/* 25 - 31: Amber / Yellow */}
-          <View style={[styles.barSegment, { flex: 6, backgroundColor: '#FBBF24' }]} />
+          <View style={[styles.barSegment, styles.segYellow]} />
           {/* 31 - 35: Warm Tangerine */}
-          <View style={[styles.barSegment, { flex: 4, backgroundColor: '#F97316' }]} />
+          <View style={[styles.barSegment, styles.segOrange]} />
           {/* 35 - 40: Crimson Red */}
-          <View style={[styles.barSegment, { flex: 5, backgroundColor: '#EF4444' }]} />
+          <View style={[styles.barSegment, styles.segRed]} />
         </View>
 
         {/* Dynamic Indicator Thumb */}
@@ -60,8 +89,8 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
             { left: `${thumbPercent}%` },
           ]}
         >
-          <View style={[styles.thumbOuter, { borderColor: bmiStatus.color }]}>
-            <View style={[styles.thumbInner, { backgroundColor: bmiStatus.color }]} />
+          <View style={[styles.thumbOuter, getThumbBorderStyle(bmiStatus.label)]}>
+            <View style={[styles.thumbInner, getThumbBgStyle(bmiStatus.label)]} />
           </View>
         </View>
       </View>
@@ -127,6 +156,18 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 13.5,
   },
+  statusUnder: {
+    color: '#3B82F6',
+  },
+  statusNormal: {
+    color: '#10B981',
+  },
+  statusOver: {
+    color: '#F59E0B',
+  },
+  statusObese: {
+    color: '#EF4444',
+  },
   barContainer: {
     position: 'relative',
     height: 18,
@@ -141,6 +182,30 @@ const styles = StyleSheet.create({
   },
   barSegment: {
     height: '100%',
+  },
+  segDeepBlue: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+  },
+  segLightBlue: {
+    flex: 2.5,
+    backgroundColor: '#38BDF8',
+  },
+  segGreen: {
+    flex: 6.5,
+    backgroundColor: '#22C55E',
+  },
+  segYellow: {
+    flex: 6,
+    backgroundColor: '#FBBF24',
+  },
+  segOrange: {
+    flex: 4,
+    backgroundColor: '#F97316',
+  },
+  segRed: {
+    flex: 5,
+    backgroundColor: '#EF4444',
   },
   thumbAnchor: {
     position: 'absolute',
@@ -165,10 +230,34 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
+  thumbBorderUnder: {
+    borderColor: '#3B82F6',
+  },
+  thumbBorderNormal: {
+    borderColor: '#10B981',
+  },
+  thumbBorderOver: {
+    borderColor: '#F59E0B',
+  },
+  thumbBorderObese: {
+    borderColor: '#EF4444',
+  },
   thumbInner: {
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  thumbBgUnder: {
+    backgroundColor: '#3B82F6',
+  },
+  thumbBgNormal: {
+    backgroundColor: '#10B981',
+  },
+  thumbBgOver: {
+    backgroundColor: '#F59E0B',
+  },
+  thumbBgObese: {
+    backgroundColor: '#EF4444',
   },
   ticksRow: {
     flexDirection: 'row',

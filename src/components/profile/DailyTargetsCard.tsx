@@ -68,10 +68,13 @@ export const DailyTargetsCard: React.FC<DailyTargetsCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.presetBtn,
-            activePreset === 'fat_loss' && styles.presetBtnSelected,
-            pressed && styles.pressedPreset,
+            activePreset === 'fat_loss' ? styles.presetBtnSelected : null,
+            pressed ? styles.pressedPreset : null,
           ]}
           onPress={() => applyPreset('fat_loss')}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activePreset === 'fat_loss' }}
+          accessibilityLabel="Apply Fat Loss preset, 1650 kcal, 40% carbs, 30% protein, 30% fat"
         >
           <Text style={styles.presetEmoji}>🔥</Text>
           <Text style={styles.presetLabel}>Fat Loss</Text>
@@ -82,10 +85,13 @@ export const DailyTargetsCard: React.FC<DailyTargetsCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.presetBtn,
-            activePreset === 'muscle_gain' && styles.presetBtnSelected,
-            pressed && styles.pressedPreset,
+            activePreset === 'muscle_gain' ? styles.presetBtnSelected : null,
+            pressed ? styles.pressedPreset : null,
           ]}
           onPress={() => applyPreset('muscle_gain')}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activePreset === 'muscle_gain' }}
+          accessibilityLabel="Apply Muscle Build preset, 2300 kcal, 45% carbs, 30% protein, 25% fat"
         >
           <Text style={styles.presetEmoji}>💪</Text>
           <Text style={styles.presetLabel}>Muscle Build</Text>
@@ -96,10 +102,13 @@ export const DailyTargetsCard: React.FC<DailyTargetsCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.presetBtn,
-            activePreset === 'maintenance' && styles.presetBtnSelected,
-            pressed && styles.pressedPreset,
+            activePreset === 'maintenance' ? styles.presetBtnSelected : null,
+            pressed ? styles.pressedPreset : null,
           ]}
           onPress={() => applyPreset('maintenance')}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activePreset === 'maintenance' }}
+          accessibilityLabel="Apply Maintenance preset, 1950 kcal, 45% carbs, 20% protein, 35% fat"
         >
           <Text style={styles.presetEmoji}>⚖️</Text>
           <Text style={styles.presetLabel}>Maintain</Text>
@@ -115,21 +124,21 @@ export const DailyTargetsCard: React.FC<DailyTargetsCardProps> = ({
           <Text style={styles.macroRatioSum}>{computedMacroCals} kcal calculated</Text>
         </View>
         <View style={styles.macroBar}>
-          <View style={[styles.macroBarSeg, { flex: Math.max(1, proteinPct), backgroundColor: '#10B981' }]} />
-          <View style={[styles.macroBarSeg, { flex: Math.max(1, carbsPct), backgroundColor: '#F59E0B' }]} />
-          <View style={[styles.macroBarSeg, { flex: Math.max(1, fatPct), backgroundColor: '#F47551' }]} />
+          <View style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, proteinPct) }]} />
+          <View style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, carbsPct) }]} />
+          <View style={[styles.macroBarSeg, styles.macroBarFat, { flex: Math.max(1, fatPct) }]} />
         </View>
         <View style={styles.macroLegendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendDot, styles.legendDotProtein]} />
             <Text style={styles.legendText}>Protein ({proteinPct}%)</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.legendDot, styles.legendDotCarbs]} />
             <Text style={styles.legendText}>Carbs ({carbsPct}%)</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#F47551' }]} />
+            <View style={[styles.legendDot, styles.legendDotFat]} />
             <Text style={styles.legendText}>Fat ({fatPct}%)</Text>
           </View>
         </View>
@@ -369,6 +378,15 @@ const styles = StyleSheet.create({
   macroBarSeg: {
     height: '100%',
   },
+  macroBarProtein: {
+    backgroundColor: '#10B981',
+  },
+  macroBarCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  macroBarFat: {
+    backgroundColor: '#F47551',
+  },
   macroLegendRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -382,6 +400,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  legendDotProtein: {
+    backgroundColor: '#10B981',
+  },
+  legendDotCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  legendDotFat: {
+    backgroundColor: '#F47551',
   },
   legendText: {
     fontFamily: Fonts.poppins.regular,

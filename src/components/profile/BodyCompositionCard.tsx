@@ -43,6 +43,22 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
   calorieBudget,
   currentBudget,
 }) => {
+  const getBmiPillStyle = (label?: string) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('under')) return styles.bmiPillUnder;
+    if (l.includes('over')) return styles.bmiPillOver;
+    if (l.includes('obese')) return styles.bmiPillObese;
+    return styles.bmiPillNormal;
+  };
+
+  const getBmiTextStyle = (label?: string) => {
+    const l = (label || '').toLowerCase();
+    if (l.includes('under')) return styles.bmiTextUnder;
+    if (l.includes('over')) return styles.bmiTextOver;
+    if (l.includes('obese')) return styles.bmiTextObese;
+    return styles.bmiTextNormal;
+  };
+
   return (
     <View style={styles.container}>
       {/* 1. Weight Progress Journey Card */}
@@ -86,6 +102,7 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
               keyboardType="numeric"
               value={currentWeight}
               onChangeText={setCurrentWeight}
+              accessibilityLabel="Current weight in kilograms"
             />
           </View>
 
@@ -96,6 +113,7 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
               keyboardType="numeric"
               value={targetWeight}
               onChangeText={setTargetWeight}
+              accessibilityLabel="Target goal weight in kilograms"
             />
           </View>
         </View>
@@ -108,23 +126,23 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
             <Text style={styles.cardTitle}>Body Mass Index (BMI)</Text>
             <Text style={styles.cardSubtitle}>Clinical indicator of healthy body composition</Text>
           </View>
-          <View style={[styles.bmiPill, { backgroundColor: bmiStatus.color + '20' }]}>
-            <Text style={[styles.bmiPillText, { color: bmiStatus.color }]}>{bmiStatus.label}</Text>
+          <View style={[styles.bmiPill, getBmiPillStyle(bmiStatus.label)]}>
+            <Text style={[styles.bmiPillText, getBmiTextStyle(bmiStatus.label)]}>{bmiStatus.label}</Text>
           </View>
         </View>
 
         {/* Large BMI Number */}
         <View style={styles.bmiNumberRow}>
-          <Text style={[styles.bmiBigNumber, { color: bmiStatus.color }]}>{bmi}</Text>
+          <Text style={[styles.bmiBigNumber, getBmiTextStyle(bmiStatus.label)]}>{bmi}</Text>
           <Text style={styles.bmiUnit}>kg/m²</Text>
         </View>
 
         {/* 4-Color Category Bar */}
         <View style={styles.bmiBarWrapper}>
-          <View style={[styles.bmiBarSeg, { backgroundColor: '#3B82F6', flex: 18.5 }]} />
-          <View style={[styles.bmiBarSeg, { backgroundColor: '#10B981', flex: 6.4 }]} />
-          <View style={[styles.bmiBarSeg, { backgroundColor: '#F59E0B', flex: 5 }]} />
-          <View style={[styles.bmiBarSeg, { backgroundColor: '#EF4444', flex: 10 }]} />
+          <View style={[styles.bmiBarSeg, styles.bmiBarSegUnder]} />
+          <View style={[styles.bmiBarSeg, styles.bmiBarSegNormal]} />
+          <View style={[styles.bmiBarSeg, styles.bmiBarSegOver]} />
+          <View style={[styles.bmiBarSeg, styles.bmiBarSegObese]} />
         </View>
         <View style={styles.bmiLabelsRow}>
           <Text style={styles.bmiRangeText}>&lt;18.5 Under</Text>
@@ -141,6 +159,7 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
             keyboardType="numeric"
             value={userHeightCm}
             onChangeText={setUserHeightCm}
+            accessibilityLabel="Height in centimeters"
           />
         </View>
       </View>
@@ -160,7 +179,7 @@ export const BodyCompositionCard: React.FC<BodyCompositionCardProps> = ({
           </View>
 
           <View style={styles.metabolicBox}>
-            <Text style={[styles.metabolicVal, { color: Colors.primary }]}>
+            <Text style={[styles.metabolicVal, styles.metabolicValPrimary]}>
               {tdeeEst} <Text style={styles.metabolicUnit}>kcal</Text>
             </Text>
             <Text style={styles.metabolicLabel}>Total Daily Burn (TDEE)</Text>
@@ -306,9 +325,33 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  bmiPillUnder: {
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+  },
+  bmiPillNormal: {
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+  },
+  bmiPillOver: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  },
+  bmiPillObese: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+  },
   bmiPillText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12,
+  },
+  bmiTextUnder: {
+    color: '#3B82F6',
+  },
+  bmiTextNormal: {
+    color: '#10B981',
+  },
+  bmiTextOver: {
+    color: '#F59E0B',
+  },
+  bmiTextObese: {
+    color: '#EF4444',
   },
   bmiNumberRow: {
     flexDirection: 'row',
@@ -335,6 +378,22 @@ const styles = StyleSheet.create({
   },
   bmiBarSeg: {
     height: '100%',
+  },
+  bmiBarSegUnder: {
+    backgroundColor: '#3B82F6',
+    flex: 18.5,
+  },
+  bmiBarSegNormal: {
+    backgroundColor: '#10B981',
+    flex: 6.4,
+  },
+  bmiBarSegOver: {
+    backgroundColor: '#F59E0B',
+    flex: 5,
+  },
+  bmiBarSegObese: {
+    backgroundColor: '#EF4444',
+    flex: 10,
   },
   bmiLabelsRow: {
     flexDirection: 'row',
@@ -370,6 +429,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.bold,
     fontSize: 18,
     color: '#0F172A',
+  },
+  metabolicValPrimary: {
+    color: Colors.primary,
   },
   metabolicUnit: {
     fontFamily: Fonts.poppins.regular,
