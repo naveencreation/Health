@@ -32,7 +32,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create, update: if isOwner(userId) && isValidUserDoc(userId);
-      allow delete: if false;
+      allow delete: if isOwner(userId);
 
       // Match Subcollection: dailyLogs
       match /dailyLogs/{date} {

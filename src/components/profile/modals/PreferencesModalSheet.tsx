@@ -9,6 +9,7 @@ import {
   Switch,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -30,7 +31,8 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
   onSignIn,
   onSignOut,
 }) => {
-  const { currentUser, logout, userGoals, updateGoals } = useHealth();
+  const { currentUser, logout, deleteAccount, userGoals, updateGoals } = useHealth();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(userGoals.riaTone || 'supportive');
   const [waterReminder, setWaterReminder] = useState(userGoals.waterReminder !== false);
@@ -89,6 +91,46 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             onClose();
             if (onSignOut) onSignOut();
           },
+        },
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    const res = await deleteAccount();
+    setIsDeleting(false);
+    if (res.success) {
+      onClose();
+      if (onSignOut) onSignOut();
+    } else {
+      if (Platform.OS === 'web') {
+        window.alert(res.error || 'Failed to delete account.');
+      } else {
+        Alert.alert('Account Deletion', res.error || 'Failed to delete account.');
+      }
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Are you sure you want to permanently delete your account and all your health data? This cannot be undone.'
+      );
+      if (confirmed) {
+        confirmDeleteAccount();
+      }
+      return;
+    }
+    Alert.alert(
+      'Delete Account Permanently',
+      'Are you sure you want to permanently delete your account and all your health logs? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Permanently',
+          style: 'destructive',
+          onPress: confirmDeleteAccount,
         },
       ]
     );
@@ -329,15 +371,37 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                   </Pressable>
                 ) : null
               ) : (
-                <Pressable
-                  style={({ pressed }) => [styles.signOutBtn, pressed ? styles.pressedSubtle : null]}
-                  onPress={handleLogout}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign out of Calori"
-                >
-                  <Ionicons name="log-out-outline" size={18} color="#DC2626" />
-                  <Text style={styles.signOutBtnText}>Sign Out of Calori</Text>
-                </Pressable>
+                <>
+                  <Pressable
+                    style={({ pressed }) => [styles.signOutBtn, pressed ? styles.pressedSubtle : null]}
+                    onPress={handleLogout}
+                    disabled={isDeleting}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign out of Calori"
+                  >
+                    <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+                    <Text style={styles.signOutBtnText}>Sign Out of Calori</Text>
+                  </Pressable>
+
+                  <View style={styles.divider} />
+
+                  <Pressable
+                    style={({ pressed }) => [styles.deleteBtn, pressed ? styles.pressedSubtle : null]}
+                    onPress={handleDeleteAccount}
+                    disabled={isDeleting}
+                    accessibilityRole="button"
+                    accessibilityLabel="Delete Account Permanently"
+                  >
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#DC2626" />
+                    ) : (
+                      <>
+                        <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                        <Text style={styles.deleteBtnText}>Delete Account Permanently</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </>
               )}
             </View>
           </ScrollView>
@@ -574,6 +638,18 @@ const styles = StyleSheet.create({
   },
   signOutBtnText: {
     fontFamily: Fonts.poppins.semiBold,
+    fontSize: 14,
+    color: '#DC2626',
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  deleteBtnText: {
+    fontFamily: Fonts.poppins.medium,
     fontSize: 13,
     color: '#DC2626',
   },

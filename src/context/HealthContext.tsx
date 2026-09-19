@@ -10,8 +10,9 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -245,6 +246,7 @@ interface HealthContextType {
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => Promise<void>;
 }
 
@@ -1085,6 +1087,64 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const fbUser = auth.currentUser;
+      if (fbUser) {
+        // 1. Delete Firestore user document
+        try {
+          await deleteDoc(doc(db, 'users', fbUser.uid));
+        } catch (fsErr) {
+          console.warn('Error deleting Firestore user document:', fsErr);
+        }
+
+        // 2. Delete user from Firebase Auth
+        try {
+          await deleteUser(fbUser);
+        } catch (authErr: any) {
+          console.log('Firebase deleteUser error:', authErr.code, authErr.message);
+          if (authErr.code === 'auth/requires-recent-login') {
+            return {
+              success: false,
+              error: 'For your security, please sign out and sign back in before deleting your account.',
+            };
+          }
+          return {
+            success: false,
+            error: authErr.message || 'Failed to delete account. Please try again.',
+          };
+        }
+      }
+
+      // 3. Clear local state and cache
+      const todayStr = getTodayDateString();
+      const emptyLog: DailyLog = {
+        date: todayStr,
+        meals: [],
+        waterMl: 0,
+        steps: 0,
+        activities: [],
+      };
+      setCurrentUser(null);
+      setUserGoals(DEFAULT_GOALS);
+      setDailyLogs({ [todayStr]: emptyLog });
+      setSelectedDate(todayStr);
+      try {
+        await AsyncStorage.multiRemove([
+          STORAGE_KEYS.AUTH,
+          STORAGE_KEYS.DAILY_LOGS,
+          STORAGE_KEYS.USER_GOALS,
+        ]);
+      } catch (storageErr) {
+        console.warn('AsyncStorage clear error on deleteAccount:', storageErr);
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to delete account' };
+    }
+  };
+
   const loginDemo = async (): Promise<void> => {
     const demoUser: AuthUser = {
       id: 'demo_user_1',
@@ -1132,6 +1192,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         login,
         register,
         logout,
+        deleteAccount,
         loginDemo,
       }}
     >
