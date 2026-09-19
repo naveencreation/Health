@@ -40,6 +40,7 @@ import {
   NotificationModal,
   AvatarPickerModal,
   RiaChatModal,
+  ConfirmationModal,
   ErrorBoundary,
 } from '@/components';
 
@@ -56,6 +57,7 @@ function MainApp() {
   const [riaChatVisible, setRiaChatVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Kurale_400Regular,
@@ -165,6 +167,10 @@ function MainApp() {
         setAuthModalVisible(false);
         return true;
       }
+      if (signOutModalVisible) {
+        setSignOutModalVisible(false);
+        return true;
+      }
 
       // 2. Tab hierarchy: if on a secondary tab, return to Today home tab
       if (activeTab !== 'today') {
@@ -185,6 +191,7 @@ function MainApp() {
     avatarModalVisible,
     riaChatVisible,
     authModalVisible,
+    signOutModalVisible,
   ]);
 
   const handleOpenSignIn = () => {
@@ -192,32 +199,20 @@ function MainApp() {
     setAuthModalVisible(true);
   };
 
-  const handleSignOut = async () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Are you sure you want to sign out of Calori?');
-      if (confirmed) {
-        setActiveTab('today');
-        await logout();
-        setAuthModalVisible(false);
-      }
-      return;
-    }
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of Calori?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            setActiveTab('today');
-            await logout();
-            setAuthModalVisible(false);
-          },
-        },
-      ]
-    );
+  const handleSignOutPress = () => {
+    setSignOutModalVisible(true);
+  };
+
+  const handleConfirmSignOut = async () => {
+    setSignOutModalVisible(false);
+    setActiveTab('today');
+    await logout();
+    setAuthModalVisible(false);
+  };
+
+  const handleSignOutCompleted = () => {
+    setActiveTab('today');
+    setAuthModalVisible(false);
   };
 
   if (isAuthLoading) {
@@ -253,7 +248,7 @@ function MainApp() {
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOut}
+              onSignOutPress={handleSignOutPress}
             />
           </View>
 
@@ -265,7 +260,7 @@ function MainApp() {
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOut}
+              onSignOutPress={handleSignOutPress}
             />
           </View>
 
@@ -276,14 +271,14 @@ function MainApp() {
               onNotificationsPress={() => setNotificationsVisible(true)}
               onAvatarPress={() => setAvatarModalVisible(true)}
               onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOut}
+              onSignOutPress={handleSignOutPress}
             />
           </View>
 
           <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
             <ProfileScreen
               onSignIn={handleOpenSignIn}
-              onSignOut={handleSignOut}
+              onSignOut={handleSignOutCompleted}
               onBack={() => handleTabChange('today')}
             />
           </View>
@@ -322,6 +317,19 @@ function MainApp() {
         <RiaChatModal
           visible={riaChatVisible}
           onClose={() => setRiaChatVisible(false)}
+        />
+
+        {/* In-App Sign Out Confirmation Modal */}
+        <ConfirmationModal
+          visible={signOutModalVisible}
+          title="Sign Out of Calori?"
+          message="You will need to sign back in to access your daily meal logs, streaks, and personalized coaching."
+          confirmText="Sign Out"
+          cancelText="Cancel"
+          confirmStyle="destructive"
+          iconName="log-out-outline"
+          onConfirm={handleConfirmSignOut}
+          onCancel={() => setSignOutModalVisible(false)}
         />
       </View>
     </SafeAreaView>

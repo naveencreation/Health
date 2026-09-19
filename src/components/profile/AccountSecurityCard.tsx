@@ -1,9 +1,10 @@
-import React from 'react';
-import { StyleSheet, View, Text, Pressable, Alert, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { ConfirmationModal } from '../common/ConfirmationModal';
 
 interface AccountSecurityCardProps {
   onSignOut?: () => void;
@@ -13,30 +14,16 @@ interface AccountSecurityCardProps {
 export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSignOut, onSignIn }) => {
   const { currentUser, logout } = useHealth();
 
-  const handleLogout = async () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Are you sure you want to sign out of Calori?');
-      if (confirmed) {
-        await logout();
-        if (onSignOut) onSignOut();
-      }
-      return;
-    }
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of Calori?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            if (onSignOut) onSignOut();
-          },
-        },
-      ]
-    );
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
+  const handleLogoutPress = () => {
+    setConfirmVisible(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setConfirmVisible(false);
+    await logout();
+    if (onSignOut) onSignOut();
   };
 
   return (
@@ -107,7 +94,7 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
           ) : null}
           <Pressable
             style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
-            onPress={handleLogout}
+            onPress={handleLogoutPress}
             accessibilityRole="button"
             accessibilityLabel="Exit guest session"
             testID="btn-profile-reset-guest"
@@ -119,7 +106,7 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
       ) : (
         <Pressable
           style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
-          onPress={handleLogout}
+          onPress={handleLogoutPress}
           accessibilityRole="button"
           accessibilityLabel="Sign out of Calori"
           testID="btn-profile-signout"
@@ -128,6 +115,23 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
           <Text style={styles.logoutButtonText}>Sign Out of Calori</Text>
         </Pressable>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={confirmVisible}
+        title={currentUser?.isGuest ? 'Exit Guest Session?' : 'Sign Out of Calori?'}
+        message={
+          currentUser?.isGuest
+            ? 'Exiting guest mode will clear guest session logs. You can create an account to save your progress permanently.'
+            : 'You will need to sign back in to access your daily meal logs, streaks, and personalized coaching.'
+        }
+        confirmText={currentUser?.isGuest ? 'Exit Session' : 'Sign Out'}
+        cancelText="Cancel"
+        confirmStyle="destructive"
+        iconName="log-out-outline"
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setConfirmVisible(false)}
+      />
     </View>
   );
 };

@@ -68,72 +68,38 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
     updateGoals({ stepReminder: val });
   };
 
-  const handleLogout = async () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Are you sure you want to sign out of Calori?');
-      if (confirmed) {
-        await logout();
-        onClose();
-        if (onSignOut) onSignOut();
-      }
-      return;
-    }
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out of Calori?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            onClose();
-            if (onSignOut) onSignOut();
-          },
-        },
-      ]
-    );
+  const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleLogoutPress = () => {
+    setConfirmAction('logout');
+    setDeleteError(null);
   };
 
-  const confirmDeleteAccount = async () => {
+  const handleDeletePress = () => {
+    setConfirmAction('delete');
+    setDeleteError(null);
+  };
+
+  const handleExecuteLogout = async () => {
+    await logout();
+    setConfirmAction(null);
+    onClose();
+    if (onSignOut) onSignOut();
+  };
+
+  const handleExecuteDelete = async () => {
     setIsDeleting(true);
+    setDeleteError(null);
     const res = await deleteAccount();
     setIsDeleting(false);
     if (res.success) {
+      setConfirmAction(null);
       onClose();
       if (onSignOut) onSignOut();
     } else {
-      if (Platform.OS === 'web') {
-        window.alert(res.error || 'Failed to delete account.');
-      } else {
-        Alert.alert('Account Deletion', res.error || 'Failed to delete account.');
-      }
+      setDeleteError(res.error || 'Failed to delete account.');
     }
-  };
-
-  const handleDeleteAccount = () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        'Are you sure you want to permanently delete your account and all your health data? This cannot be undone.'
-      );
-      if (confirmed) {
-        confirmDeleteAccount();
-      }
-      return;
-    }
-    Alert.alert(
-      'Delete Account Permanently',
-      'Are you sure you want to permanently delete your account and all your health logs? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete Permanently',
-          style: 'destructive',
-          onPress: confirmDeleteAccount,
-        },
-      ]
-    );
   };
 
   return (
@@ -374,7 +340,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 <>
                   <Pressable
                     style={({ pressed }) => [styles.signOutBtn, pressed ? styles.pressedSubtle : null]}
-                    onPress={handleLogout}
+                    onPress={handleLogoutPress}
                     disabled={isDeleting}
                     accessibilityRole="button"
                     accessibilityLabel="Sign out of Calori"
@@ -387,7 +353,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
 
                   <Pressable
                     style={({ pressed }) => [styles.deleteBtn, pressed ? styles.pressedSubtle : null]}
-                    onPress={handleDeleteAccount}
+                    onPress={handleDeletePress}
                     disabled={isDeleting}
                     accessibilityRole="button"
                     accessibilityLabel="Delete Account Permanently"
@@ -406,6 +372,93 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             </View>
           </ScrollView>
         </View>
+
+        {/* In-App Confirmation Dialog Overlay */}
+        {confirmAction ? (
+          <View style={styles.confirmOverlay}>
+            <Pressable
+              style={styles.confirmBackdrop}
+              onPress={() => {
+                if (!isDeleting) {
+                  setConfirmAction(null);
+                  setDeleteError(null);
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss confirmation"
+            />
+            <View style={styles.confirmCard}>
+              <View
+                style={[
+                  styles.confirmIconBadge,
+                  confirmAction === 'delete' ? styles.confirmIconBadgeDelete : styles.confirmIconBadgeLogout,
+                ]}
+              >
+                <Ionicons
+                  name={confirmAction === 'delete' ? 'trash-outline' : 'log-out-outline'}
+                  size={26}
+                  color={confirmAction === 'delete' ? '#DC2626' : Colors.primary}
+                />
+              </View>
+
+              <Text style={styles.confirmTitle}>
+                {confirmAction === 'delete' ? 'Delete Account Permanently?' : 'Sign Out of Calori?'}
+              </Text>
+
+              <Text style={styles.confirmMessage}>
+                {confirmAction === 'delete'
+                  ? 'This will permanently wipe your profile, custom calorie targets, streak, and meal history. This action cannot be undone.'
+                  : 'You will need to sign back in to access your daily meal logs, streaks, and personalized coaching.'}
+              </Text>
+
+              {deleteError ? (
+                <View style={styles.confirmErrorBanner}>
+                  <Ionicons name="alert-circle" size={16} color="#DC2626" />
+                  <Text style={styles.confirmErrorText}>{deleteError}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.confirmActionsCol}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.confirmPrimaryBtn,
+                    confirmAction === 'delete' ? styles.confirmPrimaryBtnDelete : styles.confirmPrimaryBtnLogout,
+                    pressed ? styles.pressedButton : null,
+                    isDeleting ? styles.disabledButton : null,
+                  ]}
+                  onPress={confirmAction === 'delete' ? handleExecuteDelete : handleExecuteLogout}
+                  disabled={isDeleting}
+                  accessibilityRole="button"
+                  accessibilityLabel={confirmAction === 'delete' ? 'Delete Permanently' : 'Sign Out'}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.confirmPrimaryBtnText}>
+                      {confirmAction === 'delete' ? 'Delete Permanently' : 'Sign Out'}
+                    </Text>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.confirmCancelBtn,
+                    pressed ? styles.confirmCancelBtnPressed : null,
+                  ]}
+                  onPress={() => {
+                    setConfirmAction(null);
+                    setDeleteError(null);
+                  }}
+                  disabled={isDeleting}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel"
+                >
+                  <Text style={styles.confirmCancelBtnText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        ) : null}
       </View>
     </Modal>
   );
@@ -676,5 +729,152 @@ const styles = StyleSheet.create({
   },
   switchIconBackup: {
     backgroundColor: '#ECFDF5',
+  },
+  confirmOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 100,
+  },
+  confirmBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  confirmCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 20,
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.25)',
+        }
+      : {}),
+  },
+  confirmIconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  confirmIconBadgeLogout: {
+    backgroundColor: '#FFF7ED',
+  },
+  confirmIconBadgeDelete: {
+    backgroundColor: '#FEF2F2',
+  },
+  confirmTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 18,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  confirmMessage: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  confirmErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 8,
+    marginBottom: 16,
+    width: '100%',
+  },
+  confirmErrorText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#B91C1C',
+    flex: 1,
+  },
+  confirmActionsCol: {
+    width: '100%',
+    gap: 10,
+  },
+  confirmPrimaryBtn: {
+    width: '100%',
+    height: 50,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmPrimaryBtnLogout: {
+    backgroundColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  confirmPrimaryBtnDelete: {
+    backgroundColor: '#DC2626',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  confirmPrimaryBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  confirmCancelBtn: {
+    width: '100%',
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  confirmCancelBtnPressed: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    transform: [{ scale: 0.985 }],
+  },
+  confirmCancelBtnText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 15,
+    color: '#475569',
+  },
+  pressedButton: {
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
+  },
+  disabledButton: {
+    opacity: 0.65,
   },
 });

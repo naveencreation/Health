@@ -42,4 +42,5 @@ export { AwardsModalSheet } from './profile/modals/AwardsModalSheet';
 // Common Components
 export { ErrorBoundary } from './common/ErrorBoundary';
 export { UserAvatar } from './common/UserAvatar';
+export { ConfirmationModal } from './common/ConfirmationModal';
 
