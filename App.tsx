@@ -48,6 +48,7 @@ function MainApp() {
   const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   const todayScrollRef = useRef<ScrollView>(null);
+  const diaryScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [searchModalVisible, setSearchModalVisible] = useState(false);
@@ -123,6 +124,8 @@ function MainApp() {
   const handleTabChange = (tab: TabType) => {
     if (tab === 'today' && activeTab === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (tab === 'diary' && activeTab === 'diary') {
+      diaryScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setActiveTab(tab);
   };
@@ -177,11 +180,11 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, activeTab === 'today' && { backgroundColor: '#EDFAF6' }]}>
+    <SafeAreaView style={[styles.safeArea, (activeTab === 'today' || activeTab === 'diary') && { backgroundColor: '#EDFAF6' }]}>
       <StatusBar style="dark" />
-      <View style={[styles.phoneContainer, activeTab === 'today' && styles.phoneContainerToday]}>
-        {/* Top Header for tabs that do not have internal header (Diary, Analytics) */}
-        {activeTab !== 'today' && activeTab !== 'profile' && (
+      <View style={[styles.phoneContainer, (activeTab === 'today' || activeTab === 'diary') && styles.phoneContainerToday]}>
+        {/* Top Header for tabs that do not have internal header (Analytics) */}
+        {activeTab !== 'today' && activeTab !== 'diary' && activeTab !== 'profile' && (
           <Header
             onSearchPress={() => setSearchModalVisible(true)}
             onNotificationsPress={() => setNotificationsVisible(true)}
@@ -206,7 +209,17 @@ function MainApp() {
             />
           )}
 
-          {activeTab === 'diary' && <DiaryScreen onAddFood={handleOpenFoodLogger} />}
+          {activeTab === 'diary' && (
+            <DiaryScreen
+              scrollRef={diaryScrollRef}
+              onAddFood={handleOpenFoodLogger}
+              onSearchPress={() => setSearchModalVisible(true)}
+              onNotificationsPress={() => setNotificationsVisible(true)}
+              onAvatarPress={() => setAvatarModalVisible(true)}
+              onSignInPress={handleOpenSignIn}
+              onSignOutPress={handleSignOut}
+            />
+          )}
 
           {activeTab === 'analytics' && <AnalyticsScreen />}
 

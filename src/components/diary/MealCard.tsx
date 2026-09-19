@@ -44,7 +44,13 @@ export const MealCard: React.FC<MealCardProps> = ({
   const isOverBudget = totalMealCals > targetCals;
 
   return (
-    <View style={[styles.card, isDimmed && !hasItems && styles.dimmedCard]}>
+    <View
+      style={[
+        styles.card,
+        hasItems && styles.cardActive,
+        isDimmed && !hasItems && styles.dimmedCard,
+      ]}
+    >
       {/* 1. Header Row */}
       <View style={styles.headerRow}>
         <TouchableOpacity
@@ -121,7 +127,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             activeOpacity={0.8}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="add" size={24} color="#1E293B" />
+            <Ionicons name="add" size={22} color="#16A34A" />
           </TouchableOpacity>
         </View>
       </View>
@@ -226,8 +232,8 @@ export const MealCard: React.FC<MealCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#4ADE80', // Fresh natural herbal green outline matching reference
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)', // Clean neutral border for empty meals
     borderRadius: 20,
     marginHorizontal: 16,
     marginBottom: 14,
@@ -238,6 +244,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
+  },
+  cardActive: {
+    borderWidth: 1.5,
+    borderColor: '#4ADE80', // Fresh herbal green border when meal has logged food
   },
   dimmedCard: {
     opacity: 0.75,
@@ -336,21 +346,22 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   addButtonCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#CDE26D',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#84CC16',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#16A34A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
   },
   dimmedAddButton: {
-    backgroundColor: '#CDE26D',
-    opacity: 0.9,
+    opacity: 0.65,
   },
   itemsContainer: {
     marginTop: 12,
