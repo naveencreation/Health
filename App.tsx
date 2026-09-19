@@ -7,6 +7,7 @@ import {
   StatusBar as RNStatusBar,
   ActivityIndicator,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -140,6 +141,52 @@ function MainApp() {
     setActiveTab(tab);
   };
 
+  // Android Hardware Back Handler
+  useEffect(() => {
+    const onHardwareBackPress = () => {
+      // 1. Modals priority: if any top-level modal is active, dismiss it first
+      if (foodModalVisible) {
+        setFoodModalVisible(false);
+        return true;
+      }
+      if (notificationsVisible) {
+        setNotificationsVisible(false);
+        return true;
+      }
+      if (avatarModalVisible) {
+        setAvatarModalVisible(false);
+        return true;
+      }
+      if (riaChatVisible) {
+        setRiaChatVisible(false);
+        return true;
+      }
+      if (authModalVisible) {
+        setAuthModalVisible(false);
+        return true;
+      }
+
+      // 2. Tab hierarchy: if on a secondary tab, return to Today home tab
+      if (activeTab !== 'today') {
+        setActiveTab('today');
+        return true;
+      }
+
+      // 3. Already on Today tab root: permit native exit
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, [
+    activeTab,
+    foodModalVisible,
+    notificationsVisible,
+    avatarModalVisible,
+    riaChatVisible,
+    authModalVisible,
+  ]);
+
   const handleOpenSignIn = () => {
     setAuthInitialMode('signin');
     setAuthModalVisible(true);
@@ -149,6 +196,7 @@ function MainApp() {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Are you sure you want to sign out of Calori?');
       if (confirmed) {
+        setActiveTab('today');
         await logout();
         setAuthModalVisible(false);
       }
@@ -163,6 +211,7 @@ function MainApp() {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
+            setActiveTab('today');
             await logout();
             setAuthModalVisible(false);
           },
@@ -193,9 +242,9 @@ function MainApp() {
     <SafeAreaView style={[styles.safeArea, styles.safeAreaMint]}>
       <StatusBar style="dark" />
       <View style={[styles.phoneContainer, styles.phoneContainerToday]}>
-        {/* Tab Content */}
+        {/* Tab Content with Offscreen Preservation */}
         <View style={styles.contentArea}>
-          {activeTab === 'today' ? (
+          <View style={[styles.tabContainer, activeTab !== 'today' ? styles.tabHidden : null]}>
             <TodayScreen
               scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
@@ -206,9 +255,9 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          ) : null}
+          </View>
 
-          {activeTab === 'diary' ? (
+          <View style={[styles.tabContainer, activeTab !== 'diary' ? styles.tabHidden : null]}>
             <DiaryScreen
               scrollRef={diaryScrollRef}
               onAddFood={handleOpenFoodLogger}
@@ -218,9 +267,9 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          ) : null}
+          </View>
 
-          {activeTab === 'analytics' ? (
+          <View style={[styles.tabContainer, activeTab !== 'analytics' ? styles.tabHidden : null]}>
             <AnalyticsScreen
               scrollRef={analyticsScrollRef}
               onSearchPress={handleGlobalSearchPress}
@@ -229,15 +278,15 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          ) : null}
+          </View>
 
-          {activeTab === 'profile' ? (
+          <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
             <ProfileScreen
               onSignIn={handleOpenSignIn}
               onSignOut={handleSignOut}
               onBack={() => handleTabChange('today')}
             />
-          ) : null}
+          </View>
         </View>
 
         {/* Bottom Navigation */}
@@ -329,5 +378,11 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
+  },
+  tabContainer: {
+    flex: 1,
+  },
+  tabHidden: {
+    display: 'none',
   },
 });

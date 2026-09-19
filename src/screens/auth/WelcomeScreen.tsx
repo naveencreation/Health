@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,6 +8,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,9 +45,57 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onClose,
 }) => {
   const { loginDemo } = useHealth();
-  const [mode, setMode] = useState<AuthScreenMode>(initialMode);
+  const [history, setHistory] = useState<AuthScreenMode[]>([initialMode]);
+  const mode = history[history.length - 1] || 'welcome';
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+
+  const pushMode = (nextMode: AuthScreenMode) => {
+    setHistory((prev) => (prev[prev.length - 1] === nextMode ? prev : [...prev, nextMode]));
+  };
+
+  const popMode = () => {
+    setHistory((prev) => {
+      if (prev.length > 1) {
+        return prev.slice(0, -1);
+      }
+      if (onClose) {
+        onClose();
+        return prev;
+      }
+      if (prev[0] !== 'welcome') {
+        return ['welcome'];
+      }
+      return prev;
+    });
+  };
+
+  // Android Hardware Back Handler for Auth & Onboarding Flow
+  useEffect(() => {
+    const onHardwareBackPress = () => {
+      if (history.length > 1) {
+        popMode();
+        return true;
+      }
+      if (mode !== 'welcome') {
+        if (onClose) {
+          onClose();
+          return true;
+        }
+        setHistory(['welcome']);
+        return true;
+      }
+      if (onClose) {
+        onClose();
+        return true;
+      }
+      // On welcome landing root: allow native exit
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, [history, mode, onClose]);
 
   const [biometrics, setBiometrics] = useState<{
     age: number;
@@ -79,16 +128,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   if (mode === 'signin') {
     return (
       <SignInScreen
-        onBack={() => {
-          if (onClose) {
-            onClose();
-          } else {
-            setMode('welcome');
-          }
-        }}
+        onBack={popMode}
         onSuccess={onLoginSuccess}
-        onSwitchToRegister={() => setMode('signup')}
-        onForgotPassword={() => setMode('forgot_password')}
+        onSwitchToRegister={() => pushMode('signup')}
+        onForgotPassword={() => pushMode('forgot_password')}
       />
     );
   }
@@ -97,9 +140,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   if (mode === 'signup') {
     return (
       <SignUpScreen
-        onBack={() => setMode('welcome')}
+        onBack={popMode}
         onSuccess={onLoginSuccess}
-        onSwitchToSignIn={() => setMode('signin')}
+        onSwitchToSignIn={() => pushMode('signin')}
         initialData={{
           age: biometrics.age,
           weight: biometrics.weight,
@@ -115,8 +158,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   if (mode === 'forgot_password') {
     return (
       <ForgotPasswordScreen
-        onBack={() => setMode('signin')}
-        onSuccess={() => setMode('signin')}
+        onBack={popMode}
+        onSuccess={popMode}
       />
     );
   }
@@ -126,13 +169,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     return (
       <AgeSelectionScreen
         initialAge={biometrics.age}
-        onBack={() => setMode('welcome')}
+        onBack={popMode}
         onContinue={(age) => {
           setBiometrics((prev) => ({ ...prev, age }));
-          setMode('weight');
+          pushMode('weight');
         }}
-        onSkip={() => setMode('signup')}
-        onSignIn={() => setMode('signin')}
+        onSkip={() => pushMode('signup')}
+        onSignIn={() => pushMode('signin')}
       />
     );
   }
@@ -142,13 +185,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     return (
       <WeightSelectionScreen
         initialWeightKg={biometrics.weight}
-        onBack={() => setMode('age')}
+        onBack={popMode}
         onContinue={(weight, weightUnit) => {
           setBiometrics((prev) => ({ ...prev, weight, weightUnit }));
-          setMode('goal');
+          pushMode('goal');
         }}
-        onSkip={() => setMode('signup')}
-        onSignIn={() => setMode('signin')}
+        onSkip={() => pushMode('signup')}
+        onSignIn={() => pushMode('signin')}
       />
     );
   }
@@ -158,13 +201,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     return (
       <GoalSelectionScreen
         initialGoal={biometrics.goal}
-        onBack={() => setMode('weight')}
+        onBack={popMode}
         onContinue={(goal) => {
           setBiometrics((prev) => ({ ...prev, goal }));
-          setMode('gender');
+          pushMode('gender');
         }}
-        onSkip={() => setMode('signup')}
-        onSignIn={() => setMode('signin')}
+        onSkip={() => pushMode('signup')}
+        onSignIn={() => pushMode('signin')}
       />
     );
   }
@@ -174,13 +217,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     return (
       <GenderSelectionScreen
         initialGender={biometrics.gender}
-        onBack={() => setMode('goal')}
+        onBack={popMode}
         onContinue={(gender) => {
           setBiometrics((prev) => ({ ...prev, gender }));
-          setMode('signup');
+          pushMode('signup');
         }}
-        onSkip={() => setMode('signup')}
-        onSignIn={() => setMode('signin')}
+        onSkip={() => pushMode('signup')}
+        onSignIn={() => pushMode('signin')}
       />
     );
   }
@@ -246,7 +289,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {/* Primary CTA */}
             <Pressable
               style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressedButton : null]}
-              onPress={() => setMode('age')}
+              onPress={() => pushMode('age')}
               testID="btn-welcome-get-started"
               accessibilityRole="button"
               accessibilityLabel="Get Started with Calori"
@@ -274,7 +317,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <View style={styles.signInRow}>
               <Text style={styles.signInPromptText}>Already have an account? </Text>
               <Pressable
-                onPress={() => setMode('signin')}
+                onPress={() => pushMode('signin')}
                 style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                 hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                 testID="btn-welcome-signin"
