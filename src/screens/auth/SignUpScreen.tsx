@@ -112,7 +112,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         {/* Top Header Navigation */}
         <View style={styles.headerBar}>
           <Pressable
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressedBack]}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
             onPress={onBack}
             hitSlop={12}
             accessibilityRole="button"
@@ -173,7 +173,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'name' && styles.inputWrapperFocused,
+                  focusedField === 'name' ? styles.inputWrapperFocused : null,
                 ]}
               >
                 <Ionicons
@@ -198,6 +198,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => emailRef.current?.focus()}
                   testID="input-signup-name"
+                  accessibilityLabel="Full Name"
                 />
               </View>
             </View>
@@ -208,7 +209,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'email' && styles.inputWrapperFocused,
+                  focusedField === 'email' ? styles.inputWrapperFocused : null,
                 ]}
               >
                 <Ionicons
@@ -236,12 +237,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => passwordRef.current?.focus()}
                   testID="input-signup-email"
+                  accessibilityLabel="Email Address"
                 />
                 {email.length > 0 ? (
                   <Pressable
                     onPress={() => setEmail('')}
                     hitSlop={8}
-                    style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                    style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear email"
                   >
                     <Ionicons name="close-circle" size={18} color="#CBD5E1" />
                   </Pressable>
@@ -255,7 +259,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'password' && styles.inputWrapperFocused,
+                  focusedField === 'password' ? styles.inputWrapperFocused : null,
                 ]}
               >
                 <Ionicons
@@ -268,7 +272,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   ref={passwordRef}
                   style={[
                     styles.textInput,
-                    Platform.OS === 'android' && !showPassword && styles.androidPasswordInput,
+                    Platform.OS === 'android' && !showPassword ? styles.androidPasswordInput : null,
                   ]}
                   placeholder="Min. 8 characters"
                   placeholderTextColor="#94A3B8"
@@ -286,12 +290,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => confirmRef.current?.focus()}
                   testID="input-signup-password"
+                  accessibilityLabel="Password"
                 />
                 <Pressable
                   onPress={() => setShowPassword(!showPassword)}
                   hitSlop={8}
-                  style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signup-toggle-password"
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -311,7 +318,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     size={14}
                     color={hasMinLength ? '#10B981' : '#94A3B8'}
                   />
-                  <Text style={[styles.reqText, hasMinLength && styles.reqTextActive]}>
+                  <Text style={[styles.reqText, hasMinLength ? styles.reqTextActive : null]}>
                     At least 8 characters
                   </Text>
                 </View>
@@ -321,7 +328,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     size={14}
                     color={hasNumber ? '#10B981' : '#94A3B8'}
                   />
-                  <Text style={[styles.reqText, hasNumber && styles.reqTextActive]}>
+                  <Text style={[styles.reqText, hasNumber ? styles.reqTextActive : null]}>
                     Contains a number
                   </Text>
                 </View>
@@ -331,7 +338,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     size={14}
                     color={hasUpper ? '#10B981' : '#94A3B8'}
                   />
-                  <Text style={[styles.reqText, hasUpper && styles.reqTextActive]}>
+                  <Text style={[styles.reqText, hasUpper ? styles.reqTextActive : null]}>
                     Uppercase letter
                   </Text>
                 </View>
@@ -341,7 +348,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     size={14}
                     color={hasSpecial ? '#10B981' : '#94A3B8'}
                   />
-                  <Text style={[styles.reqText, hasSpecial && styles.reqTextActive]}>
+                  <Text style={[styles.reqText, hasSpecial ? styles.reqTextActive : null]}>
                     Special character (!@#$)
                   </Text>
                 </View>
@@ -354,8 +361,8 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'confirm' && styles.inputWrapperFocused,
-                  passwordsMatch && styles.inputWrapperSuccess,
+                  focusedField === 'confirm' ? styles.inputWrapperFocused : null,
+                  passwordsMatch ? styles.inputWrapperSuccess : null,
                 ]}
               >
                 <Ionicons
@@ -368,7 +375,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   ref={confirmRef}
                   style={[
                     styles.textInput,
-                    Platform.OS === 'android' && !showConfirmPassword && styles.androidPasswordInput,
+                    Platform.OS === 'android' && !showConfirmPassword ? styles.androidPasswordInput : null,
                   ]}
                   placeholder="Repeat password"
                   placeholderTextColor="#94A3B8"
@@ -386,12 +393,15 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={handleRegister}
                   testID="input-signup-confirm-password"
+                  accessibilityLabel="Confirm Password"
                 />
                 <Pressable
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   hitSlop={8}
-                  style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signup-toggle-confirm-password"
+                  accessibilityRole="button"
+                  accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                 >
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -406,8 +416,8 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             <Pressable
               style={({ pressed }) => [
                 styles.submitButton,
-                pressed && styles.pressedButton,
-                loading && styles.disabledButton,
+                pressed ? styles.pressedButton : null,
+                loading ? styles.disabledButton : null,
               ]}
               onPress={handleRegister}
               disabled={loading}
@@ -432,8 +442,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Pressable
                   onPress={onSwitchToSignIn}
                   hitSlop={8}
-                  style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signup-switch-signin"
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign In"
                 >
                   <Text style={styles.footerLinkText}>Sign In</Text>
                 </Pressable>

@@ -35,13 +35,13 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
       {/* Top Row: Awards & Summary */}
       <View style={styles.gridRow}>
         <Pressable
-          style={({ pressed }) => [styles.gridCard, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.gridCard, pressed ? styles.cardPressed : null]}
           onPress={onOpenAwards}
           accessibilityRole="button"
-          accessibilityLabel="View Awards"
+          accessibilityLabel={`Awards, ${streakDays} streak milestones`}
         >
           <View style={styles.cardContent}>
-            <View style={[styles.iconContainer, { backgroundColor: '#FFEDD5' }]}>
+            <View style={[styles.iconContainer, styles.iconAwards]}>
               <Ionicons name="ribbon-outline" size={20} color="#EA580C" />
             </View>
             <View style={styles.textStack}>
@@ -52,13 +52,13 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.gridCard, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.gridCard, pressed ? styles.cardPressed : null]}
           onPress={onOpenSummary}
           accessibilityRole="button"
-          accessibilityLabel="View Metabolic Summary"
+          accessibilityLabel="Summary, weekly and TDEE report"
         >
           <View style={styles.cardContent}>
-            <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
+            <View style={[styles.iconContainer, styles.iconSummary]}>
               <Ionicons name="calendar-outline" size={20} color="#16A34A" />
             </View>
             <View style={styles.textStack}>
@@ -72,13 +72,13 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
       {/* Bottom Row: Feedback / Preferences & My Goals */}
       <View style={styles.gridRow}>
         <Pressable
-          style={({ pressed }) => [styles.gridCard, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.gridCard, pressed ? styles.cardPressed : null]}
           onPress={onOpenPreferences}
           accessibilityRole="button"
-          accessibilityLabel="App and AI Preferences"
+          accessibilityLabel={`Preferences, coaching style: ${toneLabel}`}
         >
           <View style={styles.cardContent}>
-            <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
+            <View style={[styles.iconContainer, styles.iconPreferences]}>
               <Ionicons name="options-outline" size={20} color="#2563EB" />
             </View>
             <View style={styles.textStack}>
@@ -89,13 +89,13 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.gridCard, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.gridCard, pressed ? styles.cardPressed : null]}
           onPress={onOpenGoals}
           accessibilityRole="button"
-          accessibilityLabel="Configure Goals"
+          accessibilityLabel={`My Goals, ${(calorieBudget || 1950).toLocaleString()} kilocalories per day`}
         >
           <View style={styles.cardContent}>
-            <View style={[styles.iconContainer, { backgroundColor: '#F3E8FF' }]}>
+            <View style={[styles.iconContainer, styles.iconGoals]}>
               <Ionicons name="flag-outline" size={20} color="#9333EA" />
             </View>
             <View style={styles.textStack}>
@@ -148,6 +148,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconAwards: {
+    backgroundColor: '#FFEDD5',
+  },
+  iconSummary: {
+    backgroundColor: '#DCFCE7',
+  },
+  iconPreferences: {
+    backgroundColor: '#EFF6FF',
+  },
+  iconGoals: {
+    backgroundColor: '#F3E8FF',
   },
   textStack: {
     flex: 1,

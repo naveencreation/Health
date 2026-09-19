@@ -3,7 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Platform,
   PanResponder,
   Animated,
@@ -25,6 +25,7 @@ const MIN_LBS = 66;
 const MAX_LBS = 440;
 const RULER_STEP_PX = 10; // px of horizontal drag to change 1 unit
 const VISIBLE_TICKS_COUNT = 37; // span of ticks visible across the 368px ruler
+const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   onBack,
@@ -47,8 +48,6 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   React.useEffect(() => {
     currentWeightRef.current = activeWeight;
   }, [activeWeight]);
-
-
 
   const handleUnitToggle = (newUnit: 'kg' | 'lbs') => {
     if (newUnit === unit) return;
@@ -157,15 +156,15 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
       <View style={styles.phoneFrame}>
         {/* Frame 12: Header Bar */}
         <View style={styles.headerBar}>
-          <TouchableOpacity
-            style={styles.backButton}
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
             onPress={onBack}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={HIT_SLOP_12}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </TouchableOpacity>
+          </Pressable>
 
           <View style={styles.logoBadgeContainer}>
             <View style={styles.logoDot} />
@@ -188,15 +187,16 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
         {/* Frame 13: Segmented Unit Toggle (Kg / Lbs) */}
         <View style={styles.unitToggleContainer}>
           {/* Kg Button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
+          <Pressable
             onPress={() => handleUnitToggle('kg')}
-            style={[
+            style={({ pressed }) => [
               styles.unitButton,
               unit === 'kg' ? styles.unitButtonActive : styles.unitButtonInactive,
+              pressed ? styles.unitButtonPressed : null,
             ]}
             accessibilityRole="button"
             accessibilityLabel="Switch to kilograms"
+            accessibilityState={{ selected: unit === 'kg' }}
           >
             <Text
               style={[
@@ -206,18 +206,19 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
             >
               Kg
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Lbs Button */}
-          <TouchableOpacity
-            activeOpacity={0.85}
+          <Pressable
             onPress={() => handleUnitToggle('lbs')}
-            style={[
+            style={({ pressed }) => [
               styles.unitButton,
               unit === 'lbs' ? styles.unitButtonActive : styles.unitButtonInactive,
+              pressed ? styles.unitButtonPressed : null,
             ]}
             accessibilityRole="button"
             accessibilityLabel="Switch to pounds"
+            accessibilityState={{ selected: unit === 'lbs' }}
           >
             <Text
               style={[
@@ -227,7 +228,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
             >
               Lbs
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Live Weight Display: e.g. 65 Kg */}
@@ -262,18 +263,20 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
               const isCenter = tickVal === activeWeight;
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={tickVal}
-                  activeOpacity={0.7}
                   onPress={() => updateWeight(tickVal)}
-                  style={styles.tickSlot}
+                  style={({ pressed }) => [styles.tickSlot, pressed ? styles.tickSlotPressed : null]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select weight ${tickVal} ${unit}`}
+                  accessibilityState={{ selected: isCenter }}
                 >
                   {/* Tick line */}
                   <View
                     style={[
                       styles.tickLineBase,
                       isMajor ? styles.tickLineMajor : styles.tickLineMinor,
-                      isCenter && styles.tickLineCenter,
+                      isCenter ? styles.tickLineCenter : null,
                     ]}
                   />
 
@@ -290,7 +293,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
                   ) : (
                     <View style={styles.tickLabelSpacer} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </Animated.View>
@@ -302,41 +305,40 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
 
         {/* Frame 9: Accessible Continue CTA & Skip */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity
-            style={styles.continueButton}
+          <Pressable
+            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
             onPress={handleContinuePress}
-            activeOpacity={0.88}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected weight"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#0F172A" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
-            <TouchableOpacity
-              style={styles.skipContainer}
+            <Pressable
+              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
               onPress={onSkip}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
               accessibilityLabel="Skip weight selection"
             >
               <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
-            {onSignIn && (
-              <TouchableOpacity
+            </Pressable>
+            {onSignIn ? (
+              <Pressable
                 onPress={onSignIn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.signInBottomBtn}
+                hitSlop={HIT_SLOP_12}
+                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >
                 <Text style={styles.signInLinkText}>
                   Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
                 </Text>
-              </TouchableOpacity>
-            )}
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>
@@ -461,6 +463,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  unitButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
   unitButtonActive: {
     backgroundColor: '#FFFFFF',
     ...(Platform.OS === 'web'
@@ -559,6 +565,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
+  tickSlotPressed: {
+    opacity: 0.6,
+  },
   tickLineBase: {
     borderRadius: 1,
   },
@@ -647,6 +656,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 4,
+  },
+  continueButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  btnPressedSubtle: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
   },
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',

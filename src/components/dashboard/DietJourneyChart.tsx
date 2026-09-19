@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -104,11 +104,11 @@ export const DietJourneyChart: React.FC = () => {
         {/* Wave SVG Area with Guidelines */}
         <View style={styles.svgContainer}>
           {/* Grid lines */}
-          <View style={[styles.gridLine, { top: 8 }]} />
-          <View style={[styles.gridLine, { top: 40 }]} />
-          <View style={[styles.gridLine, { top: 72 }]} />
-          <View style={[styles.gridLine, { top: 104 }]} />
-          <View style={[styles.gridLine, { top: 136 }]} />
+          <View style={[styles.gridLine, styles.gridLine8]} />
+          <View style={[styles.gridLine, styles.gridLine40]} />
+          <View style={[styles.gridLine, styles.gridLine72]} />
+          <View style={[styles.gridLine, styles.gridLine104]} />
+          <View style={[styles.gridLine, styles.gridLine136]} />
 
           <Svg width={chartWidth} height={chartHeight} style={styles.svg}>
             <Defs>
@@ -166,16 +166,22 @@ export const DietJourneyChart: React.FC = () => {
         {DAYS.map((day) => {
           const isSelected = selectedDay === day.id;
           return (
-            <TouchableOpacity
+            <Pressable
               key={day.id}
-              style={[styles.dayItem, isSelected && styles.dayItemSelected]}
+              style={({ pressed }) => [
+                styles.dayItem,
+                isSelected ? styles.dayItemSelected : null,
+                pressed ? styles.dayItemPressed : null,
+              ]}
               onPress={() => setSelectedDay(day.id as any)}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Select day ${day.label}`}
+              accessibilityState={{ selected: isSelected }}
             >
-              <Text style={[styles.dayLetter, isSelected && styles.dayLetterSelected]}>
+              <Text style={[styles.dayLetter, isSelected ? styles.dayLetterSelected : null]}>
                 {day.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -235,6 +241,21 @@ const styles = StyleSheet.create({
     right: 0,
     height: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  gridLine8: {
+    top: 8,
+  },
+  gridLine40: {
+    top: 40,
+  },
+  gridLine72: {
+    top: 72,
+  },
+  gridLine104: {
+    top: 104,
+  },
+  gridLine136: {
+    top: 136,
   },
   svg: {
     position: 'absolute',
@@ -304,6 +325,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dayItemPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
   },
   // Ellipse 28: 27px x 27px #F47551
   dayItemSelected: {

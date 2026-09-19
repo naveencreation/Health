@@ -118,7 +118,12 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
       >
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={styles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close nutrition goals"
+        />
         
         <View style={styles.sheetContainer}>
           {/* Header Bar */}
@@ -130,9 +135,11 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                 <Text style={styles.sheetSubtitle}>Tune daily calories, macro splits, and targets</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.pressedSubtle]}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close nutrition goals"
               >
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
@@ -150,12 +157,15 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
               <Pressable
                 style={({ pressed }) => [
                   styles.presetCard,
-                  activePreset === 'fat_loss' && styles.presetCardActive,
-                  pressed && styles.pressedSubtle,
+                  activePreset === 'fat_loss' ? styles.presetCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => applyPreset('fat_loss')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activePreset === 'fat_loss' }}
+                accessibilityLabel="Fat loss preset, 1650 kilocalories"
               >
-                <View style={[styles.presetIconBox, { backgroundColor: '#FFEDD5' }]}>
+                <View style={[styles.presetIconBox, styles.presetIconFatLoss]}>
                   <Ionicons name="flame" size={16} color="#EA580C" />
                 </View>
                 <Text style={styles.presetName}>Fat Loss</Text>
@@ -165,12 +175,15 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
               <Pressable
                 style={({ pressed }) => [
                   styles.presetCard,
-                  activePreset === 'muscle_gain' && styles.presetCardActive,
-                  pressed && styles.pressedSubtle,
+                  activePreset === 'muscle_gain' ? styles.presetCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => applyPreset('muscle_gain')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activePreset === 'muscle_gain' }}
+                accessibilityLabel="Muscle gain preset, 2300 kilocalories"
               >
-                <View style={[styles.presetIconBox, { backgroundColor: '#DCFCE7' }]}>
+                <View style={[styles.presetIconBox, styles.presetIconMuscle]}>
                   <Ionicons name="barbell" size={16} color="#16A34A" />
                 </View>
                 <Text style={styles.presetName}>Muscle Gain</Text>
@@ -180,12 +193,15 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
               <Pressable
                 style={({ pressed }) => [
                   styles.presetCard,
-                  activePreset === 'maintenance' && styles.presetCardActive,
-                  pressed && styles.pressedSubtle,
+                  activePreset === 'maintenance' ? styles.presetCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => applyPreset('maintenance')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activePreset === 'maintenance' }}
+                accessibilityLabel="Maintenance preset, 1950 kilocalories"
               >
-                <View style={[styles.presetIconBox, { backgroundColor: '#E0F2FE' }]}>
+                <View style={[styles.presetIconBox, styles.presetIconMaintain]}>
                   <Ionicons name="shield-checkmark" size={16} color="#0284C7" />
                 </View>
                 <Text style={styles.presetName}>Maintain</Text>
@@ -201,34 +217,34 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
               </View>
               
               <View style={styles.macroBar}>
-                <View style={[styles.macroBarSeg, { flex: Math.max(1, proteinPct), backgroundColor: '#10B981' }]} />
-                <View style={[styles.macroBarSeg, { flex: Math.max(1, carbsPct), backgroundColor: '#F59E0B' }]} />
-                <View style={[styles.macroBarSeg, { flex: Math.max(1, fatPct), backgroundColor: '#F47551' }]} />
+                <View style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, proteinPct) }]} />
+                <View style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, carbsPct) }]} />
+                <View style={[styles.macroBarSeg, styles.macroBarFat, { flex: Math.max(1, fatPct) }]} />
               </View>
 
               <View style={styles.macroLegendRow}>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                  <View style={[styles.legendDot, styles.legendDotProtein]} />
                   <Text style={styles.legendText}>Protein ({proteinPct}%)</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+                  <View style={[styles.legendDot, styles.legendDotCarbs]} />
                   <Text style={styles.legendText}>Carbs ({carbsPct}%)</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#F47551' }]} />
+                  <View style={[styles.legendDot, styles.legendDotFat]} />
                   <Text style={styles.legendText}>Fat ({fatPct}%)</Text>
                 </View>
               </View>
 
-              {Math.abs(macroDiff) > 50 && (
+              {Math.abs(macroDiff) > 50 ? (
                 <View style={styles.diffWarning}>
                   <Ionicons name="information-circle-outline" size={14} color="#D97706" />
                   <Text style={styles.diffWarningText}>
                     Macros sum to {computedMacroCals} kcal ({macroDiff > 0 ? `+${macroDiff}` : macroDiff} vs budget)
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             {/* Inputs Grid */}
@@ -249,6 +265,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={calorieBudget}
                   onChangeText={setCalorieBudget}
                   placeholder="2000"
+                  accessibilityLabel="Daily calorie budget in kilocalories"
                 />
                 <Text style={styles.fieldUnit}>kcal</Text>
               </View>
@@ -269,6 +286,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetProtein}
                   onChangeText={setTargetProtein}
                   placeholder="90"
+                  accessibilityLabel="Target protein in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
               </View>
@@ -289,6 +307,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetCarbs}
                   onChangeText={setTargetCarbs}
                   placeholder="150"
+                  accessibilityLabel="Target carbohydrates in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
               </View>
@@ -309,6 +328,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetFat}
                   onChangeText={setTargetFat}
                   placeholder="50"
+                  accessibilityLabel="Target dietary fat in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
               </View>
@@ -331,6 +351,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={waterGoal}
                   onChangeText={setWaterGoal}
                   placeholder="2500"
+                  accessibilityLabel="Target water intake in milliliters"
                 />
                 <Text style={styles.fieldUnit}>ml</Text>
               </View>
@@ -351,6 +372,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={stepGoal}
                   onChangeText={setStepGoal}
                   placeholder="10000"
+                  accessibilityLabel="Daily step target"
                 />
                 <Text style={styles.fieldUnit}>steps</Text>
               </View>
@@ -374,6 +396,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={currentWeight}
                   onChangeText={setCurrentWeight}
                   placeholder="74.2"
+                  accessibilityLabel="Current weight in kilograms"
                 />
                 <Text style={styles.fieldUnit}>kg</Text>
               </View>
@@ -394,6 +417,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={userHeightCm}
                   onChangeText={setUserHeightCm}
                   placeholder="175"
+                  accessibilityLabel="Height in centimeters"
                 />
                 <Text style={styles.fieldUnit}>cm</Text>
               </View>
@@ -414,6 +438,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetWeight}
                   onChangeText={setTargetWeight}
                   placeholder="68.0"
+                  accessibilityLabel="Target goal weight in kilograms"
                 />
                 <Text style={styles.fieldUnit}>kg</Text>
               </View>
@@ -423,16 +448,18 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
             <Pressable
               style={({ pressed }) => [
                 styles.saveBtn,
-                savedSuccess && styles.saveBtnSuccess,
-                pressed && styles.saveBtnPressed,
+                savedSuccess ? styles.saveBtnSuccess : null,
+                pressed ? styles.saveBtnPressed : null,
               ]}
               onPress={handleSave}
+              accessibilityRole="button"
+              accessibilityLabel={savedSuccess ? 'Goals saved' : 'Save goal changes'}
             >
               <Ionicons
                 name={savedSuccess ? 'checkmark-circle' : 'checkmark-sharp'}
                 size={18}
                 color="#FFFFFF"
-                style={{ marginRight: 6 }}
+                style={styles.saveBtnIcon}
               />
               <Text style={styles.saveBtnText}>
                 {savedSuccess ? 'Goals Saved!' : 'Save Goal Changes'}
@@ -730,5 +757,35 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 14,
     color: '#FFFFFF',
+  },
+  presetIconFatLoss: {
+    backgroundColor: '#FFEDD5',
+  },
+  presetIconMuscle: {
+    backgroundColor: '#DCFCE7',
+  },
+  presetIconMaintain: {
+    backgroundColor: '#E0F2FE',
+  },
+  macroBarProtein: {
+    backgroundColor: '#10B981',
+  },
+  macroBarCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  macroBarFat: {
+    backgroundColor: '#F47551',
+  },
+  legendDotProtein: {
+    backgroundColor: '#10B981',
+  },
+  legendDotCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  legendDotFat: {
+    backgroundColor: '#F47551',
+  },
+  saveBtnIcon: {
+    marginRight: 6,
   },
 });

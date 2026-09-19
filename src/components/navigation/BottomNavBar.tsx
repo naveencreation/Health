@@ -38,7 +38,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       <View style={styles.barContainer}>
         {/* Tab 1: Home Angle */}
         <Pressable
-          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
+          style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('today')}
           accessibilityRole="tab"
           accessibilityLabel="Home"
@@ -54,7 +54,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Tab 2: Chef Hat (Meals & Recipes) */}
         <Pressable
-          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
+          style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('diary')}
           accessibilityRole="tab"
           accessibilityLabel="Meals Diary"
@@ -71,7 +71,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         {/* Center Floating Action Button: Ellipse 7 (56.49px x 56.49px, #CDE26D Lime/Avocado Green) */}
         <View style={styles.centerFabAnchor}>
           <Pressable
-            style={({ pressed }) => [styles.centerFab, pressed && styles.fabPressed]}
+            style={({ pressed }) => [styles.centerFab, pressed ? styles.fabPressed : null]}
             onPress={() => setQuickSheetVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Log food or water"
@@ -82,7 +82,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Tab 3: Chart 2 (Analytics & Statistics) */}
         <Pressable
-          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
+          style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('analytics')}
           accessibilityRole="tab"
           accessibilityLabel="Analytics and Trends"
@@ -98,7 +98,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Tab 4: User Profile */}
         <Pressable
-          style={({ pressed }) => [styles.tabButton, pressed && styles.pressedTab]}
+          style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('profile')}
           accessibilityRole="tab"
           accessibilityLabel="Profile and Goals"
@@ -134,7 +134,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
             <View style={styles.quickGrid}>
               <Pressable
-                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
+                style={({ pressed }) => [styles.quickActionItem, pressed ? styles.quickActionItemPressed : null]}
                 onPress={() => handleSelectQuickMeal('breakfast')}
                 accessibilityRole="button"
                 accessibilityLabel="Log breakfast"
@@ -146,7 +146,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
+                style={({ pressed }) => [styles.quickActionItem, pressed ? styles.quickActionItemPressed : null]}
                 onPress={() => handleSelectQuickMeal('lunch')}
                 accessibilityRole="button"
                 accessibilityLabel="Log lunch"
@@ -158,7 +158,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
+                style={({ pressed }) => [styles.quickActionItem, pressed ? styles.quickActionItemPressed : null]}
                 onPress={() => handleSelectQuickMeal('snacks')}
                 accessibilityRole="button"
                 accessibilityLabel="Log snacks"
@@ -170,7 +170,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
+                style={({ pressed }) => [styles.quickActionItem, pressed ? styles.quickActionItemPressed : null]}
                 onPress={() => handleSelectQuickMeal('dinner')}
                 accessibilityRole="button"
                 accessibilityLabel="Log dinner"
@@ -182,7 +182,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [styles.quickActionItem, pressed && styles.quickActionItemPressed]}
+                style={({ pressed }) => [styles.quickActionItem, pressed ? styles.quickActionItemPressed : null]}
                 onPress={handleSelectQuickWater}
                 accessibilityRole="button"
                 accessibilityLabel="Log 250ml water"

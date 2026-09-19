@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, TextInput } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -13,6 +13,8 @@ const QUICK_WORKOUTS = [
   { name: 'Yoga & Stretching', mins: 35, cals: 110, icon: 'body-outline' },
   { name: 'Cycling', mins: 30, cals: 190, icon: 'bicycle-outline' },
 ];
+
+const CLOSE_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 
 export const ActivityCard: React.FC = () => {
   const { currentLog, userGoals, totalBurned, addSteps, addWorkout, removeWorkout } = useHealth();
@@ -105,34 +107,36 @@ export const ActivityCard: React.FC = () => {
 
       {/* Ergonomic Quick Actions */}
       <View style={styles.quickActionRow}>
-        <TouchableOpacity
-          style={styles.quickStepBtn}
+        <Pressable
+          style={({ pressed }) => [styles.quickStepBtn, pressed ? styles.quickStepBtnPressed : null]}
           onPress={() => addSteps(1000)}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Add 1000 steps"
         >
           <Ionicons name="footsteps" size={16} color="#C2410C" />
           <Text style={styles.quickStepText}>+1,000 Steps</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
-          style={styles.quickWorkoutBtn}
+        <Pressable
+          style={({ pressed }) => [styles.quickWorkoutBtn, pressed ? styles.quickWorkoutBtnPressed : null]}
           onPress={() => setModalVisible(true)}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Log a workout"
         >
           <Ionicons name="add" size={16} color="#FFFFFF" />
           <Text style={styles.quickWorkoutText}>Log Workout</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Logged Workouts List (Clean UXPeak Flat Rows) */}
-      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 && (
+      {Array.isArray(currentLog?.activities) && currentLog.activities.length > 0 ? (
         <View style={styles.workoutList}>
           {currentLog.activities.map((act, index) => {
             const isLast = index === currentLog.activities.length - 1;
             return (
               <View
                 key={act.id}
-                style={[styles.workoutRow, !isLast && styles.workoutRowBorder]}
+                style={[styles.workoutRow, !isLast ? styles.workoutRowBorder : null]}
               >
                 <View style={styles.workoutInfo}>
                   <View style={styles.workoutIconCircle}>
@@ -146,19 +150,21 @@ export const ActivityCard: React.FC = () => {
 
                 <View style={styles.workoutRight}>
                   <Text style={styles.workoutCals}>+{act.caloriesBurned} kcal</Text>
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => removeWorkout(act.id)}
-                    style={styles.delBtn}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={({ pressed }) => [styles.delBtn, pressed ? styles.delBtnPressed : null]}
+                    hitSlop={CLOSE_HIT_SLOP}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${act.name} workout`}
                   >
                     <Ionicons name="close" size={15} color="#94A3B8" />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             );
           })}
         </View>
-      )}
+      ) : null}
 
       {/* Workout Logging Modal */}
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -166,42 +172,47 @@ export const ActivityCard: React.FC = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log Activity / Workout</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setModalVisible(false)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={CLOSE_HIT_SLOP}
+                style={({ pressed }) => [pressed ? styles.closeBtnPressed : null]}
+                accessibilityRole="button"
+                accessibilityLabel="Close workout modal"
               >
                 <Ionicons name="close" size={22} color="#0F172A" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <Text style={styles.modalSubtitle}>Quick select an exercise:</Text>
             <View style={styles.quickGrid}>
               {QUICK_WORKOUTS.map((item, idx) => (
-                <TouchableOpacity
+                <Pressable
                   key={idx}
-                  style={styles.quickCard}
+                  style={({ pressed }) => [styles.quickCard, pressed ? styles.quickCardPressed : null]}
                   onPress={() => {
                     addWorkout(item.name, item.mins, item.cals);
                     setModalVisible(false);
                   }}
-                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ${item.name} for ${item.mins} minutes burning ${item.cals} calories`}
                 >
                   <Ionicons name={item.icon as any} size={20} color="#EA580C" />
                   <Text style={styles.quickName}>{item.name}</Text>
                   <Text style={styles.quickMeta}>
                     {item.mins}m • {item.cals} kcal
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
-            <Text style={[styles.modalSubtitle, { marginTop: 14 }]}>Or custom workout:</Text>
+            <Text style={styles.modalSubtitleCustom}>Or custom workout:</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g., Badminton, Swimming, HIIT"
               value={customName}
               onChangeText={setCustomName}
               placeholderTextColor="#94A3B8"
+              accessibilityLabel="Custom workout name"
             />
 
             <View style={styles.rowInputs}>
@@ -212,6 +223,7 @@ export const ActivityCard: React.FC = () => {
                   keyboardType="numeric"
                   value={customDuration}
                   onChangeText={setCustomDuration}
+                  accessibilityLabel="Duration in minutes"
                 />
               </View>
               <View style={styles.flex1}>
@@ -221,17 +233,19 @@ export const ActivityCard: React.FC = () => {
                   keyboardType="numeric"
                   value={customCalories}
                   onChangeText={setCustomCalories}
+                  accessibilityLabel="Calories burned"
                 />
               </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.saveWorkoutBtn}
+            <Pressable
+              style={({ pressed }) => [styles.saveWorkoutBtn, pressed ? styles.saveWorkoutBtnPressed : null]}
               onPress={handleAddCustomWorkout}
-              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Save Workout"
             >
               <Text style={styles.saveWorkoutBtnText}>Save Workout</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -349,6 +363,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 5,
   },
+  quickStepBtnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
   quickStepText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12,
@@ -370,6 +388,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 5,
     elevation: 3,
+  },
+  quickWorkoutBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   quickWorkoutText: {
     fontFamily: Fonts.poppins.semiBold,
@@ -438,6 +460,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  delBtnPressed: {
+    opacity: 0.6,
+  },
+  closeBtnPressed: {
+    opacity: 0.6,
+  },
   // Modal Styling
   modalOverlay: {
     flex: 1,
@@ -477,6 +505,14 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: 8,
   },
+  modalSubtitleCustom: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748B',
+    marginBottom: 8,
+    marginTop: 14,
+  },
   quickGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -489,6 +525,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  quickCardPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   quickName: {
     fontFamily: Fonts.poppins.semiBold,
@@ -533,6 +573,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 16,
+  },
+  saveWorkoutBtnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   saveWorkoutBtnText: {
     fontFamily: Fonts.poppins.bold,

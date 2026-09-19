@@ -65,67 +65,104 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
         style={styles.pillsScroll}
       >
         <Pressable
-          style={[styles.pill, activeMetric === 'bmi' && styles.pillActive]}
+          style={({ pressed }) => [
+            styles.pill,
+            activeMetric === 'bmi' ? styles.pillActive : null,
+            pressed ? styles.pressedSubtle : null,
+          ]}
           onPress={() => setActiveMetric('bmi')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeMetric === 'bmi' }}
+          accessibilityLabel="View BMI metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'bmi' && styles.pillTextActive]}>
+          <Text style={[styles.pillText, activeMetric === 'bmi' ? styles.pillTextActive : null]}>
             BMI
           </Text>
         </Pressable>
 
         <Pressable
-          style={[styles.pill, activeMetric === 'weight' && styles.pillActive]}
+          style={({ pressed }) => [
+            styles.pill,
+            activeMetric === 'weight' ? styles.pillActive : null,
+            pressed ? styles.pressedSubtle : null,
+          ]}
           onPress={() => setActiveMetric('weight')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeMetric === 'weight' }}
+          accessibilityLabel="View Weight journey metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'weight' && styles.pillTextActive]}>
+          <Text style={[styles.pillText, activeMetric === 'weight' ? styles.pillTextActive : null]}>
             Weight
           </Text>
         </Pressable>
 
         <Pressable
-          style={[styles.pill, activeMetric === 'calories' && styles.pillActive]}
+          style={({ pressed }) => [
+            styles.pill,
+            activeMetric === 'calories' ? styles.pillActive : null,
+            pressed ? styles.pressedSubtle : null,
+          ]}
           onPress={() => setActiveMetric('calories')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeMetric === 'calories' }}
+          accessibilityLabel="View Calorie Intake metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'calories' && styles.pillTextActive]}>
+          <Text style={[styles.pillText, activeMetric === 'calories' ? styles.pillTextActive : null]}>
             Calorie Intake
           </Text>
         </Pressable>
 
         <Pressable
-          style={[styles.pill, activeMetric === 'steps' && styles.pillActive]}
+          style={({ pressed }) => [
+            styles.pill,
+            activeMetric === 'steps' ? styles.pillActive : null,
+            pressed ? styles.pressedSubtle : null,
+          ]}
           onPress={() => setActiveMetric('steps')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeMetric === 'steps' }}
+          accessibilityLabel="View Daily Steps metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'steps' && styles.pillTextActive]}>
+          <Text style={[styles.pillText, activeMetric === 'steps' ? styles.pillTextActive : null]}>
             Steps
           </Text>
         </Pressable>
 
         <Pressable
-          style={[styles.pill, activeMetric === 'water' && styles.pillActive]}
+          style={({ pressed }) => [
+            styles.pill,
+            activeMetric === 'water' ? styles.pillActive : null,
+            pressed ? styles.pressedSubtle : null,
+          ]}
           onPress={() => setActiveMetric('water')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeMetric === 'water' }}
+          accessibilityLabel="View Hydration metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'water' && styles.pillTextActive]}>
+          <Text style={[styles.pillText, activeMetric === 'water' ? styles.pillTextActive : null]}>
             Hydration
           </Text>
         </Pressable>
       </ScrollView>
 
       {/* Dynamic Active Hero Card */}
-      {activeMetric === 'bmi' && (
+      {activeMetric === 'bmi' ? (
         <ClinicalBmiGauge
           bmi={bmi}
           bmiStatus={bmiStatus}
           heightCm={heightCm}
         />
-      )}
+      ) : null}
 
-      {activeMetric === 'weight' && (
+      {activeMetric === 'weight' ? (
         <View style={styles.telemetryCard}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Weight Journey</Text>
             <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit weight goal, currently ${targetWeightNum} kg`}
             >
               <Text style={styles.goalPillText}>Goal {targetWeightNum} kg</Text>
               <Ionicons name="chevron-forward" size={12} color="#64748B" />
@@ -157,15 +194,17 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             </Text>
           </View>
         </View>
-      )}
+      ) : null}
 
-      {activeMetric === 'calories' && (
+      {activeMetric === 'calories' ? (
         <View style={styles.telemetryCard}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Daily Calorie Budget</Text>
             <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              accessibilityRole="button"
+              accessibilityLabel="Edit daily calorie budget"
             >
               <Text style={styles.goalPillText}>Edit Budget</Text>
               <Ionicons name="chevron-forward" size={12} color="#64748B" />
@@ -178,38 +217,40 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           </View>
 
           <View style={styles.macroSplitBar}>
-            <View style={[styles.macroBarSeg, { flex: Math.max(1, pPct), backgroundColor: '#10B981' }]} />
-            <View style={[styles.macroBarSeg, { flex: Math.max(1, cPct), backgroundColor: '#F59E0B' }]} />
-            <View style={[styles.macroBarSeg, { flex: Math.max(1, fPct), backgroundColor: '#F47551' }]} />
+            <View style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, pPct) }]} />
+            <View style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, cPct) }]} />
+            <View style={[styles.macroBarSeg, styles.macroBarFat, { flex: Math.max(1, fPct) }]} />
           </View>
 
           <View style={styles.macroLegendRow}>
             <View style={styles.legendCol}>
-              <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+              <View style={[styles.legendDot, styles.legendDotProtein]} />
               <Text style={styles.legendLabel}>Protein</Text>
               <Text style={styles.legendVal}>{p}g ({pPct}%)</Text>
             </View>
             <View style={styles.legendCol}>
-              <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+              <View style={[styles.legendDot, styles.legendDotCarbs]} />
               <Text style={styles.legendLabel}>Carbs</Text>
               <Text style={styles.legendVal}>{c}g ({cPct}%)</Text>
             </View>
             <View style={styles.legendCol}>
-              <View style={[styles.legendDot, { backgroundColor: '#F47551' }]} />
+              <View style={[styles.legendDot, styles.legendDotFat]} />
               <Text style={styles.legendLabel}>Fat</Text>
               <Text style={styles.legendVal}>{f}g ({fPct}%)</Text>
             </View>
           </View>
         </View>
-      )}
+      ) : null}
 
-      {activeMetric === 'steps' && (
+      {activeMetric === 'steps' ? (
         <View style={styles.telemetryCard}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Daily Movement Target</Text>
             <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              accessibilityRole="button"
+              accessibilityLabel="Edit daily movement step goal"
             >
               <Text style={styles.goalPillText}>Edit Goal</Text>
               <Ionicons name="chevron-forward" size={12} color="#64748B" />
@@ -228,15 +269,17 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             </Text>
           </View>
         </View>
-      )}
+      ) : null}
 
-      {activeMetric === 'water' && (
+      {activeMetric === 'water' ? (
         <View style={styles.telemetryCard}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Daily Hydration Target</Text>
             <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              accessibilityRole="button"
+              accessibilityLabel="Edit daily hydration water target"
             >
               <Text style={styles.goalPillText}>Edit Target</Text>
               <Ionicons name="chevron-forward" size={12} color="#64748B" />
@@ -255,16 +298,18 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             </Text>
           </View>
         </View>
-      )}
+      ) : null}
 
       {/* Always Show Weight as Secondary Anchor Card if BMI is active (matching reference design) */}
-      {activeMetric === 'bmi' && (
+      {activeMetric === 'bmi' ? (
         <View style={styles.telemetryCard}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Weight</Text>
             <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit weight goal, currently ${targetWeightNum} kg`}
             >
               <Text style={styles.goalPillText}>Goal {targetWeightNum} kg</Text>
               <Ionicons name="chevron-forward" size={12} color="#64748B" />
@@ -287,7 +332,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             </View>
           </View>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -466,5 +511,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#0F172A',
     marginTop: 1,
+  },
+  macroBarProtein: {
+    backgroundColor: '#10B981',
+  },
+  macroBarCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  macroBarFat: {
+    backgroundColor: '#F47551',
+  },
+  legendDotProtein: {
+    backgroundColor: '#10B981',
+  },
+  legendDotCarbs: {
+    backgroundColor: '#F59E0B',
+  },
+  legendDotFat: {
+    backgroundColor: '#F47551',
   },
 });

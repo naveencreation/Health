@@ -18,6 +18,10 @@ interface HeroCalorieCardProps {
   onEditGoal?: () => void;
 }
 
+const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+const HIT_SLOP_TIMELINE = { top: 6, bottom: 6, left: 4, right: 4 };
+
 export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
     userGoals,
@@ -208,8 +212,8 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
           {activeSlide === 0 && onEditGoal ? (
             <Pressable
               onPress={onEditGoal}
-              style={({ pressed }) => [styles.editBtn, pressed && styles.pressedBtnSubtle]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              style={({ pressed }) => [styles.editBtn, pressed ? styles.pressedBtnSubtle : null]}
+              hitSlop={HIT_SLOP_6}
               accessibilityRole="button"
               accessibilityLabel="Edit calorie budget"
             >
@@ -223,8 +227,8 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
           <Pressable
             style={({ pressed }) => [
               styles.segmentBtn,
-              activeSlide === 0 && styles.segmentBtnActive,
-              pressed && styles.pressedSegment,
+              activeSlide === 0 ? styles.segmentBtnActive : null,
+              pressed ? styles.pressedSegment : null,
             ]}
             onPress={() => handleSlideChange(0)}
             accessibilityRole="tab"
@@ -234,7 +238,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             <Text
               style={[
                 styles.segmentBtnText,
-                activeSlide === 0 && styles.segmentBtnTextActive,
+                activeSlide === 0 ? styles.segmentBtnTextActive : null,
               ]}
             >
               Today
@@ -244,8 +248,8 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
           <Pressable
             style={({ pressed }) => [
               styles.segmentBtn,
-              activeSlide === 1 && styles.segmentBtnActive,
-              pressed && styles.pressedSegment,
+              activeSlide === 1 ? styles.segmentBtnActive : null,
+              pressed ? styles.pressedSegment : null,
             ]}
             onPress={() => handleSlideChange(1)}
             accessibilityRole="tab"
@@ -255,7 +259,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             <Text
               style={[
                 styles.segmentBtnText,
-                activeSlide === 1 && styles.segmentBtnTextActive,
+                activeSlide === 1 ? styles.segmentBtnTextActive : null,
               ]}
             >
               7-Day Trend
@@ -543,18 +547,18 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                   key={day.dateStr || idx}
                   style={({ pressed }) => [
                     styles.timelineBtn,
-                    isSelected && styles.timelineBtnSelected,
-                    pressed && styles.pressedTimelineBtn,
+                    isSelected ? styles.timelineBtnSelected : null,
+                    pressed ? styles.pressedTimelineBtn : null,
                   ]}
                   onPress={() => setSelectedDayIdx(idx)}
-                  hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                  hitSlop={HIT_SLOP_TIMELINE}
                   accessibilityRole="button"
                   accessibilityLabel={`Select ${day.dayName}, ${day.cals} calories`}
                 >
                   <Text
                     style={[
                       styles.timelineDayText,
-                      isSelected && styles.timelineDayTextSelected,
+                      isSelected ? styles.timelineDayTextSelected : null,
                     ]}
                   >
                     {day.dayName}
@@ -570,22 +574,22 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
       <View style={styles.paginationRow}>
         <Pressable
           onPress={() => handleSlideChange(0)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HIT_SLOP_8}
           style={({ pressed }) => [
             styles.paginationDot,
-            activeSlide === 0 && styles.paginationDotActive,
-            pressed && styles.pressedDot,
+            activeSlide === 0 ? styles.paginationDotActive : null,
+            pressed ? styles.pressedDot : null,
           ]}
           accessibilityRole="button"
           accessibilityLabel="Go to Today's budget slide"
         />
         <Pressable
           onPress={() => handleSlideChange(1)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HIT_SLOP_8}
           style={({ pressed }) => [
             styles.paginationDot,
-            activeSlide === 1 && styles.paginationDotActive,
-            pressed && styles.pressedDot,
+            activeSlide === 1 ? styles.paginationDotActive : null,
+            pressed ? styles.pressedDot : null,
           ]}
           accessibilityRole="button"
           accessibilityLabel="Go to 7-Day Trend slide"

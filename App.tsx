@@ -33,7 +33,6 @@ import {
 
 // Components, Navigation & Modals
 import {
-  Header,
   BottomNavBar,
   TabType,
   FoodLogModal,
@@ -191,23 +190,12 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: '#EDFAF6' }]}>
+    <SafeAreaView style={[styles.safeArea, styles.safeAreaMint]}>
       <StatusBar style="dark" />
       <View style={[styles.phoneContainer, styles.phoneContainerToday]}>
-        {/* Top Header for tabs that do not have internal header */}
-        {activeTab !== 'today' && activeTab !== 'diary' && activeTab !== 'analytics' && activeTab !== 'profile' && (
-          <Header
-            onSearchPress={handleGlobalSearchPress}
-            onNotificationsPress={() => setNotificationsVisible(true)}
-            onAvatarPress={() => setAvatarModalVisible(true)}
-            onSignInPress={handleOpenSignIn}
-            onSignOutPress={handleSignOut}
-          />
-        )}
-
         {/* Tab Content */}
         <View style={styles.contentArea}>
-          {activeTab === 'today' && (
+          {activeTab === 'today' ? (
             <TodayScreen
               scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
@@ -218,9 +206,9 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          )}
+          ) : null}
 
-          {activeTab === 'diary' && (
+          {activeTab === 'diary' ? (
             <DiaryScreen
               scrollRef={diaryScrollRef}
               onAddFood={handleOpenFoodLogger}
@@ -230,9 +218,9 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          )}
+          ) : null}
 
-          {activeTab === 'analytics' && (
+          {activeTab === 'analytics' ? (
             <AnalyticsScreen
               scrollRef={analyticsScrollRef}
               onSearchPress={handleGlobalSearchPress}
@@ -241,15 +229,15 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOut}
             />
-          )}
+          ) : null}
 
-          {activeTab === 'profile' && (
+          {activeTab === 'profile' ? (
             <ProfileScreen
               onSignIn={handleOpenSignIn}
               onSignOut={handleSignOut}
               onBack={() => handleTabChange('today')}
             />
-          )}
+          ) : null}
         </View>
 
         {/* Bottom Navigation */}
@@ -315,6 +303,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
     alignItems: 'center',
+  },
+  safeAreaMint: {
+    backgroundColor: '#EDFAF6',
   },
   phoneContainer: {
     flex: 1,

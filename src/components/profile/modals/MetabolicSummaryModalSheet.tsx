@@ -37,7 +37,12 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={styles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close metabolic energy summary"
+        />
 
         <View style={styles.sheetContainer}>
           {/* Header Bar */}
@@ -49,9 +54,11 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
                 <Text style={styles.sheetSubtitle}>Scientific daily burn rate & caloric deficit math</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.pressedSubtle]}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close metabolic energy summary"
               >
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
@@ -65,8 +72,12 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
           >
             {/* Top Stat Highlights */}
             <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
+              <View
+                style={styles.statBox}
+                accessible={true}
+                accessibilityLabel={`Basal metabolic rate: ${bmrEst} kilocalories resting burn per day`}
+              >
+                <View style={[styles.statIconBox, styles.statIconBmr]}>
                   <Ionicons name="flame" size={18} color="#2563EB" />
                 </View>
                 <Text style={styles.statVal}>{bmrEst}</Text>
@@ -74,18 +85,26 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
                 <Text style={styles.statSub}>Basal resting rate</Text>
               </View>
 
-              <View style={styles.statBox}>
-                <View style={[styles.statIconBox, { backgroundColor: '#ECFDF5' }]}>
+              <View
+                style={styles.statBox}
+                accessible={true}
+                accessibilityLabel={`Total daily energy expenditure: ${tdeeEst} kilocalories burn per day`}
+              >
+                <View style={[styles.statIconBox, styles.statIconTdee]}>
                   <Ionicons name="flash" size={18} color="#059669" />
                 </View>
-                <Text style={[styles.statVal, { color: '#059669' }]}>{tdeeEst}</Text>
+                <Text style={[styles.statVal, styles.statValTdee]}>{tdeeEst}</Text>
                 <Text style={styles.statLabel}>TDEE (kcal)</Text>
                 <Text style={styles.statSub}>Total daily burn</Text>
               </View>
             </View>
 
             {/* Calorie Deficit Engine Card */}
-            <View style={styles.engineCard}>
+            <View
+              style={styles.engineCard}
+              accessible={true}
+              accessibilityLabel={`Energy balance: ${tdeeEst} burn minus ${currentBudget} budget equals ${dailyDeficit} daily caloric deficit. Projected fat loss approximately ${weeklyFatLossKg} kg per week`}
+            >
               <View style={styles.engineHeader}>
                 <Ionicons name="analytics-outline" size={20} color={Colors.primary} />
                 <Text style={styles.engineTitle}>Energy Balance & Deficit</Text>
@@ -103,7 +122,7 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
                 </View>
                 <Text style={styles.formulaSign}>=</Text>
                 <View style={styles.formulaCol}>
-                  <Text style={[styles.formulaNumber, { color: '#16A34A' }]}>{dailyDeficit}</Text>
+                  <Text style={[styles.formulaNumber, styles.formulaNumberDeficit]}>{dailyDeficit}</Text>
                   <Text style={styles.formulaKey}>Daily Deficit</Text>
                 </View>
               </View>
@@ -141,8 +160,10 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.doneBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.doneBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close metabolic energy summary"
             >
               <Text style={styles.doneBtnText}>Close Summary</Text>
             </Pressable>
@@ -389,5 +410,17 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 14,
     color: '#FFFFFF',
+  },
+  statIconBmr: {
+    backgroundColor: '#EFF6FF',
+  },
+  statIconTdee: {
+    backgroundColor: '#ECFDF5',
+  },
+  statValTdee: {
+    color: '#059669',
+  },
+  formulaNumberDeficit: {
+    color: '#16A34A',
   },
 });

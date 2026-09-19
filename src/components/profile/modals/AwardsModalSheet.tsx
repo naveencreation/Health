@@ -64,6 +64,21 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
     },
   ];
 
+  const getAwardBgStyle = (id: string) => {
+    switch (id) {
+      case 'streak-7':
+        return styles.awardBgStreak;
+      case 'hydration-master':
+        return styles.awardBgHydration;
+      case 'macro-balance':
+        return styles.awardBgMacro;
+      case 'century-club':
+        return styles.awardBgCentury;
+      default:
+        return styles.awardBgStreak;
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -72,7 +87,12 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={styles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close awards sheet"
+        />
 
         <View style={styles.sheetContainer}>
           {/* Header Bar */}
@@ -84,9 +104,11 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
                 <Text style={styles.sheetSubtitle}>Milestones, consistency streaks, and badges</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.pressedSubtle]}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close awards sheet"
               >
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
@@ -99,7 +121,11 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
             showsVerticalScrollIndicator={false}
           >
             {/* Streak Spotlight Hero */}
-            <View style={styles.streakHero}>
+            <View
+              style={styles.streakHero}
+              accessible={true}
+              accessibilityLabel={`Current active logging streak: ${streakDays} days. On fire.`}
+            >
               <View style={styles.streakIconCircle}>
                 <Ionicons name="flame" size={28} color="#EA580C" />
               </View>
@@ -117,8 +143,12 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
             <View style={styles.awardsList}>
               {awards.map((item, index) => (
                 <View key={item.id}>
-                  <View style={[styles.awardItem, !item.unlocked && styles.awardItemLocked]}>
-                    <View style={[styles.awardIconBox, { backgroundColor: item.bgColor }]}>
+                  <View
+                    style={[styles.awardItem, !item.unlocked ? styles.awardItemLocked : null]}
+                    accessible={true}
+                    accessibilityLabel={`${item.title}, ${item.unlocked ? 'Unlocked' : 'In progress'}. ${item.desc}. ${item.progress}`}
+                  >
+                    <View style={[styles.awardIconBox, getAwardBgStyle(item.id)]}>
                       <Ionicons
                         name={item.icon as any}
                         size={20}
@@ -127,24 +157,26 @@ export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onC
                     </View>
                     <View style={styles.awardTextStack}>
                       <View style={styles.awardTitleRow}>
-                        <Text style={[styles.awardTitle, !item.unlocked && styles.awardTitleLocked]}>
+                        <Text style={[styles.awardTitle, !item.unlocked ? styles.awardTitleLocked : null]}>
                           {item.title}
                         </Text>
-                        <Text style={[styles.awardProgress, item.unlocked && styles.awardUnlockedText]}>
+                        <Text style={[styles.awardProgress, item.unlocked ? styles.awardUnlockedText : null]}>
                           {item.progress}
                         </Text>
                       </View>
                       <Text style={styles.awardDesc}>{item.desc}</Text>
                     </View>
                   </View>
-                  {index < awards.length - 1 && <View style={styles.divider} />}
+                  {index < awards.length - 1 ? <View style={styles.divider} /> : null}
                 </View>
               ))}
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.doneBtn, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.doneBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close awards sheet"
             >
               <Text style={styles.doneBtnText}>Close Awards</Text>
             </Pressable>
@@ -371,5 +403,17 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 14,
     color: '#FFFFFF',
+  },
+  awardBgStreak: {
+    backgroundColor: '#FFEDD5',
+  },
+  awardBgHydration: {
+    backgroundColor: '#DBEAFE',
+  },
+  awardBgMacro: {
+    backgroundColor: '#DCFCE7',
+  },
+  awardBgCentury: {
+    backgroundColor: '#EDE9FE',
   },
 });

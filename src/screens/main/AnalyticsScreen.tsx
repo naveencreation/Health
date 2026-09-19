@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
@@ -395,24 +395,30 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
               '30d': '30 Days',
             };
             return (
-              <TouchableOpacity
+              <Pressable
                 key={r}
-                style={[styles.timeFilterBtn, isSelected && styles.timeFilterBtnSelected]}
+                style={({ pressed }) => [
+                  styles.timeFilterBtn,
+                  isSelected ? styles.timeFilterBtnSelected : null,
+                  pressed ? styles.pressedSubtle : null,
+                ]}
                 onPress={() => {
                   setTimeRange(r);
                   if (r === '7d') setSelectedCalIdx(6);
                 }}
-                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`Show ${labels[r]} analytics range`}
               >
                 <Text
                   style={[
                     styles.timeFilterBtnText,
-                    isSelected && styles.timeFilterBtnTextSelected,
+                    isSelected ? styles.timeFilterBtnTextSelected : null,
                   ]}
                 >
                   {labels[r]}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
@@ -428,13 +434,16 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
       <View style={styles.heroSection}>
         {/* Interactive Metric Switcher Tabs: Calories | Hydration | Movement */}
         <View style={styles.metricSwitcherRow}>
-          <TouchableOpacity
-            style={[
+          <Pressable
+            style={({ pressed }) => [
               styles.metricTab,
-              activeMetric === 'calories' && styles.metricTabActiveCalories,
+              activeMetric === 'calories' ? styles.metricTabActiveCalories : null,
+              pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => setActiveMetric('calories')}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeMetric === 'calories' }}
+            accessibilityLabel="Show Calorie trends"
           >
             <Ionicons
               name="flame"
@@ -444,20 +453,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Text
               style={[
                 styles.metricTabText,
-                activeMetric === 'calories' && styles.metricTabTextActiveCalories,
+                activeMetric === 'calories' ? styles.metricTabTextActiveCalories : null,
               ]}
             >
               Calories
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[
+          <Pressable
+            style={({ pressed }) => [
               styles.metricTab,
-              activeMetric === 'hydration' && styles.metricTabActiveHydration,
+              activeMetric === 'hydration' ? styles.metricTabActiveHydration : null,
+              pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => setActiveMetric('hydration')}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeMetric === 'hydration' }}
+            accessibilityLabel="Show Hydration trends"
           >
             <Ionicons
               name="water"
@@ -467,20 +479,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Text
               style={[
                 styles.metricTabText,
-                activeMetric === 'hydration' && styles.metricTabTextActiveHydration,
+                activeMetric === 'hydration' ? styles.metricTabTextActiveHydration : null,
               ]}
             >
               Hydration
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[
+          <Pressable
+            style={({ pressed }) => [
               styles.metricTab,
-              activeMetric === 'movement' && styles.metricTabActiveMovement,
+              activeMetric === 'movement' ? styles.metricTabActiveMovement : null,
+              pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => setActiveMetric('movement')}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeMetric === 'movement' }}
+            accessibilityLabel="Show Movement trends"
           >
             <Ionicons
               name="footsteps"
@@ -490,12 +505,12 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Text
               style={[
                 styles.metricTabText,
-                activeMetric === 'movement' && styles.metricTabTextActiveMovement,
+                activeMetric === 'movement' ? styles.metricTabTextActiveMovement : null,
               ]}
             >
               Movement
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Dynamic Hero Telemetry Display (Apple Health / WHOOP Model) */}
@@ -524,7 +539,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
           </View>
 
           {/* 7-Day Chart */}
-          {timeRange === '7d' && (
+          {timeRange === '7d' ? (
             <View style={styles.chartContainer}>
               {weeklyLogs.map((item, index) => {
                 const isSelected = selectedCalIdx === index;
@@ -535,31 +550,35 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                   : 0;
 
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={item.date}
                     style={styles.barCol}
                     onPress={() => setSelectedCalIdx(index)}
-                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`${item.dayName}: ${val} ${heroDisplay.unit}`}
                   >
-                    <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
+                    <Text style={[styles.barTopText, isSelected ? styles.barTopTextActive : null]}>
                       {getMetricTopLabel(val)}
                     </Text>
                     <View
                       style={[
                         styles.barTrack,
-                        !hasData && styles.barTrackEmpty,
-                        isSelected && {
-                          borderColor: getMetricThemeColor(),
-                          borderWidth: 1.5,
-                          shadowColor: getMetricThemeColor(),
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.25,
-                          shadowRadius: 5,
-                          elevation: 3,
-                        },
+                        !hasData ? styles.barTrackEmpty : null,
+                        isSelected
+                          ? {
+                              borderColor: getMetricThemeColor(),
+                              borderWidth: 1.5,
+                              shadowColor: getMetricThemeColor(),
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.25,
+                              shadowRadius: 5,
+                              elevation: 3,
+                            }
+                          : null,
                       ]}
                     >
-                      {hasData && (
+                      {hasData ? (
                         <View
                           style={[
                             styles.barFill,
@@ -569,22 +588,22 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                             },
                           ]}
                         />
-                      )}
+                      ) : null}
                     </View>
-                    <Text style={[styles.barBottomText, isSelected && styles.barDayActive]}>
+                    <Text style={[styles.barBottomText, isSelected ? styles.barDayActive : null]}>
                       {index === weeklyLogs.length - 1 ? 'Today' : item.dayName}
                     </Text>
-                    {isSelected && (
+                    {isSelected ? (
                       <View style={[styles.activeDayDot, { backgroundColor: getMetricThemeColor() }]} />
-                    )}
-                  </TouchableOpacity>
+                    ) : null}
+                  </Pressable>
                 );
               })}
             </View>
-          )}
+          ) : null}
 
           {/* 30-Day Cluster Chart */}
-          {timeRange === '30d' && (
+          {timeRange === '30d' ? (
             <View style={styles.chartContainer}>
               {thirtyDayClusters.map((cluster, index) => {
                 const isSelected = selectedClusterIdx === index;
@@ -595,31 +614,35 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                   : 0;
 
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={cluster.id}
                     style={styles.barCol30}
                     onPress={() => setSelectedClusterIdx(index)}
-                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`${cluster.label}: ${val} ${heroDisplay.unit}`}
                   >
-                    <Text style={[styles.barTopText, isSelected && styles.barTopTextActive]}>
+                    <Text style={[styles.barTopText, isSelected ? styles.barTopTextActive : null]}>
                       {getMetricTopLabel(val)}
                     </Text>
                     <View
                       style={[
                         styles.barTrack30,
-                        !hasData && styles.barTrackEmpty,
-                        isSelected && {
-                          borderColor: getMetricThemeColor(),
-                          borderWidth: 1.5,
-                          shadowColor: getMetricThemeColor(),
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.25,
-                          shadowRadius: 5,
-                          elevation: 3,
-                        },
+                        !hasData ? styles.barTrackEmpty : null,
+                        isSelected
+                          ? {
+                              borderColor: getMetricThemeColor(),
+                              borderWidth: 1.5,
+                              shadowColor: getMetricThemeColor(),
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.25,
+                              shadowRadius: 5,
+                              elevation: 3,
+                            }
+                          : null,
                       ]}
                     >
-                      {hasData && (
+                      {hasData ? (
                         <View
                           style={[
                             styles.barFill,
@@ -629,23 +652,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
                             },
                           ]}
                         />
-                      )}
+                      ) : null}
                     </View>
-                    <Text style={[styles.barBottomText30, isSelected && styles.barDayActive]}>
+                    <Text style={[styles.barBottomText30, isSelected ? styles.barDayActive : null]}>
                       {cluster.label}
                     </Text>
-                    {isSelected && (
+                    {isSelected ? (
                       <View style={[styles.activeDayDot, { backgroundColor: getMetricThemeColor() }]} />
-                    )}
-                  </TouchableOpacity>
+                    ) : null}
+                  </Pressable>
                 );
               })}
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* Dynamic Context-Aware KPIs for Active Metric */}
-        {activeMetric === 'calories' && (
+        {activeMetric === 'calories' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
               <Text style={[styles.kpiValue, { color: '#16A34A' }]}>
@@ -678,9 +701,9 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
               </Text>
             </View>
           </View>
-        )}
+        ) : null}
 
-        {activeMetric === 'hydration' && (
+        {activeMetric === 'hydration' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
               <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
@@ -703,9 +726,9 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.kpiLabel}>Goal Consistency</Text>
             </View>
           </View>
-        )}
+        ) : null}
 
-        {activeMetric === 'movement' && (
+        {activeMetric === 'movement' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
               <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
@@ -728,25 +751,28 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.kpiLabel}>Active Energy Burn</Text>
             </View>
           </View>
-        )}
+        ) : null}
       </View>
 
       {/* 4. VITALITY HABIT GLANCE ROW (Tap either to switch the main graph instantly) */}
       <View style={styles.dualPodRow}>
         {/* Hydration Glance Card */}
-        <TouchableOpacity
-          style={[
+        <Pressable
+          style={({ pressed }) => [
             styles.habitPod,
-            activeMetric === 'hydration' && styles.habitPodActiveHydration,
+            activeMetric === 'hydration' ? styles.habitPodActiveHydration : null,
+            pressed ? styles.pressedSubtle : null,
           ]}
           onPress={() => setActiveMetric('hydration')}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeMetric === 'hydration' }}
+          accessibilityLabel={`Hydration glance: ${todayWater > 0 ? todayWater : 0} ml of ${waterGoal} ml goal`}
         >
           <View style={styles.habitHeader}>
-            <View style={[styles.habitIconCircle, { backgroundColor: '#EFF6FF' }]}>
+            <View style={[styles.habitIconCircle, styles.habitIconCircleHydration]}>
               <Ionicons name="water" size={16} color="#2563EB" />
             </View>
-            <Text style={[styles.habitTitle, { color: '#2563EB' }]}>HYDRATION</Text>
+            <Text style={[styles.habitTitle, styles.habitTitleHydration]}>HYDRATION</Text>
           </View>
 
           <Text style={styles.habitMainVal}>
@@ -756,7 +782,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
 
           {/* Micro Progress Bar */}
           <View style={styles.habitTrack}>
-            <View style={[styles.habitFill, { width: `${waterPct}%`, backgroundColor: '#2563EB' }]} />
+            <View style={[styles.habitFill, styles.habitFillHydration, { width: `${waterPct}%` }]} />
           </View>
 
           <View style={styles.habitFooterRow}>
@@ -765,22 +791,25 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             </Text>
             <Text style={styles.habitFooterHighlight}>{waterPct}%</Text>
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Movement Glance Card */}
-        <TouchableOpacity
-          style={[
+        <Pressable
+          style={({ pressed }) => [
             styles.habitPod,
-            activeMetric === 'movement' && styles.habitPodActiveMovement,
+            activeMetric === 'movement' ? styles.habitPodActiveMovement : null,
+            pressed ? styles.pressedSubtle : null,
           ]}
           onPress={() => setActiveMetric('movement')}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeMetric === 'movement' }}
+          accessibilityLabel={`Movement glance: ${todaySteps > 0 ? todaySteps : 0} of ${stepGoal} steps goal`}
         >
           <View style={styles.habitHeader}>
-            <View style={[styles.habitIconCircle, { backgroundColor: '#FFF7ED' }]}>
+            <View style={[styles.habitIconCircle, styles.habitIconCircleMovement]}>
               <Ionicons name="footsteps" size={16} color="#EA580C" />
             </View>
-            <Text style={[styles.habitTitle, { color: '#EA580C' }]}>MOVEMENT</Text>
+            <Text style={[styles.habitTitle, styles.habitTitleMovement]}>MOVEMENT</Text>
           </View>
 
           <Text style={styles.habitMainVal}>
@@ -790,16 +819,16 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
 
           {/* Micro Progress Bar */}
           <View style={styles.habitTrack}>
-            <View style={[styles.habitFill, { width: `${stepPct}%`, backgroundColor: '#EA580C' }]} />
+            <View style={[styles.habitFill, styles.habitFillMovement, { width: `${stepPct}%` }]} />
           </View>
 
           <View style={styles.habitFooterRow}>
             <Text style={styles.habitFooterText}>
               Avg: {(analyticsSummary.avgSteps / 1000).toFixed(1)}k/day
             </Text>
-            <Text style={[styles.habitFooterHighlight, { color: '#EA580C' }]}>{stepPct}%</Text>
+            <Text style={[styles.habitFooterHighlight, styles.habitHighlightMovement]}>{stepPct}%</Text>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* 5. MACRONUTRIENT & DIETARY FIBER QUALITY (Blended Section) */}
@@ -813,25 +842,25 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         <View style={styles.splitBar}>
           {hasMacros ? (
             <>
-              <View style={[styles.splitSegment, { width: `${carbPct}%`, backgroundColor: '#0284C7' }]} />
-              <View style={[styles.splitSegment, { width: `${proteinPct}%`, backgroundColor: '#16A34A' }]} />
-              <View style={[styles.splitSegment, { width: `${fatPct}%`, backgroundColor: '#EA580C' }]} />
+              <View style={[styles.splitSegment, styles.splitSegmentCarb, { width: `${carbPct}%` }]} />
+              <View style={[styles.splitSegment, styles.splitSegmentProtein, { width: `${proteinPct}%` }]} />
+              <View style={[styles.splitSegment, styles.splitSegmentFat, { width: `${fatPct}%` }]} />
             </>
           ) : (
-            <View style={[styles.splitSegment, { width: '100%', backgroundColor: '#E2E8F0' }]} />
+            <View style={[styles.splitSegment, styles.splitSegmentEmpty]} />
           )}
         </View>
 
         {/* Proportional Split Legend */}
         <View style={styles.splitLegendRow}>
           <Text style={styles.splitLegendText}>
-            <Text style={{ color: '#0284C7', fontWeight: '700' }}>● {carbPct}%</Text> Carbs
+            <Text style={styles.legendCarbText}>● {carbPct}%</Text> Carbs
           </Text>
           <Text style={styles.splitLegendText}>
-            <Text style={{ color: '#16A34A', fontWeight: '700' }}>● {proteinPct}%</Text> Protein
+            <Text style={styles.legendProteinText}>● {proteinPct}%</Text> Protein
           </Text>
           <Text style={styles.splitLegendText}>
-            <Text style={{ color: '#EA580C', fontWeight: '700' }}>● {fatPct}%</Text> Fat
+            <Text style={styles.legendFatText}>● {fatPct}%</Text> Fat
           </Text>
         </View>
       </View>
@@ -839,19 +868,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
       {/* 4 Floating Pastel Macro Pods */}
       <View style={styles.macroGrid}>
         {/* Protein Pod */}
-        <View style={[styles.macroPod, styles.proteinPod]}>
+        <View
+          style={[styles.macroPod, styles.proteinPod]}
+          accessible={true}
+          accessibilityLabel={`Protein: ${Math.round(totalProtein)} grams of ${targetProtein} grams goal`}
+        >
           <View style={styles.macroPodHeader}>
-            <View style={[styles.macroDot, { backgroundColor: '#16A34A' }]} />
-            <Text style={[styles.macroPodLabel, { color: '#16A34A' }]}>PROTEIN</Text>
+            <View style={[styles.macroDot, styles.dotProtein]} />
+            <Text style={[styles.macroPodLabel, styles.labelProtein]}>PROTEIN</Text>
           </View>
           <Text style={styles.macroPodVal}>{Math.round(totalProtein)}g</Text>
-          <View style={[styles.podTrack, { backgroundColor: '#DCFCE7' }]}>
+          <View style={[styles.podTrack, styles.trackProtein]}>
             <View
               style={[
                 styles.podFill,
+                styles.fillProtein,
                 {
                   width: `${Math.min(100, Math.round((totalProtein / targetProtein) * 100))}%`,
-                  backgroundColor: '#16A34A',
                 },
               ]}
             />
@@ -860,19 +893,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         </View>
 
         {/* Carbs Pod */}
-        <View style={[styles.macroPod, styles.carbsPod]}>
+        <View
+          style={[styles.macroPod, styles.carbsPod]}
+          accessible={true}
+          accessibilityLabel={`Carbohydrates: ${Math.round(totalCarbs)} grams of ${targetCarbs} grams goal`}
+        >
           <View style={styles.macroPodHeader}>
-            <View style={[styles.macroDot, { backgroundColor: '#0284C7' }]} />
-            <Text style={[styles.macroPodLabel, { color: '#0284C7' }]}>CARBS</Text>
+            <View style={[styles.macroDot, styles.dotCarbs]} />
+            <Text style={[styles.macroPodLabel, styles.labelCarbs]}>CARBS</Text>
           </View>
           <Text style={styles.macroPodVal}>{Math.round(totalCarbs)}g</Text>
-          <View style={[styles.podTrack, { backgroundColor: '#E0F2FE' }]}>
+          <View style={[styles.podTrack, styles.trackCarbs]}>
             <View
               style={[
                 styles.podFill,
+                styles.fillCarbs,
                 {
                   width: `${Math.min(100, Math.round((totalCarbs / targetCarbs) * 100))}%`,
-                  backgroundColor: '#0284C7',
                 },
               ]}
             />
@@ -881,19 +918,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         </View>
 
         {/* Fat Pod */}
-        <View style={[styles.macroPod, styles.fatPod]}>
+        <View
+          style={[styles.macroPod, styles.fatPod]}
+          accessible={true}
+          accessibilityLabel={`Fat: ${Math.round(totalFat)} grams of ${targetFat} grams goal`}
+        >
           <View style={styles.macroPodHeader}>
-            <View style={[styles.macroDot, { backgroundColor: '#EA580C' }]} />
-            <Text style={[styles.macroPodLabel, { color: '#EA580C' }]}>FAT</Text>
+            <View style={[styles.macroDot, styles.dotFat]} />
+            <Text style={[styles.macroPodLabel, styles.labelFat]}>FAT</Text>
           </View>
           <Text style={styles.macroPodVal}>{Math.round(totalFat)}g</Text>
-          <View style={[styles.podTrack, { backgroundColor: '#FFEDD5' }]}>
+          <View style={[styles.podTrack, styles.trackFat]}>
             <View
               style={[
                 styles.podFill,
+                styles.fillFat,
                 {
                   width: `${Math.min(100, Math.round((totalFat / targetFat) * 100))}%`,
-                  backgroundColor: '#EA580C',
                 },
               ]}
             />
@@ -902,19 +943,23 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         </View>
 
         {/* Fiber Pod */}
-        <View style={[styles.macroPod, styles.fiberPod]}>
+        <View
+          style={[styles.macroPod, styles.fiberPod]}
+          accessible={true}
+          accessibilityLabel={`Fiber: ${Math.round(totalFiber)} grams of ${targetFiber} grams goal`}
+        >
           <View style={styles.macroPodHeader}>
-            <View style={[styles.macroDot, { backgroundColor: '#059669' }]} />
-            <Text style={[styles.macroPodLabel, { color: '#059669' }]}>FIBER</Text>
+            <View style={[styles.macroDot, styles.dotFiber]} />
+            <Text style={[styles.macroPodLabel, styles.labelFiber]}>FIBER</Text>
           </View>
           <Text style={styles.macroPodVal}>{Math.round(totalFiber)}g</Text>
-          <View style={[styles.podTrack, { backgroundColor: '#D1FAE5' }]}>
+          <View style={[styles.podTrack, styles.trackFiber]}>
             <View
               style={[
                 styles.podFill,
+                styles.fillFiber,
                 {
                   width: `${Math.min(100, Math.round((totalFiber / targetFiber) * 100))}%`,
-                  backgroundColor: '#059669',
                 },
               ]}
             />
@@ -1552,6 +1597,106 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#94A3B8',
     marginTop: 1,
+  },
+  pressedSubtle: {
+    opacity: 0.85,
+  },
+  habitIconCircleHydration: {
+    backgroundColor: '#EFF6FF',
+  },
+  habitTitleHydration: {
+    color: '#2563EB',
+  },
+  habitFillHydration: {
+    backgroundColor: '#2563EB',
+  },
+  habitIconCircleMovement: {
+    backgroundColor: '#FFF7ED',
+  },
+  habitTitleMovement: {
+    color: '#EA580C',
+  },
+  habitFillMovement: {
+    backgroundColor: '#EA580C',
+  },
+  habitHighlightMovement: {
+    color: '#EA580C',
+  },
+  splitSegmentCarb: {
+    backgroundColor: '#0284C7',
+  },
+  splitSegmentProtein: {
+    backgroundColor: '#16A34A',
+  },
+  splitSegmentFat: {
+    backgroundColor: '#EA580C',
+  },
+  splitSegmentEmpty: {
+    width: '100%',
+    backgroundColor: '#E2E8F0',
+  },
+  legendCarbText: {
+    color: '#0284C7',
+    fontFamily: Fonts.poppins.bold,
+    fontWeight: '700',
+  },
+  legendProteinText: {
+    color: '#16A34A',
+    fontFamily: Fonts.poppins.bold,
+    fontWeight: '700',
+  },
+  legendFatText: {
+    color: '#EA580C',
+    fontFamily: Fonts.poppins.bold,
+    fontWeight: '700',
+  },
+  dotProtein: {
+    backgroundColor: '#16A34A',
+  },
+  labelProtein: {
+    color: '#16A34A',
+  },
+  trackProtein: {
+    backgroundColor: '#DCFCE7',
+  },
+  fillProtein: {
+    backgroundColor: '#16A34A',
+  },
+  dotCarbs: {
+    backgroundColor: '#0284C7',
+  },
+  labelCarbs: {
+    color: '#0284C7',
+  },
+  trackCarbs: {
+    backgroundColor: '#E0F2FE',
+  },
+  fillCarbs: {
+    backgroundColor: '#0284C7',
+  },
+  dotFat: {
+    backgroundColor: '#EA580C',
+  },
+  labelFat: {
+    color: '#EA580C',
+  },
+  trackFat: {
+    backgroundColor: '#FFEDD5',
+  },
+  fillFat: {
+    backgroundColor: '#EA580C',
+  },
+  dotFiber: {
+    backgroundColor: '#059669',
+  },
+  labelFiber: {
+    color: '#059669',
+  },
+  trackFiber: {
+    backgroundColor: '#D1FAE5',
+  },
+  fillFiber: {
+    backgroundColor: '#059669',
   },
 });
 

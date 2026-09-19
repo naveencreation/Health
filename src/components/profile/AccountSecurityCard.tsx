@@ -62,8 +62,8 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
             {currentUser?.email || (currentUser?.isGuest ? 'Guest Explorer' : 'Not Provided')}
           </Text>
         </View>
-        <View style={[styles.statusPill, currentUser?.isGuest && styles.statusPillGuest]}>
-          <Text style={[styles.statusPillText, currentUser?.isGuest && styles.statusPillTextGuest]}>
+        <View style={[styles.statusPill, currentUser?.isGuest ? styles.statusPillGuest : null]}>
+          <Text style={[styles.statusPillText, currentUser?.isGuest ? styles.statusPillTextGuest : null]}>
             {currentUser?.isGuest ? 'GUEST' : 'ACTIVE'}
           </Text>
         </View>
@@ -93,19 +93,23 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
       {/* Auth Action Button */}
       {currentUser?.isGuest ? (
         <View style={styles.buttonStack}>
-          {onSignIn && (
+          {onSignIn ? (
             <Pressable
-              style={({ pressed }) => [styles.signInButton, pressed && styles.signInButtonPressed]}
+              style={({ pressed }) => [styles.signInButton, pressed ? styles.signInButtonPressed : null]}
               onPress={onSignIn}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in or create account"
               testID="btn-profile-signin"
             >
               <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
               <Text style={styles.signInButtonText}>Sign In / Create Account</Text>
             </Pressable>
-          )}
+          ) : null}
           <Pressable
-            style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed]}
+            style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
             onPress={handleLogout}
+            accessibilityRole="button"
+            accessibilityLabel="Exit guest session"
             testID="btn-profile-reset-guest"
           >
             <Ionicons name="refresh-outline" size={18} color="#DC2626" />
@@ -114,8 +118,10 @@ export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSign
         </View>
       ) : (
         <Pressable
-          style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed]}
+          style={({ pressed }) => [styles.logoutButton, pressed ? styles.logoutButtonPressed : null]}
           onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out of Calori"
           testID="btn-profile-signout"
         >
           <Ionicons name="log-out-outline" size={18} color="#DC2626" />

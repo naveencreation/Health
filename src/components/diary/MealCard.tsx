@@ -17,6 +17,9 @@ interface MealCardProps {
   isDimmed?: boolean;
 }
 
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
+
 export const MealCard: React.FC<MealCardProps> = ({
   mealType,
   title,
@@ -48,8 +51,8 @@ export const MealCard: React.FC<MealCardProps> = ({
     <View
       style={[
         styles.card,
-        hasItems && styles.cardActive,
-        isDimmed && !hasItems && styles.dimmedCard,
+        hasItems ? styles.cardActive : null,
+        isDimmed && !hasItems ? styles.dimmedCard : null,
       ]}
     >
       {/* 1. Header Row */}
@@ -57,7 +60,7 @@ export const MealCard: React.FC<MealCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.headerLeft,
-            pressed && hasItems && styles.pressedSubtle,
+            pressed && hasItems ? styles.pressedSubtle : null,
           ]}
           onPress={() => {
             if (hasItems) {
@@ -132,11 +135,11 @@ export const MealCard: React.FC<MealCardProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.addButtonCircle,
-              isDimmed && !hasItems && styles.dimmedAddButton,
-              pressed && styles.pressedAddButton,
+              isDimmed && !hasItems ? styles.dimmedAddButton : null,
+              pressed ? styles.pressedAddButton : null,
             ]}
             onPress={() => onAddPress(mealType)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel={`Add food to ${title}`}
           >
@@ -155,7 +158,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                 key={item.id}
                 style={[
                   styles.foodRow,
-                  !isLast && styles.foodRowBorder,
+                  !isLast ? styles.foodRowBorder : null,
                 ]}
               >
                 {/* Left: Food Name & Serving */}
@@ -173,8 +176,8 @@ export const MealCard: React.FC<MealCardProps> = ({
                   {/* Capsule Stepper */}
                   <View style={styles.stepperCapsule}>
                     <Pressable
-                      style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressedSubtle]}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
+                      hitSlop={HIT_SLOP_8}
                       onPress={() => {
                         if (item.quantity > 0.5) {
                           updateMealQuantity(item.id, Math.max(0.5, Math.round((item.quantity - 0.5) * 10) / 10));
@@ -191,8 +194,8 @@ export const MealCard: React.FC<MealCardProps> = ({
                     <Text style={styles.stepperQty}>{item.quantity}</Text>
 
                     <Pressable
-                      style={({ pressed }) => [styles.stepperBtn, pressed && styles.pressedSubtle]}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
+                      hitSlop={HIT_SLOP_8}
                       onPress={() => updateMealQuantity(item.id, Math.round((item.quantity + 0.5) * 10) / 10)}
                       accessibilityRole="button"
                       accessibilityLabel="Increase quantity"
@@ -208,8 +211,8 @@ export const MealCard: React.FC<MealCardProps> = ({
 
                   {/* Delete Button */}
                   <Pressable
-                    style={({ pressed }) => [styles.deleteBtn, pressed && styles.pressedSubtle]}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={({ pressed }) => [styles.deleteBtn, pressed ? styles.pressedSubtle : null]}
+                    hitSlop={HIT_SLOP_10}
                     onPress={() => removeMealItem(item.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${item.name}`}

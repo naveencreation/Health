@@ -3,7 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +24,6 @@ interface GenderOption {
   title: string;
   subtitle: string;
   iconName: string;
-  iconBg: string;
   iconColor: string;
 }
 
@@ -34,7 +33,6 @@ const GENDER_OPTIONS: GenderOption[] = [
     title: 'Female',
     subtitle: 'Calibrates metabolic rate formula for female biology',
     iconName: 'female',
-    iconBg: '#FDF2F8',
     iconColor: '#EC4899',
   },
   {
@@ -42,7 +40,6 @@ const GENDER_OPTIONS: GenderOption[] = [
     title: 'Male',
     subtitle: 'Calibrates metabolic rate formula for male biology',
     iconName: 'male',
-    iconBg: '#EFF6FF',
     iconColor: '#2563EB',
   },
   {
@@ -50,10 +47,11 @@ const GENDER_OPTIONS: GenderOption[] = [
     title: 'Other',
     subtitle: 'Uses a balanced metabolic median for your calculations',
     iconName: 'sparkles',
-    iconBg: '#F5F3FF',
     iconColor: '#7C3AED',
   },
 ];
+
+const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
   onBack,
@@ -73,15 +71,15 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
       <View style={styles.phoneFrame}>
         {/* Frame 12: Top Navigation Bar */}
         <View style={styles.headerBar}>
-          <TouchableOpacity
-            style={styles.backButton}
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
             onPress={onBack}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={HIT_SLOP_12}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </TouchableOpacity>
+          </Pressable>
 
           <View style={styles.logoBadgeContainer}>
             <View style={styles.logoDot} />
@@ -107,20 +105,20 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
             const isSelected = selectedGender === option.id;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={option.id}
-                activeOpacity={0.88}
                 onPress={() => setSelectedGender(option.id)}
-                style={[
+                style={({ pressed }) => [
                   styles.genderCard,
                   isSelected ? styles.genderCardSelected : styles.genderCardUnselected,
+                  pressed ? styles.genderCardPressed : null,
                 ]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={`${option.title}: ${option.subtitle}`}
               >
                 {/* Left Visual Icon Badge */}
-                <View style={[styles.iconBadge, { backgroundColor: option.iconBg }]}>
+                <View style={[styles.iconBadge, getGenderIconBgStyle(option.id)]}>
                   <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
                 </View>
 
@@ -129,7 +127,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
                   <Text
                     style={[
                       styles.genderTitle,
-                      isSelected && styles.genderTitleSelected,
+                      isSelected ? styles.genderTitleSelected : null,
                     ]}
                   >
                     {option.title}
@@ -144,58 +142,70 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
                     isSelected ? styles.radioSelected : styles.radioUnselected,
                   ]}
                 >
-                  {isSelected && (
+                  {isSelected ? (
                     <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  )}
+                  ) : null}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
 
         {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity
-            style={styles.continueButton}
+          <Pressable
+            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
             onPress={handleContinuePress}
-            activeOpacity={0.88}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected gender"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#0F172A" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
-            <TouchableOpacity
-              style={styles.skipContainer}
+            <Pressable
+              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
               onPress={onSkip}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
               accessibilityLabel="Skip gender selection"
             >
               <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            {onSignIn && (
-              <TouchableOpacity
+            {onSignIn ? (
+              <Pressable
                 onPress={onSignIn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.signInBottomBtn}
+                hitSlop={HIT_SLOP_12}
+                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >
                 <Text style={styles.signInLinkText}>
                   Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
                 </Text>
-              </TouchableOpacity>
-            )}
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>
     </SafeAreaView>
   );
+};
+
+const getGenderIconBgStyle = (id: GenderType) => {
+  switch (id) {
+    case 'female':
+      return styles.iconBadgeFemale;
+    case 'male':
+      return styles.iconBadgeMale;
+    case 'other':
+      return styles.iconBadgeOther;
+    default:
+      return null;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -358,6 +368,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconBadgeFemale: {
+    backgroundColor: '#FDF2F8',
+  },
+  iconBadgeMale: {
+    backgroundColor: '#EFF6FF',
+  },
+  iconBadgeOther: {
+    backgroundColor: '#F5F3FF',
+  },
+  btnPressedSubtle: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
+  },
+  genderCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
   cardTextContent: {
     flex: 1,
     marginLeft: 14,
@@ -434,6 +461,10 @@ const styles = StyleSheet.create({
           boxShadow: '0px 6px 18px rgba(205, 226, 109, 0.45)',
         } as any)
       : {}),
+  },
+  continueButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -110,7 +110,7 @@ export const CalorieBudgetCard: React.FC = () => {
         <View style={styles.macroCol}>
           <Text style={styles.macroLabel}>Protein</Text>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: proteinWidth, backgroundColor: Colors.protein }]} />
+            <View style={[styles.barFill, styles.barProtein, { width: proteinWidth }]} />
           </View>
           <Text style={styles.macroValueText}>{totalProtein}/{userGoals.targetProtein || 90}g</Text>
         </View>
@@ -119,7 +119,7 @@ export const CalorieBudgetCard: React.FC = () => {
         <View style={styles.macroCol}>
           <Text style={styles.macroLabel}>Fats</Text>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: fatWidth, backgroundColor: Colors.fat }]} />
+            <View style={[styles.barFill, styles.barFat, { width: fatWidth }]} />
           </View>
           <Text style={styles.macroValueText}>{totalFat}/{userGoals.targetFat || 70}g</Text>
         </View>
@@ -128,7 +128,7 @@ export const CalorieBudgetCard: React.FC = () => {
         <View style={styles.macroCol}>
           <Text style={styles.macroLabel}>Carbs</Text>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: carbsWidth, backgroundColor: Colors.carbs }]} />
+            <View style={[styles.barFill, styles.barCarbs, { width: carbsWidth }]} />
           </View>
           <Text style={styles.macroValueText}>{totalCarbs}/{userGoals.targetCarbs || 110}g</Text>
         </View>
@@ -210,6 +210,15 @@ const styles = StyleSheet.create({
   barFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  barProtein: {
+    backgroundColor: Colors.protein,
+  },
+  barFat: {
+    backgroundColor: Colors.fat,
+  },
+  barCarbs: {
+    backgroundColor: Colors.carbs,
   },
   // 78/90g (Figma: Poppins 12px, 500, #878488)
   macroValueText: {

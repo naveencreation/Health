@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -13,6 +13,8 @@ interface DayItem {
   isSelected: boolean;
   isFuture: boolean;
 }
+
+const ARROW_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const FigmaDatePicker: React.FC = () => {
   const { selectedDate, setSelectedDate, shiftDate } = useHealth();
@@ -62,14 +64,15 @@ export const FigmaDatePicker: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Left Navigation Arrow (Alt Arrow Left: left -2px, top 519px) */}
-      <TouchableOpacity
-        style={styles.arrowButton}
+      <Pressable
+        style={({ pressed }) => [styles.arrowButton, pressed ? styles.arrowButtonPressed : null]}
         onPress={() => shiftDate(-7)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        hitSlop={ARROW_HIT_SLOP}
+        accessibilityRole="button"
+        accessibilityLabel="Previous week"
       >
         <Ionicons name="chevron-back" size={20} color="rgba(28, 39, 76, 0.6)" />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Frame 299 / Frame 298: 7 Weekday Columns */}
       <View style={styles.daysRow}>
@@ -78,30 +81,34 @@ export const FigmaDatePicker: React.FC = () => {
             // Figma Rectangle 30: 46px wide x 75px tall, border-radius 20px, #F47551
             return (
               <View key={item.dateStr} style={styles.activePillWrapper}>
-                <TouchableOpacity
-                  style={styles.activePill}
-                  activeOpacity={0.9}
+                <Pressable
+                  style={({ pressed }) => [styles.activePill, pressed ? styles.pillPressed : null]}
                   onPress={() => setSelectedDate(item.dateStr)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Selected date ${item.dayName} ${item.dayNum}`}
+                  accessibilityState={{ selected: true }}
                 >
                   <Text style={styles.activeDayText}>{item.dayName}</Text>
                   <Text style={styles.activeDateText}>{item.dayNum}</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             );
           }
 
           // Unselected Days
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.dateStr}
-              style={styles.dayCol}
+              style={({ pressed }) => [styles.dayCol, pressed ? styles.dayColPressed : null]}
               onPress={() => setSelectedDate(item.dateStr)}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Select date ${item.dayName} ${item.dayNum}`}
+              accessibilityState={{ selected: false }}
             >
               <Text
                 style={[
                   styles.dayText,
-                  item.isFuture && styles.futureText,
+                  item.isFuture ? styles.futureText : null,
                 ]}
               >
                 {item.dayName}
@@ -109,25 +116,26 @@ export const FigmaDatePicker: React.FC = () => {
               <Text
                 style={[
                   styles.dateNumText,
-                  item.isFuture && styles.futureText,
+                  item.isFuture ? styles.futureText : null,
                 ]}
               >
                 {item.dayNum}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
 
       {/* Right Navigation Arrow (Alt Arrow Right: left 344px, top 519px) */}
-      <TouchableOpacity
-        style={styles.arrowButton}
+      <Pressable
+        style={({ pressed }) => [styles.arrowButton, pressed ? styles.arrowButtonPressed : null]}
         onPress={() => shiftDate(7)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        hitSlop={ARROW_HIT_SLOP}
+        accessibilityRole="button"
+        accessibilityLabel="Next week"
       >
         <Ionicons name="chevron-forward" size={20} color="rgba(28, 39, 76, 0.6)" />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };
@@ -148,6 +156,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  arrowButtonPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.92 }],
+  },
   daysRow: {
     flex: 1,
     flexDirection: 'row',
@@ -160,6 +172,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 38,
     paddingVertical: 6,
+  },
+  dayColPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
   },
   // Inactive Day Names: Poppins 16px / line-height 27px, rgba(0, 0, 0, 0.9)
   dayText: {
@@ -197,6 +213,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 5,
+  },
+  pillPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   activeDayText: {
     fontFamily: Fonts.poppins.medium,

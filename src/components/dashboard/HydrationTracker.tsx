@@ -1,10 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+
+const CIRCLE_SIZE = 190;
+const STROKE_WIDTH = 14;
+const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+const HIT_SLOP_MINUS = { top: 8, bottom: 8, left: 6, right: 6 };
 
 export const HydrationTracker: React.FC = () => {
   const { currentLog, userGoals, addWater, resetWater } = useHealth();
@@ -14,55 +20,51 @@ export const HydrationTracker: React.FC = () => {
   const progressRatio = Math.min(1, Math.max(0, currentMl / targetMl));
   const progressPercent = Math.min(100, Math.round((currentMl / targetMl) * 100));
 
-  // Circular Gauge Dimensions
-  const size = 190;
-  const strokeWidth = 14;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - circumference * progressRatio;
+  const strokeDashoffset = CIRCUMFERENCE - CIRCUMFERENCE * progressRatio;
 
   return (
     <View style={styles.card}>
       {/* Top Header Row */}
       <View style={styles.headerRow}>
         <Text style={styles.sectionHeading}>Today's Progress</Text>
-        {currentMl > 0 && (
-          <TouchableOpacity
-            style={styles.resetBtn}
+        {currentMl > 0 ? (
+          <Pressable
+            style={({ pressed }) => [styles.resetBtn, pressed ? styles.btnPressedSubtle : null]}
             onPress={resetWater}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
+            accessibilityRole="button"
+            accessibilityLabel="Reset water intake"
           >
             <Ionicons name="refresh-outline" size={16} color="#64748B" />
-          </TouchableOpacity>
-        )}
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Center Circular Progress Ring */}
       <View style={styles.gaugeWrapper}>
-        <Svg width={size} height={size}>
+        <Svg width={CIRCLE_SIZE} height={CIRCLE_SIZE}>
           {/* Background Neutral Track */}
           <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
+            cx={CIRCLE_SIZE / 2}
+            cy={CIRCLE_SIZE / 2}
+            r={RADIUS}
             stroke="#E2E8F0"
-            strokeWidth={strokeWidth}
+            strokeWidth={STROKE_WIDTH}
             fill="none"
           />
 
           {/* Active Water Azure Arc */}
           <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
+            cx={CIRCLE_SIZE / 2}
+            cy={CIRCLE_SIZE / 2}
+            r={RADIUS}
             stroke="#2563EB"
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${circumference} ${circumference}`}
+            strokeWidth={STROKE_WIDTH}
+            strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             fill="none"
-            origin={`${size / 2}, ${size / 2}`}
+            origin={`${CIRCLE_SIZE / 2}, ${CIRCLE_SIZE / 2}`}
             rotation="-90"
           />
         </Svg>
@@ -91,34 +93,37 @@ export const HydrationTracker: React.FC = () => {
 
       {/* Ergonomic Quick-Log Buttons */}
       <View style={styles.quickActionRow}>
-        <TouchableOpacity
-          style={styles.quickAddBtn}
+        <Pressable
+          style={({ pressed }) => [styles.quickAddBtn, pressed ? styles.btnPressedSubtle : null]}
           onPress={() => addWater(250)}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Add 250 milliliters glass of water"
         >
           <Ionicons name="water-outline" size={16} color="#1D4ED8" />
           <Text style={styles.quickAddBtnText}>+250 ml (Glass)</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
-          style={styles.quickAddBtn}
+        <Pressable
+          style={({ pressed }) => [styles.quickAddBtn, pressed ? styles.btnPressedSubtle : null]}
           onPress={() => addWater(500)}
-          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Add 500 milliliters bottle of water"
         >
           <Ionicons name="add" size={16} color="#1D4ED8" />
           <Text style={styles.quickAddBtnText}>+500 ml (Bottle)</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        {currentMl > 0 && (
-          <TouchableOpacity
-            style={styles.minusBtn}
+        {currentMl > 0 ? (
+          <Pressable
+            style={({ pressed }) => [styles.minusBtn, pressed ? styles.btnPressedSubtle : null]}
             onPress={() => addWater(-250)}
-            activeOpacity={0.8}
-            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            hitSlop={HIT_SLOP_MINUS}
+            accessibilityRole="button"
+            accessibilityLabel="Subtract 250 milliliters of water"
           >
             <Ionicons name="remove" size={16} color="#64748B" />
-          </TouchableOpacity>
-        )}
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -257,5 +262,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  btnPressedSubtle: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
 });

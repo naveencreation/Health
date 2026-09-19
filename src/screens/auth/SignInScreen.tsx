@@ -68,7 +68,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         {/* Top Header Navigation */}
         <View style={styles.headerBar}>
           <Pressable
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressedBack]}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
             onPress={onBack}
             hitSlop={12}
             accessibilityRole="button"
@@ -123,7 +123,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'email' && styles.inputWrapperFocused,
+                  focusedField === 'email' ? styles.inputWrapperFocused : null,
                 ]}
               >
                 <Ionicons
@@ -150,12 +150,15 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => passwordRef.current?.focus()}
                   testID="input-signin-email"
+                  accessibilityLabel="Email Address"
                 />
                 {email.length > 0 ? (
                   <Pressable
                     onPress={() => setEmail('')}
                     hitSlop={8}
-                    style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                    style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear email"
                   >
                     <Ionicons name="close-circle" size={18} color="#CBD5E1" />
                   </Pressable>
@@ -171,8 +174,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   <Pressable
                     onPress={onForgotPassword}
                     hitSlop={8}
-                    style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                    style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                     testID="btn-signin-forgot-password"
+                    accessibilityRole="button"
+                    accessibilityLabel="Forgot Password"
                   >
                     <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                   </Pressable>
@@ -181,7 +186,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               <View
                 style={[
                   styles.inputWrapper,
-                  focusedField === 'password' && styles.inputWrapperFocused,
+                  focusedField === 'password' ? styles.inputWrapperFocused : null,
                 ]}
               >
                 <Ionicons
@@ -194,7 +199,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   ref={passwordRef}
                   style={[
                     styles.textInput,
-                    Platform.OS === 'android' && !showPassword && styles.androidPasswordInput,
+                    Platform.OS === 'android' && !showPassword ? styles.androidPasswordInput : null,
                   ]}
                   placeholder="Enter your password"
                   placeholderTextColor="#94A3B8"
@@ -213,12 +218,15 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={handleLogin}
                   testID="input-signin-password"
+                  accessibilityLabel="Password"
                 />
                 <Pressable
                   onPress={() => setShowPassword(!showPassword)}
                   hitSlop={8}
-                  style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signin-toggle-password"
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -233,12 +241,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             <Pressable
               style={({ pressed }) => [
                 styles.submitButton,
-                pressed && styles.pressedButton,
-                loading && styles.disabledButton,
+                pressed ? styles.pressedButton : null,
+                loading ? styles.disabledButton : null,
               ]}
               onPress={handleLogin}
               disabled={loading}
               testID="btn-signin-submit"
+              accessibilityRole="button"
+              accessibilityLabel="Sign In"
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -257,8 +267,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 <Pressable
                   onPress={onSwitchToRegister}
                   hitSlop={8}
-                  style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signin-switch-register"
+                  accessibilityRole="button"
+                  accessibilityLabel="Create Account"
                 >
                   <Text style={styles.footerLinkText}>Create Account</Text>
                 </Pressable>
@@ -267,12 +279,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
             {/* Quick Guest Exploration */}
             <Pressable
-              style={({ pressed }) => [styles.guestRow, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.guestRow, pressed ? styles.pressedSubtle : null]}
               onPress={async () => {
                 await loginDemo();
                 if (onSuccess) onSuccess();
               }}
               testID="btn-signin-guest"
+              accessibilityRole="button"
+              accessibilityLabel="Explore as Guest"
             >
               <Ionicons name="flash-outline" size={14} color="#D97706" />
               <Text style={styles.guestRowText}>Quick Preview / Explore as Guest</Text>

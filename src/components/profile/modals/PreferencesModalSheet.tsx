@@ -15,6 +15,8 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 
+const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
+
 interface PreferencesModalSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -100,7 +102,12 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={styles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close preferences"
+        />
 
         <View style={styles.sheetContainer}>
           {/* Header Bar */}
@@ -112,9 +119,11 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 <Text style={styles.sheetSubtitle}>Ria AI coach tone, notifications, and security</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.pressedSubtle]}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close preferences"
               >
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
@@ -132,12 +141,15 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
               <Pressable
                 style={({ pressed }) => [
                   styles.personalityCard,
-                  riaTone === 'supportive' && styles.personalityCardActive,
-                  pressed && styles.pressedSubtle,
+                  riaTone === 'supportive' ? styles.personalityCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => handleSelectTone('supportive')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: riaTone === 'supportive' }}
+                accessibilityLabel="Warm and encouraging tone: Celebrates streaks, offers gentle reminders, positive reinforcement"
               >
-                <View style={[styles.personalityIconBox, { backgroundColor: '#FEF3C7' }]}>
+                <View style={[styles.personalityIconBox, styles.personalityIconSupportive]}>
                   <Ionicons name="sparkles" size={16} color="#B45309" />
                 </View>
                 <View style={styles.flex1}>
@@ -146,9 +158,9 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                     Celebrates streaks, offers gentle reminders, positive reinforcement.
                   </Text>
                 </View>
-                {riaTone === 'supportive' && (
+                {riaTone === 'supportive' ? (
                   <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-                )}
+                ) : null}
               </Pressable>
 
               <View style={styles.divider} />
@@ -156,12 +168,15 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
               <Pressable
                 style={({ pressed }) => [
                   styles.personalityCard,
-                  riaTone === 'focused' && styles.personalityCardActive,
-                  pressed && styles.pressedSubtle,
+                  riaTone === 'focused' ? styles.personalityCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => handleSelectTone('focused')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: riaTone === 'focused' }}
+                accessibilityLabel="Disciplined and direct tone: Firm accountability, timely notifications, straightforward calorie targets"
               >
-                <View style={[styles.personalityIconBox, { backgroundColor: '#FEE2E2' }]}>
+                <View style={[styles.personalityIconBox, styles.personalityIconFocused]}>
                   <Ionicons name="flame" size={16} color="#DC2626" />
                 </View>
                 <View style={styles.flex1}>
@@ -170,9 +185,9 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                     Firm accountability, timely notifications, straightforward calorie targets.
                   </Text>
                 </View>
-                {riaTone === 'focused' && (
+                {riaTone === 'focused' ? (
                   <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-                )}
+                ) : null}
               </Pressable>
 
               <View style={styles.divider} />
@@ -180,12 +195,15 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
               <Pressable
                 style={({ pressed }) => [
                   styles.personalityCard,
-                  riaTone === 'scientific' && styles.personalityCardActive,
-                  pressed && styles.pressedSubtle,
+                  riaTone === 'scientific' ? styles.personalityCardActive : null,
+                  pressed ? styles.pressedSubtle : null,
                 ]}
                 onPress={() => handleSelectTone('scientific')}
+                accessibilityRole="button"
+                accessibilityState={{ selected: riaTone === 'scientific' }}
+                accessibilityLabel="Nutritional scientist tone: Deep analytical focus on glycemic response, micronutrients, recovery"
               >
-                <View style={[styles.personalityIconBox, { backgroundColor: '#E0E7FF' }]}>
+                <View style={[styles.personalityIconBox, styles.personalityIconScientific]}>
                   <Ionicons name="flask" size={16} color="#4338CA" />
                 </View>
                 <View style={styles.flex1}>
@@ -194,9 +212,9 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                     Deep analytical focus on glycemic response, micronutrients, recovery.
                   </Text>
                 </View>
-                {riaTone === 'scientific' && (
+                {riaTone === 'scientific' ? (
                   <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-                )}
+                ) : null}
               </Pressable>
             </View>
 
@@ -204,7 +222,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             <Text style={styles.sectionHeader}>Reminders & Alerts</Text>
             <View style={styles.card}>
               <View style={styles.switchRow}>
-                <View style={[styles.switchIconBox, { backgroundColor: '#EFF6FF' }]}>
+                <View style={[styles.switchIconBox, styles.switchIconWater]}>
                   <Ionicons name="water-outline" size={18} color="#2563EB" />
                 </View>
                 <View style={styles.flex1}>
@@ -214,15 +232,16 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 <Switch
                   value={waterReminder}
                   onValueChange={handleToggleWater}
-                  trackColor={{ false: '#CBD5E1', true: Colors.primary + '80' }}
+                  trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
                   thumbColor={waterReminder ? Colors.primary : '#F8FAFC'}
+                  accessibilityLabel="Toggle water reminders"
                 />
               </View>
 
               <View style={styles.divider} />
 
               <View style={styles.switchRow}>
-                <View style={[styles.switchIconBox, { backgroundColor: '#FFF7ED' }]}>
+                <View style={[styles.switchIconBox, styles.switchIconMeal]}>
                   <Ionicons name="restaurant-outline" size={18} color="#EA580C" />
                 </View>
                 <View style={styles.flex1}>
@@ -232,15 +251,16 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 <Switch
                   value={mealReminder}
                   onValueChange={handleToggleMeal}
-                  trackColor={{ false: '#CBD5E1', true: Colors.primary + '80' }}
+                  trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
                   thumbColor={mealReminder ? Colors.primary : '#F8FAFC'}
+                  accessibilityLabel="Toggle meal logging reminders"
                 />
               </View>
 
               <View style={styles.divider} />
 
               <View style={styles.switchRow}>
-                <View style={[styles.switchIconBox, { backgroundColor: '#F0FDF4' }]}>
+                <View style={[styles.switchIconBox, styles.switchIconStep]}>
                   <Ionicons name="footsteps-outline" size={18} color="#16A34A" />
                 </View>
                 <View style={styles.flex1}>
@@ -250,8 +270,9 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 <Switch
                   value={stepReminder}
                   onValueChange={handleToggleStep}
-                  trackColor={{ false: '#CBD5E1', true: Colors.primary + '80' }}
+                  trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
                   thumbColor={stepReminder ? Colors.primary : '#F8FAFC'}
+                  accessibilityLabel="Toggle step milestone alerts"
                 />
               </View>
             </View>
@@ -260,7 +281,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             <Text style={styles.sectionHeader}>Account & Security</Text>
             <View style={styles.card}>
               <View style={styles.accountRow}>
-                <View style={[styles.switchIconBox, { backgroundColor: '#F1F5F9' }]}>
+                <View style={[styles.switchIconBox, styles.switchIconAccount]}>
                   <Ionicons name="mail-outline" size={18} color="#475569" />
                 </View>
                 <View style={styles.flex1}>
@@ -269,8 +290,8 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                     {currentUser?.email || (currentUser?.isGuest ? 'Guest Explorer' : 'user@calori.fit')}
                   </Text>
                 </View>
-                <View style={[styles.statusTag, currentUser?.isGuest && styles.statusTagGuest]}>
-                  <Text style={[styles.statusTagText, currentUser?.isGuest && styles.statusTagTextGuest]}>
+                <View style={[styles.statusTag, currentUser?.isGuest ? styles.statusTagGuest : null]}>
+                  <Text style={[styles.statusTagText, currentUser?.isGuest ? styles.statusTagTextGuest : null]}>
                     {currentUser?.isGuest ? 'GUEST' : 'ACTIVE'}
                   </Text>
                 </View>
@@ -279,7 +300,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
               <View style={styles.divider} />
 
               <View style={styles.accountRow}>
-                <View style={[styles.switchIconBox, { backgroundColor: '#ECFDF5' }]}>
+                <View style={[styles.switchIconBox, styles.switchIconBackup]}>
                   <Ionicons name="cloud-done-outline" size={18} color="#059669" />
                 </View>
                 <View style={styles.flex1}>
@@ -295,11 +316,13 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
               {currentUser?.isGuest ? (
                 onSignIn ? (
                   <Pressable
-                    style={({ pressed }) => [styles.authBtn, pressed && styles.pressedSubtle]}
+                    style={({ pressed }) => [styles.authBtn, pressed ? styles.pressedSubtle : null]}
                     onPress={() => {
                       onClose();
                       onSignIn();
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Sign in or create account"
                   >
                     <Ionicons name="log-in-outline" size={18} color={Colors.primary} />
                     <Text style={styles.authBtnText}>Sign In / Create Account</Text>
@@ -307,8 +330,10 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                 ) : null
               ) : (
                 <Pressable
-                  style={({ pressed }) => [styles.signOutBtn, pressed && styles.pressedSubtle]}
+                  style={({ pressed }) => [styles.signOutBtn, pressed ? styles.pressedSubtle : null]}
                   onPress={handleLogout}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign out of Calori"
                 >
                   <Ionicons name="log-out-outline" size={18} color="#DC2626" />
                   <Text style={styles.signOutBtnText}>Sign Out of Calori</Text>
@@ -551,5 +576,29 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 13,
     color: '#DC2626',
+  },
+  personalityIconSupportive: {
+    backgroundColor: '#FEF3C7',
+  },
+  personalityIconFocused: {
+    backgroundColor: '#FEE2E2',
+  },
+  personalityIconScientific: {
+    backgroundColor: '#E0E7FF',
+  },
+  switchIconWater: {
+    backgroundColor: '#EFF6FF',
+  },
+  switchIconMeal: {
+    backgroundColor: '#FFF7ED',
+  },
+  switchIconStep: {
+    backgroundColor: '#F0FDF4',
+  },
+  switchIconAccount: {
+    backgroundColor: '#F1F5F9',
+  },
+  switchIconBackup: {
+    backgroundColor: '#ECFDF5',
   },
 });

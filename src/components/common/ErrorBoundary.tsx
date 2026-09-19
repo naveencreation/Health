@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 
@@ -46,14 +46,15 @@ export class ErrorBoundary extends Component<Props, State> {
             <Text style={styles.message}>
               {this.state.error?.message || 'An unexpected rendering error occurred.'}
             </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
+            <Pressable
+              style={({ pressed }) => [styles.retryButton, pressed ? styles.retryButtonPressed : null]}
               onPress={this.handleReload}
-              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Reload App"
             >
-              <Ionicons name="refresh" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Ionicons name="refresh" size={18} color="#FFFFFF" style={styles.buttonIcon} />
               <Text style={styles.retryButtonText}>Reload App</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       );
@@ -116,6 +117,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     borderRadius: 14,
     width: '100%',
+  },
+  retryButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   retryButtonText: {
     fontSize: 15,

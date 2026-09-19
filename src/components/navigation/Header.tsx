@@ -16,6 +16,9 @@ interface HeaderProps {
   onSignOutPress?: () => void;
 }
 
+const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+
 export const Header: React.FC<HeaderProps> = ({
   onSearchPress,
   onNotificationsPress,
@@ -35,10 +38,10 @@ export const Header: React.FC<HeaderProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.avatarContainer,
-              pressed && styles.avatarPressed,
+              pressed ? styles.avatarPressed : null,
             ]}
             onPress={onAvatarPress}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            hitSlop={HIT_SLOP_6}
             accessibilityRole="button"
             accessibilityLabel="Open profile"
           >
@@ -79,11 +82,11 @@ export const Header: React.FC<HeaderProps> = ({
             <Pressable
               style={({ pressed }) => [
                 styles.circleButton,
-                currentUser?.isGuest && styles.authButtonHighlight,
-                pressed && styles.circleButtonPressed,
+                currentUser?.isGuest ? styles.authButtonHighlight : null,
+                pressed ? styles.circleButtonPressed : null,
               ]}
               onPress={currentUser?.isGuest ? onSignInPress : onSignOutPress}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={HIT_SLOP_8}
               accessibilityRole="button"
               accessibilityLabel={currentUser?.isGuest ? "Sign In" : "Sign Out"}
             >
@@ -99,10 +102,10 @@ export const Header: React.FC<HeaderProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.circleButton,
-              pressed && styles.circleButtonPressed,
+              pressed ? styles.circleButtonPressed : null,
             ]}
             onPress={onSearchPress}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel="Search foods and diary"
           >
@@ -113,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.circleButton,
-              pressed && styles.circleButtonPressed,
+              pressed ? styles.circleButtonPressed : null,
             ]}
             onPress={() => {
               setHasUnreadNotification(false);
@@ -121,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onNotificationsPress();
               }
             }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
           >
@@ -136,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.guestBanner,
-            pressed && styles.guestBannerPressed,
+            pressed ? styles.guestBannerPressed : null,
           ]}
           onPress={onSignInPress}
           accessibilityRole="button"

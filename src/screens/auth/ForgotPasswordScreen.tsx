@@ -123,7 +123,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         {/* Header Bar */}
         <View style={styles.headerBar}>
           <Pressable
-            style={({ pressed }) => [styles.backButton, pressed && styles.pressedBack]}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
             onPress={step === 2 ? () => setStep(1) : onBack}
             hitSlop={12}
             accessibilityRole="button"
@@ -207,6 +207,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       returnKeyType="done"
                       onSubmitEditing={handleRequestCode}
                       testID="input-forgot-email"
+                      accessibilityLabel="Email Address"
                     />
                   </View>
                 </View>
@@ -214,12 +215,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 <Pressable
                   style={({ pressed }) => [
                     styles.submitButton,
-                    pressed && styles.pressedButton,
-                    loading && styles.disabledButton,
+                    pressed ? styles.pressedButton : null,
+                    loading ? styles.disabledButton : null,
                   ]}
                   onPress={handleRequestCode}
                   disabled={loading}
                   testID="btn-forgot-send-code"
+                  accessibilityRole="button"
+                  accessibilityLabel="Send Reset Code"
                 >
                   {loading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -252,6 +255,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       returnKeyType="next"
                       onSubmitEditing={() => passwordRef.current?.focus()}
                       testID="input-forgot-code"
+                      accessibilityLabel="Verification Code"
                     />
                   </View>
                 </View>
@@ -264,7 +268,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       ref={passwordRef}
                       style={[
                         styles.textInput,
-                        Platform.OS === 'android' && !showPassword && styles.androidPasswordInput,
+                        Platform.OS === 'android' && !showPassword ? styles.androidPasswordInput : null,
                       ]}
                       placeholder="Min. 8 characters"
                       placeholderTextColor="#94A3B8"
@@ -278,11 +282,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       returnKeyType="next"
                       onSubmitEditing={() => confirmRef.current?.focus()}
                       testID="input-forgot-new-password"
+                      accessibilityLabel="New Password"
                     />
                     <Pressable
                       onPress={() => setShowPassword(!showPassword)}
                       hitSlop={8}
-                      style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                      style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                     >
                       <Ionicons
                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -301,7 +308,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       ref={confirmRef}
                       style={[
                         styles.textInput,
-                        Platform.OS === 'android' && !showConfirmPassword && styles.androidPasswordInput,
+                        Platform.OS === 'android' && !showConfirmPassword ? styles.androidPasswordInput : null,
                       ]}
                       placeholder="Repeat new password"
                       placeholderTextColor="#94A3B8"
@@ -315,11 +322,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                       returnKeyType="done"
                       onSubmitEditing={handleResetPassword}
                       testID="input-forgot-confirm-new-password"
+                      accessibilityLabel="Confirm New Password"
                     />
                     <Pressable
                       onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                       hitSlop={8}
-                      style={({ pressed }) => [pressed && styles.pressedSubtle]}
+                      style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
+                      accessibilityRole="button"
+                      accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                     >
                       <Ionicons
                         name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -333,12 +343,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 <Pressable
                   style={({ pressed }) => [
                     styles.submitButton,
-                    pressed && styles.pressedButton,
-                    loading && styles.disabledButton,
+                    pressed ? styles.pressedButton : null,
+                    loading ? styles.disabledButton : null,
                   ]}
                   onPress={handleResetPassword}
                   disabled={loading}
                   testID="btn-forgot-reset-submit"
+                  accessibilityRole="button"
+                  accessibilityLabel="Reset Password"
                 >
                   {loading ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />

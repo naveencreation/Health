@@ -67,6 +67,9 @@ const MEAL_TABS: { id: MealType; label: string; icon: string }[] = [
   { id: 'dinner', label: 'Dinner', icon: '🍲' },
 ];
 
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
+
 interface FoodItemRowProps {
   item: FoodItem;
   onSelect: (item: FoodItem) => void;
@@ -76,7 +79,7 @@ interface FoodItemRowProps {
 const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }) => {
   return (
     <Pressable
-      style={({ pressed }) => [styles.foodItemCard, pressed && styles.foodItemCardPressed]}
+      style={({ pressed }) => [styles.foodItemCard, pressed ? styles.foodItemCardPressed : null]}
       onPress={() => onSelect(item)}
     >
       {/* Food Thumbnail Icon */}
@@ -117,12 +120,12 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
 
         {/* 44x44px Touch Target Button */}
         <Pressable
-          style={({ pressed }) => [styles.quickAddButton, pressed && styles.quickAddButtonPressed]}
+          style={({ pressed }) => [styles.quickAddButton, pressed ? styles.quickAddButtonPressed : null]}
           onPress={(e) => {
             e.stopPropagation && e.stopPropagation();
             onQuickAdd(item);
           }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HIT_SLOP_8}
           accessibilityLabel={`Quick add 1 serving of ${item.name}`}
         >
           <View style={styles.quickAddIconCircle}>
@@ -379,8 +382,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
         <View style={styles.header}>
           <Pressable
             onPress={onClose}
-            style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressedSubtle]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={({ pressed }) => [styles.closeBtn, pressed ? styles.btnPressedSubtle : null]}
+            hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
             accessibilityLabel="Close food logger"
           >
@@ -398,9 +401,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
           </View>
 
           <Pressable
-            style={({ pressed }) => [styles.customToggleBtn, pressed && styles.btnPressedSubtle]}
+            style={({ pressed }) => [styles.customToggleBtn, pressed ? styles.btnPressedSubtle : null]}
             onPress={() => setIsCustomMode(!isCustomMode)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
           >
             <Text style={styles.customToggleText}>
@@ -424,8 +427,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   key={slot.id}
                   style={({ pressed }) => [
                     styles.mealTabPill,
-                    isSelected && styles.mealTabPillActive,
-                    pressed && styles.btnPressedPill,
+                    isSelected ? styles.mealTabPillActive : null,
+                    pressed ? styles.btnPressedPill : null,
                   ]}
                   onPress={() => {
                     setSelectedMealType(slot.id);
@@ -434,7 +437,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   accessibilityRole="button"
                 >
                   <Text style={styles.mealTabEmoji}>{slot.icon}</Text>
-                  <Text style={[styles.mealTabLabel, isSelected && styles.mealTabLabelActive]}>
+                  <Text style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}>
                     {slot.label}
                   </Text>
                 </Pressable>
@@ -531,7 +534,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
               </View>
 
               <Pressable
-                style={({ pressed }) => [styles.saveCustomBtn, pressed && styles.btnPressedPrimary]}
+                style={({ pressed }) => [styles.saveCustomBtn, pressed ? styles.btnPressedPrimary : null]}
                 onPress={handleCreateCustomFood}
                 accessibilityRole="button"
               >
@@ -554,7 +557,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 {searchQuery.length > 0 ? (
                   <Pressable
                     onPress={() => setSearchQuery('')}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    hitSlop={HIT_SLOP_8}
                     accessibilityRole="button"
                     accessibilityLabel="Clear search input"
                   >
@@ -575,8 +578,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       key={cat.id}
                       style={({ pressed }) => [
                         styles.categoryPill,
-                        selectedCategory === cat.id && styles.categoryPillActive,
-                        pressed && styles.btnPressedPill,
+                        selectedCategory === cat.id ? styles.categoryPillActive : null,
+                        pressed ? styles.btnPressedPill : null,
                       ]}
                       onPress={() => setSelectedCategory(cat.id)}
                       accessibilityRole="button"
@@ -584,7 +587,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       <Text
                         style={[
                           styles.categoryText,
-                          selectedCategory === cat.id && styles.categoryTextActive,
+                          selectedCategory === cat.id ? styles.categoryTextActive : null,
                         ]}
                       >
                         {cat.label}
@@ -630,9 +633,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                     </Text>
                   </View>
                   <Pressable
-                    style={({ pressed }) => [styles.drawerCloseBtn, pressed && styles.btnPressedSubtle]}
+                    style={({ pressed }) => [styles.drawerCloseBtn, pressed ? styles.btnPressedSubtle : null]}
                     onPress={() => setSelectedFood(null)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    hitSlop={HIT_SLOP_10}
                     accessibilityRole="button"
                     accessibilityLabel="Close portion drawer"
                   >
@@ -645,8 +648,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   <Text style={styles.stepperLabel}>Portion Size:</Text>
                   <View style={styles.stepperControls}>
                     <Pressable
-                      style={({ pressed }) => [styles.stepButton, pressed && styles.btnPressedSubtle]}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={({ pressed }) => [styles.stepButton, pressed ? styles.btnPressedSubtle : null]}
+                      hitSlop={HIT_SLOP_8}
                       onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
                       accessibilityRole="button"
                       accessibilityLabel="Decrease portion by 0.5"
@@ -660,8 +663,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       </Text>
                     </View>
                     <Pressable
-                      style={({ pressed }) => [styles.stepButton, pressed && styles.btnPressedSubtle]}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={({ pressed }) => [styles.stepButton, pressed ? styles.btnPressedSubtle : null]}
+                      hitSlop={HIT_SLOP_8}
                       onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
                       accessibilityRole="button"
                       accessibilityLabel="Increase portion by 0.5"
@@ -682,8 +685,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       key={preset.val}
                       style={({ pressed }) => [
                         styles.presetBtn,
-                        quantity === preset.val && styles.presetBtnActive,
-                        pressed && styles.btnPressedPill,
+                        quantity === preset.val ? styles.presetBtnActive : null,
+                        pressed ? styles.btnPressedPill : null,
                       ]}
                       onPress={() => setQuantity(preset.val)}
                       accessibilityRole="button"
@@ -691,7 +694,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                       <Text
                         style={[
                           styles.presetBtnText,
-                          quantity === preset.val && styles.presetBtnTextActive,
+                          quantity === preset.val ? styles.presetBtnTextActive : null,
                         ]}
                       >
                         {preset.label}
@@ -759,7 +762,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
 
                 {/* Confirm Button */}
                 <Pressable
-                  style={({ pressed }) => [styles.confirmAddBtn, pressed && styles.btnPressedPrimary]}
+                  style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
                   onPress={handleConfirmLog}
                   accessibilityRole="button"
                   accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
@@ -785,9 +788,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
               <View style={styles.toastActions}>
                 {lastAddedMeal ? (
                   <Pressable
-                    style={({ pressed }) => [styles.toastUndoBtn, pressed && styles.btnPressedSubtle]}
+                    style={({ pressed }) => [styles.toastUndoBtn, pressed ? styles.btnPressedSubtle : null]}
                     onPress={handleUndo}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    hitSlop={HIT_SLOP_8}
                     accessibilityRole="button"
                     accessibilityLabel="Undo food log"
                   >
@@ -795,13 +798,13 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   </Pressable>
                 ) : null}
                 <Pressable
-                  style={({ pressed }) => [styles.toastCloseBtn, pressed && styles.btnPressedSubtle]}
+                  style={({ pressed }) => [styles.toastCloseBtn, pressed ? styles.btnPressedSubtle : null]}
                   onPress={() => {
                     setToastMessage(null);
                     setLastAddedMeal(null);
                     if (toastTimer) clearTimeout(toastTimer);
                   }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  hitSlop={HIT_SLOP_8}
                   accessibilityRole="button"
                   accessibilityLabel="Dismiss toast"
                 >

@@ -78,8 +78,12 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
               {totalItemsLogged} {totalItemsLogged === 1 ? 'item' : 'items'} tracked today
             </Text>
           </View>
-          <View style={[styles.statusPill, isOverBudget && styles.statusPillOver]}>
-            <Text style={[styles.statusPillText, isOverBudget && styles.statusPillTextOver]}>
+          <View
+            style={[styles.statusPill, isOverBudget ? styles.statusPillOver : null]}
+            accessible={true}
+            accessibilityLabel={isOverBudget ? 'Over calorie budget' : 'On track with calorie budget'}
+          >
+            <Text style={[styles.statusPillText, isOverBudget ? styles.statusPillTextOver : null]}>
               {isOverBudget ? '⚠️ Over Budget' : '✓ On Track'}
             </Text>
           </View>
@@ -89,7 +93,7 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
         <View style={styles.calorieSection}>
           <View style={styles.calorieMainRow}>
             <View style={styles.calorieLeft}>
-              <Text style={[styles.calorieRemainingVal, isOverBudget && styles.calorieOverVal]}>
+              <Text style={[styles.calorieRemainingVal, isOverBudget ? styles.calorieOverVal : null]}>
                 {Math.abs(remainingCalories).toLocaleString()}
               </Text>
               <Text style={styles.calorieRemainingUnit}>
@@ -112,14 +116,16 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
           </View>
 
           {/* Calorie Budget Bar */}
-          <View style={styles.calorieTrack}>
+          <View
+            style={styles.calorieTrack}
+            accessible={true}
+            accessibilityLabel={`Calorie budget progress: ${calorieFillPct}% consumed. ${totalConsumed} of ${calorieBudget} kilocalories`}
+          >
             <View
               style={[
                 styles.calorieBar,
-                {
-                  width: `${calorieFillPct}%`,
-                  backgroundColor: isOverBudget ? '#EF4444' : '#10B981',
-                },
+                isOverBudget ? styles.calorieBarOver : styles.calorieBarNormal,
+                { width: `${calorieFillPct}%` },
               ]}
             />
           </View>
@@ -128,17 +134,22 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
         {/* 3 Macro Pods (Pastel Cards with Micro Progress Bars) */}
         <View style={styles.macroRow}>
           {/* Protein Pod */}
-          <View style={[styles.macroPod, styles.proteinPod]}>
+          <View
+            style={[styles.macroPod, styles.proteinPod]}
+            accessible={true}
+            accessibilityLabel={`Protein: ${Math.round(totalProtein)} grams of ${targetProtein} grams target (${proteinPct}%)`}
+          >
             <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, { backgroundColor: '#16A34A' }]} />
-              <Text style={[styles.macroPodLabel, { color: '#16A34A' }]}>PROTEIN</Text>
+              <View style={[styles.macroDot, styles.dotProtein]} />
+              <Text style={[styles.macroPodLabel, styles.labelProtein]}>PROTEIN</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalProtein)}g</Text>
-            <View style={[styles.podTrack, { backgroundColor: '#DCFCE7' }]}>
+            <View style={[styles.podTrack, styles.trackProtein]}>
               <View
                 style={[
                   styles.podFill,
-                  { width: `${proteinPct}%`, backgroundColor: '#16A34A' },
+                  styles.fillProtein,
+                  { width: `${proteinPct}%` },
                 ]}
               />
             </View>
@@ -146,17 +157,22 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
           </View>
 
           {/* Carbs Pod */}
-          <View style={[styles.macroPod, styles.carbsPod]}>
+          <View
+            style={[styles.macroPod, styles.carbsPod]}
+            accessible={true}
+            accessibilityLabel={`Carbohydrates: ${Math.round(totalCarbs)} grams of ${targetCarbs} grams target (${carbsPct}%)`}
+          >
             <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, { backgroundColor: '#0284C7' }]} />
-              <Text style={[styles.macroPodLabel, { color: '#0284C7' }]}>CARBS</Text>
+              <View style={[styles.macroDot, styles.dotCarbs]} />
+              <Text style={[styles.macroPodLabel, styles.labelCarbs]}>CARBS</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalCarbs)}g</Text>
-            <View style={[styles.podTrack, { backgroundColor: '#E0F2FE' }]}>
+            <View style={[styles.podTrack, styles.trackCarbs]}>
               <View
                 style={[
                   styles.podFill,
-                  { width: `${carbsPct}%`, backgroundColor: '#0284C7' },
+                  styles.fillCarbs,
+                  { width: `${carbsPct}%` },
                 ]}
               />
             </View>
@@ -164,17 +180,22 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
           </View>
 
           {/* Fat Pod */}
-          <View style={[styles.macroPod, styles.fatPod]}>
+          <View
+            style={[styles.macroPod, styles.fatPod]}
+            accessible={true}
+            accessibilityLabel={`Fat: ${Math.round(totalFat)} grams of ${targetFat} grams target (${fatPct}%)`}
+          >
             <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, { backgroundColor: '#EA580C' }]} />
-              <Text style={[styles.macroPodLabel, { color: '#EA580C' }]}>FAT</Text>
+              <View style={[styles.macroDot, styles.dotFat]} />
+              <Text style={[styles.macroPodLabel, styles.labelFat]}>FAT</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalFat)}g</Text>
-            <View style={[styles.podTrack, { backgroundColor: '#FFEDD5' }]}>
+            <View style={[styles.podTrack, styles.trackFat]}>
               <View
                 style={[
                   styles.podFill,
-                  { width: `${fatPct}%`, backgroundColor: '#EA580C' },
+                  styles.fillFat,
+                  { width: `${fatPct}%` },
                 ]}
               />
             </View>
@@ -379,6 +400,48 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.regular,
     fontSize: 10,
     color: '#94A3B8',
+  },
+  calorieBarNormal: {
+    backgroundColor: '#10B981',
+  },
+  calorieBarOver: {
+    backgroundColor: '#EF4444',
+  },
+  dotProtein: {
+    backgroundColor: '#16A34A',
+  },
+  labelProtein: {
+    color: '#16A34A',
+  },
+  trackProtein: {
+    backgroundColor: '#DCFCE7',
+  },
+  fillProtein: {
+    backgroundColor: '#16A34A',
+  },
+  dotCarbs: {
+    backgroundColor: '#0284C7',
+  },
+  labelCarbs: {
+    color: '#0284C7',
+  },
+  trackCarbs: {
+    backgroundColor: '#E0F2FE',
+  },
+  fillCarbs: {
+    backgroundColor: '#0284C7',
+  },
+  dotFat: {
+    backgroundColor: '#EA580C',
+  },
+  labelFat: {
+    color: '#EA580C',
+  },
+  trackFat: {
+    backgroundColor: '#FFEDD5',
+  },
+  fillFat: {
+    backgroundColor: '#EA580C',
   },
 });
 

@@ -48,6 +48,8 @@ interface RiaCoachCardProps {
   onOpenChat?: (promptText?: string) => void;
 }
 
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+
 export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
   const { totalProtein, userGoals, remainingCalories, currentLog } = useHealth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
@@ -109,10 +111,10 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
         <Pressable
           style={({ pressed }) => [
             styles.chatActionBtn,
-            pressed && styles.pressedChatBtn,
+            pressed ? styles.pressedChatBtn : null,
           ]}
           onPress={() => (onOpenChat ? onOpenChat() : setActivePromptId(null))}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HIT_SLOP_8}
           accessibilityRole="button"
           accessibilityLabel="Open chat with Ria"
         >
@@ -132,7 +134,7 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
         <Pressable
           style={({ pressed }) => [
             styles.bubbleCard,
-            pressed && styles.bubbleCardPressed,
+            pressed ? styles.bubbleCardPressed : null,
           ]}
           onPress={() => onOpenChat && onOpenChat(activeMessage)}
           accessibilityRole="button"
@@ -168,15 +170,15 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
                 key={prompt.id}
                 style={({ pressed }) => [
                   styles.chip,
-                  isSelected && styles.chipSelected,
-                  pressed && styles.chipPressed,
+                  isSelected ? styles.chipSelected : null,
+                  pressed ? styles.chipPressed : null,
                 ]}
                 onPress={() => setActivePromptId(isSelected ? null : prompt.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`Ask Ria: ${prompt.label}`}
               >
                 <Text style={styles.chipIcon}>{prompt.icon}</Text>
-                <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : null]}>
                   {prompt.label}
                 </Text>
               </Pressable>

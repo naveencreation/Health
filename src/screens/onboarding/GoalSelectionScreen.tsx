@@ -3,7 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,7 +25,6 @@ interface GoalOption {
   subtitle: string;
   iconName: string;
   iconFamily: 'ionicons' | 'mci';
-  iconBg: string;
   iconColor: string;
 }
 
@@ -36,7 +35,6 @@ const GOAL_OPTIONS: GoalOption[] = [
     subtitle: 'Caloric deficit for sustainable fat loss',
     iconName: 'flame',
     iconFamily: 'ionicons',
-    iconBg: '#FFF1EE',
     iconColor: '#F47551',
   },
   {
@@ -45,7 +43,6 @@ const GOAL_OPTIONS: GoalOption[] = [
     subtitle: 'Equilibrium to optimize daily energy & health',
     iconName: 'scale-balance',
     iconFamily: 'mci',
-    iconBg: '#F0FDF4',
     iconColor: '#16A34A',
   },
   {
@@ -54,10 +51,11 @@ const GOAL_OPTIONS: GoalOption[] = [
     subtitle: 'Caloric surplus to build strength & lean mass',
     iconName: 'barbell',
     iconFamily: 'ionicons',
-    iconBg: '#EEF2FF',
     iconColor: '#4F46E5',
   },
 ];
+
+const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   onBack,
@@ -77,15 +75,15 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
       <View style={styles.phoneFrame}>
         {/* Frame 12: Top Navigation Bar */}
         <View style={styles.headerBar}>
-          <TouchableOpacity
-            style={styles.backButton}
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
             onPress={onBack}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={HIT_SLOP_12}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </TouchableOpacity>
+          </Pressable>
 
           <View style={styles.logoBadgeContainer}>
             <View style={styles.logoDot} />
@@ -113,20 +111,20 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
             const isSelected = selectedGoal === option.id;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={option.id}
-                activeOpacity={0.88}
                 onPress={() => setSelectedGoal(option.id)}
-                style={[
+                style={({ pressed }) => [
                   styles.goalCard,
                   isSelected ? styles.goalCardSelected : styles.goalCardUnselected,
+                  pressed ? styles.goalCardPressed : null,
                 ]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={`${option.title}: ${option.subtitle}`}
               >
                 {/* Left Visual Icon Badge */}
-                <View style={[styles.iconBadge, { backgroundColor: option.iconBg }]}>
+                <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
                   {option.iconFamily === 'ionicons' ? (
                     <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
                   ) : (
@@ -139,7 +137,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                   <Text
                     style={[
                       styles.goalTitle,
-                      isSelected && styles.goalTitleSelected,
+                      isSelected ? styles.goalTitleSelected : null,
                     ]}
                   >
                     {option.title}
@@ -154,58 +152,70 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                     isSelected ? styles.radioSelected : styles.radioUnselected,
                   ]}
                 >
-                  {isSelected && (
+                  {isSelected ? (
                     <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  )}
+                  ) : null}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
 
         {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity
-            style={styles.continueButton}
+          <Pressable
+            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
             onPress={handleContinuePress}
-            activeOpacity={0.88}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected goal"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#0F172A" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
-            <TouchableOpacity
-              style={styles.skipContainer}
+            <Pressable
+              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
               onPress={onSkip}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
               accessibilityLabel="Skip goal selection"
             >
               <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            {onSignIn && (
-              <TouchableOpacity
+            {onSignIn ? (
+              <Pressable
                 onPress={onSignIn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.signInBottomBtn}
+                hitSlop={HIT_SLOP_12}
+                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >
                 <Text style={styles.signInLinkText}>
                   Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
                 </Text>
-              </TouchableOpacity>
-            )}
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>
     </SafeAreaView>
   );
+};
+
+const getGoalIconBgStyle = (id: FitnessGoal) => {
+  switch (id) {
+    case 'lose':
+      return styles.iconBadgeLose;
+    case 'maintain':
+      return styles.iconBadgeMaintain;
+    case 'gain':
+      return styles.iconBadgeGain;
+    default:
+      return null;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -368,6 +378,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconBadgeLose: {
+    backgroundColor: '#FFF1EE',
+  },
+  iconBadgeMaintain: {
+    backgroundColor: '#F0FDF4',
+  },
+  iconBadgeGain: {
+    backgroundColor: '#EEF2FF',
+  },
+  btnPressedSubtle: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
+  },
+  goalCardPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
   cardTextContent: {
     flex: 1,
     marginLeft: 14,
@@ -444,6 +471,10 @@ const styles = StyleSheet.create({
           boxShadow: '0px 6px 18px rgba(205, 226, 109, 0.45)',
         } as any)
       : {}),
+  },
+  continueButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',

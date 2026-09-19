@@ -14,6 +14,8 @@ const QUICK_WORKOUTS = [
   { name: 'Cycling', mins: 30, cals: 190, icon: 'bicycle-outline' },
 ];
 
+const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+
 export const DailyHabitsCard: React.FC = () => {
   const {
     currentLog,
@@ -77,7 +79,7 @@ export const DailyHabitsCard: React.FC = () => {
         <Pressable
           style={({ pressed }) => [
             styles.logWorkoutHeaderBtn,
-            pressed && styles.pressedBtnSubtle,
+            pressed ? styles.pressedBtnSubtle : null,
           ]}
           onPress={() => setWorkoutModalVisible(true)}
           accessibilityRole="button"
@@ -142,9 +144,9 @@ export const DailyHabitsCard: React.FC = () => {
           <View style={styles.stepperActionRow}>
             {currentMl > 0 ? (
               <Pressable
-                style={({ pressed }) => [styles.waterMinusBtn, pressed && styles.stepperPressed]}
+                style={({ pressed }) => [styles.waterMinusBtn, pressed ? styles.stepperPressed : null]}
                 onPress={() => addWater(-250)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease water by 250 ml"
               >
@@ -152,9 +154,9 @@ export const DailyHabitsCard: React.FC = () => {
               </Pressable>
             ) : null}
             <Pressable
-              style={({ pressed }) => [styles.waterAddBtn, pressed && styles.stepperPressed]}
+              style={({ pressed }) => [styles.waterAddBtn, pressed ? styles.stepperPressed : null]}
               onPress={() => addWater(250)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={HIT_SLOP_8}
               accessibilityRole="button"
               accessibilityLabel="Add 250 ml water"
             >
@@ -216,9 +218,9 @@ export const DailyHabitsCard: React.FC = () => {
           <View style={styles.stepperActionRow}>
             {steps > 0 ? (
               <Pressable
-                style={({ pressed }) => [styles.stepMinusBtn, pressed && styles.stepperPressed]}
+                style={({ pressed }) => [styles.stepMinusBtn, pressed ? styles.stepperPressed : null]}
                 onPress={() => addSteps(-1000)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease steps by 1,000"
               >
@@ -226,9 +228,9 @@ export const DailyHabitsCard: React.FC = () => {
               </Pressable>
             ) : null}
             <Pressable
-              style={({ pressed }) => [styles.stepAddBtn, pressed && styles.stepperPressed]}
+              style={({ pressed }) => [styles.stepAddBtn, pressed ? styles.stepperPressed : null]}
               onPress={() => addSteps(1000)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={HIT_SLOP_8}
               accessibilityRole="button"
               accessibilityLabel="Add 1,000 steps"
             >
@@ -257,7 +259,7 @@ export const DailyHabitsCard: React.FC = () => {
               </Text>
               <Pressable
                 onPress={() => removeWorkout(act.id)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove workout ${act.name}`}
               >
@@ -276,7 +278,7 @@ export const DailyHabitsCard: React.FC = () => {
               <Text style={styles.modalTitle}>Log Activity / Workout</Text>
               <Pressable
                 onPress={() => setWorkoutModalVisible(false)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"
                 accessibilityLabel="Close workout modal"
               >
@@ -289,7 +291,7 @@ export const DailyHabitsCard: React.FC = () => {
               {QUICK_WORKOUTS.map((item, idx) => (
                 <Pressable
                   key={idx}
-                  style={({ pressed }) => [styles.quickCard, pressed && styles.quickCardPressed]}
+                  style={({ pressed }) => [styles.quickCard, pressed ? styles.quickCardPressed : null]}
                   onPress={() => {
                     addWorkout(item.name, item.mins, item.cals);
                     setWorkoutModalVisible(false);
@@ -337,7 +339,7 @@ export const DailyHabitsCard: React.FC = () => {
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.saveWorkoutBtn, pressed && styles.saveBtnPressed]}
+              style={({ pressed }) => [styles.saveWorkoutBtn, pressed ? styles.saveBtnPressed : null]}
               onPress={handleAddCustomWorkout}
               accessibilityRole="button"
               accessibilityLabel="Save custom workout"

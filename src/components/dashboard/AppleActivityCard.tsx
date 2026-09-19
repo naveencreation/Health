@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useHealth } from '@/context/HealthContext';
 
@@ -114,25 +114,37 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
         </Text>
 
         <View style={styles.toggleBar}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, mode === 'activity' && styles.toggleBtnActive]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.toggleBtn,
+              mode === 'activity' ? styles.toggleBtnActive : null,
+              pressed ? styles.toggleBtnPressed : null,
+            ]}
             onPress={() => setMode('activity')}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
+            accessibilityLabel="Activity mode"
+            accessibilityState={{ selected: mode === 'activity' }}
           >
-            <Text style={[styles.toggleBtnText, mode === 'activity' && styles.toggleBtnTextActive]}>
+            <Text style={[styles.toggleBtnText, mode === 'activity' ? styles.toggleBtnTextActive : null]}>
               Activity
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[styles.toggleBtn, mode === 'nutrition' && styles.toggleBtnActive]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.toggleBtn,
+              mode === 'nutrition' ? styles.toggleBtnActive : null,
+              pressed ? styles.toggleBtnPressed : null,
+            ]}
             onPress={() => setMode('nutrition')}
-            activeOpacity={0.8}
+            accessibilityRole="tab"
+            accessibilityLabel="Nutrition mode"
+            accessibilityState={{ selected: mode === 'nutrition' }}
           >
-            <Text style={[styles.toggleBtnText, mode === 'nutrition' && styles.toggleBtnTextActive]}>
+            <Text style={[styles.toggleBtnText, mode === 'nutrition' ? styles.toggleBtnTextActive : null]}>
               Nutrition
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -199,7 +211,7 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
           {currentRings.map((ring) => (
             <View key={`${mode}-legend-${ring.label}`} style={styles.legendItem}>
               <Text style={styles.legendLabel}>{ring.label}</Text>
-              <Text style={[styles.legendValue, { color: ring.colorStart }]}>
+              <Text style={[styles.legendValue, getLegendColorStyle(ring.label)]}>
                 {ring.current}/{ring.target}
                 <Text style={styles.legendUnit}> {ring.unit}</Text>
               </Text>
@@ -209,6 +221,25 @@ export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition
       </View>
     </View>
   );
+};
+
+const getLegendColorStyle = (label: string) => {
+  switch (label) {
+    case 'MOVE':
+      return styles.legendColorMove;
+    case 'EXERCISE':
+      return styles.legendColorExercise;
+    case 'STAND':
+      return styles.legendColorStand;
+    case 'CALORIES':
+      return styles.legendColorCalories;
+    case 'PROTEIN':
+      return styles.legendColorProtein;
+    case 'WATER':
+      return styles.legendColorWater;
+    default:
+      return null;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -249,6 +280,9 @@ const styles = StyleSheet.create({
   },
   toggleBtnActive: {
     backgroundColor: '#2D323E',
+  },
+  toggleBtnPressed: {
+    opacity: 0.8,
   },
   toggleBtnText: {
     fontSize: 11,
@@ -291,6 +325,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  legendColorMove: {
+    color: '#FF2D55',
+  },
+  legendColorExercise: {
+    color: '#A3F900',
+  },
+  legendColorStand: {
+    color: '#04C7DD',
+  },
+  legendColorCalories: {
+    color: '#F47551',
+  },
+  legendColorProtein: {
+    color: '#67BD6E',
+  },
+  legendColorWater: {
+    color: '#38BDF8',
   },
   legendUnit: {
     fontSize: 12,

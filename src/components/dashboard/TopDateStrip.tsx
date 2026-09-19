@@ -73,7 +73,7 @@ export const TopDateStrip: React.FC = () => {
                 key={item.dateStr}
                 style={({ pressed }) => [
                   styles.activeCapsule,
-                  pressed && styles.pressedCapsule,
+                  pressed ? styles.pressedCapsule : null,
                 ]}
                 onPress={() => setSelectedDate(item.dateStr)}
                 accessibilityRole="button"
@@ -117,7 +117,7 @@ export const TopDateStrip: React.FC = () => {
               key={item.dateStr}
               style={({ pressed }) => [
                 styles.capsule,
-                pressed && styles.pressedCapsule,
+                pressed ? styles.pressedCapsule : null,
               ]}
               onPress={() => setSelectedDate(item.dateStr)}
               accessibilityRole="button"

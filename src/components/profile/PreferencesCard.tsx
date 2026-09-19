@@ -43,10 +43,13 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.personalityCard,
-              riaTone === 'supportive' && styles.personalityCardActive,
-              pressed && styles.personalityPressed,
+              riaTone === 'supportive' ? styles.personalityCardActive : null,
+              pressed ? styles.personalityPressed : null,
             ]}
             onPress={() => setRiaTone('supportive')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: riaTone === 'supportive' }}
+            accessibilityLabel="Select Warm and Encouraging coaching style"
           >
             <Text style={styles.personalityEmoji}>🌟</Text>
             <View style={styles.flex1}>
@@ -63,10 +66,13 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.personalityCard,
-              riaTone === 'focused' && styles.personalityCardActive,
-              pressed && styles.personalityPressed,
+              riaTone === 'focused' ? styles.personalityCardActive : null,
+              pressed ? styles.personalityPressed : null,
             ]}
             onPress={() => setRiaTone('focused')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: riaTone === 'focused' }}
+            accessibilityLabel="Select Disciplined and Direct coaching style"
           >
             <Text style={styles.personalityEmoji}>🎯</Text>
             <View style={styles.flex1}>
@@ -83,10 +89,13 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
           <Pressable
             style={({ pressed }) => [
               styles.personalityCard,
-              riaTone === 'scientific' && styles.personalityCardActive,
-              pressed && styles.personalityPressed,
+              riaTone === 'scientific' ? styles.personalityCardActive : null,
+              pressed ? styles.personalityPressed : null,
             ]}
             onPress={() => setRiaTone('scientific')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: riaTone === 'scientific' }}
+            accessibilityLabel="Select Nutritional Scientist coaching style"
           >
             <Text style={styles.personalityEmoji}>🔬</Text>
             <View style={styles.flex1}>
@@ -120,6 +129,7 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
             onValueChange={setWaterReminder}
             trackColor={{ false: '#E2E8F0', true: '#FFEDD5' }}
             thumbColor={waterReminder ? Colors.primary : '#FFFFFF'}
+            accessibilityLabel="Hydration prompts every 2 hours"
           />
         </View>
 
@@ -136,6 +146,7 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
             onValueChange={setMealReminder}
             trackColor={{ false: '#E2E8F0', true: '#FFEDD5' }}
             thumbColor={mealReminder ? Colors.primary : '#FFFFFF'}
+            accessibilityLabel="Meal logging check-in reminders"
           />
         </View>
 
@@ -152,6 +163,7 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
             onValueChange={setStepReminder}
             trackColor={{ false: '#E2E8F0', true: '#FFEDD5' }}
             thumbColor={stepReminder ? Colors.primary : '#FFFFFF'}
+            accessibilityLabel="Evening step target summary check reminder"
           />
         </View>
       </View>
@@ -182,7 +194,11 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
               <Text style={styles.serviceStatus}>Download CSV for doctor or dietitian</Text>
             </View>
           </View>
-          <Pressable style={({ pressed }) => [styles.exportBtn, pressed && styles.exportBtnPressed]}>
+          <Pressable
+            style={({ pressed }) => [styles.exportBtn, pressed ? styles.exportBtnPressed : null]}
+            accessibilityRole="button"
+            accessibilityLabel="Export 30-Day Nutrition Log to CSV"
+          >
             <Text style={styles.exportBtnText}>Export</Text>
           </Pressable>
         </View>

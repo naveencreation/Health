@@ -3,7 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Platform,
   ScrollView,
 } from 'react-native';
@@ -24,6 +24,7 @@ const ITEM_HEIGHT = 80;
 const CONTAINER_HEIGHT = 400;
 const PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2; // 160px
 const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
+const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
   onBack,
@@ -156,15 +157,15 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
         {/* Frame 12: Top Header Bar */}
         <View style={styles.headerBar}>
           {/* Back Action */}
-          <TouchableOpacity
-            style={styles.backButton}
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
             onPress={onBack}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={HIT_SLOP_12}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Center Brand Badge */}
           <View style={styles.logoBadgeContainer}>
@@ -221,15 +222,21 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
               const isFar = diff > 2;
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={age}
-                  activeOpacity={0.8}
-                  style={[styles.numberRow, isFar && { opacity: 0 }]}
+                  style={({ pressed }) => [
+                    styles.numberRow,
+                    isFar ? styles.numberRowFar : null,
+                    pressed && !isFar ? styles.btnPressedSubtle : null,
+                  ]}
                   onPress={() => handleSelectAge(age)}
                   disabled={isFar}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Age ${age}`}
+                  accessibilityState={{ selected: diff === 0 }}
                 >
                   <Text style={textStyle}>{age}</Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -237,41 +244,40 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
 
         {/* Frame 9: High-Contrast Accessible Continue CTA Button */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity
-            style={styles.continueButton}
+          <Pressable
+            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
             onPress={handleContinuePress}
-            activeOpacity={0.88}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected age"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#0F172A" />
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
-            <TouchableOpacity
-              style={styles.skipContainer}
+            <Pressable
+              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
               onPress={onSkip}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
               accessibilityLabel="Skip age selection"
             >
               <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
-            {onSignIn && (
-              <TouchableOpacity
+            </Pressable>
+            {onSignIn ? (
+              <Pressable
                 onPress={onSignIn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.signInBottomBtn}
+                hitSlop={HIT_SLOP_12}
+                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >
                 <Text style={styles.signInLinkText}>
                   Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
                 </Text>
-              </TouchableOpacity>
-            )}
+              </Pressable>
+            ) : null}
           </View>
         </View>
       </View>
@@ -436,6 +442,13 @@ const styles = StyleSheet.create({
         } as any)
       : {}),
   },
+  numberRowFar: {
+    opacity: 0,
+  },
+  btnPressedSubtle: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
+  },
   selectedAgeText: {
     fontFamily: 'Kurale_400Regular',
     fontSize: 68,
@@ -481,6 +494,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 4,
+  },
+  continueButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',

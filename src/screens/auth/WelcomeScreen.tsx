@@ -196,9 +196,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <View style={styles.container}>
           {/* Top Header Wordmark */}
           <View style={styles.topHeader}>
-            {onClose && (
+            {onClose ? (
               <Pressable
-                style={({ pressed }) => [styles.headerCloseBtn, pressed && styles.pressedSubtle]}
+                style={({ pressed }) => [styles.headerCloseBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
                 hitSlop={10}
                 accessibilityRole="button"
@@ -206,7 +206,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               >
                 <Ionicons name="close" size={22} color="#64748B" />
               </Pressable>
-            )}
+            ) : null}
             <View style={styles.logoRow}>
               <View style={styles.logoIconBadge}>
                 <Ionicons name="flame" size={18} color="#FFFFFF" />
@@ -245,7 +245,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
             {/* Primary CTA */}
             <Pressable
-              style={({ pressed }) => [styles.primaryButton, pressed && styles.pressedButton]}
+              style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressedButton : null]}
               onPress={() => setMode('age')}
               testID="btn-welcome-get-started"
               accessibilityRole="button"
@@ -256,7 +256,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
             {/* Secondary CTA */}
             <Pressable
-              style={({ pressed }) => [styles.demoButton, pressed && styles.pressedSubtle]}
+              style={({ pressed }) => [styles.demoButton, pressed ? styles.pressedSubtle : null]}
               onPress={handleDemoSignIn}
               disabled={isDemoLoading}
               testID="btn-welcome-demo"
@@ -275,6 +275,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <Text style={styles.signInPromptText}>Already have an account? </Text>
               <Pressable
                 onPress={() => setMode('signin')}
+                style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                 hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                 testID="btn-welcome-signin"
                 accessibilityRole="button"
