@@ -457,10 +457,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     paddingHorizontal: 12,
+    paddingVertical: 0,
     height: 44,
     fontFamily: Fonts.poppins.medium,
     fontSize: 14,
     color: '#0F172A',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   grid2: {
     flexDirection: 'row',
