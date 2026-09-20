@@ -43,5 +43,7 @@ export { MarkdownText } from './common/MarkdownText';
 export { ScreenTransitionContainer } from './common/ScreenTransitionContainer';
 export { AnimatedSvgRing } from './common/AnimatedSvgRing';
 export { AnimatedProgressBar } from './common/AnimatedProgressBar';
+export { FoodIconBadge } from './common/FoodIconBadge';
+
 
 

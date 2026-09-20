@@ -14,6 +14,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
+import { FoodIconBadge } from '@/components/common/FoodIconBadge';
 
 interface SearchFoodModalProps {
   visible: boolean;
@@ -176,9 +177,7 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
             }
             renderItem={({ item }) => (
               <View style={styles.foodRow}>
-                <View style={styles.foodIconBox}>
-                  <Text style={styles.foodIconText}>{item.icon || '🍽️'}</Text>
-                </View>
+                <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
 
                 <View style={styles.foodMainInfo}>
                   <Text style={styles.foodName} numberOfLines={1}>
@@ -428,17 +427,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  foodIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
+  foodItemBadge: {
     marginRight: 12,
-  },
-  foodIconText: {
-    fontSize: 22,
   },
   foodMainInfo: {
     flex: 1,

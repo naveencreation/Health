@@ -173,6 +173,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         fat: analysisResult.fat,
         fiber: analysisResult.fiber,
         icon: '🍱',
+        imageUrl: selectedImageUri || undefined,
       });
     } else {
       foodItemToLog = {
@@ -188,6 +189,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         fat: analysisResult.fat,
         fiber: analysisResult.fiber,
         icon: '🍱',
+        imageUrl: selectedImageUri || undefined,
         isCustom: true,
       };
     }

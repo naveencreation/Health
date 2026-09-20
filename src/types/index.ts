@@ -16,6 +16,7 @@ export interface FoodItem extends MacroNutrients {
   servingUnit: string; // e.g., 'piece', 'katori', 'plate', 'cup', '100g'
   defaultServingSize: number;
   icon?: string;
+  imageUrl?: string;
   isCustom?: boolean;
 }
 
@@ -32,6 +33,7 @@ export interface LoggedMealItem {
   fat: number;
   fiber: number;
   loggedAt: string; // ISO string
+  imageUrl?: string;
 }
 
 export interface WorkoutActivity {

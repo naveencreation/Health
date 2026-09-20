@@ -49,6 +49,7 @@ rules_version = '2';
 //   - category: string (optional, <= 50 chars)
 //   - categoryLabel: string (optional, <= 100 chars)
 //   - icon: string (optional, <= 30 chars)
+//   - imageUrl: string (optional, <= 2,000 chars)
 //   - isCustom: bool (optional)
 //   - sugar: number (optional, >= 0 and <= 1,000 g)
 //   - sodium: number (optional, >= 0 and <= 50,000 mg)
@@ -115,7 +116,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'id', 'name', 'calories', 'carbs', 'protein', 'fat', 'fiber',
           'servingUnit', 'defaultServingSize', 'servingSize', 'category',
-          'categoryLabel', 'icon', 'isCustom', 'sugar', 'sodium', 'healthScore'
+          'categoryLabel', 'icon', 'imageUrl', 'isCustom', 'sugar', 'sodium', 'healthScore'
         ]) &&
         (data.name is string && data.name.size() >= 1 && data.name.size() <= 150) &&
         (data.calories is number && data.calories >= 0 && data.calories <= 15000) &&
@@ -129,6 +130,7 @@ service cloud.firestore {
         (!('category' in data) || (data.category is string && data.category.size() <= 50)) &&
         (!('categoryLabel' in data) || (data.categoryLabel is string && data.categoryLabel.size() <= 100)) &&
         (!('icon' in data) || (data.icon is string && data.icon.size() <= 30)) &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 2000)) &&
         (!('isCustom' in data) || data.isCustom is bool) &&
         (!('sugar' in data) || (data.sugar is number && data.sugar >= 0 && data.sugar <= 1000)) &&
         (!('sodium' in data) || (data.sodium is number && data.sodium >= 0 && data.sodium <= 50000)) &&

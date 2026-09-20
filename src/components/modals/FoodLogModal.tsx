@@ -11,13 +11,17 @@ import {
   Platform,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
 import { useHealth } from '@/context/HealthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FoodIconBadge } from '@/components/common/FoodIconBadge';
 
 interface FoodLogModalProps {
   visible: boolean;
@@ -97,10 +101,9 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
       style={({ pressed }) => [styles.foodItemCard, pressed ? styles.foodItemCardPressed : null]}
       onPress={() => onSelect(item)}
     >
-      {/* Food Thumbnail Icon */}
-      <View style={styles.foodItemIcon}>
-        <Text style={{ fontSize: 22 }}>{item.icon || '🍽️'}</Text>
-      </View>
+      {/* Food Vector / Photo Badge */}
+      <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
+
 
       {/* Clean Food Details (Name + Serving Unit) */}
       <View style={styles.foodItemMain}>
@@ -268,6 +271,28 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const [customProtein, setCustomProtein] = useState('');
   const [customFat, setCustomFat] = useState('');
   const [customFiber, setCustomFiber] = useState('');
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | null>(null);
+
+  const handlePickCustomPhoto = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Please grant photo library access to add a custom food photo.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setCustomPhotoUri(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      console.warn('Custom photo pick error:', err);
+    }
+  };
 
   // Context-aware food list based on mealType and active category
   const filteredFoods = useMemo(() => {
@@ -431,7 +456,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
       protein: parseFloat(customProtein) || 0,
       fat: parseFloat(customFat) || 0,
       fiber: parseFloat(customFiber) || 0,
-      icon: '🍽️',
+      icon: '🍱',
+      imageUrl: customPhotoUri || undefined,
     });
 
     const addedItem = addMealItem(selectedMealType, newFood, 1);
@@ -446,6 +472,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
     setIsCustomMode(false);
     setCustomName('');
+    setCustomPhotoUri(null);
     setCustomCals('');
     setCustomCarbs('');
     setCustomProtein('');
@@ -550,6 +577,32 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
               <Text style={styles.customFormDesc}>
                 Add homemade recipes or items not in the database.
               </Text>
+
+              {/* Photo Picker */}
+              <View style={styles.customPhotoRow}>
+                {customPhotoUri ? (
+                  <View style={styles.customPhotoPreviewContainer}>
+                    <Image source={{ uri: customPhotoUri }} style={styles.customPhotoPreviewImg} contentFit="cover" />
+                    <Pressable
+                      style={styles.customPhotoRemoveBtn}
+                      onPress={() => setCustomPhotoUri(null)}
+                      hitSlop={HIT_SLOP_8}
+                      accessibilityLabel="Remove photo"
+                    >
+                      <Ionicons name="close" size={14} color="#FFFFFF" />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    style={({ pressed }) => [styles.customAddPhotoBtn, pressed ? styles.btnPressedSubtle : null]}
+                    onPress={handlePickCustomPhoto}
+                    accessibilityLabel="Pick photo for custom food"
+                  >
+                    <Ionicons name="camera-outline" size={20} color="#EA580C" />
+                    <Text style={styles.customAddPhotoText}>Add Dish Photo (Optional)</Text>
+                  </Pressable>
+                )}
+              </View>
 
               <Text style={styles.inputLabel}>Food / Dish Name *</Text>
               <TextInput
@@ -738,9 +791,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 </View>
 
                 <View style={styles.drawerTop}>
-                  <View style={styles.drawerFoodIconBox}>
-                    <Text style={{ fontSize: 24 }}>{selectedFood.icon || '🍽️'}</Text>
-                  </View>
+                  <FoodIconBadge item={selectedFood} size={48} />
                   <View style={styles.drawerFoodInfo}>
                     <View style={styles.drawerTitleRow}>
                       <Text style={styles.drawerFoodName} numberOfLines={1}>{selectedFood.name}</Text>
@@ -1179,15 +1230,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  foodItemIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
+  foodItemBadge: {
     marginRight: 12,
   },
   foodItemMain: {
@@ -1670,6 +1713,50 @@ const styles = StyleSheet.create({
   },
   customForm: {
     padding: 20,
+  },
+  customPhotoRow: {
+    marginBottom: 12,
+  },
+  customAddPhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    borderRadius: 12,
+    paddingVertical: 12,
+    borderStyle: 'dashed',
+  },
+  customAddPhotoText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#EA580C',
+  },
+  customPhotoPreviewContainer: {
+    position: 'relative',
+    width: 64,
+    height: 64,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  customPhotoPreviewImg: {
+    width: 64,
+    height: 64,
+  },
+  customPhotoRemoveBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   customFormTitle: {
     fontFamily: Fonts.poppins.bold,

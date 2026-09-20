@@ -419,6 +419,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               fat: Math.max(0, Math.round((Number(raw.fat) || 0) * 10) / 10),
               fiber: Math.max(0, Math.round((Number(raw.fiber) || 0) * 10) / 10),
               icon: typeof raw.icon === 'string' ? raw.icon : '🍽️',
+              imageUrl: typeof raw.imageUrl === 'string' ? raw.imageUrl : undefined,
               isCustom: true,
             };
           });
@@ -732,6 +733,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       protein: Math.round(food.protein * quantity * 10) / 10,
       fat: Math.round(food.fat * quantity * 10) / 10,
       fiber: Math.round(food.fiber * quantity * 10) / 10,
+      imageUrl: food.imageUrl,
       loggedAt: new Date().toISOString(),
     };
 

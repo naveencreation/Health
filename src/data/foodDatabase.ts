@@ -1,6 +1,7 @@
 import { FoodItem } from '@/types';
+import { FOOD_PHOTO_REGISTRY } from '@/components/common/FoodIconBadge';
 
-export const INITIAL_FOOD_DATABASE: FoodItem[] = [
+const RAW_FOOD_DATABASE: FoodItem[] = [
   // --- INDIAN BREADS ---
   {
     id: 'roti_chapati',
@@ -645,3 +646,9 @@ export const INITIAL_FOOD_DATABASE: FoodItem[] = [
     icon: '🌰',
   },
 ];
+
+export const INITIAL_FOOD_DATABASE: FoodItem[] = RAW_FOOD_DATABASE.map((item) => ({
+  ...item,
+  imageUrl: FOOD_PHOTO_REGISTRY[item.id] || item.imageUrl,
+}));
+
