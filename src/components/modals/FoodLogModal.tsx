@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
@@ -30,52 +30,68 @@ interface FoodLogModalProps {
   onOpenFoodVision?: () => void;
 }
 
+interface CategoryItem {
+  id: string;
+  label: string;
+  iconFamily: 'ion' | 'mci';
+  iconName: string;
+  activeColor?: string;
+  inactiveColor?: string;
+}
+
 // Meal-Contextual Categories to eliminate decision fatigue
-const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
+const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
   breakfast: [
-    { id: 'popular', label: '⭐ Popular' },
-    { id: 'custom', label: '🍱 My Custom' },
-    { id: 'south_indian', label: '🌯 South Indian' },
-    { id: 'beverages', label: '☕ Tea & Coffee' },
-    { id: 'breads', label: '🫓 Breads & Toast' },
-    { id: 'high_protein', label: '⚡ High Protein' },
-    { id: 'fruits', label: '🍎 Fruits' },
-    { id: 'all', label: 'All Foods' },
+    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
+    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
+    { id: 'south_indian', label: 'South Indian', iconFamily: 'mci', iconName: 'pot-steam-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
+    { id: 'beverages', label: 'Tea & Coffee', iconFamily: 'ion', iconName: 'cafe-outline', activeColor: '#FFFFFF', inactiveColor: '#B45309' },
+    { id: 'breads', label: 'Breads & Toast', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
+    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
+    { id: 'fruits', label: 'Fruits', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
+    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
   ],
   lunch: [
-    { id: 'popular', label: '⭐ Popular' },
-    { id: 'custom', label: '🍱 My Custom' },
-    { id: 'curries', label: '🍲 Dals & Curries' },
-    { id: 'rice', label: '🍚 Rice & Grains' },
-    { id: 'breads', label: '🫓 Breads & Rotis' },
-    { id: 'high_protein', label: '⚡ High Protein' },
-    { id: 'all', label: 'All Foods' },
+    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
+    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
+    { id: 'curries', label: 'Dals & Curries', iconFamily: 'mci', iconName: 'bowl-mix-outline', activeColor: '#FFFFFF', inactiveColor: '#EA580C' },
+    { id: 'rice', label: 'Rice & Grains', iconFamily: 'mci', iconName: 'rice', activeColor: '#FFFFFF', inactiveColor: '#0D9488' },
+    { id: 'breads', label: 'Breads & Rotis', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
+    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
+    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
   ],
   dinner: [
-    { id: 'popular', label: '⭐ Popular' },
-    { id: 'custom', label: '🍱 My Custom' },
-    { id: 'curries', label: '🍲 Dals & Curries' },
-    { id: 'breads', label: '🫓 Breads' },
-    { id: 'south_indian', label: '🌯 South Indian' },
-    { id: 'high_protein', label: '⚡ High Protein' },
-    { id: 'all', label: 'All Foods' },
+    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
+    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
+    { id: 'curries', label: 'Dals & Curries', iconFamily: 'mci', iconName: 'bowl-mix-outline', activeColor: '#FFFFFF', inactiveColor: '#EA580C' },
+    { id: 'breads', label: 'Breads', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
+    { id: 'south_indian', label: 'South Indian', iconFamily: 'mci', iconName: 'pot-steam-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
+    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
+    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
   ],
   snacks: [
-    { id: 'popular', label: '⭐ Popular' },
-    { id: 'custom', label: '🍱 My Custom' },
-    { id: 'snacks', label: '🥗 Snacks' },
-    { id: 'beverages', label: '☕ Beverages' },
-    { id: 'fruits', label: '🍎 Fruits & Nuts' },
-    { id: 'high_protein', label: '⚡ High Protein' },
-    { id: 'all', label: 'All Foods' },
+    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
+    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
+    { id: 'snacks', label: 'Snacks', iconFamily: 'mci', iconName: 'cookie-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
+    { id: 'beverages', label: 'Beverages', iconFamily: 'ion', iconName: 'cafe-outline', activeColor: '#FFFFFF', inactiveColor: '#B45309' },
+    { id: 'fruits', label: 'Fruits & Nuts', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
+    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
+    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
   ],
 };
 
-const MEAL_TABS: { id: MealType; label: string; icon: string }[] = [
-  { id: 'breakfast', label: 'Breakfast', icon: '🍳' },
-  { id: 'lunch', label: 'Lunch', icon: '🥗' },
-  { id: 'snacks', label: 'Snacks', icon: '🍵' },
-  { id: 'dinner', label: 'Dinner', icon: '🍲' },
+interface MealTabItem {
+  id: MealType;
+  label: string;
+  iconActive: keyof typeof Ionicons.glyphMap;
+  iconInactive: keyof typeof Ionicons.glyphMap;
+}
+
+const MEAL_TABS: MealTabItem[] = [
+  { id: 'breakfast', label: 'Breakfast', iconActive: 'sunny', iconInactive: 'sunny-outline' },
+  { id: 'lunch', label: 'Lunch', iconActive: 'restaurant', iconInactive: 'restaurant-outline' },
+  { id: 'snacks', label: 'Snacks', iconActive: 'cafe', iconInactive: 'cafe-outline' },
+  { id: 'dinner', label: 'Dinner', iconActive: 'moon', iconInactive: 'moon-outline' },
 ];
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -556,7 +572,11 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${slot.label}`}
               >
-                <Text style={styles.mealTabEmoji}>{slot.icon}</Text>
+                <Ionicons
+                  name={isSelected ? slot.iconActive : slot.iconInactive}
+                  size={13}
+                  color={isSelected ? '#FFFFFF' : '#EA580C'}
+                />
                 <Text
                   style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
                   numberOfLines={1}
@@ -733,27 +753,48 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.categoryScroll}
                 >
-                  {categoriesList.map((cat) => (
-                    <Pressable
-                      key={cat.id}
-                      style={({ pressed }) => [
-                        styles.categoryPill,
-                        selectedCategory === cat.id ? styles.categoryPillActive : null,
-                        pressed ? styles.btnPressedPill : null,
-                      ]}
-                      onPress={() => setSelectedCategory(cat.id)}
-                      accessibilityRole="button"
-                    >
-                      <Text
-                        style={[
-                          styles.categoryText,
-                          selectedCategory === cat.id ? styles.categoryTextActive : null,
+                  {categoriesList.map((cat) => {
+                    const isSelected = selectedCategory === cat.id;
+                    const iconColor = isSelected
+                      ? (cat.activeColor || '#FFFFFF')
+                      : (cat.inactiveColor || '#64748B');
+
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        style={({ pressed }) => [
+                          styles.categoryPill,
+                          isSelected ? styles.categoryPillActive : null,
+                          pressed ? styles.btnPressedPill : null,
                         ]}
+                        onPress={() => setSelectedCategory(cat.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Filter by ${cat.label}`}
                       >
-                        {cat.label}
-                      </Text>
-                    </Pressable>
-                  ))}
+                        {cat.iconFamily === 'mci' ? (
+                          <MaterialCommunityIcons
+                            name={cat.iconName as any}
+                            size={14}
+                            color={iconColor}
+                          />
+                        ) : (
+                          <Ionicons
+                            name={cat.iconName as any}
+                            size={14}
+                            color={iconColor}
+                          />
+                        )}
+                        <Text
+                          style={[
+                            styles.categoryText,
+                            isSelected ? styles.categoryTextActive : null,
+                          ]}
+                        >
+                          {cat.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </ScrollView>
               </View>
 
@@ -1187,12 +1228,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryPill: {
-    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 13,
     paddingVertical: 7,
     borderRadius: 18,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    gap: 5.5,
   },
   categoryPillActive: {
     backgroundColor: '#0F172A',

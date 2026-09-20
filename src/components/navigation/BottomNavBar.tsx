@@ -180,7 +180,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
                 accessibilityLabel="Log breakfast"
               >
                 <View style={[styles.quickActionIcon, styles.iconBgBreakfast]}>
-                  <Text style={styles.quickActionEmoji}>🍳</Text>
+                  <Ionicons name="sunny" size={24} color="#EA580C" />
                 </View>
                 <Text style={styles.quickActionLabel}>Breakfast</Text>
               </Pressable>
@@ -192,7 +192,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
                 accessibilityLabel="Log lunch"
               >
                 <View style={[styles.quickActionIcon, styles.iconBgLunch]}>
-                  <Text style={styles.quickActionEmoji}>🥗</Text>
+                  <Ionicons name="restaurant" size={24} color="#10B981" />
                 </View>
                 <Text style={styles.quickActionLabel}>Lunch</Text>
               </Pressable>
@@ -204,7 +204,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
                 accessibilityLabel="Log snacks"
               >
                 <View style={[styles.quickActionIcon, styles.iconBgSnacks]}>
-                  <Text style={styles.quickActionEmoji}>🍵</Text>
+                  <Ionicons name="cafe" size={24} color="#D97706" />
                 </View>
                 <Text style={styles.quickActionLabel}>Snacks</Text>
               </Pressable>
@@ -216,7 +216,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
                 accessibilityLabel="Log dinner"
               >
                 <View style={[styles.quickActionIcon, styles.iconBgDinner]}>
-                  <Text style={styles.quickActionEmoji}>🍲</Text>
+                  <Ionicons name="moon" size={24} color="#8B5CF6" />
                 </View>
                 <Text style={styles.quickActionLabel}>Dinner</Text>
               </Pressable>

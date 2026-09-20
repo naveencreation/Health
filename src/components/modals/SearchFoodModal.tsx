@@ -22,11 +22,16 @@ interface SearchFoodModalProps {
   onLoggedSuccess?: (dishName: string, mealType: MealType) => void;
 }
 
-const MEAL_SLOTS: { id: MealType; label: string; icon: string }[] = [
-  { id: 'breakfast', label: 'Breakfast', icon: '🍳' },
-  { id: 'lunch', label: 'Lunch', icon: '🥗' },
-  { id: 'snacks', label: 'Snacks', icon: '🍵' },
-  { id: 'dinner', label: 'Dinner', icon: '🍲' },
+const MEAL_SLOTS: {
+  id: MealType;
+  label: string;
+  iconActive: keyof typeof Ionicons.glyphMap;
+  iconInactive: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { id: 'breakfast', label: 'Breakfast', iconActive: 'sunny', iconInactive: 'sunny-outline' },
+  { id: 'lunch', label: 'Lunch', iconActive: 'restaurant', iconInactive: 'restaurant-outline' },
+  { id: 'snacks', label: 'Snacks', iconActive: 'cafe', iconInactive: 'cafe-outline' },
+  { id: 'dinner', label: 'Dinner', iconActive: 'moon', iconInactive: 'moon-outline' },
 ];
 
 export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
@@ -144,7 +149,11 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={`Add to ${slot.label}`}
                   >
-                    <Text style={styles.slotEmoji}>{slot.icon}</Text>
+                    <Ionicons
+                      name={isSelected ? slot.iconActive : slot.iconInactive}
+                      size={13}
+                      color={isSelected ? '#FFFFFF' : Colors.primary}
+                    />
                     <Text style={[styles.slotText, isSelected ? styles.slotTextActive : null]}>
                       {slot.label}
                     </Text>
