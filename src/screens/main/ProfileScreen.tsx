@@ -140,7 +140,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDFAF6',
+    backgroundColor: '#FAF9F6',
   },
   scroll: {
     flex: 1,

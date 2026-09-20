@@ -31,8 +31,9 @@ export const Colors = {
   warningLight: '#FEF9E6',
 
   // Backgrounds & Surfaces
-  background: '#FFFFFF',    // Pure clean white backdrop (from Figma: 375x812 background #FFFFFF)
-  backgroundAlt: '#FAF8F5', // Soft warm backdrop
+  background: '#FAF9F6',    // Warm sunlit porcelain linen canvas
+  backgroundCanvas: '#FAF9F6',
+  backgroundAlt: '#FAF9F6', // Soft warm backdrop
   card: '#FFFFFF',
   cardHover: '#F8FAFC',
   border: '#E9E9E9',        // Figma macro track border

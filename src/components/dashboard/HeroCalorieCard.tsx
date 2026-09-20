@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,57 @@ const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_TIMELINE = { top: 6, bottom: 6, left: 4, right: 4 };
 
+const SHORT_DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const;
+const FULL_DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+const GUEST_BASELINE_DAYS = [
+  { cals: 1840, carbs: 195, protein: 72, fat: 46 },
+  { cals: 1720, carbs: 180, protein: 68, fat: 42 },
+  { cals: 1950, carbs: 210, protein: 78, fat: 50 },
+  { cals: 1680, carbs: 175, protein: 65, fat: 40 },
+  { cals: 1890, carbs: 200, protein: 74, fat: 48 },
+  { cals: 1780, carbs: 190, protein: 70, fat: 44 },
+  { cals: 1820, carbs: 195, protein: 72, fat: 45 },
+] as const;
+
+// Hoisted pure utility functions (avoids re-allocation on render)
+const parseDateStr = (str: string): Date => {
+  const parts = str.split('-');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  }
+  return new Date();
+};
+
+const formatDateStr = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
     userGoals,
@@ -34,6 +85,8 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
     weeklyLogs,
     selectedDate,
     setSelectedDate,
+    dailyLogs,
+    currentUser,
   } = useHealth();
 
   const scrollRef = useRef<ScrollView>(null);
@@ -96,68 +149,64 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   const proteinRatio = Math.min(1, Math.max(0, (totalProtein || 0) / targetProtein));
   const fatRatio = Math.min(1, Math.max(0, (totalFat || 0) / targetFat));
 
-  // --- Slide 1: 7-Day Diet Journey (Option A: Frost White Apple Health Style) ---
-  const [selectedDayIdx, setSelectedDayIdx] = useState(6); // Defaults to Today (index 6)
-
-  // Extract 7 chronological days from weeklyLogs ending today
+  // 7 Days of the active calendar week (SUN to SAT) matching TopDateStrip
   const trendDays = useMemo(() => {
-    if (Array.isArray(weeklyLogs) && weeklyLogs.length === 7) {
-      return weeklyLogs.map((item, idx) => {
-        const parts = item.date.split('-');
-        const d =
-          parts.length === 3
-            ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
-            : new Date();
-        const dayNum = d.getDate();
-        const shortDayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-        const dayName = item.dayName ? item.dayName.toUpperCase() : shortDayNames[d.getDay()];
+    const current = parseDateStr(selectedDate);
+    const dayOfWeek = current.getDay(); // 0 is Sunday
+    const sunday = new Date(current);
+    sunday.setDate(current.getDate() - dayOfWeek);
 
-        return {
-          idx,
-          dateStr: item.date,
-          dayName,
-          dayNum,
-          cals: item.calories || 0,
-          carbs: item.carbs || 0,
-          protein: item.protein || 0,
-          fat: item.fat || 0,
-          isToday: idx === 6,
-        };
-      });
-    }
+    const isGuest = currentUser?.isGuest;
 
-    // Fallback: build 7 days ending today
-    const daysArr = [];
-    const today = new Date();
-    const shortDayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      daysArr.push({
-        idx: 6 - i,
-        dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
-        dayName: shortDayNames[d.getDay()],
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday);
+      d.setDate(sunday.getDate() + i);
+      const dateStr = formatDateStr(d);
+      const isDayToday = dateStr === todayStr;
+
+      const log = dailyLogs ? dailyLogs[dateStr] : undefined;
+      const fallback = isGuest ? GUEST_BASELINE_DAYS[i % GUEST_BASELINE_DAYS.length] : null;
+
+      const hasMeals = log && Array.isArray(log.meals) && log.meals.length > 0;
+      const cals = hasMeals
+        ? log.meals.reduce((sum, m) => sum + m.calories, 0)
+        : (fallback ? fallback.cals : 0);
+      const carbs = hasMeals
+        ? Math.round(log.meals.reduce((sum, m) => sum + m.carbs, 0))
+        : (fallback ? fallback.carbs : 0);
+      const protein = hasMeals
+        ? Math.round(log.meals.reduce((sum, m) => sum + m.protein, 0))
+        : (fallback ? fallback.protein : 0);
+      const fat = hasMeals
+        ? Math.round(log.meals.reduce((sum, m) => sum + m.fat, 0))
+        : (fallback ? fallback.fat : 0);
+
+      days.push({
+        idx: i,
+        dateStr,
+        dayName: SHORT_DAY_NAMES[i],
+        fullDayName: FULL_DAY_NAMES[i],
+        monthName: MONTH_NAMES[d.getMonth()],
         dayNum: d.getDate(),
-        cals: i === 0 ? eaten : 0,
-        carbs: i === 0 ? totalCarbs : 0,
-        protein: i === 0 ? totalProtein : 0,
-        fat: i === 0 ? totalFat : 0,
-        isToday: i === 0,
+        cals,
+        carbs,
+        protein,
+        fat,
+        isToday: isDayToday,
       });
     }
-    return daysArr;
-  }, [weeklyLogs, eaten, totalCarbs, totalProtein, totalFat]);
 
-  const currentDay = trendDays[selectedDayIdx] || trendDays[6] || trendDays[trendDays.length - 1];
+    return days;
+  }, [selectedDate, dailyLogs, todayStr, currentUser]);
 
-  // Synchronize selectedDayIdx when selectedDate changes externally
-  useEffect(() => {
-    if (!trendDays || trendDays.length === 0) return;
+  // Derived selected day index (Single Source of Truth: selectedDate, adheres to react-state-minimize)
+  const selectedDayIdx = useMemo(() => {
     const matchIdx = trendDays.findIndex((d) => d.dateStr === selectedDate);
-    if (matchIdx !== -1) {
-      setSelectedDayIdx(matchIdx);
-    }
-  }, [selectedDate, trendDays]);
+    return matchIdx !== -1 ? matchIdx : parseDateStr(selectedDate).getDay();
+  }, [trendDays, selectedDate]);
+
+  const currentDay = trendDays[selectedDayIdx] || trendDays[0] || trendDays[trendDays.length - 1];
 
   // Average weekly calories & status
   const avgCals = useMemo(() => {
@@ -173,6 +222,10 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   const chartWidth = Math.max(240, cardWidth - 40);
   const chartHeight = 100;
 
+  // Inset horizontal padding so outer SVG nodes (r=8) never clip and align over timeline buttons
+  const horizontalPadding = 18;
+  const usableWidth = chartWidth - horizontalPadding * 2;
+
   // Dynamic Y-axis scale based on target budget and maximum logged calories
   const maxLoggedCals = Math.max(...trendDays.map((d) => d.cals), 0);
   const yMax = Math.max(budget * 1.2, maxLoggedCals * 1.15, 1800);
@@ -180,13 +233,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   // Calculate coordinates for the 7 points
   const dayPoints = useMemo(() => {
     return trendDays.map((day, i) => {
-      const x = Math.round((i / 6) * chartWidth);
+      const x = Math.round(horizontalPadding + (i / 6) * usableWidth);
       const availableHeight = chartHeight - 24;
       const normalizedRatio = Math.min(1, Math.max(0, day.cals / yMax));
       const y = Math.round(chartHeight - 12 - normalizedRatio * availableHeight);
       return { x, y, cals: day.cals };
     });
-  }, [trendDays, chartWidth, chartHeight, yMax]);
+  }, [trendDays, horizontalPadding, usableWidth, chartHeight, yMax]);
 
   // Goal benchmark line Y coordinate
   const goalY = Math.round(chartHeight - 12 - Math.min(1, budget / yMax) * (chartHeight - 24));
@@ -204,7 +257,12 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
     return path;
   }, [dayPoints]);
 
-  const areaPath = `${curvePath} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
+  const areaPath = useMemo(() => {
+    if (!dayPoints || dayPoints.length < 2) return '';
+    const firstX = dayPoints[0].x;
+    const lastX = dayPoints[dayPoints.length - 1].x;
+    return `${curvePath} L ${lastX} ${chartHeight} L ${firstX} ${chartHeight} Z`;
+  }, [curvePath, dayPoints, chartHeight]);
 
   // Active Selected Day Coordinates
   const activePt = dayPoints[selectedDayIdx] || dayPoints[dayPoints.length - 1];
@@ -440,7 +498,9 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                 Avg: <Text style={styles.avgIntakeBold}>{avgCals.toLocaleString()} kcal/day</Text>
               </Text>
               <Text style={styles.daySelectedLabel}>
-                {currentDay.isToday ? 'Today' : currentDay.dayName}: {currentDay.cals.toLocaleString()} kcal
+                {currentDay.isToday
+                  ? 'Today'
+                  : `${currentDay.fullDayName}, ${currentDay.monthName} ${currentDay.dayNum}`}: {currentDay.cals.toLocaleString()} kcal
               </Text>
             </View>
 
@@ -581,7 +641,6 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                     pressed ? styles.pressedTimelineBtn : null,
                   ]}
                   onPress={() => {
-                    setSelectedDayIdx(idx);
                     if (day.dateStr) {
                       setSelectedDate(day.dateStr);
                     }
@@ -596,7 +655,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                       isSelected ? styles.timelineDayTextSelected : null,
                     ]}
                   >
-                    {day.dayName}
+                    {day.isToday ? 'TODAY' : day.dayName}
                   </Text>
                 </Pressable>
               );
@@ -615,6 +674,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#FFFFFF', // Crisp Frost White surface!
     borderRadius: 24,
+    borderCurve: 'continuous',
     paddingTop: 16,
     paddingBottom: 16,
     borderWidth: 1,
@@ -658,6 +718,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#F1F5F9', // Soft Slate 100 track
     borderRadius: 14,
+    borderCurve: 'continuous',
     padding: 2.5,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -666,6 +727,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3.5,
     paddingHorizontal: 9,
     borderRadius: 11,
+    borderCurve: 'continuous',
   },
   pressedSegment: {
     opacity: 0.8,
@@ -784,13 +846,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   macroFillCarb: {
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#F8D558',
   },
   macroFillProtein: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#67BD6E',
   },
   macroFillFat: {
-    backgroundColor: '#F97316',
+    backgroundColor: '#F47551',
   },
   macroRatioText: {
     fontFamily: Fonts.poppins.regular,
@@ -831,6 +893,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   statusBadgeIcon: {
     marginRight: 3,
@@ -861,9 +924,9 @@ const styles = StyleSheet.create({
   },
   macroPillCyan: {
     flex: 1,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#FEFCE8',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: '#FEF08A',
     paddingVertical: 7,
     borderRadius: 12,
     alignItems: 'center',
@@ -892,7 +955,7 @@ const styles = StyleSheet.create({
   macroTitleCyan: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#0284C7',
+    color: '#B45309',
     fontWeight: '600',
   },
   macroTitleGreen: {
@@ -949,6 +1012,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -959,6 +1023,8 @@ const styles = StyleSheet.create({
   timelineBtnSelected: {
     backgroundColor: '#0F172A', // Obsidian Black Pill!
     paddingHorizontal: 10,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

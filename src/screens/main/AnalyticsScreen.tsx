@@ -1010,7 +1010,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDFAF6',
+    backgroundColor: '#FAF9F6',
   },
   content: {
     paddingHorizontal: 16,

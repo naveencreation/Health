@@ -865,6 +865,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       { cals: 1820, carbs: 195, protein: 72, fat: 45, fiber: 26, water: 2000, steps: 9200, burn: 368 },
     ];
 
+    const realToday = getTodayDateString();
+
     for (let i = 6; i >= 0; i--) {
       const d = new Date(curr);
       d.setDate(curr.getDate() - i);
@@ -886,7 +888,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       results.push({
         date: dateStr,
-        dayName: i === 0 ? 'Today' : dayLabels[d.getDay()],
+        dayName: dateStr === realToday ? 'Today' : dayLabels[d.getDay()],
         calories: cals,
         target: userGoals.dailyCalorieBudget,
         carbs: Math.round(carbs * 10) / 10,

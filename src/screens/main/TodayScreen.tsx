@@ -68,7 +68,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#EDFAF6',
+    backgroundColor: '#FAF9F6',
   },
   scrollContent: {
     paddingBottom: 32,

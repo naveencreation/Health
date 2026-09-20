@@ -213,7 +213,7 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDFAF6',
+    backgroundColor: '#FAF9F6',
   },
   content: {
     paddingBottom: 110, // Ensures full clearance above floating bottom navigation bar
@@ -354,8 +354,8 @@ const styles = StyleSheet.create({
     borderColor: '#DCFCE7',
   },
   carbsPod: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#E0F2FE',
+    backgroundColor: '#FEFCE8',
+    borderColor: '#FEF08A',
   },
   fatPod: {
     backgroundColor: '#FFF7ED',
@@ -420,28 +420,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#16A34A',
   },
   dotCarbs: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#EAB308',
   },
   labelCarbs: {
-    color: '#0284C7',
+    color: '#B45309',
   },
   trackCarbs: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#FEF08A',
   },
   fillCarbs: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#EAB308',
   },
   dotFat: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
   },
   labelFat: {
-    color: '#EA580C',
+    color: '#C2410C',
   },
   trackFat: {
     backgroundColor: '#FFEDD5',
   },
   fillFat: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
   },
 });
 
