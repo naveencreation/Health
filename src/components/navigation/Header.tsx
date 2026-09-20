@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 
@@ -67,37 +66,8 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Floating Action Buttons (Streak, Auth, Search, Notifications) */}
+        {/* Right: Floating Action Buttons (Search, Notifications) */}
         <View style={styles.actionButtonsRow}>
-          {/* Streak pill if available */}
-          {userGoals.streakDays ? (
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakIcon}>🔥</Text>
-              <Text style={styles.streakCount}>{userGoals.streakDays}</Text>
-            </View>
-          ) : null}
-
-          {/* Auth Button */}
-          {(onSignInPress || onSignOutPress) ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.circleButton,
-                currentUser?.isGuest ? styles.authButtonHighlight : null,
-                pressed ? styles.circleButtonPressed : null,
-              ]}
-              onPress={currentUser?.isGuest ? onSignInPress : onSignOutPress}
-              hitSlop={HIT_SLOP_8}
-              accessibilityRole="button"
-              accessibilityLabel={currentUser?.isGuest ? "Sign In" : "Sign Out"}
-            >
-              <Ionicons
-                name={currentUser?.isGuest ? "log-in-outline" : "log-out-outline"}
-                size={18}
-                color={currentUser?.isGuest ? Colors.primary : "#EF4444"}
-              />
-            </Pressable>
-          ) : null}
-
           {/* Search Button */}
           <Pressable
             style={({ pressed }) => [
@@ -237,31 +207,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 18,
-    gap: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  streakIcon: {
-    fontSize: 13,
-  },
-  streakCount: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 12,
-    color: '#EA580C',
-    fontWeight: '700',
-  },
   circleButton: {
     width: 38,
     height: 38,
@@ -281,10 +226,6 @@ const styles = StyleSheet.create({
   circleButtonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.94 }],
-  },
-  authButtonHighlight: {
-    borderColor: '#FED7AA',
-    backgroundColor: '#FFF7ED',
   },
   notificationDot: {
     position: 'absolute',
