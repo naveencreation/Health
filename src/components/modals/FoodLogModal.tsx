@@ -75,13 +75,21 @@ const MEAL_TABS: { id: MealType; label: string; icon: string }[] = [
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
+const formatServingUnit = (unit?: string): string => {
+  if (!unit) return '1 serving';
+  const trimmed = unit.trim();
+  if (/^\d/.test(trimmed)) return trimmed; // '100g' -> '100g', '250ml' -> '250ml'
+  return `1 ${trimmed}`;                  // 'egg' -> '1 egg', 'piece' -> '1 piece'
+};
+
 interface FoodItemRowProps {
   item: FoodItem;
+  loggedCount?: number;
   onSelect: (item: FoodItem) => void;
   onQuickAdd: (item: FoodItem) => void;
 }
 
-const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }) => {
+const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect, onQuickAdd }) => {
   return (
     <Pressable
       style={({ pressed }) => [styles.foodItemCard, pressed ? styles.foodItemCardPressed : null]}
@@ -96,6 +104,11 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
       <View style={styles.foodItemMain}>
         <View style={styles.foodItemNameRow}>
           <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+          {loggedCount && loggedCount > 0 ? (
+            <View style={styles.loggedCountBadge}>
+              <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
+            </View>
+          ) : null}
           {item.isCustom ? (
             <View style={styles.customBadge}>
               <Text style={styles.customBadgeText}>Custom</Text>
@@ -103,7 +116,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
           ) : null}
         </View>
         <Text style={styles.foodItemUnit}>
-          1 {item.servingUnit} • {item.categoryLabel}
+          {formatServingUnit(item.servingUnit)} • {item.categoryLabel}
         </Text>
 
         {/* Clean Color-Coded Macro Badges with Static Styles */}
@@ -150,7 +163,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
 });
 
 export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
-  const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories } = useHealth();
+  const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories, mealsByType } = useHealth();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
   const [searchQuery, setSearchQuery] = useState('');
@@ -325,15 +338,25 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     setToastTimer(timer);
   }, [addMealItem, selectedMealType, toastTimer]);
 
+  const currentMealItems = mealsByType[selectedMealType] || [];
+  const loggedMap = useMemo(() => {
+    const map = new Map<string, number>();
+    currentMealItems.forEach((m) => {
+      map.set(m.foodId, (map.get(m.foodId) || 0) + m.quantity);
+    });
+    return map;
+  }, [currentMealItems]);
+
   const renderFoodItem = useCallback(
     ({ item }: { item: FoodItem }) => (
       <FoodItemRow
         item={item}
+        loggedCount={loggedMap.get(item.id) || 0}
         onSelect={handleSelectFood}
         onQuickAdd={handleQuickAdd}
       />
     ),
-    [handleSelectFood, handleQuickAdd]
+    [handleSelectFood, handleQuickAdd, loggedMap]
   );
 
   const handleCreateCustomFood = () => {
@@ -405,12 +428,16 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
 
           <View style={styles.headerTitleCenter}>
             <Text style={styles.headerTitle}>Log {mealTitle}</Text>
-            <Text style={styles.headerSubtitle}>
-              Budget: <Text style={styles.headerBoldVal}>{mealTarget} cal</Text> • {currentMealLogged} logged •{' '}
-              <Text style={{ color: mealRemaining < 0 ? '#EF4444' : '#16A34A', fontWeight: '700' }}>
-                {mealRemaining >= 0 ? `${mealRemaining} cal left` : `${Math.abs(mealRemaining)} cal over`}
+            <View style={styles.headerBudgetRow}>
+              <Text style={styles.headerSubtitleText}>
+                Budget: <Text style={styles.headerBoldVal}>{mealTarget} cal</Text> • {currentMealLogged} logged
               </Text>
-            </Text>
+              <View style={[styles.headerBudgetBadge, mealRemaining < 0 ? styles.budgetBadgeOver : styles.budgetBadgeOk]}>
+                <Text style={[styles.headerBudgetBadgeText, mealRemaining < 0 ? styles.budgetTextOver : styles.budgetTextOk]}>
+                  {mealRemaining >= 0 ? `${mealRemaining} left` : `+${Math.abs(mealRemaining)} over`}
+                </Text>
+              </View>
+            </View>
           </View>
 
           <Pressable
@@ -425,38 +452,37 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
           </Pressable>
         </View>
 
-        {/* Meal Switcher Strip (Add to: Breakfast | Lunch | Snacks | Dinner) */}
+        {/* Meal Switcher Strip (Breakfast | Lunch | Snacks | Dinner) */}
         <View style={styles.mealSwitcherRow}>
-          <Text style={styles.mealSwitcherLabel}>Add to:</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mealSwitcherScroll}
-          >
-            {MEAL_TABS.map((slot) => {
-              const isSelected = selectedMealType === slot.id;
-              return (
-                <Pressable
-                  key={slot.id}
-                  style={({ pressed }) => [
-                    styles.mealTabPill,
-                    isSelected ? styles.mealTabPillActive : null,
-                    pressed ? styles.btnPressedPill : null,
-                  ]}
-                  onPress={() => {
-                    setSelectedMealType(slot.id);
-                    setSelectedCategory('popular');
-                  }}
-                  accessibilityRole="button"
+          {MEAL_TABS.map((slot) => {
+            const isSelected = selectedMealType === slot.id;
+            return (
+              <Pressable
+                key={slot.id}
+                style={({ pressed }) => [
+                  styles.mealTabPill,
+                  isSelected ? styles.mealTabPillActive : null,
+                  pressed ? styles.btnPressedPill : null,
+                ]}
+                onPress={() => {
+                  setSelectedMealType(slot.id);
+                  setSelectedCategory('popular');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${slot.label}`}
+              >
+                <Text style={styles.mealTabEmoji}>{slot.icon}</Text>
+                <Text
+                  style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
-                  <Text style={styles.mealTabEmoji}>{slot.icon}</Text>
-                  <Text style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}>
-                    {slot.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                  {slot.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
           {isCustomMode ? (
@@ -899,16 +925,46 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
   },
-  headerSubtitle: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
-    color: '#64748B',
+  headerBudgetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: 2,
+  },
+  headerSubtitleText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#64748B',
   },
   headerBoldVal: {
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
     color: '#0F172A',
+  },
+  headerBudgetBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  budgetBadgeOk: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  budgetBadgeOver: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FED7AA',
+  },
+  headerBudgetBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  budgetTextOk: {
+    color: '#059669',
+  },
+  budgetTextOver: {
+    color: '#EA580C',
   },
   customToggleBtn: {
     backgroundColor: '#FFF7ED',
@@ -927,16 +983,11 @@ const styles = StyleSheet.create({
   mealSwitcherRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingBottom: 4,
-  },
-  mealSwitcherLabel: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    color: '#475569',
-    marginRight: 8,
-    fontWeight: '600',
+    gap: 6,
   },
   mealSwitcherScroll: {
     alignItems: 'center',
@@ -944,26 +995,33 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   mealTabPill: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     borderRadius: 20,
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 5,
+    gap: 4,
   },
   mealTabPillActive: {
     backgroundColor: '#EA580C',
     borderColor: '#EA580C',
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   mealTabEmoji: {
     fontSize: 13,
   },
   mealTabLabel: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 12.5,
+    fontSize: 11.5,
     color: '#475569',
   },
   mealTabLabelActive: {
@@ -1082,6 +1140,20 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#EA580C',
     letterSpacing: 0.3,
+  },
+  loggedCountBadge: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  loggedCountBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 9.5,
+    color: '#059669',
+    fontWeight: '700',
   },
   cameraScanBtn: {
     padding: 6,
