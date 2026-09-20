@@ -40,11 +40,24 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
 }) => {
   const [activeMetric, setActiveMetric] = useState<MetricTab>('bmi');
 
-  // Weight calculations
-  const totalToLose = Math.max(0.1, Math.abs(startWeight - targetWeightNum));
-  const lostSoFar = Math.max(0, startWeight - weightNum);
-  const remainingWeight = Math.max(0, weightNum - targetWeightNum);
-  const weightProgressPct = Math.min(100, Math.round((lostSoFar / totalToLose) * 100));
+  // Weight calculations — direction-aware (supports both loss and gain goals)
+  const isGainGoal = targetWeightNum > startWeight;
+  const totalJourney = Math.max(0.1, Math.abs(startWeight - targetWeightNum));
+  const progressSoFar = isGainGoal
+    ? Math.max(0, weightNum - startWeight)       // gaining
+    : Math.max(0, startWeight - weightNum);      // losing
+  const lostSoFar = Math.max(0, startWeight - weightNum);   // kept for display text
+  const gainedSoFar = Math.max(0, weightNum - startWeight);
+  const remainingWeight = isGainGoal
+    ? Math.max(0, targetWeightNum - weightNum)
+    : Math.max(0, weightNum - targetWeightNum);
+  const weightProgressPct = Math.min(100, Math.round((progressSoFar / totalJourney) * 100));
+
+  // Weight journey context states
+  const isNewUser = startWeight === weightNum && progressSoFar === 0;
+  const atGoal = isGainGoal ? weightNum >= targetWeightNum : weightNum <= targetWeightNum;
+  const hasProgress = progressSoFar > 0;
+  const showStartLabel = Math.abs(startWeight - weightNum) > 0.05;
 
   // Macro percentages
   const p = Number(targetProtein) || 90;
@@ -161,6 +174,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             <Pressable
               style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenGoalsModal}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"
               accessibilityLabel={`Edit weight goal, currently ${targetWeightNum} kg`}
             >
@@ -174,24 +188,66 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             <Text style={styles.weightUnit}>kg</Text>
           </View>
 
-          {/* Milestone Track */}
+          {/* Progress Track */}
           <View style={styles.weightTrackWrapper}>
             <View style={styles.weightTrackBg}>
-              <View style={[styles.weightTrackFill, { width: `${weightProgressPct}%` }]} />
+              <View
+                style={[
+                  styles.weightTrackFill,
+                  {
+                    width: weightProgressPct > 0
+                      ? `${weightProgressPct}%`
+                      : 3, // min-fill stub so bar never looks broken
+                  },
+                ]}
+              />
             </View>
             <View style={styles.milestonesRow}>
-              <Text style={styles.milestoneText}>Start: {startWeight} kg</Text>
-              <Text style={styles.milestoneTextActive}>Current: {weightNum} kg</Text>
+              {showStartLabel ? (
+                <Text style={styles.milestoneText}>Start: {startWeight} kg</Text>
+              ) : (
+                <Text style={styles.milestoneText}>—</Text>
+              )}
+              <Text style={styles.milestoneProgressText}>{weightProgressPct}% complete</Text>
               <Text style={styles.milestoneText}>Goal: {targetWeightNum} kg</Text>
             </View>
           </View>
 
+          {/* Context row — smart states */}
           <View style={styles.contextSummaryRow}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="#16A34A" />
-            <Text style={styles.contextSummaryText}>
-              Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far •{' '}
-              <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> remaining to target
-            </Text>
+            {atGoal ? (
+              <>
+                <Ionicons name="trophy-outline" size={16} color="#F8D558" />
+                <Text style={styles.contextSummaryText}>
+                  <Text style={styles.boldText}>Goal reached!</Text> Maintaining at{' '}
+                  <Text style={styles.boldText}>{weightNum} kg</Text>
+                </Text>
+              </>
+            ) : isNewUser ? (
+              <>
+                <Ionicons name="scale-outline" size={16} color="#94A3B8" />
+                <Text style={styles.contextSummaryText}>
+                  You're at your starting weight. Log your weight daily to track progress.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={16} color="#F47551" />
+                <Text style={styles.contextSummaryText}>
+                  {isGainGoal ? (
+                    <>
+                      Gained <Text style={styles.boldText}>{gainedSoFar.toFixed(1)} kg</Text> so far •{' '}
+                      <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> to target
+                    </>
+                  ) : (
+                    <>
+                      Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far •{' '}
+                      <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> remaining to target
+                    </>
+                  )}
+                </Text>
+              </>
+            )}
           </View>
         </View>
       ) : null}
@@ -263,7 +319,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           </View>
 
           <View style={styles.contextSummaryRow}>
-            <Ionicons name="flame-outline" size={16} color="#EA580C" />
+            <Ionicons name="flame-outline" size={16} color="#F47551" />
             <Text style={styles.contextSummaryText}>
               Estimated daily movement burn: <Text style={styles.boldText}>~{Math.round(Number(stepGoal) * 0.04)} kcal</Text>
             </Text>
@@ -292,7 +348,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           </View>
 
           <View style={styles.contextSummaryRow}>
-            <Ionicons name="water-outline" size={16} color="#2563EB" />
+            <Ionicons name="water-outline" size={16} color="#0284C7" />
             <Text style={styles.contextSummaryText}>
               Promotes optimal metabolic rate, cellular recovery, and digestion.
             </Text>
@@ -300,39 +356,6 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
         </View>
       ) : null}
 
-      {/* Always Show Weight as Secondary Anchor Card if BMI is active (matching reference design) */}
-      {activeMetric === 'bmi' ? (
-        <View style={styles.telemetryCard}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Weight</Text>
-            <Pressable
-              style={({ pressed }) => [styles.goalPillBtn, pressed ? styles.pressedSubtle : null]}
-              onPress={onOpenGoalsModal}
-              accessibilityRole="button"
-              accessibilityLabel={`Edit weight goal, currently ${targetWeightNum} kg`}
-            >
-              <Text style={styles.goalPillText}>Goal {targetWeightNum} kg</Text>
-              <Ionicons name="chevron-forward" size={12} color="#64748B" />
-            </Pressable>
-          </View>
-
-          <View style={styles.weightValueRow}>
-            <Text style={styles.bigWeightValue}>{weightNum}</Text>
-            <Text style={styles.weightUnit}>kg</Text>
-          </View>
-
-          <View style={styles.weightTrackWrapper}>
-            <View style={styles.weightTrackBg}>
-              <View style={[styles.weightTrackFill, { width: `${weightProgressPct}%` }]} />
-            </View>
-            <View style={styles.milestonesRow}>
-              <Text style={styles.milestoneText}>Start: {startWeight} kg</Text>
-              <Text style={styles.milestoneTextActive}>Current: {weightNum} kg</Text>
-              <Text style={styles.milestoneText}>Goal: {targetWeightNum} kg</Text>
-            </View>
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -352,13 +375,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
   },
   pillActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    shadowColor: '#F47551',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -369,11 +393,12 @@ const styles = StyleSheet.create({
   },
   pillTextActive: {
     fontFamily: Fonts.poppins.bold,
-    color: '#0F172A',
+    color: '#F47551',
   },
   telemetryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
+    borderCurve: 'continuous',
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
@@ -445,12 +470,18 @@ const styles = StyleSheet.create({
   milestonesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 6,
   },
   milestoneText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 10.5,
     color: '#94A3B8',
+  },
+  milestoneProgressText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 10.5,
+    color: Colors.primary,
   },
   milestoneTextActive: {
     fontFamily: Fonts.poppins.semiBold,
@@ -513,19 +544,19 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   macroBarProtein: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#67BD6E',
   },
   macroBarCarbs: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F8D558',
   },
   macroBarFat: {
     backgroundColor: '#F47551',
   },
   legendDotProtein: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#67BD6E',
   },
   legendDotCarbs: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#F8D558',
   },
   legendDotFat: {
     backgroundColor: '#F47551',

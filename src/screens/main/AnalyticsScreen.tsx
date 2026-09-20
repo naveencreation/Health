@@ -319,27 +319,27 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
     const goal = getMetricGoal();
     if (activeMetric === 'calories') {
       const isOver = val > goal;
-      if (isOver) return '#EF4444';
-      return isSelected ? '#16A34A' : '#4ADE80';
+      if (isOver) return '#F47551';
+      return isSelected ? '#F47551' : '#FFD5C6';
     }
     if (activeMetric === 'hydration') {
       const isMet = val >= goal;
-      if (isMet) return '#2563EB';
-      return isSelected ? '#3B82F6' : '#93C5FD';
+      if (isMet) return '#0284C7';
+      return isSelected ? '#0284C7' : '#BAE6FD';
     }
     if (activeMetric === 'movement') {
       const isMet = val >= goal;
-      if (isMet) return '#EA580C';
-      return isSelected ? '#F97316' : '#FDBA74';
+      if (isMet) return '#F47551';
+      return isSelected ? '#F47551' : '#FFD5C6';
     }
-    return '#16A34A';
+    return '#F47551';
   };
 
   const getMetricThemeColor = (): string => {
-    if (activeMetric === 'calories') return '#16A34A';
-    if (activeMetric === 'hydration') return '#2563EB';
-    if (activeMetric === 'movement') return '#EA580C';
-    return '#16A34A';
+    if (activeMetric === 'calories') return '#F47551';
+    if (activeMetric === 'hydration') return '#0284C7';
+    if (activeMetric === 'movement') return '#F47551';
+    return '#F47551';
   };
 
   // Macro calorie contributions
@@ -425,9 +425,19 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
       </View>
 
       {/* 2. Executive Trajectory Callout Banner */}
-      <View style={styles.trajectoryCard}>
-        <Ionicons name="trending-up" size={15} color="#15803D" />
-        <Text style={styles.trajectoryText}>{analyticsSummary.comparisonText}</Text>
+      <View style={[
+        styles.trajectoryCard,
+        analyticsSummary.daysWithCals >= 3 ? styles.trajectoryCardPositive : null,
+      ]}>
+        <Ionicons
+          name={analyticsSummary.daysWithCals >= 3 ? 'trending-up' : 'information-circle-outline'}
+          size={15}
+          color={analyticsSummary.daysWithCals >= 3 ? '#059669' : '#64748B'}
+        />
+        <Text style={[
+          styles.trajectoryText,
+          analyticsSummary.daysWithCals < 3 ? styles.trajectoryTextNeutral : null,
+        ]}>{analyticsSummary.comparisonText}</Text>
       </View>
 
       {/* 3. PRIMARY HERO CHART WITH INTERACTIVE METRIC SELECTOR (Apple Health / WHOOP Model) */}
@@ -448,7 +458,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Ionicons
               name="flame"
               size={15}
-              color={activeMetric === 'calories' ? '#16A34A' : '#64748B'}
+              color={activeMetric === 'calories' ? '#F47551' : '#64748B'}
             />
             <Text
               style={[
@@ -474,7 +484,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Ionicons
               name="water"
               size={15}
-              color={activeMetric === 'hydration' ? '#2563EB' : '#64748B'}
+              color={activeMetric === 'hydration' ? '#0284C7' : '#64748B'}
             />
             <Text
               style={[
@@ -500,7 +510,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
             <Ionicons
               name="footsteps"
               size={15}
-              color={activeMetric === 'movement' ? '#EA580C' : '#64748B'}
+              color={activeMetric === 'movement' ? '#F47551' : '#64748B'}
             />
             <Text
               style={[
@@ -671,7 +681,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         {activeMetric === 'calories' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#16A34A' }]}>
+              <Text style={[styles.kpiValue, { color: '#F47551' }]}>
                 {analyticsSummary.hasSufficientTrendData
                   ? `${analyticsSummary.netDiff.toLocaleString()}`
                   : `${Math.max(0, budget - (weeklyLogs[weeklyLogs.length - 1]?.calories || 0)).toLocaleString()}`}
@@ -706,21 +716,21 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         {activeMetric === 'hydration' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+              <Text style={[styles.kpiValue, { color: '#0284C7' }]}>
                 {analyticsSummary.avgWater.toLocaleString()} ml
               </Text>
               <Text style={styles.kpiLabel}>Daily Average</Text>
             </View>
 
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+              <Text style={[styles.kpiValue, { color: '#0284C7' }]}>
                 {analyticsSummary.totalWaterL} L
               </Text>
               <Text style={styles.kpiLabel}>Total Volume</Text>
             </View>
 
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#2563EB' }]}>
+              <Text style={[styles.kpiValue, { color: '#0284C7' }]}>
                 {analyticsSummary.waterAdherenceText}
               </Text>
               <Text style={styles.kpiLabel}>Goal Consistency</Text>
@@ -731,21 +741,21 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
         {activeMetric === 'movement' ? (
           <View style={styles.kpiRow}>
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+              <Text style={[styles.kpiValue, { color: '#F47551' }]}>
                 {analyticsSummary.avgSteps.toLocaleString()}
               </Text>
               <Text style={styles.kpiLabel}>Daily Avg Steps</Text>
             </View>
 
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+              <Text style={[styles.kpiValue, { color: '#F47551' }]}>
                 {analyticsSummary.totalDistanceKm} km
               </Text>
               <Text style={styles.kpiLabel}>Total Distance</Text>
             </View>
 
             <View style={styles.kpiBox}>
-              <Text style={[styles.kpiValue, { color: '#EA580C' }]}>
+              <Text style={[styles.kpiValue, { color: '#F47551' }]}>
                 +{analyticsSummary.totalBurn.toLocaleString()} kcal
               </Text>
               <Text style={styles.kpiLabel}>Active Energy Burn</Text>
@@ -1072,22 +1082,30 @@ const styles = StyleSheet.create({
   trajectoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#FAF9F6',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: 'rgba(0, 0, 0, 0.06)',
     gap: 8,
+  },
+  trajectoryCardPositive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
   trajectoryText: {
     flex: 1,
     fontFamily: Fonts.poppins.medium,
     fontSize: 11.5,
-    color: '#15803D',
+    color: '#059669',
     lineHeight: 15,
     fontWeight: '500',
+  },
+  trajectoryTextNeutral: {
+    color: '#64748B',
   },
   heroSection: {
     marginBottom: 16,
@@ -1113,15 +1131,15 @@ const styles = StyleSheet.create({
   },
   metricTabActiveCalories: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    shadowColor: '#F47551',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   metricTabActiveHydration: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#2563EB',
+    shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1129,7 +1147,7 @@ const styles = StyleSheet.create({
   },
   metricTabActiveMovement: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#EA580C',
+    shadowColor: '#F47551',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1143,17 +1161,17 @@ const styles = StyleSheet.create({
   },
   metricTabTextActiveCalories: {
     fontFamily: Fonts.poppins.bold,
-    color: '#16A34A',
+    color: '#F47551',
     fontWeight: '700',
   },
   metricTabTextActiveHydration: {
     fontFamily: Fonts.poppins.bold,
-    color: '#2563EB',
+    color: '#0284C7',
     fontWeight: '700',
   },
   metricTabTextActiveMovement: {
     fontFamily: Fonts.poppins.bold,
-    color: '#EA580C',
+    color: '#F47551',
     fontWeight: '700',
   },
   heroTelemetryBox: {
@@ -1329,6 +1347,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderWidth: 1,
@@ -1365,6 +1384,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
+    borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1.5,
     borderColor: 'rgba(0, 0, 0, 0.05)',
@@ -1375,12 +1395,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   habitPodActiveHydration: {
-    borderColor: '#93C5FD',
+    borderColor: '#BAE6FD',
     backgroundColor: '#F0F9FF',
   },
   habitPodActiveMovement: {
-    borderColor: '#FED7AA',
-    backgroundColor: '#FFF7ED',
+    borderColor: '#FFD5C6',
+    backgroundColor: '#FFF5F1',
   },
   habitHeader: {
     flexDirection: 'row',
@@ -1439,7 +1459,7 @@ const styles = StyleSheet.create({
   habitFooterHighlight: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 10,
-    color: '#2563EB',
+    color: '#0284C7',
     fontWeight: '700',
   },
   sectionHeader: {
@@ -1493,32 +1513,23 @@ const styles = StyleSheet.create({
   },
   macroPod: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 1,
   },
-  proteinPod: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#DCFCE7',
-  },
-  carbsPod: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#E0F2FE',
-  },
-  fatPod: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FFEDD5',
-  },
-  fiberPod: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#D1FAE5',
-  },
+  proteinPod: {},
+  carbsPod: {},
+  fatPod: {},
+  fiberPod: {},
   macroPodHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1566,6 +1577,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
@@ -1602,89 +1614,89 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   habitIconCircleHydration: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F9FF',
   },
   habitTitleHydration: {
-    color: '#2563EB',
+    color: '#0284C7',
   },
   habitFillHydration: {
-    backgroundColor: '#2563EB',
-  },
-  habitIconCircleMovement: {
-    backgroundColor: '#FFF7ED',
-  },
-  habitTitleMovement: {
-    color: '#EA580C',
-  },
-  habitFillMovement: {
-    backgroundColor: '#EA580C',
-  },
-  habitHighlightMovement: {
-    color: '#EA580C',
-  },
-  splitSegmentCarb: {
     backgroundColor: '#0284C7',
   },
+  habitIconCircleMovement: {
+    backgroundColor: '#FFF5F1',
+  },
+  habitTitleMovement: {
+    color: '#F47551',
+  },
+  habitFillMovement: {
+    backgroundColor: '#F47551',
+  },
+  habitHighlightMovement: {
+    color: '#F47551',
+  },
+  splitSegmentCarb: {
+    backgroundColor: '#F8D558',
+  },
   splitSegmentProtein: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#67BD6E',
   },
   splitSegmentFat: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
   },
   splitSegmentEmpty: {
     width: '100%',
     backgroundColor: '#E2E8F0',
   },
   legendCarbText: {
-    color: '#0284C7',
+    color: '#B45309',
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
   },
   legendProteinText: {
-    color: '#16A34A',
+    color: '#15803D',
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
   },
   legendFatText: {
-    color: '#EA580C',
+    color: '#C2410C',
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
   },
   dotProtein: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#67BD6E',
   },
   labelProtein: {
-    color: '#16A34A',
+    color: '#15803D',
   },
   trackProtein: {
     backgroundColor: '#DCFCE7',
   },
   fillProtein: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#67BD6E',
   },
   dotCarbs: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#F8D558',
   },
   labelCarbs: {
-    color: '#0284C7',
+    color: '#B45309',
   },
   trackCarbs: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#FEF9C3',
   },
   fillCarbs: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#F8D558',
   },
   dotFat: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
   },
   labelFat: {
-    color: '#EA580C',
+    color: '#C2410C',
   },
   trackFat: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#FFE4D6',
   },
   fillFat: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
   },
   dotFiber: {
     backgroundColor: '#059669',

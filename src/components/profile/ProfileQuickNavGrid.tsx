@@ -42,7 +42,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconAwards]}>
-              <Ionicons name="ribbon-outline" size={20} color="#EA580C" />
+              <Ionicons name="ribbon-outline" size={20} color="#F47551" />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Awards</Text>
@@ -59,7 +59,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconSummary]}>
-              <Ionicons name="calendar-outline" size={20} color="#16A34A" />
+              <Ionicons name="calendar-outline" size={20} color="#67BD6E" />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Summary</Text>
@@ -79,7 +79,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconPreferences]}>
-              <Ionicons name="options-outline" size={20} color="#2563EB" />
+              <Ionicons name="options-outline" size={20} color="#64748B" />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Preferences</Text>
@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.04)',
@@ -150,13 +151,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconAwards: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#FFE4D6',
   },
   iconSummary: {
     backgroundColor: '#DCFCE7',
   },
   iconPreferences: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F1F5F9',
   },
   iconGoals: {
     backgroundColor: '#F3E8FF',

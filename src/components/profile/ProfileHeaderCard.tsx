@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -215,14 +216,15 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   streakPill: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#FFE4D6',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    borderCurve: 'continuous',
   },
   streakPillText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#C2410C',
+    color: '#F47551',
   },
 });

@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   gaugeContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
+    borderCurve: 'continuous',
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
   },
   statusNormal: {
-    color: '#10B981',
+    color: '#67BD6E',
   },
   statusOver: {
     color: '#F59E0B',
@@ -193,15 +194,15 @@ const styles = StyleSheet.create({
   },
   segGreen: {
     flex: 6.5,
-    backgroundColor: '#22C55E',
+    backgroundColor: '#67BD6E',
   },
   segYellow: {
     flex: 6,
-    backgroundColor: '#FBBF24',
+    backgroundColor: '#F8D558',
   },
   segOrange: {
     flex: 4,
-    backgroundColor: '#F97316',
+    backgroundColor: '#F47551',
   },
   segRed: {
     flex: 5,
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
     borderColor: '#3B82F6',
   },
   thumbBorderNormal: {
-    borderColor: '#10B981',
+    borderColor: '#67BD6E',
   },
   thumbBorderOver: {
     borderColor: '#F59E0B',
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
   },
   thumbBgNormal: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#67BD6E',
   },
   thumbBgOver: {
     backgroundColor: '#F59E0B',
