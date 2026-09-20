@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,8 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
     totalProtein,
     totalFat,
     weeklyLogs,
+    selectedDate,
+    setSelectedDate,
   } = useHealth();
 
   const scrollRef = useRef<ScrollView>(null);
@@ -44,6 +46,18 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   const eaten = totalConsumed ?? 0;
   const burned = totalBurned ?? 0;
   const calLeft = remainingCalories;
+
+  // Real-world today reference & dynamic context tab label
+  const todayStr = useMemo(() => {
+    const t = new Date();
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, '0');
+    const d = String(t.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
+
+  const isToday = selectedDate === todayStr;
+  const dayTabLabel = isToday ? 'Today' : 'Day View';
 
   // Format goal title based on user's goal
   const goalLabel = (() => {
@@ -65,6 +79,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   const circumference = 2 * Math.PI * radius;
   const progressRatio = Math.min(1, Math.max(0, eaten / budget));
   const strokeDashoffset = circumference - circumference * progressRatio;
+
+  // Brand-aligned dial stroke color
+  const dialStrokeColor = useMemo(() => {
+    if (calLeft < 0) return '#F97316'; // Warm supportive coral-amber when exceeding budget
+    if (progressRatio >= 0.95 && progressRatio <= 1.05) return '#10B981'; // Emerald on track
+    return '#F47551'; // Signature Calori Coral
+  }, [calLeft, progressRatio]);
 
   // Macro progress ratios (Slide 0)
   const targetCarbs = userGoals.targetCarbs || 110;
@@ -128,6 +149,15 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
   }, [weeklyLogs, eaten, totalCarbs, totalProtein, totalFat]);
 
   const currentDay = trendDays[selectedDayIdx] || trendDays[6] || trendDays[trendDays.length - 1];
+
+  // Synchronize selectedDayIdx when selectedDate changes externally
+  useEffect(() => {
+    if (!trendDays || trendDays.length === 0) return;
+    const matchIdx = trendDays.findIndex((d) => d.dateStr === selectedDate);
+    if (matchIdx !== -1) {
+      setSelectedDayIdx(matchIdx);
+    }
+  }, [selectedDate, trendDays]);
 
   // Average weekly calories & status
   const avgCals = useMemo(() => {
@@ -232,7 +262,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             ]}
             onPress={() => handleSlideChange(0)}
             accessibilityRole="tab"
-            accessibilityLabel="Show today's budget"
+            accessibilityLabel={isToday ? "Show today's budget" : "Show day view budget"}
             accessibilityState={{ selected: activeSlide === 0 }}
           >
             <Text
@@ -241,7 +271,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                 activeSlide === 0 ? styles.segmentBtnTextActive : null,
               ]}
             >
-              Today
+              {dayTabLabel}
             </Text>
           </Pressable>
 
@@ -325,7 +355,7 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                   cx={dialSize / 2}
                   cy={dialSize / 2}
                   r={radius}
-                  stroke={calLeft < 0 ? '#EF4444' : '#0F172A'}
+                  stroke={dialStrokeColor}
                   strokeWidth={strokeWidth}
                   strokeDasharray={`${circumference} ${circumference}`}
                   strokeDashoffset={strokeDashoffset}
@@ -346,11 +376,11 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             </View>
           </View>
 
-          {/* Bottom Row: 3 Macro Progress Strips (Carb, Proteins, Fat) */}
+          {/* Bottom Row: 3 Macro Progress Strips (Carbs, Protein, Fat) */}
           <View style={styles.macrosRow}>
-            {/* Carb */}
+            {/* Carbs */}
             <View style={styles.macroItem}>
-              <Text style={styles.macroName}>Carb</Text>
+              <Text style={styles.macroName}>Carbs</Text>
               <View style={styles.macroTrack}>
                 <View
                   style={[
@@ -365,9 +395,9 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
               </Text>
             </View>
 
-            {/* Proteins */}
+            {/* Protein */}
             <View style={styles.macroItem}>
-              <Text style={styles.macroName}>Proteins</Text>
+              <Text style={styles.macroName}>Protein</Text>
               <View style={styles.macroTrack}>
                 <View
                   style={[
@@ -550,7 +580,12 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
                     isSelected ? styles.timelineBtnSelected : null,
                     pressed ? styles.pressedTimelineBtn : null,
                   ]}
-                  onPress={() => setSelectedDayIdx(idx)}
+                  onPress={() => {
+                    setSelectedDayIdx(idx);
+                    if (day.dateStr) {
+                      setSelectedDate(day.dateStr);
+                    }
+                  }}
                   hitSlop={HIT_SLOP_TIMELINE}
                   accessibilityRole="button"
                   accessibilityLabel={`Select ${day.dayName}, ${day.cals} calories`}
@@ -569,32 +604,6 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
           </View>
         </View>
       </ScrollView>
-
-      {/* 3. Bottom Micro Pagination Indicator */}
-      <View style={styles.paginationRow}>
-        <Pressable
-          onPress={() => handleSlideChange(0)}
-          hitSlop={HIT_SLOP_8}
-          style={({ pressed }) => [
-            styles.paginationDot,
-            activeSlide === 0 ? styles.paginationDotActive : null,
-            pressed ? styles.pressedDot : null,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Go to Today's budget slide"
-        />
-        <Pressable
-          onPress={() => handleSlideChange(1)}
-          hitSlop={HIT_SLOP_8}
-          style={({ pressed }) => [
-            styles.paginationDot,
-            activeSlide === 1 ? styles.paginationDotActive : null,
-            pressed ? styles.pressedDot : null,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Go to 7-Day Trend slide"
-        />
-      </View>
     </View>
   );
 };
@@ -607,7 +616,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', // Crisp Frost White surface!
     borderRadius: 24,
     paddingTop: 16,
-    paddingBottom: 10,
+    paddingBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
     shadowColor: '#0F172A',
