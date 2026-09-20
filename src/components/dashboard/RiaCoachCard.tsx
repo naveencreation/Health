@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { AIService } from '@/services/ai';
+import { MarkdownText } from '../common/MarkdownText';
 
 interface SuggestionPrompt {
   id: string;
@@ -53,6 +55,53 @@ const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
   const { totalProtein, userGoals, remainingCalories, currentLog } = useHealth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [dynamicAiInsight, setDynamicAiInsight] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchInsight = async () => {
+      try {
+        const isConfigured = await AIService.isKeyConfigured();
+        if (!isConfigured || !isMounted) return;
+
+        const context = {
+          name: userGoals.name?.split(' ')[0] || 'Friend',
+          riaTone: userGoals.riaTone || 'supportive',
+          dailyCalorieBudget: userGoals.dailyCalorieBudget,
+          remainingCalories,
+          consumedCalories: userGoals.dailyCalorieBudget - remainingCalories,
+          targetProtein: userGoals.targetProtein,
+          consumedProtein: totalProtein,
+          targetCarbs: userGoals.targetCarbs,
+          consumedCarbs: 0,
+          targetFat: userGoals.targetFat,
+          consumedFat: 0,
+          targetWaterMl: userGoals.waterGoalMl,
+          consumedWaterMl: currentLog.waterMl,
+          stepGoal: userGoals.stepGoal,
+          currentSteps: currentLog.steps,
+          loggedMealsToday: currentLog.meals.map((m) => ({
+            name: m.name,
+            mealType: m.mealType,
+            calories: m.calories,
+            protein: m.protein,
+          })),
+        };
+
+        const insight = await AIService.getDailyInsight(context);
+        if (isMounted && insight) {
+          setDynamicAiInsight(insight);
+        }
+      } catch {
+        // Fallback to local advice gracefully
+      }
+    };
+
+    fetchInsight();
+    return () => {
+      isMounted = false;
+    };
+  }, [totalProtein, userGoals, remainingCalories, currentLog.waterMl, currentLog.steps]);
 
   // Default personalized insight based on live user data
   const liveDefaultAdvice = useMemo(() => {
@@ -74,8 +123,8 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
       const match = RIA_PROMPTS.find((p) => p.id === activePromptId);
       if (match) return match.response;
     }
-    return liveDefaultAdvice;
-  }, [activePromptId, liveDefaultAdvice]);
+    return dynamicAiInsight || liveDefaultAdvice;
+  }, [activePromptId, dynamicAiInsight, liveDefaultAdvice]);
 
   return (
     <View style={styles.card}>
@@ -136,14 +185,14 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
             styles.bubbleCard,
             pressed ? styles.bubbleCardPressed : null,
           ]}
-          onPress={() => onOpenChat && onOpenChat(activeMessage)}
+          onPress={() => (onOpenChat ? onOpenChat(activeMessage) : null)}
           accessibilityRole="button"
           accessibilityLabel="Ask Ria about this insight"
         >
           {/* Subtle Insight Tag */}
           <View style={styles.insightTagRow}>
             <Text style={styles.insightTag}>
-              {activePromptId ? '💡 RIA SUGGESTS' : '✨ DAILY NUTRITION INSIGHT'}
+              {activePromptId ? '💡 RIA SUGGESTS' : dynamicAiInsight ? '✨ LIVE AI INSIGHT' : '✨ DAILY NUTRITION INSIGHT'}
             </Text>
             <View style={styles.askRiaPill}>
               <Text style={styles.askRiaPillText}>Tap to chat 💬</Text>
@@ -151,7 +200,7 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           </View>
 
           {/* Dynamic Coach Message */}
-          <Text style={styles.messageText}>{activeMessage}</Text>
+          <MarkdownText content={activeMessage} baseStyle={styles.messageText} />
         </Pressable>
       </View>
 
@@ -192,13 +241,13 @@ export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFDFB',
-    borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 10,
+    backgroundColor: '#FAF9F6',
+    borderRadius: 24,
+    borderCurve: 'continuous',
     padding: 16,
-    borderWidth: 1,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
     borderColor: 'rgba(244, 117, 81, 0.22)',
     shadowColor: '#F47551',
     shadowOffset: { width: 0, height: 4 },
@@ -222,6 +271,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    borderCurve: 'continuous',
     borderWidth: 2,
     borderColor: '#F47551',
     shadowColor: '#F47551',
@@ -234,6 +284,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 24,
+    borderCurve: 'continuous',
   },
   onlineDot: {
     position: 'absolute',
@@ -242,6 +293,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+    borderCurve: 'continuous',
     backgroundColor: '#10B981', // Emerald active dot
     borderWidth: 2,
     borderColor: '#FFFFFF',
@@ -268,6 +320,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
+    borderCurve: 'continuous',
     gap: 3,
   },
   aiTagText: {
@@ -287,6 +340,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(244, 117, 81, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -318,6 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderTopLeftRadius: 6,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
@@ -355,6 +410,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#FFEDD5',
   },
@@ -394,6 +450,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 7,
     borderRadius: 20,
+    borderCurve: 'continuous',
     gap: 5,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },

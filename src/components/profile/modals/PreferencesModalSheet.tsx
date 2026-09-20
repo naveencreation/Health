@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { AIService } from '@/services/ai';
+import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 
 const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
 
@@ -39,12 +41,29 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
   const [mealReminder, setMealReminder] = useState(userGoals.mealReminder !== false);
   const [stepReminder, setStepReminder] = useState(userGoals.stepReminder || false);
 
+  // AI BYOK Configuration States
+  const [byokModalVisible, setByokModalVisible] = useState(false);
+  const [aiConnected, setAiConnected] = useState(false);
+  const [maskedApiKey, setMaskedApiKey] = useState('');
+
+  const refreshAIStatus = async () => {
+    const configured = await AIService.isKeyConfigured();
+    setAiConnected(configured);
+    if (configured) {
+      const masked = await AIService.getMaskedKey();
+      setMaskedApiKey(masked);
+    } else {
+      setMaskedApiKey('');
+    }
+  };
+
   React.useEffect(() => {
     if (visible) {
       setRiaTone(userGoals.riaTone || 'supportive');
       setWaterReminder(userGoals.waterReminder !== false);
       setMealReminder(userGoals.mealReminder !== false);
       setStepReminder(userGoals.stepReminder || false);
+      refreshAIStatus();
     }
   }, [visible, userGoals]);
 
@@ -224,6 +243,47 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
                   <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
                 ) : null}
               </Pressable>
+            </View>
+
+            {/* AI Intelligence Engine (BYOK) */}
+            <Text style={styles.sectionHeader}>Gemini AI Engine (BYOK)</Text>
+            <View style={styles.card}>
+              <View style={styles.byokContainer}>
+                <View style={styles.byokHeaderRow}>
+                  <View style={[styles.switchIconBox, { backgroundColor: 'rgba(244, 117, 81, 0.12)' }]}>
+                    <Ionicons name="sparkles" size={18} color="#F47551" />
+                  </View>
+                  <View style={styles.flex1}>
+                    <View style={styles.byokTitleRow}>
+                      <Text style={styles.personalityTitle}>Gemini AI</Text>
+                      <View style={[styles.statusPill, aiConnected ? styles.statusPillActive : styles.statusPillInactive]}>
+                        <View style={[styles.statusDot, aiConnected ? styles.statusDotActive : styles.statusDotInactive]} />
+                        <Text style={[styles.statusPillText, aiConnected ? styles.statusTextActive : styles.statusTextInactive]}>
+                          {aiConnected ? 'Active' : 'Not Connected'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.personalityDesc}>
+                      {aiConnected
+                        ? `Connected with ${maskedApiKey}. Powers Ria chat & AI camera food vision.`
+                        : 'Connect your personal Google Gemini API key to enable live coaching and food vision.'}
+                    </Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  style={({ pressed }) => [styles.byokActionBtn, pressed ? styles.pressedSubtle : null]}
+                  onPress={() => setByokModalVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage Gemini API key"
+                >
+                  <Ionicons name={aiConnected ? 'settings-outline' : 'key-outline'} size={15} color="#F47551" />
+                  <Text style={styles.byokActionBtnText}>
+                    {aiConnected ? 'Manage Key & Settings' : 'Connect Personal Gemini Key'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color="#F47551" />
+                </Pressable>
+              </View>
             </View>
 
             {/* 2. Notification Reminders */}
@@ -459,6 +519,13 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             </View>
           </View>
         ) : null}
+
+        {/* BYOK Key Setup Modal */}
+        <BYOKSetupModal
+          visible={byokModalVisible}
+          onClose={() => setByokModalVisible(false)}
+          onKeyConfigured={refreshAIStatus}
+        />
       </View>
     </Modal>
   );
@@ -876,5 +943,77 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.65,
+  },
+  byokContainer: {
+    padding: 14,
+  },
+  byokHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
+  },
+  byokTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 4,
+  },
+  statusPillActive: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  statusPillInactive: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusDotActive: {
+    backgroundColor: '#16A34A',
+  },
+  statusDotInactive: {
+    backgroundColor: '#94A3B8',
+  },
+  statusPillText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 10,
+  },
+  statusTextActive: {
+    color: '#16A34A',
+  },
+  statusTextInactive: {
+    color: '#64748B',
+  },
+  byokActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(244, 117, 81, 0.08)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 117, 81, 0.2)',
+  },
+  byokActionBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 12,
+    color: '#F47551',
+    flex: 1,
+    marginLeft: 4,
   },
 });

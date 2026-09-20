@@ -21,12 +21,14 @@ interface FoodLogModalProps {
   visible: boolean;
   mealType: MealType;
   onClose: () => void;
+  onOpenFoodVision?: () => void;
 }
 
 // Meal-Contextual Categories to eliminate decision fatigue
 const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
   breakfast: [
     { id: 'popular', label: '⭐ Popular' },
+    { id: 'custom', label: '🍱 My Custom' },
     { id: 'south_indian', label: '🌯 South Indian' },
     { id: 'beverages', label: '☕ Tea & Coffee' },
     { id: 'breads', label: '🫓 Breads & Toast' },
@@ -36,6 +38,7 @@ const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
   ],
   lunch: [
     { id: 'popular', label: '⭐ Popular' },
+    { id: 'custom', label: '🍱 My Custom' },
     { id: 'curries', label: '🍲 Dals & Curries' },
     { id: 'rice', label: '🍚 Rice & Grains' },
     { id: 'breads', label: '🫓 Breads & Rotis' },
@@ -44,6 +47,7 @@ const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
   ],
   dinner: [
     { id: 'popular', label: '⭐ Popular' },
+    { id: 'custom', label: '🍱 My Custom' },
     { id: 'curries', label: '🍲 Dals & Curries' },
     { id: 'breads', label: '🫓 Breads' },
     { id: 'south_indian', label: '🌯 South Indian' },
@@ -52,6 +56,7 @@ const MEAL_CATEGORIES: Record<MealType, { id: string; label: string }[]> = {
   ],
   snacks: [
     { id: 'popular', label: '⭐ Popular' },
+    { id: 'custom', label: '🍱 My Custom' },
     { id: 'snacks', label: '🥗 Snacks' },
     { id: 'beverages', label: '☕ Beverages' },
     { id: 'fruits', label: '🍎 Fruits & Nuts' },
@@ -89,7 +94,14 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
 
       {/* Food Details & Color-Coded Macro Badges */}
       <View style={styles.foodItemMain}>
-        <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+        <View style={styles.foodItemNameRow}>
+          <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+          {item.isCustom ? (
+            <View style={styles.customBadge}>
+              <Text style={styles.customBadgeText}>Custom</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={styles.foodItemUnit}>
           1 {item.servingUnit} • {item.categoryLabel}
         </Text>
@@ -137,7 +149,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, onSelect, onQuickAdd }
   );
 });
 
-export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose }) => {
+export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
   const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories } = useHealth();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
@@ -264,6 +276,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
     }
 
     if (selectedCategory === 'all') return list;
+    if (selectedCategory === 'custom') return list.filter((item) => item.isCustom);
     if (selectedCategory === 'high_protein') return list.filter((item) => item.protein >= 8);
     return list.filter((item) => item.category === selectedCategory);
   }, [foodDatabase, searchQuery, selectedCategory, selectedMealType]);
@@ -562,6 +575,16 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                     accessibilityLabel="Clear search input"
                   >
                     <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                  </Pressable>
+                ) : onOpenFoodVision ? (
+                  <Pressable
+                    onPress={onOpenFoodVision}
+                    style={styles.cameraScanBtn}
+                    hitSlop={HIT_SLOP_8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Scan food with AI camera"
+                  >
+                    <Ionicons name="camera" size={20} color="#F47551" />
                   </Pressable>
                 ) : null}
               </View>
@@ -1034,11 +1057,37 @@ const styles = StyleSheet.create({
   foodItemMain: {
     flex: 1,
   },
+  foodItemNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   foodItemName: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 14.5,
     fontWeight: '600',
     color: '#0F172A',
+    flexShrink: 1,
+  },
+  customBadge: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  customBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 9,
+    color: '#EA580C',
+    letterSpacing: 0.3,
+  },
+  cameraScanBtn: {
+    padding: 6,
+    marginLeft: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(244, 117, 81, 0.1)',
   },
   foodItemUnit: {
     fontFamily: Fonts.poppins.regular,

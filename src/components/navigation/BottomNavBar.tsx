@@ -12,6 +12,7 @@ interface BottomNavBarProps {
   onTabChange: (tab: TabType) => void;
   onQuickLogFood: (mealType: MealType) => void;
   onQuickLogWater: () => void;
+  onOpenFoodVision?: () => void;
 }
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({
@@ -19,6 +20,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onTabChange,
   onQuickLogFood,
   onQuickLogWater,
+  onOpenFoodVision,
 }) => {
   const [quickSheetVisible, setQuickSheetVisible] = useState(false);
 
@@ -131,6 +133,36 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Log Nutrition & Habits</Text>
             <Text style={styles.sheetSubtitle}>Choose what you want to add</Text>
+
+            {/* Featured: AI Food Vision Camera Snap */}
+            {onOpenFoodVision ? (
+              <Pressable
+                style={({ pressed }) => [styles.visionHeroBtn, pressed ? styles.visionHeroBtnPressed : null]}
+                onPress={() => {
+                  setQuickSheetVisible(false);
+                  onOpenFoodVision();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="AI Snap & Log Meal"
+              >
+                <View style={styles.visionHeroIconBox}>
+                  <Ionicons name="camera" size={20} color="#FFFFFF" />
+                </View>
+                <View style={styles.visionHeroTextBox}>
+                  <View style={styles.visionHeroTagRow}>
+                    <Text style={styles.visionHeroTag}>AI POWERED</Text>
+                    <View style={styles.visionHeroSparkle}>
+                      <Ionicons name="sparkles" size={10} color="#F47551" />
+                    </View>
+                  </View>
+                  <Text style={styles.visionHeroTitle}>AI Snap & Log Meal</Text>
+                  <Text style={styles.visionHeroSubtitle}>
+                    Instant calorie, protein & macro calculation from a photo
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#F47551" />
+              </Pressable>
+            ) : null}
 
             <View style={styles.quickGrid}>
               <Pressable
@@ -371,5 +403,69 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textPrimary,
     textAlign: 'center',
+  },
+  visionHeroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(244, 117, 81, 0.3)',
+    marginBottom: 16,
+    gap: 12,
+    shadowColor: '#F47551',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  visionHeroBtnPressed: {
+    transform: [{ scale: 0.98 }],
+    backgroundColor: '#FFEDD5',
+  },
+  visionHeroIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: '#F47551',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#F47551',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  visionHeroTextBox: {
+    flex: 1,
+  },
+  visionHeroTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  visionHeroTag: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 9.5,
+    color: '#F47551',
+    letterSpacing: 0.5,
+  },
+  visionHeroSparkle: {
+    marginLeft: 2,
+  },
+  visionHeroTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14,
+    color: '#0F172A',
+  },
+  visionHeroSubtitle: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15,
   },
 });

@@ -20,6 +20,8 @@ export { FoodLogModal } from './modals/FoodLogModal';
 export { NotificationModal } from './modals/NotificationModal';
 export { RiaChatModal } from './modals/RiaChatModal';
 export { SearchFoodModal } from './modals/SearchFoodModal';
+export { BYOKSetupModal } from './modals/BYOKSetupModal';
+export { FoodVisionModal } from './modals/FoodVisionModal';
 
 // Navigation
 export { Header } from './navigation/Header';
@@ -43,4 +45,5 @@ export { AwardsModalSheet } from './profile/modals/AwardsModalSheet';
 export { ErrorBoundary } from './common/ErrorBoundary';
 export { UserAvatar } from './common/UserAvatar';
 export { ConfirmationModal } from './common/ConfirmationModal';
+export { MarkdownText } from './common/MarkdownText';
 

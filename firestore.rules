@@ -40,6 +40,11 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && isValidDailyLogDoc();
         allow delete: if isOwner(userId);
       }
+
+      // Match Subcollection: customFoods (User-Scoped Custom Food Library)
+      match /customFoods/{foodId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Default Deny Rule

@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
 
 export const getUserLogsKey = (uid: string) => `@calori_daily_logs_${uid}`;
 export const getUserGoalsKey = (uid: string) => `@calori_user_goals_${uid}`;
+export const getUserCustomFoodsKey = (uid: string) => `@calori_custom_foods_${uid}`;
 
 /**
  * Universal cleaner to purge any developer or sample mock data from a DailyLog.
@@ -242,6 +243,7 @@ interface HealthContextType {
   removeWorkout: (id: string) => void;
   addSteps: (stepsCount: number) => void;
   addCustomFood: (food: Omit<FoodItem, 'id'>) => FoodItem;
+  deleteCustomFood: (foodId: string) => void;
   weeklyLogs: WeeklyTrendItem[];
   currentUser: AuthUser | null;
   isAuthenticated: boolean;
@@ -382,6 +384,32 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setDailyLogs(merged);
 
+      // 5. Fetch User-Scoped CustomFoods from Cloud Firestore & user-scoped cache
+      const userCustomFoodsKey = getUserCustomFoodsKey(uid);
+      try {
+        const cachedCustomStr = await AsyncStorage.getItem(userCustomFoodsKey);
+        if (cachedCustomStr) {
+          const parsedCustom = JSON.parse(cachedCustomStr);
+          if (Array.isArray(parsedCustom)) {
+            setCustomFoods(parsedCustom);
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('User custom foods cache read error:', cacheErr);
+      }
+
+      try {
+        const customColRef = collection(db, 'users', uid, 'customFoods');
+        const customSnap = await getDocs(customColRef);
+        if (!customSnap.empty) {
+          const fetchedCustom: FoodItem[] = customSnap.docs.map((d) => d.data() as FoodItem);
+          setCustomFoods(fetchedCustom);
+          AsyncStorage.setItem(userCustomFoodsKey, JSON.stringify(fetchedCustom)).catch(() => {});
+        }
+      } catch (colErr) {
+        console.warn('Firestore customFoods collection query error:', colErr);
+      }
+
       // Persist to user-scoped storage & active storage
       await Promise.all([
         AsyncStorage.setItem(userLogsKey, JSON.stringify(merged)),
@@ -419,7 +447,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           } catch (e) {}
         }
 
-        if (savedCustomFoods) {
+        // Load user-scoped custom foods if real user, else fallback to generic/guest
+        if (parsedAuth && !isGuest && parsedAuth.id) {
+          try {
+            const userCustomStr = await AsyncStorage.getItem(getUserCustomFoodsKey(parsedAuth.id));
+            if (userCustomStr) {
+              setCustomFoods(JSON.parse(userCustomStr));
+            }
+          } catch (e) {}
+        } else if (savedCustomFoods) {
           try {
             setCustomFoods(JSON.parse(savedCustomFoods));
           } catch (e) {}
@@ -567,8 +603,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     if (!isLoaded) return;
-    AsyncStorage.setItem(STORAGE_KEYS.CUSTOM_FOODS, JSON.stringify(customFoods)).catch(console.error);
-  }, [customFoods, isLoaded]);
+    const uid = currentUser?.id || 'guest';
+    AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(customFoods)).catch(console.error);
+  }, [customFoods, isLoaded, currentUser]);
 
   // Combined food database
   const foodDatabase = useMemo(() => {
@@ -835,8 +872,34 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: 'custom_' + Date.now(),
       isCustom: true,
     };
-    setCustomFoods((prev) => [newFood, ...prev]);
+    setCustomFoods((prev) => {
+      const updated = [newFood, ...prev];
+      const uid = currentUser?.id || 'guest';
+      AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
+
+      if (currentUser && !currentUser.isGuest) {
+        setDoc(doc(db, 'users', currentUser.id, 'customFoods', newFood.id), sanitizeForFirestore(newFood)).catch((err) => {
+          console.warn('Firestore customFoods setDoc error:', err);
+        });
+      }
+      return updated;
+    });
     return newFood;
+  };
+
+  const deleteCustomFood = (foodId: string) => {
+    setCustomFoods((prev) => {
+      const updated = prev.filter((f) => f.id !== foodId);
+      const uid = currentUser?.id || 'guest';
+      AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
+
+      if (currentUser && !currentUser.isGuest) {
+        deleteDoc(doc(db, 'users', currentUser.id, 'customFoods', foodId)).catch((err) => {
+          console.warn('Firestore customFoods deleteDoc error:', err);
+        });
+      }
+      return updated;
+    });
   };
 
   const updateGoals = (newGoals: Partial<UserGoals>) => {
@@ -1148,6 +1211,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentUser(null);
       setUserGoals(DEFAULT_GOALS);
       setDailyLogs({ [todayStr]: emptyLog });
+      setCustomFoods([]);
       setSelectedDate(todayStr);
       try {
         await AsyncStorage.multiRemove([
@@ -1277,6 +1341,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         removeWorkout,
         addSteps,
         addCustomFood,
+        deleteCustomFood,
         weeklyLogs,
         currentUser,
         isAuthenticated: !!currentUser,

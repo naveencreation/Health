@@ -30,7 +30,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-image"
+      "expo-image",
+      "expo-secure-store"
     ],
     "owner": "naveen0004",
     "extra": {

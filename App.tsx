@@ -42,6 +42,8 @@ import {
   RiaChatModal,
   ConfirmationModal,
   ErrorBoundary,
+  FoodVisionModal,
+  BYOKSetupModal,
 } from '@/components';
 
 function MainApp() {
@@ -51,6 +53,8 @@ function MainApp() {
   const diaryScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
+  const [foodVisionVisible, setFoodVisionVisible] = useState(false);
+  const [byokSetupVisible, setByokSetupVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
@@ -151,6 +155,14 @@ function MainApp() {
         setFoodModalVisible(false);
         return true;
       }
+      if (foodVisionVisible) {
+        setFoodVisionVisible(false);
+        return true;
+      }
+      if (byokSetupVisible) {
+        setByokSetupVisible(false);
+        return true;
+      }
       if (notificationsVisible) {
         setNotificationsVisible(false);
         return true;
@@ -187,6 +199,8 @@ function MainApp() {
   }, [
     activeTab,
     foodModalVisible,
+    foodVisionVisible,
+    byokSetupVisible,
     notificationsVisible,
     avatarModalVisible,
     riaChatVisible,
@@ -291,6 +305,7 @@ function MainApp() {
           onTabChange={handleTabChange}
           onQuickLogFood={handleOpenFoodLogger}
           onQuickLogWater={handleQuickWater}
+          onOpenFoodVision={() => setFoodVisionVisible(true)}
         />
 
         {/* Food Logging Modal */}
@@ -298,6 +313,24 @@ function MainApp() {
           visible={foodModalVisible}
           mealType={activeMealType}
           onClose={() => setFoodModalVisible(false)}
+          onOpenFoodVision={() => {
+            setFoodModalVisible(false);
+            setFoodVisionVisible(true);
+          }}
+        />
+
+        {/* AI Food Vision Camera Modal */}
+        <FoodVisionModal
+          visible={foodVisionVisible}
+          onClose={() => setFoodVisionVisible(false)}
+          initialMealType={activeMealType}
+          onOpenBYOKSetup={() => setByokSetupVisible(true)}
+        />
+
+        {/* Global BYOK Setup Modal */}
+        <BYOKSetupModal
+          visible={byokSetupVisible}
+          onClose={() => setByokSetupVisible(false)}
         />
 
         {/* Notification Center Modal */}
@@ -318,6 +351,7 @@ function MainApp() {
         <RiaChatModal
           visible={riaChatVisible}
           onClose={() => setRiaChatVisible(false)}
+          onOpenBYOKSetup={() => setByokSetupVisible(true)}
         />
 
         {/* In-App Sign Out Confirmation Modal */}
