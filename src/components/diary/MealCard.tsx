@@ -60,16 +60,17 @@ export const MealCard: React.FC<MealCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.headerLeft,
-            pressed && hasItems ? styles.pressedSubtle : null,
+            pressed ? styles.pressedSubtle : null,
           ]}
           onPress={() => {
             if (hasItems) {
               setIsExpanded((prev) => !prev);
+            } else {
+              onAddPress(mealType);
             }
           }}
-          disabled={!hasItems}
           accessibilityRole="button"
-          accessibilityLabel={`${title}, ${hasItems ? (isExpanded ? 'collapse details' : 'expand details') : 'no items logged'}`}
+          accessibilityLabel={`${title}, ${hasItems ? (isExpanded ? 'collapse details' : 'expand details') : 'add food to ' + title}`}
         >
           {/* Circular Thumbnail with Crisp Border */}
           <View style={styles.thumbnailCircle}>
@@ -87,7 +88,7 @@ export const MealCard: React.FC<MealCardProps> = ({
             )}
           </View>
 
-          {/* Title, Single Target Subtitle & Informative Progress Bar */}
+          {/* Title, Target Subtitle & Clean Progress Bar */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
               <Text style={styles.mealTitle}>
@@ -97,16 +98,18 @@ export const MealCard: React.FC<MealCardProps> = ({
                 <View style={styles.chevronPill}>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={14}
+                    size={13}
                     color="#475569"
                   />
                 </View>
               ) : null}
             </View>
 
-            {/* Zero Decision Fatigue: Single Clear Target */}
+            {/* Contextual Target / Consumed Subtitle */}
             <Text style={styles.recommendedText}>
-              Recommended: {targetCals} cal
+              {hasItems
+                ? `${totalMealCals} / ${targetCals} kcal • ${isOverBudget ? 'Above target' : 'On track'}`
+                : `Target: ${targetCals} kcal • Tap to log`}
             </Text>
 
             {/* Visual Calorie Consumption Progress Bar */}
@@ -167,7 +170,7 @@ export const MealCard: React.FC<MealCardProps> = ({
                     {item.name}
                   </Text>
                   <Text style={styles.foodServing} numberOfLines={1}>
-                    {item.quantity} × {item.servingUnit}
+                    {item.servingUnit}
                   </Text>
                 </View>
 
@@ -179,8 +182,10 @@ export const MealCard: React.FC<MealCardProps> = ({
                       style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
                       hitSlop={HIT_SLOP_8}
                       onPress={() => {
-                        if (item.quantity > 0.5) {
-                          updateMealQuantity(item.id, Math.max(0.5, Math.round((item.quantity - 0.5) * 10) / 10));
+                        if (item.quantity > 1) {
+                          updateMealQuantity(item.id, item.quantity - 1);
+                        } else if (item.quantity === 1) {
+                          updateMealQuantity(item.id, 0.5);
                         } else {
                           removeMealItem(item.id);
                         }
@@ -196,7 +201,13 @@ export const MealCard: React.FC<MealCardProps> = ({
                     <Pressable
                       style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
                       hitSlop={HIT_SLOP_8}
-                      onPress={() => updateMealQuantity(item.id, Math.round((item.quantity + 0.5) * 10) / 10)}
+                      onPress={() => {
+                        if (item.quantity === 0.5) {
+                          updateMealQuantity(item.id, 1);
+                        } else {
+                          updateMealQuantity(item.id, Math.round((item.quantity + 1) * 10) / 10);
+                        }
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel="Increase quantity"
                     >
@@ -224,8 +235,15 @@ export const MealCard: React.FC<MealCardProps> = ({
             );
           })}
 
-          {/* 3. Meal-Level Macro Summary Bar */}
+          {/* 3. Meal-Level Macro Summary Bar (Harmonized: Carbs -> Protein -> Fat) */}
           <View style={styles.macroSummaryBar}>
+            <View style={styles.macroSummaryPill}>
+              <View style={[styles.macroDot, styles.macroDotCarbs]} />
+              <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
+            </View>
+
+            <Text style={styles.macroSummaryDivider}>•</Text>
+
             <View style={styles.macroSummaryPill}>
               <View style={[styles.macroDot, styles.macroDotProtein]} />
               <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
@@ -235,14 +253,7 @@ export const MealCard: React.FC<MealCardProps> = ({
 
             <View style={styles.macroSummaryPill}>
               <View style={[styles.macroDot, styles.macroDotFat]} />
-              <Text style={styles.macroSummaryText}>{totalFat}g Fats</Text>
-            </View>
-
-            <Text style={styles.macroSummaryDivider}>•</Text>
-
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotCarbs]} />
-              <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
+              <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
             </View>
           </View>
         </View>
@@ -255,21 +266,22 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)', // Clean neutral border for empty meals
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 20,
+    borderCurve: 'continuous',
     marginHorizontal: 16,
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    shadowColor: '#000000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
   cardActive: {
-    borderWidth: 1.5,
-    borderColor: '#4ADE80', // Fresh herbal green border when meal has logged food
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    shadowOpacity: 0.06,
   },
   dimmedCard: {
     opacity: 0.75,
@@ -287,16 +299,17 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   thumbnailCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderCurve: 'continuous',
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     marginRight: 12,
     backgroundColor: '#F8FAFC',
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderColor: 'rgba(0, 0, 0, 0.06)',
   },
   thumbnailImg: {
     width: '100%',
@@ -324,6 +337,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
+    borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -335,22 +349,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressBarTrack: {
-    height: 4.5,
+    height: 3.5,
     backgroundColor: '#F1F5F9',
-    borderRadius: 2.5,
+    borderRadius: 2,
+    borderCurve: 'continuous',
     marginTop: 6,
     maxWidth: 160,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 2.5,
+    borderRadius: 2,
+    borderCurve: 'continuous',
   },
   progressBarFillNormal: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#10B981', // Emerald on track
   },
   progressBarFillOver: {
-    backgroundColor: '#F97316',
+    backgroundColor: '#F47551', // Supportive warm coral
   },
   pressedSubtle: {
     opacity: 0.65,
@@ -383,6 +399,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    borderCurve: 'continuous',
     backgroundColor: '#F0FDF4',
     borderWidth: 1,
     borderColor: '#BBF7D0',
@@ -440,14 +457,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
-    height: 28,
+    borderCurve: 'continuous',
+    height: 30,
     paddingHorizontal: 5,
     gap: 4,
   },
   stepperBtn: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -476,6 +495,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
+    borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -484,12 +504,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAF8',
+    backgroundColor: '#FAF9F6', // Warm porcelain tint
     borderRadius: 12,
-    paddingVertical: 9,
+    borderCurve: 'continuous',
+    paddingVertical: 8,
     paddingHorizontal: 16,
     marginTop: 10,
-    gap: 10,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.04)',
   },
   macroSummaryPill: {
     flexDirection: 'row',
@@ -497,18 +520,18 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   macroDot: {
-    width: 6.5,
-    height: 6.5,
+    width: 7,
+    height: 7,
     borderRadius: 3.5,
   },
+  macroDotCarbs: {
+    backgroundColor: '#F8D558', // Warm Golden Amber
+  },
   macroDotProtein: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#67BD6E', // Fresh Avocado Leaf Green
   },
   macroDotFat: {
-    backgroundColor: '#F97316',
-  },
-  macroDotCarbs: {
-    backgroundColor: '#EAB308',
+    backgroundColor: '#F47551', // Signature Sun Coral
   },
   macroSummaryText: {
     fontFamily: Fonts.poppins.semiBold,

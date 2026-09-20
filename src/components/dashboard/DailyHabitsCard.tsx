@@ -16,6 +16,19 @@ const QUICK_WORKOUTS = [
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
+// Contextual workout emoji generator
+const getWorkoutIcon = (name: string): string => {
+  const lower = name.toLowerCase();
+  if (lower.includes('walk')) return '🚶';
+  if (lower.includes('gym') || lower.includes('weight') || lower.includes('lift') || lower.includes('strength')) return '🏋️';
+  if (lower.includes('run') || lower.includes('jog') || lower.includes('sprint')) return '🏃';
+  if (lower.includes('yoga') || lower.includes('stretch') || lower.includes('pilates')) return '🧘';
+  if (lower.includes('cycl') || lower.includes('bike') || lower.includes('spin')) return '🚴';
+  if (lower.includes('swim')) return '🏊';
+  if (lower.includes('hiit') || lower.includes('crossfit') || lower.includes('cardio') || lower.includes('badminton')) return '⚡';
+  return '🔥';
+};
+
 export const DailyHabitsCard: React.FC = () => {
   const {
     currentLog,
@@ -52,7 +65,7 @@ export const DailyHabitsCard: React.FC = () => {
 
   // Circular Gauge Specs (Optimized for side-by-side)
   const dialSize = 114;
-  const strokeWidth = 9;
+  const strokeWidth = 8.5;
   const radius = (dialSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -84,13 +97,14 @@ export const DailyHabitsCard: React.FC = () => {
           onPress={() => setWorkoutModalVisible(true)}
           accessibilityRole="button"
           accessibilityLabel="Log workout"
+          hitSlop={HIT_SLOP_8}
         >
-          <Ionicons name="barbell-outline" size={14} color="#EA580C" />
-          <Text style={styles.logWorkoutHeaderText}>Log Workout</Text>
+          <Ionicons name="barbell-outline" size={14} color="#F47551" />
+          <Text style={styles.logWorkoutHeaderText}>+ Log Workout</Text>
         </Pressable>
       </View>
 
-      {/* Side-by-Side Habit Pods */}
+      {/* Side-by-Side Habit Pods (Unified Frost White Surfaces) */}
       <View style={styles.podsRow}>
         {/* LEFT POD: Water Tracker 💧 */}
         <View style={styles.waterPod}>
@@ -105,7 +119,7 @@ export const DailyHabitsCard: React.FC = () => {
                   cx={dialSize / 2}
                   cy={dialSize / 2}
                   r={radius}
-                  stroke="#E2E8F0"
+                  stroke="#F1F5F9"
                   strokeWidth={strokeWidth}
                   fill="none"
                 />
@@ -113,7 +127,7 @@ export const DailyHabitsCard: React.FC = () => {
                   cx={dialSize / 2}
                   cy={dialSize / 2}
                   r={radius}
-                  stroke="#2563EB"
+                  stroke="#0284C7"
                   strokeWidth={strokeWidth}
                   strokeDasharray={`${circumference} ${circumference}`}
                   strokeDashoffset={waterOffset}
@@ -123,19 +137,18 @@ export const DailyHabitsCard: React.FC = () => {
               </Svg>
             </View>
 
-            {/* Inner Content */}
+            {/* Inner Hero Content */}
             <View style={styles.gaugeInner}>
               <Text style={styles.innerValueText}>{currentMl.toLocaleString()}</Text>
-              <Text style={styles.innerSubText}>ml</Text>
+              <Text style={styles.innerSubTextBlue}>ML</Text>
             </View>
           </View>
 
-          {/* Metric Below: Ratio */}
+          {/* Metric Below: Goal Ratio & Context */}
           <Text style={styles.metricRatioTextBlue}>
             {currentMl.toLocaleString()}{' '}
             <Text style={styles.metricRatioUnit}>/ {targetMl.toLocaleString()} ml</Text>
           </Text>
-          {/* Subtitle: Progress context */}
           <Text style={styles.metricContextText}>
             {waterPercent}% • {Math.round(currentMl / 250)} of {glassesTarget} glasses
           </Text>
@@ -150,7 +163,7 @@ export const DailyHabitsCard: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Decrease water by 250 ml"
               >
-                <Ionicons name="remove" size={16} color="#2563EB" />
+                <Ionicons name="remove" size={15} color="#0284C7" />
               </Pressable>
             ) : null}
             <Pressable
@@ -179,7 +192,7 @@ export const DailyHabitsCard: React.FC = () => {
                   cx={dialSize / 2}
                   cy={dialSize / 2}
                   r={radius}
-                  stroke="#E2E8F0"
+                  stroke="#F1F5F9"
                   strokeWidth={strokeWidth}
                   fill="none"
                 />
@@ -187,7 +200,7 @@ export const DailyHabitsCard: React.FC = () => {
                   cx={dialSize / 2}
                   cy={dialSize / 2}
                   r={radius}
-                  stroke="#EA580C"
+                  stroke="#F47551"
                   strokeWidth={strokeWidth}
                   strokeDasharray={`${circumference} ${circumference}`}
                   strokeDashoffset={stepOffset}
@@ -197,19 +210,18 @@ export const DailyHabitsCard: React.FC = () => {
               </Svg>
             </View>
 
-            {/* Inner Content */}
+            {/* Inner Hero Content */}
             <View style={styles.gaugeInner}>
               <Text style={styles.innerValueText}>{steps.toLocaleString()}</Text>
-              <Text style={styles.innerSubText}>steps</Text>
+              <Text style={styles.innerSubTextCoral}>STEPS</Text>
             </View>
           </View>
 
-          {/* Metric Below: Ratio */}
-          <Text style={styles.metricRatioTextOrange}>
+          {/* Metric Below: Goal Ratio & Context */}
+          <Text style={styles.metricRatioTextCoral}>
             {steps.toLocaleString()}{' '}
             <Text style={styles.metricRatioUnit}>/ {stepGoal.toLocaleString()}</Text>
           </Text>
-          {/* Subtitle: Progress context */}
           <Text style={styles.metricContextText}>
             {stepPercent}% • ~{stepBurnKcal} kcal burn
           </Text>
@@ -224,7 +236,7 @@ export const DailyHabitsCard: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Decrease steps by 1,000"
               >
-                <Ionicons name="remove" size={16} color="#EA580C" />
+                <Ionicons name="remove" size={15} color="#F47551" />
               </Pressable>
             ) : null}
             <Pressable
@@ -255,7 +267,7 @@ export const DailyHabitsCard: React.FC = () => {
           {currentLog.activities.map((act) => (
             <View key={act.id} style={styles.activityChip}>
               <Text style={styles.activityChipText}>
-                🏃 {act.name} ({act.durationMinutes}m) • +{act.caloriesBurned} kcal
+                {getWorkoutIcon(act.name)} {act.name} ({act.durationMinutes}m) • +{act.caloriesBurned} kcal
               </Text>
               <Pressable
                 onPress={() => removeWorkout(act.id)}
@@ -263,7 +275,7 @@ export const DailyHabitsCard: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel={`Remove workout ${act.name}`}
               >
-                <Ionicons name="close-circle" size={16} color="#94A3B8" />
+                <Ionicons name="close-circle" size={17} color="#94A3B8" />
               </Pressable>
             </View>
           ))}
@@ -299,7 +311,7 @@ export const DailyHabitsCard: React.FC = () => {
                   accessibilityRole="button"
                   accessibilityLabel={`Log ${item.name} workout`}
                 >
-                  <Ionicons name={item.icon as any} size={20} color="#EA580C" />
+                  <Ionicons name={item.icon as any} size={20} color="#F47551" />
                   <Text style={styles.quickName}>{item.name}</Text>
                   <Text style={styles.quickMeta}>
                     {item.mins}m • {item.cals} kcal
@@ -378,67 +390,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#FFD5C6',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
+    borderCurve: 'continuous',
     gap: 4,
-    shadowColor: '#EA580C',
+    shadowColor: '#F47551',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 1,
   },
   logWorkoutHeaderText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#EA580C',
+    color: '#F47551',
     fontWeight: '600',
   },
   pressedBtnSubtle: {
     opacity: 0.75,
     transform: [{ scale: 0.96 }],
   },
-  // Side-by-Side Habit Pods
+  // Side-by-Side Habit Pods (Unified Frost White Surfaces)
   podsRow: {
     flexDirection: 'row',
     gap: 12,
   },
   waterPod: {
     flex: 1,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
+    borderCurve: 'continuous',
     paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
-    shadowColor: '#0284C7',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
   stepPod: {
     flex: 1,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
+    borderCurve: 'continuous',
     paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FED7AA',
-    shadowColor: '#EA580C',
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
   waterPodBadge: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F0F9FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#BAE6FD',
@@ -449,18 +465,19 @@ const styles = StyleSheet.create({
     color: '#0284C7',
   },
   stepPodBadge: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF5F1',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#FFD5C6',
   },
   stepPodBadgeText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 11,
-    color: '#EA580C',
+    color: '#F47551',
   },
   gaugeCanvas: {
     position: 'relative',
@@ -484,11 +501,19 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     lineHeight: 20,
   },
-  innerSubText: {
-    fontFamily: Fonts.poppins.medium,
+  innerSubTextBlue: {
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 10,
-    color: '#64748B',
+    color: '#0284C7',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  innerSubTextCoral: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 10,
+    color: '#F47551',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   metricRatioTextBlue: {
     fontFamily: Fonts.poppins.bold,
@@ -497,10 +522,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  metricRatioTextOrange: {
+  metricRatioTextCoral: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 13.5,
-    color: '#EA580C',
+    color: '#F47551',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -531,6 +556,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#BAE6FD',
@@ -544,6 +570,7 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 9,
+    borderCurve: 'continuous',
     gap: 3,
   },
   waterAddBtnText: {
@@ -555,19 +582,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#FFD5C6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 9,
+    borderCurve: 'continuous',
     gap: 3,
   },
   stepAddBtnText: {
@@ -580,6 +609,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderCurve: 'continuous',
     padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
@@ -604,16 +634,17 @@ const styles = StyleSheet.create({
   activitiesTotalBurn: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 11.5,
-    color: '#EA580C',
+    color: '#F47551',
   },
   activityChip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F6',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
+    borderCurve: 'continuous',
     marginBottom: 4,
   },
   activityChipText: {
@@ -634,6 +665,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
+    borderCurve: 'continuous',
     padding: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
@@ -675,9 +707,10 @@ const styles = StyleSheet.create({
   },
   quickCard: {
     width: '48%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F6',
     padding: 10,
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -698,10 +731,11 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   input: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F6',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 10,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontFamily: Fonts.poppins.regular,
@@ -723,8 +757,9 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   saveWorkoutBtn: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#F47551',
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 16,

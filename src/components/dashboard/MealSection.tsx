@@ -51,12 +51,23 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
       <MealCard
         mealType="dinner"
         title="Dinner"
-        recommendedCals={recommended.dinner || 658}
+        recommendedCals={recommended.dinner || 560}
         imageUrl="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=150&auto=format&fit=crop&q=80"
         iconFallback="🍲"
         items={mealsByType.dinner}
         onAddPress={onAddFood}
         isDimmed={false}
+      />
+
+      {/* Snacks */}
+      <MealCard
+        mealType="snacks"
+        title="Snacks"
+        recommendedCals={recommended.snacks || 240}
+        imageUrl="https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=150&auto=format&fit=crop&q=80"
+        iconFallback="🍎"
+        items={mealsByType.snacks}
+        onAddPress={onAddFood}
       />
     </View>
   );
