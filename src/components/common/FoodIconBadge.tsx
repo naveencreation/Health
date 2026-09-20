@@ -3,6 +3,7 @@ import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FoodItem } from '@/types';
+import { LOCAL_FOOD_IMAGES } from '@/assets/foodImages';
 
 export interface FoodIconBadgeProps {
   item?: Partial<FoodItem> | null;
@@ -292,42 +293,47 @@ export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(({
 }) => {
   const [imgError, setImgError] = useState(false);
 
-  // Look up photo URL: 1) explicit item.imageUrl (camera/picker), 2) exact ID in registry, 3) smart keyword matching
-  const photoUrl =
-    item?.imageUrl ||
-    (item?.id ? FOOD_PHOTO_REGISTRY[item.id] : undefined) ||
-    (() => {
-      const name = (item?.name || foodName || '').toLowerCase().trim();
-      if (!name) return undefined;
-      if (name.includes('idli') || name.includes('dhokla')) return FOOD_PHOTO_REGISTRY['idli_steamed'];
-      if (name.includes('dosa') || name.includes('uttapam')) return FOOD_PHOTO_REGISTRY['plain_dosa'];
-      if (name.includes('paratha')) return FOOD_PHOTO_REGISTRY['aloo_paratha'];
-      if (name.includes('roti') || name.includes('chapati') || name.includes('phulka')) return FOOD_PHOTO_REGISTRY['roti_chapati'];
-      if (name.includes('naan')) return FOOD_PHOTO_REGISTRY['plain_naan'];
-      if (name.includes('bread') || name.includes('toast') || name.includes('sandwich')) return FOOD_PHOTO_REGISTRY['brown_bread_slice'];
-      if (name.includes('biryani') || name.includes('pulao')) return FOOD_PHOTO_REGISTRY['chicken_biryani'];
-      if (name.includes('rice') || name.includes('chawal')) return FOOD_PHOTO_REGISTRY['cooked_white_rice'];
-      if (name.includes('paneer')) return FOOD_PHOTO_REGISTRY['paneer_butter_masala'];
-      if (name.includes('chicken') || name.includes('meat') || name.includes('mutton') || name.includes('fish')) return FOOD_PHOTO_REGISTRY['chicken_curry'];
-      if (name.includes('egg') || name.includes('omelet') || name.includes('omlette')) return FOOD_PHOTO_REGISTRY['boiled_egg'];
-      if (name.includes('dal') || name.includes('sambar') || name.includes('curry') || name.includes('chole') || name.includes('rajma')) return FOOD_PHOTO_REGISTRY['dal_tadka'];
-      if (name.includes('chai') || name.includes('tea')) return FOOD_PHOTO_REGISTRY['masala_chai'];
-      if (name.includes('coffee')) return FOOD_PHOTO_REGISTRY['filter_coffee'];
-      if (name.includes('samosa') || name.includes('pakora') || name.includes('vada')) return FOOD_PHOTO_REGISTRY['samosa'];
-      if (name.includes('apple')) return FOOD_PHOTO_REGISTRY['apple_medium'];
-      if (name.includes('banana')) return FOOD_PHOTO_REGISTRY['banana_medium'];
-      if (name.includes('papaya')) return FOOD_PHOTO_REGISTRY['papaya_cubes'];
-      if (name.includes('oat') || name.includes('porridge')) return FOOD_PHOTO_REGISTRY['oatmeal_water'];
-      if (name.includes('curd') || name.includes('dahi') || name.includes('yogurt')) return FOOD_PHOTO_REGISTRY['curd_dahi'];
-      if (name.includes('protein') || name.includes('shake')) return FOOD_PHOTO_REGISTRY['whey_protein'];
-      if (name.includes('salad') || name.includes('sprout')) return FOOD_PHOTO_REGISTRY['sprouts_salad'];
-      return undefined;
-    })();
+  // Priority 1: User's custom image URL (e.g. camera capture / gallery photo picker)
+  // Priority 2: Verified bundled offline asset from LOCAL_FOOD_IMAGES (0ms load, offline ready)
+  // Priority 3: Smart keyword matching against local food assets
+  const imageSource = (() => {
+    if (item?.imageUrl) {
+      return typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl;
+    }
+    if (item?.id && LOCAL_FOOD_IMAGES[item.id]) {
+      return LOCAL_FOOD_IMAGES[item.id];
+    }
+    const name = (item?.name || foodName || '').toLowerCase().trim();
+    if (!name) return undefined;
+    if (name.includes('idli') || name.includes('dhokla')) return LOCAL_FOOD_IMAGES['idli_steamed'];
+    if (name.includes('dosa') || name.includes('uttapam')) return LOCAL_FOOD_IMAGES['plain_dosa'];
+    if (name.includes('paratha')) return LOCAL_FOOD_IMAGES['aloo_paratha'];
+    if (name.includes('roti') || name.includes('chapati') || name.includes('phulka')) return LOCAL_FOOD_IMAGES['roti_chapati'];
+    if (name.includes('naan')) return LOCAL_FOOD_IMAGES['plain_naan'];
+    if (name.includes('bread') || name.includes('toast') || name.includes('sandwich')) return LOCAL_FOOD_IMAGES['brown_bread_slice'];
+    if (name.includes('biryani') || name.includes('pulao')) return LOCAL_FOOD_IMAGES['chicken_biryani'];
+    if (name.includes('rice') || name.includes('chawal')) return LOCAL_FOOD_IMAGES['cooked_white_rice'];
+    if (name.includes('paneer')) return LOCAL_FOOD_IMAGES['paneer_butter_masala'];
+    if (name.includes('chicken') || name.includes('meat') || name.includes('mutton') || name.includes('fish')) return LOCAL_FOOD_IMAGES['chicken_curry'];
+    if (name.includes('egg') || name.includes('omelet') || name.includes('omlette')) return LOCAL_FOOD_IMAGES['boiled_egg'];
+    if (name.includes('dal') || name.includes('sambar') || name.includes('curry') || name.includes('chole') || name.includes('rajma')) return LOCAL_FOOD_IMAGES['dal_tadka'];
+    if (name.includes('chai') || name.includes('tea')) return LOCAL_FOOD_IMAGES['masala_chai'];
+    if (name.includes('coffee')) return LOCAL_FOOD_IMAGES['filter_coffee'];
+    if (name.includes('samosa') || name.includes('pakora') || name.includes('vada')) return LOCAL_FOOD_IMAGES['samosa'];
+    if (name.includes('apple')) return LOCAL_FOOD_IMAGES['apple_medium'];
+    if (name.includes('banana')) return LOCAL_FOOD_IMAGES['banana_medium'];
+    if (name.includes('papaya')) return LOCAL_FOOD_IMAGES['papaya_cubes'];
+    if (name.includes('oat') || name.includes('porridge')) return LOCAL_FOOD_IMAGES['oatmeal_water'];
+    if (name.includes('curd') || name.includes('dahi') || name.includes('yogurt')) return LOCAL_FOOD_IMAGES['curd_dahi'];
+    if (name.includes('protein') || name.includes('shake')) return LOCAL_FOOD_IMAGES['whey_protein'];
+    if (name.includes('salad') || name.includes('sprout')) return LOCAL_FOOD_IMAGES['sprouts_salad'];
+    return undefined;
+  })();
 
   const radius = Math.round(size * 0.28);
 
-  // 1. Primary: Real Food Photography Thumbnail
-  if (photoUrl && !imgError) {
+  // 1. Primary: Real Food Photography Thumbnail (Offline Local Asset or Custom Photo)
+  if (imageSource && !imgError) {
     return (
       <View
         style={[
@@ -341,12 +347,12 @@ export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(({
         ]}
       >
         <Image
-          source={{ uri: photoUrl }}
+          source={imageSource}
           style={{ width: size, height: size, borderRadius: radius }}
           contentFit="cover"
           cachePolicy="memory-disk"
           transition={150}
-          recyclingKey={item?.id || photoUrl}
+          recyclingKey={item?.id}
           priority="normal"
           onError={() => setImgError(true)}
         />
