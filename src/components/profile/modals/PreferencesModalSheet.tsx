@@ -247,43 +247,66 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
 
             {/* AI Intelligence Engine (BYOK) */}
             <Text style={styles.sectionHeader}>Gemini AI Engine (BYOK)</Text>
-            <View style={styles.card}>
-              <View style={styles.byokContainer}>
-                <View style={styles.byokHeaderRow}>
-                  <View style={[styles.switchIconBox, { backgroundColor: 'rgba(244, 117, 81, 0.12)' }]}>
-                    <Ionicons name="sparkles" size={18} color="#F47551" />
-                  </View>
-                  <View style={styles.flex1}>
-                    <View style={styles.byokTitleRow}>
-                      <Text style={styles.personalityTitle}>Gemini AI</Text>
-                      <View style={[styles.statusPill, aiConnected ? styles.statusPillActive : styles.statusPillInactive]}>
-                        <View style={[styles.statusDot, aiConnected ? styles.statusDotActive : styles.statusDotInactive]} />
-                        <Text style={[styles.statusPillText, aiConnected ? styles.statusTextActive : styles.statusTextInactive]}>
-                          {aiConnected ? 'Active' : 'Not Connected'}
-                        </Text>
-                      </View>
+            <View style={styles.byokCard}>
+              <View style={styles.byokHeaderRow}>
+                <View style={styles.byokIconBox}>
+                  <Ionicons name="sparkles" size={19} color="#F47551" />
+                </View>
+                <View style={styles.flex1}>
+                  <View style={styles.byokTitleRow}>
+                    <Text style={styles.byokTitle}>Gemini AI</Text>
+                    <View style={[styles.statusPill, aiConnected ? styles.statusPillActive : styles.statusPillInactive]}>
+                      <View style={[styles.statusDot, aiConnected ? styles.statusDotActive : styles.statusDotInactive]} />
+                      <Text style={[styles.statusPillText, aiConnected ? styles.statusTextActive : styles.statusTextInactive]}>
+                        {aiConnected ? 'Active' : 'Not Connected'}
+                      </Text>
                     </View>
-                    <Text style={styles.personalityDesc}>
-                      {aiConnected
-                        ? `Connected with ${maskedApiKey}. Powers Ria chat & AI camera food vision.`
-                        : 'Connect your personal Google Gemini API key to enable live coaching and food vision.'}
-                    </Text>
+                  </View>
+                  <Text style={styles.byokDesc}>
+                    {aiConnected
+                      ? 'Powers Ria 1-on-1 coaching & AI camera food vision.'
+                      : 'Connect your personal Google Gemini API key to enable live coaching and food vision.'}
+                  </Text>
+                </View>
+              </View>
+
+              {aiConnected && maskedApiKey ? (
+                <View style={styles.byokKeyChip}>
+                  <View style={styles.byokKeyChipLeft}>
+                    <Ionicons name="key-outline" size={13} color="#F47551" />
+                    <Text style={styles.byokKeyChipLabel}>Key:</Text>
+                    <Text style={styles.byokKeyChipValue}>{maskedApiKey}</Text>
+                  </View>
+                  <View style={styles.byokSecureTag}>
+                    <Ionicons name="shield-checkmark" size={11} color="#059669" />
+                    <Text style={styles.byokSecureText}>Encrypted</Text>
                   </View>
                 </View>
+              ) : null}
 
-                <Pressable
-                  style={({ pressed }) => [styles.byokActionBtn, pressed ? styles.pressedSubtle : null]}
-                  onPress={() => setByokModalVisible(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Manage Gemini API key"
-                >
-                  <Ionicons name={aiConnected ? 'settings-outline' : 'key-outline'} size={15} color="#F47551" />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.byokActionBtn,
+                  pressed ? styles.byokActionBtnPressed : null,
+                ]}
+                onPress={() => setByokModalVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Manage Gemini API key"
+              >
+                <View style={styles.byokActionLeft}>
+                  <View style={styles.byokActionIconCircle}>
+                    <Ionicons
+                      name={aiConnected ? 'settings-outline' : 'key-outline'}
+                      size={14}
+                      color="#EA580C"
+                    />
+                  </View>
                   <Text style={styles.byokActionBtnText}>
                     {aiConnected ? 'Manage Key & Settings' : 'Connect Personal Gemini Key'}
                   </Text>
-                  <Ionicons name="chevron-forward" size={14} color="#F47551" />
-                </Pressable>
-              </View>
+                </View>
+                <Ionicons name="chevron-forward" size={15} color="#EA580C" />
+              </Pressable>
             </View>
 
             {/* 2. Notification Reminders */}
@@ -944,14 +967,35 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.65,
   },
-  byokContainer: {
-    padding: 14,
+  byokCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 1,
   },
   byokHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
-    marginBottom: 12,
+  },
+  byokIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: 'rgba(244, 117, 81, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 117, 81, 0.2)',
   },
   byokTitleRow: {
     flexDirection: 'row',
@@ -959,12 +1003,69 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 2,
   },
+  byokTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14.5,
+    color: '#0F172A',
+  },
+  byokDesc: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11.5,
+    color: '#64748B',
+    lineHeight: 16.5,
+    marginTop: 2,
+  },
+  byokKeyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 12,
+  },
+  byokKeyChipLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  byokKeyChipLabel: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 11,
+    color: '#64748B',
+  },
+  byokKeyChipValue: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11,
+    color: '#1E293B',
+    letterSpacing: 0.3,
+  },
+  byokSecureTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    gap: 3,
+  },
+  byokSecureText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 9.5,
+    color: '#059669',
+  },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingVertical: 2.5,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     gap: 4,
   },
   statusPillActive: {
@@ -1001,19 +1102,42 @@ const styles = StyleSheet.create({
   byokActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(244, 117, 81, 0.08)',
-    borderRadius: 12,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 14,
+    borderCurve: 'continuous',
     paddingVertical: 10,
-    gap: 6,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(244, 117, 81, 0.2)',
+    borderColor: '#FFEDD5',
+    marginTop: 12,
+  },
+  byokActionBtnPressed: {
+    backgroundColor: '#FFEDD5',
+    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
+  },
+  byokActionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  byokActionIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   byokActionBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12,
-    color: '#F47551',
-    flex: 1,
-    marginLeft: 4,
+    color: '#EA580C',
   },
 });
