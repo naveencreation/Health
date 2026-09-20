@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     borderColor: '#FECACA',
   },
   errorMsgText: {
-    color: '#DC2626 !important' as any,
+    color: '#DC2626',
   },
   bubbleText: {
     fontSize: 13.5,

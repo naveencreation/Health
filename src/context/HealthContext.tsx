@@ -402,7 +402,24 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const customColRef = collection(db, 'users', uid, 'customFoods');
         const customSnap = await getDocs(customColRef);
         if (!customSnap.empty) {
-          const fetchedCustom: FoodItem[] = customSnap.docs.map((d) => d.data() as FoodItem);
+          const fetchedCustom: FoodItem[] = customSnap.docs.map((d) => {
+            const raw = d.data();
+            return {
+              id: typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : d.id,
+              name: typeof raw.name === 'string' && raw.name.trim().length > 0 ? raw.name.trim() : 'Unnamed Food',
+              category: raw.category || 'snacks',
+              categoryLabel: raw.categoryLabel || 'Custom Food',
+              servingUnit: typeof raw.servingUnit === 'string' ? raw.servingUnit : 'serving',
+              defaultServingSize: typeof raw.defaultServingSize === 'number' ? Math.max(1, raw.defaultServingSize) : 1,
+              calories: Math.max(0, Math.round(Number(raw.calories) || 0)),
+              carbs: Math.max(0, Math.round((Number(raw.carbs) || 0) * 10) / 10),
+              protein: Math.max(0, Math.round((Number(raw.protein) || 0) * 10) / 10),
+              fat: Math.max(0, Math.round((Number(raw.fat) || 0) * 10) / 10),
+              fiber: Math.max(0, Math.round((Number(raw.fiber) || 0) * 10) / 10),
+              icon: typeof raw.icon === 'string' ? raw.icon : '🍽️',
+              isCustom: true,
+            };
+          });
           setCustomFoods(fetchedCustom);
           AsyncStorage.setItem(userCustomFoodsKey, JSON.stringify(fetchedCustom)).catch(() => {});
         }
@@ -870,6 +887,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const newFood: FoodItem = {
       ...foodData,
       id: 'custom_' + Date.now(),
+      name: (foodData.name || 'Custom Food').trim().slice(0, 150),
+      calories: Math.max(0, Math.min(15000, Math.round(Number(foodData.calories) || 0))),
+      carbs: Math.max(0, Math.min(1000, Math.round((Number(foodData.carbs) || 0) * 10) / 10)),
+      protein: Math.max(0, Math.min(1000, Math.round((Number(foodData.protein) || 0) * 10) / 10)),
+      fat: Math.max(0, Math.min(1000, Math.round((Number(foodData.fat) || 0) * 10) / 10)),
+      fiber: Math.max(0, Math.min(500, Math.round((Number(foodData.fiber) || 0) * 10) / 10)),
       isCustom: true,
     };
     setCustomFoods((prev) => {

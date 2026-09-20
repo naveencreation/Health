@@ -1,7 +1,67 @@
 rules_version = '2';
 
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following user-scoped data structures:
+//
+// Collection: users/{userId}
+// Document ID: Firebase Auth UID
+// Fields:
+//   - id: string (optional, must match userId, immutable on update)
+//   - name: string (optional, <= 100 chars)
+//   - email: string (optional, > 3 chars, <= 150 chars)
+//   - age: number (optional, 1 <= age <= 150)
+//   - weight: number (optional, 10 <= weight <= 500)
+//   - weightUnit: string (optional, 'kg' or 'lbs')
+//   - goal: string (optional, <= 50 chars)
+//   - gender: string (optional, <= 30 chars)
+//   - heightCm: number (optional, 50 <= heightCm <= 300)
+//   - startWeightKg: number (optional, 10 <= startWeightKg <= 500)
+//   - avatarUrl: string (optional, <= 150 chars)
+//   - createdAt: string (optional, ISO timestamp <= 40 chars, immutable on update)
+//   - updatedAt: string (optional, ISO timestamp <= 40 chars)
+//   - goals: map (optional, user nutrition, calorie budget, and RIA assistant settings)
+//
+// Subcollection: users/{userId}/dailyLogs/{date}
+// Document ID: Date string formatted as YYYY-MM-DD
+// Fields:
+//   - date: string (optional, must match {date} doc id, immutable on update, <= 30 chars)
+//   - waterMl: number (optional, >= 0 and <= 30,000 ml)
+//   - steps: number (optional, >= 0 and <= 250,000 steps)
+//   - meals: list (optional, <= 200 items, array of logged meals)
+//   - activities: list (optional, <= 100 items, array of logged workouts)
+//
+// Subcollection: users/{userId}/customFoods/{foodId}
+// Document ID: custom food item ID (e.g. custom_1726834000000)
+// Fields:
+//   - id: string (optional, must match {foodId} on create, immutable on update)
+//   - name: string (required, 1 <= size <= 150 chars)
+//   - calories: number (required, >= 0 and <= 15,000 kcal)
+//   - carbs: number (required, >= 0 and <= 1,000 g)
+//   - protein: number (required, >= 0 and <= 1,000 g)
+//   - fat: number (required, >= 0 and <= 1,000 g)
+//   - fiber: number (optional, >= 0 and <= 500 g)
+//   - servingUnit: string (optional, <= 60 chars)
+//   - defaultServingSize: number (optional, >= 0 and <= 10,000)
+//   - servingSize: number (optional, >= 0 and <= 10,000)
+//   - category: string (optional, <= 50 chars)
+//   - categoryLabel: string (optional, <= 100 chars)
+//   - icon: string (optional, <= 30 chars)
+//   - isCustom: bool (optional)
+//   - sugar: number (optional, >= 0 and <= 1,000 g)
+//   - sodium: number (optional, >= 0 and <= 50,000 mg)
+//   - healthScore: number (optional, >= 0 and <= 100)
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
 
     function isAuthenticated() {
       return request.auth != null;
@@ -11,39 +71,101 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
     function isValidUserDoc(userId) {
       let data = request.resource.data;
-      return (!('id' in data) || data.id == userId) &&
+      return data.keys().hasOnly([
+          'id', 'name', 'email', 'age', 'weight', 'weightUnit',
+          'goal', 'gender', 'heightCm', 'startWeightKg',
+          'avatarUrl', 'createdAt', 'updatedAt', 'goals'
+        ]) &&
+        (!('id' in data) || data.id == userId) &&
         (!('name' in data) || (data.name is string && data.name.size() <= 100)) &&
-        (!('email' in data) || (data.email is string && data.email.size() > 3)) &&
+        (!('email' in data) || (data.email is string && data.email.size() > 3 && data.email.size() <= 150)) &&
+        (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 150)) &&
+        (!('age' in data) || (data.age is number && data.age >= 1 && data.age <= 150)) &&
+        (!('weight' in data) || (data.weight is number && data.weight >= 10 && data.weight <= 500)) &&
+        (!('startWeightKg' in data) || (data.startWeightKg is number && data.startWeightKg >= 10 && data.startWeightKg <= 500)) &&
+        (!('heightCm' in data) || (data.heightCm is number && data.heightCm >= 50 && data.heightCm <= 300)) &&
+        (!('weightUnit' in data) || (data.weightUnit in ['kg', 'lbs'])) &&
+        (!('goal' in data) || (data.goal is string && data.goal.size() <= 50)) &&
+        (!('gender' in data) || (data.gender is string && data.gender.size() <= 30)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 40)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40)) &&
         (!('goals' in data) || data.goals is map);
     }
 
-    function isValidDailyLogDoc() {
+    function isValidDailyLogDoc(date) {
       let data = request.resource.data;
-      return (!('date' in data) || data.date is string) &&
-        (!('waterMl' in data) || data.waterMl is number) &&
-        (!('steps' in data) || data.steps is number) &&
-        (!('meals' in data) || data.meals is list) &&
-        (!('activities' in data) || data.activities is list);
+      return data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities']) &&
+        (!('date' in data) || (data.date is string && data.date.size() <= 30 && data.date == date)) &&
+        (!('waterMl' in data) || (data.waterMl is number && data.waterMl >= 0 && data.waterMl <= 30000)) &&
+        (!('steps' in data) || (data.steps is number && data.steps >= 0 && data.steps <= 250000)) &&
+        (!('meals' in data) || (data.meals is list && data.meals.size() <= 200)) &&
+        (!('activities' in data) || (data.activities is list && data.activities.size() <= 100));
     }
+
+    function isValidCustomFoodDoc() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'id', 'name', 'calories', 'carbs', 'protein', 'fat', 'fiber',
+          'servingUnit', 'defaultServingSize', 'servingSize', 'category',
+          'categoryLabel', 'icon', 'isCustom', 'sugar', 'sodium', 'healthScore'
+        ]) &&
+        (data.name is string && data.name.size() >= 1 && data.name.size() <= 150) &&
+        (data.calories is number && data.calories >= 0 && data.calories <= 15000) &&
+        (data.carbs is number && data.carbs >= 0 && data.carbs <= 1000) &&
+        (data.protein is number && data.protein >= 0 && data.protein <= 1000) &&
+        (data.fat is number && data.fat >= 0 && data.fat <= 1000) &&
+        (!('fiber' in data) || (data.fiber is number && data.fiber >= 0 && data.fiber <= 500)) &&
+        (!('servingUnit' in data) || (data.servingUnit is string && data.servingUnit.size() <= 60)) &&
+        (!('defaultServingSize' in data) || (data.defaultServingSize is number && data.defaultServingSize >= 0 && data.defaultServingSize <= 10000)) &&
+        (!('servingSize' in data) || (data.servingSize is number && data.servingSize >= 0 && data.servingSize <= 10000)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 50)) &&
+        (!('categoryLabel' in data) || (data.categoryLabel is string && data.categoryLabel.size() <= 100)) &&
+        (!('icon' in data) || (data.icon is string && data.icon.size() <= 30)) &&
+        (!('isCustom' in data) || data.isCustom is bool) &&
+        (!('sugar' in data) || (data.sugar is number && data.sugar >= 0 && data.sugar <= 1000)) &&
+        (!('sodium' in data) || (data.sodium is number && data.sodium >= 0 && data.sodium <= 50000)) &&
+        (!('healthScore' in data) || (data.healthScore is number && data.healthScore >= 0 && data.healthScore <= 100));
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
 
     // Match Root Collection: users
     match /users/{userId} {
       allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId) && isValidUserDoc(userId);
+      allow create: if isOwner(userId) && isValidUserDoc(userId) &&
+        (!('id' in request.resource.data) || request.resource.data.id == userId);
+      allow update: if isOwner(userId) && isValidUserDoc(userId) &&
+        (!('id' in request.resource.data) || request.resource.data.id == resource.data.id) &&
+        (!('createdAt' in resource.data) || !('createdAt' in request.resource.data) || request.resource.data.createdAt == resource.data.createdAt);
       allow delete: if isOwner(userId);
 
       // Match Subcollection: dailyLogs
       match /dailyLogs/{date} {
         allow read: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidDailyLogDoc();
+        allow create: if isOwner(userId) && isValidDailyLogDoc(date);
+        allow update: if isOwner(userId) && isValidDailyLogDoc(date) &&
+          (!('date' in request.resource.data) || request.resource.data.date == resource.data.date);
         allow delete: if isOwner(userId);
       }
 
-      // Match Subcollection: customFoods (User-Scoped Custom Food Library)
+      // Match Subcollection: customFoods (AI & User-Scoped Food Library)
       match /customFoods/{foodId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+          isValidCustomFoodDoc() &&
+          (!('id' in request.resource.data) || request.resource.data.id == foodId);
+        allow update: if isOwner(userId) &&
+          isValidCustomFoodDoc() &&
+          (!('id' in request.resource.data) || request.resource.data.id == resource.data.id);
+        allow delete: if isOwner(userId);
       }
     }
 

@@ -88,6 +88,10 @@ function MainApp() {
         const style = document.createElement('style');
         style.id = styleId;
         style.innerHTML = `
+          /* Pure warm neutral backdrop for web desktop view */
+          html, body, #root {
+            background-color: #F4F1EA !important;
+          }
           /* Hide scrollbars across Chrome, Safari, Edge, Firefox for pure mobile app feel */
           ::-webkit-scrollbar {
             display: none !important;
@@ -249,9 +253,9 @@ function MainApp() {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, styles.safeAreaMint]}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
-      <View style={[styles.phoneContainer, styles.phoneContainerToday]}>
+      <View style={styles.phoneContainer}>
         {/* Tab Content with Offscreen Preservation */}
         <View style={styles.contentArea}>
           <View style={[styles.tabContainer, activeTab !== 'today' ? styles.tabHidden : null]}>
@@ -392,12 +396,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.card,
+    backgroundColor: Platform.OS === 'web' ? '#F4F1EA' : Colors.background,
     paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
     alignItems: 'center',
-  },
-  safeAreaMint: {
-    backgroundColor: '#EDFAF6',
   },
   phoneContainer: {
     flex: 1,
@@ -415,9 +416,6 @@ const styles = StyleSheet.create({
           borderColor: Colors.border,
         }
       : {}),
-  },
-  phoneContainerToday: {
-    backgroundColor: '#EDFAF6',
   },
   contentArea: {
     flex: 1,

@@ -353,7 +353,7 @@ export const TopDateStrip: React.FC = () => {
                       r={radius}
                       stroke="#E2E8F0"
                       strokeWidth={strokeWidth}
-                      fill="#F8FAFC"
+                      fill="none"
                     />
                     {hasProgress ? (
                       <Circle
@@ -616,21 +616,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 72,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
     elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   futureCapsule: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    borderColor: 'rgba(241, 245, 249, 0.7)',
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
   },
   circleNumberWrapper: {
     width: 32,
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'transparent',
   },
   dayNumText: {
     fontFamily: Fonts.poppins.bold,
