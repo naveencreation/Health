@@ -102,7 +102,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
         <Text style={{ fontSize: 22 }}>{item.icon || '🍽️'}</Text>
       </View>
 
-      {/* Food Details & Color-Coded Macro Badges */}
+      {/* Clean Food Details (Name + Serving Unit) */}
       <View style={styles.foodItemMain}>
         <View style={styles.foodItemNameRow}>
           <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
@@ -117,25 +117,9 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
             </View>
           ) : null}
         </View>
-        <Text style={styles.foodItemUnit}>
-          {formatServingUnit(item.servingUnit)} • {item.categoryLabel}
+        <Text style={styles.foodItemUnit} numberOfLines={1}>
+          {formatServingUnit(item.servingUnit)}
         </Text>
-
-        {/* Clean Color-Coded Macro Badges with Static Styles */}
-        <View style={styles.macroPillRow}>
-          <View style={styles.macroBadge}>
-            <View style={[styles.macroDot, styles.macroDotProtein]} />
-            <Text style={styles.macroText}>{item.protein}g P</Text>
-          </View>
-          <View style={styles.macroBadge}>
-            <View style={[styles.macroDot, styles.macroDotCarbs]} />
-            <Text style={styles.macroText}>{item.carbs}g C</Text>
-          </View>
-          <View style={styles.macroBadge}>
-            <View style={[styles.macroDot, styles.macroDotFat]} />
-            <Text style={styles.macroText}>{item.fat}g F</Text>
-          </View>
-        </View>
       </View>
 
       {/* Calories Stack + 44x44px Touch Target Quick Add */}
@@ -754,10 +738,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 </View>
 
                 <View style={styles.drawerTop}>
+                  <View style={styles.drawerFoodIconBox}>
+                    <Text style={{ fontSize: 24 }}>{selectedFood.icon || '🍽️'}</Text>
+                  </View>
                   <View style={styles.drawerFoodInfo}>
-                    <Text style={styles.drawerFoodName} numberOfLines={1}>{selectedFood.name}</Text>
+                    <View style={styles.drawerTitleRow}>
+                      <Text style={styles.drawerFoodName} numberOfLines={1}>{selectedFood.name}</Text>
+                      {selectedFood.categoryLabel ? (
+                        <View style={styles.drawerCategoryBadge}>
+                          <Text style={styles.drawerCategoryText}>{selectedFood.categoryLabel}</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text style={styles.drawerFoodUnit}>
-                      1 {selectedFood.servingUnit} = {selectedFood.calories} kcal
+                      1 {selectedFood.servingUnit} • {selectedFood.calories} kcal
                     </Text>
                   </View>
                   <Pressable
@@ -1173,15 +1167,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingVertical: 12,
+    borderCurve: 'continuous',
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    marginBottom: 10,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
     elevation: 1,
   },
   foodItemIcon: {
@@ -1370,19 +1365,48 @@ const styles = StyleSheet.create({
   },
   drawerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 14,
+    gap: 12,
+  },
+  drawerFoodIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   drawerFoodInfo: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 6,
+  },
+  drawerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   drawerFoodName: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 16.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
+    flexShrink: 1,
+  },
+  drawerCategoryBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+  },
+  drawerCategoryText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10,
+    color: '#64748B',
   },
   drawerFoodUnit: {
     fontFamily: Fonts.poppins.regular,
