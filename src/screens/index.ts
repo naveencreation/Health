@@ -6,6 +6,7 @@ export { ForgotPasswordScreen } from './auth/ForgotPasswordScreen';
 
 // Onboarding Screens
 export { AgeSelectionScreen } from './onboarding/AgeSelectionScreen';
+export { HeightSelectionScreen, HeightUnit } from './onboarding/HeightSelectionScreen';
 export { GenderSelectionScreen } from './onboarding/GenderSelectionScreen';
 export { GoalSelectionScreen } from './onboarding/GoalSelectionScreen';
 export { WeightSelectionScreen } from './onboarding/WeightSelectionScreen';

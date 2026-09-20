@@ -957,6 +957,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       age?: number;
       weight?: number;
       weightUnit?: 'kg' | 'lbs';
+      heightCm?: number;
       goal?: string;
       gender?: string;
     },
@@ -974,8 +975,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const gender = data.gender || baseGoals.gender || 'male';
     const goal = data.goal || baseGoals.goal || 'maintain';
 
-    // Standard height assumption (175cm male / 163cm female / 170cm other)
-    const heightCm = gender === 'female' ? 163 : gender === 'other' ? 170 : 175;
+    // Height from user onboarding input or intelligent gender default
+    const heightCm = data.heightCm || (gender === 'female' ? 163 : gender === 'other' ? 170 : 175);
 
     // Gender constant s in Mifflin-St Jeor equation
     const s = gender === 'female' ? -161 : gender === 'other' ? -78 : 5;

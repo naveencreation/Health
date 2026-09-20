@@ -91,7 +91,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
           </View>
 
           <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 3 of 4</Text>
+            <Text style={styles.stepIndicatorText}>Step 4 of 5</Text>
           </View>
         </View>
 

@@ -226,7 +226,8 @@ function MainApp() {
   if (!isAuthenticated || authModalVisible) {
     return (
       <WelcomeScreen
-        initialMode={!isAuthenticated ? 'signin' : authInitialMode}
+        key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
+        initialMode={authModalVisible ? authInitialMode : 'welcome'}
         onLoginSuccess={() => setAuthModalVisible(false)}
         onClose={isAuthenticated ? () => setAuthModalVisible(false) : undefined}
       />

@@ -105,6 +105,7 @@ export interface RegisterData {
   weightUnit?: 'kg' | 'lbs';
   goal?: string;
   gender?: string;
+  heightCm?: number;
 }
 
 

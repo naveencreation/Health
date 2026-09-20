@@ -26,6 +26,8 @@ interface SignUpScreenProps {
     weightUnit?: 'kg' | 'lbs';
     goal?: string;
     gender?: string;
+    height?: number;
+    heightUnit?: 'cm' | 'ft';
   };
 }
 
@@ -92,6 +94,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         weightUnit: initialData?.weightUnit,
         goal: initialData?.goal,
         gender: initialData?.gender,
+        heightCm: initialData?.height,
       });
 
       if (res.success) {

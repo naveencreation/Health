@@ -20,6 +20,7 @@ import { SignUpScreen } from './SignUpScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
 import { AgeSelectionScreen } from '../onboarding/AgeSelectionScreen';
 import { WeightSelectionScreen } from '../onboarding/WeightSelectionScreen';
+import { HeightSelectionScreen, HeightUnit } from '../onboarding/HeightSelectionScreen';
 import { GoalSelectionScreen, FitnessGoal } from '../onboarding/GoalSelectionScreen';
 import { GenderSelectionScreen, GenderType } from '../onboarding/GenderSelectionScreen';
 
@@ -30,6 +31,7 @@ type AuthScreenMode =
   | 'forgot_password'
   | 'age'
   | 'weight'
+  | 'height'
   | 'goal'
   | 'gender';
 
@@ -49,6 +51,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const mode = history[history.length - 1] || 'welcome';
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHistory([initialMode]);
+  }, [initialMode]);
 
   const pushMode = (nextMode: AuthScreenMode) => {
     setHistory((prev) => (prev[prev.length - 1] === nextMode ? prev : [...prev, nextMode]));
@@ -101,12 +107,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     age: number;
     weight: number;
     weightUnit: 'kg' | 'lbs';
+    height: number;
+    heightUnit: HeightUnit;
     goal: FitnessGoal;
     gender: GenderType;
   }>({
     age: 24,
     weight: 68,
     weightUnit: 'kg',
+    height: 170,
+    heightUnit: 'cm',
     goal: 'maintain',
     gender: 'male',
   });
@@ -130,7 +140,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <SignInScreen
         onBack={popMode}
         onSuccess={onLoginSuccess}
-        onSwitchToRegister={() => pushMode('signup')}
+        onSwitchToRegister={() => pushMode('age')}
         onForgotPassword={() => pushMode('forgot_password')}
       />
     );
@@ -147,6 +157,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           age: biometrics.age,
           weight: biometrics.weight,
           weightUnit: biometrics.weightUnit,
+          height: biometrics.height,
+          heightUnit: biometrics.heightUnit,
           goal: biometrics.goal,
           gender: biometrics.gender,
         }}
@@ -188,6 +200,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         onBack={popMode}
         onContinue={(weight, weightUnit) => {
           setBiometrics((prev) => ({ ...prev, weight, weightUnit }));
+          pushMode('height');
+        }}
+        onSkip={() => pushMode('signup')}
+        onSignIn={() => pushMode('signin')}
+      />
+    );
+  }
+
+  // 6. Onboarding Step 3: Height
+  if (mode === 'height') {
+    return (
+      <HeightSelectionScreen
+        initialHeightCm={biometrics.height}
+        onBack={popMode}
+        onContinue={(height, heightUnit) => {
+          setBiometrics((prev) => ({ ...prev, height, heightUnit }));
           pushMode('goal');
         }}
         onSkip={() => pushMode('signup')}

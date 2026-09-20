@@ -172,7 +172,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           </View>
 
           <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 2 of 4</Text>
+            <Text style={styles.stepIndicatorText}>Step 2 of 5</Text>
           </View>
         </View>
 

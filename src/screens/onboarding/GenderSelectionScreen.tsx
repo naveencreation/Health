@@ -87,7 +87,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
           </View>
 
           <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 4 of 4</Text>
+            <Text style={styles.stepIndicatorText}>Step 5 of 5</Text>
           </View>
         </View>
 

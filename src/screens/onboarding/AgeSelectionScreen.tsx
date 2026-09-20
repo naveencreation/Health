@@ -246,9 +246,9 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
             <Text style={styles.logoBadgeText}>Calori</Text>
           </View>
 
-          {/* Step Indicator: Step 1 of 4 */}
+          {/* Step Indicator: Step 1 of 5 */}
           <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 1 of 4</Text>
+            <Text style={styles.stepIndicatorText}>Step 1 of 5</Text>
           </View>
         </View>
 
