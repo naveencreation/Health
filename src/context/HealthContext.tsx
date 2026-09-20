@@ -13,6 +13,8 @@ import {
   deleteUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
+
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -433,7 +435,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(merged)),
       ]);
 
+      // 6. Restore Gemini API key from Firestore backup (BYOK persistence across logout/login)
+      SecureKeyStorage.restoreFromFirestore(uid).catch((err) => {
+        console.warn('fetchAndHydrateUserData: Gemini key restore failed (non-fatal)', err);
+      });
+
       hydratedUidRef.current = uid;
+
     } catch (err) {
       console.error('fetchAndHydrateUserData error:', err);
     } finally {
@@ -1218,6 +1226,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const logout = async (): Promise<void> => {
     isLoggingOutRef.current = true;
     hydratedUidRef.current = null;
+
+    // Invalidate in-memory API key cache so next login restores from Firestore
+    SecureKeyStorage.invalidateCache();
+
     try {
       await firebaseSignOut(auth);
     } catch (e) {
