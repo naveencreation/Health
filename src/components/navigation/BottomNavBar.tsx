@@ -36,25 +36,27 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   return (
     <>
-      {/* Figma Frame 297: Bottom Bar */}
+      {/* Frame 297: Bottom Bar with Micro-Labels */}
       <View style={styles.barContainer}>
-        {/* Tab 1: Home Angle */}
+        {/* Tab 1: Today */}
         <Pressable
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('today')}
           accessibilityRole="tab"
-          accessibilityLabel="Home"
+          accessibilityLabel="Today"
           accessibilityState={{ selected: activeTab === 'today' }}
         >
           <Ionicons
             name={activeTab === 'today' ? 'home' : 'home-outline'}
-            size={23}
+            size={20}
             color={activeTab === 'today' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'today' ? <View style={styles.activeDot} /> : null}
+          <Text style={[styles.tabLabel, activeTab === 'today' ? styles.tabLabelActive : null]}>
+            Today
+          </Text>
         </Pressable>
 
-        {/* Tab 2: Chef Hat (Meals & Recipes) */}
+        {/* Tab 2: Meals Diary (book-outline) */}
         <Pressable
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('diary')}
@@ -62,12 +64,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           accessibilityLabel="Meals Diary"
           accessibilityState={{ selected: activeTab === 'diary' }}
         >
-          <MaterialCommunityIcons
-            name="chef-hat"
-            size={24}
+          <Ionicons
+            name={activeTab === 'diary' ? 'book' : 'book-outline'}
+            size={20}
             color={activeTab === 'diary' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'diary' ? <View style={styles.activeDot} /> : null}
+          <Text style={[styles.tabLabel, activeTab === 'diary' ? styles.tabLabelActive : null]}>
+            Diary
+          </Text>
         </Pressable>
 
         {/* Center Floating Action Button: Ellipse 7 (56.49px x 56.49px, #CDE26D Lime/Avocado Green) */}
@@ -82,7 +86,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           </Pressable>
         </View>
 
-        {/* Tab 3: Chart 2 (Analytics & Statistics) */}
+        {/* Tab 3: Analytics */}
         <Pressable
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => onTabChange('analytics')}
@@ -92,10 +96,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         >
           <Ionicons
             name={activeTab === 'analytics' ? 'bar-chart' : 'bar-chart-outline'}
-            size={23}
+            size={20}
             color={activeTab === 'analytics' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'analytics' ? <View style={styles.activeDot} /> : null}
+          <Text style={[styles.tabLabel, activeTab === 'analytics' ? styles.tabLabelActive : null]}>
+            Analytics
+          </Text>
         </Pressable>
 
         {/* Tab 4: User Profile */}
@@ -108,10 +114,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         >
           <Ionicons
             name={activeTab === 'profile' ? 'person' : 'person-outline'}
-            size={23}
+            size={20}
             color={activeTab === 'profile' ? Colors.iconNavy : '#8E95A2'}
           />
-          {activeTab === 'profile' ? <View style={styles.activeDot} /> : null}
+          <Text style={[styles.tabLabel, activeTab === 'profile' ? styles.tabLabelActive : null]}>
+            Profile
+          </Text>
         </Pressable>
       </View>
 
@@ -256,19 +264,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    position: 'relative',
+    paddingVertical: 4,
   },
   pressedTab: {
     opacity: 0.65,
     transform: [{ scale: 0.94 }],
   },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.iconNavy,
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 16 : 8,
+  tabLabel: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10,
+    color: '#8E95A2',
+    marginTop: 3,
+  },
+  tabLabelActive: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontWeight: '600',
+    color: Colors.iconNavy,
   },
   centerFabAnchor: {
     width: 64,
