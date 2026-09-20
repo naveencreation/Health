@@ -5,6 +5,38 @@ import { auth, db } from '@/services/firebase';
 
 const GEMINI_API_KEY_STORAGE_KEY = 'calorify_gemini_byok_api_key_v1';
 
+const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+function safeEncode(input: string): string {
+  if (typeof btoa === 'function') {
+    try {
+      return btoa(input);
+    } catch (_) {}
+  }
+  let str = input;
+  let output = '';
+  for (let block = 0, charCode, i = 0, map = B64_CHARS; str.charAt(i | 0) || (map = '=', i % 1); output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+    charCode = str.charCodeAt(i += 3 / 4);
+    block = (block << 8) | charCode;
+  }
+  return output;
+}
+
+function safeDecode(input: string): string {
+  if (typeof atob === 'function') {
+    try {
+      return atob(input);
+    } catch (_) {}
+  }
+  let str = String(input).replace(/=+$/, '');
+  let output = '';
+  if (str.length % 4 === 1) return '';
+  for (let bc = 0, bs = 0, buffer, i = 0; (buffer = str.charAt(i++)); ~buffer && ((bs = bc % 4 ? bs * 64 + buffer : buffer), bc++ % 4) ? (output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6)))) : 0) {
+    buffer = B64_CHARS.indexOf(buffer);
+  }
+  return output;
+}
+
 class SecureKeyStorageService {
   private inMemoryCache: string | null = null;
   private isLoaded = false;
@@ -69,7 +101,7 @@ class SecureKeyStorageService {
       const uid = auth.currentUser?.uid;
       if (uid) {
         // Simple reversible obfuscation (not encryption — key is user-owned BYOK)
-        const obfuscated = btoa(cleanedKey);
+        const obfuscated = safeEncode(cleanedKey);
         await setDoc(
           doc(db, 'users', uid),
           { geminiKeyObfuscated: obfuscated },
@@ -160,7 +192,7 @@ class SecureKeyStorageService {
       const existingKey = await this.getApiKey();
       if (existingKey && existingKey.length > 5) return true; // Already configured locally
 
-      const restored = atob(obfuscated);
+      const restored = safeDecode(obfuscated);
       if (!restored || restored.length < 5) return false;
 
       // Save to local secure store without triggering another Firestore write
