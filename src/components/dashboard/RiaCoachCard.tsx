@@ -52,7 +52,7 @@ interface RiaCoachCardProps {
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
-export const RiaCoachCard: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
+const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
   const { totalProtein, userGoals, remainingCalories, currentLog } = useHealth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const [dynamicAiInsight, setDynamicAiInsight] = useState<string | null>(null);
@@ -466,12 +466,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F47551',
     borderColor: '#F47551',
     shadowColor: '#F47551',
-    shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 3,
   },
   chipIcon: {
-    fontSize: 13,
+    fontSize: 12,
   },
   chipText: {
     fontFamily: Fonts.poppins.medium,
@@ -484,3 +483,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export const RiaCoachCard = React.memo(RiaCoachCardComponent);

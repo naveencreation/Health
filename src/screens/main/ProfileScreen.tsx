@@ -23,7 +23,7 @@ interface ProfileScreenProps {
   onBack?: () => void;
 }
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({
+const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onSignIn,
   onSignOut,
   onBack,
@@ -152,4 +152,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export const ProfileScreen = React.memo(ProfileScreenComponent);
 export const ProfileTab = ProfileScreen;

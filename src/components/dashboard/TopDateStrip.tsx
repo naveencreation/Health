@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   Modal,
-  TouchableOpacity,
   GestureResponderEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,23 +34,28 @@ const SHORT_MONTHS = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+const SHORT_DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-const toDateString = (d: Date): string => {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const toDateString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
-const parseDateString = (str: string): Date => {
-  const parts = str.split('-');
+const parseDateString = (dateStr: string): Date => {
+  const parts = dateStr.split('-');
   if (parts.length === 3) {
     return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
   }
   return new Date();
 };
 
-export const TopDateStrip: React.FC = () => {
+export const TopDateStripComponent: React.FC = () => {
   const { selectedDate, setSelectedDate, shiftDate, dailyLogs, userGoals } = useHealth();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -409,9 +413,8 @@ export const TopDateStrip: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setIsCalendarOpen(false)}
       >
-        <TouchableOpacity
+        <Pressable
           style={styles.modalOverlay}
-          activeOpacity={1}
           onPress={() => setIsCalendarOpen(false)}
         >
           <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
@@ -512,11 +515,13 @@ export const TopDateStrip: React.FC = () => {
               </Pressable>
             </View>
           </Pressable>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
     </View>
   );
 };
+
+export const TopDateStrip = React.memo(TopDateStripComponent);
 
 const styles = StyleSheet.create({
   container: {

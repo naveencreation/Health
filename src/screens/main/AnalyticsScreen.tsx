@@ -26,7 +26,7 @@ interface AnalyticsScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({
+const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   onSearchPress,
   onNotificationsPress,
   onAvatarPress,
@@ -1712,4 +1712,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export const AnalyticsScreen = React.memo(AnalyticsScreenComponent);
 export const AnalyticsTab = AnalyticsScreen;

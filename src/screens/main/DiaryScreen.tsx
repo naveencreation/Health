@@ -5,6 +5,7 @@ import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 import { Header, TopDateStrip, MealSection } from '@/components';
 import { MealType } from '@/types';
+import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
 interface DiaryScreenProps {
   onAddFood: (mealType: MealType) => void;
@@ -16,7 +17,7 @@ interface DiaryScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export const DiaryScreen: React.FC<DiaryScreenProps> = ({
+const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   onAddFood,
   onSearchPress,
   onNotificationsPress,
@@ -121,16 +122,15 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
 
           {/* Calorie Budget Bar */}
           <View
-            style={styles.calorieTrack}
             accessible={true}
             accessibilityLabel={`Calorie budget progress: ${calorieFillPct}% consumed. ${totalConsumed} of ${effectiveBudget} kilocalories`}
+            style={{ marginTop: 10 }}
           >
-            <View
-              style={[
-                styles.calorieBar,
-                isOverBudget ? styles.calorieBarOver : styles.calorieBarNormal,
-                { width: `${calorieFillPct}%` },
-              ]}
+            <AnimatedProgressBar
+              progress={totalConsumed / Math.max(1, effectiveBudget)}
+              fillColor={isOverBudget ? '#F97316' : '#22C55E'}
+              height={8}
+              trackColor="#E2E8F0"
             />
           </View>
         </View>
@@ -148,15 +148,13 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
               <Text style={[styles.macroPodLabel, styles.labelCarbs]}>CARBS</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalCarbs)}g</Text>
-            <View style={[styles.podTrack, styles.trackCarbs]}>
-              <View
-                style={[
-                  styles.podFill,
-                  styles.fillCarbs,
-                  { width: `${carbsPct}%` },
-                ]}
-              />
-            </View>
+            <AnimatedProgressBar
+              progress={(totalCarbs || 0) / Math.max(1, targetCarbs)}
+              fillColor="#EAB308"
+              height={5}
+              trackColor="#FEF9C3"
+              style={{ marginVertical: 6 }}
+            />
             <Text style={styles.macroPodSub}>of {targetCarbs}g</Text>
           </View>
 
@@ -171,15 +169,13 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
               <Text style={[styles.macroPodLabel, styles.labelProtein]}>PROTEIN</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalProtein)}g</Text>
-            <View style={[styles.podTrack, styles.trackProtein]}>
-              <View
-                style={[
-                  styles.podFill,
-                  styles.fillProtein,
-                  { width: `${proteinPct}%` },
-                ]}
-              />
-            </View>
+            <AnimatedProgressBar
+              progress={(totalProtein || 0) / Math.max(1, targetProtein)}
+              fillColor="#22C55E"
+              height={5}
+              trackColor="#DCFCE7"
+              style={{ marginVertical: 6 }}
+            />
             <Text style={styles.macroPodSub}>of {targetProtein}g</Text>
           </View>
 
@@ -194,15 +190,13 @@ export const DiaryScreen: React.FC<DiaryScreenProps> = ({
               <Text style={[styles.macroPodLabel, styles.labelFat]}>FAT</Text>
             </View>
             <Text style={styles.macroPodVal}>{Math.round(totalFat)}g</Text>
-            <View style={[styles.podTrack, styles.trackFat]}>
-              <View
-                style={[
-                  styles.podFill,
-                  styles.fillFat,
-                  { width: `${fatPct}%` },
-                ]}
-              />
-            </View>
+            <AnimatedProgressBar
+              progress={(totalFat || 0) / Math.max(1, targetFat)}
+              fillColor="#F47551"
+              height={5}
+              trackColor="#FFE4D6"
+              style={{ marginVertical: 6 }}
+            />
             <Text style={styles.macroPodSub}>of {targetFat}g</Text>
           </View>
         </View>
@@ -448,4 +442,6 @@ const styles = StyleSheet.create({
   },
 });
 
+export const DiaryScreen = React.memo(DiaryScreenComponent);
 export const DiaryTab = DiaryScreen;
+

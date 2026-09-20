@@ -15,7 +15,7 @@ interface BottomNavBarProps {
   onOpenFoodVision?: () => void;
 }
 
-export const BottomNavBar: React.FC<BottomNavBarProps> = ({
+const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
   activeTab,
   onTabChange,
   onQuickLogFood,
@@ -480,3 +480,5 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 });
+
+export const BottomNavBar = React.memo(BottomNavBarComponent);

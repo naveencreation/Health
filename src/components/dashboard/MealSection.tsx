@@ -9,7 +9,7 @@ interface MealSectionProps {
   onAddFood: (mealType: MealType) => void;
 }
 
-export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
+const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
   const { mealsByType, userGoals } = useHealth();
 
   const budget = userGoals.dailyCalorieBudget;
@@ -72,6 +72,8 @@ export const MealSection: React.FC<MealSectionProps> = ({ onAddFood }) => {
     </View>
   );
 };
+
+export const MealSection = React.memo(MealSectionComponent);
 
 const styles = StyleSheet.create({
   container: {

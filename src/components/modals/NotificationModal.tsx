@@ -28,7 +28,7 @@ interface NotificationModalProps {
   onClose: () => void;
 }
 
-export const NotificationModal: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
+const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
   const { userGoals, currentUser, currentLog, remainingCalories } = useHealth();
 
   const firstName = (currentUser?.name || userGoals.name || 'there').split(' ')[0];
@@ -507,3 +507,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 });
+
+export const NotificationModal = React.memo(NotificationModalComponent);

@@ -26,7 +26,7 @@ interface FoodVisionModalProps {
   onOpenBYOKSetup: () => void;
 }
 
-export const FoodVisionModal: React.FC<FoodVisionModalProps> = ({
+const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   visible,
   onClose,
   initialMealType,
@@ -1010,3 +1010,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+export const FoodVisionModal = React.memo(FoodVisionModalComponent);

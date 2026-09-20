@@ -18,7 +18,7 @@ interface HeaderProps {
 const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
-export const Header: React.FC<HeaderProps> = ({
+const HeaderComponent: React.FC<HeaderProps> = ({
   onSearchPress,
   onNotificationsPress,
   onAvatarPress,
@@ -271,3 +271,5 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
+
+export const Header = React.memo(HeaderComponent);

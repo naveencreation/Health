@@ -35,7 +35,7 @@ const QUICK_QUESTIONS = [
   '💧 Water timing for fat loss',
 ];
 
-export const RiaChatModal: React.FC<RiaChatModalProps> = ({
+const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   visible,
   onClose,
   initialPrompt,
@@ -871,3 +871,5 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }],
   },
 });
+
+export const RiaChatModal = React.memo(RiaChatModalComponent);

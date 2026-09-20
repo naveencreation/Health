@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData } from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
@@ -650,12 +650,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [dailyLogs, selectedDate]);
 
   // Shift date helper
-  const shiftDate = (days: number) => {
-    const parts = selectedDate.split('-');
-    const curr = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    curr.setDate(curr.getDate() + days);
-    setSelectedDate(getTodayDateString(curr));
-  };
+  const shiftDate = useCallback((days: number) => {
+    setSelectedDate((prev) => {
+      const parts = prev.split('-');
+      const curr = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      curr.setDate(curr.getDate() + days);
+      return getTodayDateString(curr);
+    });
+  }, []);
 
   // Group meals by meal slot
   const mealsByType = useMemo(() => {
@@ -717,7 +719,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [userGoals.dailyCalorieBudget, totalConsumed, totalBurned]);
 
   // Actions
-  const addMealItem = (mealType: MealType, food: FoodItem, quantity: number) => {
+  const addMealItem = useCallback((mealType: MealType, food: FoodItem, quantity: number) => {
     const newItem: LoggedMealItem = {
       id: 'meal_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       foodId: food.id,
@@ -750,9 +752,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
     });
     return newItem;
-  };
+  }, [selectedDate]);
 
-  const removeMealItem = (mealId: string) => {
+  const removeMealItem = useCallback((mealId: string) => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate];
       if (!existing) return prev;
@@ -764,9 +766,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const updateMealQuantity = (mealId: string, quantity: number) => {
+  const updateMealQuantity = useCallback((mealId: string, quantity: number) => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate];
       if (!existing) return prev;
@@ -796,9 +798,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate, foodDatabase]);
 
-  const addWater = (ml: number) => {
+  const addWater = useCallback((ml: number) => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate] || {
         date: selectedDate,
@@ -816,9 +818,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const resetWater = () => {
+  const resetWater = useCallback(() => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate];
       if (!existing) return prev;
@@ -830,9 +832,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const addWorkout = (name: string, durationMinutes: number, caloriesBurned: number) => {
+  const addWorkout = useCallback((name: string, durationMinutes: number, caloriesBurned: number) => {
     const workout: WorkoutActivity = {
       id: 'work_' + Date.now(),
       name,
@@ -856,9 +858,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const removeWorkout = (id: string) => {
+  const removeWorkout = useCallback((id: string) => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate];
       if (!existing) return prev;
@@ -870,9 +872,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const addSteps = (count: number) => {
+  const addSteps = useCallback((count: number) => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate] || {
         date: selectedDate,
@@ -889,9 +891,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         },
       };
     });
-  };
+  }, [selectedDate]);
 
-  const addCustomFood = (foodData: Omit<FoodItem, 'id'>): FoodItem => {
+  const addCustomFood = useCallback((foodData: Omit<FoodItem, 'id'>): FoodItem => {
     const newFood: FoodItem = {
       ...foodData,
       id: 'custom_' + Date.now(),
@@ -916,9 +918,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return updated;
     });
     return newFood;
-  };
+  }, [currentUser]);
 
-  const deleteCustomFood = (foodId: string) => {
+  const deleteCustomFood = useCallback((foodId: string) => {
     setCustomFoods((prev) => {
       const updated = prev.filter((f) => f.id !== foodId);
       const uid = currentUser?.id || 'guest';
@@ -931,14 +933,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       return updated;
     });
-  };
+  }, [currentUser]);
 
-  const updateGoals = (newGoals: Partial<UserGoals>) => {
+  const updateGoals = useCallback((newGoals: Partial<UserGoals>) => {
     setUserGoals((prev) => ({
       ...prev,
       ...newGoals,
     }));
-  };
+  }, []);
 
   // Past 7 days data for analytics with complete metrics (calories, macros, water, steps, burn)
   const weeklyLogs = useMemo((): WeeklyTrendItem[] => {
@@ -997,7 +999,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return results;
   }, [selectedDate, dailyLogs, userGoals.dailyCalorieBudget, currentUser]);
 
-  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+  const login = useCallback(async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
       isLoggingOutRef.current = false;
       const normalizedEmail = email.toLowerCase().trim();
@@ -1042,7 +1044,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (err: any) {
       return { success: false, error: err.message || 'Login failed' };
     }
-  };
+  }, []);
 
   /**
    * Scientific Calorie & Macro Target Calibration based on Mifflin-St Jeor Equation
@@ -1140,7 +1142,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   };
 
-  const register = async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
+  const register = useCallback(async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       const normalizedEmail = data.email.toLowerCase().trim();
       try {
@@ -1221,9 +1223,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (err: any) {
       return { success: false, error: err.message || 'Registration failed' };
     }
-  };
+  }, [userGoals, updateGoals]);
 
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     isLoggingOutRef.current = true;
     hydratedUidRef.current = null;
 
@@ -1262,9 +1264,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLoggingOutRef.current = false;
       }, 500);
     }
-  };
+  }, []);
 
-  const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
+  const deleteAccount = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     try {
       isLoggingOutRef.current = true;
       hydratedUidRef.current = null;
@@ -1334,9 +1336,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLoggingOutRef.current = false;
       }, 500);
     }
-  };
+  }, []);
 
-  const loginDemo = async (): Promise<void> => {
+  const loginDemo = useCallback(async (): Promise<void> => {
     const demoUser: AuthUser = {
       id: 'demo_user_1',
       email: 'akshay.rajput@example.com',
@@ -1345,49 +1347,87 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     setCurrentUser(demoUser);
     await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(demoUser));
-  };
+  }, []);
+
+  const contextValue = useMemo<HealthContextType>(
+    () => ({
+      selectedDate,
+      setSelectedDate,
+      shiftDate,
+      userGoals,
+      updateGoals,
+      foodDatabase,
+      dailyLogs,
+      currentLog,
+      totalConsumed,
+      totalBurned,
+      remainingCalories,
+      totalCarbs,
+      totalProtein,
+      totalFat,
+      totalFiber,
+      mealsByType,
+      mealCalories,
+      addMealItem,
+      removeMealItem,
+      updateMealQuantity,
+      addWater,
+      resetWater,
+      addWorkout,
+      removeWorkout,
+      addSteps,
+      addCustomFood,
+      deleteCustomFood,
+      weeklyLogs,
+      currentUser,
+      isAuthenticated: !!currentUser,
+      isAuthLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      loginDemo,
+    }),
+    [
+      selectedDate,
+      shiftDate,
+      userGoals,
+      updateGoals,
+      foodDatabase,
+      dailyLogs,
+      currentLog,
+      totalConsumed,
+      totalBurned,
+      remainingCalories,
+      totalCarbs,
+      totalProtein,
+      totalFat,
+      totalFiber,
+      mealsByType,
+      mealCalories,
+      addMealItem,
+      removeMealItem,
+      updateMealQuantity,
+      addWater,
+      resetWater,
+      addWorkout,
+      removeWorkout,
+      addSteps,
+      addCustomFood,
+      deleteCustomFood,
+      weeklyLogs,
+      currentUser,
+      isAuthLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      loginDemo,
+    ]
+  );
 
   return (
-    <HealthContext.Provider
-      value={{
-        selectedDate,
-        setSelectedDate,
-        shiftDate,
-        userGoals,
-        updateGoals,
-        foodDatabase,
-        dailyLogs,
-        currentLog,
-        totalConsumed,
-        totalBurned,
-        remainingCalories,
-        totalCarbs,
-        totalProtein,
-        totalFat,
-        totalFiber,
-        mealsByType,
-        mealCalories,
-        addMealItem,
-        removeMealItem,
-        updateMealQuantity,
-        addWater,
-        resetWater,
-        addWorkout,
-        removeWorkout,
-        addSteps,
-        addCustomFood,
-        deleteCustomFood,
-        weeklyLogs,
-        currentUser,
-        isAuthenticated: !!currentUser,
-        isAuthLoading,
-        login,
-        register,
-        logout,
-        deleteAccount,
-        loginDemo,
-      }}
-    >
+    <HealthContext.Provider value={contextValue}>
       {children}
     </HealthContext.Provider>
   );

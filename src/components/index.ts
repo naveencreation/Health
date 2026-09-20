@@ -1,15 +1,9 @@
 // Dashboard Components
-export { CalorieBudgetCard } from './dashboard/CalorieBudgetCard';
 export { HeroCalorieCard } from './dashboard/HeroCalorieCard';
 export { TopDateStrip } from './dashboard/TopDateStrip';
-export { DietJourneyChart } from './dashboard/DietJourneyChart';
 export { MealSection } from './dashboard/MealSection';
 export { DailyHabitsCard } from './dashboard/DailyHabitsCard';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
-export { ActivityCard } from './dashboard/ActivityCard';
-export { AppleActivityCard } from './dashboard/AppleActivityCard';
-export { HydrationTracker } from './dashboard/HydrationTracker';
-export { FigmaDatePicker } from './dashboard/FigmaDatePicker';
 
 // Diary Components
 export { MealCard } from './diary/MealCard';
@@ -41,9 +35,13 @@ export { PreferencesModalSheet } from './profile/modals/PreferencesModalSheet';
 export { MetabolicSummaryModalSheet } from './profile/modals/MetabolicSummaryModalSheet';
 export { AwardsModalSheet } from './profile/modals/AwardsModalSheet';
 
-// Common Components
+// Common Components & Motion Primitives
 export { ErrorBoundary } from './common/ErrorBoundary';
 export { UserAvatar } from './common/UserAvatar';
 export { ConfirmationModal } from './common/ConfirmationModal';
 export { MarkdownText } from './common/MarkdownText';
+export { ScreenTransitionContainer } from './common/ScreenTransitionContainer';
+export { AnimatedSvgRing } from './common/AnimatedSvgRing';
+export { AnimatedProgressBar } from './common/AnimatedProgressBar';
+
 

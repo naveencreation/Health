@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { LoggedMealItem, MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
+import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
 interface MealCardProps {
   mealType: MealType;
@@ -20,7 +21,7 @@ interface MealCardProps {
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
-export const MealCard: React.FC<MealCardProps> = ({
+const MealCardComponent: React.FC<MealCardProps> = ({
   mealType,
   title,
   recommendedCals,
@@ -33,6 +34,14 @@ export const MealCard: React.FC<MealCardProps> = ({
   const { removeMealItem, updateMealQuantity } = useHealth();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
+
+  const handleToggleExpand = () => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded((prev) => !prev);
+  };
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
   const hasItems = items.length > 0;
@@ -64,7 +73,7 @@ export const MealCard: React.FC<MealCardProps> = ({
           ]}
           onPress={() => {
             if (hasItems) {
-              setIsExpanded((prev) => !prev);
+              handleToggleExpand();
             } else {
               onAddPress(mealType);
             }
@@ -113,15 +122,13 @@ export const MealCard: React.FC<MealCardProps> = ({
             </Text>
 
             {/* Visual Calorie Consumption Progress Bar */}
-            <View style={styles.progressBarTrack}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${Math.round(mealProgress * 100)}%` },
-                  isOverBudget ? styles.progressBarFillOver : styles.progressBarFillNormal,
-                ]}
-              />
-            </View>
+            <AnimatedProgressBar
+              progress={mealProgress}
+              fillColor={isOverBudget ? '#F97316' : '#10B981'}
+              height={4}
+              trackColor="rgba(15, 23, 42, 0.06)"
+              style={{ marginTop: 4 }}
+            />
           </View>
         </Pressable>
 
@@ -544,3 +551,6 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
   },
 });
+
+export const MealCard = React.memo(MealCardComponent);
+

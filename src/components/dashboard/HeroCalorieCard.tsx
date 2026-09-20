@@ -13,6 +13,8 @@ import Svg, { Circle, Path, Line, Defs, LinearGradient, Stop } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { useHealth } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
+import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
 interface HeroCalorieCardProps {
   onEditGoal?: () => void;
@@ -73,7 +75,7 @@ const formatDateStr = (d: Date): string => {
   return `${y}-${m}-${day}`;
 };
 
-export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
+const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
     userGoals,
     totalConsumed,
@@ -400,28 +402,13 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
 
             {/* Right Column: Hero "Cal left" Progress Dial */}
             <View style={styles.dialContainer}>
-              <Svg width={dialSize} height={dialSize}>
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke="rgba(15, 23, 42, 0.08)"
-                  strokeWidth={strokeWidth}
-                  fill="none"
-                />
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke={dialStrokeColor}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={`${circumference} ${circumference}`}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  fill="none"
-                  transform={`rotate(-90 ${dialSize / 2} ${dialSize / 2})`}
-                />
-              </Svg>
+              <AnimatedSvgRing
+                size={dialSize}
+                strokeWidth={strokeWidth}
+                progress={progressRatio}
+                strokeColor={dialStrokeColor}
+                backgroundColor="rgba(15, 23, 42, 0.08)"
+              />
 
               <View style={styles.dialCenterContent}>
                 <Text style={styles.calLeftNumber}>
@@ -439,15 +426,12 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             {/* Carbs */}
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Carbs</Text>
-              <View style={styles.macroTrack}>
-                <View
-                  style={[
-                    styles.macroFill,
-                    { width: `${Math.round(carbRatio * 100)}%` },
-                    styles.macroFillCarb,
-                  ]}
-                />
-              </View>
+              <AnimatedProgressBar
+                progress={carbRatio}
+                fillColor="#22C55E"
+                height={5}
+                trackColor="#E2E8F0"
+              />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs}g
               </Text>
@@ -456,15 +440,12 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             {/* Protein */}
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Protein</Text>
-              <View style={styles.macroTrack}>
-                <View
-                  style={[
-                    styles.macroFill,
-                    { width: `${Math.round(proteinRatio * 100)}%` },
-                    styles.macroFillProtein,
-                  ]}
-                />
-              </View>
+              <AnimatedProgressBar
+                progress={proteinRatio}
+                fillColor="#3B82F6"
+                height={5}
+                trackColor="#E2E8F0"
+              />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein}g
               </Text>
@@ -473,15 +454,12 @@ export const HeroCalorieCard: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) 
             {/* Fat */}
             <View style={styles.macroItem}>
               <Text style={styles.macroName}>Fat</Text>
-              <View style={styles.macroTrack}>
-                <View
-                  style={[
-                    styles.macroFill,
-                    { width: `${Math.round(fatRatio * 100)}%` },
-                    styles.macroFillFat,
-                  ]}
-                />
-              </View>
+              <AnimatedProgressBar
+                progress={fatRatio}
+                fillColor="#EC4899"
+                height={5}
+                trackColor="#E2E8F0"
+              />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat}g
               </Text>
@@ -1063,3 +1041,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
 });
+
+export const HeroCalorieCard = React.memo(HeroCalorieCardComponent);

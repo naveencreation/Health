@@ -49,6 +49,12 @@ import {
 function MainApp() {
   const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
+  const [visitedTabs, setVisitedTabs] = useState<Record<TabType, boolean>>({
+    today: true,
+    diary: false,
+    analytics: false,
+    profile: false,
+  });
   const todayScrollRef = useRef<ScrollView>(null);
   const diaryScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
@@ -121,12 +127,12 @@ function MainApp() {
     }
   }, []);
 
-  const handleOpenFoodLogger = (mealType: MealType = 'lunch') => {
+  const handleOpenFoodLogger = React.useCallback((mealType: MealType = 'lunch') => {
     setActiveMealType(mealType);
     setFoodModalVisible(true);
-  };
+  }, []);
 
-  const handleGlobalSearchPress = () => {
+  const handleGlobalSearchPress = React.useCallback(() => {
     const hour = new Date().getHours();
     let slot: MealType = 'lunch';
     if (hour < 11) slot = 'breakfast';
@@ -134,13 +140,13 @@ function MainApp() {
     else if (hour < 19) slot = 'snacks';
     else slot = 'dinner';
     handleOpenFoodLogger(slot);
-  };
+  }, [handleOpenFoodLogger]);
 
-  const handleQuickWater = () => {
+  const handleQuickWater = React.useCallback(() => {
     addWater(250);
-  };
+  }, [addWater]);
 
-  const handleTabChange = (tab: TabType) => {
+  const handleTabChange = React.useCallback((tab: TabType) => {
     if (tab === 'today' && activeTab === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'diary' && activeTab === 'diary') {
@@ -148,8 +154,9 @@ function MainApp() {
     } else if (tab === 'analytics' && activeTab === 'analytics') {
       analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
+    setVisitedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     setActiveTab(tab);
-  };
+  }, [activeTab]);
 
   // Android Hardware Back Handler
   useEffect(() => {
@@ -212,26 +219,45 @@ function MainApp() {
     signOutModalVisible,
   ]);
 
-  const handleOpenSignIn = () => {
+  const handleOpenSignIn = React.useCallback(() => {
     setAuthInitialMode('signin');
     setAuthModalVisible(true);
-  };
+  }, []);
 
-  const handleSignOutPress = () => {
+  const handleSignOutPress = React.useCallback(() => {
     setSignOutModalVisible(true);
-  };
+  }, []);
 
-  const handleConfirmSignOut = async () => {
+  const handleConfirmSignOut = React.useCallback(async () => {
     setSignOutModalVisible(false);
     setActiveTab('today');
     await logout();
     setAuthModalVisible(false);
-  };
+  }, [logout]);
 
-  const handleSignOutCompleted = () => {
+  const handleSignOutCompleted = React.useCallback(() => {
     setActiveTab('today');
     setAuthModalVisible(false);
-  };
+  }, []);
+
+  const handleOpenRiaChat = React.useCallback(() => setRiaChatVisible(true), []);
+  const handleCloseRiaChat = React.useCallback(() => setRiaChatVisible(false), []);
+  const handleOpenNotifications = React.useCallback(() => setNotificationsVisible(true), []);
+  const handleCloseNotifications = React.useCallback(() => setNotificationsVisible(false), []);
+  const handleOpenAvatarModal = React.useCallback(() => setAvatarModalVisible(true), []);
+  const handleCloseAvatarModal = React.useCallback(() => setAvatarModalVisible(false), []);
+  const handleSelectAvatar = React.useCallback((newUrl: string) => updateGoals({ avatarUrl: newUrl }), [updateGoals]);
+  const handleOpenFoodVision = React.useCallback(() => setFoodVisionVisible(true), []);
+  const handleCloseFoodVision = React.useCallback(() => setFoodVisionVisible(false), []);
+  const handleOpenBYOKSetup = React.useCallback(() => setByokSetupVisible(true), []);
+  const handleCloseBYOKSetup = React.useCallback(() => setByokSetupVisible(false), []);
+  const handleCloseFoodModal = React.useCallback(() => setFoodModalVisible(false), []);
+  const handleFoodModalToVision = React.useCallback(() => {
+    setFoodModalVisible(false);
+    setFoodVisionVisible(true);
+  }, []);
+  const handleBackToToday = React.useCallback(() => handleTabChange('today'), [handleTabChange]);
+  const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
   if (isAuthLoading) {
     return (
@@ -246,8 +272,8 @@ function MainApp() {
       <WelcomeScreen
         key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
         initialMode={authModalVisible ? authInitialMode : 'welcome'}
-        onLoginSuccess={() => setAuthModalVisible(false)}
-        onClose={isAuthenticated ? () => setAuthModalVisible(false) : undefined}
+        onLoginSuccess={handleCloseAuthModal}
+        onClose={isAuthenticated ? handleCloseAuthModal : undefined}
       />
     );
   }
@@ -256,51 +282,57 @@ function MainApp() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.phoneContainer}>
-        {/* Tab Content with Offscreen Preservation */}
+        {/* Tab Content with Offscreen Preservation & Lazy Initial Mount */}
         <View style={styles.contentArea}>
           <View style={[styles.tabContainer, activeTab !== 'today' ? styles.tabHidden : null]}>
             <TodayScreen
               scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
-              onOpenRiaChat={() => setRiaChatVisible(true)}
+              onOpenRiaChat={handleOpenRiaChat}
               onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={() => setNotificationsVisible(true)}
-              onAvatarPress={() => setAvatarModalVisible(true)}
+              onNotificationsPress={handleOpenNotifications}
+              onAvatarPress={handleOpenAvatarModal}
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
             />
           </View>
 
-          <View style={[styles.tabContainer, activeTab !== 'diary' ? styles.tabHidden : null]}>
-            <DiaryScreen
-              scrollRef={diaryScrollRef}
-              onAddFood={handleOpenFoodLogger}
-              onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={() => setNotificationsVisible(true)}
-              onAvatarPress={() => setAvatarModalVisible(true)}
-              onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOutPress}
-            />
-          </View>
+          {visitedTabs.diary && (
+            <View style={[styles.tabContainer, activeTab !== 'diary' ? styles.tabHidden : null]}>
+              <DiaryScreen
+                scrollRef={diaryScrollRef}
+                onAddFood={handleOpenFoodLogger}
+                onSearchPress={handleGlobalSearchPress}
+                onNotificationsPress={handleOpenNotifications}
+                onAvatarPress={handleOpenAvatarModal}
+                onSignInPress={handleOpenSignIn}
+                onSignOutPress={handleSignOutPress}
+              />
+            </View>
+          )}
 
-          <View style={[styles.tabContainer, activeTab !== 'analytics' ? styles.tabHidden : null]}>
-            <AnalyticsScreen
-              scrollRef={analyticsScrollRef}
-              onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={() => setNotificationsVisible(true)}
-              onAvatarPress={() => setAvatarModalVisible(true)}
-              onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOutPress}
-            />
-          </View>
+          {visitedTabs.analytics && (
+            <View style={[styles.tabContainer, activeTab !== 'analytics' ? styles.tabHidden : null]}>
+              <AnalyticsScreen
+                scrollRef={analyticsScrollRef}
+                onSearchPress={handleGlobalSearchPress}
+                onNotificationsPress={handleOpenNotifications}
+                onAvatarPress={handleOpenAvatarModal}
+                onSignInPress={handleOpenSignIn}
+                onSignOutPress={handleSignOutPress}
+              />
+            </View>
+          )}
 
-          <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
-            <ProfileScreen
-              onSignIn={handleOpenSignIn}
-              onSignOut={handleSignOutCompleted}
-              onBack={() => handleTabChange('today')}
-            />
-          </View>
+          {visitedTabs.profile && (
+            <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
+              <ProfileScreen
+                onSignIn={handleOpenSignIn}
+                onSignOut={handleSignOutCompleted}
+                onBack={handleBackToToday}
+              />
+            </View>
+          )}
         </View>
 
         {/* Bottom Navigation */}
@@ -309,53 +341,50 @@ function MainApp() {
           onTabChange={handleTabChange}
           onQuickLogFood={handleOpenFoodLogger}
           onQuickLogWater={handleQuickWater}
-          onOpenFoodVision={() => setFoodVisionVisible(true)}
+          onOpenFoodVision={handleOpenFoodVision}
         />
 
         {/* Food Logging Modal */}
         <FoodLogModal
           visible={foodModalVisible}
           mealType={activeMealType}
-          onClose={() => setFoodModalVisible(false)}
-          onOpenFoodVision={() => {
-            setFoodModalVisible(false);
-            setFoodVisionVisible(true);
-          }}
+          onClose={handleCloseFoodModal}
+          onOpenFoodVision={handleFoodModalToVision}
         />
 
         {/* AI Food Vision Camera Modal */}
         <FoodVisionModal
           visible={foodVisionVisible}
-          onClose={() => setFoodVisionVisible(false)}
+          onClose={handleCloseFoodVision}
           initialMealType={activeMealType}
-          onOpenBYOKSetup={() => setByokSetupVisible(true)}
+          onOpenBYOKSetup={handleOpenBYOKSetup}
         />
 
         {/* Global BYOK Setup Modal */}
         <BYOKSetupModal
           visible={byokSetupVisible}
-          onClose={() => setByokSetupVisible(false)}
+          onClose={handleCloseBYOKSetup}
         />
 
         {/* Notification Center Modal */}
         <NotificationModal
           visible={notificationsVisible}
-          onClose={() => setNotificationsVisible(false)}
+          onClose={handleCloseNotifications}
         />
 
         {/* Avatar Picker Modal */}
         <AvatarPickerModal
           visible={avatarModalVisible}
           currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
-          onClose={() => setAvatarModalVisible(false)}
-          onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
+          onClose={handleCloseAvatarModal}
+          onSelectAvatar={handleSelectAvatar}
         />
 
         {/* Ria AI Interactive Chat Modal */}
         <RiaChatModal
           visible={riaChatVisible}
-          onClose={() => setRiaChatVisible(false)}
-          onOpenBYOKSetup={() => setByokSetupVisible(true)}
+          onClose={handleCloseRiaChat}
+          onOpenBYOKSetup={handleOpenBYOKSetup}
         />
 
         {/* In-App Sign Out Confirmation Modal */}

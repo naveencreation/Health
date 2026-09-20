@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ScrollView,
   FlatList,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -104,7 +106,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
       <View style={styles.foodItemMain}>
         <View style={styles.foodItemNameRow}>
           <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
-          {loggedCount && loggedCount > 0 ? (
+          {(loggedCount ?? 0) > 0 ? (
             <View style={styles.loggedCountBadge}>
               <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
             </View>
@@ -162,7 +164,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
   );
 });
 
-export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
+const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
   const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories, mealsByType } = useHealth();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
@@ -180,6 +182,80 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [lastAddedMeal, setLastAddedMeal] = useState<LoggedMealItem | null>(null);
   const [toastTimer, setToastTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const drawerSlideAnim = useRef(new Animated.Value(320)).current;
+  const drawerFadeAnim = useRef(new Animated.Value(0)).current;
+  const toastSlideAnim = useRef(new Animated.Value(20)).current;
+  const toastFadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (selectedFood) {
+      drawerSlideAnim.setValue(320);
+      drawerFadeAnim.setValue(0);
+      Animated.parallel([
+        Animated.timing(drawerFadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(drawerSlideAnim, {
+          toValue: 0,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
+    }
+  }, [selectedFood]);
+
+  const handleDismissDrawer = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(drawerFadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(drawerSlideAnim, {
+        toValue: 320,
+        duration: 180,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start(() => {
+      setSelectedFood(null);
+    });
+  }, [drawerFadeAnim, drawerSlideAnim]);
+
+  useEffect(() => {
+    if (toastMessage) {
+      toastSlideAnim.setValue(20);
+      toastFadeAnim.setValue(0);
+      Animated.parallel([
+        Animated.timing(toastFadeAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.spring(toastSlideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 60,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
+    }
+  }, [toastMessage]);
+
+  const handleDismissToast = useCallback(() => {
+    Animated.timing(toastFadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start(() => {
+      setToastMessage(null);
+      setLastAddedMeal(null);
+      if (toastTimer) clearTimeout(toastTimer);
+    });
+  }, [toastFadeAnim, toastTimer]);
 
   useEffect(() => {
     return () => {
@@ -302,9 +378,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
   const handleUndo = () => {
     if (lastAddedMeal) {
       removeMealItem(lastAddedMeal.id);
-      setToastMessage(null);
-      setLastAddedMeal(null);
-      if (toastTimer) clearTimeout(toastTimer);
+      handleDismissToast();
     }
   };
 
@@ -662,14 +736,19 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
 
           {/* 5. Portion Selector Drawer */}
           {selectedFood ? (
-            <View style={styles.portionOverlay}>
+            <Animated.View style={[styles.portionOverlay, { opacity: drawerFadeAnim }]}>
               <Pressable
                 style={styles.portionOverlayDismiss}
-                onPress={() => setSelectedFood(null)}
+                onPress={handleDismissDrawer}
                 accessibilityRole="button"
                 accessibilityLabel="Dismiss portion drawer"
               />
-              <View style={styles.portionDrawer}>
+              <Animated.View
+                style={[
+                  styles.portionDrawer,
+                  { transform: [{ translateY: drawerSlideAnim }] },
+                ]}
+              >
                 <View style={styles.drawerHandleBar}>
                   <View style={styles.drawerHandle} />
                 </View>
@@ -683,7 +762,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   </View>
                   <Pressable
                     style={({ pressed }) => [styles.drawerCloseBtn, pressed ? styles.btnPressedSubtle : null]}
-                    onPress={() => setSelectedFood(null)}
+                    onPress={handleDismissDrawer}
                     hitSlop={HIT_SLOP_10}
                     accessibilityRole="button"
                     accessibilityLabel="Close portion drawer"
@@ -821,13 +900,21 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                     Add to {mealTitle} • {projectedAddedCals} kcal
                   </Text>
                 </Pressable>
-              </View>
-            </View>
+              </Animated.View>
+            </Animated.View>
           ) : null}
 
           {/* 6. Floating In-Modal Toast Snackbar with Undo */}
           {toastMessage ? (
-            <View style={styles.toastContainer}>
+            <Animated.View
+              style={[
+                styles.toastContainer,
+                {
+                  opacity: toastFadeAnim,
+                  transform: [{ translateY: toastSlideAnim }],
+                },
+              ]}
+            >
               <View style={styles.toastContent}>
                 <Ionicons name="checkmark-circle" size={18} color="#22C55E" style={{ marginRight: 8 }} />
                 <Text style={styles.toastText} numberOfLines={1}>
@@ -848,11 +935,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                 ) : null}
                 <Pressable
                   style={({ pressed }) => [styles.toastCloseBtn, pressed ? styles.btnPressedSubtle : null]}
-                  onPress={() => {
-                    setToastMessage(null);
-                    setLastAddedMeal(null);
-                    if (toastTimer) clearTimeout(toastTimer);
-                  }}
+                  onPress={handleDismissToast}
                   hitSlop={HIT_SLOP_8}
                   accessibilityRole="button"
                   accessibilityLabel="Dismiss toast"
@@ -860,7 +943,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({ visible, mealType, o
                   <Ionicons name="close" size={16} color="#94A3B8" />
                 </Pressable>
               </View>
-            </View>
+            </Animated.View>
           ) : null}
         </SafeAreaView>
       </View>
@@ -1618,3 +1701,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
+
+export const FoodLogModal = React.memo(FoodLogModalComponent);

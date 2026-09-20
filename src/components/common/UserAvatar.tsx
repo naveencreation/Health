@@ -24,7 +24,7 @@ const FALLBACK_REMOTE_SOURCE = {
   uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240',
 };
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({
+const UserAvatarComponent: React.FC<UserAvatarProps> = ({
   avatarUrl,
   size = 48,
   style,
@@ -174,3 +174,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
 });
+
+export const UserAvatar = React.memo(UserAvatarComponent);

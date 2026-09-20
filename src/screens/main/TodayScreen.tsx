@@ -21,7 +21,7 @@ interface TodayScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export const TodayScreen: React.FC<TodayScreenProps> = ({
+const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onAddFood,
   onOpenRiaChat,
   onSearchPress,
@@ -65,6 +65,8 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({
   );
 };
 
+export const TodayScreen = React.memo(TodayScreenComponent);
+
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
@@ -74,4 +76,5 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
 });
+
 

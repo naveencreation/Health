@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
 
 const QUICK_WORKOUTS = [
   { name: 'Brisk Walk', mins: 30, cals: 130, icon: 'walk-outline' },
@@ -29,7 +30,7 @@ const getWorkoutIcon = (name: string): string => {
   return '🔥';
 };
 
-export const DailyHabitsCard: React.FC = () => {
+const DailyHabitsCardComponent: React.FC = () => {
   const {
     currentLog,
     userGoals,
@@ -66,11 +67,6 @@ export const DailyHabitsCard: React.FC = () => {
   // Circular Gauge Specs (Optimized for side-by-side)
   const dialSize = 114;
   const strokeWidth = 8.5;
-  const radius = (dialSize - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-
-  const waterOffset = circumference - circumference * waterRatio;
-  const stepOffset = circumference - circumference * stepRatio;
 
   const handleAddCustomWorkout = () => {
     if (!customName.trim()) return;
@@ -113,29 +109,13 @@ export const DailyHabitsCard: React.FC = () => {
           </View>
 
           <View style={styles.gaugeCanvas}>
-            <View style={styles.gaugeRotate}>
-              <Svg width={dialSize} height={dialSize}>
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke="#F1F5F9"
-                  strokeWidth={strokeWidth}
-                  fill="none"
-                />
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke="#0284C7"
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={`${circumference} ${circumference}`}
-                  strokeDashoffset={waterOffset}
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </Svg>
-            </View>
+            <AnimatedSvgRing
+              size={dialSize}
+              strokeWidth={strokeWidth}
+              progress={waterRatio}
+              strokeColor="#0284C7"
+              backgroundColor="#F1F5F9"
+            />
 
             {/* Inner Hero Content */}
             <View style={styles.gaugeInner}>
@@ -186,29 +166,13 @@ export const DailyHabitsCard: React.FC = () => {
           </View>
 
           <View style={styles.gaugeCanvas}>
-            <View style={styles.gaugeRotate}>
-              <Svg width={dialSize} height={dialSize}>
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke="#F1F5F9"
-                  strokeWidth={strokeWidth}
-                  fill="none"
-                />
-                <Circle
-                  cx={dialSize / 2}
-                  cy={dialSize / 2}
-                  r={radius}
-                  stroke="#F47551"
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={`${circumference} ${circumference}`}
-                  strokeDashoffset={stepOffset}
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </Svg>
-            </View>
+            <AnimatedSvgRing
+              size={dialSize}
+              strokeWidth={strokeWidth}
+              progress={stepRatio}
+              strokeColor="#F47551"
+              backgroundColor="#F1F5F9"
+            />
 
             {/* Inner Hero Content */}
             <View style={styles.gaugeInner}>
@@ -775,3 +739,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const DailyHabitsCard = React.memo(DailyHabitsCardComponent);
+
