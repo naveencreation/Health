@@ -14,67 +14,8 @@ export interface FoodIconBadgeProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// 100% Free, High-Resolution Curated Food Photography Registry
-export const FOOD_PHOTO_REGISTRY: Record<string, string> = {
-  // --- SOUTH INDIAN ---
-  idli_steamed: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200&auto=format&fit=crop&q=80',
-  plain_dosa: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=200&auto=format&fit=crop&q=80',
-  masala_dosa: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=200&auto=format&fit=crop&q=80',
-  sambar: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&auto=format&fit=crop&q=80',
-  coconut_chutney: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&auto=format&fit=crop&q=80',
-  upma: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200&auto=format&fit=crop&q=80',
-
-  // --- BREADS & ROTIS ---
-  roti_chapati: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=200&auto=format&fit=crop&q=80',
-  butter_roti: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=200&auto=format&fit=crop&q=80',
-  aloo_paratha: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&auto=format&fit=crop&q=80',
-  paneer_paratha: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&auto=format&fit=crop&q=80',
-  plain_naan: 'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?w=200&auto=format&fit=crop&q=80',
-  brown_bread_slice: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop&q=80',
-
-  // --- DALS & CURRIES ---
-  dal_tadka: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&auto=format&fit=crop&q=80',
-  dal_makhani: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&auto=format&fit=crop&q=80',
-  paneer_butter_masala: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=200&auto=format&fit=crop&q=80',
-  palak_paneer: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&auto=format&fit=crop&q=80',
-  rajma_masala: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&auto=format&fit=crop&q=80',
-  chole_masala: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=200&auto=format&fit=crop&q=80',
-  chicken_curry: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=200&auto=format&fit=crop&q=80',
-  egg_curry: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=200&auto=format&fit=crop&q=80',
-  mix_veg_sabzi: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop&q=80',
-
-  // --- RICE & GRAINS ---
-  cooked_white_rice: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=200&auto=format&fit=crop&q=80',
-  brown_rice: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=200&auto=format&fit=crop&q=80',
-  veg_biryani: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&auto=format&fit=crop&q=80',
-  chicken_biryani: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=200&auto=format&fit=crop&q=80',
-  moong_dal_khichdi: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&auto=format&fit=crop&q=80',
-  oatmeal_water: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=200&auto=format&fit=crop&q=80',
-
-  // --- SNACKS & PROTEIN ---
-  boiled_egg: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=200&auto=format&fit=crop&q=80',
-  egg_white: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=200&auto=format&fit=crop&q=80',
-  paneer_raw: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=200&auto=format&fit=crop&q=80',
-  sprouts_salad: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&auto=format&fit=crop&q=80',
-  roasted_chana: 'https://images.unsplash.com/photo-1509914398892-963f53e6e2f1?w=200&auto=format&fit=crop&q=80',
-  poha: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=200&auto=format&fit=crop&q=80',
-  samosa: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&auto=format&fit=crop&q=80',
-
-  // --- DAIRY & BEVERAGES ---
-  masala_chai: 'https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?w=200&auto=format&fit=crop&q=80',
-  chai_without_sugar: 'https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?w=200&auto=format&fit=crop&q=80',
-  filter_coffee: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=200&auto=format&fit=crop&q=80',
-  green_tea: 'https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?w=200&auto=format&fit=crop&q=80',
-  buttermilk_chaas: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&auto=format&fit=crop&q=80',
-  curd_dahi: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&auto=format&fit=crop&q=80',
-  whey_protein: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=200&auto=format&fit=crop&q=80',
-
-  // --- FRUITS & NUTS ---
-  banana_medium: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&auto=format&fit=crop&q=80',
-  apple_medium: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&auto=format&fit=crop&q=80',
-  papaya_cubes: 'https://images.unsplash.com/photo-1517282009859-f000ec3b26fe?w=200&auto=format&fit=crop&q=80',
-  raw_almonds: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=200&auto=format&fit=crop&q=80',
-};
+// Food photo registry is powered by offline bundled LOCAL_FOOD_IMAGES
+export const FOOD_PHOTO_REGISTRY: Record<string, string> = {};
 
 // Vector Fallback Theme Generator
 export const getFoodIconTheme = (
@@ -293,15 +234,15 @@ export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(({
 }) => {
   const [imgError, setImgError] = useState(false);
 
-  // Priority 1: User's custom image URL (e.g. camera capture / gallery photo picker)
-  // Priority 2: Verified bundled offline asset from LOCAL_FOOD_IMAGES (0ms load, offline ready)
+  // Priority 1: Verified bundled offline asset from LOCAL_FOOD_IMAGES (0ms load, offline ready)
+  // Priority 2: User's custom image URL (e.g. camera capture / gallery photo picker / custom meal)
   // Priority 3: Smart keyword matching against local food assets
   const imageSource = (() => {
-    if (item?.imageUrl) {
-      return typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl;
-    }
     if (item?.id && LOCAL_FOOD_IMAGES[item.id]) {
       return LOCAL_FOOD_IMAGES[item.id];
+    }
+    if (item?.imageUrl) {
+      return typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl;
     }
     const name = (item?.name || foodName || '').toLowerCase().trim();
     if (!name) return undefined;
