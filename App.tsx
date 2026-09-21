@@ -285,6 +285,9 @@ function MainApp() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
+      {Platform.OS === 'android' ? (
+        <RNStatusBar backgroundColor="#FAF9F6" barStyle="dark-content" />
+      ) : null}
       <View style={styles.phoneContainer}>
         {/* Tab Content with Offscreen Preservation & Lazy Initial Mount */}
         <View style={styles.contentArea}>
@@ -429,8 +432,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? '#F4F1EA' : Colors.background,
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
+    backgroundColor: Colors.background,
     alignItems: 'center',
   },
   phoneContainer: {
@@ -452,9 +454,11 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   tabContainer: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   tabHidden: {
     display: 'none',

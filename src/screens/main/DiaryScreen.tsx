@@ -1,9 +1,21 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  Pressable,
+  Animated,
+  Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
-import { Header, TopDateStrip, MealSection } from '@/components';
+import { TopDateStrip, MealSection } from '@/components';
 import { MealType } from '@/types';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
@@ -17,16 +29,25 @@ interface DiaryScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
+const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toDateString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = pad2(date.getMonth() + 1);
+  const d = pad2(date.getDate());
+  return `${y}-${m}-${d}`;
+};
+
 const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   onAddFood,
   onSearchPress,
-  onNotificationsPress,
-  onAvatarPress,
-  onSignInPress,
-  onSignOutPress,
   scrollRef,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
+
+  // Scroll tracking to reveal date subtitle only when scrolled
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -34,6 +55,38 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
       setRefreshing(false);
     }, 750);
   }, []);
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: Platform.OS !== 'web' }
+  );
+
+  // Title scaling from large (1.0) down to compact (0.78)
+  const titleScale = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [1, 0.78],
+    extrapolate: 'clamp',
+  });
+
+  // Title moves slightly up to make room for subtitle
+  const titleTranslateY = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, -4],
+    extrapolate: 'clamp',
+  });
+
+  // Reveal subtitle only when scrolled past the visible TopDateStrip
+  const subtitleOpacity = scrollY.interpolate({
+    inputRange: [20, 50],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const subtitleTranslateY = scrollY.interpolate({
+    inputRange: [20, 50],
+    outputRange: [4, 0],
+    extrapolate: 'clamp',
+  });
 
   const {
     currentLog,
@@ -44,7 +97,26 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
     totalCarbs,
     totalFat,
     remainingCalories,
+    selectedDate,
+    setSelectedDate,
   } = useHealth();
+
+  const todayStr = useMemo(() => toDateString(new Date()), []);
+  const isViewingToday = selectedDate === todayStr;
+
+  // Format date display for Diary Header (e.g. "Today, 21 Sep" or "Mon, 15 Sep")
+  const formattedDate = useMemo(() => {
+    if (!selectedDate) return 'Today';
+    const parts = selectedDate.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const dayName = SHORT_DAY_NAMES[d.getDay()];
+      const monthName = SHORT_MONTHS[d.getMonth()];
+      const dayNum = d.getDate();
+      return isViewingToday ? `Today, ${dayNum} ${monthName}` : `${dayName}, ${dayNum} ${monthName}`;
+    }
+    return selectedDate;
+  }, [selectedDate, isViewingToday]);
 
   const totalItemsLogged = currentLog.meals.length;
   const targetProtein = userGoals.targetProtein || 90;
@@ -60,172 +132,242 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   const proteinPct = Math.min(100, Math.max(0, Math.round((totalProtein / Math.max(1, targetProtein)) * 100)));
   const fatPct = Math.min(100, Math.max(0, Math.round((totalFat / Math.max(1, targetFat)) * 100)));
 
-  const subtitleText =
-    totalItemsLogged === 0
-      ? 'No food logged yet • Tap + below'
-      : `${totalItemsLogged} ${totalItemsLogged === 1 ? 'item' : 'items'} logged today`;
-
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor="#F47551"
-          colors={['#F47551', '#CDE26D']}
-        />
-      }
-    >
-      {/* 0. Blended Header (Scrolls naturally off-screen with content) */}
-      <Header
-        onSearchPress={onSearchPress}
-        onNotificationsPress={onNotificationsPress}
-        onAvatarPress={onAvatarPress}
-        onSignInPress={onSignInPress}
-        onSignOutPress={onSignOutPress}
-      />
-
-      {/* 1. Top 7-Day Date Selector Strip (SUN to SAT with active obsidian capsule & circular ring) */}
-      <TopDateStrip />
-
-      {/* 2. Daily Nutrition Summary Card */}
-      <View style={styles.summaryCard}>
-        {/* Header with Title & Status Pill */}
-        <View style={styles.summaryTop}>
-          <View>
-            <Text style={styles.summaryTitle}>Daily Nutrition</Text>
-            <Text style={styles.summarySubtitle}>{subtitleText}</Text>
-          </View>
-          <View
-            style={[styles.statusPill, isOverBudget ? styles.statusPillOver : null]}
-            accessible={true}
-            accessibilityLabel={isOverBudget ? 'Over calorie budget' : 'Within calorie budget'}
+    <View style={styles.rootContainer}>
+      {/* 0. Dedicated Nutrition Diary Header */}
+      <View style={styles.diaryHeaderContainer}>
+        <View style={styles.diaryHeaderMainRow}>
+          {/* Left Title in Animated.View (Exact same center line as Search button!) */}
+          <Animated.View
+            style={{
+              flex: 1,
+              transform: [{ translateY: titleTranslateY }, { scale: titleScale }],
+              transformOrigin: 'left center',
+              justifyContent: 'center',
+            }}
           >
-            <Text style={[styles.statusPillText, isOverBudget ? styles.statusPillTextOver : null]}>
-              {isOverBudget ? '⚠️ Over Budget' : '✓ Within Budget'}
-            </Text>
-          </View>
+            <Text style={styles.diaryHeaderTitle}>Nutrition Diary</Text>
+          </Animated.View>
+
+          {/* Right: Quick Search Log Action */}
+          <Pressable
+            style={({ pressed }) => [styles.circleBtn, pressed ? styles.btnPressed : null]}
+            onPress={onSearchPress}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Search foods in diary"
+          >
+            <Ionicons name="search-outline" size={18} color="#0F172A" />
+          </Pressable>
         </View>
 
-        {/* Calorie Telemetry Section */}
-        <View style={styles.calorieSection}>
-          <View style={styles.calorieMainRow}>
-            <View style={styles.calorieLeft}>
-              <Text style={[styles.calorieRemainingVal, isOverBudget ? styles.calorieOverVal : null]}>
+        {/* Floating Subtitle (Revealed on Scroll, 0px footprint at rest so it never misaligns the title!) */}
+        <Animated.View
+          style={[
+            styles.subtitleContainer,
+            {
+              opacity: subtitleOpacity,
+              transform: [{ translateY: subtitleTranslateY }],
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Text style={styles.diaryHeaderSubtitle} numberOfLines={1}>
+            {formattedDate} • {totalItemsLogged} {totalItemsLogged === 1 ? 'item' : 'items'}
+          </Text>
+        </Animated.View>
+      </View>
+
+      {/* Main Scroll Content */}
+      <Animated.ScrollView
+        ref={scrollRef as any}
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#F47551"
+            colors={['#F47551', '#CDE26D']}
+          />
+        }
+      >
+        {/* 1. Top 7-Day Date Selector Strip (SUN to SAT with active obsidian capsule & circular ring) */}
+        <TopDateStrip />
+
+        {/* 2. Compact Nutrition Telemetry Strip (~84px tall) */}
+        <View style={styles.telemetryCard}>
+          {/* Top Row: Calories Left / Over on Left, Telemetry on Right */}
+          <View style={styles.telemetryHeaderRow}>
+            <View style={styles.telemetryLeftCol}>
+              <View style={[styles.statusDot, isOverBudget ? styles.statusDotOver : styles.statusDotOk]} />
+              <Text style={[styles.telemetryCalVal, isOverBudget ? styles.telemetryCalOver : null]}>
                 {Math.abs(remainingCalories).toLocaleString()}
               </Text>
-              <Text style={styles.calorieRemainingUnit}>
+              <Text style={styles.telemetryCalUnit}>
                 {isOverBudget ? 'kcal over' : 'kcal left'}
               </Text>
             </View>
-            <View style={styles.calorieStats}>
-              <Text style={styles.calorieStatItem}>
-                Eaten <Text style={styles.calorieStatBold}>{totalConsumed.toLocaleString()}</Text>
+
+            <View style={styles.telemetryRightCol}>
+              <Text style={styles.telemetryStatItem}>
+                Eaten <Text style={styles.telemetryStatBold}>{totalConsumed.toLocaleString()}</Text>
               </Text>
-              <Text style={styles.calorieStatDivider}>•</Text>
-              <Text style={styles.calorieStatItem}>
-                Burned <Text style={styles.calorieStatBold}>{totalBurned.toLocaleString()}</Text>
-              </Text>
-              <Text style={styles.calorieStatDivider}>•</Text>
-              <Text style={styles.calorieStatItem}>
-                Goal <Text style={styles.calorieStatBold}>{calorieBudget.toLocaleString()}</Text>
+              <Text style={styles.telemetryStatDivider}>•</Text>
+              <Text style={styles.telemetryStatItem}>
+                Goal <Text style={styles.telemetryStatBold}>{calorieBudget.toLocaleString()}</Text>
               </Text>
             </View>
           </View>
 
-          {/* Calorie Budget Bar */}
+          {/* Middle Row: Continuous Calorie Budget Progress Bar */}
           <View
+            style={styles.telemetryTrackWrap}
             accessible={true}
-            accessibilityLabel={`Calorie budget progress: ${calorieFillPct}% consumed. ${totalConsumed} of ${effectiveBudget} kilocalories`}
-            style={{ marginTop: 10 }}
+            accessibilityLabel={`Calorie budget: ${calorieFillPct}% consumed. ${totalConsumed} of ${effectiveBudget} kilocalories`}
           >
             <AnimatedProgressBar
               progress={totalConsumed / Math.max(1, effectiveBudget)}
-              fillColor={isOverBudget ? '#F97316' : '#22C55E'}
-              height={8}
-              trackColor="#E2E8F0"
+              fillColor={isOverBudget ? '#F47551' : '#22C55E'}
+              height={5}
+              trackColor="#F1F5F9"
             />
+          </View>
+
+          {/* Bottom Row: 3 Responsive Equal Macro Columns (33.3% flex: 1 each) */}
+          <View style={styles.macroStripRow}>
+            {/* Carbs Column */}
+            <View
+              style={styles.macroCol}
+              accessible={true}
+              accessibilityLabel={`Carbohydrates: ${Math.round(totalCarbs)}g of ${targetCarbs}g`}
+            >
+              <View style={styles.macroLabelRow}>
+                <Text style={styles.macroNameText}>CARBS</Text>
+                <Text style={styles.macroGramsText}>{Math.round(totalCarbs)}<Text style={styles.macroTargetText}>/{targetCarbs}g</Text></Text>
+              </View>
+              <AnimatedProgressBar
+                progress={(totalCarbs || 0) / Math.max(1, targetCarbs)}
+                fillColor="#EAB308"
+                height={3.5}
+                trackColor="#FEF9C3"
+              />
+            </View>
+
+            {/* Protein Column */}
+            <View
+              style={styles.macroCol}
+              accessible={true}
+              accessibilityLabel={`Protein: ${Math.round(totalProtein)}g of ${targetProtein}g`}
+            >
+              <View style={styles.macroLabelRow}>
+                <Text style={styles.macroNameText}>PROTEIN</Text>
+                <Text style={styles.macroGramsText}>{Math.round(totalProtein)}<Text style={styles.macroTargetText}>/{targetProtein}g</Text></Text>
+              </View>
+              <AnimatedProgressBar
+                progress={(totalProtein || 0) / Math.max(1, targetProtein)}
+                fillColor="#22C55E"
+                height={3.5}
+                trackColor="#DCFCE7"
+              />
+            </View>
+
+            {/* Fat Column */}
+            <View
+              style={styles.macroCol}
+              accessible={true}
+              accessibilityLabel={`Fat: ${Math.round(totalFat)}g of ${targetFat}g`}
+            >
+              <View style={styles.macroLabelRow}>
+                <Text style={styles.macroNameText}>FAT</Text>
+                <Text style={styles.macroGramsText}>{Math.round(totalFat)}<Text style={styles.macroTargetText}>/{targetFat}g</Text></Text>
+              </View>
+              <AnimatedProgressBar
+                progress={(totalFat || 0) / Math.max(1, targetFat)}
+                fillColor="#F47551"
+                height={3.5}
+                trackColor="#FFE4D6"
+              />
+            </View>
           </View>
         </View>
 
-        {/* 3 Macro Pods (Frost White Cards with Micro Progress Bars - Carbs, Protein, Fat) */}
-        <View style={styles.macroRow}>
-          {/* Carbs Pod */}
-          <View
-            style={styles.macroPod}
-            accessible={true}
-            accessibilityLabel={`Carbohydrates: ${Math.round(totalCarbs)} grams of ${targetCarbs} grams target (${carbsPct}%)`}
-          >
-            <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, styles.dotCarbs]} />
-              <Text style={[styles.macroPodLabel, styles.labelCarbs]}>CARBS</Text>
-            </View>
-            <Text style={styles.macroPodVal}>{Math.round(totalCarbs)}g</Text>
-            <AnimatedProgressBar
-              progress={(totalCarbs || 0) / Math.max(1, targetCarbs)}
-              fillColor="#EAB308"
-              height={5}
-              trackColor="#FEF9C3"
-              style={{ marginVertical: 6 }}
-            />
-            <Text style={styles.macroPodSub}>of {targetCarbs}g</Text>
-          </View>
-
-          {/* Protein Pod */}
-          <View
-            style={styles.macroPod}
-            accessible={true}
-            accessibilityLabel={`Protein: ${Math.round(totalProtein)} grams of ${targetProtein} grams target (${proteinPct}%)`}
-          >
-            <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, styles.dotProtein]} />
-              <Text style={[styles.macroPodLabel, styles.labelProtein]}>PROTEIN</Text>
-            </View>
-            <Text style={styles.macroPodVal}>{Math.round(totalProtein)}g</Text>
-            <AnimatedProgressBar
-              progress={(totalProtein || 0) / Math.max(1, targetProtein)}
-              fillColor="#22C55E"
-              height={5}
-              trackColor="#DCFCE7"
-              style={{ marginVertical: 6 }}
-            />
-            <Text style={styles.macroPodSub}>of {targetProtein}g</Text>
-          </View>
-
-          {/* Fat Pod */}
-          <View
-            style={styles.macroPod}
-            accessible={true}
-            accessibilityLabel={`Fat: ${Math.round(totalFat)} grams of ${targetFat} grams target (${fatPct}%)`}
-          >
-            <View style={styles.macroPodHeader}>
-              <View style={[styles.macroDot, styles.dotFat]} />
-              <Text style={[styles.macroPodLabel, styles.labelFat]}>FAT</Text>
-            </View>
-            <Text style={styles.macroPodVal}>{Math.round(totalFat)}g</Text>
-            <AnimatedProgressBar
-              progress={(totalFat || 0) / Math.max(1, targetFat)}
-              fillColor="#F47551"
-              height={5}
-              trackColor="#FFE4D6"
-              style={{ marginVertical: 6 }}
-            />
-            <Text style={styles.macroPodSub}>of {targetFat}g</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Meals List (Breakfast, Lunch, Dinner) */}
-      <MealSection onAddFood={onAddFood} />
-    </ScrollView>
+        {/* Meals List (Breakfast, Lunch, Dinner) */}
+        <MealSection onAddFood={onAddFood} />
+      </Animated.ScrollView>
+    </View>
   );
 };
 
+export const DiaryScreen = React.memo(DiaryScreenComponent);
+export const DiaryTab = DiaryScreen;
+
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: '#FAF9F6',
+  },
+  diaryHeaderContainer: {
+    backgroundColor: '#FAF9F6',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+    minHeight: 64,
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 10,
+  },
+  diaryHeaderMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 42,
+  },
+  diaryHeaderTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 26,
+    lineHeight: 32,
+    color: '#0F172A',
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  subtitleContainer: {
+    position: 'absolute',
+    bottom: 4,
+    left: 16,
+    right: 60,
+  },
+  diaryHeaderSubtitle: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
+    includeFontPadding: false,
+  },
+  circleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  btnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.95 }],
+  },
   container: {
     flex: 1,
     backgroundColor: '#FAF9F6',
@@ -233,232 +375,110 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 110, // Ensures full clearance above floating bottom navigation bar
   },
-  summaryCard: {
+  telemetryCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 20,
     borderCurve: 'continuous',
     marginHorizontal: 16,
     marginTop: 4,
-    marginBottom: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  summaryTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  summaryTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 17.5,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-  },
-  summarySubtitle: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 1,
-  },
-  statusPill: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 4.5,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  statusPillOver: {
-    backgroundColor: '#FFF5F1',
-    borderColor: '#FFD5C6',
-  },
-  statusPillText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#059669',
-  },
-  statusPillTextOver: {
-    color: '#F47551',
-  },
-  calorieSection: {
-    backgroundColor: '#FAF9F6',
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    paddingVertical: 12,
+    marginBottom: 10,
     paddingHorizontal: 14,
-    marginBottom: 12,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.04)',
-  },
-  calorieMainRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 10,
-  },
-  calorieLeft: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  calorieRemainingVal: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
-  calorieOverVal: {
-    color: '#F47551',
-  },
-  calorieRemainingUnit: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  calorieStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  calorieStatItem: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
-    color: '#94A3B8',
-  },
-  calorieStatBold: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  calorieStatDivider: {
-    fontSize: 10,
-    color: '#CBD5E1',
-  },
-  calorieTrack: {
-    height: 6,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  calorieBar: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  macroRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  macroPod: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  macroPodHeader: {
+  telemetryHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  telemetryLeftCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
+    gap: 6,
   },
-  macroDot: {
+  statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  macroPodLabel: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
+  statusDotOk: {
+    backgroundColor: '#22C55E',
   },
-  macroPodVal: {
+  statusDotOver: {
+    backgroundColor: '#F47551',
+  },
+  telemetryCalVal: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 22,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 6,
+    letterSpacing: -0.3,
   },
-  podTrack: {
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
+  telemetryCalOver: {
+    color: '#F47551',
+  },
+  telemetryCalUnit: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 11.5,
+    color: '#64748B',
+  },
+  telemetryRightCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  telemetryStatItem: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#64748B',
+  },
+  telemetryStatBold: {
+    fontFamily: Fonts.poppins.semiBold,
+    color: '#0F172A',
+  },
+  telemetryStatDivider: {
+    color: '#CBD5E1',
+    fontSize: 10,
+  },
+  telemetryTrackWrap: {
+    marginBottom: 10,
+  },
+  macroStripRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  macroCol: {
+    flex: 1,
+  },
+  macroLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
     marginBottom: 4,
   },
-  podFill: {
-    height: '100%',
-    borderRadius: 2,
+  macroNameText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 9.5,
+    color: '#64748B',
+    letterSpacing: 0.3,
   },
-  macroPodSub: {
+  macroGramsText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11,
+    color: '#0F172A',
+  },
+  macroTargetText: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#94A3B8',
   },
-  calorieBarNormal: {
-    backgroundColor: '#10B981',
-  },
-  calorieBarOver: {
-    backgroundColor: '#F47551',
-  },
-  dotCarbs: {
-    backgroundColor: '#F8D558',
-  },
-  labelCarbs: {
-    color: '#B45309',
-  },
-  trackCarbs: {
-    backgroundColor: '#FEF9C3',
-  },
-  fillCarbs: {
-    backgroundColor: '#F8D558',
-  },
-  dotProtein: {
-    backgroundColor: '#67BD6E',
-  },
-  labelProtein: {
-    color: '#15803D',
-  },
-  trackProtein: {
-    backgroundColor: '#DCFCE7',
-  },
-  fillProtein: {
-    backgroundColor: '#67BD6E',
-  },
-  dotFat: {
-    backgroundColor: '#F47551',
-  },
-  labelFat: {
-    color: '#C2410C',
-  },
-  trackFat: {
-    backgroundColor: '#FFE4D6',
-  },
-  fillFat: {
-    backgroundColor: '#F47551',
-  },
 });
-
-export const DiaryScreen = React.memo(DiaryScreenComponent);
-export const DiaryTab = DiaryScreen;
-
