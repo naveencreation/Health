@@ -49,9 +49,27 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const scrollViewRef = useRef<ScrollView>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
+  const fieldOffsets = useRef<{ [key: string]: number }>({});
+
+  const scrollToField = (field: 'name' | 'email' | 'password' | 'confirm') => {
+    setFocusedField(field);
+    const targetY = fieldOffsets.current[field];
+    if (typeof targetY === 'number') {
+      const scrollY = Math.max(0, targetY - 24);
+      scrollViewRef.current?.scrollTo({ y: scrollY, animated: true });
+      // Android keyboard slide-in animation takes ~100-150ms to settle window layout
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: scrollY, animated: true });
+      }, 120);
+    } else {
+      const fallbackY = field === 'name' ? 0 : field === 'email' ? 80 : field === 'password' ? 160 : 360;
+      scrollViewRef.current?.scrollTo({ y: fallbackY, animated: true });
+    }
+  };
 
   // Password requirements calculation
   const hasMinLength = password.length >= 8;
@@ -137,15 +155,17 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         {/* Keyboard Avoiding Container */}
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 280 }]}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           >
             {/* Centered Title Section */}
             <View style={styles.titleSection}>
@@ -174,7 +194,12 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             ) : null}
 
             {/* Full Name Field */}
-            <View style={styles.inputGroup}>
+            <View
+              style={styles.inputGroup}
+              onLayout={(e) => {
+                fieldOffsets.current['name'] = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.inputLabel}>FULL NAME</Text>
               <View
                 style={[
@@ -199,8 +224,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   }}
                   autoCapitalize="words"
                   autoCorrect={false}
+                  autoComplete={Platform.OS === 'android' ? 'off' : 'name'}
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
                   returnKeyType="next"
-                  onFocus={() => setFocusedField('name')}
+                  onFocus={() => scrollToField('name')}
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => emailRef.current?.focus()}
                   testID="input-signup-name"
@@ -210,7 +238,12 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             </View>
 
             {/* Email Field */}
-            <View style={styles.inputGroup}>
+            <View
+              style={styles.inputGroup}
+              onLayout={(e) => {
+                fieldOffsets.current['email'] = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
               <View
                 style={[
@@ -238,8 +271,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   autoCorrect={false}
                   spellCheck={false}
                   keyboardType="email-address"
+                  autoComplete={Platform.OS === 'android' ? 'off' : 'email'}
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
                   returnKeyType="next"
-                  onFocus={() => setFocusedField('email')}
+                  onFocus={() => scrollToField('email')}
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => passwordRef.current?.focus()}
                   testID="input-signup-email"
@@ -260,7 +296,12 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             </View>
 
             {/* Password Field */}
-            <View style={styles.inputGroup}>
+            <View
+              style={styles.inputGroup}
+              onLayout={(e) => {
+                fieldOffsets.current['password'] = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.inputLabel}>PASSWORD</Text>
               <View
                 style={[
@@ -291,8 +332,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   autoCapitalize="none"
                   autoCorrect={false}
                   spellCheck={false}
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
                   returnKeyType="next"
-                  onFocus={() => setFocusedField('password')}
+                  onFocus={() => scrollToField('password')}
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={() => confirmRef.current?.focus()}
                   testID="input-signup-password"
@@ -362,7 +406,12 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             ) : null}
 
             {/* Confirm Password Field */}
-            <View style={styles.inputGroup}>
+            <View
+              style={styles.inputGroup}
+              onLayout={(e) => {
+                fieldOffsets.current['confirm'] = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.inputLabel}>CONFIRM PASSWORD</Text>
               <View
                 style={[
@@ -394,8 +443,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   autoCapitalize="none"
                   autoCorrect={false}
                   spellCheck={false}
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
                   returnKeyType="done"
-                  onFocus={() => setFocusedField('confirm')}
+                  onFocus={() => scrollToField('confirm')}
                   onBlur={() => setFocusedField(null)}
                   onSubmitEditing={handleRegister}
                   testID="input-signup-confirm-password"
@@ -630,12 +682,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
     fontSize: 14,
     color: '#0F172A',
+    backgroundColor: 'transparent',
     height: '100%',
     paddingVertical: 0,
     ...(Platform.OS === 'web'
       ? ({
           outlineStyle: 'none',
           outlineWidth: 0,
+          boxShadow: '0 0 0 1000px transparent inset',
         } as any)
       : {}),
   },
