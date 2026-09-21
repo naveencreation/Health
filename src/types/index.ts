@@ -18,6 +18,8 @@ export interface FoodItem extends MacroNutrients {
   icon?: string;
   imageUrl?: string;
   isCustom?: boolean;
+  description?: string;
+  badge?: string;
 }
 
 export interface LoggedMealItem {

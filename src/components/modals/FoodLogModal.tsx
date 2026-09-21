@@ -23,6 +23,9 @@ import { FoodItem, MealType, LoggedMealItem } from '@/types';
 import { useHealth } from '@/context/HealthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FoodIconBadge } from '@/components/common/FoodIconBadge';
+import { FoodImage } from '@/components/common/FoodImage';
+import { getFoodDescription } from '@/data/foodDatabase';
+import { getFoodImageSource } from '@/assets/foodImages';
 
 interface FoodLogModalProps {
   visible: boolean;
@@ -46,10 +49,9 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
     { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
     { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
     { id: 'south_indian', label: 'South Indian', iconFamily: 'mci', iconName: 'pot-steam-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
-    { id: 'beverages', label: 'Tea & Coffee', iconFamily: 'ion', iconName: 'cafe-outline', activeColor: '#FFFFFF', inactiveColor: '#B45309' },
     { id: 'breads', label: 'Breads & Toast', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
     { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
-    { id: 'fruits', label: 'Fruits', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
+    { id: 'fruits', label: 'Fruits & Nuts', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
     { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
   ],
   lunch: [
@@ -74,7 +76,6 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
     { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
     { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
     { id: 'snacks', label: 'Snacks', iconFamily: 'mci', iconName: 'cookie-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
-    { id: 'beverages', label: 'Beverages', iconFamily: 'ion', iconName: 'cafe-outline', activeColor: '#FFFFFF', inactiveColor: '#B45309' },
     { id: 'fruits', label: 'Fruits & Nuts', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
     { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
     { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
@@ -103,6 +104,13 @@ const formatServingUnit = (unit?: string): string => {
   const trimmed = unit.trim();
   if (/^\d/.test(trimmed)) return trimmed; // '100g' -> '100g', '250ml' -> '250ml'
   return `1 ${trimmed}`;                  // 'egg' -> '1 egg', 'piece' -> '1 piece'
+};
+
+const formatStepperUnit = (unit?: string): string => {
+  if (!unit) return 'x';
+  const firstWord = unit.split(/[\s(]/)[0].toLowerCase();
+  if (firstWord.length <= 7) return firstWord;
+  return 'x';
 };
 
 interface FoodItemRowProps {
@@ -177,6 +185,11 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const [favoriteFoodIds, setFavoriteFoodIds] = useState<Record<string, boolean>>({});
+
+  const toggleFavorite = useCallback((id: string) => {
+    setFavoriteFoodIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   useEffect(() => {
     setSelectedMealType(mealType);
@@ -213,21 +226,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   }, [selectedFood]);
 
   const handleDismissDrawer = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(drawerFadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-      Animated.timing(drawerSlideAnim, {
-        toValue: 320,
-        duration: 180,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-    ]).start(() => {
-      setSelectedFood(null);
-    });
-  }, [drawerFadeAnim, drawerSlideAnim]);
+    setSelectedFood(null);
+    setQuantity(1);
+  }, []);
 
   useEffect(() => {
     if (toastMessage) {
@@ -330,17 +331,17 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
         const priorityIds = [
           'idli_steamed',
           'plain_dosa',
-          'filter_coffee',
-          'masala_chai',
-          'brown_bread_slice',
           'aloo_paratha',
-          'egg_curry',
+          'bread_omelette',
+          'upma',
+          'ven_pongal',
+          'poha',
           'apple_medium',
           'banana_medium',
-          'almonds',
+          'raw_almonds',
         ];
         return list
-          .filter((item) => priorityIds.includes(item.id) || item.category === 'south_indian')
+          .filter((item) => priorityIds.includes(item.id))
           .sort((a, b) => {
             const aIdx = priorityIds.indexOf(a.id);
             const bIdx = priorityIds.indexOf(b.id);
@@ -354,13 +355,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
       if (selectedMealType === 'lunch') {
         const priorityIds = [
           'roti_chapati',
-          'dal_tadka',
-          'steamed_rice_white',
           'paneer_butter_masala',
-          'curd_dahi',
-          'mix_veg_sabzi',
           'chicken_curry',
-          'salad_cucumber_tomato',
+          'chicken_biryani',
+          'chole_rice',
+          'rajma_chawal',
+          'veg_thali',
+          'curd_rice',
+          'lemon_rice',
         ];
         return list.filter(
           (item) => priorityIds.includes(item.id) || item.category === 'curries' || item.category === 'rice'
@@ -370,14 +372,16 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
       if (selectedMealType === 'dinner') {
         const priorityIds = [
           'roti_chapati',
-          'dal_tadka',
-          'mix_veg_sabzi',
-          'palak_paneer',
+          'paratha',
+          'paneer_butter_masala',
+          'veg_thali',
+          'chicken_curry',
           'idli_steamed',
-          'salad_cucumber_tomato',
+          'moong_dal_khichdi',
+          'curd_rice',
         ];
         return list.filter(
-          (item) => priorityIds.includes(item.id) || item.category === 'curries'
+          (item) => priorityIds.includes(item.id) || item.category === 'curries' || item.category === 'breads'
         );
       }
 
@@ -385,7 +389,6 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
       return list.filter(
         (item) =>
           item.category === 'snacks' ||
-          item.category === 'beverages' ||
           item.category === 'fruits'
       );
     }
@@ -506,6 +509,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const projectedRemaining = mealTarget - projectedTotal;
   const projectedPct = Math.min(100, Math.round((projectedTotal / (mealTarget || 1)) * 100));
   const isProjectedOver = projectedRemaining < 0;
+  const heroImageSource = selectedFood ? getFoodImageSource(selectedFood) : undefined;
+  const foodDescription = selectedFood ? getFoodDescription(selectedFood) : '';
+  const isFav = selectedFood ? !!favoriteFoodIds[selectedFood.id] : false;
 
   return (
     <Modal
@@ -515,7 +521,233 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
       onRequestClose={onClose}
     >
       <View style={styles.modalRoot}>
-        <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
+        {selectedFood ? (
+          /* =======================================================
+             1. FULL-SCREEN DEDICATED FOOD PRODUCT DETAIL PAGE
+             ======================================================= */
+          <SafeAreaView style={styles.fullScreenProductContainer} edges={['top', 'bottom']}>
+            {/* Top Bar: Floating Back & Favorite Buttons */}
+            <View style={styles.productTopNavRow}>
+              <Pressable
+                style={({ pressed }) => [styles.productNavCircleBtn, pressed ? styles.btnPressedSubtle : null]}
+                onPress={handleDismissDrawer}
+                hitSlop={HIT_SLOP_10}
+                accessibilityRole="button"
+                accessibilityLabel="Back to food list"
+              >
+                <Ionicons name="arrow-back" size={22} color="#0F172A" />
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.productNavCircleBtn, pressed ? styles.btnPressedSubtle : null]}
+                onPress={() => toggleFavorite(selectedFood.id)}
+                hitSlop={HIT_SLOP_10}
+                accessibilityRole="button"
+                accessibilityLabel={isFav ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Ionicons name={isFav ? "heart" : "heart-outline"} size={22} color={isFav ? "#EF4444" : "#64748B"} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              style={styles.fullScreenScrollView}
+              contentContainerStyle={styles.fullScreenScrollContent}
+            >
+              {/* 2. First: The Food Image — 4:3 container, subject centered via contain */}
+              <View style={styles.productHeroStage}>
+                <FoodImage
+                  source={heroImageSource}
+                  aspectRatio={4 / 3}
+                  contentFit="contain"
+                  width="100%"
+                  backgroundColor="#FFFFFF"
+                  fallback={<FoodIconBadge item={selectedFood} size={160} />}
+                />
+              </View>
+
+              {/* 3. Product Information Card */}
+              <View style={styles.productDetailCard}>
+                {/* Category Pill + Health Tag */}
+                <View style={styles.productHeaderMetaRow}>
+                  <Text style={styles.productCategoryLabel}>
+                    {(selectedFood.categoryLabel || selectedFood.category || 'WHOLESOME').toUpperCase()}
+                  </Text>
+                  <View style={styles.productHealthBadgePill}>
+                    <Text style={styles.productHealthBadgeText}>{selectedFood.badge || 'Clean Energy'}</Text>
+                  </View>
+                </View>
+
+                {/* Dish Name */}
+                <Text style={styles.productMainTitle} numberOfLines={2}>
+                  {selectedFood.name}
+                </Text>
+
+                {/* Serving Unit & Base Calories */}
+                <Text style={styles.productBaseServingText}>
+                  1 {selectedFood.servingUnit} · {selectedFood.calories} kcal
+                </Text>
+
+                {/* Description */}
+                <Text style={styles.productDescriptionText}>
+                  {foodDescription}
+                </Text>
+
+                {/* Nutrition Breakdown */}
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeaderLabel}>Nutrition Breakdown</Text>
+                </View>
+
+                <View style={styles.nutritionMatrixGrid}>
+                  <View style={[styles.nutriCard, styles.nutriCardCalories]}>
+                    <Text style={styles.nutriVal}>{projectedAddedCals}</Text>
+                    <Text style={[styles.nutriKey, { color: '#C2410C' }]}>CALORIES</Text>
+                  </View>
+                  <View style={styles.nutriCard}>
+                    <View style={styles.nutriHeaderRow}>
+                      <View style={[styles.drawerMacroDot, { backgroundColor: '#10B981' }]} />
+                      <Text style={styles.nutriKey}>PROTEIN</Text>
+                    </View>
+                    <Text style={styles.nutriVal}>
+                      {(selectedFood.protein * quantity).toFixed(1)}g
+                    </Text>
+                  </View>
+                  <View style={styles.nutriCard}>
+                    <View style={styles.nutriHeaderRow}>
+                      <View style={[styles.drawerMacroDot, { backgroundColor: '#F59E0B' }]} />
+                      <Text style={styles.nutriKey}>CARBS</Text>
+                    </View>
+                    <Text style={styles.nutriVal}>
+                      {(selectedFood.carbs * quantity).toFixed(1)}g
+                    </Text>
+                  </View>
+                  <View style={styles.nutriCard}>
+                    <View style={styles.nutriHeaderRow}>
+                      <View style={[styles.drawerMacroDot, { backgroundColor: '#F47551' }]} />
+                      <Text style={styles.nutriKey}>FAT</Text>
+                    </View>
+                    <Text style={styles.nutriVal}>
+                      {(selectedFood.fat * quantity).toFixed(1)}g
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Effective Quantity Distribution */}
+                {/* Quick Portion Chips */}
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeaderLabel}>Quick Portions</Text>
+                </View>
+
+                <View style={styles.distributionChipsRow}>
+                  {[1, 2, 3, 5].map((val) => (
+                    <Pressable
+                      key={val}
+                      style={({ pressed }) => [
+                        styles.distributionChip,
+                        quantity === val ? styles.distributionChipActive : null,
+                        pressed ? styles.btnPressedPill : null,
+                      ]}
+                      onPress={() => setQuantity(val)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${val} servings`}
+                    >
+                      <Text
+                        style={[
+                          styles.distributionChipText,
+                          quantity === val ? styles.distributionChipTextActive : null,
+                        ]}
+                      >
+                        {val}x
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Daily Budget Impact */}
+                <View style={styles.drawerImpactCard}>
+                  <View style={styles.impactHeaderRow}>
+                    <Text style={styles.impactTitle}>{mealTitle} Budget</Text>
+                    <Text style={[styles.impactRemaining, isProjectedOver ? styles.impactRemainingOver : styles.impactRemainingOk]}>
+                      {projectedRemaining >= 0
+                        ? `${projectedRemaining} kcal left`
+                        : `${Math.abs(projectedRemaining)} kcal over`}
+                    </Text>
+                  </View>
+
+                  <View style={styles.impactProgressTrack}>
+                    <View
+                      style={[
+                        styles.impactProgressBar,
+                        { width: `${projectedPct}%` },
+                        isProjectedOver ? styles.impactBarOver : styles.impactBarOk,
+                      ]}
+                    />
+                  </View>
+
+                  <View style={styles.impactFooterRow}>
+                    <Text style={styles.impactFooterText}>
+                      {projectedTotal} / {mealTarget} kcal ({projectedPct}%)
+                    </Text>
+                    <Text style={styles.impactAddedBadge}>
+                      +{projectedAddedCals} kcal
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Sticky Bottom Stepper & CTA Footer */}
+            <View style={styles.productStickyFooter}>
+              {/* Left: Quantity Stepper Pill */}
+              <View style={styles.footerStepperPill}>
+                <Pressable
+                  style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                  hitSlop={HIT_SLOP_8}
+                  onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease portion by 0.5"
+                >
+                  <Ionicons name="remove" size={20} color="#0F172A" />
+                </Pressable>
+
+                <View style={styles.footerStepperValueWrap}>
+                  <Text style={styles.footerStepperValue} numberOfLines={1}>
+                    <Text style={styles.footerStepperNumber}>{quantity}</Text>
+                    <Text style={styles.footerStepperUnit}> {formatStepperUnit(selectedFood.servingUnit)}</Text>
+                  </Text>
+                </View>
+
+                <Pressable
+                  style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                  hitSlop={HIT_SLOP_8}
+                  onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase portion by 0.5"
+                >
+                  <Ionicons name="add" size={20} color="#0F172A" />
+                </Pressable>
+              </View>
+
+              {/* Right: Add to Meal Action Button */}
+              <Pressable
+                style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
+                onPress={handleConfirmLog}
+                accessibilityRole="button"
+                accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
+              >
+                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                <Text style={styles.confirmAddBtnText} numberOfLines={1}>
+                  Add to {mealTitle} • {projectedAddedCals} kcal
+                </Text>
+              </Pressable>
+            </View>
+          </SafeAreaView>
+        ) : (
+          /* =======================================================
+             2. CATALOG / SEARCH PAGE
+             ======================================================= */
+          <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
         {/* 1. Header with Title & Live Budget Anchors */}
         <View style={styles.header}>
           <Pressable
@@ -824,227 +1056,51 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
             </>
           )}
 
-          {/* 5. Portion Selector Drawer */}
-          {selectedFood ? (
-            <Animated.View style={[styles.portionOverlay, { opacity: drawerFadeAnim }]}>
-              <Pressable
-                style={styles.portionOverlayDismiss}
-                onPress={handleDismissDrawer}
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss portion drawer"
-              />
-              <Animated.View
-                style={[
-                  styles.portionDrawer,
-                  { transform: [{ translateY: drawerSlideAnim }] },
-                ]}
-              >
-                <View style={styles.drawerHandleBar}>
-                  <View style={styles.drawerHandle} />
-                </View>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        )}
 
-                <View style={styles.drawerTop}>
-                  <FoodIconBadge item={selectedFood} size={48} />
-                  <View style={styles.drawerFoodInfo}>
-                    <View style={styles.drawerTitleRow}>
-                      <Text style={styles.drawerFoodName} numberOfLines={1}>{selectedFood.name}</Text>
-                      {selectedFood.categoryLabel ? (
-                        <View style={styles.drawerCategoryBadge}>
-                          <Text style={styles.drawerCategoryText}>{selectedFood.categoryLabel}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    <Text style={styles.drawerFoodUnit}>
-                      1 {selectedFood.servingUnit} • {selectedFood.calories} kcal
-                    </Text>
-                  </View>
-                  <Pressable
-                    style={({ pressed }) => [styles.drawerCloseBtn, pressed ? styles.btnPressedSubtle : null]}
-                    onPress={handleDismissDrawer}
-                    hitSlop={HIT_SLOP_10}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close portion drawer"
-                  >
-                    <Ionicons name="close" size={20} color="#64748B" />
-                  </Pressable>
-                </View>
-
-                {/* Quantity Stepper with Functional State Updaters */}
-                <View style={styles.stepperContainer}>
-                  <Text style={styles.stepperLabel}>Portion Size:</Text>
-                  <View style={styles.stepperControls}>
-                    <Pressable
-                      style={({ pressed }) => [styles.stepButton, pressed ? styles.btnPressedSubtle : null]}
-                      hitSlop={HIT_SLOP_8}
-                      onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
-                      accessibilityRole="button"
-                      accessibilityLabel="Decrease portion by 0.5"
-                    >
-                      <Ionicons name="remove" size={20} color={Colors.primary} />
-                    </Pressable>
-                    <View style={styles.quantityDisplayContainer}>
-                      <Text style={styles.quantityDisplay}>{quantity}x</Text>
-                      <Text style={styles.quantityUnitText} numberOfLines={1}>
-                        {selectedFood.servingUnit}
-                      </Text>
-                    </View>
-                    <Pressable
-                      style={({ pressed }) => [styles.stepButton, pressed ? styles.btnPressedSubtle : null]}
-                      hitSlop={HIT_SLOP_8}
-                      onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Increase portion by 0.5"
-                    >
-                      <Ionicons name="add" size={20} color={Colors.primary} />
-                    </Pressable>
-                  </View>
-                </View>
-
-                {/* 3 Clean Presets (eliminating Hick's Law decision fatigue) */}
-                <View style={styles.presetRow}>
-                  {[
-                    { val: 0.5, label: '0.5x (Half)' },
-                    { val: 1, label: '1x (Standard)' },
-                    { val: 2, label: '2x (Double)' },
-                  ].map((preset) => (
-                    <Pressable
-                      key={preset.val}
-                      style={({ pressed }) => [
-                        styles.presetBtn,
-                        quantity === preset.val ? styles.presetBtnActive : null,
-                        pressed ? styles.btnPressedPill : null,
-                      ]}
-                      onPress={() => setQuantity(preset.val)}
-                      accessibilityRole="button"
-                    >
-                      <Text
-                        style={[
-                          styles.presetBtnText,
-                          quantity === preset.val ? styles.presetBtnTextActive : null,
-                        ]}
-                      >
-                        {preset.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
-                {/* Live Budget Impact Preview Card */}
-                <View style={styles.drawerImpactCard}>
-                  <View style={styles.impactHeaderRow}>
-                    <Text style={styles.impactTitle}>{mealTitle} after this</Text>
-                    <Text style={[styles.impactRemaining, isProjectedOver ? styles.impactRemainingOver : styles.impactRemainingOk]}>
-                      {projectedRemaining >= 0
-                        ? `${projectedRemaining} cal remaining`
-                        : `${Math.abs(projectedRemaining)} cal over target`}
-                    </Text>
-                  </View>
-
-                  <View style={styles.impactProgressTrack}>
-                    <View
-                      style={[
-                        styles.impactProgressBar,
-                        { width: `${projectedPct}%` },
-                        isProjectedOver ? styles.impactBarOver : styles.impactBarOk,
-                      ]}
-                    />
-                  </View>
-
-                  <View style={styles.impactFooterRow}>
-                    <Text style={styles.impactFooterText}>
-                      {projectedTotal} / {mealTarget} kcal ({projectedPct}%)
-                    </Text>
-                    <Text style={styles.impactAddedBadge}>
-                      +{projectedAddedCals} kcal
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Live Nutrition Breakdown with Static Style Colors */}
-                <View style={styles.liveNutritionBox}>
-                  <View style={styles.liveNutriItem}>
-                    <Text style={styles.liveNutriVal}>{projectedAddedCals}</Text>
-                    <Text style={styles.liveNutriKey}>Calories</Text>
-                  </View>
-                  <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, styles.liveNutriProtein]}>
-                      {(selectedFood.protein * quantity).toFixed(1)}g
-                    </Text>
-                    <Text style={styles.liveNutriKey}>Protein</Text>
-                  </View>
-                  <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, styles.liveNutriCarbs]}>
-                      {(selectedFood.carbs * quantity).toFixed(1)}g
-                    </Text>
-                    <Text style={styles.liveNutriKey}>Carbs</Text>
-                  </View>
-                  <View style={styles.liveNutriItem}>
-                    <Text style={[styles.liveNutriVal, styles.liveNutriFat]}>
-                      {(selectedFood.fat * quantity).toFixed(1)}g
-                    </Text>
-                    <Text style={styles.liveNutriKey}>Fat</Text>
-                  </View>
-                </View>
-
-                {/* Confirm Button */}
+        {/* Floating In-Modal Toast Snackbar with Undo */}
+        {toastMessage ? (
+          <Animated.View
+            style={[
+              styles.toastContainer,
+              {
+                opacity: toastFadeAnim,
+                transform: [{ translateY: toastSlideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.toastContent}>
+              <Ionicons name="checkmark-circle" size={18} color="#22C55E" style={{ marginRight: 8 }} />
+              <Text style={styles.toastText} numberOfLines={1}>
+                {toastMessage}
+              </Text>
+            </View>
+            <View style={styles.toastActions}>
+              {lastAddedMeal ? (
                 <Pressable
-                  style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
-                  onPress={handleConfirmLog}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
-                >
-                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                  <Text style={styles.confirmAddBtnText}>
-                    Add to {mealTitle} • {projectedAddedCals} kcal
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            </Animated.View>
-          ) : null}
-        </KeyboardAvoidingView>
-
-          {/* 6. Floating In-Modal Toast Snackbar with Undo */}
-          {toastMessage ? (
-            <Animated.View
-              style={[
-                styles.toastContainer,
-                {
-                  opacity: toastFadeAnim,
-                  transform: [{ translateY: toastSlideAnim }],
-                },
-              ]}
-            >
-              <View style={styles.toastContent}>
-                <Ionicons name="checkmark-circle" size={18} color="#22C55E" style={{ marginRight: 8 }} />
-                <Text style={styles.toastText} numberOfLines={1}>
-                  {toastMessage}
-                </Text>
-              </View>
-              <View style={styles.toastActions}>
-                {lastAddedMeal ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.toastUndoBtn, pressed ? styles.btnPressedSubtle : null]}
-                    onPress={handleUndo}
-                    hitSlop={HIT_SLOP_8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Undo food log"
-                  >
-                    <Text style={styles.toastUndoText}>Undo</Text>
-                  </Pressable>
-                ) : null}
-                <Pressable
-                  style={({ pressed }) => [styles.toastCloseBtn, pressed ? styles.btnPressedSubtle : null]}
-                  onPress={handleDismissToast}
+                  style={({ pressed }) => [styles.toastUndoBtn, pressed ? styles.btnPressedSubtle : null]}
+                  onPress={handleUndo}
                   hitSlop={HIT_SLOP_8}
                   accessibilityRole="button"
-                  accessibilityLabel="Dismiss toast"
+                  accessibilityLabel="Undo food log"
                 >
-                  <Ionicons name="close" size={16} color="#94A3B8" />
+                  <Text style={styles.toastUndoText}>Undo</Text>
                 </Pressable>
-              </View>
-            </Animated.View>
-          ) : null}
-        </SafeAreaView>
+              ) : null}
+              <Pressable
+                style={({ pressed }) => [styles.toastCloseBtn, pressed ? styles.btnPressedSubtle : null]}
+                onPress={handleDismissToast}
+                hitSlop={HIT_SLOP_8}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss toast"
+              >
+                <Ionicons name="close" size={16} color="#94A3B8" />
+              </Pressable>
+            </View>
+          </Animated.View>
+        ) : null}
       </View>
     </Modal>
   );
@@ -1061,6 +1117,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     maxWidth: 480,
+    height: Platform.OS === 'web' ? '100%' : undefined,
     backgroundColor: '#FFFFFF',
     position: 'relative',
     overflow: 'hidden',
@@ -1422,126 +1479,246 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     transform: [{ scale: 0.95 }],
   },
-  portionOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    top: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    justifyContent: 'flex-end',
-    zIndex: 10001,
-  },
-  portionOverlayDismiss: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  portionDrawer: {
+  fullScreenProductContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    height: Platform.OS === 'web' ? '100%' : undefined,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 16,
+    position: 'relative',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? {
+          shadowColor: '#0F172A',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 24,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: '#E2E8F0',
+        }
+      : {}),
   },
-  drawerHandleBar: {
-    alignItems: 'center',
-    paddingVertical: 4,
-    marginBottom: 6,
+  fullScreenScrollView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  drawerHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+  fullScreenScrollContent: {
+    paddingBottom: 96,
   },
-  drawerTop: {
+  productTopNavRow: {
+    position: 'absolute',
+    top: Platform.OS === 'web' ? 14 : 8,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 12,
+    justifyContent: 'space-between',
+    zIndex: 20,
   },
-  drawerFoodIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    backgroundColor: '#FFF7ED',
+  productNavCircleBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  productHeroStage: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    position: 'relative',
+  },
+  productDetailCard: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -24,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  productStickyFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 20,
+  },
+  footerStepperPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    height: 52,
+    paddingHorizontal: 4,
+    minWidth: 120,
+  },
+  footerStepBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  drawerFoodInfo: {
-    flex: 1,
-    paddingRight: 6,
-  },
-  drawerTitleRow: {
-    flexDirection: 'row',
+  footerStepperValueWrap: {
+    paddingHorizontal: 4,
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
   },
-  drawerFoodName: {
+  footerStepperValue: {
+    textAlign: 'center',
+  },
+  footerStepperNumber: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    flexShrink: 1,
   },
-  drawerCategoryBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-  },
-  drawerCategoryText: {
+  footerStepperUnit: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 10,
+    fontSize: 12.5,
     color: '#64748B',
   },
-  drawerFoodUnit: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 12,
+  productHeaderMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  productCategoryLabel: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11.5,
+    color: '#94A3B8',
+    letterSpacing: 1.2,
+  },
+  productHealthBadgePill: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  productHealthBadgeText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 11,
+    color: '#059669',
+  },
+  productMainTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+    marginTop: 4,
+    lineHeight: 28,
+  },
+  productBaseServingText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 13,
     color: '#64748B',
     marginTop: 2,
+    marginBottom: 8,
   },
-  drawerCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+  productDescriptionText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  distributionChipsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  distributionChip: {
+    flex: 1,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  distributionChipActive: {
+    backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
+  },
+  distributionChipText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: '#475569',
+  },
+  distributionChipTextActive: {
+    fontFamily: Fonts.poppins.bold,
+    color: '#FFFFFF',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+    marginTop: 2,
+    paddingHorizontal: 2,
+  },
+  sectionHeaderLabel: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11,
+    color: '#64748B',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: 14,
-    marginBottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-  },
-  stepperLabel: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  stepperControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    marginBottom: 8,
   },
   stepButton: {
     width: 44,
@@ -1552,21 +1729,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#CBD5E1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   quantityDisplayContainer: {
     alignItems: 'center',
-    minWidth: 54,
+    flex: 1,
+    paddingHorizontal: 8,
   },
   quantityDisplay: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 16,
+    fontSize: 18,
     color: '#0F172A',
   },
   quantityUnitText: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
     color: '#64748B',
-    maxWidth: 90,
+    marginTop: 1,
   },
   presetRow: {
     flexDirection: 'row',
@@ -1576,8 +1759,8 @@ const styles = StyleSheet.create({
   presetBtn: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    minHeight: 44,
-    paddingVertical: 10,
+    minHeight: 40,
+    paddingVertical: 8,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1589,7 +1772,7 @@ const styles = StyleSheet.create({
     borderColor: '#0F172A',
   },
   presetBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.poppins.medium,
     fontSize: 12,
     color: '#475569',
   },
@@ -1597,11 +1780,53 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: Fonts.poppins.bold,
   },
+  nutritionMatrixGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  nutriCard: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  nutriCardCalories: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FFEDD5',
+  },
+  nutriHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  drawerMacroDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  nutriKey: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 9.5,
+    color: '#64748B',
+    letterSpacing: 0.4,
+  },
+  nutriVal: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14,
+    color: '#0F172A',
+  },
   drawerImpactCard: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -1658,33 +1883,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#0F172A',
   },
-  liveNutritionBox: {
-    flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 10,
-    justifyContent: 'space-around',
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  liveNutriItem: {
-    alignItems: 'center',
-  },
-  liveNutriVal: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
-    color: '#0F172A',
-  },
-  liveNutriProtein: {
-    color: '#22C55E',
-  },
-  liveNutriCarbs: {
-    color: '#EAB308',
-  },
-  liveNutriFat: {
-    color: '#F97316',
-  },
   btnPressedSubtle: {
     opacity: 0.7,
   },
@@ -1696,27 +1894,27 @@ const styles = StyleSheet.create({
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
   },
-  liveNutriKey: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 10,
-    color: '#64748B',
-    marginTop: 2,
-    textTransform: 'uppercase',
-  },
   confirmAddBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: 14,
+    backgroundColor: '#15803D',
+    height: 52,
+    borderRadius: 16,
     gap: 8,
-    minHeight: 48,
+    paddingHorizontal: 12,
+    shadowColor: '#15803D',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   confirmAddBtnText: {
     fontFamily: Fonts.poppins.bold,
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14.5,
+    fontWeight: '700',
   },
   toastContainer: {
     position: 'absolute',

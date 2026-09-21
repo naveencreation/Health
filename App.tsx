@@ -260,10 +260,12 @@ function MainApp() {
   const handleBackToToday = React.useCallback(() => handleTabChange('today'), [handleTabChange]);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
-  if (!fontsLoaded || isAuthLoading) {
+  const isFontsReady = Platform.OS === 'web' || fontsLoaded;
+
+  if (!isFontsReady || isAuthLoading) {
     return (
       <AppLoadingScreen
-        message={!fontsLoaded ? 'Loading typography...' : 'Authenticating...'}
+        message={!isFontsReady ? 'Loading typography...' : 'Authenticating...'}
         subMessage="Preparing your personalized nutrition dashboard"
       />
     );
