@@ -246,18 +246,22 @@ export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(({
     }
     const name = (item?.name || foodName || '').toLowerCase().trim();
     if (!name) return undefined;
-    if (name.includes('idli') || name.includes('dhokla')) return LOCAL_FOOD_IMAGES['idli_steamed'];
-    if (name.includes('dosa') || name.includes('uttapam')) return LOCAL_FOOD_IMAGES['plain_dosa'];
-    if (name.includes('paratha')) return LOCAL_FOOD_IMAGES['aloo_paratha'];
+    if (name.includes('idli') || name.includes('dhokla') || name.includes('appam') || name.includes('idiyappam') || name.includes('puttu')) return LOCAL_FOOD_IMAGES['idli_steamed'];
+    if (name.includes('dosa') || name.includes('uttapam') || name.includes('adai')) return LOCAL_FOOD_IMAGES['plain_dosa'];
+    if (name.includes('paratha') || name.includes('parotta') || name.includes('kothu')) return LOCAL_FOOD_IMAGES['aloo_paratha'];
     if (name.includes('roti') || name.includes('chapati') || name.includes('phulka')) return LOCAL_FOOD_IMAGES['roti_chapati'];
     if (name.includes('naan')) return LOCAL_FOOD_IMAGES['plain_naan'];
     if (name.includes('bread') || name.includes('toast') || name.includes('sandwich')) return LOCAL_FOOD_IMAGES['brown_bread_slice'];
     if (name.includes('biryani') || name.includes('pulao')) return LOCAL_FOOD_IMAGES['chicken_biryani'];
-    if (name.includes('rice') || name.includes('chawal')) return LOCAL_FOOD_IMAGES['cooked_white_rice'];
+    if (name.includes('pongal') || name.includes('khichdi') || name.includes('bath') || name.includes('mudde')) return LOCAL_FOOD_IMAGES['moong_dal_khichdi'];
+    if (name.includes('rice') || name.includes('chawal') || name.includes('sadham')) return LOCAL_FOOD_IMAGES['cooked_white_rice'];
+    if (name.includes('upma')) return LOCAL_FOOD_IMAGES['upma'];
     if (name.includes('paneer')) return LOCAL_FOOD_IMAGES['paneer_butter_masala'];
     if (name.includes('chicken') || name.includes('meat') || name.includes('mutton') || name.includes('fish')) return LOCAL_FOOD_IMAGES['chicken_curry'];
     if (name.includes('egg') || name.includes('omelet') || name.includes('omlette')) return LOCAL_FOOD_IMAGES['boiled_egg'];
-    if (name.includes('dal') || name.includes('sambar') || name.includes('curry') || name.includes('chole') || name.includes('rajma')) return LOCAL_FOOD_IMAGES['dal_tadka'];
+    if (name.includes('sambar')) return LOCAL_FOOD_IMAGES['sambar'];
+    if (name.includes('chutney')) return LOCAL_FOOD_IMAGES['coconut_chutney'];
+    if (name.includes('dal') || name.includes('curry') || name.includes('chole') || name.includes('rajma')) return LOCAL_FOOD_IMAGES['dal_tadka'];
     if (name.includes('chai') || name.includes('tea')) return LOCAL_FOOD_IMAGES['masala_chai'];
     if (name.includes('coffee')) return LOCAL_FOOD_IMAGES['filter_coffee'];
     if (name.includes('samosa') || name.includes('pakora') || name.includes('vada')) return LOCAL_FOOD_IMAGES['samosa'];
