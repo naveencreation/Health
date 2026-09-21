@@ -367,7 +367,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
 
               <View style={styles.headerProfile}>
                 <Image
-                  source={require('../../../assets/ria_avatar.png')}
+                  source={require('../../../assets/ria_avatar.webp')}
                   style={styles.headerAvatar}
                 />
                 <View style={styles.headerTextGroup}>
@@ -440,7 +440,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                   >
                     {isRia ? (
                       <Image
-                        source={require('../../../assets/ria_avatar.png')}
+                        source={require('../../../assets/ria_avatar.webp')}
                         style={styles.bubbleAvatar}
                         contentFit="cover"
                       />
@@ -478,7 +478,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               {isStreaming ? (
                 <View style={[styles.messageRow, styles.messageRowRia]}>
                   <Image
-                    source={require('../../../assets/ria_avatar.png')}
+                    source={require('../../../assets/ria_avatar.webp')}
                     style={styles.bubbleAvatar}
                     contentFit="cover"
                   />

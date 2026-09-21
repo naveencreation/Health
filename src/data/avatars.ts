@@ -14,13 +14,13 @@ export interface SvgAvatarData {
 }
 
 export const LOCAL_AVATAR_ASSETS: Record<string, any> = {
-  'asset:men': require('../../assets/avatars/men.png'),
-  'asset:women': require('../../assets/avatars/women.png'),
-  'asset:boy': require('../../assets/avatars/boy.png'),
-  'asset:girl': require('../../assets/avatars/girl.png'),
-  'asset:grandpa': require('../../assets/avatars/grandpa.png'),
-  'asset:grandma': require('../../assets/avatars/grandma.png'),
-  'asset:ria': require('../../assets/avatars/ria.png'),
+  'asset:men': require('../../assets/avatars/men.webp'),
+  'asset:women': require('../../assets/avatars/women.webp'),
+  'asset:boy': require('../../assets/avatars/boy.webp'),
+  'asset:girl': require('../../assets/avatars/girl.webp'),
+  'asset:grandpa': require('../../assets/avatars/grandpa.webp'),
+  'asset:grandma': require('../../assets/avatars/grandma.webp'),
+  'asset:ria': require('../../assets/avatars/ria.webp'),
 };
 
 export function isLocalAssetAvatar(urlOrId?: string | null): boolean {

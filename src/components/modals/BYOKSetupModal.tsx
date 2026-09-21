@@ -185,11 +185,14 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               <View style={styles.headerTitleBox}>
                 <View style={styles.badgeRow}>
                   <View style={styles.sparkleIcon}>
-                    <GeminiIcon size={14} />
+                    <GeminiIcon size={12} />
                   </View>
                   <Text style={styles.badgeText}>BRING YOUR OWN KEY (BYOK)</Text>
                 </View>
-                <Text style={styles.sheetTitle}>Connect Gemini AI</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                  <GeminiIcon size={24} />
+                  <Text style={styles.sheetTitle}>Connect Gemini AI</Text>
+                </View>
               </View>
 
               <Pressable

@@ -134,7 +134,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           {/* Ria 3D Avatar with Ambient Glow Ring */}
           <View style={styles.avatarWrapper}>
             <Image
-              source={require('../../../assets/ria_avatar.png')}
+              source={require('../../../assets/ria_avatar.webp')}
               style={styles.avatarImg}
               contentFit="cover"
               transition={150}

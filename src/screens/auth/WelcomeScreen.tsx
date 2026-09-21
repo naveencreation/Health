@@ -297,7 +297,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <View style={styles.heroGlowRing}>
                 <View style={styles.heroImageContainer}>
                   <ExpoImage
-                    source={require('../../../assets/ria_avatar.png')}
+                    source={require('../../../assets/ria_avatar.webp')}
                     style={styles.heroImage}
                     contentFit="cover"
                     transition={200}
