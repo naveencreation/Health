@@ -664,83 +664,89 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   ))}
                 </View>
 
-                {/* Daily Budget Impact */}
-                <View style={styles.drawerImpactCard}>
-                  <View style={styles.impactHeaderRow}>
-                    <Text style={styles.impactTitle}>{mealTitle} Budget</Text>
-                    <Text style={[styles.impactRemaining, isProjectedOver ? styles.impactRemainingOver : styles.impactRemainingOk]}>
+              </View>
+            </ScrollView>
+
+            {/* Sticky Bottom Stepper & CTA Footer with Integrated Live Budget Impact */}
+            <View style={styles.productStickyFooter}>
+              {/* Live Budget Impact Ticker Strip */}
+              <View style={styles.footerImpactStrip}>
+                <View style={styles.footerImpactMetaRow}>
+                  <View style={styles.footerImpactLeft}>
+                    <Ionicons name="pie-chart-outline" size={13} color="#64748B" />
+                    <Text style={styles.footerImpactLabel} numberOfLines={1}>
+                      {mealTitle} Target: <Text style={styles.footerImpactBold}>{mealTarget} kcal</Text>
+                      <Text style={styles.footerImpactSub}> • {projectedTotal} total</Text>
+                    </Text>
+                  </View>
+
+                  <View style={[styles.footerImpactBadge, isProjectedOver ? styles.footerImpactBadgeOver : styles.footerImpactBadgeOk]}>
+                    <View style={[styles.footerImpactDot, isProjectedOver ? styles.footerImpactDotOver : styles.footerImpactDotOk]} />
+                    <Text style={[styles.footerImpactBadgeText, isProjectedOver ? styles.footerImpactBadgeTextOver : styles.footerImpactBadgeTextOk]}>
                       {projectedRemaining >= 0
                         ? `${projectedRemaining} kcal left`
                         : `${Math.abs(projectedRemaining)} kcal over`}
                     </Text>
                   </View>
+                </View>
 
-                  <View style={styles.impactProgressTrack}>
-                    <View
-                      style={[
-                        styles.impactProgressBar,
-                        { width: `${projectedPct}%` },
-                        isProjectedOver ? styles.impactBarOver : styles.impactBarOk,
-                      ]}
-                    />
-                  </View>
-
-                  <View style={styles.impactFooterRow}>
-                    <Text style={styles.impactFooterText}>
-                      {projectedTotal} / {mealTarget} kcal ({projectedPct}%)
-                    </Text>
-                    <Text style={styles.impactAddedBadge}>
-                      +{projectedAddedCals} kcal
-                    </Text>
-                  </View>
+                {/* Hairline 3px Micro-Progress Track */}
+                <View style={styles.footerImpactTrack}>
+                  <View
+                    style={[
+                      styles.footerImpactBar,
+                      { width: `${projectedPct}%` },
+                      isProjectedOver ? styles.footerImpactBarOver : styles.footerImpactBarOk,
+                    ]}
+                  />
                 </View>
               </View>
-            </ScrollView>
 
-            {/* Sticky Bottom Stepper & CTA Footer */}
-            <View style={styles.productStickyFooter}>
-              {/* Left: Quantity Stepper Pill */}
-              <View style={styles.footerStepperPill}>
+              {/* Action Controls: Stepper Pill & Add CTA */}
+              <View style={styles.footerActionRow}>
+                {/* Left: Quantity Stepper Pill */}
+                <View style={styles.footerStepperPill}>
+                  <Pressable
+                    style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                    hitSlop={HIT_SLOP_8}
+                    onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
+                    accessibilityRole="button"
+                    accessibilityLabel="Decrease portion by 0.5"
+                  >
+                    <Ionicons name="remove" size={20} color="#0F172A" />
+                  </Pressable>
+
+                  <View style={styles.footerStepperValueWrap}>
+                    <Text style={styles.footerStepperValue} numberOfLines={1}>
+                      <Text style={styles.footerStepperNumber}>{quantity}</Text>
+                      <Text style={styles.footerStepperUnit}> {formatStepperUnit(selectedFood.servingUnit)}</Text>
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                    hitSlop={HIT_SLOP_8}
+                    onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Increase portion by 0.5"
+                  >
+                    <Ionicons name="add" size={20} color="#0F172A" />
+                  </Pressable>
+                </View>
+
+                {/* Right: Add to Meal Action Button */}
                 <Pressable
-                  style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
-                  hitSlop={HIT_SLOP_8}
-                  onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
+                  style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
+                  onPress={handleConfirmLog}
                   accessibilityRole="button"
-                  accessibilityLabel="Decrease portion by 0.5"
+                  accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
                 >
-                  <Ionicons name="remove" size={20} color="#0F172A" />
-                </Pressable>
-
-                <View style={styles.footerStepperValueWrap}>
-                  <Text style={styles.footerStepperValue} numberOfLines={1}>
-                    <Text style={styles.footerStepperNumber}>{quantity}</Text>
-                    <Text style={styles.footerStepperUnit}> {formatStepperUnit(selectedFood.servingUnit)}</Text>
+                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                  <Text style={styles.confirmAddBtnText} numberOfLines={1}>
+                    Add to {mealTitle} • {projectedAddedCals} kcal
                   </Text>
-                </View>
-
-                <Pressable
-                  style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
-                  hitSlop={HIT_SLOP_8}
-                  onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Increase portion by 0.5"
-                >
-                  <Ionicons name="add" size={20} color="#0F172A" />
                 </Pressable>
               </View>
-
-              {/* Right: Add to Meal Action Button */}
-              <Pressable
-                style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
-                onPress={handleConfirmLog}
-                accessibilityRole="button"
-                accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
-              >
-                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                <Text style={styles.confirmAddBtnText} numberOfLines={1}>
-                  Add to {mealTitle} • {projectedAddedCals} kcal
-                </Text>
-              </Pressable>
             </View>
           </SafeAreaView>
         ) : (
@@ -1504,7 +1510,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   fullScreenScrollContent: {
-    paddingBottom: 96,
+    paddingBottom: 120,
   },
   productTopNavRow: {
     position: 'absolute',
@@ -1566,15 +1572,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 14,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 10,
     zIndex: 20,
   },
@@ -1822,66 +1825,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0F172A',
   },
-  drawerImpactCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  footerImpactStrip: {
+    marginBottom: 10,
   },
-  impactHeaderRow: {
+  footerImpactMetaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  impactTitle: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 12,
-    color: '#334155',
-  },
-  impactRemaining: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 12,
-  },
-  impactRemainingOk: {
-    color: '#16A34A',
-  },
-  impactRemainingOver: {
-    color: '#EF4444',
-  },
-  impactProgressTrack: {
-    height: 6,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 3,
-    overflow: 'hidden',
+    justifyContent: 'space-between',
     marginBottom: 6,
   },
-  impactProgressBar: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  impactBarOk: {
-    backgroundColor: '#22C55E',
-  },
-  impactBarOver: {
-    backgroundColor: '#EF4444',
-  },
-  impactFooterRow: {
+  footerImpactLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    marginRight: 8,
   },
-  impactFooterText: {
+  footerImpactLabel: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
   },
-  impactAddedBadge: {
+  footerImpactBold: {
+    fontFamily: Fonts.poppins.semiBold,
+    color: '#0F172A',
+  },
+  footerImpactSub: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#94A3B8',
+  },
+  footerImpactBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  footerImpactBadgeOk: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  footerImpactBadgeOver: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  footerImpactDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 4,
+  },
+  footerImpactDotOk: {
+    backgroundColor: '#16A34A',
+  },
+  footerImpactDotOver: {
+    backgroundColor: '#EF4444',
+  },
+  footerImpactBadgeText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 11,
-    color: '#0F172A',
+  },
+  footerImpactBadgeTextOk: {
+    color: '#15803D',
+  },
+  footerImpactBadgeTextOver: {
+    color: '#DC2626',
+  },
+  footerImpactTrack: {
+    height: 3,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 1.5,
+    overflow: 'hidden',
+  },
+  footerImpactBar: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+  footerImpactBarOk: {
+    backgroundColor: '#16A34A',
+  },
+  footerImpactBarOver: {
+    backgroundColor: '#EF4444',
+  },
+  footerActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   btnPressedSubtle: {
     opacity: 0.7,
