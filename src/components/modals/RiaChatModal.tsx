@@ -7,12 +7,14 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  KeyboardAvoidingView,
+  AppState,
+  Keyboard,
+  LayoutAnimation,
   Platform,
   ActivityIndicator,
   Alert,
-  AppState,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -52,6 +54,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     currentLog,
   } = useHealth();
 
+  const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -60,8 +63,37 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const firstName = (userGoals.name || currentUser?.name || 'there').split(' ')[0];
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const height = e?.endCoordinates?.height || 0;
+      if (Platform.OS === 'ios') {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+      setKeyboardHeight(height);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, Platform.OS === 'ios' ? 50 : 100);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      if (Platform.OS === 'ios') {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      }
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -301,6 +333,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       <View style={styles.modalBackdrop}>
@@ -310,15 +343,16 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Dismiss Ria chat modal backdrop"
         />
-        <View style={styles.sheetContainer}>
+        <View
+          style={[
+            styles.sheetContainer,
+            keyboardHeight > 0 ? styles.sheetContainerKeyboard : null,
+          ]}
+        >
           <View style={styles.handleContainer}>
             <View style={styles.dragHandle} />
           </View>
-          <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
-          >
+          <View style={[styles.container, { paddingBottom: keyboardHeight }]}>
             {/* Header */}
             <View style={styles.header}>
               <Pressable
@@ -386,8 +420,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               contentContainerStyle={styles.chatContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
               contentInsetAdjustmentBehavior="automatic"
+              onContentSizeChange={() => {
+                if (isStreaming || keyboardHeight > 0) {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }
+              }}
             >
               {messages.map((msg) => {
                 const isRia = msg.sender === 'ria';
@@ -475,7 +514,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
             ) : null}
 
             {/* Quick Suggestion Chips */}
-            {!isStreaming ? (
+            {!isStreaming && inputQuery.length === 0 ? (
               <View style={styles.quickChipsWrapper}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChipsScroll}>
                   {QUICK_QUESTIONS.map((chip, idx) => (
@@ -494,7 +533,18 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
             ) : null}
 
             {/* Input Bar */}
-            <View style={styles.inputBar}>
+            <View
+              style={[
+                styles.inputBar,
+                {
+                  paddingBottom: keyboardHeight > 0
+                    ? 10
+                    : Platform.OS === 'ios'
+                    ? Math.max(insets.bottom, 14)
+                    : 12,
+                },
+              ]}
+            >
               <TextInput
                 style={styles.textInput}
                 placeholder="Ask Ria about food, calories, or workouts..."
@@ -504,6 +554,12 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                 onSubmitEditing={() => handleSendMessage()}
                 returnKeyType="send"
                 editable={!isStreaming}
+                multiline={true}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 80);
+                }}
               />
               <Pressable
                 style={({ pressed }) => [
@@ -520,7 +576,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                 <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
               </Pressable>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
       </View>
     </Modal>
@@ -569,6 +625,12 @@ const styles = StyleSheet.create({
           borderColor: '#E2E8F0',
         }
       : {}),
+  },
+  sheetContainerKeyboard: {
+    height: '100%',
+    maxHeight: '100%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
   handleContainer: {
     width: '100%',
@@ -834,7 +896,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
@@ -843,15 +904,25 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 22,
+    borderRadius: 20,
     borderCurve: 'continuous',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 10 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     fontFamily: Fonts.poppins.regular,
-    fontSize: 13,
+    fontSize: 13.5,
+    lineHeight: 18,
     color: '#0F172A',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    maxHeight: 100,
+    textAlignVertical: 'center',
+    ...(Platform.OS === 'web'
+      ? ({
+          outlineStyle: 'none',
+          outlineWidth: 0,
+        } as any)
+      : {}),
   },
   sendBtn: {
     width: 42,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,7 +8,7 @@ import {
   TextInput,
   Pressable,
   Platform,
-  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -35,6 +35,36 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
   const [userHeightCm, setUserHeightCm] = useState(String(userGoals.heightCm || 175));
   const [activePreset, setActivePreset] = useState<'fat_loss' | 'muscle_gain' | 'maintenance'>('maintenance');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  const cardOffsets = useRef<{ [key: string]: number }>({});
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const height = e?.endCoordinates?.height || 0;
+      setKeyboardHeight(height);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToOffset = (yOffset: number) => {
+    scrollViewRef.current?.scrollTo({ y: Math.max(0, yOffset - 30), animated: true });
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: Math.max(0, yOffset - 30), animated: true });
+    }, 100);
+  };
 
   // Synchronize state from userGoals whenever the modal is opened
   React.useEffect(() => {
@@ -112,13 +142,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
       visible={visible}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
-        style={styles.modalOverlay}
-      >
+      <View style={styles.modalOverlay}>
         <Pressable
           style={styles.backdropPressable}
           onPress={onClose}
@@ -126,7 +153,12 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
           accessibilityLabel="Close nutrition goals"
         />
         
-        <View style={styles.sheetContainer}>
+        <View
+          style={[
+            styles.sheetContainer,
+            keyboardHeight > 0 ? styles.sheetContainerKeyboard : null,
+          ]}
+        >
           {/* Header Bar */}
           <View style={styles.sheetHeader}>
             <View style={styles.dragPill} />
@@ -148,10 +180,14 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
           </View>
 
           <ScrollView
+            ref={scrollViewRef}
             style={styles.sheetScroll}
-            contentContainerStyle={[styles.sheetScrollContent, { paddingBottom: 140 }]}
+            contentContainerStyle={[
+              styles.sheetScrollContent,
+              { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 80 : 140 },
+            ]}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             showsVerticalScrollIndicator={false}
           >
             {/* Presets Row */}
@@ -253,7 +289,12 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
             {/* Inputs Grid */}
             <Text style={styles.sectionHeader}>Nutritional Targets</Text>
             
-            <View style={styles.inputCard}>
+            <View
+              style={styles.inputCard}
+              onLayout={(e) => {
+                cardOffsets.current['nutrition'] = e.nativeEvent.layout.y;
+              }}
+            >
               <View style={styles.fieldRow}>
                 <View style={styles.fieldIconContainer}>
                   <Ionicons name="flame-outline" size={18} color="#EA580C" />
@@ -268,6 +309,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={calorieBudget}
                   onChangeText={setCalorieBudget}
                   placeholder="2000"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset(cardOffsets.current['nutrition'] || 250)}
                   accessibilityLabel="Daily calorie budget in kilocalories"
                 />
                 <Text style={styles.fieldUnit}>kcal</Text>
@@ -289,6 +334,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetProtein}
                   onChangeText={setTargetProtein}
                   placeholder="90"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['nutrition'] || 250) + 50)}
                   accessibilityLabel="Target protein in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
@@ -310,6 +359,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetCarbs}
                   onChangeText={setTargetCarbs}
                   placeholder="150"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['nutrition'] || 250) + 110)}
                   accessibilityLabel="Target carbohydrates in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
@@ -331,6 +384,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetFat}
                   onChangeText={setTargetFat}
                   placeholder="50"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['nutrition'] || 250) + 170)}
                   accessibilityLabel="Target dietary fat in grams"
                 />
                 <Text style={styles.fieldUnit}>g</Text>
@@ -339,7 +396,12 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
 
             <Text style={styles.sectionHeader}>Activity & Habits</Text>
             
-            <View style={styles.inputCard}>
+            <View
+              style={styles.inputCard}
+              onLayout={(e) => {
+                cardOffsets.current['activity'] = e.nativeEvent.layout.y;
+              }}
+            >
               <View style={styles.fieldRow}>
                 <View style={styles.fieldIconContainer}>
                   <Ionicons name="water-outline" size={18} color="#2563EB" />
@@ -354,6 +416,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={waterGoal}
                   onChangeText={setWaterGoal}
                   placeholder="2500"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset(cardOffsets.current['activity'] || 480)}
                   accessibilityLabel="Target water intake in milliliters"
                 />
                 <Text style={styles.fieldUnit}>ml</Text>
@@ -375,16 +441,24 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={stepGoal}
                   onChangeText={setStepGoal}
                   placeholder="10000"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['activity'] || 480) + 60)}
                   accessibilityLabel="Daily step target"
                 />
                 <Text style={styles.fieldUnit}>steps</Text>
               </View>
-
             </View>
 
             <Text style={styles.sectionHeader}>Body Measurements</Text>
             
-            <View style={styles.inputCard}>
+            <View
+              style={styles.inputCard}
+              onLayout={(e) => {
+                cardOffsets.current['body'] = e.nativeEvent.layout.y;
+              }}
+            >
               <View style={styles.fieldRow}>
                 <View style={styles.fieldIconContainer}>
                   <Ionicons name="scale-outline" size={18} color="#0284C7" />
@@ -399,6 +473,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={currentWeight}
                   onChangeText={setCurrentWeight}
                   placeholder="74.2"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset(cardOffsets.current['body'] || 680)}
                   accessibilityLabel="Current weight in kilograms"
                 />
                 <Text style={styles.fieldUnit}>kg</Text>
@@ -420,6 +498,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={userHeightCm}
                   onChangeText={setUserHeightCm}
                   placeholder="175"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['body'] || 680) + 60)}
                   accessibilityLabel="Height in centimeters"
                 />
                 <Text style={styles.fieldUnit}>cm</Text>
@@ -441,6 +523,10 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
                   value={targetWeight}
                   onChangeText={setTargetWeight}
                   placeholder="68.0"
+                  autoComplete="off"
+                  importantForAutofill="no"
+                  underlineColorAndroid="transparent"
+                  onFocus={() => scrollToOffset((cardOffsets.current['body'] || 680) + 120)}
                   accessibilityLabel="Target goal weight in kilograms"
                 />
                 <Text style={styles.fieldUnit}>kg</Text>
@@ -470,7 +556,7 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
             </Pressable>
           </ScrollView>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
@@ -496,6 +582,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    borderCurve: 'continuous',
     maxHeight: '90%',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
@@ -503,6 +590,10 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 20,
     overflow: 'hidden',
+  },
+  sheetContainerKeyboard: {
+    maxHeight: '98%',
+    height: '98%',
   },
   sheetHeader: {
     alignItems: 'center',
@@ -680,6 +771,7 @@ const styles = StyleSheet.create({
   inputCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
+    borderCurve: 'continuous',
     paddingHorizontal: 14,
     paddingVertical: 6,
     marginBottom: 16,
@@ -699,6 +791,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
@@ -722,6 +815,7 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: '#F1F5F9',
     borderRadius: 10,
+    borderCurve: 'continuous',
     textAlign: 'center',
     textAlignVertical: 'center',
     fontFamily: Fonts.poppins.semiBold,
