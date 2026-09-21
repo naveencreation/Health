@@ -14,9 +14,10 @@ const MEAL_ICONS = {
 
 interface MealSectionProps {
   onAddFood: (mealType: MealType) => void;
+  title?: string;
 }
 
-const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
+const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = 'Daily Meals' }) => {
   const { mealsByType, userGoals } = useHealth();
 
   const budget = userGoals.dailyCalorieBudget;
@@ -29,8 +30,8 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
 
   return (
     <View style={styles.container}>
-      {/* Section Header: Eaten */}
-      <Text style={styles.sectionTitle}>Eaten</Text>
+      {/* Section Header: Daily Meals */}
+      <Text style={styles.sectionTitle}>{title}</Text>
 
       {/* Breakfast */}
       <MealCard
