@@ -121,57 +121,81 @@ interface FoodItemRowProps {
 }
 
 const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect, onQuickAdd }) => {
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(pressScale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 200,
+    }).start();
+  }, [pressScale]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(pressScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 180,
+    }).start();
+  }, [pressScale]);
+
   return (
     <Pressable
-      style={({ pressed }) => [styles.foodItemCard, pressed ? styles.foodItemCardPressed : null]}
       onPress={() => onSelect(item)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
-      {/* Food Vector / Photo Badge */}
-      <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
+      <Animated.View
+        style={[styles.foodItemCard, { transform: [{ scale: pressScale }] }]}
+      >
+        {/* Food Vector / Photo Badge */}
+        <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
 
-
-      {/* Clean Food Details (Name + Serving Unit) */}
-      <View style={styles.foodItemMain}>
-        <View style={styles.foodItemNameRow}>
-          <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
-          {(loggedCount ?? 0) > 0 ? (
-            <View style={styles.loggedCountBadge}>
-              <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
-            </View>
-          ) : null}
-          {item.isCustom ? (
-            <View style={styles.customBadge}>
-              <Text style={styles.customBadgeText}>Custom</Text>
-            </View>
-          ) : null}
-        </View>
-        <Text style={styles.foodItemUnit} numberOfLines={1}>
-          {formatServingUnit(item.servingUnit)}
-        </Text>
-      </View>
-
-      {/* Calories Stack + 44x44px Touch Target Quick Add */}
-      <View style={styles.foodItemRight}>
-        <View style={styles.caloriesStack}>
-          <Text style={styles.foodItemCals}>{item.calories}</Text>
-          <Text style={styles.foodItemCalUnit}>kcal</Text>
-        </View>
-
-        {/* 44x44px Touch Target Button */}
-        <Pressable
-          style={({ pressed }) => [styles.quickAddButton, pressed ? styles.quickAddButtonPressed : null]}
-          onPress={(e) => {
-            e.stopPropagation && e.stopPropagation();
-            onQuickAdd(item);
-          }}
-          hitSlop={HIT_SLOP_8}
-          accessibilityLabel={`Quick add 1 serving of ${item.name}`}
-        >
-          <View style={styles.quickAddIconCircle}>
-            <Ionicons name="add" size={20} color="#FFFFFF" />
+        {/* Clean Food Details (Name + Serving Unit) */}
+        <View style={styles.foodItemMain}>
+          <View style={styles.foodItemNameRow}>
+            <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+            {(loggedCount ?? 0) > 0 ? (
+              <View style={styles.loggedCountBadge}>
+                <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
+              </View>
+            ) : null}
+            {item.isCustom ? (
+              <View style={styles.customBadge}>
+                <Text style={styles.customBadgeText}>Custom</Text>
+              </View>
+            ) : null}
           </View>
-        </Pressable>
-      </View>
+          <Text style={styles.foodItemUnit} numberOfLines={1}>
+            {formatServingUnit(item.servingUnit)}
+          </Text>
+        </View>
+
+        {/* Calories Stack + 44×44 Touch Target Quick Add */}
+        <View style={styles.foodItemRight}>
+          <View style={styles.caloriesStack}>
+            <Text style={styles.foodItemCals}>{item.calories}</Text>
+            <Text style={styles.foodItemCalUnit}>kcal</Text>
+          </View>
+
+          {/* 44×44 Touch Target Button — stopPropagation prevents card select */}
+          <Pressable
+            style={({ pressed }) => [styles.quickAddButton, pressed ? styles.quickAddButtonPressed : null]}
+            onPress={(e) => {
+              e.stopPropagation && e.stopPropagation();
+              onQuickAdd(item);
+            }}
+            hitSlop={HIT_SLOP_8}
+            accessibilityLabel={`Quick add 1 serving of ${item.name}`}
+          >
+            <View style={styles.quickAddIconCircle}>
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+            </View>
+          </Pressable>
+        </View>
+      </Animated.View>
     </Pressable>
   );
 });
@@ -204,6 +228,42 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const drawerFadeAnim = useRef(new Animated.Value(0)).current;
   const toastSlideAnim = useRef(new Animated.Value(20)).current;
   const toastFadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Stagger anims for category pills — max 8 pills per meal type
+  const pillAnims = useRef(
+    Array.from({ length: 8 }, () => ({
+      opacity: new Animated.Value(0),
+      translateX: new Animated.Value(-10),
+    }))
+  ).current;
+
+  // Re-run stagger whenever modal opens or meal type switches
+  useEffect(() => {
+    if (!visible || isCustomMode) return;
+    // Reset all pills instantly
+    pillAnims.forEach((a) => {
+      a.opacity.setValue(0);
+      a.translateX.setValue(-10);
+    });
+    // Stagger each pill in by 55ms
+    Animated.stagger(
+      55,
+      pillAnims.map((a) =>
+        Animated.parallel([
+          Animated.timing(a.opacity, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+          Animated.timing(a.translateX, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        ])
+      )
+    ).start();
+  }, [visible, selectedMealType, isCustomMode]);
 
   useEffect(() => {
     if (selectedFood) {
@@ -551,7 +611,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
             <ScrollView
               showsVerticalScrollIndicator={false}
-              bounces={false}
+              bounces={true}
+              alwaysBounceVertical={true}
               style={styles.fullScreenScrollView}
               contentContainerStyle={styles.fullScreenScrollContent}
             >
@@ -754,41 +815,40 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
              2. CATALOG / SEARCH PAGE
              ======================================================= */
           <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
-        {/* 1. Header with Title & Live Budget Anchors */}
+        {/* 1. Header — Back button | Title | Create button */}
         <View style={styles.header}>
+          {/* Left: Context-aware back button */}
           <Pressable
-            onPress={onClose}
+            onPress={isCustomMode ? () => setIsCustomMode(false) : onClose}
             style={({ pressed }) => [styles.closeBtn, pressed ? styles.btnPressedSubtle : null]}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
-            accessibilityLabel="Close food logger"
+            accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
           >
-            <Ionicons name="close" size={22} color="#0F172A" />
+            <Ionicons name="arrow-back" size={22} color="#0F172A" />
           </Pressable>
 
+          {/* Center: Clean title only — no budget clutter */}
           <View style={styles.headerTitleCenter}>
-            <Text style={styles.headerTitle}>Log {mealTitle}</Text>
-            <View style={styles.headerBudgetRow}>
-              <Text style={styles.headerSubtitleText}>
-                Budget: <Text style={styles.headerBoldVal}>{mealTarget} cal</Text> • {currentMealLogged} logged
-              </Text>
-              <View style={[styles.headerBudgetBadge, mealRemaining < 0 ? styles.budgetBadgeOver : styles.budgetBadgeOk]}>
-                <Text style={[styles.headerBudgetBadgeText, mealRemaining < 0 ? styles.budgetTextOver : styles.budgetTextOk]}>
-                  {mealRemaining >= 0 ? `${mealRemaining} left` : `+${Math.abs(mealRemaining)} over`}
-                </Text>
-              </View>
-            </View>
+            <Text style={styles.headerTitle}>
+              {isCustomMode ? 'Create Dish' : `Log ${mealTitle}`}
+            </Text>
           </View>
 
+          {/* Right: Create (opens custom form) — hidden when already in create mode */}
           <Pressable
-            style={({ pressed }) => [styles.customToggleBtn, pressed ? styles.btnPressedSubtle : null]}
-            onPress={() => setIsCustomMode(!isCustomMode)}
+            style={({ pressed }) => [
+              styles.customToggleBtn,
+              isCustomMode ? styles.customToggleBtnHidden : null,
+              pressed ? styles.btnPressedSubtle : null,
+            ]}
+            onPress={() => setIsCustomMode(true)}
             hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
+            accessibilityLabel="Create custom food"
+            disabled={isCustomMode}
           >
-            <Text style={styles.customToggleText}>
-              {isCustomMode ? 'Search' : '+ Custom'}
-            </Text>
+            <Text style={styles.customToggleText}>+ Create</Text>
           </Pressable>
         </View>
 
@@ -843,7 +903,6 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
               keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.customFormTitle}>Create & Log Custom Dish</Text>
               <Text style={styles.customFormDesc}>
                 Add homemade recipes or items not in the database.
               </Text>
@@ -1003,46 +1062,54 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.categoryScroll}
                 >
-                  {categoriesList.map((cat) => {
+                  {categoriesList.map((cat, index) => {
                     const isSelected = selectedCategory === cat.id;
                     const iconColor = isSelected
                       ? (cat.activeColor || '#FFFFFF')
                       : (cat.inactiveColor || '#64748B');
+                    const pillAnim = pillAnims[index] || pillAnims[0];
 
                     return (
-                      <Pressable
+                      <Animated.View
                         key={cat.id}
-                        style={({ pressed }) => [
-                          styles.categoryPill,
-                          isSelected ? styles.categoryPillActive : null,
-                          pressed ? styles.btnPressedPill : null,
-                        ]}
-                        onPress={() => setSelectedCategory(cat.id)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Filter by ${cat.label}`}
+                        style={{
+                          opacity: pillAnim.opacity,
+                          transform: [{ translateX: pillAnim.translateX }],
+                        }}
                       >
-                        {cat.iconFamily === 'mci' ? (
-                          <MaterialCommunityIcons
-                            name={cat.iconName as any}
-                            size={14}
-                            color={iconColor}
-                          />
-                        ) : (
-                          <Ionicons
-                            name={cat.iconName as any}
-                            size={14}
-                            color={iconColor}
-                          />
-                        )}
-                        <Text
-                          style={[
-                            styles.categoryText,
-                            isSelected ? styles.categoryTextActive : null,
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.categoryPill,
+                            isSelected ? styles.categoryPillActive : null,
+                            pressed ? styles.btnPressedPill : null,
                           ]}
+                          onPress={() => setSelectedCategory(cat.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Filter by ${cat.label}`}
                         >
-                          {cat.label}
-                        </Text>
-                      </Pressable>
+                          {cat.iconFamily === 'mci' ? (
+                            <MaterialCommunityIcons
+                              name={cat.iconName as any}
+                              size={14}
+                              color={iconColor}
+                            />
+                          ) : (
+                            <Ionicons
+                              name={cat.iconName as any}
+                              size={14}
+                              color={iconColor}
+                            />
+                          )}
+                          <Text
+                            style={[
+                              styles.categoryText,
+                              isSelected ? styles.categoryTextActive : null,
+                            ]}
+                          >
+                            {cat.label}
+                          </Text>
+                        </Pressable>
+                      </Animated.View>
                     );
                   })}
                 </ScrollView>
@@ -1150,14 +1217,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  customToggleBtnHidden: {
+    opacity: 0,
+    pointerEvents: 'none',
   },
   headerTitleCenter: {
     alignItems: 'center',
@@ -1166,9 +1237,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 17,
+    fontSize: 22,
     fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.3,
   },
   headerBudgetRow: {
     flexDirection: 'row',
