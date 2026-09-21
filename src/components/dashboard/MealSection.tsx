@@ -5,6 +5,13 @@ import { MealType } from '@/types';
 import { useHealth } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 
+const MEAL_ICONS = {
+  breakfast: require('../../../assets/meals/breakfast.webp'),
+  lunch: require('../../../assets/meals/lunch.webp'),
+  dinner: require('../../../assets/meals/dinner.webp'),
+  snacks: require('../../../assets/meals/snacks.webp'),
+};
+
 interface MealSectionProps {
   onAddFood: (mealType: MealType) => void;
 }
@@ -30,7 +37,7 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
         mealType="breakfast"
         title="Breakfast"
         recommendedCals={recommended.breakfast || 588}
-        imageUrl="https://images.unsplash.com/photo-1525351484163-7529414344d8?w=150&auto=format&fit=crop&q=80"
+        imageSource={MEAL_ICONS.breakfast}
         iconFallback="🍳"
         items={mealsByType.breakfast}
         onAddPress={onAddFood}
@@ -41,7 +48,7 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
         mealType="lunch"
         title="Lunch"
         recommendedCals={recommended.lunch || 822}
-        imageUrl="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=80"
+        imageSource={MEAL_ICONS.lunch}
         iconFallback="🥗"
         items={mealsByType.lunch}
         onAddPress={onAddFood}
@@ -52,7 +59,7 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
         mealType="dinner"
         title="Dinner"
         recommendedCals={recommended.dinner || 560}
-        imageUrl="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=150&auto=format&fit=crop&q=80"
+        imageSource={MEAL_ICONS.dinner}
         iconFallback="🍲"
         items={mealsByType.dinner}
         onAddPress={onAddFood}
@@ -64,7 +71,7 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood }) => {
         mealType="snacks"
         title="Snacks"
         recommendedCals={recommended.snacks || 240}
-        imageUrl="https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=150&auto=format&fit=crop&q=80"
+        imageSource={MEAL_ICONS.snacks}
         iconFallback="🍎"
         items={mealsByType.snacks}
         onAddPress={onAddFood}

@@ -11,7 +11,8 @@ interface MealCardProps {
   mealType: MealType;
   title: string;
   recommendedCals: number;
-  imageUrl: string;
+  imageUrl?: string;
+  imageSource?: any;
   iconFallback: string;
   items: LoggedMealItem[];
   onAddPress: (mealType: MealType) => void;
@@ -26,6 +27,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   title,
   recommendedCals,
   imageUrl,
+  imageSource,
   iconFallback,
   items,
   onAddPress,
@@ -34,6 +36,8 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const { removeMealItem, updateMealQuantity } = useHealth();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
+
+  const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
   const handleToggleExpand = () => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -83,9 +87,9 @@ const MealCardComponent: React.FC<MealCardProps> = ({
         >
           {/* Circular Thumbnail with Crisp Border */}
           <View style={styles.thumbnailCircle}>
-            {!imgError ? (
+            {!imgError && resolvedImageSource ? (
               <Image
-                source={{ uri: imageUrl }}
+                source={resolvedImageSource}
                 style={styles.thumbnailImg}
                 contentFit="cover"
                 cachePolicy="memory-disk"
