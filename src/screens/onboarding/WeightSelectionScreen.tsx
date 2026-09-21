@@ -245,7 +245,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           onWheel={handleWheel}
         >
           {/* Stationary Center Needle */}
-          <View pointerEvents="none" style={styles.centerNeedleContainer}>
+          <View style={styles.centerNeedleContainer}>
             <View style={styles.centerNeedle} />
           </View>
 
@@ -299,8 +299,8 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           </Animated.View>
 
           {/* Left and Right Fade Gradients */}
-          <View pointerEvents="none" style={styles.rulerFadeLeft} />
-          <View pointerEvents="none" style={styles.rulerFadeRight} />
+          <View style={styles.rulerFadeLeft} />
+          <View style={styles.rulerFadeRight} />
         </View>
 
         {/* Frame 9: Accessible Continue CTA & Skip */}
@@ -547,6 +547,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     zIndex: 10,
+    pointerEvents: 'none',
   },
   centerNeedle: {
     width: 4,

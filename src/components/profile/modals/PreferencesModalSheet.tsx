@@ -17,6 +17,7 @@ import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 import { AIService } from '@/services/ai';
 import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
+import { GeminiIcon } from '@/components/common/GeminiIcon';
 
 const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
 
@@ -250,7 +251,7 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
             <View style={styles.byokCard}>
               <View style={styles.byokHeaderRow}>
                 <View style={styles.byokIconBox}>
-                  <Ionicons name="sparkles" size={19} color="#F47551" />
+                  <GeminiIcon size={24} />
                 </View>
                 <View style={styles.flex1}>
                   <View style={styles.byokTitleRow}>
@@ -991,11 +992,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 12,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(244, 117, 81, 0.1)',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(244, 117, 81, 0.2)',
+    borderColor: '#E2E8F0',
   },
   byokTitleRow: {
     flexDirection: 'row',

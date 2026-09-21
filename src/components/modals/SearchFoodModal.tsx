@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ interface SearchFoodModalProps {
   onClose: () => void;
   onLoggedSuccess?: (dishName: string, mealType: MealType) => void;
 }
+
+const keyExtractor = (item: FoodItem) => item.id;
 
 const MEAL_SLOTS: {
   id: MealType;
@@ -58,7 +60,7 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
     );
   }, [foodDatabase, query]);
 
-  const handleQuickAdd = (food: FoodItem) => {
+  const handleQuickAdd = useCallback((food: FoodItem) => {
     addMealItem(targetSlot, food, 1);
     setFeedbackDish(`Added ${food.name} to ${targetSlot.toUpperCase()}`);
     if (onLoggedSuccess) {
@@ -67,7 +69,18 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
     setTimeout(() => {
       setFeedbackDish(null);
     }, 2000);
-  };
+  }, [addMealItem, targetSlot, onLoggedSuccess]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: FoodItem }) => (
+      <SearchFoodItemRow
+        item={item}
+        targetSlot={targetSlot}
+        onQuickAdd={handleQuickAdd}
+      />
+    ),
+    [handleQuickAdd, targetSlot]
+  );
 
   return (
     <Modal
@@ -174,9 +187,14 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
           {/* Search Results List */}
           <FlatList
             data={filteredFoods}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            keyExtractor={keyExtractor}
+            contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             ListHeaderComponent={
               <Text style={styles.resultsCount}>
                 {query.trim()
@@ -184,51 +202,67 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
                   : 'Frequently logged foods'}
               </Text>
             }
-            renderItem={({ item }) => (
-              <View style={styles.foodRow}>
-                <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
-
-                <View style={styles.foodMainInfo}>
-                  <Text style={styles.foodName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.foodUnit}>
-                    1 {item.servingUnit} • {item.categoryLabel}
-                  </Text>
-                  <View style={styles.macroPillRow}>
-                    <Text style={[styles.macroPill, styles.macroPillProtein]}>
-                      P: {item.protein}g
-                    </Text>
-                    <Text style={[styles.macroPill, styles.macroPillCarbs]}>
-                      C: {item.carbs}g
-                    </Text>
-                    <Text style={[styles.macroPill, styles.macroPillFat]}>
-                      F: {item.fat}g
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.foodRightCol}>
-                  <Text style={styles.foodCals}>{item.calories} <Text style={styles.calUnit}>kcal</Text></Text>
-                  <Pressable
-                    style={({ pressed }) => [styles.quickAddBtn, pressed ? styles.pressedQuickAdd : null]}
-                    onPress={() => handleQuickAdd(item)}
-                    hitSlop={6}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Quick add ${item.name} to ${targetSlot}`}
-                  >
-                    <Ionicons name="add" size={18} color="#FFFFFF" />
-                    <Text style={styles.quickAddText}>Add</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
+            renderItem={renderItem}
           />
         </View>
       </View>
     </Modal>
   );
 };
+
+interface SearchFoodItemRowProps {
+  item: FoodItem;
+  targetSlot: MealType;
+  onQuickAdd: (food: FoodItem) => void;
+}
+
+const SearchFoodItemRow = React.memo<SearchFoodItemRowProps>(({ item, targetSlot, onQuickAdd }) => {
+  const handlePress = useCallback(() => {
+    onQuickAdd(item);
+  }, [item, onQuickAdd]);
+
+  return (
+    <View style={styles.foodRow}>
+      <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
+
+      <View style={styles.foodMainInfo}>
+        <Text style={styles.foodName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.foodUnit}>
+          1 {item.servingUnit} • {item.categoryLabel}
+        </Text>
+        <View style={styles.macroPillRow}>
+          <Text style={[styles.macroPill, styles.macroPillProtein]}>
+            P: {item.protein}g
+          </Text>
+          <Text style={[styles.macroPill, styles.macroPillCarbs]}>
+            C: {item.carbs}g
+          </Text>
+          <Text style={[styles.macroPill, styles.macroPillFat]}>
+            F: {item.fat}g
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.foodRightCol}>
+        <Text style={styles.foodCals}>
+          {item.calories} <Text style={styles.calUnit}>kcal</Text>
+        </Text>
+        <Pressable
+          style={({ pressed }) => [styles.quickAddBtn, pressed ? styles.pressedQuickAdd : null]}
+          onPress={handlePress}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={`Quick add ${item.name} to ${targetSlot}`}
+        >
+          <Ionicons name="add" size={18} color="#FFFFFF" />
+          <Text style={styles.quickAddText}>Add</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+});
 
 const styles = StyleSheet.create({
   modalBackdrop: {

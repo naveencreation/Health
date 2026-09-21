@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   Platform,
+  KeyboardAvoidingView,
   Animated,
   Easing,
   Alert,
@@ -590,9 +591,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           })}
         </View>
 
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+        >
           {isCustomMode ? (
             /* Custom Food Form */
-            <ScrollView style={styles.customForm} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView
+              style={styles.customForm}
+              contentContainerStyle={{ paddingBottom: 140 }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              showsVerticalScrollIndicator={false}
+            >
               <Text style={styles.customFormTitle}>Create & Log Custom Dish</Text>
               <Text style={styles.customFormDesc}>
                 Add homemade recipes or items not in the database.
@@ -989,6 +1001,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
               </Animated.View>
             </Animated.View>
           ) : null}
+        </KeyboardAvoidingView>
 
           {/* 6. Floating In-Modal Toast Snackbar with Undo */}
           {toastMessage ? (

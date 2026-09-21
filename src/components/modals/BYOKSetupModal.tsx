@@ -18,6 +18,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { AIService, ValidationResult } from '@/services/ai';
+import { GeminiIcon } from '@/components/common/GeminiIcon';
 
 interface BYOKSetupModalProps {
   visible: boolean;
@@ -171,7 +172,8 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
         />
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
           style={styles.keyboardContainer}
         >
           <View style={styles.sheetContainer}>
@@ -183,7 +185,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               <View style={styles.headerTitleBox}>
                 <View style={styles.badgeRow}>
                   <View style={styles.sparkleIcon}>
-                    <Ionicons name="sparkles" size={14} color="#F47551" />
+                    <GeminiIcon size={14} />
                   </View>
                   <Text style={styles.badgeText}>BRING YOUR OWN KEY (BYOK)</Text>
                 </View>
@@ -203,18 +205,17 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 
             <ScrollView
               style={styles.scrollContent}
-              contentContainerStyle={styles.scrollInner}
+              contentContainerStyle={[styles.scrollInner, { paddingBottom: 100 }]}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={false}
               contentInsetAdjustmentBehavior="automatic"
             >
               {/* Privacy Guarantee Card */}
               <View style={styles.privacyCard}>
-                <Ionicons name="shield-checkmark" size={22} color="#16A34A" style={styles.shieldIcon} />
+                <Ionicons name="shield-checkmark" size={15} color="#059669" style={styles.shieldIcon} />
                 <View style={styles.privacyTextContainer}>
                   <Text style={styles.privacyTitle}>100% Device-Encrypted Privacy</Text>
-                  <Text style={styles.privacyDesc}>
-                    Your key is stored exclusively in your device's hardware KeyStore / Keychain. It is never sent to Calorify servers or shared with other users.
-                  </Text>
                 </View>
               </View>
 
@@ -230,7 +231,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                   </View>
 
                   <View style={styles.maskedRow}>
-                    <Ionicons name="key-outline" size={16} color="#475569" />
+                    <Ionicons name="key-outline" size={15} color="#64748B" />
                     <Text style={styles.maskedKeyText}>{maskedKey || 'Key Configured'}</Text>
                   </View>
 
@@ -244,7 +245,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                         <ActivityIndicator size="small" color="#F47551" />
                       ) : (
                         <>
-                          <Ionicons name="refresh-outline" size={15} color="#F47551" />
+                          <Ionicons name="refresh-outline" size={14} color="#475569" />
                           <Text style={styles.testBtnText}>Test Connection</Text>
                         </>
                       )}
@@ -254,7 +255,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                       style={({ pressed }) => [styles.disconnectBtn, pressed ? styles.pressedSubtle : null]}
                       onPress={handleDisconnect}
                     >
-                      <Ionicons name="trash-outline" size={15} color="#EF4444" />
+                      <Ionicons name="trash-outline" size={14} color="#DC2626" />
                       <Text style={styles.disconnectBtnText}>Disconnect</Text>
                     </Pressable>
                   </View>
@@ -264,9 +265,6 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               {/* Input Form */}
               <Text style={styles.inputSectionLabel}>
                 {isConnected ? 'Replace API Key' : 'Enter Your Google Gemini Key'}
-              </Text>
-              <Text style={styles.inputHelperNote}>
-                Personal Gemini keys start with "AIza...". Quotes and prefixes are cleaned automatically.
               </Text>
 
               <View style={styles.inputCard}>
@@ -300,7 +298,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     </Pressable>
                   ) : (
                     <Pressable style={styles.pastePill} onPress={handlePaste}>
-                      <Ionicons name="clipboard-outline" size={12} color="#F47551" />
+                      <Ionicons name="clipboard-outline" size={12} color="#64748B" />
                       <Text style={styles.pastePillText}>Paste</Text>
                     </Pressable>
                   )}
@@ -353,7 +351,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                 onPress={handleOpenGoogleAIStudio}
               >
                 <View style={styles.helperIcon}>
-                  <Ionicons name="help-circle-outline" size={20} color="#0284C7" />
+                  <Ionicons name="help-circle-outline" size={18} color="#475569" />
                 </View>
                 <View style={styles.helperTextCol}>
                   <Text style={styles.helperTitle}>How do I get a free Gemini API key?</Text>
@@ -361,7 +359,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     Tap to open Google AI Studio and generate a free personal key in 30 seconds.
                   </Text>
                 </View>
-                <Ionicons name="open-outline" size={16} color="#0284C7" />
+                <Ionicons name="open-outline" size={15} color="#94A3B8" />
               </Pressable>
             </ScrollView>
           </View>
@@ -446,15 +444,15 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(244, 117, 81, 0.12)',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: '#F47551',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
     letterSpacing: 0.5,
   },
   sheetTitle: {
@@ -483,94 +481,88 @@ const styles = StyleSheet.create({
   },
   privacyCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#F0FDF4',
-    borderRadius: 16,
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     borderCurve: 'continuous',
-    padding: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
-    marginBottom: 16,
-    gap: 12,
+    borderColor: '#E2E8F0',
+    marginBottom: 14,
+    gap: 8,
   },
-  shieldIcon: {
-    marginTop: 2,
-  },
+  shieldIcon: {},
   privacyTextContainer: {
     flex: 1,
   },
   privacyTitle: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#166534',
-    marginBottom: 2,
-  },
-  privacyDesc: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
-    color: '#15803D',
-    lineHeight: 16,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#475569',
   },
   connectedCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(22, 163, 74, 0.3)',
+    borderColor: '#E2E8F0',
     marginBottom: 16,
-    shadowColor: '#16A34A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     elevation: 1,
   },
   statusHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
     gap: 8,
   },
   greenDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     borderCurve: 'continuous',
-    backgroundColor: '#16A34A',
+    backgroundColor: '#10B981',
   },
   statusTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13.5,
+    fontWeight: '600',
     color: '#0F172A',
     flex: 1,
   },
   modelTag: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
     borderCurve: 'continuous',
   },
   modelTagText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 10,
-    color: '#475569',
+    color: '#64748B',
   },
   maskedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#F8FAFC',
-    padding: 10,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     marginBottom: 10,
   },
   maskedKeyText: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#334155',
   },
   connectedActionRow: {
@@ -584,48 +576,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(244, 117, 81, 0.1)',
+    backgroundColor: '#F8FAFC',
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 8,
     borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     gap: 6,
   },
   testBtnText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 12,
-    color: '#F47551',
-    fontWeight: '600',
+    color: '#475569',
   },
   disconnectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#F8FAFC',
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderCurve: 'continuous',
-    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 5,
   },
   disconnectBtnText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 12,
     color: '#DC2626',
-    fontWeight: '600',
   },
   inputSectionLabel: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12.5,
     fontWeight: '600',
     color: '#475569',
-    marginBottom: 4,
-  },
-  inputHelperNote: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11.5,
-    color: '#64748B',
     marginBottom: 10,
-    lineHeight: 16,
   },
   inputCard: {
     backgroundColor: '#FFFFFF',
@@ -657,18 +644,17 @@ const styles = StyleSheet.create({
   pastePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(244, 117, 81, 0.12)',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
     borderCurve: 'continuous',
     gap: 4,
   },
   pastePillText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.poppins.medium,
     fontSize: 11,
-    color: '#F47551',
-    fontWeight: '600',
+    color: '#475569',
   },
   errorBox: {
     flexDirection: 'row',
@@ -738,20 +724,20 @@ const styles = StyleSheet.create({
   helperBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    padding: 14,
-    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    padding: 13,
+    borderRadius: 14,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
-    gap: 12,
+    borderColor: '#E2E8F0',
+    gap: 10,
   },
   helperIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderCurve: 'continuous',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -762,13 +748,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#0369A1',
+    color: '#1E293B',
     marginBottom: 2,
   },
   helperSubtitle: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 11,
-    color: '#0284C7',
+    color: '#64748B',
     lineHeight: 15,
   },
 });

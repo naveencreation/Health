@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -248,7 +248,10 @@ const DailyHabitsCardComponent: React.FC = () => {
 
       {/* Workout Logging Modal */}
       <Modal visible={workoutModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log Activity / Workout</Text>
@@ -323,7 +326,7 @@ const DailyHabitsCardComponent: React.FC = () => {
               <Text style={styles.saveWorkoutBtnText}>Save Workout</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

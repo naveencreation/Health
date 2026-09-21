@@ -16,6 +16,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 import { ScreenTransitionContainer } from '@/components/common/ScreenTransitionContainer';
+import { BouncingDotsLoader } from '@/components/common/BouncingDotsLoader';
 import { SignInScreen } from './SignInScreen';
 import { SignUpScreen } from './SignUpScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
@@ -346,7 +347,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 accessibilityLabel="Explore as guest"
               >
                 {isDemoLoading ? (
-                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <BouncingDotsLoader color={Colors.primary} size={6} gap={5} />
                 ) : (
                   <Text style={styles.demoButtonText}>Explore as Guest</Text>
                 )}

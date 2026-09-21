@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
@@ -26,6 +26,15 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   onSignOutPress,
   scrollRef,
 }) => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 750);
+  }, []);
+
   const {
     currentLog,
     totalConsumed,
@@ -62,6 +71,14 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#F47551"
+          colors={['#F47551', '#CDE26D']}
+        />
+      }
     >
       {/* 0. Blended Header (Scrolls naturally off-screen with content) */}
       <Header

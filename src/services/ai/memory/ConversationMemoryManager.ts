@@ -14,6 +14,19 @@ class ConversationMemoryManagerService {
   }
 
   /**
+   * Returns authenticated Firebase UID if active and matches requested userId.
+   * Prevents premature Firestore calls before auth token restoration or in demo/guest modes.
+   */
+  private getAuthenticatedUid(userId?: string): string | null {
+    const authUser = auth.currentUser;
+    if (!authUser || !authUser.uid) return null;
+    const uid = userId || authUser.uid;
+    if (!uid || uid === 'guest' || uid.startsWith('demo_')) return null;
+    if (authUser.uid !== uid) return null;
+    return uid;
+  }
+
+  /**
    * Retrieves short-term conversation turns from device storage (or Firestore backup if device cache empty).
    */
   async loadHistory(userId?: string): Promise<ChatMessage[]> {
@@ -26,16 +39,16 @@ class ConversationMemoryManagerService {
         }
       }
 
-      // Fallback: If device cache is empty and user is logged in, try restoring from Firestore
-      const uid = userId || auth.currentUser?.uid;
-      if (uid && uid !== 'guest') {
+      // Fallback: If device cache is empty and user is actively logged in to Firebase Auth, try restoring from Firestore
+      const syncUid = this.getAuthenticatedUid(userId);
+      if (syncUid) {
         try {
-          const snap = await getDoc(doc(db, 'users', uid, 'chatHistory', 'recent'));
+          const snap = await getDoc(doc(db, 'users', syncUid, 'chatHistory', 'recent'));
           if (snap.exists()) {
             const data = snap.data();
             if (Array.isArray(data?.messages) && data.messages.length > 0) {
               const msgs = data.messages.slice(-AI_CONFIG.MEMORY.MAX_PERSISTED_MESSAGES);
-              await AsyncStorage.setItem(this.getChatKey(uid), JSON.stringify(msgs)).catch(() => {});
+              await AsyncStorage.setItem(this.getChatKey(syncUid), JSON.stringify(msgs)).catch(() => {});
               return msgs;
             }
           }
@@ -60,10 +73,10 @@ class ConversationMemoryManagerService {
       await AsyncStorage.setItem(this.getChatKey(userId), JSON.stringify(trimmed));
 
       // Backup to Firestore
-      const uid = userId || auth.currentUser?.uid;
-      if (uid && uid !== 'guest') {
+      const syncUid = this.getAuthenticatedUid(userId);
+      if (syncUid) {
         setDoc(
-          doc(db, 'users', uid, 'chatHistory', 'recent'),
+          doc(db, 'users', syncUid, 'chatHistory', 'recent'),
           {
             messages: trimmed,
             updatedAt: new Date().toISOString(),
@@ -87,13 +100,13 @@ class ConversationMemoryManagerService {
       if (raw) return JSON.parse(raw);
 
       // Fallback: Check Firestore
-      const uid = userId || auth.currentUser?.uid;
-      if (uid && uid !== 'guest') {
-        const snap = await getDoc(doc(db, 'users', uid, 'chatHistory', 'summary'));
+      const syncUid = this.getAuthenticatedUid(userId);
+      if (syncUid) {
+        const snap = await getDoc(doc(db, 'users', syncUid, 'chatHistory', 'summary'));
         if (snap.exists()) {
           const data = snap.data() as ConversationSummary;
           if (data?.text) {
-            await AsyncStorage.setItem(this.getSummaryKey(uid), JSON.stringify(data)).catch(() => {});
+            await AsyncStorage.setItem(this.getSummaryKey(syncUid), JSON.stringify(data)).catch(() => {});
             return data;
           }
         }
@@ -112,9 +125,9 @@ class ConversationMemoryManagerService {
       await AsyncStorage.setItem(this.getSummaryKey(userId), JSON.stringify(summary));
 
       // Backup to Firestore
-      const uid = userId || auth.currentUser?.uid;
-      if (uid && uid !== 'guest') {
-        setDoc(doc(db, 'users', uid, 'chatHistory', 'summary'), summary, { merge: true }).catch(() => {});
+      const syncUid = this.getAuthenticatedUid(userId);
+      if (syncUid) {
+        setDoc(doc(db, 'users', syncUid, 'chatHistory', 'summary'), summary, { merge: true }).catch(() => {});
       }
     } catch (err) {
       console.warn('ConversationMemoryManager: Failed to save summary', err);
@@ -137,10 +150,10 @@ class ConversationMemoryManagerService {
     try {
       await AsyncStorage.multiRemove([this.getChatKey(userId), this.getSummaryKey(userId)]);
 
-      const uid = userId || auth.currentUser?.uid;
-      if (uid && uid !== 'guest') {
-        deleteDoc(doc(db, 'users', uid, 'chatHistory', 'recent')).catch(() => {});
-        deleteDoc(doc(db, 'users', uid, 'chatHistory', 'summary')).catch(() => {});
+      const syncUid = this.getAuthenticatedUid(userId);
+      if (syncUid) {
+        deleteDoc(doc(db, 'users', syncUid, 'chatHistory', 'recent')).catch(() => {});
+        deleteDoc(doc(db, 'users', syncUid, 'chatHistory', 'summary')).catch(() => {});
       }
     } catch (err) {
       console.warn('ConversationMemoryManager: Failed to clear memory', err);

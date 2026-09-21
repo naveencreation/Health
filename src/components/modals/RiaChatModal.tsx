@@ -316,7 +316,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           </View>
           <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
           >
             {/* Header */}
             <View style={styles.header}>
@@ -384,6 +385,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               style={styles.chatArea}
               contentContainerStyle={styles.chatContent}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               contentInsetAdjustmentBehavior="automatic"
             >
               {messages.map((msg) => {

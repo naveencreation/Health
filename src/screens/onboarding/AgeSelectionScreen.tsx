@@ -267,7 +267,7 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
           onMouseDown={handleMouseDown}
         >
           {/* Static Center Selected Lime Card Background */}
-          <View style={styles.selectedBoxBackground} pointerEvents="none" />
+          <View style={styles.selectedBoxBackground} />
 
           {/* Smooth Scrollable / Draggable Number Track */}
           <ScrollView
@@ -472,6 +472,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 18,
     elevation: 6,
+    pointerEvents: 'none',
   },
   pickerScrollView: {
     width: '100%',

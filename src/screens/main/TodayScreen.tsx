@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import {
   Header,
   TopDateStrip,
@@ -31,12 +31,29 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onSignOutPress,
   scrollRef,
 }) => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 750);
+  }, []);
+
   return (
     <ScrollView
       ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#F47551"
+          colors={['#F47551', '#CDE26D']}
+        />
+      }
     >
       {/* 0. Blended Header (Scrolls naturally off-screen with content) */}
       <Header

@@ -115,7 +115,8 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         style={styles.modalOverlay}
       >
         <Pressable
@@ -148,7 +149,9 @@ export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClo
 
           <ScrollView
             style={styles.sheetScroll}
-            contentContainerStyle={styles.sheetScrollContent}
+            contentContainerStyle={[styles.sheetScrollContent, { paddingBottom: 140 }]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {/* Presets Row */}

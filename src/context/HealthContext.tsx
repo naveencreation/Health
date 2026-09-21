@@ -912,8 +912,32 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const uid = currentUser?.id || 'guest';
       AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
 
-      if (currentUser && !currentUser.isGuest) {
-        setDoc(doc(db, 'users', currentUser.id, 'customFoods', newFood.id), sanitizeForFirestore(newFood)).catch((err) => {
+      const authUid = auth.currentUser?.uid;
+      if (authUid && currentUser && !currentUser.isGuest && !currentUser.id.startsWith('demo_') && authUid === currentUser.id) {
+        // Construct clean payload strictly adhering to firestore.rules
+        const firestorePayload: Record<string, any> = {
+          id: newFood.id,
+          name: newFood.name,
+          calories: newFood.calories,
+          carbs: newFood.carbs,
+          protein: newFood.protein,
+          fat: newFood.fat,
+          fiber: newFood.fiber,
+          isCustom: true,
+          category: newFood.category || 'snacks',
+          categoryLabel: newFood.categoryLabel || 'Custom',
+          defaultServingSize: newFood.defaultServingSize || 1,
+          servingUnit: newFood.servingUnit || 'serving',
+        };
+
+        if (newFood.icon && typeof newFood.icon === 'string') {
+          firestorePayload.icon = newFood.icon.slice(0, 30);
+        }
+        if (newFood.imageUrl && typeof newFood.imageUrl === 'string' && newFood.imageUrl.length <= 2000) {
+          firestorePayload.imageUrl = newFood.imageUrl;
+        }
+
+        setDoc(doc(db, 'users', currentUser.id, 'customFoods', newFood.id), firestorePayload).catch((err) => {
           console.warn('Firestore customFoods setDoc error:', err);
         });
       }
@@ -928,7 +952,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const uid = currentUser?.id || 'guest';
       AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
 
-      if (currentUser && !currentUser.isGuest) {
+      const authUid = auth.currentUser?.uid;
+      if (authUid && currentUser && !currentUser.isGuest && !currentUser.id.startsWith('demo_') && authUid === currentUser.id) {
         deleteDoc(doc(db, 'users', currentUser.id, 'customFoods', foodId)).catch((err) => {
           console.warn('Firestore customFoods deleteDoc error:', err);
         });

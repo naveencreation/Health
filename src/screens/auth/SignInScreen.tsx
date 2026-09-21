@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { BouncingDotsLoader } from '@/components';
 
 interface SignInScreenProps {
   onBack: () => void;
@@ -92,13 +93,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         {/* Keyboard Avoiding Container */}
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          enabled={Platform.OS === 'ios'}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {/* Title Section */}
@@ -254,7 +256,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               accessibilityLabel="Sign In"
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <BouncingDotsLoader color="#FFFFFF" size={6} gap={5} />
               ) : (
                 <Text style={styles.submitButtonText}>Sign In</Text>
               )}

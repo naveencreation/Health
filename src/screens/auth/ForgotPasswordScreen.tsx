@@ -17,6 +17,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { auth } from '@/services/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { BouncingDotsLoader } from '@/components';
 
 interface ForgotPasswordScreenProps {
   onBack: () => void;
@@ -95,12 +96,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {!isSent ? (
@@ -164,7 +167,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                   accessibilityLabel="Send Password Reset Link"
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <BouncingDotsLoader color="#FFFFFF" size={6} gap={5} />
                   ) : (
                     <View style={styles.btnContentRow}>
                       <Text style={styles.submitButtonText}>Send Reset Link</Text>
@@ -241,7 +244,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                   accessibilityLabel="Resend Email Link"
                 >
                   {resending ? (
-                    <ActivityIndicator size="small" color={Colors.primary} />
+                    <BouncingDotsLoader color={Colors.primary} size={6} gap={5} />
                   ) : (
                     <View style={styles.btnContentRow}>
                       <Ionicons name="refresh-outline" size={18} color={Colors.primary} />

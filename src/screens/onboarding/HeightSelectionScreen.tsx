@@ -317,7 +317,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             onWheel={handleWheel}
           >
             {/* Stationary Center Pointer Needle in Calori Coral (#F47551) */}
-            <View pointerEvents="none" style={styles.centerNeedleContainer}>
+            <View style={styles.centerNeedleContainer}>
               <View style={styles.needlePointerTriangle} />
               <View style={styles.centerNeedleLine} />
             </View>
@@ -343,8 +343,8 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             </Animated.View>
 
             {/* Top and Bottom Fade Gradients */}
-            <View pointerEvents="none" style={styles.rulerFadeTop} />
-            <View pointerEvents="none" style={styles.rulerFadeBottom} />
+            <View style={styles.rulerFadeTop} />
+            <View style={styles.rulerFadeBottom} />
           </View>
         </View>
 
@@ -629,6 +629,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     zIndex: 10,
+    pointerEvents: 'none',
   },
   needlePointerTriangle: {
     width: 0,
@@ -711,6 +712,7 @@ const styles = StyleSheet.create({
     zIndex: 5,
     backgroundColor: '#F8FAFC',
     opacity: 0.85,
+    pointerEvents: 'none',
   },
   rulerFadeBottom: {
     position: 'absolute',
@@ -721,6 +723,7 @@ const styles = StyleSheet.create({
     zIndex: 5,
     backgroundColor: '#F8FAFC',
     opacity: 0.85,
+    pointerEvents: 'none',
   },
 
   // Frame 9: Continue CTA & Footer Links (matches Weight & Age 1:1)

@@ -44,6 +44,7 @@ import {
   ErrorBoundary,
   FoodVisionModal,
   BYOKSetupModal,
+  AppLoadingScreen,
 } from '@/components';
 
 function MainApp() {
@@ -259,11 +260,12 @@ function MainApp() {
   const handleBackToToday = React.useCallback(() => handleTabChange('today'), [handleTabChange]);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
-  if (isAuthLoading) {
+  if (!fontsLoaded || isAuthLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <AppLoadingScreen
+        message={!fontsLoaded ? 'Loading typography...' : 'Authenticating...'}
+        subMessage="Preparing your personalized nutrition dashboard"
+      />
     );
   }
 

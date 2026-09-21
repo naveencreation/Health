@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { BouncingDotsLoader } from '@/components';
 
 interface SignUpScreenProps {
   onBack: () => void;
@@ -136,13 +137,14 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         {/* Keyboard Avoiding Container */}
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          enabled={Platform.OS === 'ios'}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {/* Centered Title Section */}
@@ -430,7 +432,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               testID="btn-signup-submit"
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#0F172A" />
+                <BouncingDotsLoader color="#0F172A" size={6} gap={5} />
               ) : (
                 <View style={styles.btnContentRow}>
                   <Text style={styles.submitButtonText}>Create Account</Text>
@@ -466,19 +468,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   phoneFrame: {
+    flex: 1,
     width: '100%',
-    maxWidth: 375,
-    height: 812,
+    maxWidth: 440,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 30,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 24 : 16,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 20,
-    justifyContent: 'space-between',
     ...(Platform.OS === 'web'
       ? ({
           boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',

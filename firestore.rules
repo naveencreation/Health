@@ -116,7 +116,8 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'id', 'name', 'calories', 'carbs', 'protein', 'fat', 'fiber',
           'servingUnit', 'defaultServingSize', 'servingSize', 'category',
-          'categoryLabel', 'icon', 'imageUrl', 'isCustom', 'sugar', 'sodium', 'healthScore'
+          'categoryLabel', 'icon', 'imageUrl', 'isCustom', 'sugar', 'sodium', 'healthScore',
+          'confidence', 'notes', 'atwaterCorrected'
         ]) &&
         (data.name is string && data.name.size() >= 1 && data.name.size() <= 150) &&
         (data.calories is number && data.calories >= 0 && data.calories <= 15000) &&
@@ -134,7 +135,10 @@ service cloud.firestore {
         (!('isCustom' in data) || data.isCustom is bool) &&
         (!('sugar' in data) || (data.sugar is number && data.sugar >= 0 && data.sugar <= 1000)) &&
         (!('sodium' in data) || (data.sodium is number && data.sodium >= 0 && data.sodium <= 50000)) &&
-        (!('healthScore' in data) || (data.healthScore is number && data.healthScore >= 0 && data.healthScore <= 100));
+        (!('healthScore' in data) || (data.healthScore is number && data.healthScore >= 0 && data.healthScore <= 100)) &&
+        (!('confidence' in data) || (data.confidence is string && data.confidence.size() <= 20)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+        (!('atwaterCorrected' in data) || data.atwaterCorrected is bool);
     }
 
     // ===============================================================
