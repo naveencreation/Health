@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.calorify.app",
@@ -32,7 +27,14 @@
       "expo-font",
       "expo-image",
       "expo-secure-store",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#FAF9F6",
+          "imageWidth": 280
+        }
+      ]
     ],
     "owner": "naveen0004",
     "extra": {

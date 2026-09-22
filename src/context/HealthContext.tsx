@@ -298,6 +298,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Synchronization and lifecycle protection refs
   const isLoggingOutRef = useRef(false);
+  const authResolvedRef = useRef(false);
   const isHydratingRef = useRef(false);
   const hydratedUidRef = useRef<string | null>(null);
   const firestoreLogDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -490,6 +491,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const parsedAuth: AuthUser | null = savedAuth ? JSON.parse(savedAuth) : null;
         const isGuest = parsedAuth?.isGuest;
 
+        // Optimistic restore: render from the cached user immediately.
+        // onAuthStateChanged is authoritative and confirms/corrects this.
+        if (parsedAuth?.id && !authResolvedRef.current) {
+          setCurrentUser(parsedAuth);
+          setIsAuthLoading(false);
+        }
+
         const savedGoals = await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS);
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
 
@@ -569,6 +577,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Firebase Auth State Listener & Cloud Sync (Single Source of Truth)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      authResolvedRef.current = true;
       if (fbUser) {
         const userObj: AuthUser = {
           id: fbUser.uid,

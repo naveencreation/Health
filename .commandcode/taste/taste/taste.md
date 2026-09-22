@@ -3,6 +3,11 @@
 - Project AGENTS.md requires pulling the exact Expo v57 docs before writing code. Confidence: 0.7
 - Prefers to activate and use the React Native skills (e.g. vercel-react-native-skills) when auditing React Native / Expo code. Confidence: 0.6
 - Prefers audits to be done systematically, one rule/category at a time, rather than all at once. Confidence: 0.6
-- When sharing official documentation (e.g. Expo docs), expects an in-depth conformance analysis of their own codebase against that doc, grounded in the actual code rather than a doc summary. Confidence: 0.8
+- When sharing official documentation (e.g. Expo docs), expects an in-depth conformance analysis of their own codebase against that doc, grounded in the actual code rather than a doc summary. Confidence: 0.9
 - Prefers terse directives and expects the agent to proceed directly with recommended fixes rather than asking for confirmation first. Confidence: 0.6
 - Prioritizes solutions that work correctly and consistently across all platforms/devices (Android, iOS, web) without device-specific quirks or flash-of-unstyled-content issues. Confidence: 0.7
+- Wants solutions aligned with how industry-leading applications solve a problem (best practices/established patterns) rather than ad-hoc fixes, and asks for that comparison before committing to an implementation. Confidence: 0.6
+- Is security-conscious: asks whether a recommended optimization is safe before adopting it, and expects the agent to proactively surface security trade-offs (e.g. plaintext AsyncStorage vs SecureStore). Confidence: 0.6
+- Probes edge cases and failure modes of a proposed change before committing (e.g. sign-out → reopen flow, crash/force-kill mid-operation), not just the happy path. Confidence: 0.5
+- Prefers the app splash/branding to show the full wordmark — logo plus the app name side by side and centered — rather than just the icon alone. Confidence: 0.8
+- Prefers the splash screen background color to exactly match the app's background color for a seamless launch transition. Confidence: 0.9
