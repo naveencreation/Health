@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   Pressable,
-  Animated,
   ScrollView,
   useWindowDimensions,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -16,15 +16,20 @@ import {
   ProfileHeaderCard,
   ProfileQuickNavGrid,
   ProfileMetricInspector,
-  GoalsModalSheet,
-  PreferencesModalSheet,
-  MetabolicSummaryModalSheet,
-  AwardsModalSheet,
   AvatarPickerModal,
+  ScreenTransitionContainer,
 } from '@/components';
+import {
+  AwardsScreen,
+  MetabolicSummaryScreen,
+  PreferencesScreen,
+  GoalsScreen,
+} from '@/screens/profile';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
+
+export type ProfileSubView = 'main' | 'awards' | 'summary' | 'preferences' | 'goals';
 
 interface ProfileScreenProps {
   onSignIn?: () => void;
@@ -42,12 +47,62 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
 
   const { userGoals, currentUser, updateGoals } = useHealth();
 
-  // Modal Visibility States
+  // Navigation Sub-View State ('main' | 'awards' | 'summary' | 'preferences' | 'goals')
+  const [subView, setSubView] = useState<ProfileSubView>('main');
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
-  const [goalsModalVisible, setGoalsModalVisible] = useState(false);
-  const [preferencesModalVisible, setPreferencesModalVisible] = useState(false);
-  const [summaryModalVisible, setSummaryModalVisible] = useState(false);
-  const [awardsModalVisible, setAwardsModalVisible] = useState(false);
+
+  // Hardware Back Handler on Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (subView !== 'main') {
+        setSubView('main');
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [subView]);
+
+  // Sub-Screen View Routing with Fluid Slide Transitions
+  if (subView === 'awards') {
+    return (
+      <ScreenTransitionContainer transitionKey="awards" direction="forward">
+        <AwardsScreen onBack={() => setSubView('main')} />
+      </ScreenTransitionContainer>
+    );
+  }
+
+  if (subView === 'summary') {
+    return (
+      <ScreenTransitionContainer transitionKey="summary" direction="forward">
+        <MetabolicSummaryScreen
+          onBack={() => setSubView('main')}
+          onOpenGoals={() => setSubView('goals')}
+        />
+      </ScreenTransitionContainer>
+    );
+  }
+
+  if (subView === 'preferences') {
+    return (
+      <ScreenTransitionContainer transitionKey="preferences" direction="forward">
+        <PreferencesScreen
+          onBack={() => setSubView('main')}
+          onSignIn={onSignIn}
+          onSignOut={onSignOut}
+        />
+      </ScreenTransitionContainer>
+    );
+  }
+
+  if (subView === 'goals') {
+    return (
+      <ScreenTransitionContainer transitionKey="goals" direction="forward">
+        <GoalsScreen onBack={() => setSubView('main')} />
+      </ScreenTransitionContainer>
+    );
+  }
 
   // Derived Biometrics & Health Baseline
   const weightNum = userGoals.currentWeightKg || 74.2;
@@ -69,7 +124,8 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const streakDays = userGoals.streakDays || 7;
 
   return (
-    <View style={styles.rootContainer}>
+    <ScreenTransitionContainer transitionKey="main" direction="fade">
+      <View style={styles.rootContainer}>
       {/* 0. Dedicated Profile & Account Top App Bar - Completely blended with background */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
@@ -86,7 +142,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           {/* Right Action: Settings Gear Button */}
           <Pressable
             style={({ pressed }) => [styles.headerCircleBtn, pressed ? styles.btnPressed : null]}
-            onPress={() => setPreferencesModalVisible(true)}
+            onPress={() => setSubView('preferences')}
             hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel="Open settings and preferences"
@@ -110,7 +166,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
           onEditAvatar={() => setAvatarPickerVisible(true)}
           isGuest={currentUser?.isGuest}
-          onOpenSettings={() => setPreferencesModalVisible(true)}
+          onOpenSettings={() => setSubView('preferences')}
           streakDays={streakDays}
           showNav={false}
         />
@@ -120,10 +176,10 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           streakDays={streakDays}
           calorieBudget={userGoals.dailyCalorieBudget}
           riaTone={userGoals.riaTone}
-          onOpenAwards={() => setAwardsModalVisible(true)}
-          onOpenSummary={() => setSummaryModalVisible(true)}
-          onOpenPreferences={() => setPreferencesModalVisible(true)}
-          onOpenGoals={() => setGoalsModalVisible(true)}
+          onOpenAwards={() => setSubView('awards')}
+          onOpenSummary={() => setSubView('summary')}
+          onOpenPreferences={() => setSubView('preferences')}
+          onOpenGoals={() => setSubView('goals')}
         />
 
         {/* 3. Interactive Biometric Telemetry Inspector */}
@@ -140,33 +196,11 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           targetFat={userGoals.targetFat}
           stepGoal={userGoals.stepGoal}
           waterGoal={userGoals.waterGoalMl}
-          onOpenGoalsModal={() => setGoalsModalVisible(true)}
+          onOpenGoalsModal={() => setSubView('goals')}
         />
       </ScrollView>
 
-      {/* MODAL SHEETS (Focused Editing & Deep Dives) */}
-      <GoalsModalSheet
-        visible={goalsModalVisible}
-        onClose={() => setGoalsModalVisible(false)}
-      />
-
-      <PreferencesModalSheet
-        visible={preferencesModalVisible}
-        onClose={() => setPreferencesModalVisible(false)}
-        onSignIn={onSignIn}
-        onSignOut={onSignOut}
-      />
-
-      <MetabolicSummaryModalSheet
-        visible={summaryModalVisible}
-        onClose={() => setSummaryModalVisible(false)}
-      />
-
-      <AwardsModalSheet
-        visible={awardsModalVisible}
-        onClose={() => setAwardsModalVisible(false)}
-      />
-
+      {/* Avatar Picker Modal */}
       <AvatarPickerModal
         visible={avatarPickerVisible}
         currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
@@ -174,6 +208,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
       />
     </View>
+  </ScreenTransitionContainer>
   );
 };
 
