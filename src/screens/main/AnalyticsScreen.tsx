@@ -6,8 +6,6 @@ import {
   Pressable,
   Animated,
   Platform,
-  LayoutAnimation,
-  UIManager,
   Easing,
   ScrollView,
   useWindowDimensions,
@@ -16,9 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+
 
 type TimeRange = '7d' | '30d';
 
@@ -105,13 +101,12 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       toValue: 1,
       friction: 8,
       tension: 60,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [tooltipAnim]);
 
   const handleTimeRangeChange = useCallback((range: TimeRange) => {
     if (range === timeRange) return;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setTimeRange(range);
     setSelectedBarIdx(range === '7d' ? 6 : null);
     setSelectedClusterIdx(range === '30d' ? 3 : null);
@@ -119,7 +114,6 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   const handleMetricTabChange = useCallback((tab: MetricTab) => {
     if (tab === metricTab) return;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setMetricTab(tab);
     // Reset selection so tooltip shows cleanly for the new metric
     setSelectedBarIdx(timeRange === '7d' ? 6 : null);

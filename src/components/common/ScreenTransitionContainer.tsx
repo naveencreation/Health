@@ -4,8 +4,6 @@ import {
   StyleSheet,
   ViewStyle,
   StyleProp,
-  AccessibilityInfo,
-  Platform,
 } from 'react-native';
 
 interface ScreenTransitionContainerProps {
@@ -24,33 +22,16 @@ export const ScreenTransitionContainer: React.FC<ScreenTransitionContainerProps>
   duration = 240,
 }) => {
   const animValue = useRef(new Animated.Value(0)).current;
-  const isReducedMotionRef = useRef(false);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      isReducedMotionRef.current = enabled;
-    });
-
-    const sub = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      (enabled) => {
-        isReducedMotionRef.current = enabled;
-      }
-    );
-    return () => sub.remove();
-  }, []);
-
-  useEffect(() => {
-    if (isReducedMotionRef.current) {
-      animValue.setValue(1);
-      return;
-    }
-
     animValue.setValue(0);
     Animated.timing(animValue, {
       toValue: 1,
       duration,
-      useNativeDriver: Platform.OS !== 'web',
+      // useNativeDriver: false is required on New Architecture (Fabric).
+      // Opacity interpolations crash with forEach-of-null when native driver
+      // tries to traverse the animated node graph on Android.
+      useNativeDriver: false,
     }).start();
   }, [transitionKey, duration]);
 
@@ -73,7 +54,7 @@ export const ScreenTransitionContainer: React.FC<ScreenTransitionContainerProps>
         style,
         {
           opacity,
-          transform: offset !== 0 ? [{ translateX }] : undefined,
+          transform: offset !== 0 ? [{ translateX }] : [],
         },
       ]}
     >

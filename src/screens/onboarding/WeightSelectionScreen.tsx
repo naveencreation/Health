@@ -115,7 +115,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           toValue: 0,
           friction: 7,
           tension: 60,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }).start();
       },
       onPanResponderTerminate: () => {
@@ -123,7 +123,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           toValue: 0,
           friction: 7,
           tension: 60,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }).start();
       },
     })

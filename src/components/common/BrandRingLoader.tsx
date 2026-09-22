@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle } from 'react-native';
 
 interface BrandRingLoaderProps {
   size?: number;
@@ -23,7 +23,7 @@ export const BrandRingLoader: React.FC<BrandRingLoaderProps> = ({
         toValue: 1,
         duration: 1800,
         easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: true,
       })
     );
 
@@ -33,13 +33,13 @@ export const BrandRingLoader: React.FC<BrandRingLoaderProps> = ({
           toValue: 1.12,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
       ])
     );

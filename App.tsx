@@ -50,6 +50,8 @@ import {
 function MainApp() {
   const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
+  // Ref mirrors activeTab so handleTabChange never needs activeTab in deps
+  const activeTabRef = useRef<TabType>('today');
   const [visitedTabs, setVisitedTabs] = useState<Record<TabType, boolean>>({
     today: true,
     diary: false,
@@ -60,6 +62,12 @@ function MainApp() {
   const diaryScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
   const profileScrollRef = useRef<ScrollView>(null);
+
+  // Keep ref in sync with state
+  React.useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);
   const [byokSetupVisible, setByokSetupVisible] = useState(false);
@@ -149,18 +157,18 @@ function MainApp() {
   }, [addWater]);
 
   const handleTabChange = React.useCallback((tab: TabType) => {
-    if (tab === 'today' && activeTab === 'today') {
+    if (tab === 'today' && activeTabRef.current === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'diary' && activeTab === 'diary') {
+    } else if (tab === 'diary' && activeTabRef.current === 'diary') {
       diaryScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'analytics' && activeTab === 'analytics') {
+    } else if (tab === 'analytics' && activeTabRef.current === 'analytics') {
       analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'profile' && activeTab === 'profile') {
+    } else if (tab === 'profile' && activeTabRef.current === 'profile') {
       profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setVisitedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     setActiveTab(tab);
-  }, [activeTab]);
+  }, []); // stable — reads activeTab via ref, not closure
 
   // Android Hardware Back Handler
   useEffect(() => {

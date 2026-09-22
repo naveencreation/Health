@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
@@ -36,16 +36,25 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const { removeMealItem, updateMealQuantity } = useHealth();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
+  const expandAnim = useRef(new Animated.Value(1)).current;
 
   const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
   const handleToggleExpand = () => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    const toValue = isExpanded ? 0 : 1;
     setIsExpanded((prev) => !prev);
+    Animated.timing(expandAnim, {
+      toValue,
+      duration: 220,
+      useNativeDriver: false,
+    }).start();
   };
+
+  // Sync anim when items change (card goes from empty to filled)
+  useEffect(() => {
+    expandAnim.setValue(1);
+    setIsExpanded(true);
+  }, [items.length === 0]);
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
   const hasItems = items.length > 0;
@@ -163,8 +172,20 @@ const MealCardComponent: React.FC<MealCardProps> = ({
       </View>
 
       {/* 2. Expanded Items List: Flat Rows (No Nested Cards) */}
-      {isExpanded && hasItems ? (
-        <View style={styles.itemsContainer}>
+      {hasItems ? (
+        <Animated.View
+          style={[
+            styles.itemsContainer,
+            {
+              opacity: expandAnim,
+              maxHeight: expandAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 2000],
+              }),
+              overflow: 'hidden',
+            },
+          ]}
+        >
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
             return (
@@ -267,7 +288,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
               <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );

@@ -167,7 +167,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
           toValue: 0,
           friction: 7,
           tension: 60,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }).start();
       },
       onPanResponderTerminate: () => {
@@ -175,7 +175,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
           toValue: 0,
           friction: 7,
           tension: 60,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }).start();
       },
     })

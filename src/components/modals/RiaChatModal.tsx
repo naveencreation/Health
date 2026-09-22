@@ -9,7 +9,6 @@ import {
   TextInput,
   AppState,
   Keyboard,
-  LayoutAnimation,
   Platform,
   ActivityIndicator,
   Alert,
@@ -73,9 +72,6 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       const height = e?.endCoordinates?.height || 0;
-      if (Platform.OS === 'ios') {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      }
       setKeyboardHeight(height);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -83,9 +79,6 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
-      if (Platform.OS === 'ios') {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      }
       setKeyboardHeight(0);
     });
 

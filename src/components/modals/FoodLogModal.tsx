@@ -253,12 +253,12 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           Animated.timing(a.opacity, {
             toValue: 1,
             duration: 200,
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: false,
           }),
           Animated.timing(a.translateX, {
             toValue: 0,
             duration: 200,
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: false,
           }),
         ])
       )
@@ -273,13 +273,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
         Animated.timing(drawerFadeAnim, {
           toValue: 1,
           duration: 200,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
         Animated.timing(drawerSlideAnim, {
           toValue: 0,
           duration: 240,
           easing: Easing.out(Easing.cubic),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
       ]).start();
     }
@@ -298,13 +298,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
         Animated.timing(toastFadeAnim, {
           toValue: 1,
           duration: 180,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
         Animated.spring(toastSlideAnim, {
           toValue: 0,
           friction: 8,
           tension: 60,
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
       ]).start();
     }
@@ -314,7 +314,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
     Animated.timing(toastFadeAnim, {
       toValue: 0,
       duration: 150,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: true,
     }).start(() => {
       setToastMessage(null);
       setLastAddedMeal(null);

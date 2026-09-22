@@ -23,7 +23,7 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 350,
-      useNativeDriver: Platform.OS !== 'web',
+      useNativeDriver: true,
     }).start();
 
     // Pulse animation
@@ -33,13 +33,13 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
           toValue: 1.08,
           duration: 1000,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1000,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: Platform.OS !== 'web',
+          useNativeDriver: true,
         }),
       ])
     );
@@ -51,7 +51,7 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
         toValue: 1,
         duration: 3000,
         easing: Easing.linear,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: true,
       })
     );
     rotateLoop.start();

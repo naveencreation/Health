@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle, Platform } from 'react-native';
+import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle } from 'react-native';
 
 interface BouncingDotsLoaderProps {
   color?: string;
@@ -27,13 +27,13 @@ export const BouncingDotsLoader: React.FC<BouncingDotsLoaderProps> = ({
             toValue: -6,
             duration: 320,
             easing: Easing.bezier(0.2, 0.64, 0.21, 1),
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: true,
           }),
           Animated.timing(anim, {
             toValue: 0,
             duration: 320,
             easing: Easing.bezier(0.42, 0, 0.58, 1),
-            useNativeDriver: Platform.OS !== 'web',
+            useNativeDriver: true,
           }),
           Animated.delay(320 - delay),
         ])
