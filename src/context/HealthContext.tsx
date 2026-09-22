@@ -1326,6 +1326,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Invalidate in-memory API key cache so next login restores from Firestore
     SecureKeyStorage.invalidateCache();
 
+    const uid = auth.currentUser?.uid;
+
     try {
       await firebaseSignOut(auth);
     } catch (e) {
@@ -1345,11 +1347,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCustomFoods([]);
       setSelectedDate(todayStr);
       try {
-        await AsyncStorage.multiRemove([
+        const keysToRemove = [
           STORAGE_KEYS.AUTH,
           STORAGE_KEYS.DAILY_LOGS,
           STORAGE_KEYS.USER_GOALS,
-        ]);
+        ];
+        if (uid) {
+          keysToRemove.push(
+            getUserLogsKey(uid),
+            getUserGoalsKey(uid),
+            getUserCustomFoodsKey(uid)
+          );
+        }
+        await AsyncStorage.multiRemove(keysToRemove);
       } catch (storageErr) {
         console.warn('AsyncStorage clear error on logout:', storageErr);
       }

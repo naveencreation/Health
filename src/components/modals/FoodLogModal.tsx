@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
+  AccessibilityInfo,
   Alert,
 } from 'react-native';
 import Animated, {
@@ -282,6 +283,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
     transform: [{ translateY: toastSlideAnim.value }],
   }));
 
+  const isReducedMotion = useRef(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      isReducedMotion.current = enabled;
+    });
+  }, []);
+
   const handleDismissDrawer = useCallback(() => {
     setSelectedFood(null);
     setQuantity(1);
@@ -289,6 +297,11 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
   useEffect(() => {
     if (toastMessage) {
+      if (isReducedMotion.current) {
+        toastSlideAnim.value = 0;
+        toastFadeAnim.value = 1;
+        return;
+      }
       toastSlideAnim.value = 20;
       toastFadeAnim.value = 0;
       toastFadeAnim.value = withTiming(1, { duration: 180 });
@@ -297,6 +310,12 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   }, [toastMessage, toastSlideAnim, toastFadeAnim]);
 
   const handleDismissToast = useCallback(() => {
+    if (isReducedMotion.current) {
+      setToastMessage(null);
+      setLastAddedMeal(null);
+      if (toastTimer) clearTimeout(toastTimer);
+      return;
+    }
     toastFadeAnim.value = withTiming(0, { duration: 150 });
     setTimeout(() => {
       setToastMessage(null);

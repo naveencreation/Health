@@ -8,7 +8,7 @@ import {
 // @ts-ignore
 import { getReactNativePersistence } from '@firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const firebaseConfig = {
@@ -23,6 +23,22 @@ const firebaseConfig = {
 // Initialize Firebase App
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+// Firebase auth persistence keys contain characters SecureStore rejects
+// (e.g. "firebase:authUser:<apiKey>:[DEFAULT]"), so hex-encode the key.
+const encodeSecureKey = (key: string) => {
+  let encoded = '';
+  for (let i = 0; i < key.length; i++) {
+    encoded += key.charCodeAt(i).toString(16).padStart(2, '0');
+  }
+  return 'fb_auth_' + encoded;
+};
+
+const secureStorePersistence = {
+  getItem: (key: string) => SecureStore.getItemAsync(encodeSecureKey(key)),
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(encodeSecureKey(key), value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(encodeSecureKey(key)),
+};
+
 // Initialize Auth with cross-platform persistence
 let authInstance: Auth;
 try {
@@ -32,7 +48,7 @@ try {
     });
   } else {
     authInstance = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
+      persistence: getReactNativePersistence(secureStorePersistence),
     });
   }
 } catch (e) {
