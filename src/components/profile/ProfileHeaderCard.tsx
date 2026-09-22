@@ -13,8 +13,9 @@ interface ProfileHeaderCardProps {
   onEditAvatar: () => void;
   isGuest?: boolean;
   onBack?: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings?: () => void;
   streakDays?: number;
+  showNav?: boolean;
 }
 
 export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
@@ -26,39 +27,46 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
   onBack,
   onOpenSettings,
   streakDays = 7,
+  showNav = false,
 }) => {
   return (
     <View style={styles.container}>
-      {/* 1. Top Navigation Bar (< Profile ⚙️) */}
-      <View style={styles.navBar}>
-        {onBack ? (
-          <Pressable
-            style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
-            onPress={onBack}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-          >
-            <Ionicons name="chevron-back" size={20} color="#0F172A" />
-          </Pressable>
-        ) : (
-          <View style={styles.navPlaceholder} />
-        )}
+      {/* 1. Optional Top Navigation Bar (Hidden when screen top app bar is active) */}
+      {showNav ? (
+        <View style={styles.navBar}>
+          {onBack ? (
+            <Pressable
+              style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
+              onPress={onBack}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
+              <Ionicons name="chevron-back" size={20} color="#0F172A" />
+            </Pressable>
+          ) : (
+            <View style={styles.navPlaceholder} />
+          )}
 
-        <Text style={styles.navTitle}>Profile</Text>
+          <Text style={styles.navTitle}>Profile</Text>
 
-        <Pressable
-          style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
-          onPress={onOpenSettings}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-        >
-          <Ionicons name="settings-outline" size={19} color="#0F172A" />
-        </Pressable>
-      </View>
+          {onOpenSettings ? (
+            <Pressable
+              style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
+              onPress={onOpenSettings}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+            >
+              <Ionicons name="settings-outline" size={19} color="#0F172A" />
+            </Pressable>
+          ) : (
+            <View style={styles.navPlaceholder} />
+          )}
+        </View>
+      ) : null}
 
-      {/* 2. User Identity Row */}
+      {/* 2. User Identity Card */}
       <View style={styles.identityCard}>
         <Pressable
           style={({ pressed }) => [styles.avatarWrapper, pressed ? styles.avatarPressed : null]}
@@ -80,8 +88,13 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
 
         <View style={styles.identityInfo}>
           <Text style={styles.userName} numberOfLines={1}>
-            {email || name || (isGuest ? 'Guest Explorer' : 'Calori User')}
+            {name || (isGuest ? 'Guest Explorer' : 'Calori Member')}
           </Text>
+          {email && email !== name ? (
+            <Text style={styles.userEmail} numberOfLines={1}>
+              {email}
+            </Text>
+          ) : null}
 
           <View style={styles.statusRow}>
             {isGuest ? (
@@ -97,7 +110,8 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
             )}
 
             <View style={styles.streakPill}>
-              <Text style={styles.streakPillText}>🔥 {streakDays}-Day Streak</Text>
+              <Ionicons name="flame" size={11} color="#F47551" />
+              <Text style={styles.streakPillText}>{streakDays}-Day Streak</Text>
             </View>
           </View>
         </View>
@@ -149,7 +163,17 @@ const styles = StyleSheet.create({
   identityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
     gap: 16,
   },
   avatarWrapper: {
@@ -180,6 +204,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.3,
+  },
+  userEmail: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11.5,
+    color: '#64748B',
+    marginTop: 1,
+    includeFontPadding: false,
   },
   statusRow: {
     flexDirection: 'row',
@@ -216,6 +247,9 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
     backgroundColor: '#FFE4D6',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -226,5 +260,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
     color: '#F47551',
+    includeFontPadding: false,
   },
 });

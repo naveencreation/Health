@@ -59,6 +59,7 @@ function MainApp() {
   const todayScrollRef = useRef<ScrollView>(null);
   const diaryScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
+  const profileScrollRef = useRef<ScrollView>(null);
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);
   const [byokSetupVisible, setByokSetupVisible] = useState(false);
@@ -154,6 +155,8 @@ function MainApp() {
       diaryScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'analytics' && activeTab === 'analytics') {
       analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (tab === 'profile' && activeTab === 'profile') {
+      profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setVisitedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     setActiveTab(tab);
@@ -257,7 +260,6 @@ function MainApp() {
     setFoodModalVisible(false);
     setFoodVisionVisible(true);
   }, []);
-  const handleBackToToday = React.useCallback(() => handleTabChange('today'), [handleTabChange]);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
   const isFontsReady = Platform.OS === 'web' || fontsLoaded;
@@ -334,9 +336,9 @@ function MainApp() {
           {visitedTabs.profile && (
             <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
               <ProfileScreen
+                scrollRef={profileScrollRef}
                 onSignIn={handleOpenSignIn}
                 onSignOut={handleSignOutCompleted}
-                onBack={handleBackToToday}
               />
             </View>
           )}

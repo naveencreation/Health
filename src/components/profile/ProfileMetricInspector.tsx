@@ -206,7 +206,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
               {showStartLabel ? (
                 <Text style={styles.milestoneText}>Start: {startWeight} kg</Text>
               ) : (
-                <Text style={styles.milestoneText}>—</Text>
+                <Text style={styles.milestoneText}>{'\u2014'}</Text>
               )}
               <Text style={styles.milestoneProgressText}>{weightProgressPct}% complete</Text>
               <Text style={styles.milestoneText}>Goal: {targetWeightNum} kg</Text>
@@ -236,12 +236,12 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
                 <Text style={styles.contextSummaryText}>
                   {isGainGoal ? (
                     <>
-                      Gained <Text style={styles.boldText}>{gainedSoFar.toFixed(1)} kg</Text> so far •{' '}
+                      Gained <Text style={styles.boldText}>{gainedSoFar.toFixed(1)} kg</Text> so far {'\u2022'}{' '}
                       <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> to target
                     </>
                   ) : (
                     <>
-                      Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far •{' '}
+                      Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far {'\u2022'}{' '}
                       <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> remaining to target
                     </>
                   )}
