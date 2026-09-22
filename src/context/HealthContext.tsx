@@ -114,6 +114,35 @@ const getTodayDateString = (date = new Date()): string => {
   return `${y}-${m}-${d}`;
 };
 
+/**
+ * Computes the current consecutive-day streak from dailyLogs.
+ * A day counts as "active" if it has ≥1 meal, any water > 0, or any steps > 0.
+ * Starts from today and walks backwards until a gap is found.
+ * Pure function — no side-effects.
+ */
+export const computeStreak = (logs: Record<string, DailyLog>): number => {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateStr = getTodayDateString(d);
+    const log = logs[dateStr];
+    const isActive =
+      log &&
+      ((Array.isArray(log.meals) && log.meals.length > 0) ||
+        (typeof log.waterMl === 'number' && log.waterMl > 0) ||
+        (typeof log.steps === 'number' && log.steps > 0));
+    if (isActive) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return Math.max(streak, 1); // minimum streak of 1 (first day always counts)
+};
+
+
 // Generate realistic starter log for immediate rich Healthify experience
 const createInitialSampleLog = (dateStr: string): DailyLog => {
   return {
@@ -632,6 +661,22 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const uid = currentUser?.id || 'guest';
     AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(customFoods)).catch(console.error);
   }, [customFoods, isLoaded, currentUser]);
+
+  // Auto-compute streak from dailyLogs — updates whenever any log changes
+  // Rule: react-state-minimize — derive values, don't store what can be computed
+  const userGoalsRef = useRef(userGoals);
+  useEffect(() => {
+    userGoalsRef.current = userGoals;
+  }, [userGoals]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const newStreak = computeStreak(dailyLogs);
+    if (newStreak !== userGoalsRef.current.streakDays) {
+      setUserGoals((prev) => ({ ...prev, streakDays: newStreak }));
+    }
+  }, [dailyLogs, isLoaded]);
+
 
   // Combined food database
   const foodDatabase = useMemo(() => {

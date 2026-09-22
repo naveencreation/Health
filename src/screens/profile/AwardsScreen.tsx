@@ -19,8 +19,30 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
   const logsList = Object.values(dailyLogs || {});
   const totalLifetimeSteps = logsList.reduce((sum, l) => sum + (l.steps || 0), 0);
   const targetWater = userGoals.waterGoalMl || 2000;
+  const targetFiber = userGoals.targetFiber || 30;
   const daysWaterGoalMet = logsList.filter((l) => (l.waterMl || 0) >= targetWater).length;
   const daysMealsLogged = logsList.filter((l) => Array.isArray(l.meals) && l.meals.length > 0).length;
+
+  // Fiber: days where total fiber intake >= daily target
+  const daysFiberGoalMet = logsList.filter((l) => {
+    if (!Array.isArray(l.meals) || l.meals.length === 0) return false;
+    const fiberTotal = l.meals.reduce((sum, m) => sum + (m.fiber || 0), 0);
+    return fiberTotal >= targetFiber;
+  }).length;
+
+  // Workout Warrior: any 7-day rolling window with 3+ workout sessions
+  const sortedDates = Object.keys(dailyLogs || {}).sort();
+  let maxWorkoutsInAnyWeek = 0;
+  for (let i = 0; i < sortedDates.length; i++) {
+    let weekCount = 0;
+    for (let j = i; j < Math.min(i + 7, sortedDates.length); j++) {
+      const log = dailyLogs[sortedDates[j]];
+      if (log && Array.isArray(log.activities)) {
+        weekCount += log.activities.length;
+      }
+    }
+    if (weekCount > maxWorkoutsInAnyWeek) maxWorkoutsInAnyWeek = weekCount;
+  }
 
   const awards = [
     {
@@ -62,6 +84,26 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       bgColor: '#EDE9FE',
       unlocked: totalLifetimeSteps >= 100000,
       progress: totalLifetimeSteps >= 100000 ? 'Unlocked' : `${totalLifetimeSteps.toLocaleString()} / 100,000`,
+    },
+    {
+      id: 'fiber-champion',
+      title: 'Fiber Champion',
+      desc: `Hit your daily fiber goal of ${targetFiber}g on 5 separate days`,
+      icon: 'leaf',
+      color: '#0D9488',
+      bgColor: '#CCFBF1',
+      unlocked: daysFiberGoalMet >= 5,
+      progress: daysFiberGoalMet >= 5 ? 'Unlocked' : `${daysFiberGoalMet} / 5 days`,
+    },
+    {
+      id: 'workout-warrior',
+      title: 'Workout Warrior',
+      desc: 'Log 3 or more workouts in a single week',
+      icon: 'barbell',
+      color: '#7C3AED',
+      bgColor: '#F3F0FF',
+      unlocked: maxWorkoutsInAnyWeek >= 3,
+      progress: maxWorkoutsInAnyWeek >= 3 ? 'Unlocked' : `${maxWorkoutsInAnyWeek} / 3 sessions`,
     },
   ];
 

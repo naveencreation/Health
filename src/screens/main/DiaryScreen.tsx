@@ -96,6 +96,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
     totalProtein,
     totalCarbs,
     totalFat,
+    totalFiber,
     remainingCalories,
     selectedDate,
     setSelectedDate,
@@ -122,6 +123,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   const targetProtein = userGoals.targetProtein || 90;
   const targetCarbs = userGoals.targetCarbs || 110;
   const targetFat = userGoals.targetFat || 70;
+  const targetFiber = userGoals.targetFiber || 30;
   const calorieBudget = userGoals.dailyCalorieBudget || 2200;
 
   const isOverBudget = remainingCalories < 0;
@@ -237,7 +239,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
             />
           </View>
 
-          {/* Bottom Row: 3 Responsive Equal Macro Columns (33.3% flex: 1 each) */}
+          {/* Bottom Row: Responsive Equal Macro Columns */}
           <View style={styles.macroStripRow}>
             {/* Carbs Column */}
             <View
@@ -290,6 +292,24 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
                 fillColor="#F47551"
                 height={3.5}
                 trackColor="#FFE4D6"
+              />
+            </View>
+
+            {/* Fiber Column */}
+            <View
+              style={styles.macroCol}
+              accessible={true}
+              accessibilityLabel={`Fiber: ${Math.round(totalFiber)}g of ${targetFiber}g`}
+            >
+              <View style={styles.macroLabelRow}>
+                <Text style={styles.macroNameText}>FIBER</Text>
+                <Text style={styles.macroGramsText}>{Math.round(totalFiber)}<Text style={styles.macroTargetText}>/{targetFiber}g</Text></Text>
+              </View>
+              <AnimatedProgressBar
+                progress={(totalFiber || 0) / Math.max(1, targetFiber)}
+                fillColor="#0D9488"
+                height={3.5}
+                trackColor="#CCFBF1"
               />
             </View>
           </View>

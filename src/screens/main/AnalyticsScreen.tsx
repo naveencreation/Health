@@ -13,6 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
+import { WorkoutHistoryCard } from '@/components/analytics/WorkoutHistoryCard';
+
 
 
 
@@ -61,6 +63,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   } = useHealth();
 
   type MetricTab = 'calories' | 'water' | 'steps';
+
 
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
   const [metricTab, setMetricTab] = useState<MetricTab>('calories');
@@ -269,6 +272,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     let totalCarbs = 0;
     let totalFat = 0;
 
+    let totalFiber30 = 0;
+
     const parts = (selectedDate || '').split('-');
     const curr = parts.length === 3
       ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
@@ -290,9 +295,11 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           const p = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.protein || 0), 0) : 0;
           const c = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.carbs || 0), 0) : 0;
           const f = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.fat || 0), 0) : 0;
+          const fb = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0) : 0;
           totalProtein += p;
           totalCarbs += c;
           totalFat += f;
+          totalFiber30 += fb;
         }
         const water = log.waterMl || 0;
         totalWater += water;
@@ -319,6 +326,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     const avgProtein = totalLoggedDays > 0 ? Math.round(totalProtein / divisor) : 0;
     const avgCarbs = totalLoggedDays > 0 ? Math.round(totalCarbs / divisor) : 0;
     const avgFat = totalLoggedDays > 0 ? Math.round(totalFat / divisor) : 0;
+    const avgFiber = totalLoggedDays > 0 ? Math.round(totalFiber30 / divisor) : 0;
 
     const effectiveBudget = budget * totalLoggedDays;
     const netDiff = totalLoggedDays > 0 ? (effectiveBudget + totalBurn) - totalCals : 0;
@@ -338,8 +346,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       avgProtein,
       avgCarbs,
       avgFat,
+      avgFiber,
     };
   }, [dailyLogs, selectedDate, budget, waterGoal]);
+
 
   // Dynamically points to the active horizon's true performance metrics
   const currentMetrics = timeRange === '7d' ? weeklyMetrics : thirtyDayMetrics;
@@ -1536,7 +1546,67 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               />
             </View>
           </View>
+          {/* Row 4: Fiber */}
+          <View style={[styles.macroRowBlock, { marginBottom: 2 }]}>
+            <View style={styles.macroRowTop}>
+              <View style={styles.macroRowLabelWrap}>
+                <View style={[styles.macroRowDot, { backgroundColor: '#0D9488' }]} />
+                <Text style={styles.macroRowLabel}>FIBER</Text>
+              </View>
+              <View
+                style={
+                  currentMetrics.loggedCount === 0
+                    ? styles.macroBadgeNeutral
+                    : (currentMetrics as any).avgFiber >= targetFiber * 0.9
+                    ? styles.macroBadgeGreen
+                    : styles.macroBadgeNeutral
+                }
+              >
+                {currentMetrics.loggedCount > 0 && (currentMetrics as any).avgFiber >= targetFiber ? (
+                  <Ionicons name="checkmark-circle" size={11} color="#059669" />
+                ) : null}
+                <Text
+                  style={
+                    currentMetrics.loggedCount === 0
+                      ? styles.macroBadgeTextNeutral
+                      : (currentMetrics as any).avgFiber >= targetFiber * 0.9
+                      ? styles.macroBadgeTextGreen
+                      : styles.macroBadgeTextNeutral
+                  }
+                >
+                  {currentMetrics.loggedCount === 0
+                    ? 'No logs'
+                    : (currentMetrics as any).avgFiber >= targetFiber
+                    ? 'Target Met'
+                    : `${Math.round(((currentMetrics as any).avgFiber / targetFiber) * 100)}% Met`}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.macroRowValues}>
+              <Text style={styles.macroRowGramsBold}>{(currentMetrics as any).avgFiber ?? 0}g</Text>
+              <Text style={styles.macroRowGoalText}> / {targetFiber}g daily goal</Text>
+            </View>
+
+            <View style={styles.macroProgressTrack}>
+              <View
+                style={[
+                  styles.macroProgressFill,
+                  {
+                    width: `${Math.min(100, Math.round(((currentMetrics as any).avgFiber / targetFiber) * 100))}%`,
+                    backgroundColor: '#0D9488',
+                  },
+                ]}
+              />
+            </View>
+          </View>
         </View>
+
+        {/* ========================================================= */}
+        {/* LAYER 6: WORKOUT HISTORY CARD                             */}
+        {/* ========================================================= */}
+        <WorkoutHistoryCard timeRange={timeRange} />
+
       </Animated.ScrollView>
     </View>
   );
