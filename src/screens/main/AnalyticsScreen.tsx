@@ -189,7 +189,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       });
     }
     return clusters;
-  }, [dailyLogs, selectedDate]);
+  }, [dailyLogs]);
 
   // Total days with real logged meals in the past 30 days
   const totalDaysLoggedPast30 = useMemo(() => {

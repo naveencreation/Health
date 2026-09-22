@@ -1122,9 +1122,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 renderItem={renderFoodItem}
-                initialNumToRender={12}
+                initialNumToRender={10}
                 maxToRenderPerBatch={10}
                 windowSize={5}
+                getItemLayout={(_data, index) => ({
+                  length: 64,
+                  offset: 64 * index,
+                  index,
+                })}
               />
             </>
           )}

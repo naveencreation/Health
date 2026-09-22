@@ -12,9 +12,8 @@ import {
   updateProfile,
   deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
-
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -118,12 +117,12 @@ const getTodayDateString = (date = new Date()): string => {
  * Computes the current consecutive-day streak from dailyLogs.
  * A day counts as "active" if it has ≥1 meal, any water > 0, or any steps > 0.
  * Starts from today and walks backwards until a gap is found.
- * Pure function — no side-effects.
+ * Pure function — no side-effects. Bounded to max 30 days for performance.
  */
 export const computeStreak = (logs: Record<string, DailyLog>): number => {
   let streak = 0;
   const today = new Date();
-  for (let i = 0; i < 365; i++) {
+  for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = getTodayDateString(d);
@@ -139,7 +138,7 @@ export const computeStreak = (logs: Record<string, DailyLog>): number => {
       break;
     }
   }
-  return Math.max(streak, 1); // minimum streak of 1 (first day always counts)
+  return Math.max(streak, 1); // minimum streak of 1
 };
 
 
@@ -301,6 +300,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const isLoggingOutRef = useRef(false);
   const isHydratingRef = useRef(false);
   const hydratedUidRef = useRef<string | null>(null);
+  const firestoreLogDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firestoreGoalsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
   const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
@@ -359,11 +360,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.warn('Firestore fetch user doc error:', userDocErr);
       }
 
-      // 3. Fetch ALL DailyLogs subcollection from Cloud Firestore
+      // 3. Fetch recent 30 DailyLogs subcollection from Cloud Firestore (Bounded for Cold Start Performance)
       const cloudLogs: Record<string, DailyLog> = {};
       try {
         const logsCollectionRef = collection(db, 'users', uid, 'dailyLogs');
-        const logsSnap = await getDocs(logsCollectionRef);
+        const boundedQuery = query(logsCollectionRef, orderBy('date', 'desc'), limit(30));
+        const logsSnap = await getDocs(boundedQuery);
 
         for (const d of logsSnap.docs) {
           const rawLog = d.data() as DailyLog;
@@ -381,7 +383,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }
       } catch (colErr) {
-        console.warn('Firestore dailyLogs collection query error:', colErr);
+        if (__DEV__) console.warn('Firestore dailyLogs collection query error:', colErr);
         // Fallback: try fetching today's document directly
         try {
           const todayKey = getTodayDateString();
@@ -597,73 +599,84 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => unsubscribe();
   }, []);
 
-  // Save changes & sync dailyLogs to Firestore
+  // Save changes & sync dailyLogs to Firestore (1000ms Debounced Cloud Sync)
   useEffect(() => {
     if (!isLoaded) return;
-    AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(dailyLogs)).catch(console.error);
+    const targetKey = auth.currentUser && !currentUser?.isGuest
+      ? getUserLogsKey(auth.currentUser.uid)
+      : STORAGE_KEYS.DAILY_LOGS;
 
-    if (auth.currentUser && !currentUser?.isGuest) {
-      AsyncStorage.setItem(getUserLogsKey(auth.currentUser.uid), JSON.stringify(dailyLogs)).catch(console.error);
+    AsyncStorage.setItem(targetKey, JSON.stringify(dailyLogs)).catch(() => {});
+
+    // 1000ms Debounced Cloud Firestore Sync
+    if (firestoreLogDebounceRef.current) {
+      clearTimeout(firestoreLogDebounceRef.current);
     }
 
-    // Cloud Firestore Sync - STRICTLY GUARDED against logout / unhydrated states
-    if (
-      !isLoggingOutRef.current &&
-      !isHydratingRef.current &&
-      auth.currentUser &&
-      !currentUser?.isGuest &&
-      hydratedUidRef.current === auth.currentUser.uid
-    ) {
-      const activeLog = dailyLogs[selectedDate];
-      if (activeLog) {
-        try {
-          const payload = sanitizeForFirestore(activeLog);
-          setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), payload, { merge: true }).catch((err) => {
-            console.warn('dailyLogs setDoc async error:', err);
-          });
-        } catch (err) {
-          console.warn('dailyLogs setDoc sync error:', err);
+    firestoreLogDebounceRef.current = setTimeout(() => {
+      if (
+        !isLoggingOutRef.current &&
+        !isHydratingRef.current &&
+        auth.currentUser &&
+        !currentUser?.isGuest &&
+        hydratedUidRef.current === auth.currentUser.uid
+      ) {
+        const activeLog = dailyLogs[selectedDate];
+        if (activeLog) {
+          try {
+            const payload = sanitizeForFirestore(activeLog);
+            setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), payload, { merge: true }).catch((err) => {
+              if (__DEV__) console.warn('dailyLogs setDoc async error:', err);
+            });
+          } catch (err) {
+            if (__DEV__) console.warn('dailyLogs setDoc sync error:', err);
+          }
         }
       }
-    }
+    }, 1000);
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
 
-  // Save changes & sync userGoals to Firestore
+  // Save changes & sync userGoals to Firestore (1000ms Debounced Cloud Sync)
   useEffect(() => {
     if (!isLoaded) return;
-    AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(userGoals)).catch(console.error);
+    const targetKey = auth.currentUser && !currentUser?.isGuest
+      ? getUserGoalsKey(auth.currentUser.uid)
+      : STORAGE_KEYS.USER_GOALS;
 
-    if (auth.currentUser && !currentUser?.isGuest) {
-      AsyncStorage.setItem(getUserGoalsKey(auth.currentUser.uid), JSON.stringify(userGoals)).catch(console.error);
+    AsyncStorage.setItem(targetKey, JSON.stringify(userGoals)).catch(() => {});
+
+    // 1000ms Debounced Cloud Firestore Sync
+    if (firestoreGoalsDebounceRef.current) {
+      clearTimeout(firestoreGoalsDebounceRef.current);
     }
 
-    // Cloud Firestore Sync - STRICTLY GUARDED against logout / unhydrated states
-    if (
-      !isLoggingOutRef.current &&
-      !isHydratingRef.current &&
-      auth.currentUser &&
-      !currentUser?.isGuest &&
-      hydratedUidRef.current === auth.currentUser.uid
-    ) {
-      try {
-        const payload = sanitizeForFirestore({ goals: userGoals });
-        setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
-          console.warn('userGoals setDoc async error:', err);
-        });
-      } catch (err) {
-        console.warn('userGoals setDoc sync error:', err);
+    firestoreGoalsDebounceRef.current = setTimeout(() => {
+      if (
+        !isLoggingOutRef.current &&
+        !isHydratingRef.current &&
+        auth.currentUser &&
+        !currentUser?.isGuest &&
+        hydratedUidRef.current === auth.currentUser.uid
+      ) {
+        try {
+          const payload = sanitizeForFirestore({ goals: userGoals });
+          setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
+            if (__DEV__) console.warn('userGoals setDoc async error:', err);
+          });
+        } catch (err) {
+          if (__DEV__) console.warn('userGoals setDoc sync error:', err);
+        }
       }
-    }
+    }, 1000);
   }, [userGoals, isLoaded, currentUser]);
 
   useEffect(() => {
     if (!isLoaded) return;
     const uid = currentUser?.id || 'guest';
-    AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(customFoods)).catch(console.error);
+    AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(customFoods)).catch(() => {});
   }, [customFoods, isLoaded, currentUser]);
 
-  // Auto-compute streak from dailyLogs — updates whenever any log changes
-  // Rule: react-state-minimize — derive values, don't store what can be computed
+  // Auto-compute streak from dailyLogs
   const userGoalsRef = useRef(userGoals);
   useEffect(() => {
     userGoalsRef.current = userGoals;

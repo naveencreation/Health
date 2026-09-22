@@ -47,6 +47,24 @@ import {
   AppLoadingScreen,
 } from '@/components';
 
+interface TabWrapperProps {
+  isActive: boolean;
+  children: React.ReactNode;
+}
+
+const TabWrapper = React.memo<TabWrapperProps>(({ isActive, children }) => {
+  return (
+    <View style={[styles.tabContainer, !isActive ? styles.tabHidden : null]}>
+      {children}
+    </View>
+  );
+}, (prevProps, nextProps) => {
+  if (!prevProps.isActive && !nextProps.isActive) {
+    return true;
+  }
+  return prevProps.isActive === nextProps.isActive;
+});
+
 function MainApp() {
   const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
@@ -170,57 +188,30 @@ function MainApp() {
     setActiveTab(tab);
   }, []); // stable — reads activeTab via ref, not closure
 
-  // Android Hardware Back Handler
+  // Refs for modal states so BackHandler subscription does not re-register on every toggle
+  const modalStatesRef = useRef({
+    foodModalVisible,
+    foodVisionVisible,
+    byokSetupVisible,
+    notificationsVisible,
+    avatarModalVisible,
+    riaChatVisible,
+    authModalVisible,
+    signOutModalVisible,
+  });
+
   useEffect(() => {
-    const onHardwareBackPress = () => {
-      // 1. Modals priority: if any top-level modal is active, dismiss it first
-      if (foodModalVisible) {
-        setFoodModalVisible(false);
-        return true;
-      }
-      if (foodVisionVisible) {
-        setFoodVisionVisible(false);
-        return true;
-      }
-      if (byokSetupVisible) {
-        setByokSetupVisible(false);
-        return true;
-      }
-      if (notificationsVisible) {
-        setNotificationsVisible(false);
-        return true;
-      }
-      if (avatarModalVisible) {
-        setAvatarModalVisible(false);
-        return true;
-      }
-      if (riaChatVisible) {
-        setRiaChatVisible(false);
-        return true;
-      }
-      if (authModalVisible) {
-        setAuthModalVisible(false);
-        return true;
-      }
-      if (signOutModalVisible) {
-        setSignOutModalVisible(false);
-        return true;
-      }
-
-      // 2. Tab hierarchy: if on a secondary tab, return to Today home tab
-      if (activeTab !== 'today') {
-        setActiveTab('today');
-        return true;
-      }
-
-      // 3. Already on Today tab root: permit native exit
-      return false;
+    modalStatesRef.current = {
+      foodModalVisible,
+      foodVisionVisible,
+      byokSetupVisible,
+      notificationsVisible,
+      avatarModalVisible,
+      riaChatVisible,
+      authModalVisible,
+      signOutModalVisible,
     };
-
-    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
-    return () => subscription.remove();
   }, [
-    activeTab,
     foodModalVisible,
     foodVisionVisible,
     byokSetupVisible,
@@ -230,6 +221,30 @@ function MainApp() {
     authModalVisible,
     signOutModalVisible,
   ]);
+
+  // Android Hardware Back Handler - Single stable subscription
+  useEffect(() => {
+    const onHardwareBackPress = () => {
+      const ms = modalStatesRef.current;
+      if (ms.foodModalVisible) { setFoodModalVisible(false); return true; }
+      if (ms.foodVisionVisible) { setFoodVisionVisible(false); return true; }
+      if (ms.byokSetupVisible) { setByokSetupVisible(false); return true; }
+      if (ms.notificationsVisible) { setNotificationsVisible(false); return true; }
+      if (ms.avatarModalVisible) { setAvatarModalVisible(false); return true; }
+      if (ms.riaChatVisible) { setRiaChatVisible(false); return true; }
+      if (ms.authModalVisible) { setAuthModalVisible(false); return true; }
+      if (ms.signOutModalVisible) { setSignOutModalVisible(false); return true; }
+
+      if (activeTabRef.current !== 'today') {
+        setActiveTab('today');
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, []);
 
   const handleOpenSignIn = React.useCallback(() => {
     setAuthInitialMode('signin');
@@ -301,7 +316,7 @@ function MainApp() {
       <View style={styles.phoneContainer}>
         {/* Tab Content with Offscreen Preservation & Lazy Initial Mount */}
         <View style={styles.contentArea}>
-          <View style={[styles.tabContainer, activeTab !== 'today' ? styles.tabHidden : null]}>
+          <TabWrapper isActive={activeTab === 'today'}>
             <TodayScreen
               scrollRef={todayScrollRef}
               onAddFood={handleOpenFoodLogger}
@@ -312,10 +327,10 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
             />
-          </View>
+          </TabWrapper>
 
           {visitedTabs.diary && (
-            <View style={[styles.tabContainer, activeTab !== 'diary' ? styles.tabHidden : null]}>
+            <TabWrapper isActive={activeTab === 'diary'}>
               <DiaryScreen
                 scrollRef={diaryScrollRef}
                 onAddFood={handleOpenFoodLogger}
@@ -325,11 +340,11 @@ function MainApp() {
                 onSignInPress={handleOpenSignIn}
                 onSignOutPress={handleSignOutPress}
               />
-            </View>
+            </TabWrapper>
           )}
 
           {visitedTabs.analytics && (
-            <View style={[styles.tabContainer, activeTab !== 'analytics' ? styles.tabHidden : null]}>
+            <TabWrapper isActive={activeTab === 'analytics'}>
               <AnalyticsScreen
                 scrollRef={analyticsScrollRef}
                 onSearchPress={handleGlobalSearchPress}
@@ -338,17 +353,17 @@ function MainApp() {
                 onSignInPress={handleOpenSignIn}
                 onSignOutPress={handleSignOutPress}
               />
-            </View>
+            </TabWrapper>
           )}
 
           {visitedTabs.profile && (
-            <View style={[styles.tabContainer, activeTab !== 'profile' ? styles.tabHidden : null]}>
+            <TabWrapper isActive={activeTab === 'profile'}>
               <ProfileScreen
                 scrollRef={profileScrollRef}
                 onSignIn={handleOpenSignIn}
                 onSignOut={handleSignOutCompleted}
               />
-            </View>
+            </TabWrapper>
           )}
         </View>
 
