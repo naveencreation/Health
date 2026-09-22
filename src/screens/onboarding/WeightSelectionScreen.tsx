@@ -6,8 +6,12 @@ import {
   Pressable,
   Platform,
   PanResponder,
-  Animated,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -43,7 +47,11 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   const activeWeight = unit === 'kg' ? weightKg : weightLbs;
 
   // Real-time micro horizontal sliding feedback
-  const dragAnimX = useRef(new Animated.Value(0)).current;
+  const dragAnimX = useSharedValue(0);
+
+  const dragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: dragAnimX.value }],
+  }));
   const startWeightRef = useRef<number>(activeWeight);
   const currentWeightRef = useRef<number>(activeWeight);
 
@@ -85,7 +93,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 3,
       onPanResponderGrant: () => {
         startWeightRef.current = currentWeightRef.current;
-        dragAnimX.setValue(0);
+        dragAnimX.value = 0;
       },
       onPanResponderMove: (_, g) => {
         // Dragging LEFT (-dx) moves ruler right (increases weight)
@@ -101,7 +109,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
 
         // Tactile micro-offset
         const remainder = g.dx + steps * RULER_STEP_PX;
-        dragAnimX.setValue(remainder * 0.45);
+        dragAnimX.value = remainder * 0.45;
       },
       onPanResponderRelease: (_, g) => {
         // Momentum glide
@@ -111,20 +119,10 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           updateWeight(currentWeightRef.current - 2);
         }
 
-        Animated.spring(dragAnimX, {
-          toValue: 0,
-          friction: 7,
-          tension: 60,
-          useNativeDriver: true,
-        }).start();
+        dragAnimX.value = withTiming(0, { duration: 200 });
       },
       onPanResponderTerminate: () => {
-        Animated.spring(dragAnimX, {
-          toValue: 0,
-          friction: 7,
-          tension: 60,
-          useNativeDriver: true,
-        }).start();
+        dragAnimX.value = withTiming(0, { duration: 200 });
       },
     })
   ).current;
@@ -236,9 +234,7 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           <Animated.View
             style={[
               styles.ticksTape,
-              {
-                transform: [{ translateX: dragAnimX }],
-              },
+              dragStyle,
             ]}
           >
             {ticks.map((tickVal) => {

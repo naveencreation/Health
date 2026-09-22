@@ -1,7 +1,15 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { BouncingDotsLoader } from './BouncingDotsLoader';
 
@@ -14,97 +22,58 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
   message = 'Starting Calorify...',
   subMessage = 'Preparing your nutrition companion',
 }) => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useSharedValue(1);
+  const rotateAnim = useSharedValue(0);
+  const fadeAnim = useSharedValue(0);
 
   useEffect(() => {
-    // Fade in
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 350,
-      useNativeDriver: true,
-    }).start();
+    fadeAnim.value = withTiming(1, { duration: 350 });
 
-    // Pulse animation
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.08,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false
     );
-    pulseLoop.start();
 
-    // Continuous subtle rotation for outer glow ring
-    const rotateLoop = Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 3000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
+    rotateAnim.value = withRepeat(
+      withTiming(1, { duration: 3000, easing: Easing.linear }),
+      -1,
+      false
     );
-    rotateLoop.start();
-
-    return () => {
-      pulseLoop.stop();
-      rotateLoop.stop();
-    };
   }, [pulseAnim, rotateAnim, fadeAnim]);
 
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: fadeAnim.value,
+  }));
+
+  const emblemStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseAnim.value }],
+  }));
+
+  const outerRingStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${interpolate(rotateAnim.value, [0, 1], [0, 360])}deg` }],
+  }));
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, containerStyle]}>
       <View style={styles.content}>
-        {/* Animated Brand Emblem */}
-        <Animated.View
-          style={[
-            styles.emblemContainer,
-            {
-              transform: [{ scale: pulseAnim }],
-            },
-          ]}
-        >
-          {/* Outer Decorative Ring */}
-          <Animated.View
-            style={[
-              styles.outerRing,
-              {
-                transform: [{ rotate: spin }],
-              },
-            ]}
-          />
-
-          {/* Core Brand Circle */}
+        <Animated.View style={[styles.emblemContainer, emblemStyle]}>
+          <Animated.View style={[styles.outerRing, outerRingStyle]} />
           <View style={styles.innerCircle}>
             <MaterialCommunityIcons name="fire" size={44} color="#F47551" />
           </View>
         </Animated.View>
 
-        {/* Brand Title */}
         <Text style={styles.brandTitle}>Calorify</Text>
 
-        {/* Bouncing Dots & Dynamic Status Message */}
         <View style={styles.statusBox}>
           <BouncingDotsLoader color="#F47551" size={6} gap={4} style={styles.dots} />
           <Text style={styles.statusMessage}>{message}</Text>
         </View>
 
-        {/* Subtitle */}
         {subMessage ? <Text style={styles.subMessage}>{subMessage}</Text> : null}
       </View>
     </Animated.View>

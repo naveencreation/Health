@@ -6,7 +6,11 @@
       "powershell",
       "Shell(python --version 2>&1; python -c \"import PIL; print('PIL', PIL.__version__)\" 2>&1; magick -version 2>&1 | head -1; node -e \"try{require('canvas');console.log('canvas yes')}catch(e){console.log('canvas no')}\" 2>&1)",
       "Shell(python scratch/make_splash.py)",
-      "Shell(node -e \"const j=JSON.parse(require('fs').readFileSync('app.json','utf8')); console.log('app.json valid. plugins:', JSON.stringify(j.expo.plugins));\")"
+      "Shell(node -e \"const j=JSON.parse(require('fs').readFileSync('app.json','utf8')); console.log('app.json valid. plugins:', JSON.stringify(j.expo.plugins));\")",
+      "Shell(npx expo install react-native-reanimated)",
+      "Shell(node -e \"const p=require('./package.json'); console.log('reanimated:', p.dependencies['react-native-reanimated'], '| worklets:', p.dependencies['react-native-worklets']);\")",
+      "Shell(npx expo-doctor)",
+      "Shell(npx expo install react-native-worklets)"
     ],
     "deny": [],
     "defaultMode": "default"

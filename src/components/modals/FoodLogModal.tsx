@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,14 @@ import {
   FlatList,
   Platform,
   KeyboardAvoidingView,
-  Animated,
-  Easing,
   Alert,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+} from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -42,6 +46,59 @@ interface CategoryItem {
   activeColor?: string;
   inactiveColor?: string;
 }
+
+const CategoryPill = React.memo(function CategoryPill({
+  index,
+  cat,
+  isSelected,
+  onPress,
+}: {
+  index: number;
+  cat: CategoryItem;
+  isSelected: boolean;
+  onPress: () => void;
+}) {
+  const opacity = useSharedValue(0);
+  const translateX = useSharedValue(-10);
+
+  useEffect(() => {
+    opacity.value = withDelay(index * 55, withTiming(1, { duration: 200 }));
+    translateX.value = withDelay(index * 55, withTiming(0, { duration: 200 }));
+  }, [index, opacity, translateX]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const iconColor = isSelected
+    ? (cat.activeColor || '#FFFFFF')
+    : (cat.inactiveColor || '#64748B');
+
+  return (
+    <Animated.View style={pillStyle}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.categoryPill,
+          isSelected ? styles.categoryPillActive : null,
+          pressed ? styles.btnPressedPill : null,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Filter by ${cat.label}`}
+      >
+        {cat.iconFamily === 'mci' ? (
+          <MaterialCommunityIcons name={cat.iconName as any} size={14} color={iconColor} />
+        ) : (
+          <Ionicons name={cat.iconName as any} size={14} color={iconColor} />
+        )}
+        <Text style={[styles.categoryText, isSelected ? styles.categoryTextActive : null]}>
+          {cat.label}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+});
 
 // Meal-Contextual Categories to eliminate decision fatigue
 const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
@@ -121,24 +178,17 @@ interface FoodItemRowProps {
 }
 
 const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect, onQuickAdd }) => {
-  const pressScale = useRef(new Animated.Value(1)).current;
+  const pressScale = useSharedValue(1);
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
 
   const handlePressIn = useCallback(() => {
-    Animated.spring(pressScale, {
-      toValue: 0.97,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 200,
-    }).start();
+    pressScale.value = withTiming(0.97, { duration: 80 });
   }, [pressScale]);
 
   const handlePressOut = useCallback(() => {
-    Animated.spring(pressScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 180,
-    }).start();
+    pressScale.value = withTiming(1, { duration: 120 });
   }, [pressScale]);
 
   return (
@@ -148,7 +198,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
       onPressOut={handlePressOut}
     >
       <Animated.View
-        style={[styles.foodItemCard, { transform: [{ scale: pressScale }] }]}
+        style={[styles.foodItemCard, pressStyle]}
       >
         {/* Food Vector / Photo Badge */}
         <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
@@ -224,66 +274,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const [lastAddedMeal, setLastAddedMeal] = useState<LoggedMealItem | null>(null);
   const [toastTimer, setToastTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  const drawerSlideAnim = useRef(new Animated.Value(320)).current;
-  const drawerFadeAnim = useRef(new Animated.Value(0)).current;
-  const toastSlideAnim = useRef(new Animated.Value(20)).current;
-  const toastFadeAnim = useRef(new Animated.Value(0)).current;
+  const toastSlideAnim = useSharedValue(20);
+  const toastFadeAnim = useSharedValue(0);
 
-  // Stagger anims for category pills — max 8 pills per meal type
-  const pillAnims = useRef(
-    Array.from({ length: 8 }, () => ({
-      opacity: new Animated.Value(0),
-      translateX: new Animated.Value(-10),
-    }))
-  ).current;
-
-  // Re-run stagger whenever modal opens or meal type switches
-  useEffect(() => {
-    if (!visible || isCustomMode) return;
-    // Reset all pills instantly
-    pillAnims.forEach((a) => {
-      a.opacity.setValue(0);
-      a.translateX.setValue(-10);
-    });
-    // Stagger each pill in by 55ms
-    Animated.stagger(
-      55,
-      pillAnims.map((a) =>
-        Animated.parallel([
-          Animated.timing(a.opacity, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(a.translateX, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-        ])
-      )
-    ).start();
-  }, [visible, selectedMealType, isCustomMode]);
-
-  useEffect(() => {
-    if (selectedFood) {
-      drawerSlideAnim.setValue(320);
-      drawerFadeAnim.setValue(0);
-      Animated.parallel([
-        Animated.timing(drawerFadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(drawerSlideAnim, {
-          toValue: 0,
-          duration: 240,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [selectedFood]);
+  const toastStyle = useAnimatedStyle(() => ({
+    opacity: toastFadeAnim.value,
+    transform: [{ translateY: toastSlideAnim.value }],
+  }));
 
   const handleDismissDrawer = useCallback(() => {
     setSelectedFood(null);
@@ -292,34 +289,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
   useEffect(() => {
     if (toastMessage) {
-      toastSlideAnim.setValue(20);
-      toastFadeAnim.setValue(0);
-      Animated.parallel([
-        Animated.timing(toastFadeAnim, {
-          toValue: 1,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-        Animated.spring(toastSlideAnim, {
-          toValue: 0,
-          friction: 8,
-          tension: 60,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      toastSlideAnim.value = 20;
+      toastFadeAnim.value = 0;
+      toastFadeAnim.value = withTiming(1, { duration: 180 });
+      toastSlideAnim.value = withTiming(0, { duration: 180 });
     }
-  }, [toastMessage]);
+  }, [toastMessage, toastSlideAnim, toastFadeAnim]);
 
   const handleDismissToast = useCallback(() => {
-    Animated.timing(toastFadeAnim, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
+    toastFadeAnim.value = withTiming(0, { duration: 150 });
+    setTimeout(() => {
       setToastMessage(null);
       setLastAddedMeal(null);
       if (toastTimer) clearTimeout(toastTimer);
-    });
+    }, 150);
   }, [toastFadeAnim, toastTimer]);
 
   useEffect(() => {
@@ -1062,56 +1045,15 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.categoryScroll}
                 >
-                  {categoriesList.map((cat, index) => {
-                    const isSelected = selectedCategory === cat.id;
-                    const iconColor = isSelected
-                      ? (cat.activeColor || '#FFFFFF')
-                      : (cat.inactiveColor || '#64748B');
-                    const pillAnim = pillAnims[index] || pillAnims[0];
-
-                    return (
-                      <Animated.View
-                        key={cat.id}
-                        style={{
-                          opacity: pillAnim.opacity,
-                          transform: [{ translateX: pillAnim.translateX }],
-                        }}
-                      >
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.categoryPill,
-                            isSelected ? styles.categoryPillActive : null,
-                            pressed ? styles.btnPressedPill : null,
-                          ]}
-                          onPress={() => setSelectedCategory(cat.id)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Filter by ${cat.label}`}
-                        >
-                          {cat.iconFamily === 'mci' ? (
-                            <MaterialCommunityIcons
-                              name={cat.iconName as any}
-                              size={14}
-                              color={iconColor}
-                            />
-                          ) : (
-                            <Ionicons
-                              name={cat.iconName as any}
-                              size={14}
-                              color={iconColor}
-                            />
-                          )}
-                          <Text
-                            style={[
-                              styles.categoryText,
-                              isSelected ? styles.categoryTextActive : null,
-                            ]}
-                          >
-                            {cat.label}
-                          </Text>
-                        </Pressable>
-                      </Animated.View>
-                    );
-                  })}
+                  {categoriesList.map((cat, index) => (
+                    <CategoryPill
+                      key={cat.id}
+                      index={index}
+                      cat={cat}
+                      isSelected={selectedCategory === cat.id}
+                      onPress={() => setSelectedCategory(cat.id)}
+                    />
+                  ))}
                 </ScrollView>
               </View>
 
@@ -1143,10 +1085,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           <Animated.View
             style={[
               styles.toastContainer,
-              {
-                opacity: toastFadeAnim,
-                transform: [{ translateY: toastSlideAnim }],
-              },
+              toastStyle,
             ]}
           >
             <View style={styles.toastContent}>

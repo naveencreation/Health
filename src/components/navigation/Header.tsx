@@ -4,9 +4,12 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Animated,
-  Platform,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  SharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
@@ -19,7 +22,7 @@ interface HeaderProps {
   onAvatarPress?: () => void;
   onSignInPress?: () => void;
   onSignOutPress?: () => void;
-  scrollY?: Animated.Value;
+  scrollY?: SharedValue<number>;
   isScrolled?: boolean;
 }
 
@@ -67,53 +70,27 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   const calLeft = remainingCalories ?? 0;
   const isOverBudget = calLeft < 0;
 
-  // 60fps Native driver interpolations for continuous morphing
-  const avatarScale = scrollY
-    ? scrollY.interpolate({
-        inputRange: [0, 45],
-        outputRange: [1, 0.72],
-        extrapolate: 'clamp',
-      })
-    : 1;
+  // 60fps UI-thread driven morphing styles
+  const avatarStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scrollY ? interpolate(scrollY.value, [0, 45], [1, 0.72], 'clamp') : 1 }],
+  }));
 
-  const welcomeOpacity = scrollY
-    ? scrollY.interpolate({
-        inputRange: [0, 25],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-      })
-    : 1;
+  const welcomeStyle = useAnimatedStyle(() => ({
+    opacity: scrollY ? interpolate(scrollY.value, [0, 25], [1, 0], 'clamp') : 1,
+    transform: [{ translateY: scrollY ? interpolate(scrollY.value, [0, 25], [0, -6], 'clamp') : 0 }],
+  }));
 
-  const welcomeTranslateY = scrollY
-    ? scrollY.interpolate({
-        inputRange: [0, 25],
-        outputRange: [0, -6],
-        extrapolate: 'clamp',
-      })
-    : 0;
-
-  const collapsedOpacity = scrollY
-    ? scrollY.interpolate({
-        inputRange: [20, 45],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-      })
-    : 0;
-
-  const collapsedTranslateY = scrollY
-    ? scrollY.interpolate({
-        inputRange: [20, 45],
-        outputRange: [6, 0],
-        extrapolate: 'clamp',
-      })
-    : 0;
+  const collapsedStyle = useAnimatedStyle(() => ({
+    opacity: scrollY ? interpolate(scrollY.value, [20, 45], [0, 1], 'clamp') : 0,
+    transform: [{ translateY: scrollY ? interpolate(scrollY.value, [20, 45], [6, 0], 'clamp') : 0 }],
+  }));
 
   return (
     <View style={styles.headerWrapper}>
       <View style={styles.topBar}>
         {/* Left: Avatar + Morphing Text (Welcome Naveen -> Today & Calorie HUD) */}
         <View style={styles.userSection}>
-          <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+          <Animated.View style={avatarStyle}>
             <Pressable
               style={({ pressed }) => [
                 styles.avatarContainer,
@@ -137,11 +114,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             <Animated.View
               style={[
                 styles.welcomeStack,
-                {
-                  opacity: welcomeOpacity,
-                  transform: [{ translateY: welcomeTranslateY }],
-                  pointerEvents: isScrolled ? 'none' : 'auto',
-                },
+                welcomeStyle,
+                { pointerEvents: isScrolled ? 'none' : 'auto' },
               ]}
             >
               <View style={styles.welcomeRow}>
@@ -162,11 +136,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               <Animated.View
                 style={[
                   styles.collapsedHudStack,
-                  {
-                    opacity: collapsedOpacity,
-                    transform: [{ translateY: collapsedTranslateY }],
-                    pointerEvents: isScrolled ? 'auto' : 'none',
-                  },
+                  collapsedStyle,
+                  { pointerEvents: isScrolled ? 'auto' : 'none' },
                 ]}
               >
                 <Text style={styles.collapsedDateText} numberOfLines={1}>

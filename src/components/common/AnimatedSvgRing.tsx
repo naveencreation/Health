@@ -1,6 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, AccessibilityInfo } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { AccessibilityInfo } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface AnimatedSvgRingProps {
   size: number;
@@ -24,8 +32,7 @@ export const AnimatedSvgRing: React.FC<AnimatedSvgRingProps> = ({
   const clampedProgress = Math.max(0, Math.min(1, progress));
   const targetOffset = circumference * (1 - clampedProgress);
 
-  const [currentOffset, setCurrentOffset] = useState(targetOffset);
-  const animValue = useRef(new Animated.Value(targetOffset)).current;
+  const animatedOffset = useSharedValue(targetOffset);
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
@@ -36,25 +43,19 @@ export const AnimatedSvgRing: React.FC<AnimatedSvgRingProps> = ({
 
   useEffect(() => {
     if (isReducedMotion.current) {
-      setCurrentOffset(targetOffset);
+      animatedOffset.value = targetOffset;
       return;
     }
 
-    const listenerId = animValue.addListener(({ value }) => {
-      setCurrentOffset(value);
-    });
-
-    Animated.timing(animValue, {
-      toValue: targetOffset,
+    animatedOffset.value = withTiming(targetOffset, {
       duration,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
+    });
+  }, [targetOffset, duration, animatedOffset]);
 
-    return () => {
-      animValue.removeListener(listenerId);
-    };
-  }, [targetOffset, duration, animValue]);
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: animatedOffset.value,
+  }));
 
   return (
     <Svg width={size} height={size}>
@@ -66,17 +67,17 @@ export const AnimatedSvgRing: React.FC<AnimatedSvgRingProps> = ({
         strokeWidth={strokeWidth}
         fill="none"
       />
-      <Circle
+      <AnimatedCircle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         strokeDasharray={`${circumference} ${circumference}`}
-        strokeDashoffset={currentOffset}
         strokeLinecap="round"
         fill="none"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        animatedProps={animatedProps}
       />
     </Svg>
   );

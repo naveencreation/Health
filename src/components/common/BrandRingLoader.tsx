@@ -1,5 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
 
 interface BrandRingLoaderProps {
   size?: number;
@@ -14,56 +23,42 @@ export const BrandRingLoader: React.FC<BrandRingLoaderProps> = ({
   accentColor = '#CDE26D',
   style,
 }) => {
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useSharedValue(0);
+  const pulseAnim = useSharedValue(1);
 
   useEffect(() => {
-    const rotateLoop = Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 1800,
-        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-        useNativeDriver: true,
-      })
+    rotateAnim.value = withRepeat(
+      withTiming(1, { duration: 1800, easing: Easing.bezier(0.4, 0, 0.2, 1) }),
+      -1,
+      false
     );
 
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.12,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1.12, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false
     );
-
-    rotateLoop.start();
-    pulseLoop.start();
-
-    return () => {
-      rotateLoop.stop();
-      pulseLoop.stop();
-    };
   }, [rotateAnim, pulseAnim]);
 
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const outerRingStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${interpolate(rotateAnim.value, [0, 1], [0, 360])}deg` },
+      { scale: pulseAnim.value },
+    ],
+  }));
+
+  const innerCoreStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseAnim.value }],
+  }));
 
   const outerSize = size;
   const innerSize = Math.round(size * 0.72);
 
   return (
     <View style={[styles.wrapper, { width: outerSize, height: outerSize }, style]}>
-      {/* Outer Glowing Ring */}
       <Animated.View
         style={[
           styles.outerRing,
@@ -75,12 +70,10 @@ export const BrandRingLoader: React.FC<BrandRingLoaderProps> = ({
             borderRightColor: accentColor,
             borderBottomColor: 'transparent',
             borderLeftColor: primaryColor,
-            transform: [{ rotate: spin }, { scale: pulseAnim }],
           },
+          outerRingStyle,
         ]}
       />
-
-      {/* Inner Soft Pulsing Core */}
       <Animated.View
         style={[
           styles.innerCore,
@@ -89,8 +82,8 @@ export const BrandRingLoader: React.FC<BrandRingLoaderProps> = ({
             height: innerSize,
             borderRadius: innerSize / 2,
             backgroundColor: `${primaryColor}18`,
-            transform: [{ scale: pulseAnim }],
           },
+          innerCoreStyle,
         ]}
       />
     </View>

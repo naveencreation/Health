@@ -1,5 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
@@ -36,25 +42,26 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const { removeMealItem, updateMealQuantity } = useHealth();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
-  const expandAnim = useRef(new Animated.Value(1)).current;
+  const expandAnim = useSharedValue(1);
 
   const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
   const handleToggleExpand = () => {
     const toValue = isExpanded ? 0 : 1;
     setIsExpanded((prev) => !prev);
-    Animated.timing(expandAnim, {
-      toValue,
-      duration: 220,
-      useNativeDriver: false,
-    }).start();
+    expandAnim.value = withTiming(toValue, { duration: 220 });
   };
 
   // Sync anim when items change (card goes from empty to filled)
   useEffect(() => {
-    expandAnim.setValue(1);
+    expandAnim.value = 1;
     setIsExpanded(true);
   }, [items.length === 0]);
+
+  const collapseStyle = useAnimatedStyle(() => ({
+    opacity: expandAnim.value,
+    maxHeight: interpolate(expandAnim.value, [0, 1], [0, 2000]),
+  }));
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
   const hasItems = items.length > 0;
@@ -176,14 +183,8 @@ const MealCardComponent: React.FC<MealCardProps> = ({
         <Animated.View
           style={[
             styles.itemsContainer,
-            {
-              opacity: expandAnim,
-              maxHeight: expandAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 2000],
-              }),
-              overflow: 'hidden',
-            },
+            { overflow: 'hidden' },
+            collapseStyle,
           ]}
         >
           {items.map((item, index) => {

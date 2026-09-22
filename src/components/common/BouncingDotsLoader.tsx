@@ -1,5 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, StyleProp, ViewStyle } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withDelay,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 interface BouncingDotsLoaderProps {
   color?: string;
@@ -14,48 +23,33 @@ export const BouncingDotsLoader: React.FC<BouncingDotsLoaderProps> = ({
   gap = 5,
   style,
 }) => {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  const dot1 = useSharedValue(0);
+  const dot2 = useSharedValue(0);
+  const dot3 = useSharedValue(0);
 
   useEffect(() => {
-    const createBounceAnimation = (anim: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(anim, {
-            toValue: -6,
-            duration: 320,
-            easing: Easing.bezier(0.2, 0.64, 0.21, 1),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 320,
-            easing: Easing.bezier(0.42, 0, 0.58, 1),
-            useNativeDriver: true,
-          }),
-          Animated.delay(320 - delay),
-        ])
+    const bounce = (toValue: number, delay: number, rest: number, restTarget: number) => {
+      return withRepeat(
+        withSequence(
+          withDelay(delay, withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })),
+          withTiming(0, { duration: 320, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+          withDelay(rest, withTiming(restTarget, { duration: 0 })),
+        ),
+        -1,
+        false
       );
     };
 
-    const anim1 = createBounceAnimation(dot1, 0);
-    const anim2 = createBounceAnimation(dot2, 140);
-    const anim3 = createBounceAnimation(dot3, 280);
-
-    anim1.start();
-    anim2.start();
-    anim3.start();
-
-    return () => {
-      anim1.stop();
-      anim2.stop();
-      anim3.stop();
-    };
+    dot1.value = bounce(-6, 0, 320, 0);
+    dot2.value = bounce(-6, 140, 180, 0);
+    dot3.value = bounce(-6, 280, 40, 0);
   }, [dot1, dot2, dot3]);
 
-  const dotStyle = {
+  const dot1Style = useAnimatedStyle(() => ({ transform: [{ translateY: dot1.value }] }));
+  const dot2Style = useAnimatedStyle(() => ({ transform: [{ translateY: dot2.value }] }));
+  const dot3Style = useAnimatedStyle(() => ({ transform: [{ translateY: dot3.value }] }));
+
+  const dotBaseStyle = {
     width: size,
     height: size,
     borderRadius: size / 2,
@@ -65,9 +59,9 @@ export const BouncingDotsLoader: React.FC<BouncingDotsLoaderProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View style={[dotStyle, { transform: [{ translateY: dot1 }] }]} />
-      <Animated.View style={[dotStyle, { transform: [{ translateY: dot2 }] }]} />
-      <Animated.View style={[dotStyle, { transform: [{ translateY: dot3 }] }]} />
+      <Animated.View style={[dotBaseStyle, dot1Style]} />
+      <Animated.View style={[dotBaseStyle, dot2Style]} />
+      <Animated.View style={[dotBaseStyle, dot3Style]} />
     </View>
   );
 };

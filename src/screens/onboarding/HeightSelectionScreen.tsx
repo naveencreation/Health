@@ -6,8 +6,12 @@ import {
   Pressable,
   Platform,
   PanResponder,
-  Animated,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -104,7 +108,11 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
   const activeValue = unit === 'cm' ? heightCm : totalInches;
 
   // Real-time micro vertical drag visual feedback
-  const dragAnimY = useRef(new Animated.Value(0)).current;
+  const dragAnimY = useSharedValue(0);
+
+  const dragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: dragAnimY.value }],
+  }));
   const startValRef = useRef<number>(activeValue);
   const currentValRef = useRef<number>(activeValue);
 
@@ -137,7 +145,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 3,
       onPanResponderGrant: () => {
         startValRef.current = currentValRef.current;
-        dragAnimY.setValue(0);
+        dragAnimY.value = 0;
       },
       onPanResponderMove: (_, g) => {
         // Dragging DOWN (+dy) moves ruler down (increases height value)
@@ -153,7 +161,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
 
         // Tactile micro-offset
         const remainder = g.dy - steps * RULER_STEP_PX;
-        dragAnimY.setValue(remainder * 0.4);
+        dragAnimY.value = remainder * 0.4;
       },
       onPanResponderRelease: (_, g) => {
         // Momentum flick
@@ -163,20 +171,10 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
           updateHeight(currentValRef.current - 2);
         }
 
-        Animated.spring(dragAnimY, {
-          toValue: 0,
-          friction: 7,
-          tension: 60,
-          useNativeDriver: true,
-        }).start();
+        dragAnimY.value = withTiming(0, { duration: 200 });
       },
       onPanResponderTerminate: () => {
-        Animated.spring(dragAnimY, {
-          toValue: 0,
-          friction: 7,
-          tension: 60,
-          useNativeDriver: true,
-        }).start();
+        dragAnimY.value = withTiming(0, { duration: 200 });
       },
     })
   ).current;
@@ -310,9 +308,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             <Animated.View
               style={[
                 styles.ticksTape,
-                {
-                  transform: [{ translateY: dragAnimY }],
-                },
+                dragStyle,
               ]}
             >
               {ticks.map((tickVal) => (

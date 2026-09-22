@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,13 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  Animated,
-  Platform,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -47,7 +49,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
 
   // Scroll tracking to reveal date subtitle only when scrolled
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollY = useSharedValue(0);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -56,37 +58,25 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
     }, 750);
   }, []);
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: Platform.OS !== 'web' }
-  );
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
   // Title scaling from large (1.0) down to compact (0.78)
-  const titleScale = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [1, 0.78],
-    extrapolate: 'clamp',
-  });
-
-  // Title moves slightly up to make room for subtitle
-  const titleTranslateY = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, -4],
-    extrapolate: 'clamp',
-  });
+  const titleStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(scrollY.value, [0, 50], [0, -4], 'clamp') },
+      { scale: interpolate(scrollY.value, [0, 50], [1, 0.78], 'clamp') },
+    ],
+  }));
 
   // Reveal subtitle only when scrolled past the visible TopDateStrip
-  const subtitleOpacity = scrollY.interpolate({
-    inputRange: [20, 50],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const subtitleTranslateY = scrollY.interpolate({
-    inputRange: [20, 50],
-    outputRange: [4, 0],
-    extrapolate: 'clamp',
-  });
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [20, 50], [0, 1], 'clamp'),
+    transform: [{ translateY: interpolate(scrollY.value, [20, 50], [4, 0], 'clamp') }],
+  }));
 
   const {
     currentLog,
@@ -141,12 +131,10 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
         <View style={styles.diaryHeaderMainRow}>
           {/* Left Title in Animated.View (Exact same center line as Search button!) */}
           <Animated.View
-            style={{
-              flex: 1,
-              transform: [{ translateY: titleTranslateY }, { scale: titleScale }],
-              transformOrigin: 'left center',
-              justifyContent: 'center',
-            }}
+            style={[
+              { flex: 1, transformOrigin: 'left center', justifyContent: 'center' },
+              titleStyle,
+            ]}
           >
             <Text style={styles.diaryHeaderTitle}>Nutrition Diary</Text>
           </Animated.View>
@@ -167,10 +155,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
         <Animated.View
           style={[
             styles.subtitleContainer,
-            {
-              opacity: subtitleOpacity,
-              transform: [{ translateY: subtitleTranslateY }],
-            },
+            subtitleStyle,
           ]}
           pointerEvents="none"
         >

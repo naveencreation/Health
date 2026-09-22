@@ -1,5 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, StyleProp, ViewStyle, Easing, AccessibilityInfo } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, AccessibilityInfo } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
 
 interface AnimatedProgressBarProps {
   progress: number; // 0 to 1
@@ -21,7 +28,7 @@ export const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
   fillStyle,
 }) => {
   const clamped = Math.max(0, Math.min(1, progress));
-  const animatedProgress = useRef(new Animated.Value(clamped)).current;
+  const animatedProgress = useSharedValue(clamped);
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
@@ -32,22 +39,19 @@ export const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
 
   useEffect(() => {
     if (isReducedMotion.current) {
-      animatedProgress.setValue(clamped);
+      animatedProgress.value = clamped;
       return;
     }
 
-    Animated.timing(animatedProgress, {
-      toValue: clamped,
+    animatedProgress.value = withTiming(clamped, {
       duration,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [clamped, duration]);
+    });
+  }, [clamped, duration, animatedProgress]);
 
-  const width = animatedProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const fillAnimatedStyle = useAnimatedStyle(() => ({
+    width: `${interpolate(animatedProgress.value, [0, 1], [0, 100])}%`,
+  }));
 
   return (
     <View style={[styles.track, { height, backgroundColor: trackColor, borderRadius: height / 2 }, style]}>
@@ -58,8 +62,8 @@ export const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
             height,
             backgroundColor: fillColor,
             borderRadius: height / 2,
-            width,
           },
+          fillAnimatedStyle,
           fillStyle,
         ]}
       />

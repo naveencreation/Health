@@ -1,14 +1,15 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   ScrollView,
   RefreshControl,
   View,
-  Animated,
-  Platform,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  runOnJS,
+} from 'react-native-reanimated';
 import {
   Header,
   TopDateStrip,
@@ -43,8 +44,8 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
 
   // Scroll tracking for in-place morphing header
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const isScrolledRef = useRef(false);
+  const scrollY = useSharedValue(0);
+  const isScrolledSV = useSharedValue(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const onRefresh = useCallback(() => {
@@ -54,23 +55,20 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
     }, 750);
   }, []);
 
-  // 60fps Native-driven scroll handler
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    {
-      useNativeDriver: Platform.OS !== 'web',
-      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const y = event.nativeEvent.contentOffset.y;
-        if (y > 35 && !isScrolledRef.current) {
-          isScrolledRef.current = true;
-          setIsScrolled(true);
-        } else if (y <= 35 && isScrolledRef.current) {
-          isScrolledRef.current = false;
-          setIsScrolled(false);
-        }
-      },
-    }
-  );
+  // 60fps UI-thread scroll handler; JS state only flips on threshold crossing
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+      const y = event.contentOffset.y;
+      if (y > 35 && !isScrolledSV.value) {
+        isScrolledSV.value = true;
+        runOnJS(setIsScrolled)(true);
+      } else if (y <= 35 && isScrolledSV.value) {
+        isScrolledSV.value = false;
+        runOnJS(setIsScrolled)(false);
+      }
+    },
+  });
 
   return (
     <View style={styles.container}>

@@ -1,15 +1,21 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  Animated,
-  Platform,
-  Easing,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  withTiming,
+  Easing,
+  SharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
@@ -48,6 +54,21 @@ interface AnalyticsScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
+const AnimatedBarFill = React.memo(function AnimatedBarFill({
+  heightPct,
+  color,
+  barAnim,
+}: {
+  heightPct: number;
+  color: string;
+  barAnim: SharedValue<number>;
+}) {
+  const fillStyle = useAnimatedStyle(() => ({
+    height: `${interpolate(barAnim.value, [0, 1], [0, Math.max(10, heightPct)])}%`,
+  }));
+  return <Animated.View style={[styles.barFill, fillStyle, { backgroundColor: color }]} />;
+});
+
 const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   scrollRef,
 }) => {
@@ -71,9 +92,9 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const [selectedClusterIdx, setSelectedClusterIdx] = useState<number | null>(3);
 
   // Animations -- shared across all metric tabs
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const barAnim = useRef(new Animated.Value(0)).current;
-  const tooltipAnim = useRef(new Animated.Value(1)).current;
+  const scrollY = useSharedValue(0);
+  const barAnim = useSharedValue(0);
+  const tooltipAnim = useSharedValue(1);
 
   const budget = userGoals.dailyCalorieBudget || 2200;
   const waterGoal = userGoals.waterGoalMl || 2000;
@@ -89,23 +110,16 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   // Animate bars on horizon or metric tab change
   useEffect(() => {
-    barAnim.setValue(0);
-    Animated.timing(barAnim, {
-      toValue: 1,
+    barAnim.value = 0;
+    barAnim.value = withTiming(1, {
       duration: 380,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
+    });
   }, [timeRange, metricTab, barAnim]);
 
   const triggerTooltipAnim = useCallback(() => {
-    tooltipAnim.setValue(0);
-    Animated.spring(tooltipAnim, {
-      toValue: 1,
-      friction: 8,
-      tension: 60,
-      useNativeDriver: false,
-    }).start();
+    tooltipAnim.value = 0;
+    tooltipAnim.value = withTiming(1, { duration: 150 });
   }, [tooltipAnim]);
 
   const handleTimeRangeChange = useCallback((range: TimeRange) => {
@@ -494,46 +508,36 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   }, [timeRange, selectedBarIdx, selectedClusterIdx, weeklyLogs, thirtyDayClusters, stepGoal]);
 
   // Scroll animations
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
-  );
-
-  const titleScale = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [1, 0.78],
-    extrapolate: 'clamp',
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
   });
 
-  const titleTranslateY = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, -3],
-    extrapolate: 'clamp',
-  });
+  const titleStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(scrollY.value, [0, 50], [0, -3], 'clamp') },
+      { scale: interpolate(scrollY.value, [0, 50], [1, 0.78], 'clamp') },
+    ],
+  }));
 
-  const subtitleAtRestOpacity = scrollY.interpolate({
-    inputRange: [0, 25],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const subtitleAtRestStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 25], [1, 0], 'clamp'),
+  }));
 
-  const adaptiveContextOpacity = scrollY.interpolate({
-    inputRange: [20, 45],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
+  const adaptiveContextStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [20, 45], [0, 1], 'clamp'),
+    transform: [{ translateY: interpolate(scrollY.value, [20, 45], [4, 0], 'clamp') }],
+  }));
 
-  const adaptiveContextTranslateY = scrollY.interpolate({
-    inputRange: [20, 45],
-    outputRange: [4, 0],
-    extrapolate: 'clamp',
-  });
+  const headerBorderStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [15, 40], [0, 1], 'clamp'),
+  }));
 
-  const headerBorderOpacity = scrollY.interpolate({
-    inputRange: [15, 40],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
+  const tooltipStyle = useAnimatedStyle(() => ({
+    opacity: tooltipAnim.value,
+    transform: [{ scale: interpolate(tooltipAnim.value, [0, 1], [0.94, 1]) }],
+  }));
 
   // Dynamic max scale for bar charts so peak days don't cap out (respects active horizon)
   const maxChartCalorie = useMemo(() => {
@@ -564,18 +568,15 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     <View style={styles.rootContainer}>
       {/* 0. Dedicated Nutrition & Health Trends Top App Bar */}
       <View style={styles.headerContainer}>
-        <Animated.View style={[styles.headerBorder, { opacity: headerBorderOpacity }]} />
+        <Animated.View style={[styles.headerBorder, headerBorderStyle]} />
 
         <View style={styles.headerMainRow}>
           {/* Title: Scales down smoothly on scroll with margin to prevent crowding */}
           <Animated.View
-            style={{
-              flex: 1,
-              transform: [{ translateY: titleTranslateY }, { scale: titleScale }],
-              transformOrigin: 'left center',
-              justifyContent: 'center',
-              marginRight: 10,
-            }}
+            style={[
+              { flex: 1, transformOrigin: 'left center', justifyContent: 'center', marginRight: 10 },
+              titleStyle,
+            ]}
           >
             <Text
               style={styles.headerTitle}
@@ -634,7 +635,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         {/* Subtitle Zone: At rest displays description; on scroll reveals adaptive status pill */}
         <View style={styles.subtitleZone}>
           <Animated.View
-            style={[styles.subtitleStack, { opacity: subtitleAtRestOpacity }]}
+            style={[styles.subtitleStack, subtitleAtRestStyle]}
             pointerEvents="none"
           >
             <Text style={styles.headerSubtitle} numberOfLines={1}>
@@ -647,10 +648,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <Animated.View
             style={[
               styles.subtitleStack,
-              {
-                opacity: adaptiveContextOpacity,
-                transform: [{ translateY: adaptiveContextTranslateY }],
-              },
+              adaptiveContextStyle,
             ]}
           >
             <View style={styles.adaptiveStatusBadge}>
@@ -954,10 +952,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             <Animated.View
               style={[
                 styles.tooltipContainer,
-                {
-                  opacity: tooltipAnim,
-                  transform: [{ scale: tooltipAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
-                },
+                tooltipStyle,
               ]}
             >
               <View style={styles.tooltipMainRow}>
@@ -1028,10 +1023,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             <Animated.View
               style={[
                 styles.tooltipContainer,
-                {
-                  opacity: tooltipAnim,
-                  transform: [{ scale: tooltipAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
-                },
+                tooltipStyle,
               ]}
             >
               <View style={styles.tooltipMainRow}>
@@ -1096,10 +1088,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             <Animated.View
               style={[
                 styles.tooltipContainer,
-                {
-                  opacity: tooltipAnim,
-                  transform: [{ scale: tooltipAnim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
-                },
+                tooltipStyle,
               ]}
             >
               <View style={styles.tooltipMainRow}>
@@ -1209,11 +1198,6 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   const barColorOther = metricTab === 'calories' ? '#F47551' : metricTab === 'water' ? '#38BDF8' : '#FB923C';
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
-                  const animBarHeight = barAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', `${Math.max(10, heightPct)}%`],
-                  });
-
                   const topLabel = metricTab === 'calories' ? `${val}`
                                    : metricTab === 'water' ? `${(val / 1000).toFixed(1)}L`
                                    : val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
@@ -1248,8 +1232,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                         ]}
                       >
                         {hasData ? (
-                          <Animated.View
-                            style={[styles.barFill, { height: animBarHeight, backgroundColor: isGood ? barColorMet : barColorOther }]}
+                          <AnimatedBarFill
+                            heightPct={heightPct}
+                            color={isGood ? barColorMet : barColorOther}
+                            barAnim={barAnim}
                           />
                         ) : null}
                       </View>
@@ -1288,11 +1274,6 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   const barColorOther = metricTab === 'calories' ? '#F47551' : metricTab === 'water' ? '#38BDF8' : '#FB923C';
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
-                  const animBarHeight = barAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0%', `${Math.max(10, heightPct)}%`],
-                  });
-
                   const topLabel = metricTab === 'calories' ? `${val}`
                                    : metricTab === 'water' ? `${(val / 1000).toFixed(1)}L`
                                    : val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
@@ -1327,8 +1308,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                         ]}
                       >
                         {hasData ? (
-                          <Animated.View
-                            style={[styles.barFill, { height: animBarHeight, backgroundColor: isGood ? barColorMet : barColorOther }]}
+                          <AnimatedBarFill
+                            heightPct={heightPct}
+                            color={isGood ? barColorMet : barColorOther}
+                            barAnim={barAnim}
                           />
                         ) : null}
                       </View>
