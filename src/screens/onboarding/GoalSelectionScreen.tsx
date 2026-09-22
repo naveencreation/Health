@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Colors } from '@/theme/colors';
+import { OnboardingHeader } from '@/components/onboarding';
 
 export type FitnessGoal = 'lose' | 'maintain' | 'gain';
 
@@ -73,27 +75,8 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Frame 12: Top Navigation Bar */}
-        <View style={styles.headerBar}>
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
-            onPress={onBack}
-            hitSlop={HIT_SLOP_12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </Pressable>
-
-          <View style={styles.logoBadgeContainer}>
-            <View style={styles.logoDot} />
-            <Text style={styles.logoBadgeText}>Calori</Text>
-          </View>
-
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 4 of 5</Text>
-          </View>
-        </View>
+        {/* Top Navigation Bar */}
+        <OnboardingHeader onBack={onBack} stepText="Step 4 of 5" />
 
         {/* Header Title & Cognitive Context */}
         <View style={styles.titleContainer}>
@@ -170,7 +153,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
             accessibilityLabel="Continue with selected goal"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#0F172A" />
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
 
           {/* Skip & Sign In Actions */}
@@ -227,69 +210,19 @@ const styles = StyleSheet.create({
   },
   phoneFrame: {
     width: '100%',
-    maxWidth: 375,
-    height: 812,
+    maxWidth: 440,
+    flex: 1,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 30,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 24 : 16,
-    paddingBottom: 28,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 24,
     justifyContent: 'space-between',
     ...(Platform.OS === 'web'
       ? ({
           boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',
         } as any)
       : {}),
-  },
-
-  // Header Bar
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 10,
-    paddingHorizontal: 4,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  logoDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CDE26D',
-  },
-  logoBadgeText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  stepBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  stepIndicatorText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 12,
-    color: '#64748B',
-    letterSpacing: 0.2,
   },
 
   // Title & Context
@@ -454,13 +387,13 @@ const styles = StyleSheet.create({
   continueButton: {
     width: 220,
     height: 52,
-    backgroundColor: '#CDE26D',
+    backgroundColor: Colors.primary,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#CDE26D',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -468,7 +401,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web'
       ? ({
           cursor: 'pointer',
-          boxShadow: '0px 6px 18px rgba(205, 226, 109, 0.45)',
+          boxShadow: '0px 6px 18px rgba(244, 117, 81, 0.4)',
         } as any)
       : {}),
   },
@@ -479,7 +412,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#0F172A',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   skipContainer: {

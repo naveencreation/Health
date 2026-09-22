@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/theme/colors';
+import { OnboardingHeader } from '@/components/onboarding';
 
 interface AgeSelectionScreenProps {
   onBack?: () => void;
@@ -228,29 +230,7 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
         {/* Frame 12: Top Header Bar */}
-        <View style={styles.headerBar}>
-          {/* Back Action */}
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
-            onPress={onBack}
-            hitSlop={HIT_SLOP_12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </Pressable>
-
-          {/* Center Brand Badge */}
-          <View style={styles.logoBadgeContainer}>
-            <View style={styles.logoDot} />
-            <Text style={styles.logoBadgeText}>Calori</Text>
-          </View>
-
-          {/* Step Indicator: Step 1 of 5 */}
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 1 of 5</Text>
-          </View>
-        </View>
+        <OnboardingHeader onBack={onBack} stepText="Step 1 of 5" />
 
         {/* Title & Cognitive Reassurance Context */}
         <View style={styles.titleContainer}>
@@ -308,7 +288,7 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
             accessibilityLabel="Continue with selected age"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#0F172A" />
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
 
           {/* Skip & Sign In Actions */}
@@ -351,12 +331,12 @@ const styles = StyleSheet.create({
   },
   phoneFrame: {
     width: '100%',
-    maxWidth: 375,
-    minHeight: 740,
+    maxWidth: 440,
+    flex: 1,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 30,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 24 : 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
     justifyContent: 'space-between',
     // Desktop frame preview shadow
@@ -368,56 +348,6 @@ const styles = StyleSheet.create({
           shadowRadius: 30,
         }
       : {}),
-  },
-
-  // Frame 12: Header
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 10,
-    paddingHorizontal: 4,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  logoDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CDE26D',
-  },
-  logoBadgeText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  stepBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  stepIndicatorText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 12,
-    color: '#64748B',
-    letterSpacing: 0.2,
   },
 
   // Title: What’s your Age?
@@ -464,15 +394,20 @@ const styles = StyleSheet.create({
     top: 158,
     width: 138,
     height: 84,
-    backgroundColor: '#CDE26D',
+    backgroundColor: Colors.primary,
     borderRadius: 20,
     alignSelf: 'center',
-    shadowColor: '#CDE26D',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.35,
     shadowRadius: 18,
     elevation: 6,
     pointerEvents: 'none',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0px 8px 24px rgba(244, 117, 81, 0.4)',
+        } as any)
+      : {}),
   },
   pickerScrollView: {
     width: '100%',
@@ -544,13 +479,13 @@ const styles = StyleSheet.create({
   continueButton: {
     width: 220,
     height: 52,
-    backgroundColor: '#CDE26D',
+    backgroundColor: Colors.primary,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#CDE26D',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -563,7 +498,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#0F172A',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   skipContainer: {

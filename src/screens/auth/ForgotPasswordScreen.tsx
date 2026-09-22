@@ -17,7 +17,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { auth } from '@/services/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { BouncingDotsLoader } from '@/components';
+import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface ForgotPasswordScreenProps {
   onBack: () => void;
@@ -74,25 +74,10 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
         {/* Header Bar */}
-        <View style={styles.headerBar}>
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
-            onPress={isSent ? () => setIsSent(false) : onBack}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            testID="btn-forgot-back"
-          >
-            <Ionicons name="arrow-back" size={22} color="#1C274C" />
-          </Pressable>
-
-          <View style={styles.logoBadgeContainer}>
-            <View style={styles.logoDot} />
-            <Text style={styles.logoBadgeText}>Calori</Text>
-          </View>
-
-          <View style={styles.headerPlaceholder} />
-        </View>
+        <OnboardingHeader
+          onBack={isSent ? () => setIsSent(false) : onBack}
+          testID="btn-forgot-back"
+        />
 
         <KeyboardAvoidingView
           style={styles.flexOne}
@@ -288,55 +273,6 @@ const styles = StyleSheet.create({
   },
   flexOne: {
     flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  pressedBack: {
-    backgroundColor: '#E2E8F0',
-    transform: [{ scale: 0.96 }],
-  },
-  logoBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-  },
-  logoDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-    marginRight: 6,
-  },
-  logoBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    color: Colors.primary,
-  },
-  headerPlaceholder: {
-    width: 44,
   },
   scrollView: {
     flex: 1,

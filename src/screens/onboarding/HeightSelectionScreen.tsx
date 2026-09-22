@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/theme/colors';
+import { OnboardingHeader } from '@/components/onboarding';
 
 export type HeightUnit = 'cm' | 'ft';
 
@@ -212,26 +214,8 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
         {/* Frame 12: Header Bar */}
-        <View style={styles.headerBar}>
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
-            onPress={onBack}
-            hitSlop={HIT_SLOP_12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </Pressable>
-
-          <View style={styles.logoBadgeContainer}>
-            <View style={styles.logoDot} />
-            <Text style={styles.logoBadgeText}>Calori</Text>
-          </View>
-
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>Step 3 of 5</Text>
-          </View>
-        </View>
+        {/* Header Bar */}
+        <OnboardingHeader onBack={onBack} stepText="Step 3 of 5" />
 
         {/* Title & Cognitive Context */}
         <View style={styles.titleContainer}>
@@ -358,7 +342,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             testID="btn-height-continue"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#0F172A" />
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
 
           {/* Skip & Sign In Actions */}
@@ -401,14 +385,13 @@ const styles = StyleSheet.create({
   },
   phoneFrame: {
     width: '100%',
-    maxWidth: 375,
-    height: 812,
+    maxWidth: 440,
+    flex: 1,
+    alignSelf: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 30,
-    borderCurve: 'continuous',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 24 : 16,
-    paddingBottom: 28,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 24,
     justifyContent: 'space-between',
     ...(Platform.OS === 'web'
       ? ({
@@ -416,62 +399,9 @@ const styles = StyleSheet.create({
         } as any)
       : {}),
   },
-
-  // Frame 12: Header Bar (matches Weight & Age 1:1)
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 10,
-    paddingHorizontal: 4,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   btnPressedSubtle: {
     opacity: 0.65,
     transform: [{ scale: 0.96 }],
-  },
-  logoBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  logoDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CDE26D', // Calori Lime!
-  },
-  logoBadgeText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  stepBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-  },
-  stepIndicatorText: {
-    fontFamily: 'Poppins_600SemiBold',
-    fontSize: 12,
-    color: '#64748B',
-    letterSpacing: 0.2,
   },
 
   // Title: What’s your height? (matches Weight 1:1)
@@ -735,14 +665,14 @@ const styles = StyleSheet.create({
   continueButton: {
     width: 220,
     height: 52,
-    backgroundColor: '#CDE26D', // Calori Lime!
+    backgroundColor: Colors.primary,
     borderRadius: 16,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#CDE26D',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -755,7 +685,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
-    color: '#0F172A',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
   skipContainer: {

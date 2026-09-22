@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useHealth } from '@/context/HealthContext';
-import { BouncingDotsLoader } from '@/components';
+import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface SignInScreenProps {
   onBack: () => void;
@@ -67,28 +67,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
         {/* Top Header Navigation */}
-        <View style={styles.headerBar}>
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.pressedBack : null]}
-            onPress={onBack}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            testID="btn-signin-back"
-          >
-            <Ionicons name="arrow-back" size={22} color="#1C274C" />
-          </Pressable>
-
-          <View style={styles.headerCenterBrand}>
-            <View style={styles.headerLogoBadge}>
-              <Ionicons name="flame" size={16} color="#FFFFFF" />
-            </View>
-            <Text style={styles.headerBrandText}>Calori</Text>
-          </View>
-
-          {/* Symmetrical placeholder balancing the 44px back button */}
-          <View style={styles.headerRightPlaceholder} />
-        </View>
+        <OnboardingHeader onBack={onBack} testID="btn-signin-back" />
 
         {/* Keyboard Avoiding Container */}
         <KeyboardAvoidingView
@@ -296,53 +275,12 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
     backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 24,
   },
   flexOne: {
     flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 12,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  pressedBack: {
-    backgroundColor: '#E2E8F0',
-    transform: [{ scale: 0.96 }],
-  },
-  headerCenterBrand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerLogoBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBrandText: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
-    color: '#0F172A',
-    letterSpacing: -0.4,
-  },
-  headerRightPlaceholder: {
-    width: 44,
   },
   scrollView: {
     flex: 1,

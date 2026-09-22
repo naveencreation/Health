@@ -49,3 +49,6 @@ export { FoodImage } from './common/FoodImage';
 export { AppLoadingScreen } from './common/AppLoadingScreen';
 export { BouncingDotsLoader } from './common/BouncingDotsLoader';
 export { BrandRingLoader } from './common/BrandRingLoader';
+
+// Onboarding Components
+export { OnboardingHeader } from './onboarding';
