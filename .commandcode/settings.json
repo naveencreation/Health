@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(npx expo install expo-navigation-bar)",
+      "Shell(npx tsc --noEmit)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

@@ -4,13 +4,14 @@ import {
   View,
   ScrollView,
   Platform,
-  StatusBar as RNStatusBar,
   ActivityIndicator,
   Alert,
   BackHandler,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationBar } from 'expo-navigation-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Kurale_400Regular } from '@expo-google-fonts/kurale';
 import {
   Poppins_400Regular,
@@ -46,6 +47,8 @@ import {
   BYOKSetupModal,
   AppLoadingScreen,
 } from '@/components';
+
+SplashScreen.preventAutoHideAsync();
 
 interface TabWrapperProps {
   isActive: boolean;
@@ -97,7 +100,7 @@ function MainApp() {
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Kurale_400Regular,
     Poppins_400Regular,
     Poppins_500Medium,
@@ -106,17 +109,13 @@ function MainApp() {
   });
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      const linkId = 'calori-figma-google-fonts';
-      if (!document.getElementById(linkId)) {
-        const link = document.createElement('link');
-        link.id = linkId;
-        link.rel = 'stylesheet';
-        link.href =
-          'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&display=swap';
-        document.head.appendChild(link);
-      }
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
+  useEffect(() => {
+    if (Platform.OS === 'web') {
       const styleId = 'calori-hide-scrollbars';
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
@@ -285,7 +284,7 @@ function MainApp() {
   }, []);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
-  const isFontsReady = Platform.OS === 'web' || fontsLoaded;
+  const isFontsReady = fontsLoaded || fontError;
 
   if (!isFontsReady || isAuthLoading) {
     return (
@@ -309,10 +308,6 @@ function MainApp() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      {Platform.OS === 'android' ? (
-        <RNStatusBar backgroundColor="#FAF9F6" barStyle="dark-content" />
-      ) : null}
       <View style={styles.phoneContainer}>
         {/* Tab Content with Offscreen Preservation & Lazy Initial Mount */}
         <View style={styles.contentArea}>
@@ -441,6 +436,8 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <HealthProvider>
+          <StatusBar style="dark" />
+          <NavigationBar style="dark" />
           <MainApp />
         </HealthProvider>
       </SafeAreaProvider>
