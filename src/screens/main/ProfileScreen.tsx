@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,11 +7,13 @@ import {
   ScrollView,
   useWindowDimensions,
   BackHandler,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth, useGoals } from '@/context/HealthContext';
 import {
   ProfileHeaderCard,
   ProfileQuickNavGrid,
@@ -35,21 +37,39 @@ interface ProfileScreenProps {
   onSignIn?: () => void;
   onSignOut?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
+  initialScrollOffset?: number;
+  onScrollPositionChange?: (offset: number) => void;
 }
 
 const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onSignIn,
   onSignOut,
   scrollRef,
+  initialScrollOffset = 0,
+  onScrollPositionChange,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallDevice = screenWidth < 375;
 
-  const { userGoals, currentUser, updateGoals } = useHealth();
+  const { userGoals, updateGoals } = useGoals();
+  const { currentUser } = useAuth();
 
   // Navigation Sub-View State ('main' | 'awards' | 'summary' | 'preferences' | 'goals')
   const [subView, setSubView] = useState<ProfileSubView>('main');
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (initialScrollOffset > 0) {
+        scrollRef?.current?.scrollTo({ y: initialScrollOffset, animated: false });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialScrollOffset, scrollRef]);
+
+  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+  }, [onScrollPositionChange]);
 
   // Hardware Back Handler on Android
   useEffect(() => {
@@ -158,6 +178,8 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
       >
         {/* 1. User Identity Card (Avatar + Name + Status + Streak) */}
         <ProfileHeaderCard

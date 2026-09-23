@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth } from '@/context/HealthContext';
 import { ScreenTransitionContainer } from '@/components/common/ScreenTransitionContainer';
 import { BouncingDotsLoader } from '@/components/common/BouncingDotsLoader';
 import { SignInScreen } from './SignInScreen';
@@ -48,7 +48,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   initialMode = 'welcome',
   onClose,
 }) => {
-  const { loginDemo } = useHealth();
+  const { loginDemo } = useAuth();
   const [history, setHistory] = useState<AuthScreenMode[]>([initialMode]);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const mode = history[history.length - 1] || 'welcome';

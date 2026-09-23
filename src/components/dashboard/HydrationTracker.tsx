@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 
 const CIRCLE_SIZE = 190;
 const STROKE_WIDTH = 14;
@@ -13,7 +13,8 @@ const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_MINUS = { top: 8, bottom: 8, left: 6, right: 6 };
 
 export const HydrationTracker: React.FC = () => {
-  const { currentLog, userGoals, addWater, resetWater } = useHealth();
+  const { currentLog, addWater, resetWater } = useDailyLog();
+  const { userGoals } = useGoals();
 
   const currentMl = currentLog.waterMl || 0;
   const targetMl = userGoals.waterGoalMl || 2000;

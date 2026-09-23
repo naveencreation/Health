@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Modal, ScrollView, Pressable } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals } from '@/context/HealthContext';
 
 interface MetabolicSummaryModalSheetProps {
   visible: boolean;
@@ -14,7 +14,7 @@ export const MetabolicSummaryModalSheet: React.FC<MetabolicSummaryModalSheetProp
   visible,
   onClose,
 }) => {
-  const { userGoals } = useHealth();
+  const { userGoals } = useGoals();
 
   const weightNum = userGoals.currentWeightKg || 74.2;
   const targetWeightNum = userGoals.targetWeightKg || 68.0;

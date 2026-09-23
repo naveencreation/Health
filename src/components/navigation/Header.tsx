@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { UserAvatar } from '@/components/common/UserAvatar';
 
@@ -48,7 +48,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   scrollY,
   isScrolled,
 }) => {
-  const { userGoals, currentUser, selectedDate, remainingCalories } = useHealth();
+  const { userGoals } = useGoals();
+  const { currentUser } = useAuth();
+  const { selectedDate, remainingCalories } = useDailyLog();
   const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
 
   const todayStr = useMemo(() => toDateString(new Date()), []);

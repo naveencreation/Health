@@ -12,7 +12,7 @@
 - Probes edge cases and failure modes of a proposed change before committing (e.g. sign-out → reopen flow, crash/force-kill mid-operation), not just the happy path. Confidence: 0.5
 - Prefers the app splash/branding to show the full wordmark — logo plus the app name side by side and centered — rather than just the icon alone. Confidence: 0.8
 - Prefers the splash screen background color to exactly match the app's background color for a seamless launch transition. Confidence: 0.9
-- Prioritizes smooth, high-quality UI animation as a top concern — explicitly calls animation "the most important thing" to get right. Confidence: 0.7
+- Prioritizes smooth, high-quality UI animation and stutter-free interactions as a top concern — explicitly calls animation "the most important thing" and flags janky button presses / "sudden movement" as a defect. Confidence: 0.8
 - Prefers a detailed written plan with prioritized, broken-down tasks before starting a large multi-file change (e.g. a framework migration), rather than jumping straight into code. Confidence: 0.7
 - Prefers natural, snappy spring animations without rubbery overshoot/bounce — when a spring feels "unnatural," expects higher damping relative to stiffness rather than a bouncy settle. Confidence: 0.7
 - Prefers the simplest, fastest animation primitive for quick UI feedback (press/tap scale, toast slide, tooltip, snap-back) — specifically plain `withTiming` over `withSpring`, valuing predictability and zero tuning over "natural" spring motion. Confidence: 0.8
@@ -20,3 +20,6 @@
 - Uses Jest (via the jest-expo preset) for unit and snapshot testing in the Expo project, with @testing-library/react-native for component tests. Confidence: 0.7
 - When assessing test status, wants concrete numbers — test-file count, pass count, a breakdown by test type (unit vs integration vs E2E), and code coverage — rather than just pass/fail. Confidence: 0.5
 - When expanding test coverage, prefers prioritizing the highest-value, lowest-risk targets first (e.g. security- and cost-critical logic like AI validators and rate limiter, or state reducers) and having the agent choose and build those tests autonomously rather than requiring a prescriptive list. Confidence: 0.5
+- Prefers encrypting sensitive data at rest (e.g., the BYOK Gemini API key backed up to Firestore) rather than leaving it as reversible base64 obfuscation or relying on SecureStore alone. Confidence: 0.6
+- Prefers deploying/testing on a physical Android device connected over USB (adb / `expo run:android`) rather than EAS cloud builds or the emulator. Confidence: 0.6
+- Prefers a standalone release build that runs without a dev server/PC (`npx expo run:android --variant release`) over debug builds tied to Metro staying connected. Confidence: 0.6

@@ -3,17 +3,17 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 
 export const CalorieBudgetCard: React.FC = () => {
   const {
-    userGoals,
     totalConsumed,
     totalCarbs,
     totalProtein,
     totalFat,
     remainingCalories,
-  } = useHealth();
+  } = useDailyLog();
+  const { userGoals } = useGoals();
 
   // Figma Specs: 224px x 224px Arc Gauge
   const size = 224;

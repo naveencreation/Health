@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth } from '@/context/HealthContext';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 
 interface AccountSecurityCardProps {
@@ -12,7 +12,7 @@ interface AccountSecurityCardProps {
 }
 
 export const AccountSecurityCard: React.FC<AccountSecurityCardProps> = ({ onSignOut, onSignIn }) => {
-  const { currentUser, logout } = useHealth();
+  const { currentUser, logout } = useAuth();
 
   const [confirmVisible, setConfirmVisible] = useState(false);
 

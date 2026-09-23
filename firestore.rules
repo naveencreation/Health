@@ -141,6 +141,22 @@ service cloud.firestore {
         (!('atwaterCorrected' in data) || data.atwaterCorrected is bool);
     }
 
+    function isValidRecentChatDoc() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['messages', 'updatedAt']) &&
+        data.messages is list && data.messages.size() <= 30 &&
+        data.updatedAt is string && data.updatedAt.size() <= 40;
+    }
+
+    function isValidChatSummaryDoc() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['text', 'lastSummarizedIndex', 'updatedAt']) &&
+        data.text is string && data.text.size() <= 2000 &&
+        data.lastSummarizedIndex is int && data.lastSummarizedIndex >= 0 &&
+        data.lastSummarizedIndex <= 1000000 &&
+        data.updatedAt is string && data.updatedAt.size() <= 40;
+    }
+
     // ===============================================================
     // Collection Rules
     // ===============================================================
@@ -178,7 +194,10 @@ service cloud.firestore {
 
       // Match Subcollection: chatHistory (Ria Assistant Chat Persistence)
       match /chatHistory/{messageId} {
-        allow read, write, delete: if isOwner(userId);
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          ((messageId == 'recent' && isValidRecentChatDoc()) ||
+           (messageId == 'summary' && isValidChatSummaryDoc()));
       }
     }
 

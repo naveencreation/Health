@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import Svg, { Circle, Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals, useAnalytics } from '@/context/HealthContext';
+import { useAuth } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
@@ -77,19 +78,19 @@ const formatDateStr = (d: Date): string => {
 
 const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
-    userGoals,
+    selectedDate,
+    setSelectedDate,
+    dailyLogs,
     totalConsumed,
     totalBurned,
     remainingCalories,
     totalCarbs,
     totalProtein,
     totalFat,
-    weeklyLogs,
-    selectedDate,
-    setSelectedDate,
-    dailyLogs,
-    currentUser,
-  } = useHealth();
+  } = useDailyLog();
+  const { userGoals } = useGoals();
+  const { weeklyLogs } = useAnalytics();
+  const { currentUser } = useAuth();
 
   const scrollRef = useRef<ScrollView>(null);
   const initialWidth =

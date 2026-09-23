@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   ScrollView,
   RefreshControl,
   View,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -29,6 +31,8 @@ interface TodayScreenProps {
   onSignInPress?: () => void;
   onSignOutPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
+  initialScrollOffset?: number;
+  onScrollPositionChange?: (offset: number) => void;
 }
 
 const TodayScreenComponent: React.FC<TodayScreenProps> = ({
@@ -40,6 +44,8 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onSignInPress,
   onSignOutPress,
   scrollRef,
+  initialScrollOffset = 0,
+  onScrollPositionChange,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -54,6 +60,19 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
       setRefreshing(false);
     }, 750);
   }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (initialScrollOffset > 0) {
+        scrollRef?.current?.scrollTo({ y: initialScrollOffset, animated: false });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialScrollOffset, scrollRef]);
+
+  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+  }, [onScrollPositionChange]);
 
   // 60fps UI-thread scroll handler; JS state only flips on threshold crossing
   const handleScroll = useAnimatedScrollHandler({
@@ -91,6 +110,8 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

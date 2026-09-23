@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals } from '@/context/HealthContext';
 
 interface GoalsModalSheetProps {
   visible: boolean;
@@ -21,7 +21,7 @@ interface GoalsModalSheetProps {
 }
 
 export const GoalsModalSheet: React.FC<GoalsModalSheetProps> = ({ visible, onClose }) => {
-  const { userGoals, updateGoals } = useHealth();
+  const { userGoals, updateGoals } = useGoals();
 
   const [calorieBudget, setCalorieBudget] = useState(String(userGoals.dailyCalorieBudget));
   const [targetProtein, setTargetProtein] = useState(String(userGoals.targetProtein));

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 
 interface ActivityRingData {
   label: string;
@@ -17,7 +17,8 @@ interface ActivityRingData {
 export const AppleActivityCard: React.FC<{ initialMode?: 'activity' | 'nutrition' }> = ({
   initialMode = 'activity',
 }) => {
-  const { currentLog, totalBurned, totalConsumed, userGoals, totalProtein } = useHealth();
+  const { currentLog, totalBurned, totalConsumed, totalProtein } = useDailyLog();
+  const { userGoals } = useGoals();
   const [mode, setMode] = useState<'activity' | 'nutrition'>(initialMode);
 
   // Concentric Rings Dimensions

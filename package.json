@@ -38,6 +38,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
+    "android:clean": "if exist android\\app\\.cxx rmdir /s /q android\\app\\.cxx && if exist android\\app\\build rmdir /s /q android\\app\\build && if exist android\\build rmdir /s /q android\\build && cd android && gradlew.bat clean",
+    "android:release": "npm run android:clean && expo run:android --variant release",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest"

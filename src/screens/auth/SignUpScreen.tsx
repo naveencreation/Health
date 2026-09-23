@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth } from '@/context/HealthContext';
 import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface SignUpScreenProps {
@@ -37,7 +37,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onSwitchToSignIn,
   initialData,
 }) => {
-  const { register } = useHealth();
+  const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

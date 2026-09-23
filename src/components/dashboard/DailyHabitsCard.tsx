@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
 
 const QUICK_WORKOUTS = [
@@ -33,14 +33,14 @@ const getWorkoutIcon = (name: string): string => {
 const DailyHabitsCardComponent: React.FC = () => {
   const {
     currentLog,
-    userGoals,
     totalBurned,
     addWater,
     resetWater,
     addSteps,
     addWorkout,
     removeWorkout,
-  } = useHealth();
+  } = useDailyLog();
+  const { userGoals } = useGoals();
 
   const [workoutModalVisible, setWorkoutModalVisible] = useState(false);
   const [customName, setCustomName] = useState('');

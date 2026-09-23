@@ -246,7 +246,7 @@ const createInitialSampleLog = (dateStr: string): DailyLog => {
   };
 };
 
-interface HealthContextType {
+export interface HealthContextType {
   selectedDate: string;
   setSelectedDate: (date: string) => void;
   shiftDate: (days: number) => void;
@@ -286,6 +286,49 @@ interface HealthContextType {
 }
 
 const HealthContext = createContext<HealthContextType | undefined>(undefined);
+
+export type AuthContextValue = Pick<
+  HealthContextType,
+  'currentUser' | 'isAuthenticated' | 'isAuthLoading' | 'login' | 'register' | 'logout' | 'deleteAccount' | 'loginDemo'
+>;
+
+export type GoalsContextValue = Pick<HealthContextType, 'userGoals' | 'updateGoals'>;
+
+export type DailyLogContextValue = Pick<
+  HealthContextType,
+  | 'selectedDate'
+  | 'setSelectedDate'
+  | 'shiftDate'
+  | 'dailyLogs'
+  | 'currentLog'
+  | 'totalConsumed'
+  | 'totalBurned'
+  | 'remainingCalories'
+  | 'totalCarbs'
+  | 'totalProtein'
+  | 'totalFat'
+  | 'totalFiber'
+  | 'mealsByType'
+  | 'mealCalories'
+  | 'addMealItem'
+  | 'removeMealItem'
+  | 'updateMealQuantity'
+  | 'addWater'
+  | 'resetWater'
+  | 'addWorkout'
+  | 'removeWorkout'
+  | 'addSteps'
+>;
+
+export type AnalyticsContextValue = Pick<HealthContextType, 'weeklyLogs' | 'dailyLogs'>;
+
+export type FoodContextValue = Pick<HealthContextType, 'foodDatabase' | 'addCustomFood' | 'deleteCustomFood'>;
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const GoalsContext = createContext<GoalsContextValue | undefined>(undefined);
+const DailyLogContext = createContext<DailyLogContextValue | undefined>(undefined);
+const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined);
+const FoodContext = createContext<FoodContextValue | undefined>(undefined);
 
 export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
@@ -1530,9 +1573,93 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ]
   );
 
+  const authValue = useMemo<AuthContextValue>(() => ({
+    currentUser,
+    isAuthenticated: !!currentUser,
+    isAuthLoading,
+    login,
+    register,
+    logout,
+    deleteAccount,
+    loginDemo,
+  }), [currentUser, isAuthLoading, login, register, logout, deleteAccount, loginDemo]);
+
+  const goalsValue = useMemo<GoalsContextValue>(() => ({
+    userGoals,
+    updateGoals,
+  }), [userGoals, updateGoals]);
+
+  const dailyLogValue = useMemo<DailyLogContextValue>(() => ({
+    selectedDate,
+    setSelectedDate,
+    shiftDate,
+    dailyLogs,
+    currentLog,
+    totalConsumed,
+    totalBurned,
+    remainingCalories,
+    totalCarbs,
+    totalProtein,
+    totalFat,
+    totalFiber,
+    mealsByType,
+    mealCalories,
+    addMealItem,
+    removeMealItem,
+    updateMealQuantity,
+    addWater,
+    resetWater,
+    addWorkout,
+    removeWorkout,
+    addSteps,
+  }), [
+    selectedDate,
+    shiftDate,
+    dailyLogs,
+    currentLog,
+    totalConsumed,
+    totalBurned,
+    remainingCalories,
+    totalCarbs,
+    totalProtein,
+    totalFat,
+    totalFiber,
+    mealsByType,
+    mealCalories,
+    addMealItem,
+    removeMealItem,
+    updateMealQuantity,
+    addWater,
+    resetWater,
+    addWorkout,
+    removeWorkout,
+    addSteps,
+  ]);
+
+  const analyticsValue = useMemo<AnalyticsContextValue>(() => ({
+    weeklyLogs,
+    dailyLogs,
+  }), [weeklyLogs, dailyLogs]);
+
+  const foodValue = useMemo<FoodContextValue>(() => ({
+    foodDatabase,
+    addCustomFood,
+    deleteCustomFood,
+  }), [foodDatabase, addCustomFood, deleteCustomFood]);
+
   return (
     <HealthContext.Provider value={contextValue}>
-      {children}
+      <AuthContext.Provider value={authValue}>
+        <GoalsContext.Provider value={goalsValue}>
+          <DailyLogContext.Provider value={dailyLogValue}>
+            <AnalyticsContext.Provider value={analyticsValue}>
+              <FoodContext.Provider value={foodValue}>
+                {children}
+              </FoodContext.Provider>
+            </AnalyticsContext.Provider>
+          </DailyLogContext.Provider>
+        </GoalsContext.Provider>
+      </AuthContext.Provider>
     </HealthContext.Provider>
   );
 
@@ -1545,3 +1672,17 @@ export const useHealth = () => {
   }
   return context;
 };
+
+const useRequiredContext = <T,>(context: React.Context<T | undefined>, name: string): T => {
+  const value = useContext(context);
+  if (!value) {
+    throw new Error(`${name} must be used within HealthProvider`);
+  }
+  return value;
+};
+
+export const useAuth = () => useRequiredContext(AuthContext, 'useAuth');
+export const useGoals = () => useRequiredContext(GoalsContext, 'useGoals');
+export const useDailyLog = () => useRequiredContext(DailyLogContext, 'useDailyLog');
+export const useAnalytics = () => useRequiredContext(AnalyticsContext, 'useAnalytics');
+export const useFoodData = () => useRequiredContext(FoodContext, 'useFoodData');

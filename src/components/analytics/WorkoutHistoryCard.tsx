@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAnalytics } from '@/context/HealthContext';
 import { WorkoutActivity } from '@/types';
 
 interface WorkoutEntry extends WorkoutActivity {
@@ -113,7 +113,7 @@ const rowStyles = StyleSheet.create({
 const WorkoutHistoryCardComponent: React.FC<WorkoutHistoryCardProps> = ({
   timeRange,
 }) => {
-  const { dailyLogs } = useHealth();
+  const { dailyLogs } = useAnalytics();
   const days = timeRange === '7d' ? 7 : 30;
   const todayStr = getTodayString();
 

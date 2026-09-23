@@ -18,7 +18,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { AIService, ChatMessage, UserNutritionContext } from '@/services/ai';
 import { MarkdownText } from '../common/MarkdownText';
 
@@ -43,15 +43,15 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   onOpenBYOKSetup,
 }) => {
   const {
-    userGoals,
-    currentUser,
     totalConsumed,
     remainingCalories,
     totalProtein,
     totalCarbs,
     totalFat,
     currentLog,
-  } = useHealth();
+  } = useDailyLog();
+  const { userGoals } = useGoals();
+  const { currentUser } = useAuth();
 
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);

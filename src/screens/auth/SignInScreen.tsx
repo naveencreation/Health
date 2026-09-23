@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth } from '@/context/HealthContext';
 import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface SignInScreenProps {
@@ -30,7 +30,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   onSwitchToRegister,
   onForgotPassword,
 }) => {
-  const { login, loginDemo } = useHealth();
+  const { login, loginDemo } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

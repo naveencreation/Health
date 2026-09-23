@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals } from '@/context/HealthContext';
 
 interface GoalsScreenProps {
   onBack: () => void;
@@ -21,7 +21,7 @@ interface GoalsScreenProps {
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
-  const { userGoals, updateGoals } = useHealth();
+  const { userGoals, updateGoals } = useGoals();
 
   const [calorieBudget, setCalorieBudget] = useState(String(userGoals.dailyCalorieBudget || 1950));
   const [targetProtein, setTargetProtein] = useState(String(userGoals.targetProtein || 90));

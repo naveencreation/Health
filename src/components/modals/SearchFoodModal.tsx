@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType } from '@/types';
-import { useHealth } from '@/context/HealthContext';
+import { useFoodData, useDailyLog } from '@/context/HealthContext';
 import { FoodIconBadge } from '@/components/common/FoodIconBadge';
 
 interface SearchFoodModalProps {
@@ -41,7 +41,8 @@ export const SearchFoodModal: React.FC<SearchFoodModalProps> = ({
   onClose,
   onLoggedSuccess,
 }) => {
-  const { foodDatabase, addMealItem } = useHealth();
+  const { foodDatabase } = useFoodData();
+  const { addMealItem } = useDailyLog();
 
   const [query, setQuery] = useState('');
   const [targetSlot, setTargetSlot] = useState<MealType>('lunch');

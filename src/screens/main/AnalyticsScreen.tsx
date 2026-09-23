@@ -6,6 +6,8 @@ import {
   Pressable,
   ScrollView,
   useWindowDimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAnalytics, useGoals, useDailyLog } from '@/context/HealthContext';
 import { WorkoutHistoryCard } from '@/components/analytics/WorkoutHistoryCard';
 
 
@@ -52,6 +54,8 @@ interface AnalyticsScreenProps {
   onSignInPress?: () => void;
   onSignOutPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
+  initialScrollOffset?: number;
+  onScrollPositionChange?: (offset: number) => void;
 }
 
 const AnimatedBarFill = React.memo(function AnimatedBarFill({
@@ -71,17 +75,16 @@ const AnimatedBarFill = React.memo(function AnimatedBarFill({
 
 const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   scrollRef,
+  initialScrollOffset = 0,
+  onScrollPositionChange,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallDevice = screenWidth < 375;
   const isVerySmallDevice = screenWidth < 340;
 
-  const {
-    weeklyLogs,
-    userGoals,
-    dailyLogs,
-    selectedDate,
-  } = useHealth();
+  const { weeklyLogs, dailyLogs } = useAnalytics();
+  const { userGoals } = useGoals();
+  const { selectedDate } = useDailyLog();
 
   type MetricTab = 'calories' | 'water' | 'steps';
 
@@ -90,6 +93,19 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const [metricTab, setMetricTab] = useState<MetricTab>('calories');
   const [selectedBarIdx, setSelectedBarIdx] = useState<number | null>(6); // shared across tabs
   const [selectedClusterIdx, setSelectedClusterIdx] = useState<number | null>(3);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (initialScrollOffset > 0) {
+        scrollRef?.current?.scrollTo({ y: initialScrollOffset, animated: false });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialScrollOffset, scrollRef]);
+
+  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+  }, [onScrollPositionChange]);
 
   // Animations -- shared across all metric tabs
   const scrollY = useSharedValue(0);
@@ -682,6 +698,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
       >
         {/* ========================================================= */}
         {/* LAYER 1: THE VERDICT — Executive Performance Hero Card    */}

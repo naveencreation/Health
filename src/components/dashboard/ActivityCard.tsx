@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 
 const QUICK_WORKOUTS = [
   { name: 'Brisk Walk', mins: 30, cals: 130, icon: 'walk-outline' },
@@ -17,7 +17,8 @@ const QUICK_WORKOUTS = [
 const CLOSE_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 
 export const ActivityCard: React.FC = () => {
-  const { currentLog, userGoals, totalBurned, addSteps, addWorkout, removeWorkout } = useHealth();
+  const { currentLog, totalBurned, addSteps, addWorkout, removeWorkout } = useDailyLog();
+  const { userGoals } = useGoals();
   const [modalVisible, setModalVisible] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customDuration, setCustomDuration] = useState('30');

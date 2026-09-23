@@ -25,7 +25,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
-import { useHealth } from '@/context/HealthContext';
+import { useFoodData, useDailyLog, useGoals } from '@/context/HealthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FoodIconBadge } from '@/components/common/FoodIconBadge';
 import { FoodImage } from '@/components/common/FoodImage';
@@ -252,7 +252,9 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
 });
 
 const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
-  const { foodDatabase, addMealItem, removeMealItem, addCustomFood, userGoals, mealCalories, mealsByType } = useHealth();
+  const { foodDatabase, addCustomFood } = useFoodData();
+  const { addMealItem, removeMealItem, mealCalories, mealsByType } = useDailyLog();
+  const { userGoals } = useGoals();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
   const [searchQuery, setSearchQuery] = useState('');

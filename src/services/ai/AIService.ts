@@ -12,7 +12,7 @@ import {
 } from './types/ai.types';
 
 class AIServiceFacade {
-  private cachedInsight: { text: string; timestamp: number } | null = null;
+  private cachedInsights = new Map<string, { text: string; timestamp: number }>();
 
   /**
    * Checks if user has a valid stored Gemini key.
@@ -60,7 +60,7 @@ class AIServiceFacade {
    */
   async disconnectKey(): Promise<void> {
     await SecureKeyStorage.removeApiKey();
-    this.cachedInsight = null;
+    this.cachedInsights.clear();
   }
 
   /**
@@ -116,20 +116,21 @@ class AIServiceFacade {
   /**
    * Generates or returns cached daily insight for RiaCoachCard.
    */
-  async getDailyInsight(context: UserNutritionContext): Promise<string | null> {
+  async getDailyInsight(context: UserNutritionContext, cacheKey = 'default'): Promise<string | null> {
     const apiKey = await SecureKeyStorage.getApiKey();
     if (!apiKey) return null;
 
     const now = Date.now();
     // Cache insight for 4 hours to preserve user quota and prevent flickering
-    if (this.cachedInsight && now - this.cachedInsight.timestamp < 4 * 60 * 60 * 1000) {
-      return this.cachedInsight.text;
+    const cachedInsight = this.cachedInsights.get(cacheKey);
+    if (cachedInsight && now - cachedInsight.timestamp < 4 * 60 * 60 * 1000) {
+      return cachedInsight.text;
     }
 
     try {
       const insight = await GeminiProvider.generateDailyInsight(apiKey, context);
       if (insight) {
-        this.cachedInsight = { text: insight, timestamp: now };
+        this.cachedInsights.set(cacheKey, { text: insight, timestamp: now });
         return insight;
       }
     } catch {

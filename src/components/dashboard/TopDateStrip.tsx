@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 
@@ -56,7 +56,8 @@ const parseDateString = (dateStr: string): Date => {
 };
 
 export const TopDateStripComponent: React.FC = () => {
-  const { selectedDate, setSelectedDate, shiftDate, dailyLogs, userGoals } = useHealth();
+  const { selectedDate, setSelectedDate, shiftDate, dailyLogs } = useDailyLog();
+  const { userGoals } = useGoals();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Calendar Modal State

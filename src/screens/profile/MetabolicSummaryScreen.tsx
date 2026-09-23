@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals } from '@/context/HealthContext';
 
 interface MetabolicSummaryScreenProps {
   onBack: () => void;
@@ -16,7 +16,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
   onBack,
   onOpenGoals,
 }) => {
-  const { userGoals } = useHealth();
+  const { userGoals } = useGoals();
 
   const weightNum = userGoals.currentWeightKg || 74.2;
   const targetWeightNum = userGoals.targetWeightKg || 68.0;

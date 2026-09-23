@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog, useGoals, useAnalytics } from '@/context/HealthContext';
 
 const DAYS = [
   { id: 'sun', label: 'S', dayIndex: 0 },
@@ -16,7 +16,9 @@ const DAYS = [
 ];
 
 export const DietJourneyChart: React.FC = () => {
-  const { totalConsumed, totalCarbs, totalProtein, totalFat, userGoals, weeklyLogs } = useHealth();
+  const { totalConsumed, totalCarbs, totalProtein, totalFat } = useDailyLog();
+  const { userGoals } = useGoals();
+  const { weeklyLogs } = useAnalytics();
   const todayDayIndex = new Date().getDay();
   const initialDayId = (DAYS.find((d) => d.dayIndex === todayDayIndex)?.id || 'wed') as any;
   const [selectedDay, setSelectedDay] = useState<'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'>(initialDayId);

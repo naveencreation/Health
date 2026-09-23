@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals, useAnalytics } from '@/context/HealthContext';
 
 interface AwardsScreenProps {
   onBack: () => void;
@@ -12,7 +12,8 @@ interface AwardsScreenProps {
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
-  const { userGoals, dailyLogs } = useHealth();
+  const { userGoals } = useGoals();
+  const { dailyLogs } = useAnalytics();
   const streakDays = userGoals.streakDays || 1;
 
   // Real database analytics derived from dailyLogs

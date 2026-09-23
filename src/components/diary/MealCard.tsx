@@ -10,7 +10,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { LoggedMealItem, MealType } from '@/types';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog } from '@/context/HealthContext';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
 interface MealCardProps {
@@ -39,10 +39,11 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   onAddPress,
   isDimmed = false,
 }) => {
-  const { removeMealItem, updateMealQuantity } = useHealth();
+  const { removeMealItem, updateMealQuantity } = useDailyLog();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
   const expandAnim = useSharedValue(1);
+  const contentHeight = useSharedValue(0);
 
   const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
@@ -60,7 +61,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
 
   const collapseStyle = useAnimatedStyle(() => ({
     opacity: expandAnim.value,
-    maxHeight: interpolate(expandAnim.value, [0, 1], [0, 2000]),
+    height: interpolate(expandAnim.value, [0, 1], [0, contentHeight.value]),
   }));
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
@@ -187,7 +188,8 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             collapseStyle,
           ]}
         >
-          {items.map((item, index) => {
+          <View onLayout={(event) => { contentHeight.value = event.nativeEvent.layout.height; }}>
+            {items.map((item, index) => {
             const isLast = index === items.length - 1;
             return (
               <View
@@ -266,27 +268,28 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                 </View>
               </View>
             );
-          })}
+            })}
 
           {/* 3. Meal-Level Macro Summary Bar (Harmonized: Carbs -> Protein -> Fat) */}
-          <View style={styles.macroSummaryBar}>
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotCarbs]} />
-              <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
-            </View>
+            <View style={styles.macroSummaryBar}>
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotCarbs]} />
+                <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
+              </View>
 
-            <Text style={styles.macroSummaryDivider}>•</Text>
+              <Text style={styles.macroSummaryDivider}>•</Text>
 
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotProtein]} />
-              <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
-            </View>
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotProtein]} />
+                <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
+              </View>
 
-            <Text style={styles.macroSummaryDivider}>•</Text>
+              <Text style={styles.macroSummaryDivider}>•</Text>
 
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotFat]} />
-              <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotFat]} />
+                <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
+              </View>
             </View>
           </View>
         </Animated.View>
@@ -579,4 +582,3 @@ const styles = StyleSheet.create({
 });
 
 export const MealCard = React.memo(MealCardComponent);
-

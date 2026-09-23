@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,7 +18,8 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog } from '@/context/HealthContext';
+import { useGoals } from '@/context/HealthContext';
 import { TopDateStrip, MealSection } from '@/components';
 import { MealType } from '@/types';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
@@ -29,6 +32,8 @@ interface DiaryScreenProps {
   onSignInPress?: () => void;
   onSignOutPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
+  initialScrollOffset?: number;
+  onScrollPositionChange?: (offset: number) => void;
 }
 
 const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -45,6 +50,8 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
   onAddFood,
   onSearchPress,
   scrollRef,
+  initialScrollOffset = 0,
+  onScrollPositionChange,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -57,6 +64,19 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
       setRefreshing(false);
     }, 750);
   }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (initialScrollOffset > 0) {
+        scrollRef?.current?.scrollTo({ y: initialScrollOffset, animated: false });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [initialScrollOffset, scrollRef]);
+
+  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+  }, [onScrollPositionChange]);
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -82,7 +102,6 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
     currentLog,
     totalConsumed,
     totalBurned,
-    userGoals,
     totalProtein,
     totalCarbs,
     totalFat,
@@ -90,7 +109,8 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
     remainingCalories,
     selectedDate,
     setSelectedDate,
-  } = useHealth();
+  } = useDailyLog();
+  const { userGoals } = useGoals();
 
   const todayStr = useMemo(() => toDateString(new Date()), []);
   const isViewingToday = selectedDate === todayStr;
@@ -173,6 +193,8 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

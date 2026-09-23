@@ -5,6 +5,11 @@ import { auth, db } from '@/services/firebase';
 
 const GEMINI_API_KEY_STORAGE_KEY = 'calorify_gemini_byok_api_key_v1';
 
+function getStorageKey(uid?: string): string {
+  const activeUid = uid || auth.currentUser?.uid || 'guest';
+  return `${GEMINI_API_KEY_STORAGE_KEY}:${activeUid}`;
+}
+
 const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
 function safeEncode(input: string): string {
@@ -53,12 +58,12 @@ class SecureKeyStorageService {
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          this.inMemoryCache = window.localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+          this.inMemoryCache = window.localStorage.getItem(getStorageKey());
         }
       } else {
         const isAvailable = await SecureStore.isAvailableAsync();
         if (isAvailable) {
-          this.inMemoryCache = await SecureStore.getItemAsync(GEMINI_API_KEY_STORAGE_KEY);
+          this.inMemoryCache = await SecureStore.getItemAsync(getStorageKey());
         }
       }
     } catch (error) {
@@ -84,10 +89,10 @@ class SecureKeyStorageService {
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, cleanedKey);
+          window.localStorage.setItem(getStorageKey(), cleanedKey);
         }
       } else {
-        await SecureStore.setItemAsync(GEMINI_API_KEY_STORAGE_KEY, cleanedKey, {
+        await SecureStore.setItemAsync(getStorageKey(), cleanedKey, {
           keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
         });
       }
@@ -124,10 +129,10 @@ class SecureKeyStorageService {
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem(GEMINI_API_KEY_STORAGE_KEY);
+          window.localStorage.removeItem(getStorageKey());
         }
       } else {
-        await SecureStore.deleteItemAsync(GEMINI_API_KEY_STORAGE_KEY);
+        await SecureStore.deleteItemAsync(getStorageKey());
       }
     } catch (error) {
       console.warn('SecureKeyStorage: Error removing API key', error);
@@ -201,12 +206,12 @@ class SecureKeyStorageService {
 
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, restored);
+          window.localStorage.setItem(getStorageKey(uid), restored);
         }
       } else {
         const isAvailable = await SecureStore.isAvailableAsync();
         if (isAvailable) {
-          await SecureStore.setItemAsync(GEMINI_API_KEY_STORAGE_KEY, restored, {
+          await SecureStore.setItemAsync(getStorageKey(uid), restored, {
             keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
           });
         }

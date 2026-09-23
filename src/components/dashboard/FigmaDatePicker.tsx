@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useDailyLog } from '@/context/HealthContext';
 
 interface DayItem {
   dateStr: string;
@@ -17,7 +17,7 @@ interface DayItem {
 const ARROW_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const FigmaDatePicker: React.FC = () => {
-  const { selectedDate, setSelectedDate, shiftDate } = useHealth();
+  const { selectedDate, setSelectedDate, shiftDate } = useDailyLog();
 
   // Generate 7 days for the currently selected week (Mon to Sun)
   const weekDays = useMemo((): DayItem[] => {

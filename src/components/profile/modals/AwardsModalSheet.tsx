@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Modal, ScrollView, Pressable } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals, useAnalytics } from '@/context/HealthContext';
 
 interface AwardsModalSheetProps {
   visible: boolean;
@@ -11,7 +11,8 @@ interface AwardsModalSheetProps {
 }
 
 export const AwardsModalSheet: React.FC<AwardsModalSheetProps> = ({ visible, onClose }) => {
-  const { userGoals, dailyLogs } = useHealth();
+  const { userGoals } = useGoals();
+  const { dailyLogs } = useAnalytics();
   const streakDays = userGoals.streakDays || 1;
 
   // Real database analytics derived from dailyLogs

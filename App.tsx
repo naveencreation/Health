@@ -19,7 +19,7 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
-import { HealthProvider, useHealth } from '@/context/HealthContext';
+import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { MealType } from '@/types';
@@ -50,34 +50,18 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-interface TabWrapperProps {
-  isActive: boolean;
-  children: React.ReactNode;
-}
-
-const TabWrapper = React.memo<TabWrapperProps>(({ isActive, children }) => {
-  return (
-    <View style={[styles.tabContainer, !isActive ? styles.tabHidden : null]}>
-      {children}
-    </View>
-  );
-}, (prevProps, nextProps) => {
-  if (!prevProps.isActive && !nextProps.isActive) {
-    return true;
-  }
-  return prevProps.isActive === nextProps.isActive;
-});
-
 function MainApp() {
-  const { addWater, userGoals, updateGoals, isAuthenticated, isAuthLoading, currentUser, logout } = useHealth();
+  const { addWater } = useDailyLog();
+  const { userGoals, updateGoals } = useGoals();
+  const { isAuthenticated, isAuthLoading, currentUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
   // Ref mirrors activeTab so handleTabChange never needs activeTab in deps
   const activeTabRef = useRef<TabType>('today');
-  const [visitedTabs, setVisitedTabs] = useState<Record<TabType, boolean>>({
-    today: true,
-    diary: false,
-    analytics: false,
-    profile: false,
+  const scrollOffsetsRef = useRef<Record<TabType, number>>({
+    today: 0,
+    diary: 0,
+    analytics: 0,
+    profile: 0,
   });
   const todayScrollRef = useRef<ScrollView>(null);
   const diaryScrollRef = useRef<ScrollView>(null);
@@ -183,9 +167,16 @@ function MainApp() {
     } else if (tab === 'profile' && activeTabRef.current === 'profile') {
       profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
-    setVisitedTabs((prev) => (prev[tab] ? prev : { ...prev, [tab]: true }));
     setActiveTab(tab);
   }, []); // stable — reads activeTab via ref, not closure
+
+  const saveScrollOffset = React.useCallback((tab: TabType, offset: number) => {
+    scrollOffsetsRef.current[tab] = Math.max(0, offset);
+  }, []);
+  const saveTodayScrollOffset = React.useCallback((offset: number) => saveScrollOffset('today', offset), [saveScrollOffset]);
+  const saveDiaryScrollOffset = React.useCallback((offset: number) => saveScrollOffset('diary', offset), [saveScrollOffset]);
+  const saveAnalyticsScrollOffset = React.useCallback((offset: number) => saveScrollOffset('analytics', offset), [saveScrollOffset]);
+  const saveProfileScrollOffset = React.useCallback((offset: number) => saveScrollOffset('profile', offset), [saveScrollOffset]);
 
   // Refs for modal states so BackHandler subscription does not re-register on every toggle
   const modalStatesRef = useRef({
@@ -309,11 +300,13 @@ function MainApp() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneContainer}>
-        {/* Tab Content with Offscreen Preservation & Lazy Initial Mount */}
+        {/* Only the active tab is mounted; scroll offsets are retained in refs. */}
         <View style={styles.contentArea}>
-          <TabWrapper isActive={activeTab === 'today'}>
+          {activeTab === 'today' && (
             <TodayScreen
               scrollRef={todayScrollRef}
+              initialScrollOffset={scrollOffsetsRef.current.today}
+              onScrollPositionChange={saveTodayScrollOffset}
               onAddFood={handleOpenFoodLogger}
               onOpenRiaChat={handleOpenRiaChat}
               onSearchPress={handleGlobalSearchPress}
@@ -322,43 +315,43 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
             />
-          </TabWrapper>
-
-          {visitedTabs.diary && (
-            <TabWrapper isActive={activeTab === 'diary'}>
-              <DiaryScreen
-                scrollRef={diaryScrollRef}
-                onAddFood={handleOpenFoodLogger}
-                onSearchPress={handleGlobalSearchPress}
-                onNotificationsPress={handleOpenNotifications}
-                onAvatarPress={handleOpenAvatarModal}
-                onSignInPress={handleOpenSignIn}
-                onSignOutPress={handleSignOutPress}
-              />
-            </TabWrapper>
           )}
 
-          {visitedTabs.analytics && (
-            <TabWrapper isActive={activeTab === 'analytics'}>
-              <AnalyticsScreen
-                scrollRef={analyticsScrollRef}
-                onSearchPress={handleGlobalSearchPress}
-                onNotificationsPress={handleOpenNotifications}
-                onAvatarPress={handleOpenAvatarModal}
-                onSignInPress={handleOpenSignIn}
-                onSignOutPress={handleSignOutPress}
-              />
-            </TabWrapper>
+          {activeTab === 'diary' && (
+            <DiaryScreen
+              scrollRef={diaryScrollRef}
+              initialScrollOffset={scrollOffsetsRef.current.diary}
+              onScrollPositionChange={saveDiaryScrollOffset}
+              onAddFood={handleOpenFoodLogger}
+              onSearchPress={handleGlobalSearchPress}
+              onNotificationsPress={handleOpenNotifications}
+              onAvatarPress={handleOpenAvatarModal}
+              onSignInPress={handleOpenSignIn}
+              onSignOutPress={handleSignOutPress}
+            />
           )}
 
-          {visitedTabs.profile && (
-            <TabWrapper isActive={activeTab === 'profile'}>
-              <ProfileScreen
-                scrollRef={profileScrollRef}
-                onSignIn={handleOpenSignIn}
-                onSignOut={handleSignOutCompleted}
-              />
-            </TabWrapper>
+          {activeTab === 'analytics' && (
+            <AnalyticsScreen
+              scrollRef={analyticsScrollRef}
+              initialScrollOffset={scrollOffsetsRef.current.analytics}
+              onScrollPositionChange={saveAnalyticsScrollOffset}
+              onSearchPress={handleGlobalSearchPress}
+              onNotificationsPress={handleOpenNotifications}
+              onAvatarPress={handleOpenAvatarModal}
+              onSignInPress={handleOpenSignIn}
+              onSignOutPress={handleSignOutPress}
+            />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileScreen
+              scrollRef={profileScrollRef}
+              initialScrollOffset={scrollOffsetsRef.current.profile}
+              onScrollPositionChange={saveProfileScrollOffset}
+              onSignIn={handleOpenSignIn}
+              onSignOut={handleSignOutCompleted}
+            />
           )}
         </View>
 
@@ -477,12 +470,5 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  tabContainer: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  tabHidden: {
-    display: 'none',
   },
 });

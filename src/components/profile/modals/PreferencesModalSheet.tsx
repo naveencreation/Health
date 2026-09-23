@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useAuth, useGoals } from '@/context/HealthContext';
 import { AIService } from '@/services/ai';
 import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
@@ -34,7 +34,8 @@ export const PreferencesModalSheet: React.FC<PreferencesModalSheetProps> = ({
   onSignIn,
   onSignOut,
 }) => {
-  const { currentUser, logout, deleteAccount, userGoals, updateGoals } = useHealth();
+  const { currentUser, logout, deleteAccount } = useAuth();
+  const { userGoals, updateGoals } = useGoals();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(userGoals.riaTone || 'supportive');

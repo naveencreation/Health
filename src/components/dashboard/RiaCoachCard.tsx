@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
-import { AIService } from '@/services/ai';
+import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
+import { useRiaDailyInsight } from '@/hooks/useRiaDailyInsight';
 import { MarkdownText } from '../common/MarkdownText';
 
 interface SuggestionPrompt {
@@ -53,55 +53,18 @@ interface RiaCoachCardProps {
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
 const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
-  const { totalProtein, userGoals, remainingCalories, currentLog } = useHealth();
+  const { totalProtein, remainingCalories, currentLog, selectedDate } = useDailyLog();
+  const { userGoals } = useGoals();
+  const { currentUser } = useAuth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
-  const [dynamicAiInsight, setDynamicAiInsight] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchInsight = async () => {
-      try {
-        const isConfigured = await AIService.isKeyConfigured();
-        if (!isConfigured || !isMounted) return;
-
-        const context = {
-          name: userGoals.name?.split(' ')[0] || 'Friend',
-          riaTone: userGoals.riaTone || 'supportive',
-          dailyCalorieBudget: userGoals.dailyCalorieBudget,
-          remainingCalories,
-          consumedCalories: userGoals.dailyCalorieBudget - remainingCalories,
-          targetProtein: userGoals.targetProtein,
-          consumedProtein: totalProtein,
-          targetCarbs: userGoals.targetCarbs,
-          consumedCarbs: 0,
-          targetFat: userGoals.targetFat,
-          consumedFat: 0,
-          targetWaterMl: userGoals.waterGoalMl,
-          consumedWaterMl: currentLog.waterMl,
-          stepGoal: userGoals.stepGoal,
-          currentSteps: currentLog.steps,
-          loggedMealsToday: currentLog.meals.map((m) => ({
-            name: m.name,
-            mealType: m.mealType,
-            calories: m.calories,
-            protein: m.protein,
-          })),
-        };
-
-        const insight = await AIService.getDailyInsight(context);
-        if (isMounted && insight) {
-          setDynamicAiInsight(insight);
-        }
-      } catch {
-        // Fallback to local advice gracefully
-      }
-    };
-
-    fetchInsight();
-    return () => {
-      isMounted = false;
-    };
-  }, [totalProtein, userGoals, remainingCalories, currentLog.waterMl, currentLog.steps]);
+  const dynamicAiInsight = useRiaDailyInsight({
+    userId: currentUser?.id || 'guest',
+    selectedDate,
+    userGoals,
+    currentLog,
+    totalProtein,
+    remainingCalories,
+  });
 
   // Default personalized insight based on live user data
   const liveDefaultAdvice = useMemo(() => {

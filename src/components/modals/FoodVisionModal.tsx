@@ -16,7 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType, FoodItem } from '@/types';
-import { useHealth } from '@/context/HealthContext';
+import { useFoodData, useDailyLog } from '@/context/HealthContext';
 import { AIService, FoodVisionResult } from '@/services/ai';
 
 interface FoodVisionModalProps {
@@ -32,7 +32,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   initialMealType,
   onOpenBYOKSetup,
 }) => {
-  const { addCustomFood, addMealItem } = useHealth();
+  const { addCustomFood } = useFoodData();
+  const { addMealItem } = useDailyLog();
 
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);

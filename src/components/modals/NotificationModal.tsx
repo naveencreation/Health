@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useHealth } from '@/context/HealthContext';
+import { useGoals, useAuth, useDailyLog } from '@/context/HealthContext';
 
 interface NotificationItem {
   id: string;
@@ -29,7 +29,9 @@ interface NotificationModalProps {
 }
 
 const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
-  const { userGoals, currentUser, currentLog, remainingCalories } = useHealth();
+  const { userGoals } = useGoals();
+  const { currentUser } = useAuth();
+  const { currentLog, remainingCalories } = useDailyLog();
 
   const firstName = (currentUser?.name || userGoals.name || 'there').split(' ')[0];
 
