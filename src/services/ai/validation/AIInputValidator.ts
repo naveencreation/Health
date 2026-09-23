@@ -13,11 +13,11 @@ const CLINICAL_SAFETY_PATTERNS = [
 
 // Suspicious prompt injection delimiters attempting to hijack system instructions
 const PROMPT_INJECTION_PATTERNS = [
-  /<\s*\/?\s*system\s*>/i,
-  /<\s*\/?\s*instruction\s*>/i,
-  /\b(?:ignore\s+all\s+(?:previous|prior)\s+instructions)\b/i,
-  /\b(?:you\s+are\s+now\s+in\s+DAN\s+mode|jailbreak)\b/i,
-  /\b(?:disregard\s+(?:system|safety)\s+rules)\b/i,
+  /<\s*\/?\s*system\s*>/gi,
+  /<\s*\/?\s*instruction\s*>/gi,
+  /\b(?:ignore\s+all\s+(?:previous|prior)\s+instructions)\b/gi,
+  /\b(?:you\s+are\s+now\s+in\s+DAN\s+mode|jailbreak)\b/gi,
+  /\b(?:disregard\s+(?:system|safety)\s+rules)\b/gi,
 ];
 
 export class AIInputValidator {

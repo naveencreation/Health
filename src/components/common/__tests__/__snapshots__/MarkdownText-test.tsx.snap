@@ -1,0 +1,88 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<MarkdownText /> matches snapshot 1`] = `
+<View
+  style={
+    [
+      {
+        "width": "100%",
+      },
+      undefined,
+    ]
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "color": "#1E293B",
+          "fontFamily": "Poppins_400Regular",
+          "fontSize": 13.5,
+          "lineHeight": 20.5,
+        },
+        undefined,
+        {
+          "fontFamily": "Poppins_700Bold",
+          "fontSize": 17,
+          "fontWeight": "700",
+          "lineHeight": 23,
+          "marginBottom": 4,
+          "marginTop": 8,
+        },
+        {
+          "color": "#0F172A",
+        },
+      ]
+    }
+  >
+    <Text>
+      Title
+    </Text>
+  </Text>
+  <View
+    style={
+      {
+        "height": 8,
+      }
+    }
+  />
+  <Text
+    style={
+      [
+        {
+          "color": "#1E293B",
+          "fontFamily": "Poppins_400Regular",
+          "fontSize": 13.5,
+          "lineHeight": 20.5,
+        },
+        undefined,
+        {
+          "marginTop": 2,
+        },
+      ]
+    }
+  >
+    <Text>
+      Some 
+    </Text>
+    <Text
+      style={
+        [
+          {
+            "fontFamily": "Poppins_700Bold",
+            "fontWeight": "700",
+          },
+          {
+            "color": "#0F172A",
+          },
+        ]
+      }
+    >
+      bold
+    </Text>
+    <Text>
+       text
+    </Text>
+  </Text>
+</View>
+`;
