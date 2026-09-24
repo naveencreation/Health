@@ -1,8 +1,9 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
@@ -29,62 +30,147 @@ const getDateString = (date: Date): string => {
 
 const getTodayString = (): string => getDateString(new Date());
 
-interface WorkoutRowProps {
-  item: WorkoutEntry;
+const formatDuration = (mins: number): string => {
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remaining = mins % 60;
+  return remaining > 0 ? `${hours}h ${remaining}m` : `${hours}h`;
+};
+
+interface ActivityStyleConfig {
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bgColor: string;
+  borderColor: string;
 }
 
-const WorkoutRow = React.memo<WorkoutRowProps>(({ item }) => (
-  <View style={rowStyles.row}>
-    <View style={rowStyles.dayBadge}>
-      <Text style={rowStyles.dayText} numberOfLines={1}>
-        {item.dayLabel}
-      </Text>
+const getActivityConfig = (name: string): ActivityStyleConfig => {
+  const lower = name.toLowerCase();
+  if (lower.includes('walk') || lower.includes('stroll')) {
+    return {
+      icon: 'walk-outline',
+      color: '#16A34A',
+      bgColor: '#F0FDF4',
+      borderColor: '#DCFCE7',
+    };
+  }
+  if (lower.includes('run') || lower.includes('jog') || lower.includes('treadmill') || lower.includes('sprint')) {
+    return {
+      icon: 'flame-outline',
+      color: '#F47551',
+      bgColor: '#FFF1EE',
+      borderColor: '#FFE4DE',
+    };
+  }
+  if (lower.includes('cycl') || lower.includes('bike') || lower.includes('spin')) {
+    return {
+      icon: 'bicycle-outline',
+      color: '#0284C7',
+      bgColor: '#F0F9FF',
+      borderColor: '#E0F2FE',
+    };
+  }
+  if (lower.includes('yoga') || lower.includes('stretch') || lower.includes('pilates')) {
+    return {
+      icon: 'body-outline',
+      color: '#0D9488',
+      bgColor: '#F0FDFA',
+      borderColor: '#CCFBF1',
+    };
+  }
+  if (lower.includes('gym') || lower.includes('weight') || lower.includes('lift') || lower.includes('strength') || lower.includes('barbell')) {
+    return {
+      icon: 'barbell-outline',
+      color: '#EA580C',
+      bgColor: '#FFF7ED',
+      borderColor: '#FFEDD5',
+    };
+  }
+  if (lower.includes('swim')) {
+    return {
+      icon: 'water-outline',
+      color: '#0284C7',
+      bgColor: '#F0F9FF',
+      borderColor: '#E0F2FE',
+    };
+  }
+  if (
+    lower.includes('badminton') ||
+    lower.includes('tennis') ||
+    lower.includes('football') ||
+    lower.includes('soccer') ||
+    lower.includes('basketball') ||
+    lower.includes('cricket') ||
+    lower.includes('sport')
+  ) {
+    return {
+      icon: 'trophy-outline',
+      color: '#D97706',
+      bgColor: '#FEFCE8',
+      borderColor: '#FEF08A',
+    };
+  }
+  return {
+    icon: 'fitness-outline',
+    color: '#F47551',
+    bgColor: '#FFF1EE',
+    borderColor: '#FFE4DE',
+  };
+};
+
+interface WorkoutRowProps {
+  item: WorkoutEntry;
+  isLast: boolean;
+}
+
+const WorkoutRow = React.memo<WorkoutRowProps>(({ item, isLast }) => {
+  const config = getActivityConfig(item.name);
+
+  return (
+    <View style={[rowStyles.row, !isLast && rowStyles.rowBorder]}>
+      {/* Contextual Activity Icon Badge */}
+      <View style={[rowStyles.iconWrap, { backgroundColor: config.bgColor, borderColor: config.borderColor }]}>
+        <Ionicons name={config.icon} size={16} color={config.color} />
+      </View>
+
+      {/* Main Info: Activity Name + Day & Time metadata */}
+      <View style={rowStyles.info}>
+        <Text style={rowStyles.name} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={rowStyles.meta} numberOfLines={1}>
+          <Text style={rowStyles.metaDay}>{item.dayLabel}</Text> · {item.durationMinutes} min
+        </Text>
+      </View>
+
+      {/* Burned Metric */}
+      <View style={rowStyles.burnBox}>
+        <Text style={rowStyles.burnValue} numberOfLines={1}>
+          {item.caloriesBurned}
+        </Text>
+        <Text style={rowStyles.burnUnit}>kcal</Text>
+      </View>
     </View>
-    <View style={rowStyles.iconWrap}>
-      <Ionicons name="barbell-outline" size={14} color="#8B5CF6" />
-    </View>
-    <View style={rowStyles.info}>
-      <Text style={rowStyles.name} numberOfLines={1}>
-        {item.name}
-      </Text>
-      <Text style={rowStyles.meta} numberOfLines={1}>
-        {item.durationMinutes} min
-      </Text>
-    </View>
-    <Text style={rowStyles.burn} numberOfLines={1}>
-      {item.caloriesBurned} kcal
-    </Text>
-  </View>
-));
+  );
+});
 
 const rowStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F1F5F9',
-    gap: 8,
+    paddingVertical: 10,
+    gap: 12,
   },
-  dayBadge: {
-    width: 36,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: '#F3F0FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 10,
-    color: '#7C3AED',
-    letterSpacing: 0.2,
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
   },
   iconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#EDE9FE',
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -93,20 +179,34 @@ const rowStyles = StyleSheet.create({
   },
   name: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
+    fontSize: 13.5,
+    fontWeight: '600',
     color: '#0F172A',
     letterSpacing: -0.1,
   },
   meta: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 11.5,
+    color: '#64748B',
     marginTop: 1,
   },
-  burn: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 12,
-    color: '#EA580C',
+  metaDay: {
+    fontFamily: Fonts.poppins.medium,
+    color: '#334155',
+  },
+  burnBox: {
+    alignItems: 'flex-end',
+  },
+  burnValue: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  burnUnit: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10.5,
+    color: '#94A3B8',
   },
 });
 
@@ -116,11 +216,13 @@ const WorkoutHistoryCardComponent: React.FC<WorkoutHistoryCardProps> = ({
   const { dailyLogs } = useAnalytics();
   const days = timeRange === '7d' ? 7 : 30;
   const todayStr = getTodayString();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const { entries, totalBurn, totalDuration, sessionCount } = useMemo(() => {
+  const { entries, totalBurn, totalDuration, sessionCount, activeDaysCount } = useMemo(() => {
     const result: WorkoutEntry[] = [];
     let burn = 0;
     let duration = 0;
+    const activeDaysSet = new Set<string>();
     const today = new Date();
 
     for (let i = 0; i < days; i++) {
@@ -128,34 +230,42 @@ const WorkoutHistoryCardComponent: React.FC<WorkoutHistoryCardProps> = ({
       d.setDate(today.getDate() - i);
       const dateStr = getDateString(d);
       const log = dailyLogs[dateStr];
-      if (!log || !Array.isArray(log.activities)) continue;
+      if (!log || !Array.isArray(log.activities) || log.activities.length === 0) continue;
       const dayLabel = dateStr === todayStr ? 'Today' : DAY_LABELS[d.getDay()];
+      activeDaysSet.add(dateStr);
       for (const act of log.activities) {
         result.push({ ...act, date: dateStr, dayLabel });
         burn += act.caloriesBurned || 0;
         duration += act.durationMinutes || 0;
       }
     }
-    result.sort((a, b) => (a.date < b.date ? 1 : -1));
-    return { entries: result, totalBurn: burn, totalDuration: duration, sessionCount: result.length };
+    result.sort((a, b) => b.date.localeCompare(a.date));
+    return {
+      entries: result,
+      totalBurn: burn,
+      totalDuration: duration,
+      sessionCount: result.length,
+      activeDaysCount: activeDaysSet.size,
+    };
   }, [dailyLogs, days, todayStr]);
 
-  const avgDuration = sessionCount > 0 ? Math.round(totalDuration / sessionCount) : 0;
   const hasWorkouts = sessionCount > 0;
+  const displayedEntries = isExpanded ? entries : entries.slice(0, 4);
 
   return (
     <View style={styles.card}>
+      {/* 1. Header Row */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.iconBadge}>
-            <Ionicons name="barbell" size={14} color="#8B5CF6" />
+            <Ionicons name="flame" size={16} color="#F47551" />
           </View>
           <View>
             <Text style={styles.cardTitle} numberOfLines={1}>
               Workout History
             </Text>
             <Text style={styles.cardSubtitle} numberOfLines={1}>
-              {timeRange === '7d' ? 'Last 7 days' : 'Last 30 days'} · logged activities
+              {timeRange === '7d' ? 'Last 7 days' : 'Last 30 days'} · active burn
             </Text>
           </View>
         </View>
@@ -166,44 +276,98 @@ const WorkoutHistoryCardComponent: React.FC<WorkoutHistoryCardProps> = ({
         </View>
       </View>
 
+      {/* 2. 3 Impactful Habit Metric Pods */}
       {hasWorkouts ? (
         <View style={styles.statsRow}>
+          {/* Total Burn */}
           <View style={styles.statBox}>
-            <Text style={styles.statValue} numberOfLines={1}>{totalBurn.toLocaleString()}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>kcal burned</Text>
+            <View style={styles.statValueRow}>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {totalBurn.toLocaleString()}
+              </Text>
+              <Text style={styles.statUnit}>kcal</Text>
+            </View>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              burned
+            </Text>
           </View>
+
           <View style={styles.statDivider} />
+
+          {/* Active Duration */}
           <View style={styles.statBox}>
-            <Text style={styles.statValue} numberOfLines={1}>{avgDuration}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>avg min / session</Text>
+            <View style={styles.statValueRow}>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {formatDuration(totalDuration)}
+              </Text>
+            </View>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              active time
+            </Text>
           </View>
+
           <View style={styles.statDivider} />
+
+          {/* Consistency */}
           <View style={styles.statBox}>
-            <Text style={styles.statValue} numberOfLines={1}>{totalDuration}</Text>
-            <Text style={styles.statLabel} numberOfLines={1}>total minutes</Text>
+            <View style={styles.statValueRow}>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {activeDaysCount}
+              </Text>
+              <Text style={styles.statUnit}>/{days}d</Text>
+            </View>
+            <Text style={styles.statLabel} numberOfLines={1}>
+              active days
+            </Text>
           </View>
         </View>
       ) : null}
 
+      {/* 3. Activity Rows with Dynamic Iconography */}
       {hasWorkouts ? (
         <View style={styles.listContainer}>
-          {entries.slice(0, 8).map((item) => (
-            <WorkoutRow key={item.id} item={item} />
+          {displayedEntries.map((item, index) => (
+            <WorkoutRow
+              key={item.id}
+              item={item}
+              isLast={index === displayedEntries.length - 1}
+            />
           ))}
-          {entries.length > 8 ? (
-            <Text style={styles.moreLabel} numberOfLines={1}>
-              +{entries.length - 8} more sessions this period
-            </Text>
+
+          {/* Progressive Disclosure Expand / Collapse Button */}
+          {entries.length > 4 ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.expandToggleBtn,
+                pressed ? styles.btnPressed : null,
+              ]}
+              onPress={() => setIsExpanded((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityLabel={isExpanded ? 'Show fewer workouts' : `View all ${entries.length} activities`}
+            >
+              <Text style={styles.expandToggleText}>
+                {isExpanded
+                  ? 'Show fewer'
+                  : `View all ${entries.length} activities`}
+              </Text>
+              <Ionicons
+                name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color="#F47551"
+              />
+            </Pressable>
           ) : null}
         </View>
       ) : (
         <View style={styles.emptyState}>
-          <Ionicons name="barbell-outline" size={28} color="#CBD5E1" />
+          <View style={styles.emptyIconBox}>
+            <Ionicons name="fitness-outline" size={24} color="#F47551" />
+          </View>
           <Text style={styles.emptyTitle} numberOfLines={1}>
             No workouts logged yet
           </Text>
           <Text style={styles.emptyDesc}>
-            Add activities from the Today screen to track your workout history here.
+            Log your walks, runs, gym sessions, and yoga on the Today screen to track your active burn here.
           </Text>
         </View>
       )}
@@ -217,17 +381,15 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    borderCurve: 'continuous',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
@@ -242,95 +404,134 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#EDE9FE',
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF1EE',
+    borderWidth: 1,
+    borderColor: '#FFE4DE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 15,
+    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   cardSubtitle: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#64748B',
     marginTop: 1,
   },
   sessionBadge: {
-    backgroundColor: '#F3F0FF',
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    borderCurve: 'continuous',
     paddingHorizontal: 10,
     paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   sessionBadgeText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#7C3AED',
+    color: '#475569',
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
+    backgroundColor: '#FAF9F6',
+    borderRadius: 14,
+    borderCurve: 'continuous',
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.04)',
   },
   statBox: {
     flex: 1,
     alignItems: 'center',
   },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
   statDivider: {
     width: 1,
-    height: 28,
+    height: 24,
     backgroundColor: '#E2E8F0',
     marginHorizontal: 4,
   },
   statValue: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#0F172A',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
+  },
+  statUnit: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 10,
+    color: '#94A3B8',
   },
   statLabel: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 10,
-    color: '#94A3B8',
+    color: '#64748B',
     marginTop: 1,
     textAlign: 'center',
   },
   listContainer: {
-    gap: 0,
+    paddingTop: 2,
   },
-  moreLabel: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 11,
-    color: '#94A3B8',
-    textAlign: 'center',
-    paddingTop: 10,
+  expandToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  expandToggleText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 11.5,
+    color: '#F47551',
+  },
+  btnPressed: {
+    opacity: 0.7,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
     gap: 6,
+  },
+  emptyIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF1EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   emptyTitle: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
-    color: '#CBD5E1',
-    marginTop: 4,
+    fontSize: 13.5,
+    color: '#334155',
   },
   emptyDesc: {
     fontFamily: Fonts.poppins.regular,
-    fontSize: 12,
-    color: '#CBD5E1',
+    fontSize: 11.5,
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 17,
-    maxWidth: 240,
+    maxWidth: 260,
   },
 });
