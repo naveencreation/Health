@@ -43,7 +43,6 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
   const expandAnim = useSharedValue(1);
-  const contentHeight = useSharedValue(0);
 
   const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
@@ -61,7 +60,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
 
   const collapseStyle = useAnimatedStyle(() => ({
     opacity: expandAnim.value,
-    height: interpolate(expandAnim.value, [0, 1], [0, contentHeight.value]),
+    maxHeight: interpolate(expandAnim.value, [0, 1], [0, 2000]),
   }));
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
@@ -188,8 +187,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             collapseStyle,
           ]}
         >
-          <View onLayout={(event) => { contentHeight.value = event.nativeEvent.layout.height; }}>
-            {items.map((item, index) => {
+          {items.map((item, index) => {
             const isLast = index === items.length - 1;
             return (
               <View
@@ -268,28 +266,27 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                 </View>
               </View>
             );
-            })}
+          })}
 
           {/* 3. Meal-Level Macro Summary Bar (Harmonized: Carbs -> Protein -> Fat) */}
-            <View style={styles.macroSummaryBar}>
-              <View style={styles.macroSummaryPill}>
-                <View style={[styles.macroDot, styles.macroDotCarbs]} />
-                <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
-              </View>
+          <View style={styles.macroSummaryBar}>
+            <View style={styles.macroSummaryPill}>
+              <View style={[styles.macroDot, styles.macroDotCarbs]} />
+              <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
+            </View>
 
-              <Text style={styles.macroSummaryDivider}>•</Text>
+            <Text style={styles.macroSummaryDivider}>•</Text>
 
-              <View style={styles.macroSummaryPill}>
-                <View style={[styles.macroDot, styles.macroDotProtein]} />
-                <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
-              </View>
+            <View style={styles.macroSummaryPill}>
+              <View style={[styles.macroDot, styles.macroDotProtein]} />
+              <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
+            </View>
 
-              <Text style={styles.macroSummaryDivider}>•</Text>
+            <Text style={styles.macroSummaryDivider}>•</Text>
 
-              <View style={styles.macroSummaryPill}>
-                <View style={[styles.macroDot, styles.macroDotFat]} />
-                <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
-              </View>
+            <View style={styles.macroSummaryPill}>
+              <View style={[styles.macroDot, styles.macroDotFat]} />
+              <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
             </View>
           </View>
         </Animated.View>
@@ -487,6 +484,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 0,
   },
   stepperCapsule: {
     flexDirection: 'row',
@@ -544,11 +542,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderCurve: 'continuous',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     marginTop: 10,
-    gap: 12,
+    gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.04)',
+    flexWrap: 'wrap',
   },
   macroSummaryPill: {
     flexDirection: 'row',
