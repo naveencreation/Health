@@ -14,7 +14,29 @@ describe('AIErrorMapper.fromRawError', () => {
       retryable: true,
     } as const);
     expect(error.type).toBe('RATE_LIMIT');
-    expect(error.userTitle).toBe('Chatting Too Fast');
+    expect(error.userTitle).toBe('Please Wait a Moment');
+  });
+
+  test('maps 401 to INVALID_KEY with empathetic metadata', () => {
+    const error = AIErrorMapper.fromRawError({
+      statusCode: 401,
+      message: 'API key not valid. Please pass a valid API key.',
+    });
+    expect(error.type).toBe('INVALID_KEY');
+    expect(error.retryable).toBe(false);
+    expect(error.userTitle).toBe('Invalid Gemini Key');
+    expect(error.actionLabel).toBe('Update Key');
+  });
+
+  test('maps 401 raw Google JSON error payload to INVALID_KEY', () => {
+    const error = AIErrorMapper.fromRawError({
+      statusCode: 401,
+      message: '{"error": {"code": 401, "message": "API key not valid. Please pass a valid API key.", "status": "UNAUTHENTICATED"}}',
+    });
+    expect(error.type).toBe('INVALID_KEY');
+    expect(error.retryable).toBe(false);
+    expect(error.userTitle).toBe('Invalid Gemini Key');
+    expect(error.message).toContain('API key not valid');
   });
 
   test('maps 400 with an API-key message to INVALID_KEY', () => {

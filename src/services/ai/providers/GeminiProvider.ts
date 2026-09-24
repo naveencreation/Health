@@ -401,6 +401,23 @@ Output strictly valid JSON matching this exact schema:
   "fiber": 6,
   "confidence": "high",
   "notes": "Estimated 2 whole wheat rotis and 1 medium bowl paneer curry"
+}
+
+If the image clearly does not contain any food, meal, or beverage (e.g. an object, gadget, pet, person, document, or blank scenery), output strictly:
+{
+  "isFood": false,
+  "name": "Not Food",
+  "category": "snacks",
+  "categoryLabel": "Other",
+  "servingUnit": "item",
+  "defaultServingSize": 1,
+  "calories": 0,
+  "carbs": 0,
+  "protein": 0,
+  "fat": 0,
+  "fiber": 0,
+  "confidence": "low",
+  "notes": "No recognizable food or beverage detected in this photo."
 }`;
 
     const endpoint = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;

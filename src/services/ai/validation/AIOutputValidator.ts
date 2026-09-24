@@ -60,6 +60,23 @@ export class AIOutputValidator {
       };
     }
 
+    // Explicit check for non-food photo identification
+    if (
+      parsed.isFood === false ||
+      (parsed.name && /not\s*(?:a\s*)?food|no\s*food/i.test(String(parsed.name))) ||
+      (parsed.notes && /no\s*food\s*(?:or\s*drink\s*)?detected/i.test(String(parsed.notes)))
+    ) {
+      return {
+        isValid: false,
+        error: AIErrorMapper.createError(
+          'INVALID_STRUCTURED_OUTPUT',
+          'No recognizable food or drink detected in this image. Please snap a clear photo of your meal.',
+          undefined,
+          false
+        ),
+      };
+    }
+
     const corrections: string[] = [];
     let wasCorrected = false;
 

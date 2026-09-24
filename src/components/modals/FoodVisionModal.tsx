@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,7 +17,8 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType, FoodItem } from '@/types';
 import { useFoodData, useDailyLog } from '@/context/HealthContext';
-import { AIService, FoodVisionResult } from '@/services/ai';
+import { AIService, FoodVisionResult, AIError, AIErrorMapper } from '@/services/ai';
+import { GeminiIcon } from '@/components/common/GeminiIcon';
 
 interface FoodVisionModalProps {
   visible: boolean;
@@ -37,9 +38,10 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<FoodVisionResult | null>(null);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<AIError | null>(null);
 
   // Form states in review step
   const [mealSlot, setMealSlot] = useState<MealType>(initialMealType || 'lunch');
@@ -47,38 +49,52 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   const [saveToCustom, setSaveToCustom] = useState(true);
   const [isLoggedSuccess, setIsLoggedSuccess] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      checkKeyStatus();
-      resetFlow();
-      if (initialMealType) {
-        setMealSlot(initialMealType);
-      } else {
-        const hour = new Date().getHours();
-        if (hour < 11) setMealSlot('breakfast');
-        else if (hour < 16) setMealSlot('lunch');
-        else if (hour < 19) setMealSlot('snacks');
-        else setMealSlot('dinner');
-      }
-    }
-  }, [visible, initialMealType]);
-
-  const checkKeyStatus = async () => {
-    const configured = await AIService.isKeyConfigured();
-    setHasKey(configured);
-  };
-
-  const resetFlow = () => {
+  const resetFlow = useCallback(() => {
     setSelectedImageUri(null);
+    setSelectedAsset(null);
     setIsAnalyzing(false);
     setAnalysisResult(null);
     setAnalysisError(null);
     setPortionMultiplier(1);
     setSaveToCustom(true);
     setIsLoggedSuccess(false);
-  };
+  }, []);
 
-  const handleLaunchCamera = async () => {
+  const processImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
+    setSelectedAsset(asset);
+    setSelectedImageUri(asset.uri);
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
+
+    try {
+      if (!asset.base64) {
+        throw AIErrorMapper.createError(
+          'INVALID_REQUEST',
+          'Image data could not be read from this photo. Please try another photo.'
+        );
+      }
+
+      const mimeType = asset.mimeType || 'image/jpeg';
+      const result = await AIService.analyzeFoodImage(asset.base64, mimeType);
+      setAnalysisResult(result);
+    } catch (err: any) {
+      const mapped = AIErrorMapper.fromRawError(err);
+      setAnalysisError(mapped);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, []);
+
+  const handleRetryAnalysis = useCallback(() => {
+    if (selectedAsset) {
+      processImage(selectedAsset);
+    } else {
+      resetFlow();
+    }
+  }, [selectedAsset, processImage, resetFlow]);
+
+  const handleLaunchCamera = useCallback(async () => {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
@@ -101,11 +117,12 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         processImage(result.assets[0]);
       }
     } catch (err: any) {
-      setAnalysisError(err?.message || 'Failed to capture photo from camera.');
+      const mapped = AIErrorMapper.fromRawError(err);
+      setAnalysisError(mapped);
     }
-  };
+  }, [processImage]);
 
-  const handleLaunchGallery = async () => {
+  const handleLaunchGallery = useCallback(async () => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
@@ -128,32 +145,29 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         processImage(result.assets[0]);
       }
     } catch (err: any) {
-      setAnalysisError(err?.message || 'Failed to select photo from gallery.');
+      const mapped = AIErrorMapper.fromRawError(err);
+      setAnalysisError(mapped);
     }
-  };
+  }, [processImage]);
 
-  const processImage = async (asset: ImagePicker.ImagePickerAsset) => {
-    setSelectedImageUri(asset.uri);
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    setAnalysisResult(null);
-
-    try {
-      if (!asset.base64) {
-        throw new Error('Image base64 data could not be extracted.');
+  useEffect(() => {
+    if (visible) {
+      resetFlow();
+      if (initialMealType) {
+        setMealSlot(initialMealType);
+      } else {
+        const hour = new Date().getHours();
+        if (hour < 11) setMealSlot('breakfast');
+        else if (hour < 16) setMealSlot('lunch');
+        else if (hour < 19) setMealSlot('snacks');
+        else setMealSlot('dinner');
       }
 
-      const mimeType = asset.mimeType || 'image/jpeg';
-      const result = await AIService.analyzeFoodImage(asset.base64, mimeType);
-      setAnalysisResult(result);
-    } catch (err: any) {
-      setAnalysisError(
-        err?.userMessage || err?.message || 'Could not recognize the meal. Please try a clearer food photo.'
-      );
-    } finally {
-      setIsAnalyzing(false);
+      AIService.isKeyConfigured().then((configured) => {
+        setHasKey(configured);
+      });
     }
-  };
+  }, [visible, initialMealType, resetFlow]);
 
   const handleConfirmAndLog = () => {
     if (!analysisResult) return;
@@ -221,8 +235,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
           <View style={styles.headerRow}>
             <View style={styles.headerTitleBox}>
               <View style={styles.badgeRow}>
-                <Ionicons name="camera" size={13} color="#F47551" />
-                <Text style={styles.badgeText}>AI FOOD RECOGNITION</Text>
+                <GeminiIcon size={12} />
+                <Text style={styles.badgeText}>POWERED BY GOOGLE GEMINI</Text>
               </View>
               <Text style={styles.sheetTitle}>Snap & Log Meal</Text>
             </View>
@@ -240,11 +254,11 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
           {hasKey === false ? (
             <View style={styles.unconfiguredContainer}>
               <View style={styles.unconfiguredIconBox}>
-                <Ionicons name="sparkles" size={28} color="#F47551" />
+                <GeminiIcon size={38} />
               </View>
-              <Text style={styles.unconfiguredTitle}>Gemini Key Required</Text>
+              <Text style={styles.unconfiguredTitle}>Google Gemini Key Required</Text>
               <Text style={styles.unconfiguredDesc}>
-                AI Food Vision analyzes your food photos and calculates calories instantly using Google Gemini. Connect your free personal API key to unlock this feature.
+                Calorify uses Google Gemini's advanced multimodal vision to analyze food photos, estimate portion sizes, and calculate calories instantly. Connect your free personal API key to unlock AI features.
               </Text>
 
               <Pressable
@@ -254,7 +268,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                   onOpenBYOKSetup();
                 }}
               >
-                <Ionicons name="key" size={16} color="#FFFFFF" />
+                <GeminiIcon size={18} />
                 <Text style={styles.connectKeyBtnText}>Connect Free Gemini Key</Text>
               </Pressable>
             </View>
@@ -269,30 +283,34 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               {!selectedImageUri ? (
                 <View style={styles.pickerSection}>
                   <Text style={styles.pickerIntro}>
-                    Take a photo of your meal or plate. Ria will identify the ingredients, calculate calories, and prepare it for 1-tap logging.
+                    Snap a new photo of your meal or select a picture you already took from your phone. Ria will identify the ingredients, calculate calories, and prepare it for logging.
                   </Text>
 
                   <View style={styles.pickerActionsRow}>
                     <Pressable
                       style={({ pressed }) => [styles.pickerCard, pressed ? styles.pickerCardPressed : null]}
                       onPress={handleLaunchCamera}
+                      accessibilityRole="button"
+                      accessibilityLabel="Take a photo with camera"
                     >
                       <View style={[styles.pickerIconBox, styles.cameraIconBg]}>
-                        <Ionicons name="camera" size={28} color="#F47551" />
+                        <Ionicons name="camera-outline" size={28} color="#F47551" />
                       </View>
                       <Text style={styles.pickerCardTitle}>Take Photo</Text>
-                      <Text style={styles.pickerCardSubtitle}>Open camera</Text>
+                      <Text style={styles.pickerCardSubtitle}>Snap with camera</Text>
                     </Pressable>
 
                     <Pressable
                       style={({ pressed }) => [styles.pickerCard, pressed ? styles.pickerCardPressed : null]}
                       onPress={handleLaunchGallery}
+                      accessibilityRole="button"
+                      accessibilityLabel="Choose photo already taken from library"
                     >
                       <View style={[styles.pickerIconBox, styles.galleryIconBg]}>
-                        <Ionicons name="images" size={28} color="#0284C7" />
+                        <Ionicons name="images-outline" size={28} color="#0284C7" />
                       </View>
                       <Text style={styles.pickerCardTitle}>Photo Library</Text>
-                      <Text style={styles.pickerCardSubtitle}>Choose from gallery</Text>
+                      <Text style={styles.pickerCardSubtitle}>Already taken</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -321,15 +339,131 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               ) : null}
 
               {/* ERROR STATE */}
-              {analysisError ? (
-                <View style={styles.errorCard}>
-                  <Ionicons name="alert-circle" size={18} color="#DC2626" />
-                  <Text style={styles.errorText}>{analysisError}</Text>
-                  <Pressable style={styles.retryBtn} onPress={resetFlow}>
-                    <Text style={styles.retryBtnText}>Try Another Photo</Text>
-                  </Pressable>
-                </View>
-              ) : null}
+              {analysisError ? (() => {
+                const isKeyError =
+                  analysisError.type === 'INVALID_KEY' ||
+                  analysisError.type === 'EXPIRED_OR_REVOKED_KEY' ||
+                  analysisError.type === 'NO_KEY_CONFIGURED';
+                const isQuotaError = analysisError.type === 'QUOTA_EXCEEDED';
+                const isRateLimit = analysisError.type === 'RATE_LIMIT';
+                const isNetworkOrTimeout =
+                  analysisError.type === 'NETWORK_ERROR' ||
+                  analysisError.type === 'TIMEOUT' ||
+                  analysisError.type === 'MODEL_UNAVAILABLE' ||
+                  analysisError.type === 'SERVER_ERROR' ||
+                  isRateLimit;
+                const isImageOrNotFood =
+                  analysisError.type === 'INVALID_STRUCTURED_OUTPUT' ||
+                  analysisError.type === 'INPUT_TOO_LARGE' ||
+                  analysisError.type === 'INVALID_REQUEST';
+
+                return (
+                  <View
+                    style={[
+                      styles.errorCardContainer,
+                      isKeyError ? styles.keyErrorCardBorder : styles.generalErrorCardBorder,
+                    ]}
+                  >
+                    {/* Top Header Badge */}
+                    <View style={styles.errorIconHeaderRow}>
+                      <View
+                        style={[
+                          styles.errorIconBadge,
+                          isKeyError ? styles.keyErrorIconBg : styles.generalErrorIconBg,
+                        ]}
+                      >
+                        {isKeyError ? (
+                          <GeminiIcon size={20} />
+                        ) : isNetworkOrTimeout ? (
+                          <Ionicons name="cloud-offline-outline" size={20} color="#DC2626" />
+                        ) : isImageOrNotFood ? (
+                          <Ionicons name="fast-food-outline" size={20} color="#EA580C" />
+                        ) : (
+                          <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
+                        )}
+                      </View>
+
+                      <View style={styles.errorTitleBox}>
+                        <View style={styles.errorCategoryRow}>
+                          <Text
+                            style={[
+                              styles.errorCategoryText,
+                              isKeyError ? { color: '#4E82EE' } : { color: '#DC2626' },
+                            ]}
+                          >
+                            {isKeyError
+                              ? 'GEMINI API KEY'
+                              : isQuotaError
+                              ? 'USAGE LIMIT'
+                              : isNetworkOrTimeout
+                              ? 'CONNECTION'
+                              : 'FOOD VISION'}
+                          </Text>
+                        </View>
+                        <Text style={styles.errorTitleText}>
+                          {analysisError.userTitle || 'AI Analysis Notice'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Friendly Empathic Message */}
+                    <Text style={styles.errorBodyText}>
+                      {analysisError.userMessage || 'An unexpected issue occurred while analyzing this food photo.'}
+                    </Text>
+
+                    {/* Contextual Action Buttons */}
+                    <View style={styles.errorActionsRow}>
+                      {isKeyError || isQuotaError ? (
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.primaryErrorActionBtn,
+                            styles.keyActionBtnBg,
+                            pressed ? styles.btnPressed : null,
+                          ]}
+                          onPress={() => {
+                            onClose();
+                            onOpenBYOKSetup();
+                          }}
+                        >
+                          <GeminiIcon size={16} />
+                          <Text style={styles.primaryErrorActionText}>
+                            {analysisError.actionLabel || 'Update Gemini Key'}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+
+                      {selectedAsset && (isNetworkOrTimeout || analysisError.retryable) ? (
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.primaryErrorActionBtn,
+                            styles.retryActionBtnBg,
+                            pressed ? styles.btnPressed : null,
+                          ]}
+                          onPress={handleRetryAnalysis}
+                        >
+                          <Ionicons name="refresh" size={16} color="#FFFFFF" />
+                          <Text style={styles.primaryErrorActionText}>
+                            {analysisError.actionLabel || 'Retry Analysis'}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.secondaryErrorActionBtn,
+                          pressed ? styles.pickerCardPressed : null,
+                        ]}
+                        onPress={resetFlow}
+                      >
+                        <Ionicons name="images-outline" size={15} color="#475569" />
+                        <Text style={styles.secondaryErrorActionText}>
+                          {selectedAsset ? 'Choose Different Photo' : 'Dismiss'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              })() : null}
 
               {/* STEP 3: Successful Analysis Result & Confirmation */}
               {analysisResult && !isLoggedSuccess ? (
@@ -339,7 +473,6 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Text style={styles.dishName}>{analysisResult.name}</Text>
                       <Text style={styles.dishServing}>
                         Serving: {analysisResult.servingUnit}
-                        {analysisResult.notes ? ` • ${analysisResult.notes}` : ''}
                       </Text>
                     </View>
                     <View style={styles.confidencePill}>
@@ -347,6 +480,19 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Text style={styles.confidenceText}>Verified</Text>
                     </View>
                   </View>
+
+                  {/* Ria Coach Nutrition Breakdown */}
+                  {analysisResult.notes ? (
+                    <View style={styles.riaCoachBubble}>
+                      <View style={styles.riaCoachIcon}>
+                        <GeminiIcon size={16} />
+                      </View>
+                      <View style={styles.riaCoachTextCol}>
+                        <Text style={styles.riaCoachLabel}>Ria's Gemini Vision Breakdown</Text>
+                        <Text style={styles.riaCoachNote}>{analysisResult.notes}</Text>
+                      </View>
+                    </View>
+                  ) : null}
 
                   {/* 4 Macro Pods (Sunny Vitality Palette) */}
                   <View style={styles.macroGrid}>
@@ -386,6 +532,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Pressable
                         style={styles.stepBtn}
                         onPress={() => setPortionMultiplier((p) => Math.max(0.5, p - 0.5))}
+                        hitSlop={4}
                       >
                         <Ionicons name="remove" size={16} color="#334155" />
                       </Pressable>
@@ -393,22 +540,31 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Pressable
                         style={styles.stepBtn}
                         onPress={() => setPortionMultiplier((p) => p + 0.5)}
+                        hitSlop={4}
                       >
                         <Ionicons name="add" size={16} color="#334155" />
                       </Pressable>
                     </View>
                   </View>
 
-                  {/* Meal Slot Selector */}
-                  <Text style={styles.slotHeaderLabel}>Log to Meal Slot:</Text>
+                  {/* Context-Aware Meal Slot Selector (Tap to change) */}
+                  <View style={styles.slotHeaderRow}>
+                    <Text style={styles.slotHeaderLabel}>Log to Meal Slot:</Text>
+                    <Text style={styles.slotHeaderHint}>Tap to change</Text>
+                  </View>
                   <View style={styles.slotRow}>
                     {(['breakfast', 'lunch', 'snacks', 'dinner'] as MealType[]).map((slot) => {
                       const isSelected = mealSlot === slot;
                       return (
                         <Pressable
                           key={slot}
-                          style={[styles.slotPill, isSelected ? styles.slotPillSelected : null]}
+                          style={({ pressed }) => [
+                            styles.slotPill,
+                            isSelected ? styles.slotPillSelected : null,
+                            pressed ? styles.slotPillPressed : null,
+                          ]}
                           onPress={() => setMealSlot(slot)}
+                          hitSlop={4}
                         >
                           <Text style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}>
                             {slot.charAt(0).toUpperCase() + slot.slice(1)}
@@ -571,14 +727,21 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   unconfiguredIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderCurve: 'continuous',
-    backgroundColor: 'rgba(244, 117, 81, 0.12)',
+    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(78, 130, 238, 0.25)',
+    shadowColor: '#4E82EE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 3,
   },
   unconfiguredTitle: {
     fontFamily: Fonts.poppins.bold,
@@ -599,15 +762,15 @@ const styles = StyleSheet.create({
   connectKeyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F47551',
-    paddingHorizontal: 20,
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 22,
     paddingVertical: 14,
     borderRadius: 16,
     borderCurve: 'continuous',
-    gap: 8,
-    shadowColor: '#F47551',
+    gap: 10,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -740,35 +903,122 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#FFFFFF',
   },
-  errorCard: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 16,
+  errorCardContainer: {
+    borderRadius: 20,
     borderCurve: 'continuous',
-    padding: 16,
-    alignItems: 'center',
+    padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#FECACA',
-    gap: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  errorText: {
+  keyErrorCardBorder: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(78, 130, 238, 0.3)',
+  },
+  generalErrorCardBorder: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FECACA',
+  },
+  errorIconHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  errorIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keyErrorIconBg: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: 'rgba(78, 130, 238, 0.25)',
+  },
+  generalErrorIconBg: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorTitleBox: {
+    flex: 1,
+  },
+  errorCategoryRow: {
+    marginBottom: 2,
+  },
+  errorCategoryText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  errorTitleText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  errorBodyText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 12.5,
-    color: '#DC2626',
-    textAlign: 'center',
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 16,
   },
-  retryBtn: {
-    backgroundColor: '#DC2626',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
+  errorActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  primaryErrorActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
     borderCurve: 'continuous',
-    marginTop: 4,
+    gap: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  retryBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 11.5,
+  keyActionBtnBg: {
+    backgroundColor: '#1E293B',
+  },
+  retryActionBtnBg: {
+    backgroundColor: '#F47551',
+  },
+  primaryErrorActionText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFFFFF',
+  },
+  secondaryErrorActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 6,
+  },
+  secondaryErrorActionText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12.5,
+    color: '#475569',
   },
   resultContainer: {
     backgroundColor: '#FFFFFF',
@@ -901,11 +1151,21 @@ const styles = StyleSheet.create({
     minWidth: 28,
     textAlign: 'center',
   },
+  slotHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   slotHeaderLabel: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 12.5,
     color: '#334155',
-    marginBottom: 8,
+  },
+  slotHeaderHint: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#94A3B8',
   },
   slotRow: {
     flexDirection: 'row',
@@ -914,26 +1174,72 @@ const styles = StyleSheet.create({
   },
   slotPill: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 12,
     borderCurve: 'continuous',
     backgroundColor: '#F8FAFC',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   slotPillSelected: {
-    backgroundColor: 'rgba(244, 117, 81, 0.12)',
+    backgroundColor: '#FFF7ED',
     borderColor: '#F47551',
+  },
+  slotPillPressed: {
+    opacity: 0.8,
   },
   slotText: {
     fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#64748B',
+    includeFontPadding: false,
   },
   slotTextSelected: {
+    fontFamily: Fonts.poppins.semiBold,
     color: '#F47551',
     fontWeight: '700',
+    includeFontPadding: false,
+  },
+  riaCoachBubble: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 14,
+    borderCurve: 'continuous',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 117, 81, 0.25)',
+    marginBottom: 14,
+    gap: 10,
+  },
+  riaCoachIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(244, 117, 81, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  riaCoachTextCol: {
+    flex: 1,
+  },
+  riaCoachLabel: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 11,
+    color: '#EA580C',
+    letterSpacing: 0.2,
+    marginBottom: 2,
+    includeFontPadding: false,
+  },
+  riaCoachNote: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#334155',
+    includeFontPadding: false,
   },
   customCheckRow: {
     flexDirection: 'row',

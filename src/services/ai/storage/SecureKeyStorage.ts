@@ -6,8 +6,10 @@ import { auth, db } from '@/services/firebase';
 const GEMINI_API_KEY_STORAGE_KEY = 'calorify_gemini_byok_api_key_v1';
 
 function getStorageKey(uid?: string): string {
-  const activeUid = uid || auth.currentUser?.uid || 'guest';
-  return `${GEMINI_API_KEY_STORAGE_KEY}:${activeUid}`;
+  const rawUid = uid || auth.currentUser?.uid || 'guest';
+  // Expo SecureStore keys strictly allow only alphanumeric, '.', '-', and '_'
+  const safeUid = rawUid.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return `${GEMINI_API_KEY_STORAGE_KEY}_${safeUid}`;
 }
 
 const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
