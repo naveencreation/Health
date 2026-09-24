@@ -9,7 +9,15 @@ import {
   BackHandler,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Platform,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -19,7 +27,6 @@ import {
   ProfileQuickNavGrid,
   ProfileMetricInspector,
   AvatarPickerModal,
-  ScreenTransitionContainer,
 } from '@/components';
 import {
   AwardsScreen,
@@ -41,6 +48,58 @@ interface ProfileScreenProps {
   onScrollPositionChange?: (offset: number) => void;
 }
 
+interface SlideInSubScreenProps {
+  children: React.ReactNode;
+  isClosing: boolean;
+  onClosed: () => void;
+  screenWidth: number;
+  zIndex: number;
+}
+
+const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
+  children,
+  isClosing,
+  onClosed,
+  screenWidth,
+  zIndex,
+}) => {
+  const translateX = useSharedValue(screenWidth);
+
+  useEffect(() => {
+    translateX.value = withTiming(0, {
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [screenWidth, translateX]);
+
+  useEffect(() => {
+    if (isClosing) {
+      translateX.value = withTiming(
+        screenWidth,
+        {
+          duration: 220,
+          easing: Easing.in(Easing.cubic),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(onClosed)();
+          }
+        }
+      );
+    }
+  }, [isClosing, screenWidth, translateX, onClosed]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.subScreenContainer, { zIndex }, animatedStyle]}>
+      {children}
+    </Animated.View>
+  );
+};
+
 const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onSignIn,
   onSignOut,
@@ -49,14 +108,33 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onScrollPositionChange,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
-  const isSmallDevice = screenWidth < 375;
 
   const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
 
-  // Navigation Sub-View State ('main' | 'awards' | 'summary' | 'preferences' | 'goals')
-  const [subView, setSubView] = useState<ProfileSubView>('main');
+  // Navigation Sub-View Stack ('awards' | 'summary' | 'preferences' | 'goals')
+  const [navStack, setNavStack] = useState<Exclude<ProfileSubView, 'main'>[]>([]);
+  const [closingView, setClosingView] = useState<Exclude<ProfileSubView, 'main'> | null>(null);
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
+
+  const handleOpenSubView = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
+    if (closingView) return;
+    setNavStack((prev) => {
+      if (prev[prev.length - 1] === view) return prev;
+      return [...prev, view];
+    });
+  }, [closingView]);
+
+  const handleBack = useCallback(() => {
+    if (navStack.length === 0 || closingView) return;
+    const topView = navStack[navStack.length - 1];
+    setClosingView(topView);
+  }, [navStack, closingView]);
+
+  const handleClosed = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
+    setNavStack((prev) => prev.filter((item) => item !== view));
+    setClosingView((prev) => (prev === view ? null : prev));
+  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -74,55 +152,41 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   // Hardware Back Handler on Android
   useEffect(() => {
     const onBackPress = () => {
-      if (subView !== 'main') {
-        setSubView('main');
+      if (navStack.length > 0) {
+        handleBack();
         return true;
       }
       return false;
     };
     const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => sub.remove();
-  }, [subView]);
+  }, [navStack.length, handleBack]);
 
-  // Sub-Screen View Routing with Fluid Slide Transitions
-  if (subView === 'awards') {
-    return (
-      <ScreenTransitionContainer transitionKey="awards" direction="forward">
-        <AwardsScreen onBack={() => setSubView('main')} />
-      </ScreenTransitionContainer>
-    );
-  }
-
-  if (subView === 'summary') {
-    return (
-      <ScreenTransitionContainer transitionKey="summary" direction="forward">
-        <MetabolicSummaryScreen
-          onBack={() => setSubView('main')}
-          onOpenGoals={() => setSubView('goals')}
-        />
-      </ScreenTransitionContainer>
-    );
-  }
-
-  if (subView === 'preferences') {
-    return (
-      <ScreenTransitionContainer transitionKey="preferences" direction="forward">
-        <PreferencesScreen
-          onBack={() => setSubView('main')}
-          onSignIn={onSignIn}
-          onSignOut={onSignOut}
-        />
-      </ScreenTransitionContainer>
-    );
-  }
-
-  if (subView === 'goals') {
-    return (
-      <ScreenTransitionContainer transitionKey="goals" direction="forward">
-        <GoalsScreen onBack={() => setSubView('main')} />
-      </ScreenTransitionContainer>
-    );
-  }
+  const renderSubScreenContent = (view: Exclude<ProfileSubView, 'main'>) => {
+    switch (view) {
+      case 'awards':
+        return <AwardsScreen onBack={handleBack} />;
+      case 'summary':
+        return (
+          <MetabolicSummaryScreen
+            onBack={handleBack}
+            onOpenGoals={() => handleOpenSubView('goals')}
+          />
+        );
+      case 'preferences':
+        return (
+          <PreferencesScreen
+            onBack={handleBack}
+            onSignIn={onSignIn}
+            onSignOut={onSignOut}
+          />
+        );
+      case 'goals':
+        return <GoalsScreen onBack={handleBack} />;
+      default:
+        return null;
+    }
+  };
 
   // Derived Biometrics & Health Baseline
   const weightNum = userGoals.currentWeightKg || 74.2;
@@ -144,8 +208,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const streakDays = userGoals.streakDays || 7;
 
   return (
-    <ScreenTransitionContainer transitionKey="main" direction="fade">
-      <View style={styles.rootContainer}>
+    <View style={styles.rootContainer}>
       {/* 0. Dedicated Profile & Account Top App Bar - Completely blended with background */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
@@ -162,7 +225,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           {/* Right Action: Settings Gear Button */}
           <Pressable
             style={({ pressed }) => [styles.headerCircleBtn, pressed ? styles.btnPressed : null]}
-            onPress={() => setSubView('preferences')}
+            onPress={() => handleOpenSubView('preferences')}
             hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel="Open settings and preferences"
@@ -188,7 +251,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
           onEditAvatar={() => setAvatarPickerVisible(true)}
           isGuest={currentUser?.isGuest}
-          onOpenSettings={() => setSubView('preferences')}
+          onOpenSettings={() => handleOpenSubView('preferences')}
           streakDays={streakDays}
           showNav={false}
         />
@@ -198,10 +261,10 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           streakDays={streakDays}
           calorieBudget={userGoals.dailyCalorieBudget}
           riaTone={userGoals.riaTone}
-          onOpenAwards={() => setSubView('awards')}
-          onOpenSummary={() => setSubView('summary')}
-          onOpenPreferences={() => setSubView('preferences')}
-          onOpenGoals={() => setSubView('goals')}
+          onOpenAwards={() => handleOpenSubView('awards')}
+          onOpenSummary={() => handleOpenSubView('summary')}
+          onOpenPreferences={() => handleOpenSubView('preferences')}
+          onOpenGoals={() => handleOpenSubView('goals')}
         />
 
         {/* 3. Interactive Biometric Telemetry Inspector */}
@@ -218,7 +281,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           targetFat={userGoals.targetFat}
           stepGoal={userGoals.stepGoal}
           waterGoal={userGoals.waterGoalMl}
-          onOpenGoalsModal={() => setSubView('goals')}
+          onOpenGoalsModal={() => handleOpenSubView('goals')}
         />
       </ScrollView>
 
@@ -229,8 +292,20 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         onClose={() => setAvatarPickerVisible(false)}
         onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
       />
+
+      {/* Full-Page Native Stack Sub-Screens (Awards, Summary, Preferences, Goals) */}
+      {navStack.map((view, index) => (
+        <SlideInSubScreen
+          key={view}
+          zIndex={10 + index}
+          screenWidth={screenWidth}
+          isClosing={closingView === view}
+          onClosed={() => handleClosed(view)}
+        >
+          {renderSubScreenContent(view)}
+        </SlideInSubScreen>
+      ))}
     </View>
-  </ScreenTransitionContainer>
   );
 };
 
@@ -242,9 +317,9 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: Colors.background,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
-    minHeight: 64,
+    paddingTop: 10,
+    paddingBottom: 8,
+    minHeight: 56,
     justifyContent: 'center',
     zIndex: 10,
   },
@@ -297,6 +372,22 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 120, // Clear bottom nav bar
     gap: 14,
+  },
+  subScreenContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.background,
+    ...(Platform.OS !== 'android'
+      ? {
+          shadowColor: '#0F172A',
+          shadowOffset: { width: -3, height: 0 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+        }
+      : {}),
   },
 });
 

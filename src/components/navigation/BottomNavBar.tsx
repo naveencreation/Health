@@ -247,17 +247,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     height: Platform.OS === 'ios' ? 76 : 64,
     paddingBottom: Platform.OS === 'ios' ? 12 : 0,
-    borderTopWidth: 1,
-    borderTopColor: '#D0D5DD',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.08)',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 16,
     position: 'relative',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 8,
+    zIndex: 500,
   },
   tabButton: {
     flex: 1,
@@ -285,6 +281,7 @@ const styles = StyleSheet.create({
     width: 64,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 501,
   },
   // Ellipse 7: 56.49px x 56.49px, background: #CDE26D (Lime/Avocado Green)
   centerFab: {
@@ -302,6 +299,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 3,
     borderColor: '#FFFFFF',
+    zIndex: 502,
   },
   fabPressed: {
     opacity: 0.88,

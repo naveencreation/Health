@@ -365,11 +365,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   pillsScroll: {
-    marginBottom: 14,
+    marginBottom: 8,
   },
   pillsScrollContent: {
     gap: 8,
     paddingHorizontal: 2,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
   pill: {
     paddingHorizontal: 16,
@@ -377,6 +379,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pillActive: {
     backgroundColor: '#FFFFFF',
@@ -390,6 +394,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.medium,
     fontSize: 12.5,
     color: '#64748B',
+    includeFontPadding: false,
   },
   pillTextActive: {
     fontFamily: Fonts.poppins.bold,
