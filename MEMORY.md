@@ -82,6 +82,11 @@
     - **Stable Date Sorting:** Fixed non-strict sort comparator to use `localeCompare` so items on the same date preserve natural order.
     - **Unit Test Coverage:** Created comprehensive test suite `WorkoutHistoryCard.test.tsx` (empty state, habit metrics, dynamic icon categorizer, progressive disclosure).
 
+17. **Splash Screen & Startup Loader Unification** — resolved visual discontinuity, jumping layouts, and abrupt transitions:
+    - **Asset & Layout Parity (0px Layout Shift):** `AppLoadingScreen.tsx` now renders the exact canonical `assets/splash-icon.png` (280x106, flame + "Calorify" wordmark) centered on `#FAF9F6`, matching `expo-splash-screen` native configuration pixel-for-pixel with zero shift when the native splash hides.
+    - **Simple & Elegant Loading Indicator:** Stripped out legacy circular card, heavy shadows, and rotating dashed lime ring. Replaced with an understated jumping dots animation (`BouncingDotsLoader`, 3 terracotta `#F47551` dots) and clean status text (`"Personalizing your data..."` in `Poppins`, `#64748B`) positioned directly 28px below the logo.
+    - **Continuous Overlay & Crossfade:** In `App.tsx`, rather than unmounting the loading screen abruptly in 1 frame when `isAuthLoading` completes, `AppLoadingScreen` is mounted as an absolute overlay atop the app tree (`zIndex: 9999`). When `isAppReady` (`isFontsReady && !isAuthLoading`) becomes true, it smoothly dissolves into the app with a 250ms crossfade (`withTiming(0, { duration: 250 })`), simultaneously setting `pointerEvents="none"` for immediate user responsiveness, and unmounting once fully transparent.
+
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

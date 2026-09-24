@@ -19,6 +19,7 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
+import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
@@ -275,30 +276,36 @@ function MainApp() {
   }, []);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
-  const isFontsReady = fontsLoaded || fontError;
+  const isFontsReady = Boolean(fontsLoaded || fontError);
+  const isAppReady = isFontsReady && !isAuthLoading;
 
-  if (!isFontsReady || isAuthLoading) {
+  const loaderOpacity = useSharedValue(1);
+  const [isOverlayMounted, setIsOverlayMounted] = useState(true);
+
+  useEffect(() => {
+    if (isAppReady && isOverlayMounted) {
+      loaderOpacity.value = withTiming(0, { duration: 250 }, (finished) => {
+        if (finished) {
+          runOnJS(setIsOverlayMounted)(false);
+        }
+      });
+    }
+  }, [isAppReady]);
+
+  const renderContent = () => {
+    if (!isAuthenticated || authModalVisible) {
+      return (
+        <WelcomeScreen
+          key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
+          initialMode={authModalVisible ? authInitialMode : 'welcome'}
+          onLoginSuccess={handleCloseAuthModal}
+          onClose={isAuthenticated ? handleCloseAuthModal : undefined}
+        />
+      );
+    }
+
     return (
-      <AppLoadingScreen
-        message={!isFontsReady ? 'Loading typography...' : 'Authenticating...'}
-        subMessage="Preparing your personalized nutrition dashboard"
-      />
-    );
-  }
-
-  if (!isAuthenticated || authModalVisible) {
-    return (
-      <WelcomeScreen
-        key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
-        initialMode={authModalVisible ? authInitialMode : 'welcome'}
-        onLoginSuccess={handleCloseAuthModal}
-        onClose={isAuthenticated ? handleCloseAuthModal : undefined}
-      />
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneContainer}>
         {/* Only the active tab is mounted; scroll offsets are retained in refs. */}
         <View style={styles.contentArea}>
@@ -419,8 +426,22 @@ function MainApp() {
           onConfirm={handleConfirmSignOut}
           onCancel={() => setSignOutModalVisible(false)}
         />
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    );
+  };
+
+  return (
+    <View style={styles.rootContainer}>
+      {isFontsReady && renderContent()}
+      {isOverlayMounted && (
+        <AppLoadingScreen
+          fadeAnim={loaderOpacity}
+          pointerEvents={isAppReady ? 'none' : 'auto'}
+          message="Personalizing your data..."
+        />
+      )}
+    </View>
   );
 }
 
@@ -439,6 +460,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   loadingContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
