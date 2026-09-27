@@ -27,7 +27,18 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Kurale_400Regular.ttf",
+            "./assets/fonts/Poppins_400Regular.ttf",
+            "./assets/fonts/Poppins_500Medium.ttf",
+            "./assets/fonts/Poppins_600SemiBold.ttf",
+            "./assets/fonts/Poppins_700Bold.ttf"
+          ]
+        }
+      ],
       "expo-image",
       "expo-secure-store",
       [
@@ -35,7 +46,7 @@
         {
           "image": "./assets/splash-icon.png",
           "backgroundColor": "#FAF9F6",
-          "imageWidth": 280
+          "imageWidth": 288
         }
       ]
     ],

@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
     paddingTop: Platform.OS === 'android' ? 16 : 8,
     paddingBottom: Platform.OS === 'android' ? 24 : 16,
     alignItems: 'center',

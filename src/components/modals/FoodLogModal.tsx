@@ -26,7 +26,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
 import { useFoodData, useDailyLog, useGoals } from '@/context/HealthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodIconBadge } from '@/components/common/FoodIconBadge';
 import { FoodImage } from '@/components/common/FoodImage';
 import { getFoodDescription } from '@/data/foodDatabase';
@@ -252,6 +252,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
 });
 
 const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
+  const insets = useSafeAreaInsets();
   const { foodDatabase, addCustomFood } = useFoodData();
   const { addMealItem, removeMealItem, mealCalories, mealsByType } = useDailyLog();
   const { userGoals } = useGoals();
@@ -589,7 +590,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           /* =======================================================
              1. FULL-SCREEN DEDICATED FOOD PRODUCT DETAIL PAGE
              ======================================================= */
-          <SafeAreaView style={styles.fullScreenProductContainer} edges={['top', 'bottom']}>
+          <SafeAreaView style={styles.fullScreenProductContainer} edges={['top']}>
             {/* Top Bar: Floating Back & Favorite Buttons */}
             <View style={styles.productTopNavRow}>
               <Pressable
@@ -618,7 +619,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
               bounces={true}
               alwaysBounceVertical={true}
               style={styles.fullScreenScrollView}
-              contentContainerStyle={styles.fullScreenScrollContent}
+              contentContainerStyle={[
+                styles.fullScreenScrollContent,
+                { paddingBottom: 160 + insets.bottom },
+              ]}
             >
               {/* 2. First: The Food Image — 4:3 container, subject centered via contain */}
               <View style={styles.productHeroStage}>
@@ -671,7 +675,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   </View>
                   <View style={styles.nutriCard}>
                     <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: '#10B981' }]} />
+                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.protein }]} />
                       <Text style={styles.nutriKey}>PROTEIN</Text>
                     </View>
                     <Text style={styles.nutriVal}>
@@ -680,7 +684,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   </View>
                   <View style={styles.nutriCard}>
                     <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: '#F59E0B' }]} />
+                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.carbs }]} />
                       <Text style={styles.nutriKey}>CARBS</Text>
                     </View>
                     <Text style={styles.nutriVal}>
@@ -689,7 +693,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   </View>
                   <View style={styles.nutriCard}>
                     <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: '#F47551' }]} />
+                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.fat }]} />
                       <Text style={styles.nutriKey}>FAT</Text>
                     </View>
                     <Text style={styles.nutriVal}>
@@ -733,7 +737,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
             </ScrollView>
 
             {/* Sticky Bottom Stepper & CTA Footer with Integrated Live Budget Impact */}
-            <View style={styles.productStickyFooter}>
+            <View style={[styles.productStickyFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
               {/* Live Budget Impact Ticker Strip */}
               <View style={styles.footerImpactStrip}>
                 <View style={styles.footerImpactMetaRow}>
@@ -878,7 +882,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 <Ionicons
                   name={isSelected ? slot.iconActive : slot.iconInactive}
                   size={13}
-                  color={isSelected ? '#FFFFFF' : '#EA580C'}
+                  color={isSelected ? '#FFFFFF' : Colors.primary}
                 />
                 <Text
                   style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
@@ -1106,6 +1110,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           <Animated.View
             style={[
               styles.toastContainer,
+              { bottom: Math.max(insets.bottom + 12, 20) },
               toastStyle,
             ]}
           >
@@ -1290,9 +1295,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   mealTabPillActive: {
-    backgroundColor: '#EA580C',
-    borderColor: '#EA580C',
-    shadowColor: '#EA580C',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -1610,7 +1615,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 14,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
@@ -1623,7 +1627,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     height: 52,
@@ -1670,17 +1674,17 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   productHealthBadgePill: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: 'rgba(103, 189, 110, 0.35)',
   },
   productHealthBadgeText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 11,
-    color: '#059669',
+    color: '#2E7D32',
   },
   productMainTitle: {
     fontFamily: Fonts.poppins.bold,
@@ -1900,9 +1904,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   footerImpactBadgeOk: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: 'rgba(103, 189, 110, 0.35)',
   },
   footerImpactBadgeOver: {
     backgroundColor: '#FEF2F2',
@@ -1916,7 +1920,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   footerImpactDotOk: {
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.protein,
   },
   footerImpactDotOver: {
     backgroundColor: '#EF4444',
@@ -1926,7 +1930,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   footerImpactBadgeTextOk: {
-    color: '#15803D',
+    color: '#2E7D32',
   },
   footerImpactBadgeTextOver: {
     color: '#DC2626',
@@ -1942,7 +1946,7 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
   footerImpactBarOk: {
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.protein,
   },
   footerImpactBarOver: {
     backgroundColor: '#EF4444',
@@ -1968,12 +1972,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#15803D',
+    backgroundColor: Colors.primary,
     height: 52,
     borderRadius: 16,
     gap: 8,
     paddingHorizontal: 12,
-    shadowColor: '#15803D',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,

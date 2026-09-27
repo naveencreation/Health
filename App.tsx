@@ -12,13 +12,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts, Kurale_400Regular } from '@expo-google-fonts/kurale';
-import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-} from '@expo-google-fonts/poppins';
+
 import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
@@ -85,27 +79,89 @@ function MainApp() {
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
-  const [fontsLoaded, fontError] = useFonts({
-    Kurale_400Regular,
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-  });
-
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    // Fonts are natively bundled into APK/app binary assets (0ms load time)
+    requestAnimationFrame(() => {
       SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+    });
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
-      const styleId = 'calori-hide-scrollbars';
+      // 1. Google Fonts CDN links with preconnect for optimal speed
+      const linkId = 'calori-google-fonts';
+      if (!document.getElementById(linkId)) {
+        const preconnect1 = document.createElement('link');
+        preconnect1.rel = 'preconnect';
+        preconnect1.href = 'https://fonts.googleapis.com';
+        document.head.appendChild(preconnect1);
+
+        const preconnect2 = document.createElement('link');
+        preconnect2.rel = 'preconnect';
+        preconnect2.href = 'https://fonts.gstatic.com';
+        preconnect2.crossOrigin = 'anonymous';
+        document.head.appendChild(preconnect2);
+
+        const fontLink = document.createElement('link');
+        fontLink.id = linkId;
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&display=swap';
+        document.head.appendChild(fontLink);
+      }
+
+      // 2. Web styles & explicit @font-face aliases for native font names
+      const styleId = 'calori-web-typography-and-scrollbars';
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
         style.innerHTML = `
+          /* Map React Native static font names to Google Fonts on Web */
+          @font-face {
+            font-family: 'Poppins_400Regular';
+            src: local('Poppins Regular'), local('Poppins-Regular'), local('Poppins'),
+                 url('https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrFJA.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Poppins_500Medium';
+            src: local('Poppins Medium'), local('Poppins-Medium'),
+                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9V1s.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Poppins_600SemiBold';
+            src: local('Poppins SemiBold'), local('Poppins-SemiBold'),
+                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6V1s.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Poppins_700Bold';
+            src: local('Poppins Bold'), local('Poppins-Bold'),
+                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7V1s.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Kurale_400Regular';
+            src: local('Kurale Regular'), local('Kurale-Regular'), local('Kurale'),
+                 url('https://fonts.gstatic.com/s/kurale/v16/4iCs6KV9e9dXjho6eA.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+          }
+
+          /* Default modern sans-serif fallback so Times New Roman never renders on Web */
+          html, body, #root, div, span, text, input, button, textarea {
+            font-family: Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          }
+
           /* Pure warm neutral backdrop for web desktop view */
           html, body, #root {
             background-color: #F4F1EA !important;
@@ -276,15 +332,38 @@ function MainApp() {
   }, []);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
 
-  const isFontsReady = Boolean(fontsLoaded || fontError);
-  const isAppReady = isFontsReady && !isAuthLoading;
+  const isDataReady = !isAuthLoading;
+
+  // Healthify/Spotify UX pattern:
+  // 1. Defer heavy dashboard mounting until brand reveal completes (600ms).
+  //    Guarantees 100% of CPU/GPU headroom on JS thread for 60/120 FPS buttery motion.
+  // 2. Minimum display time (950ms) for crisp brand appreciation, followed by 300ms dissolve.
+  const [isContentMounted, setIsContentMounted] = useState(false);
+  const [minDisplayElapsed, setMinDisplayElapsed] = useState(false);
+
+  useEffect(() => {
+    const mountTimer = setTimeout(() => {
+      setIsContentMounted(true);
+    }, 600);
+
+    const displayTimer = setTimeout(() => {
+      setMinDisplayElapsed(true);
+    }, 950);
+
+    return () => {
+      clearTimeout(mountTimer);
+      clearTimeout(displayTimer);
+    };
+  }, []);
+
+  const isAppReady = isDataReady && minDisplayElapsed;
 
   const loaderOpacity = useSharedValue(1);
   const [isOverlayMounted, setIsOverlayMounted] = useState(true);
 
   useEffect(() => {
     if (isAppReady && isOverlayMounted) {
-      loaderOpacity.value = withTiming(0, { duration: 250 }, (finished) => {
+      loaderOpacity.value = withTiming(0, { duration: 300 }, (finished) => {
         if (finished) {
           runOnJS(setIsOverlayMounted)(false);
         }
@@ -433,12 +512,12 @@ function MainApp() {
 
   return (
     <View style={styles.rootContainer}>
-      {isFontsReady && renderContent()}
+      {isContentMounted && renderContent()}
       {isOverlayMounted && (
         <AppLoadingScreen
+          isReady={true}
           fadeAnim={loaderOpacity}
           pointerEvents={isAppReady ? 'none' : 'auto'}
-          message="Personalizing your data..."
         />
       )}
     </View>

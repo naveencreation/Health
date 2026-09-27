@@ -240,7 +240,7 @@ export const TopDateStripComponent: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Return to today"
             >
-              <View style={styles.todayPillDot} />
+              <Ionicons name="arrow-undo-outline" size={12} color="#C2410C" />
               <Text style={styles.todayPillText}>Today</Text>
             </Pressable>
           )}

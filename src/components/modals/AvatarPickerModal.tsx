@@ -274,8 +274,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.poppins.bold,
     fontSize: 18,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerSubtitle: {

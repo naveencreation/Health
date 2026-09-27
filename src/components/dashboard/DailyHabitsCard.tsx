@@ -105,7 +105,8 @@ const DailyHabitsCardComponent: React.FC = () => {
         {/* LEFT POD: Water Tracker 💧 */}
         <View style={styles.waterPod}>
           <View style={styles.waterPodBadge}>
-            <Text style={styles.waterPodBadgeText}>💧 Hydration</Text>
+            <Ionicons name="water-outline" size={13} color="#0284C7" />
+            <Text style={styles.waterPodBadgeText}>Hydration</Text>
           </View>
 
           <View style={styles.gaugeCanvas}>
@@ -153,7 +154,7 @@ const DailyHabitsCardComponent: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Add 250 ml water"
             >
-              <Ionicons name="add" size={15} color="#FFFFFF" />
+              <Ionicons name="add" size={15} color="#0284C7" />
               <Text style={styles.waterAddBtnText}>250 ml</Text>
             </Pressable>
           </View>
@@ -162,7 +163,8 @@ const DailyHabitsCardComponent: React.FC = () => {
         {/* RIGHT POD: Movement 👟 */}
         <View style={styles.stepPod}>
           <View style={styles.stepPodBadge}>
-            <Text style={styles.stepPodBadgeText}>👟 Movement</Text>
+            <Ionicons name="footsteps-outline" size={13} color="#F47551" />
+            <Text style={styles.stepPodBadgeText}>Movement</Text>
           </View>
 
           <View style={styles.gaugeCanvas}>
@@ -210,7 +212,7 @@ const DailyHabitsCardComponent: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Add 1,000 steps"
             >
-              <Ionicons name="add" size={15} color="#FFFFFF" />
+              <Ionicons name="add" size={15} color="#F47551" />
               <Text style={styles.stepAddBtnText}>1k steps</Text>
             </Pressable>
           </View>
@@ -417,6 +419,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   waterPodBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#F0F9FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -425,6 +429,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#BAE6FD',
+    gap: 4,
   },
   waterPodBadgeText: {
     fontFamily: Fonts.poppins.bold,
@@ -432,6 +437,8 @@ const styles = StyleSheet.create({
     color: '#0284C7',
   },
   stepPodBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF5F1',
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -440,6 +447,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#FFD5C6',
+    gap: 4,
   },
   stepPodBadgeText: {
     fontFamily: Fonts.poppins.bold,
@@ -533,7 +541,9 @@ const styles = StyleSheet.create({
   waterAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0284C7',
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 9,
@@ -543,7 +553,7 @@ const styles = StyleSheet.create({
   waterAddBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#FFFFFF',
+    color: '#0284C7',
   },
   stepMinusBtn: {
     width: 32,
@@ -559,7 +569,9 @@ const styles = StyleSheet.create({
   stepAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F47551',
+    backgroundColor: '#FFF5F1',
+    borderWidth: 1,
+    borderColor: '#FFD5C6',
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 9,
@@ -569,7 +581,7 @@ const styles = StyleSheet.create({
   stepAddBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#FFFFFF',
+    color: '#F47551',
   },
   // Logged Activities Strip
   activitiesStrip: {

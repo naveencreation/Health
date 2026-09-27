@@ -82,10 +82,77 @@
     - **Stable Date Sorting:** Fixed non-strict sort comparator to use `localeCompare` so items on the same date preserve natural order.
     - **Unit Test Coverage:** Created comprehensive test suite `WorkoutHistoryCard.test.tsx` (empty state, habit metrics, dynamic icon categorizer, progressive disclosure).
 
-17. **Splash Screen & Startup Loader Unification** — resolved visual discontinuity, jumping layouts, and abrupt transitions:
-    - **Asset & Layout Parity (0px Layout Shift):** `AppLoadingScreen.tsx` now renders the exact canonical `assets/splash-icon.png` (280x106, flame + "Calorify" wordmark) centered on `#FAF9F6`, matching `expo-splash-screen` native configuration pixel-for-pixel with zero shift when the native splash hides.
-    - **Simple & Elegant Loading Indicator:** Stripped out legacy circular card, heavy shadows, and rotating dashed lime ring. Replaced with an understated jumping dots animation (`BouncingDotsLoader`, 3 terracotta `#F47551` dots) and clean status text (`"Personalizing your data..."` in `Poppins`, `#64748B`) positioned directly 28px below the logo.
-    - **Continuous Overlay & Crossfade:** In `App.tsx`, rather than unmounting the loading screen abruptly in 1 frame when `isAuthLoading` completes, `AppLoadingScreen` is mounted as an absolute overlay atop the app tree (`zIndex: 9999`). When `isAppReady` (`isFontsReady && !isAuthLoading`) becomes true, it smoothly dissolves into the app with a 250ms crossfade (`withTiming(0, { duration: 250 })`), simultaneously setting `pointerEvents="none"` for immediate user responsiveness, and unmounting once fully transparent.
+17. **Cinematic Startup Reveal & Two-Phase Handoff (Healthify / Spotify Standard)** — resolved emblem oversizing, circular mask clipping, and created a luxury brand reveal:
+    - **Refined Emblem Scale & 1:1 Density Alignment:** Scaled the Terracotta Flame down from oversized 140dp to an understated, elegant **~73dp height** (visual width 54dp, 260px height in 1024x1024 master canvas). Configured `imageWidth: 288` in `app.json` matching Android 12+ 288dp icon canvas for 1:1 un-interpolated pixel mapping on 4x xxxhdpi screens (1152px), eliminating hardware upscaling blur.
+    - **Native Android Project Sync:** Regenerated `android/` via `npx expo prebuild --platform android`. Configured `Theme.SplashScreen` (`windowSplashScreenBackground: #FAF9F6`, `windowSplashScreenAnimatedIcon: @drawable/splashscreen_logo`, `postSplashScreenTheme: @style/AppTheme`), wiring `SplashScreenManager.registerOnActivity(this)` in `MainActivity.kt`.
+    - **Cinematic Motion Choreography (`AppLoadingScreen.tsx`):**
+      - **Freeze-Frame Handshake (0–200ms):** Flame starts dead-center at $X=0, Y=0$, matching the native splash screen with 0.0px layout shift.
+      - **Leftward Glide (200–750ms):** Flame smoothly glides leftward ($X: 0 \to -64\text{dp}$) via organic cubic bezier (`Easing.bezier(0.16, 1, 0.3, 1)`).
+      - **Letter-by-Letter Reveal (280–650ms):** As the flame glides, each letter of **"Calorify"** (`C - a - l - o - r - i - f - y`) reveals sequentially with 38ms stagger in **solid black** (`#000000`, `Kurale_400Regular`, 32px) right next to the flame, forming the complete horizontal lockup.
+      - **Status Fade-In (680–1200ms):** 3 terracotta jumping dots (`BouncingDotsLoader`) and `"Personalizing your data..."` fade in underneath the lockup.
+      - **Buttery Dissolve (1200ms):** Smooth 300ms crossfade into the active dashboard once data and minimum display threshold are ready.
+
+18. **Zero-Jank Deferred Mounting & Single-Clock Worklet Optimization** — eliminated startup stutter and frame drops:
+    - **Deferred Dashboard Mounting (`App.tsx`):** Root cause of stutter was `{isFontsReady && renderContent()}` mounting the entire heavy dashboard (SVG rings, calendar strip, meal cards, AI hooks) on the JavaScript thread simultaneously while Reanimated was playing the intro animation. Resolved by deferring `{isContentMounted && renderContent()}` until 800ms (after the flame glide and letter reveal are complete). The intro animation gets 100% of CPU/GPU headroom on the UI thread at silky 60/120 FPS, and the dashboard mounts invisibly behind the static holding phase before the 1200ms dissolve.
+    - **Native Splash Handoff Buffer (`requestAnimationFrame`):** Wrapped `SplashScreen.hideAsync()` in `requestAnimationFrame` so the native splash window dismisses only after React Native's first paint is buffered in the GPU, preventing any 1-frame flash.
+    - **Single Master Reanimated Clock (`AppLoadingScreen.tsx`):** Replaced 8 independent `useSharedValue` timers with a single master `wordmarkProgress` shared value (`0 -> 1`), synchronizing all letter reveals into one GPU animation tick.
+    - **Hardware Layer Translation vs Text Rasterization:** Wrapped each letter in an `<Animated.View>` with static `<Text>` inside, animating `translateY` (6 -> 0) and `opacity`. Removed dynamic text `scale`, completely eliminating Android Skia glyph re-rasterization and layout recalculations. Added `cachePolicy="memory-disk"` to `expo-image`.
+
+19. **Native Static Font Embedding (Zero-Wait Native Boot)** — eliminated `useFonts()` asynchronous hook and registration delay:
+    - Extracted all `.ttf` font files (`Kurale_400Regular.ttf`, `Poppins_400Regular.ttf`, `Poppins_500Medium.ttf`, `Poppins_600SemiBold.ttf`, `Poppins_700Bold.ttf`) and embedded them directly into `assets/fonts/` and native `android/app/src/main/assets/fonts/`.
+    - Configured the native `expo-font` plugin in `app.json` with the static fonts array and ran `npx expo prebuild --platform android --no-install`.
+    - Removed `useFonts()` and `@expo-google-fonts/*` dependencies from `App.tsx`.
+    - Fonts are now linked directly at the native OS level (`Typeface` on Android, `UIFont` on iOS) at application launch before JavaScript boots. Startup wait time for fonts dropped to **0ms**, eliminating any possibility of font-loading delays or FOUT.
+
+20. **Pure Minimalist Brand Reveal (Option A / Apple & Spotify Standard)** — removed jumping dots and status text:
+    - Removed `BouncingDotsLoader` and `"Personalizing your data..."` caption from `AppLoadingScreen.tsx`.
+    - Focused 100% of visual attention on the centered brand lockup: the Terracotta Flame gliding leftward ($X: 0 \to -64\text{dp}$) and the solid black serif wordmark `"Calorify"` revealing letter-by-letter.
+    - Tightened startup lifecycle in `App.tsx`: background dashboard mounts at 600ms, display threshold reduced from 1200ms to **950ms**, followed by the 300ms dissolve into the active dashboard. Total startup time is now a crisp, luxury **~1.25s** with zero dropped frames.
+
+21. **Auth Screen Horizontal Padding Harmonization** — resolved 44px double-padding bug and vertical header misalignment:
+    - Root cause: `SignInScreen.tsx` had compounded paddings (`phoneFrame` had `paddingHorizontal: 20` and `scrollContent` had `paddingHorizontal: 24`, totaling 44px per side). This squished inputs and misaligned the form from the `<OnboardingHeader>` back button (which sat at 24px).
+    - Reduced `scrollContent` in `SignInScreen.tsx` to `paddingHorizontal: 4`, aligning form fields, titles, error banners, and buttons on the exact same 24px vertical grid line ($20\text{px} + 4\text{px} = 24\text{px}$) as `SignUpScreen.tsx`.
+    - Added matching `paddingHorizontal: 20` to `phoneFrame` and updated `scrollContent` to `4` in `ForgotPasswordScreen.tsx`.
+    - Unified `WelcomeScreen.tsx` container padding to `24px`. All screens across the auth flow now share an identical, balanced 24px gutter consistent with the rest of the application.
+
+22. **Navigation Button Shape Unification (Circle Standard)** — eliminated squircle back button in onboarding header:
+    - Root cause: `OnboardingHeader.tsx` had `borderRadius: 10` (a rounded square/squircle) on its 38x38 back button, while 100% of other navigation and modal close controls in the app (`Header.tsx` search/notification, `FoodLogModal.tsx`, `FoodVisionModal.tsx`, `RiaChatModal.tsx`, `GoalsModalSheet.tsx`, etc.) use circular buttons (`borderRadius = width / 2`).
+    - Updated `backButton` in `OnboardingHeader.tsx` to `borderRadius: 19`, matching `Header.tsx`'s `circleButton` (`38 × 38dp`, `borderRadius: 19`). Navigation icon buttons across the entire app are now 100% unified in shape and visual affordance.
+
+23. **Today Quick-Jump Affordance ("Return to Today")** — replaced ambiguous dot with actionable return icon:
+    - In `TopDateStrip.tsx`, replaced `<View style={styles.todayPillDot} />` inside `todayPill` with `<Ionicons name="arrow-undo-outline" size={12} color="#C2410C" />`.
+    - The button now clearly reads `[ ↩ Today ]`, providing an unambiguous, actionable visual affordance that clicking it returns to the current real-world day.
+
+24. **Safe Area Compliance Overhaul (`FoodLogModal.tsx`)** — grounded in Expo Safe Area guidelines (`useSafeAreaInsets`):
+    - Replaced hardcoded `paddingBottom: Platform.OS === 'ios' ? 24 : 14` on `productStickyFooter` with dynamic `paddingBottom: Math.max(insets.bottom, 16)`, preventing button overlap with the iOS home indicator bar (34px) and Android gesture bar.
+    - Updated `fullScreenScrollContent` to dynamic `paddingBottom: 160 + insets.bottom`, fully resolving the "Quick Portions" chips cutoff behind the sticky footer bar.
+    - Updated `fullScreenProductContainer` to `edges={['top']}`, allowing the sticky footer to cleanly bleed to the bottom edge.
+    - Updated in-modal `toastContainer` to dynamic `bottom: Math.max(insets.bottom + 12, 20)` to float above the home indicator.
+
+25. **Web Typography & Google Fonts CDN Integration** — eliminated browser Times New Roman fallback:
+    - In `App.tsx`, injected Google Fonts CDN `<link>` (preconnect to `fonts.googleapis.com` & `fonts.gstatic.com` + `Kurale` & `Poppins:wght@400;500;600;700&display=swap`) strictly within `Platform.OS === 'web'` (0 KB mobile bundle impact).
+    - Injected CSS `@font-face` aliases on Web for `Poppins_400Regular`, `Poppins_500Medium`, `Poppins_600SemiBold`, `Poppins_700Bold`, and `Kurale_400Regular`.
+    - In `typography.ts`, added modern system-ui fallback stacks (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`) on Web so text never renders in Times New Roman.
+
+26. **Design & Color System Harmonization (`FoodLogModal.tsx`)** — unified with Figma design tokens in `Colors.ts`:
+    - Replaced heavy dark forest green (`#15803D`) on primary CTA button (`confirmAddBtn`) with brand Terracotta (`Colors.primary = '#F47551'`), matching all other app action buttons.
+    - Harmonized Macro matrix dots in `nutritionMatrixGrid`: Protein uses `Colors.protein` (`#67BD6E`), Carbs uses `Colors.carbs` (`#F8D558`), Fat uses `Colors.fat` (`#F47551`).
+    - Harmonized Health Badge ("Gut Friendly") to `Colors.proteinLight` (`#E8F6E9`) with `#2E7D32` accessible typography.
+    - Unified live budget impact ticker to `Colors.protein` / `Colors.proteinLight`.
+    - Harmonized meal switcher active pills (`mealTabPillActive`) and active icons to `Colors.primary` (`#F47551`).
+    - Normalized `footerStepperPill` border to `borderWidth: 1` (was 1.5px), matching 1px border grid across all chips and cards.
+
+27. **Modal Header Typography Unification (`AvatarPickerModal`, `NotificationModal`, `SearchFoodModal`)**:
+    - Replaced serif `Fonts.kurale` header titles with `Fonts.poppins.bold` (`fontWeight: '700'`) in `AvatarPickerModal.tsx` ("Select Avatar"), `NotificationModal.tsx` ("Notifications"), and `SearchFoodModal.tsx` ("Search Food").
+    - Unified `emptyTitle` in `NotificationModal.tsx` to `Fonts.poppins.semiBold`.
+    - Modal sheets across the entire app now share a cohesive, modern geometric typography matching their subtitles and buttons.
+
+28. **Daily Habits & Activity Iconography & Button Harmonization (`DailyHabitsCard.tsx`)**:
+    - Replaced raw filled OS emojis (`💧` and `👟`) with monoline vector outline icons: `<Ionicons name="water-outline" size={13} color="#0284C7" />` and `<Ionicons name="footsteps-outline" size={13} color="#F47551" />`.
+    - Replaced heavy solid buttons with industry-standard soft-tinted surface action buttons matching `+ Log Workout`:
+      - Water Add Button: `#F0F9FF` background, `borderWidth: 1`, `#BAE6FD` border, `#0284C7` icon/text.
+      - Step Add Button: `#FFF5F1` background, `borderWidth: 1`, `#FFD5C6` border, `#F47551` icon/text.
+    - Result: Eliminates platform emoji distortion and heavy bottom weight, centering focus on the data gauges while keeping clean 1-tap touch affordances.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

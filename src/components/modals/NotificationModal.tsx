@@ -354,8 +354,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.poppins.bold,
     fontSize: 18,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerSubtitle: {
@@ -496,8 +497,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   emptyTitle: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 18,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   emptyDesc: {
