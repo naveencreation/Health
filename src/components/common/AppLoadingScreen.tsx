@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
@@ -25,9 +25,17 @@ interface AnimatedLetterProps {
   char: string;
   index: number;
   progress: SharedValue<number>;
+  fontSize: number;
+  lineHeight: number;
 }
 
-const AnimatedLetter: React.FC<AnimatedLetterProps> = ({ char, index, progress }) => {
+const AnimatedLetter: React.FC<AnimatedLetterProps> = ({
+  char,
+  index,
+  progress,
+  fontSize,
+  lineHeight,
+}) => {
   const animatedStyle = useAnimatedStyle(() => {
     // Staggered reveal window across the single master progress (0 to 1)
     const start = index * 0.08;
@@ -45,8 +53,19 @@ const AnimatedLetter: React.FC<AnimatedLetterProps> = ({ char, index, progress }
   });
 
   return (
-    <Animated.View style={animatedStyle}>
-      <Text style={styles.letterText}>{char}</Text>
+    <Animated.View style={[styles.letterWrapper, animatedStyle]}>
+      <Text
+        style={[
+          styles.letterText,
+          {
+            fontSize,
+            lineHeight,
+          },
+        ]}
+        allowFontScaling={false}
+      >
+        {char}
+      </Text>
     </Animated.View>
   );
 };
@@ -56,7 +75,27 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
   fadeAnim,
   pointerEvents = 'auto',
 }) => {
-  // Flame horizontal glide: starts at 0 (exact native splash center), moves to -64dp
+  const { width: screenWidth } = useWindowDimensions();
+
+  // Dynamic responsive scale:
+  // For compact devices (width < 360dp), scale slightly down to 0.85x so brand lockup breathes easily.
+  // Standard phones (360dp - 430dp) and wider viewports use 1.0x scale.
+  const scale = screenWidth < 360 ? Math.max(0.85, screenWidth / 375) : 1;
+  const fontSize = Math.round(32 * scale);
+  const lineHeight = Math.round(42 * scale);
+
+  // Optical centering for the full lockup (Flame + "Calorify"):
+  // Visible flame inside splash-icon.png is ~54dp * scale; gap is ~12dp * scale; wordmark is ~136dp * scale.
+  // Total brand lockup width = ~202dp * scale.
+  // When centered around screen origin (0, 0):
+  // - Flame visual center rests at -72dp * scale
+  // - Wordmark left edge starts at -34dp * scale
+  // Resulting lockup span: [-99dp, +102dp] -> perfectly optically centered on any display width.
+  const targetFlameTranslateX = Math.round(-72 * scale);
+  const wordmarkMarginLeft = Math.round(-34 * scale);
+  const wordmarkMarginTop = Math.round(-lineHeight / 2);
+
+  // Flame horizontal glide: starts at 0 (exact native splash center), moves to targetFlameTranslateX
   const flameTranslateX = useSharedValue(0);
 
   // Single synchronized master progress for letter-by-letter reveal (0 to 1)
@@ -68,7 +107,7 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
     // 1. After 160ms freeze-frame, flame smoothly glides leftward
     flameTranslateX.value = withDelay(
       160,
-      withTiming(-64, {
+      withTiming(targetFlameTranslateX, {
         duration: 520,
         easing: Easing.bezier(0.16, 1, 0.3, 1), // Swift launch, silky deceleration
       })
@@ -82,7 +121,7 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
         easing: Easing.out(Easing.cubic),
       })
     );
-  }, [isReady]);
+  }, [isReady, targetFlameTranslateX]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim ? fadeAnim.value : 1,
@@ -110,13 +149,23 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
         </Animated.View>
 
         {/* Staggered Letter-by-Letter Reveal: Sits directly right of flame */}
-        <View style={styles.wordmarkContainer}>
+        <View
+          style={[
+            styles.wordmarkContainer,
+            {
+              marginLeft: wordmarkMarginLeft,
+              marginTop: wordmarkMarginTop,
+            },
+          ]}
+        >
           {LETTERS.map((char, index) => (
             <AnimatedLetter
               key={index}
               char={char}
               index={index}
               progress={wordmarkProgress}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
             />
           ))}
         </View>
@@ -159,16 +208,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: '50%',
     top: '50%',
-    marginLeft: -25, // Placed 12dp to the right of the flame's resting position (-37dp + 12dp = -25dp)
-    marginTop: -16,  // Optical vertical baseline match with the flame's visual center
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    overflow: 'visible',
+  },
+  letterWrapper: {
+    overflow: 'visible',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 6, // Prevents Android native RenderNode from clipping ascenders/descenders
+    paddingHorizontal: 0.5,
   },
   letterText: {
     fontFamily: Fonts.kurale || 'System',
-    fontSize: 32,
     color: '#000000', // Solid black typography
-    letterSpacing: -0.2,
-    includeFontPadding: false,
+    letterSpacing: 0, // Clean spacing without negative kerning that cuts off character tails
+    includeFontPadding: Platform.OS === 'android', // Preserve font padding so Android doesn't slice descenders
   },
 });
