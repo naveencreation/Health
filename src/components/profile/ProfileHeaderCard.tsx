@@ -42,7 +42,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Back"
             >
-              <Ionicons name="chevron-back" size={20} color="#0F172A" />
+              <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.navPlaceholder} />
@@ -58,7 +58,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Settings"
             >
-              <Ionicons name="settings-outline" size={19} color="#0F172A" />
+              <Ionicons name="settings-outline" size={19} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.navPlaceholder} />
@@ -104,13 +104,13 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               </View>
             ) : (
               <View style={styles.proBadge}>
-                <Ionicons name="ribbon" size={12} color="#D97706" />
+                <Ionicons name="ribbon" size={12} color="#A16207" />
                 <Text style={styles.proBadgeText}>PRO Member</Text>
               </View>
             )}
 
             <View style={styles.streakPill}>
-              <Ionicons name="flame" size={11} color="#F47551" />
+              <Ionicons name="flame" size={11} color={Colors.primary} />
               <Text style={styles.streakPillText}>{streakDays}-Day Streak</Text>
             </View>
           </View>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   proBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   proBadgeText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#B45309',
+    color: '#A16207',
   },
   guestBadge: {
     flexDirection: 'row',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3.5,
-    backgroundColor: '#FFE4D6',
+    backgroundColor: Colors.fatLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   streakPillText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#F47551',
+    color: Colors.primaryDark,
     includeFontPadding: false,
   },
 });

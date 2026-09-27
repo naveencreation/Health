@@ -51,8 +51,8 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       title: '7-Day Discipline',
       desc: 'Logged nutrition and activity for 7 consecutive days',
       icon: 'flame',
-      color: '#EA580C',
-      bgColor: '#FFEDD5',
+      color: Colors.primary,
+      bgColor: Colors.fatLight,
       unlocked: streakDays >= 7,
       progress: streakDays >= 7 ? 'Unlocked' : `${streakDays} / 7 days`,
     },
@@ -61,8 +61,8 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       title: 'Hydration Pioneer',
       desc: `Achieved daily ${(targetWater / 1000).toFixed(1)}L water intake target 5 times`,
       icon: 'water',
-      color: '#2563EB',
-      bgColor: '#DBEAFE',
+      color: Colors.water,
+      bgColor: Colors.waterLight,
       unlocked: daysWaterGoalMet >= 5,
       progress: daysWaterGoalMet >= 5 ? 'Unlocked' : `${daysWaterGoalMet} / 5 days`,
     },
@@ -71,8 +71,8 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       title: 'Nutritional Consistency',
       desc: 'Logged complete daily meals on at least 3 separate days',
       icon: 'ribbon',
-      color: '#16A34A',
-      bgColor: '#DCFCE7',
+      color: Colors.protein,
+      bgColor: Colors.proteinLight,
       unlocked: daysMealsLogged >= 3,
       progress: daysMealsLogged >= 3 ? 'Unlocked' : `${daysMealsLogged} / 3 days`,
     },
@@ -81,8 +81,8 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       title: 'Century Stepper',
       desc: 'Accumulate 100,000 total recorded steps in Calori',
       icon: 'footsteps',
-      color: '#8B5CF6',
-      bgColor: '#EDE9FE',
+      color: Colors.steps,
+      bgColor: Colors.fatLight,
       unlocked: totalLifetimeSteps >= 100000,
       progress: totalLifetimeSteps >= 100000 ? 'Unlocked' : `${totalLifetimeSteps.toLocaleString()} / 100,000`,
     },
@@ -91,8 +91,8 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
       title: 'Fiber Champion',
       desc: `Hit your daily fiber goal of ${targetFiber}g on 5 separate days`,
       icon: 'leaf',
-      color: '#0D9488',
-      bgColor: '#CCFBF1',
+      color: Colors.fiber,
+      bgColor: Colors.fiberLight,
       unlocked: daysFiberGoalMet >= 5,
       progress: daysFiberGoalMet >= 5 ? 'Unlocked' : `${daysFiberGoalMet} / 5 days`,
     },
@@ -122,7 +122,7 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -135,7 +135,7 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
           </View>
 
           <View style={styles.unlockedBadge}>
-            <Ionicons name="trophy" size={13} color="#D97706" />
+            <Ionicons name="trophy" size={13} color="#A16207" />
             <Text style={styles.unlockedBadgeText}>
               {unlockedCount}/{awards.length}
             </Text>
@@ -156,7 +156,7 @@ export const AwardsScreen: React.FC<AwardsScreenProps> = ({ onBack }) => {
           accessibilityLabel={`Current active logging streak: ${streakDays} days. On fire.`}
         >
           <View style={styles.streakIconCircle}>
-            <Ionicons name="flame" size={28} color="#EA580C" />
+            <Ionicons name="flame" size={28} color={Colors.primary} />
           </View>
           <View style={styles.streakInfo}>
             <Text style={styles.streakVal}>{streakDays} {streakDays === 1 ? 'Day' : 'Days'}</Text>
@@ -284,15 +284,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: 'rgba(248, 213, 88, 0.4)',
   },
   unlockedBadgeText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 12,
     fontWeight: '700',
-    color: '#D97706',
+    color: '#A16207',
     includeFontPadding: false,
   },
   scrollContainer: {
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.fatLight,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -120,7 +120,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -147,7 +147,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <Ionicons
               name={savedSuccess ? 'checkmark' : 'save-outline'}
               size={15}
-              color={savedSuccess ? '#16A34A' : Colors.primary}
+              color={savedSuccess ? Colors.protein : Colors.primary}
             />
             <Text
               style={[
@@ -184,7 +184,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             accessibilityLabel="Fat loss preset, 1650 kilocalories"
           >
             <View style={[styles.presetIconBox, styles.presetIconFatLoss]}>
-              <Ionicons name="flame" size={16} color="#EA580C" />
+              <Ionicons name="flame" size={16} color={Colors.primary} />
             </View>
             <Text style={styles.presetName}>Fat Loss</Text>
             <Text style={styles.presetMeta}>1,650 kcal</Text>
@@ -202,7 +202,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             accessibilityLabel="Muscle gain preset, 2300 kilocalories"
           >
             <View style={[styles.presetIconBox, styles.presetIconMuscle]}>
-              <Ionicons name="barbell" size={16} color="#16A34A" />
+              <Ionicons name="barbell" size={16} color={Colors.protein} />
             </View>
             <Text style={styles.presetName}>Muscle Gain</Text>
             <Text style={styles.presetMeta}>2,300 kcal</Text>
@@ -220,7 +220,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             accessibilityLabel="Maintenance preset, 1950 kilocalories"
           >
             <View style={[styles.presetIconBox, styles.presetIconMaintain]}>
-              <Ionicons name="shield-checkmark" size={16} color="#0284C7" />
+              <Ionicons name="shield-checkmark" size={16} color={Colors.water} />
             </View>
             <Text style={styles.presetName}>Maintain</Text>
             <Text style={styles.presetMeta}>1,950 kcal</Text>
@@ -270,7 +270,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="flame-outline" size={18} color="#EA580C" />
+              <Ionicons name="flame-outline" size={18} color={Colors.primary} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Daily Calorie Budget</Text>
@@ -294,7 +294,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="fitness-outline" size={18} color="#10B981" />
+              <Ionicons name="fitness-outline" size={18} color={Colors.protein} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Protein</Text>
@@ -318,7 +318,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="nutrition-outline" size={18} color="#F59E0B" />
+              <Ionicons name="nutrition-outline" size={18} color="#D97706" />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Carbohydrates</Text>
@@ -342,7 +342,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="leaf-outline" size={18} color="#F47551" />
+              <Ionicons name="leaf-outline" size={18} color={Colors.fat} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Dietary Fat</Text>
@@ -366,7 +366,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="sparkles-outline" size={18} color="#16A34A" />
+              <Ionicons name="sparkles-outline" size={18} color={Colors.fiber} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Dietary Fiber</Text>
@@ -392,7 +392,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="water-outline" size={18} color="#2563EB" />
+              <Ionicons name="water-outline" size={18} color={Colors.water} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Water Intake</Text>
@@ -416,7 +416,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="footsteps-outline" size={18} color="#059669" />
+              <Ionicons name="footsteps-outline" size={18} color={Colors.steps} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Daily Steps</Text>
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.04,
@@ -584,8 +584,8 @@ const styles = StyleSheet.create({
     borderColor: '#FEE2E2',
   },
   headerSaveBtnSuccess: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
+    backgroundColor: Colors.proteinLight,
+    borderColor: 'rgba(103, 189, 110, 0.35)',
   },
   headerSaveBtnText: {
     fontFamily: Fonts.poppins.semiBold,
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   headerSaveBtnTextSuccess: {
-    color: '#16A34A',
+    color: '#15803D',
   },
   btnPressed: {
     opacity: 0.75,
@@ -673,13 +673,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   presetIconFatLoss: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.fatLight,
   },
   presetIconMuscle: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   presetIconMaintain: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterLight,
   },
   presetName: {
     fontFamily: Fonts.poppins.semiBold,
@@ -735,13 +735,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   macroBarProtein: {
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.protein,
   },
   macroBarCarbs: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: Colors.carbs,
   },
   macroBarFat: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.fat,
   },
   macroLegendRow: {
     flexDirection: 'row',
@@ -759,13 +759,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendDotProtein: {
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.protein,
   },
   legendDotCarbs: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: Colors.carbs,
   },
   legendDotFat: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.fat,
   },
   legendText: {
     fontFamily: Fonts.poppins.medium,

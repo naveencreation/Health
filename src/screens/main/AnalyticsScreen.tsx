@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { useAnalytics, useGoals, useDailyLog } from '@/context/HealthContext';
 import { WorkoutHistoryCard } from '@/components/analytics/WorkoutHistoryCard';
 
@@ -671,7 +672,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <View
                 style={[
                   styles.adaptiveStatusDot,
-                  { backgroundColor: currentMetrics.isDeficit ? '#22C55E' : '#F47551' },
+                  { backgroundColor: currentMetrics.isDeficit ? Colors.protein : Colors.primary },
                 ]}
               />
               <Text style={styles.adaptiveStatusText}>
@@ -721,7 +722,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <Ionicons
                 name={currentMetrics.isDeficit ? 'shield-checkmark' : 'alert-circle'}
                 size={13}
-                color={currentMetrics.isDeficit ? '#059669' : '#EA580C'}
+                color={currentMetrics.isDeficit ? '#15803D' : Colors.primaryDark}
               />
               <Text
                 style={[
@@ -786,7 +787,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             {/* Pillar 1: Nutrition Intake */}
             <View style={[styles.kpiCol, styles.kpiColBorder]}>
               <View style={styles.pillarTitleRow}>
-                <Ionicons name="nutrition-outline" size={12} color="#16A34A" />
+                <Ionicons name="nutrition-outline" size={12} color={Colors.protein} />
                 <Text style={styles.pillarTitle}>INTAKE</Text>
               </View>
               <Text
@@ -869,7 +870,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               {/* Dynamic goal badge */}
               {metricTab === 'calories' ? (
                 <View style={styles.chartBudgetBadge}>
-                  <Ionicons name="flame" size={11} color="#059669" />
+                  <Ionicons name="flame" size={11} color={Colors.protein} />
                   <Text style={styles.chartBudgetBadgeText}>{budget.toLocaleString()} kcal</Text>
                 </View>
               ) : metricTab === 'water' ? (
@@ -879,7 +880,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 </View>
               ) : (
                 <View style={styles.chartStepsBadge}>
-                  <Ionicons name="footsteps" size={11} color="#EA580C" />
+                  <Ionicons name="footsteps" size={11} color={Colors.steps} />
                   <Text style={styles.chartStepsBadgeText}>
                     {stepGoal >= 1000 ? `${(stepGoal / 1000).toFixed(0)}k` : stepGoal} steps
                   </Text>
@@ -906,9 +907,9 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                     size={11}
                     color={
                       metricTab === tab
-                        ? (tab === 'calories' ? '#22C55E'
+                        ? (tab === 'calories' ? Colors.protein
                             : tab === 'water' ? '#0284C7'
-                            : '#EA580C')
+                            : Colors.steps)
                         : '#94A3B8'
                     }
                   />
@@ -936,11 +937,11 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               </View>
               {metricTab === 'calories' ? (<>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.protein }]} />
                   <Text style={styles.legendLabel}>On Budget</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#F47551' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
                   <Text style={styles.legendLabel}>Surplus</Text>
                 </View>
               </>) : metricTab === 'water' ? (<>
@@ -1000,7 +1001,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   <Ionicons
                     name={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? 'checkmark-circle' : 'alert-circle') : 'time-outline'}
                     size={12}
-                    color={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? '#16A34A' : '#EA580C') : '#0284C7'}
+                    color={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? Colors.protein : Colors.primary) : Colors.water}
                   />
                   <Text
                     style={[
@@ -1018,13 +1019,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               {activeTooltipData.hasData && activeTooltipData.protein > 0 ? (
                 <View style={styles.tooltipMacroRow}>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: '#16A34A', fontWeight: '700' }}>P </Text>{Math.round(activeTooltipData.protein)}g
+                    <Text style={{ color: Colors.protein, fontWeight: '700' }}>P </Text>{Math.round(activeTooltipData.protein)}g
                   </Text>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: '#D97706', fontWeight: '700' }}>C </Text>{Math.round(activeTooltipData.carbs)}g
+                    <Text style={{ color: '#A16207', fontWeight: '700' }}>C </Text>{Math.round(activeTooltipData.carbs)}g
                   </Text>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: '#EA580C', fontWeight: '700' }}>F </Text>{Math.round(activeTooltipData.fat)}g
+                    <Text style={{ color: Colors.primaryDark, fontWeight: '700' }}>F </Text>{Math.round(activeTooltipData.fat)}g
                   </Text>
                 </View>
               ) : (
@@ -1212,8 +1213,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                                : stepGoal;
                   const hasData = val > 0;
                   const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? '#22C55E' : metricTab === 'water' ? '#0284C7' : '#EA580C';
-                  const barColorOther = metricTab === 'calories' ? '#F47551' : metricTab === 'water' ? '#38BDF8' : '#FB923C';
+                  const barColorMet = metricTab === 'calories' ? Colors.protein : metricTab === 'water' ? '#0284C7' : '#EA580C';
+                  const barColorOther = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? '#38BDF8' : '#FB923C';
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
                   const topLabel = metricTab === 'calories' ? `${val}`
@@ -1288,8 +1289,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                                : stepGoal;
                   const hasData = cluster.daysLogged > 0;
                   const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? '#22C55E' : metricTab === 'water' ? '#0284C7' : '#EA580C';
-                  const barColorOther = metricTab === 'calories' ? '#F47551' : metricTab === 'water' ? '#38BDF8' : '#FB923C';
+                  const barColorMet = metricTab === 'calories' ? Colors.protein : metricTab === 'water' ? '#0284C7' : '#EA580C';
+                  const barColorOther = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? '#38BDF8' : '#FB923C';
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
                   const topLabel = metricTab === 'calories' ? `${val}`
@@ -1376,7 +1377,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               </Text>
             </View>
             <View style={styles.macroQualityTag}>
-              <Ionicons name="sparkles" size={11} color="#059669" />
+              <Ionicons name="sparkles" size={11} color={Colors.protein} />
               <Text style={styles.macroQualityTagText}>
                 {timeRange === '7d' ? '7-Day Targets' : '30-Day Targets'}
               </Text>
@@ -1387,7 +1388,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <View style={styles.macroRowBlock}>
             <View style={styles.macroRowTop}>
               <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: '#22C55E' }]} />
+                <View style={[styles.macroRowDot, { backgroundColor: Colors.protein }]} />
                 <Text style={styles.macroRowLabel}>PROTEIN</Text>
               </View>
               <View
@@ -1400,7 +1401,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 }
               >
                 {currentMetrics.loggedCount > 0 && currentMetrics.avgProtein >= targetProtein ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#059669" />
+                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                 ) : null}
                 <Text
                   style={
@@ -1431,7 +1432,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   styles.macroProgressFill,
                   {
                     width: `${Math.min(100, Math.round((currentMetrics.avgProtein / targetProtein) * 100))}%`,
-                    backgroundColor: '#22C55E',
+                    backgroundColor: Colors.protein,
                   },
                 ]}
               />
@@ -1442,7 +1443,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <View style={styles.macroRowBlock}>
             <View style={styles.macroRowTop}>
               <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: '#EAB308' }]} />
+                <View style={[styles.macroRowDot, { backgroundColor: Colors.carbs }]} />
                 <Text style={styles.macroRowLabel}>CARBS</Text>
               </View>
               <View
@@ -1455,7 +1456,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 }
               >
                 {currentMetrics.loggedCount > 0 && currentMetrics.avgCarbs <= targetCarbs * 1.05 ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#059669" />
+                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                 ) : null}
                 <Text
                   style={
@@ -1486,7 +1487,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   styles.macroProgressFill,
                   {
                     width: `${Math.min(100, Math.round((currentMetrics.avgCarbs / targetCarbs) * 100))}%`,
-                    backgroundColor: '#EAB308',
+                    backgroundColor: Colors.carbs,
                   },
                 ]}
               />
@@ -1497,7 +1498,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <View style={[styles.macroRowBlock, { marginBottom: 2 }]}>
             <View style={styles.macroRowTop}>
               <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: '#F47551' }]} />
+                <View style={[styles.macroRowDot, { backgroundColor: Colors.fat }]} />
                 <Text style={styles.macroRowLabel}>FAT</Text>
               </View>
               <View
@@ -1510,7 +1511,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 }
               >
                 {currentMetrics.loggedCount > 0 && currentMetrics.avgFat <= targetFat * 1.05 ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#059669" />
+                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                 ) : null}
                 <Text
                   style={
@@ -1541,7 +1542,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   styles.macroProgressFill,
                   {
                     width: `${Math.min(100, Math.round((currentMetrics.avgFat / targetFat) * 100))}%`,
-                    backgroundColor: '#F47551',
+                    backgroundColor: Colors.fat,
                   },
                 ]}
               />
@@ -1551,7 +1552,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <View style={[styles.macroRowBlock, { marginBottom: 2 }]}>
             <View style={styles.macroRowTop}>
               <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: '#0D9488' }]} />
+                <View style={[styles.macroRowDot, { backgroundColor: Colors.fiber }]} />
                 <Text style={styles.macroRowLabel}>FIBER</Text>
               </View>
               <View
@@ -1564,7 +1565,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 }
               >
                 {currentMetrics.loggedCount > 0 && (currentMetrics as any).avgFiber >= targetFiber ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#059669" />
+                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                 ) : null}
                 <Text
                   style={
@@ -1595,7 +1596,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   styles.macroProgressFill,
                   {
                     width: `${Math.min(100, Math.round(((currentMetrics as any).avgFiber / targetFiber) * 100))}%`,
-                    backgroundColor: '#0D9488',
+                    backgroundColor: Colors.fiber,
                   },
                 ]}
               />
@@ -1802,13 +1803,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   adherenceBadgeGreen: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: Colors.proteinLight,
+    borderColor: 'rgba(103, 189, 110, 0.35)',
     borderWidth: 1,
   },
   adherenceBadgeCoral: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FFEDD5',
+    backgroundColor: Colors.fatLight,
+    borderColor: '#FFD5C6',
     borderWidth: 1,
   },
   adherenceBadgeText: {
@@ -1818,10 +1819,10 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   adherenceTextGreen: {
-    color: '#059669',
+    color: '#15803D',
   },
   adherenceTextCoral: {
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   heroValueContainer: {
     marginVertical: 4,
@@ -2435,7 +2436,7 @@ const styles = StyleSheet.create({
   macroQualityTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -2444,7 +2445,7 @@ const styles = StyleSheet.create({
   macroQualityTagText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 9.5,
-    color: '#059669',
+    color: '#15803D',
     letterSpacing: 0.4,
     includeFontPadding: false,
   },
@@ -2506,7 +2507,7 @@ const styles = StyleSheet.create({
   macroBadgeGreen: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 6,
@@ -2515,13 +2516,13 @@ const styles = StyleSheet.create({
   macroBadgeTextGreen: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 10,
-    color: '#059669',
+    color: '#15803D',
     includeFontPadding: false,
   },
   macroBadgeCoral: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF1F2',
+    backgroundColor: Colors.fatLight,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 6,
@@ -2530,7 +2531,7 @@ const styles = StyleSheet.create({
   macroBadgeTextCoral: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 10,
-    color: '#E11D48',
+    color: Colors.primaryDark,
     includeFontPadding: false,
   },
   macroBadgeNeutral: {

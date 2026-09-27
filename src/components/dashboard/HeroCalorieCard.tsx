@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDailyLog, useGoals, useAnalytics } from '@/context/HealthContext';
 import { useAuth } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
@@ -138,9 +139,9 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
   // Brand-aligned dial stroke color
   const dialStrokeColor = useMemo(() => {
-    if (calLeft < 0) return '#F97316'; // Warm supportive coral-amber when exceeding budget
-    if (progressRatio >= 0.95 && progressRatio <= 1.05) return '#10B981'; // Emerald on track
-    return '#F47551'; // Signature Calori Coral
+    if (calLeft < 0) return Colors.primary; // Warm supportive coral when exceeding budget
+    if (progressRatio >= 0.95 && progressRatio <= 1.05) return Colors.protein; // Fresh green on track
+    return Colors.primary; // Signature Calori Coral
   }, [calLeft, progressRatio]);
 
   // Macro progress ratios (Slide 0)
@@ -308,7 +309,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               accessibilityRole="button"
               accessibilityLabel="Edit calorie budget"
             >
-              <Ionicons name="pencil-outline" size={15} color="#0F172A" />
+              <Ionicons name="pencil-outline" size={15} color={Colors.iconNavy} />
             </Pressable>
           ) : null}
         </View>
@@ -429,7 +430,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <Text style={styles.macroName}>Carbs</Text>
               <AnimatedProgressBar
                 progress={carbRatio}
-                fillColor="#22C55E"
+                fillColor={Colors.carbs}
                 height={5}
                 trackColor="#E2E8F0"
               />
@@ -443,7 +444,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <Text style={styles.macroName}>Protein</Text>
               <AnimatedProgressBar
                 progress={proteinRatio}
-                fillColor="#3B82F6"
+                fillColor={Colors.protein}
                 height={5}
                 trackColor="#E2E8F0"
               />
@@ -457,7 +458,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <Text style={styles.macroName}>Fat</Text>
               <AnimatedProgressBar
                 progress={fatRatio}
-                fillColor="#EC4899"
+                fillColor={Colors.fat}
                 height={5}
                 trackColor="#E2E8F0"
               />
@@ -492,7 +493,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <Ionicons
                 name={isOnTrack ? 'checkmark-circle' : 'alert-circle'}
                 size={13}
-                color={isOnTrack ? '#16A34A' : '#EA580C'}
+                color={isOnTrack ? Colors.protein : Colors.primary}
                 style={styles.statusBadgeIcon}
               />
               <Text
@@ -529,9 +530,9 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
             <Svg width={chartWidth} height={chartHeight} style={styles.svgAbsolute}>
               <Defs>
                 <LinearGradient id="frostWaveGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0%" stopColor="#FF6B4A" stopOpacity={0.35} />
-                  <Stop offset="65%" stopColor="#FF8C68" stopOpacity={0.12} />
-                  <Stop offset="100%" stopColor="#FF8C68" stopOpacity={0.0} />
+                  <Stop offset="0%" stopColor={Colors.primary} stopOpacity={0.35} />
+                  <Stop offset="65%" stopColor={Colors.primaryLight} stopOpacity={0.15} />
+                  <Stop offset="100%" stopColor={Colors.primaryLight} stopOpacity={0.0} />
                 </LinearGradient>
               </Defs>
 
@@ -552,7 +553,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               {/* Glowing Wave Curve Line */}
               <Path
                 d={curvePath}
-                stroke="#FF6B4A"
+                stroke={Colors.primary}
                 strokeWidth={3}
                 fill="none"
                 strokeLinecap="round"
@@ -579,7 +580,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                     cx={pt.x}
                     cy={pt.y}
                     r={pt.cals > 0 ? 3.5 : 2.5}
-                    fill={pt.cals > 0 ? '#FF6B4A' : 'rgba(15, 23, 42, 0.15)'}
+                    fill={pt.cals > 0 ? Colors.primary : 'rgba(15, 23, 42, 0.15)'}
                   />
                 );
               })}
@@ -589,14 +590,14 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 cx={activePt.x}
                 cy={activePt.y}
                 r={8}
-                fill="rgba(255, 107, 74, 0.25)"
+                fill="rgba(244, 117, 81, 0.25)"
               />
               <Circle
                 cx={activePt.x}
                 cy={activePt.y}
                 r={4.5}
                 fill="#FFFFFF"
-                stroke="#FF6B4A"
+                stroke={Colors.primary}
                 strokeWidth={2.5}
               />
             </Svg>
@@ -878,10 +879,10 @@ const styles = StyleSheet.create({
     marginRight: 3,
   },
   statusBadgeGreen: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   statusBadgeOrange: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.fatLight,
   },
   statusBadgeText: {
     fontFamily: Fonts.poppins.bold,
@@ -889,10 +890,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statusTextGreen: {
-    color: '#16A34A',
+    color: '#2E7D32',
   },
   statusTextOrange: {
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   // Slide 1: Refined Soft Pastel Macro Badges
   macroBadgesRow: {
@@ -903,9 +904,9 @@ const styles = StyleSheet.create({
   },
   macroPillCyan: {
     flex: 1,
-    backgroundColor: '#FEFCE8',
+    backgroundColor: Colors.carbsLight,
     borderWidth: 1,
-    borderColor: '#FEF08A',
+    borderColor: '#FDE68A',
     paddingVertical: 7,
     borderRadius: 12,
     alignItems: 'center',
@@ -913,7 +914,7 @@ const styles = StyleSheet.create({
   },
   macroPillGreen: {
     flex: 1,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
     borderColor: '#BBF7D0',
     paddingVertical: 7,
@@ -923,9 +924,9 @@ const styles = StyleSheet.create({
   },
   macroPillOrange: {
     flex: 1,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#FFD5C6',
     paddingVertical: 7,
     borderRadius: 12,
     alignItems: 'center',
@@ -934,19 +935,19 @@ const styles = StyleSheet.create({
   macroTitleCyan: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#B45309',
+    color: '#A16207',
     fontWeight: '600',
   },
   macroTitleGreen: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#16A34A',
+    color: '#2E7D32',
     fontWeight: '600',
   },
   macroTitleOrange: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#EA580C',
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   macroPillValue: {

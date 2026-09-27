@@ -42,7 +42,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconAwards]}>
-              <Ionicons name="ribbon-outline" size={20} color="#F47551" />
+              <Ionicons name="ribbon-outline" size={20} color={Colors.primary} />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Awards</Text>
@@ -59,7 +59,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconSummary]}>
-              <Ionicons name="calendar-outline" size={20} color="#67BD6E" />
+              <Ionicons name="calendar-outline" size={20} color={Colors.protein} />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Summary</Text>
@@ -79,7 +79,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconPreferences]}>
-              <Ionicons name="options-outline" size={20} color="#64748B" />
+              <Ionicons name="options-outline" size={20} color={Colors.iconNavy} />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Preferences</Text>
@@ -151,10 +151,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconAwards: {
-    backgroundColor: '#FFE4D6',
+    backgroundColor: Colors.fatLight,
   },
   iconSummary: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   iconPreferences: {
     backgroundColor: '#F1F5F9',

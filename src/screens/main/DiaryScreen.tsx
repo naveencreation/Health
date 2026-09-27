@@ -167,7 +167,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Search foods in diary"
           >
-            <Ionicons name="search-outline" size={18} color="#0F172A" />
+            <Ionicons name="search-outline" size={18} color={Colors.iconNavy} />
           </Pressable>
         </View>
 
@@ -240,7 +240,7 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
           >
             <AnimatedProgressBar
               progress={totalConsumed / Math.max(1, effectiveBudget)}
-              fillColor={isOverBudget ? '#F47551' : '#22C55E'}
+              fillColor={isOverBudget ? Colors.primary : Colors.protein}
               height={5}
               trackColor="#F1F5F9"
             />
@@ -260,9 +260,9 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
               </View>
               <AnimatedProgressBar
                 progress={(totalCarbs || 0) / Math.max(1, targetCarbs)}
-                fillColor="#EAB308"
+                fillColor={Colors.carbs}
                 height={3.5}
-                trackColor="#FEF9C3"
+                trackColor={Colors.carbsLight}
               />
             </View>
 
@@ -278,9 +278,9 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
               </View>
               <AnimatedProgressBar
                 progress={(totalProtein || 0) / Math.max(1, targetProtein)}
-                fillColor="#22C55E"
+                fillColor={Colors.protein}
                 height={3.5}
-                trackColor="#DCFCE7"
+                trackColor={Colors.proteinLight}
               />
             </View>
 
@@ -296,9 +296,9 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
               </View>
               <AnimatedProgressBar
                 progress={(totalFat || 0) / Math.max(1, targetFat)}
-                fillColor="#F47551"
+                fillColor={Colors.fat}
                 height={3.5}
-                trackColor="#FFE4D6"
+                trackColor={Colors.fatLight}
               />
             </View>
 
@@ -314,9 +314,9 @@ const DiaryScreenComponent: React.FC<DiaryScreenProps> = ({
               </View>
               <AnimatedProgressBar
                 progress={(totalFiber || 0) / Math.max(1, targetFiber)}
-                fillColor="#0D9488"
+                fillColor={Colors.fiber}
                 height={3.5}
-                trackColor="#CCFBF1"
+                trackColor={Colors.fiberLight}
               />
             </View>
           </View>
@@ -380,9 +380,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
@@ -436,10 +436,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusDotOk: {
-    backgroundColor: '#22C55E',
+    backgroundColor: Colors.protein,
   },
   statusDotOver: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
   },
   telemetryCalVal: {
     fontFamily: Fonts.poppins.bold,
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   telemetryCalOver: {
-    color: '#F47551',
+    color: Colors.primaryDark,
   },
   telemetryCalUnit: {
     fontFamily: Fonts.poppins.medium,

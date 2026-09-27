@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderCurve: 'continuous',
-    backgroundColor: '#10B981', // Emerald active dot
+    backgroundColor: Colors.protein, // Fresh avocado active dot
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
@@ -369,18 +369,18 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   askRiaPill: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#FFD5C6',
   },
   askRiaPillText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 9,
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   messageText: {
     fontFamily: Fonts.poppins.medium,

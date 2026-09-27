@@ -232,7 +232,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
               </>
             ) : (
               <>
-                <Ionicons name="checkmark-circle-outline" size={16} color="#F47551" />
+                <Ionicons name="checkmark-circle-outline" size={16} color={Colors.protein} />
                 <Text style={styles.contextSummaryText}>
                   {isGainGoal ? (
                     <>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   pillActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#F47551',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   },
   pillTextActive: {
     fontFamily: Fonts.poppins.bold,
-    color: '#F47551',
+    color: Colors.primary,
   },
   telemetryCard: {
     backgroundColor: '#FFFFFF',
@@ -549,21 +549,21 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   macroBarProtein: {
-    backgroundColor: '#67BD6E',
+    backgroundColor: Colors.protein,
   },
   macroBarCarbs: {
-    backgroundColor: '#F8D558',
+    backgroundColor: Colors.carbs,
   },
   macroBarFat: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.fat,
   },
   legendDotProtein: {
-    backgroundColor: '#67BD6E',
+    backgroundColor: Colors.protein,
   },
   legendDotCarbs: {
-    backgroundColor: '#F8D558',
+    backgroundColor: Colors.carbs,
   },
   legendDotFat: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.fat,
   },
 });

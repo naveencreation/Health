@@ -9,6 +9,7 @@ import Animated, {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { LoggedMealItem, MealType } from '@/types';
 import { useDailyLog } from '@/context/HealthContext';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
@@ -144,7 +145,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             {/* Visual Calorie Consumption Progress Bar */}
             <AnimatedProgressBar
               progress={mealProgress}
-              fillColor={isOverBudget ? '#F97316' : '#10B981'}
+              fillColor={isOverBudget ? Colors.primary : Colors.protein}
               height={4}
               trackColor="rgba(15, 23, 42, 0.06)"
               style={{ marginTop: 4 }}
@@ -161,7 +162,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             </View>
           ) : null}
 
-          {/* Round Lime Green Add Button (#CDE26D) */}
+          {/* Round Action Add Button */}
           <Pressable
             style={({ pressed }) => [
               styles.addButtonCircle,
@@ -173,7 +174,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Add food to ${title}`}
           >
-            <Ionicons name="add" size={22} color="#16A34A" />
+            <Ionicons name="add" size={22} color={Colors.protein} />
           </Pressable>
         </View>
       </View>
@@ -433,12 +434,12 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderCurve: 'continuous',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: 'rgba(103, 189, 110, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#16A34A',
+    shadowColor: Colors.protein,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,

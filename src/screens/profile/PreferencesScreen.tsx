@@ -131,7 +131,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -168,7 +168,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityLabel="Warm and encouraging tone: Celebrates streaks, offers gentle reminders, positive reinforcement"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconSupportive]}>
-              <Ionicons name="sparkles" size={16} color="#B45309" />
+              <Ionicons name="sparkles" size={16} color="#A16207" />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Warm & Encouraging</Text>
@@ -195,7 +195,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityLabel="Disciplined and direct tone: Firm accountability, timely notifications, straightforward calorie targets"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconFocused]}>
-              <Ionicons name="flame" size={16} color="#DC2626" />
+              <Ionicons name="flame" size={16} color={Colors.primary} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Disciplined & Direct</Text>
@@ -264,12 +264,12 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           {aiConnected && maskedApiKey ? (
             <View style={styles.byokKeyChip}>
               <View style={styles.byokKeyChipLeft}>
-                <Ionicons name="key-outline" size={13} color="#F47551" />
+                <Ionicons name="key-outline" size={13} color={Colors.primary} />
                 <Text style={styles.byokKeyChipLabel}>Key:</Text>
                 <Text style={styles.byokKeyChipValue}>{maskedApiKey}</Text>
               </View>
               <View style={styles.byokSecureTag}>
-                <Ionicons name="shield-checkmark" size={11} color="#059669" />
+                <Ionicons name="shield-checkmark" size={11} color={Colors.protein} />
                 <Text style={styles.byokSecureText}>Encrypted</Text>
               </View>
             </View>
@@ -289,14 +289,14 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 <Ionicons
                   name={aiConnected ? 'settings-outline' : 'key-outline'}
                   size={14}
-                  color="#EA580C"
+                  color={Colors.primary}
                 />
               </View>
               <Text style={styles.byokActionBtnText}>
                 {aiConnected ? 'Manage Key & Settings' : 'Connect Personal Gemini Key'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={15} color="#EA580C" />
+            <Ionicons name="chevron-forward" size={15} color={Colors.primary} />
           </Pressable>
         </View>
 
@@ -305,7 +305,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <View style={[styles.switchIconBox, styles.switchIconWater]}>
-              <Ionicons name="water-outline" size={18} color="#2563EB" />
+              <Ionicons name="water-outline" size={18} color={Colors.water} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.switchTitle}>Water Reminders</Text>
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personalityCardActive: {
-    backgroundColor: '#FFF8F6',
+    backgroundColor: Colors.fatLight,
   },
   personalityIconBox: {
     width: 36,
@@ -607,10 +607,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   personalityIconSupportive: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
   },
   personalityIconFocused: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.fatLight,
   },
   personalityIconScientific: {
     backgroundColor: '#E0E7FF',
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.fatLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   statusPillActive: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   statusPillInactive: {
     backgroundColor: '#F1F5F9',
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusDotActive: {
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.protein,
   },
   statusDotInactive: {
     backgroundColor: '#94A3B8',

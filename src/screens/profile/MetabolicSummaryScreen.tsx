@@ -43,7 +43,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -63,7 +63,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Tune goals"
             >
-              <Ionicons name="options-outline" size={19} color="#0F172A" />
+              <Ionicons name="options-outline" size={19} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.headerPlaceholder} />
@@ -85,7 +85,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             accessibilityLabel={`Basal metabolic rate: ${bmrEst} kilocalories resting burn per day`}
           >
             <View style={[styles.statIconBox, styles.statIconBmr]}>
-              <Ionicons name="flame" size={20} color="#2563EB" />
+              <Ionicons name="flame" size={20} color={Colors.primary} />
             </View>
             <Text style={styles.statVal}>{bmrEst}</Text>
             <Text style={styles.statLabel}>BMR (kcal/day)</Text>
@@ -98,7 +98,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             accessibilityLabel={`Total daily energy expenditure: ${tdeeEst} kilocalories burn per day`}
           >
             <View style={[styles.statIconBox, styles.statIconTdee]}>
-              <Ionicons name="flash" size={20} color="#059669" />
+              <Ionicons name="flash" size={20} color={Colors.protein} />
             </View>
             <Text style={[styles.statVal, styles.statValTdee]}>{tdeeEst}</Text>
             <Text style={styles.statLabel}>TDEE (kcal/day)</Text>
@@ -140,7 +140,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
           </View>
 
           <View style={styles.fatLossBanner}>
-            <Ionicons name="trending-down" size={20} color="#EA580C" />
+            <Ionicons name="trending-down" size={20} color={Colors.primary} />
             <Text style={styles.fatLossText}>
               Projected fat loss: <Text style={styles.boldText}>~{weeklyFatLossKg} kg / week</Text>{' '}
               ({Math.round(dailyDeficit * 7).toLocaleString()} kcal weekly deficit).
@@ -325,10 +325,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   statIconBmr: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: Colors.fatLight,
   },
   statIconTdee: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: Colors.proteinLight,
   },
   statVal: {
     fontFamily: Fonts.poppins.bold,
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   statValTdee: {
-    color: '#059669',
+    color: '#15803D',
   },
   statLabel: {
     fontFamily: Fonts.poppins.semiBold,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.fatLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   formulaNumberDeficit: {
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   formulaKey: {
     fontFamily: Fonts.poppins.medium,
@@ -431,18 +431,18 @@ const styles = StyleSheet.create({
   fatLossBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
     borderRadius: 12,
     padding: 12,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#FFD5C6',
   },
   fatLossText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 12.5,
     lineHeight: 18,
-    color: '#C2410C',
+    color: Colors.primaryDark,
     flex: 1,
   },
   boldText: {

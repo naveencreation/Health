@@ -240,7 +240,7 @@ export const TopDateStripComponent: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Return to today"
             >
-              <Ionicons name="arrow-undo-outline" size={12} color="#C2410C" />
+              <Ionicons name="arrow-undo-outline" size={12} color={Colors.primaryDark} />
               <Text style={styles.todayPillText}>Today</Text>
             </Pressable>
           )}
@@ -365,7 +365,7 @@ export const TopDateStripComponent: React.FC = () => {
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke={item.progress >= 0.9 ? '#10B981' : Colors.primary}
+                        stroke={item.progress >= 0.9 ? Colors.protein : Colors.primary}
                         strokeWidth={strokeWidth}
                         strokeDasharray={`${circumference} ${circumference}`}
                         strokeDashoffset={strokeDashoffset}
@@ -566,9 +566,9 @@ const styles = StyleSheet.create({
   todayPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: '#FFD5C6',
     paddingHorizontal: 9,
     paddingVertical: 3.5,
     borderRadius: 14,
@@ -578,12 +578,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.primary,
   },
   todayPillText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#C2410C',
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
   weekArrowsContainer: {
@@ -595,9 +595,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
@@ -814,8 +814,8 @@ const styles = StyleSheet.create({
   },
   modalDayCellToday: {
     borderWidth: 1.5,
-    borderColor: '#F47551',
-    backgroundColor: '#FFF7ED',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.fatLight,
   },
   modalDayText: {
     fontFamily: Fonts.poppins.medium,
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   modalDayTextToday: {
-    color: '#EA580C',
+    color: Colors.primaryDark,
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
   },
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.protein,
   },
   modalFooter: {
     marginTop: 16,
@@ -854,12 +854,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
   },
   modalTodayBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 13,
-    color: Colors.primary,
+    color: Colors.primaryDark,
     fontWeight: '600',
   },
 });

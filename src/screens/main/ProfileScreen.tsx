@@ -199,9 +199,9 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
 
   const getBmiStatus = (val: number) => {
     if (val < 18.5) return { label: 'Underweight', color: '#3B82F6' };
-    if (val < 25) return { label: 'Healthy Weight', color: '#16A34A' };
-    if (val < 30) return { label: 'Overweight', color: '#F59E0B' };
-    return { label: 'Obese', color: '#EF4444' };
+    if (val < 25) return { label: 'Healthy Weight', color: Colors.protein };
+    if (val < 30) return { label: 'Overweight', color: '#D97706' };
+    return { label: 'Obese', color: Colors.primary };
   };
 
   const bmiStatus = getBmiStatus(bmiNum);
@@ -230,7 +230,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Open settings and preferences"
           >
-            <Ionicons name="settings-outline" size={19} color="#0F172A" />
+            <Ionicons name="settings-outline" size={19} color={Colors.iconNavy} />
           </Pressable>
         </View>
       </View>
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.04,

@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { UserAvatar } from '@/components/common/UserAvatar';
@@ -186,7 +187,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Search foods and diary"
           >
-            <Ionicons name="search-outline" size={18} color="#0F172A" />
+            <Ionicons name="search-outline" size={18} color={Colors.iconNavy} />
           </Pressable>
 
           <Pressable
@@ -204,7 +205,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Notifications"
           >
-            <Ionicons name="notifications-outline" size={18} color="#0F172A" />
+            <Ionicons name="notifications-outline" size={18} color={Colors.iconNavy} />
             {hasUnreadNotification ? <View style={styles.notificationDot} /> : null}
           </Pressable>
         </View>
@@ -346,9 +347,9 @@ const styles = StyleSheet.create({
     gap: 4.5,
   },
   caloriePillOk: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#FFD5C6',
   },
   caloriePillOver: {
     backgroundColor: '#FEF2F2',
@@ -361,7 +362,7 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   calorieDotOk: {
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.primary,
   },
   calorieDotOver: {
     backgroundColor: '#EF4444',
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
   },
   calorieTextOk: {
-    color: '#C2410C',
+    color: Colors.primaryDark,
   },
   calorieTextOver: {
     color: '#DC2626',
@@ -385,9 +386,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.badgeOrange,
     borderWidth: 1,
     borderColor: '#FFFFFF',
   },
