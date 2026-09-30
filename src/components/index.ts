@@ -3,7 +3,14 @@ export { HeroCalorieCard } from './dashboard/HeroCalorieCard';
 export { TopDateStrip } from './dashboard/TopDateStrip';
 export { MealSection } from './dashboard/MealSection';
 export { DailyHabitsCard } from './dashboard/DailyHabitsCard';
+export { WaterTracker } from './dashboard/WaterTracker';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
+
+// Water Tracking Components
+export { DropletVisualizer } from './water/DropletVisualizer';
+export { HeroDropletCard } from './water/HeroDropletCard';
+export { WaterHistoryCard } from './water/WaterHistoryCard';
+export { WaterBottomDock } from './water/WaterBottomDock';
 
 // Diary Components
 export { MealCard } from './diary/MealCard';
@@ -16,6 +23,8 @@ export { RiaChatModal } from './modals/RiaChatModal';
 export { SearchFoodModal } from './modals/SearchFoodModal';
 export { BYOKSetupModal } from './modals/BYOKSetupModal';
 export { FoodVisionModal } from './modals/FoodVisionModal';
+export { DailyWaterGoalModal } from './modals/DailyWaterGoalModal';
+export { CupSizeModal } from './modals/CupSizeModal';
 
 // Navigation
 export { Header } from './navigation/Header';
@@ -40,6 +49,7 @@ export { FoodImage } from './common/FoodImage';
 
 export { AppLoadingScreen } from './common/AppLoadingScreen';
 export { BouncingDotsLoader } from './common/BouncingDotsLoader';
+export { SlideInSubScreen } from './common/SlideInSubScreen';
 
 // Onboarding Components
 export { OnboardingHeader } from './onboarding';

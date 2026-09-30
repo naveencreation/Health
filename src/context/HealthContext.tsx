@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData } from '@/types';
+import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData, WaterLogEntry } from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { auth, db } from '@/services/firebase';
@@ -57,6 +57,7 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
     activities: cleanActivities,
     waterMl: cleanWater,
     steps: cleanSteps,
+    waterEntries: log.waterEntries || [],
   };
 };
 
@@ -87,7 +88,7 @@ const DEFAULT_GOALS: UserGoals = {
   targetCarbs: 110,
   targetFat: 70,
   targetFiber: 30,
-  waterGoalMl: 2000,
+  waterGoalMl: 2500,
   stepGoal: 10000,
   currentWeightKg: 68.0,
   targetWeightKg: 65.0,
@@ -267,7 +268,8 @@ export interface HealthContextType {
   addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => LoggedMealItem;
   removeMealItem: (mealId: string) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
-  addWater: (ml: number) => void;
+  addWater: (ml: number, beverageType?: string) => void;
+  removeWaterEntry: (id: string) => void;
   resetWater: () => void;
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
@@ -314,6 +316,7 @@ export type DailyLogContextValue = Pick<
   | 'removeMealItem'
   | 'updateMealQuantity'
   | 'addWater'
+  | 'removeWaterEntry'
   | 'resetWater'
   | 'addWorkout'
   | 'removeWorkout'
@@ -912,7 +915,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [selectedDate, foodDatabase]);
 
-  const addWater = useCallback((ml: number) => {
+  const addWater = useCallback((ml: number, beverageType: string = 'water') => {
     setDailyLogs((prev) => {
       const existing = prev[selectedDate] || {
         date: selectedDate,
@@ -920,13 +923,61 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         waterMl: 0,
         steps: 0,
         activities: [],
+        waterEntries: [],
       };
       const updated = Math.max(0, existing.waterMl + ml);
+      let updatedEntries = existing.waterEntries ? [...existing.waterEntries] : [];
+
+      if (ml > 0) {
+        const newEntry: WaterLogEntry = {
+          id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          amountMl: ml,
+          beverageType,
+          loggedAt: new Date().toISOString(),
+        };
+        updatedEntries = [newEntry, ...updatedEntries];
+      } else if (ml < 0 && updatedEntries.length > 0) {
+        let remainingToDeduct = Math.abs(ml);
+        const nextEntries: WaterLogEntry[] = [];
+        for (const entry of updatedEntries) {
+          if (remainingToDeduct <= 0) {
+            nextEntries.push(entry);
+          } else if (entry.amountMl <= remainingToDeduct) {
+            remainingToDeduct -= entry.amountMl;
+          } else {
+            nextEntries.push({
+              ...entry,
+              amountMl: entry.amountMl - remainingToDeduct,
+            });
+            remainingToDeduct = 0;
+          }
+        }
+        updatedEntries = nextEntries;
+      }
+
       return {
         ...prev,
         [selectedDate]: {
           ...existing,
           waterMl: updated,
+          waterEntries: updatedEntries,
+        },
+      };
+    });
+  }, [selectedDate]);
+
+  const removeWaterEntry = useCallback((id: string) => {
+    setDailyLogs((prev) => {
+      const existing = prev[selectedDate];
+      if (!existing || !existing.waterEntries) return prev;
+      const target = existing.waterEntries.find((e) => e.id === id);
+      const amountDeducted = target ? target.amountMl : 0;
+      return {
+        ...prev,
+        [selectedDate]: {
+          ...existing,
+          waterMl: Math.max(0, existing.waterMl - amountDeducted),
+          waterEntries: existing.waterEntries.filter((e) => e.id !== id),
         },
       };
     });
@@ -941,6 +992,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         [selectedDate]: {
           ...existing,
           waterMl: 0,
+          waterEntries: [],
         },
       };
     });
@@ -1519,6 +1571,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       removeMealItem,
       updateMealQuantity,
       addWater,
+      removeWaterEntry,
       resetWater,
       addWorkout,
       removeWorkout,
@@ -1556,6 +1609,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       removeMealItem,
       updateMealQuantity,
       addWater,
+      removeWaterEntry,
       resetWater,
       addWorkout,
       removeWorkout,
@@ -1608,6 +1662,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     removeMealItem,
     updateMealQuantity,
     addWater,
+    removeWaterEntry,
     resetWater,
     addWorkout,
     removeWorkout,
@@ -1630,6 +1685,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     removeMealItem,
     updateMealQuantity,
     addWater,
+    removeWaterEntry,
     resetWater,
     addWorkout,
     removeWorkout,

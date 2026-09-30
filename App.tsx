@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   BackHandler,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -26,6 +27,7 @@ import {
   DiaryScreen,
   AnalyticsScreen,
   ProfileScreen,
+  WaterTrackerScreen,
 } from '@/screens';
 
 // Components, Navigation & Modals
@@ -41,6 +43,7 @@ import {
   FoodVisionModal,
   BYOKSetupModal,
   AppLoadingScreen,
+  SlideInSubScreen,
 } from '@/components';
 
 SplashScreen.preventAutoHideAsync();
@@ -77,6 +80,24 @@ function MainApp() {
   const [riaChatVisible, setRiaChatVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
+  const { width: screenWidth } = useWindowDimensions();
+  const [waterTrackerVisible, setWaterTrackerVisible] = useState(false);
+  const [isClosingWaterTracker, setIsClosingWaterTracker] = useState(false);
+
+  const handleOpenWaterTracker = useCallback(() => {
+    setIsClosingWaterTracker(false);
+    setWaterTrackerVisible(true);
+  }, []);
+
+  const handleCloseWaterTracker = useCallback(() => {
+    setIsClosingWaterTracker(true);
+  }, []);
+
+  const handleWaterTrackerClosed = useCallback(() => {
+    setIsClosingWaterTracker(false);
+    setWaterTrackerVisible(false);
+  }, []);
+
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
 
   useEffect(() => {
@@ -245,6 +266,7 @@ function MainApp() {
     riaChatVisible,
     authModalVisible,
     signOutModalVisible,
+    waterTrackerVisible,
   });
 
   useEffect(() => {
@@ -257,6 +279,7 @@ function MainApp() {
       riaChatVisible,
       authModalVisible,
       signOutModalVisible,
+      waterTrackerVisible,
     };
   }, [
     foodModalVisible,
@@ -267,12 +290,14 @@ function MainApp() {
     riaChatVisible,
     authModalVisible,
     signOutModalVisible,
+    waterTrackerVisible,
   ]);
 
   // Android Hardware Back Handler - Single stable subscription
   useEffect(() => {
     const onHardwareBackPress = () => {
       const ms = modalStatesRef.current;
+      if (ms.waterTrackerVisible) { handleCloseWaterTracker(); return true; }
       if (ms.foodModalVisible) { setFoodModalVisible(false); return true; }
       if (ms.foodVisionVisible) { setFoodVisionVisible(false); return true; }
       if (ms.byokSetupVisible) { setByokSetupVisible(false); return true; }
@@ -291,7 +316,7 @@ function MainApp() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
     return () => subscription.remove();
-  }, []);
+  }, [handleCloseWaterTracker]);
 
   const handleOpenSignIn = React.useCallback(() => {
     setAuthInitialMode('signin');
@@ -400,6 +425,7 @@ function MainApp() {
               onAvatarPress={handleOpenAvatarModal}
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
+              onOpenWaterTracker={handleOpenWaterTracker}
             />
           )}
 
@@ -449,6 +475,18 @@ function MainApp() {
           onQuickLogWater={handleQuickWater}
           onOpenFoodVision={handleOpenFoodVision}
         />
+
+        {/* Full-Screen Water Tracker Sub-Screen */}
+        {waterTrackerVisible && (
+          <SlideInSubScreen
+            screenWidth={screenWidth}
+            isClosing={isClosingWaterTracker}
+            onClosed={handleWaterTrackerClosed}
+            zIndex={600}
+          >
+            <WaterTrackerScreen onBack={handleCloseWaterTracker} />
+          </SlideInSubScreen>
+        )}
 
         {/* Food Logging Modal */}
         <FoodLogModal
@@ -505,6 +543,17 @@ function MainApp() {
           onConfirm={handleConfirmSignOut}
           onCancel={() => setSignOutModalVisible(false)}
         />
+
+        {/* Full-Page Slide-In Water Tracker Sub-Screen */}
+        {waterTrackerVisible && (
+          <SlideInSubScreen
+            isClosing={isClosingWaterTracker}
+            onClosed={handleWaterTrackerClosed}
+            screenWidth={screenWidth}
+          >
+            <WaterTrackerScreen onBack={handleCloseWaterTracker} />
+          </SlideInSubScreen>
+        )}
         </View>
       </SafeAreaView>
     );
