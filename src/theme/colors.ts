@@ -5,15 +5,26 @@ export const Colors = {
   primaryLight: '#F4D7CF',  // Arc background track
   primaryMuted: '#FFAA93',
 
-  // Figma Macro & Feature Accents
+  // Figma Macro & Feature Accents (4-Tier Harmonic System)
   protein: '#67BD6E',       // Figma Fresh Green
-  proteinLight: '#E8F6E9',
+  proteinLight: '#DCFCE7',  // Soft Mint track
+  proteinBorder: '#BBF7D0',
+  proteinDark: '#166534',
+
   carbs: '#F8D558',         // Figma Warm Gold
-  carbsLight: '#FEF9E6',
+  carbsLight: '#FEF3C7',    // Soft Honey track
+  carbsBorder: '#FDE68A',
+  carbsDark: '#92400E',
+
   fat: '#F47551',           // Figma Terracotta
-  fatLight: '#FCEBE6',
-  fiber: '#67BD6E',
-  fiberLight: '#E8F6E9',
+  fatLight: '#FFEDD5',      // Soft Peach track
+  fatBorder: '#FED7AA',
+  fatDark: '#9A3412',
+
+  fiber: '#10B981',         // Deep Emerald
+  fiberLight: '#D1FAE5',    // Pale Sage track
+  fiberBorder: '#A7F3D0',
+  fiberDark: '#065F46',
 
   // Figma Action & Special Accents
   accentLime: '#CDE26D',    // Center Floating '+' button
@@ -47,11 +58,27 @@ export const Colors = {
   textLight: 'rgba(0, 0, 0, 0.2)', // Figma sub-kcal color
   textInverse: '#FFFFFF',
 
-  // Water & Activity
-  water: '#38BDF8',
-  waterLight: '#E0F2FE',
-  steps: '#F47551',
-  stepsLight: '#FCEBE6',
+  // Water & Hydration
+  water: '#0284C7',         // Ocean Sky Blue
+  waterSecondary: '#38BDF8',// Bright Cyan
+  waterLight: '#F0F9FF',    // Soft Aqua Mist
+  waterTrack: '#E0F2FE',    // Circular dial track
+  waterBorder: '#BAE6FD',
+  waterDark: '#0369A1',
+
+  // Steps & Kinetic Movement
+  steps: '#EA580C',         // Kinetic Flame Orange
+  stepsSecondary: '#FB923C',// Tangerine
+  stepsLight: '#FFF7ED',    // Soft Apricot
+  stepsTrack: '#FFEDD5',    // Circular dial track
+  stepsBorder: '#FED7AA',
+  stepsDark: '#C2410C',
+
+  // Calorie Burn & Active Output
+  burn: '#EA580C',          // Active Burn
+  burnLight: '#FFF5F1',
+  burnBorder: '#FFD5C6',
+  burnDark: '#C2410C',
 
   // Shadows
   shadowColor: '#000000',

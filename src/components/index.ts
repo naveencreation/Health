@@ -22,18 +22,10 @@ export { Header } from './navigation/Header';
 export { BottomNavBar, TabType } from './navigation/BottomNavBar';
 
 // Profile Components
-export { AccountSecurityCard } from './profile/AccountSecurityCard';
-export { BodyCompositionCard } from './profile/BodyCompositionCard';
-export { DailyTargetsCard } from './profile/DailyTargetsCard';
-export { PreferencesCard } from './profile/PreferencesCard';
 export { ProfileHeaderCard } from './profile/ProfileHeaderCard';
 export { ProfileQuickNavGrid } from './profile/ProfileQuickNavGrid';
 export { ClinicalBmiGauge } from './profile/ClinicalBmiGauge';
 export { ProfileMetricInspector } from './profile/ProfileMetricInspector';
-export { GoalsModalSheet } from './profile/modals/GoalsModalSheet';
-export { PreferencesModalSheet } from './profile/modals/PreferencesModalSheet';
-export { MetabolicSummaryModalSheet } from './profile/modals/MetabolicSummaryModalSheet';
-export { AwardsModalSheet } from './profile/modals/AwardsModalSheet';
 
 // Common Components & Motion Primitives
 export { ErrorBoundary } from './common/ErrorBoundary';
@@ -48,7 +40,6 @@ export { FoodImage } from './common/FoodImage';
 
 export { AppLoadingScreen } from './common/AppLoadingScreen';
 export { BouncingDotsLoader } from './common/BouncingDotsLoader';
-export { BrandRingLoader } from './common/BrandRingLoader';
 
 // Onboarding Components
 export { OnboardingHeader } from './onboarding';

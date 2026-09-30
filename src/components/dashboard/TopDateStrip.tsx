@@ -6,6 +6,7 @@ import {
   Pressable,
   Modal,
   GestureResponderEvent,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
@@ -365,7 +366,7 @@ export const TopDateStripComponent: React.FC = () => {
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke={item.progress >= 0.9 ? Colors.protein : Colors.primary}
+                        stroke={Colors.primary}
                         strokeWidth={strokeWidth}
                         strokeDasharray={`${circumference} ${circumference}`}
                         strokeDashoffset={strokeDashoffset}
@@ -600,11 +601,23 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
+      },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   btnPressed: {
     opacity: 0.65,
@@ -626,17 +639,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   futureCapsule: {
     backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: 'rgba(15, 23, 42, 0.05)',
   },
   circleNumberWrapper: {
     width: 32,
@@ -688,11 +713,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.22,
+        shadowRadius: 8,
+      },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.22,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   activeCircleWrapper: {
     width: 32,

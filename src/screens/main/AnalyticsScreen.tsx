@@ -787,7 +787,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             {/* Pillar 1: Nutrition Intake */}
             <View style={[styles.kpiCol, styles.kpiColBorder]}>
               <View style={styles.pillarTitleRow}>
-                <Ionicons name="nutrition-outline" size={12} color={Colors.protein} />
+                <Ionicons name="nutrition-outline" size={12} color={Colors.primary} />
                 <Text style={styles.pillarTitle}>INTAKE</Text>
               </View>
               <Text
@@ -870,12 +870,12 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               {/* Dynamic goal badge */}
               {metricTab === 'calories' ? (
                 <View style={styles.chartBudgetBadge}>
-                  <Ionicons name="flame" size={11} color={Colors.protein} />
+                  <Ionicons name="flame" size={11} color={Colors.primary} />
                   <Text style={styles.chartBudgetBadgeText}>{budget.toLocaleString()} kcal</Text>
                 </View>
               ) : metricTab === 'water' ? (
                 <View style={styles.chartWaterBadge}>
-                  <Ionicons name="water" size={11} color="#0284C7" />
+                  <Ionicons name="water" size={11} color={Colors.water} />
                   <Text style={styles.chartWaterBadgeText}>{(waterGoal / 1000).toFixed(1)} L</Text>
                 </View>
               ) : (
@@ -907,8 +907,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                     size={11}
                     color={
                       metricTab === tab
-                        ? (tab === 'calories' ? Colors.protein
-                            : tab === 'water' ? '#0284C7'
+                        ? (tab === 'calories' ? Colors.primary
+                            : tab === 'water' ? Colors.water
                             : Colors.steps)
                         : '#94A3B8'
                     }
@@ -937,29 +937,29 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               </View>
               {metricTab === 'calories' ? (<>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.protein }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
                   <Text style={styles.legendLabel}>On Budget</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
+                  <View style={[styles.legendDot, { backgroundColor: '#DC2626' }]} />
                   <Text style={styles.legendLabel}>Surplus</Text>
                 </View>
               </>) : metricTab === 'water' ? (<>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#0284C7' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.water }]} />
                   <Text style={styles.legendLabel}>Goal Met</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#38BDF8' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.waterSecondary }]} />
                   <Text style={styles.legendLabel}>In Progress</Text>
                 </View>
               </>) : (<>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#EA580C' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.steps }]} />
                   <Text style={styles.legendLabel}>Goal Met</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#FB923C' }]} />
+                  <View style={[styles.legendDot, { backgroundColor: Colors.stepsSecondary }]} />
                   <Text style={styles.legendLabel}>Active</Text>
                 </View>
               </>)}
@@ -994,19 +994,19 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   style={[
                     styles.tooltipStatusPill,
                     activeTooltipData.hasData
-                      ? (activeTooltipData.isOnBudget ? styles.tooltipPillGreen : styles.tooltipPillCoral)
+                      ? (activeTooltipData.isOnBudget ? styles.tooltipPillWarm : styles.tooltipPillCoral)
                       : styles.tooltipPillNeutral,
                   ]}
                 >
                   <Ionicons
                     name={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? 'checkmark-circle' : 'alert-circle') : 'time-outline'}
                     size={12}
-                    color={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? Colors.protein : Colors.primary) : Colors.water}
+                    color={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? Colors.primary : '#DC2626') : Colors.water}
                   />
                   <Text
                     style={[
                       styles.tooltipStatusText,
-                      activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? styles.tooltipTextGreen : styles.tooltipTextCoral) : styles.tooltipTextNeutral,
+                      activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? styles.tooltipTextWarm : styles.tooltipTextCoral) : styles.tooltipTextNeutral,
                     ]}
                     numberOfLines={1}
                   >
@@ -1019,13 +1019,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               {activeTooltipData.hasData && activeTooltipData.protein > 0 ? (
                 <View style={styles.tooltipMacroRow}>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: Colors.protein, fontWeight: '700' }}>P </Text>{Math.round(activeTooltipData.protein)}g
+                    <Text style={{ color: Colors.proteinDark, fontWeight: '700' }}>P </Text>{Math.round(activeTooltipData.protein)}g
                   </Text>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: '#A16207', fontWeight: '700' }}>C </Text>{Math.round(activeTooltipData.carbs)}g
+                    <Text style={{ color: Colors.carbsDark, fontWeight: '700' }}>C </Text>{Math.round(activeTooltipData.carbs)}g
                   </Text>
                   <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: Colors.primaryDark, fontWeight: '700' }}>F </Text>{Math.round(activeTooltipData.fat)}g
+                    <Text style={{ color: Colors.fatDark, fontWeight: '700' }}>F </Text>{Math.round(activeTooltipData.fat)}g
                   </Text>
                 </View>
               ) : (
@@ -1213,8 +1213,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                                : stepGoal;
                   const hasData = val > 0;
                   const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? Colors.protein : metricTab === 'water' ? '#0284C7' : '#EA580C';
-                  const barColorOther = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? '#38BDF8' : '#FB923C';
+                  const barColorMet = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? Colors.water : Colors.steps;
+                  const barColorOther = metricTab === 'calories' ? '#DC2626' : metricTab === 'water' ? Colors.waterSecondary : Colors.stepsSecondary;
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
                   const topLabel = metricTab === 'calories' ? `${val}`
@@ -1289,8 +1289,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                                : stepGoal;
                   const hasData = cluster.daysLogged > 0;
                   const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? Colors.protein : metricTab === 'water' ? '#0284C7' : '#EA580C';
-                  const barColorOther = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? '#38BDF8' : '#FB923C';
+                  const barColorMet = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? Colors.water : Colors.steps;
+                  const barColorOther = metricTab === 'calories' ? '#DC2626' : metricTab === 'water' ? Colors.waterSecondary : Colors.stepsSecondary;
                   const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
 
                   const topLabel = metricTab === 'calories' ? `${val}`
@@ -1426,7 +1426,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.macroRowGoalText}> / {targetProtein}g daily goal</Text>
             </View>
 
-            <View style={styles.macroProgressTrack}>
+            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.proteinLight }]}>
               <View
                 style={[
                   styles.macroProgressFill,
@@ -1481,7 +1481,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.macroRowGoalText}> / {targetCarbs}g daily goal</Text>
             </View>
 
-            <View style={styles.macroProgressTrack}>
+            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.carbsLight }]}>
               <View
                 style={[
                   styles.macroProgressFill,
@@ -1536,7 +1536,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.macroRowGoalText}> / {targetFat}g daily goal</Text>
             </View>
 
-            <View style={styles.macroProgressTrack}>
+            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.fatLight }]}>
               <View
                 style={[
                   styles.macroProgressFill,
@@ -1590,7 +1590,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               <Text style={styles.macroRowGoalText}> / {targetFiber}g daily goal</Text>
             </View>
 
-            <View style={styles.macroProgressTrack}>
+            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.fiberLight }]}>
               <View
                 style={[
                   styles.macroProgressFill,
@@ -1964,18 +1964,18 @@ const styles = StyleSheet.create({
   chartBudgetBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#FFF5F1',
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#FFD5C6',
     gap: 4,
   },
   chartBudgetBadgeText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11,
-    color: '#059669',
+    color: Colors.primaryDark,
     fontWeight: '600',
     includeFontPadding: false,
   },
@@ -2111,10 +2111,10 @@ const styles = StyleSheet.create({
     gap: 4,
     flexShrink: 0,
   },
-  tooltipPillGreen: {
-    backgroundColor: '#DCFCE7',
+  tooltipPillWarm: {
+    backgroundColor: '#FFF5F1',
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#FFD5C6',
   },
   tooltipPillCoral: {
     backgroundColor: '#FEE2E2',
@@ -2132,8 +2132,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     includeFontPadding: false,
   },
-  tooltipTextGreen: {
-    color: '#16A34A',
+  tooltipTextWarm: {
+    color: Colors.primaryDark,
   },
   tooltipTextCoral: {
     color: '#DC2626',
@@ -2396,7 +2396,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   metricTabTextCalories: {
-    color: '#22C55E',
+    color: '#0F172A',
     fontFamily: Fonts.poppins.bold,
     fontWeight: '700',
   },

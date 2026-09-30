@@ -139,10 +139,9 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
   // Brand-aligned dial stroke color
   const dialStrokeColor = useMemo(() => {
-    if (calLeft < 0) return Colors.primary; // Warm supportive coral when exceeding budget
-    if (progressRatio >= 0.95 && progressRatio <= 1.05) return Colors.protein; // Fresh green on track
+    if (calLeft < 0) return Colors.primaryDark; // Warm supportive deep coral when exceeding budget
     return Colors.primary; // Signature Calori Coral
-  }, [calLeft, progressRatio]);
+  }, [calLeft]);
 
   // Macro progress ratios (Slide 0)
   const targetCarbs = userGoals.targetCarbs || 110;
@@ -431,8 +430,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <AnimatedProgressBar
                 progress={carbRatio}
                 fillColor={Colors.carbs}
-                height={5}
-                trackColor="#E2E8F0"
+                height={6}
+                trackColor="#FEF3C7"
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs}g
@@ -445,8 +444,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <AnimatedProgressBar
                 progress={proteinRatio}
                 fillColor={Colors.protein}
-                height={5}
-                trackColor="#E2E8F0"
+                height={6}
+                trackColor="#DCFCE7"
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein}g
@@ -459,8 +458,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <AnimatedProgressBar
                 progress={fatRatio}
                 fillColor={Colors.fat}
-                height={5}
-                trackColor="#E2E8F0"
+                height={6}
+                trackColor="#FFEDD5"
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat}g
@@ -812,32 +811,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.medium,
     fontSize: 11.5,
     color: '#475569',
-    marginBottom: 4,
-  },
-  macroTrack: {
-    height: 5,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  macroFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  macroFillCarb: {
-    backgroundColor: '#F8D558',
-  },
-  macroFillProtein: {
-    backgroundColor: '#67BD6E',
-  },
-  macroFillFat: {
-    backgroundColor: '#F47551',
+    marginBottom: 5,
   },
   macroRatioText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 10.5,
     color: '#64748B',
+    marginTop: 4,
   },
   macroBoldVal: {
     fontFamily: Fonts.poppins.semiBold,

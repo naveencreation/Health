@@ -154,6 +154,47 @@
       - Step Add Button: `#FFF5F1` background, `borderWidth: 1`, `#FFD5C6` border, `#F47551` icon/text.
     - Result: Eliminates platform emoji distortion and heavy bottom weight, centering focus on the data gauges while keeping clean 1-tap touch affordances.
 
+29. **Date Strip Android Square Shadow Outline Bug Fix (`TopDateStrip.tsx`)**:
+    - Root cause: On Android, `ReactViewBackgroundDrawable` fails to compute rounded convex outline paths when a View/Pressable combines `borderRadius`, `borderWidth: 1.2`, semi-transparent RGBA borders, and child SVGs, causing Android's native hardware `ViewOutlineProvider` to fall back to the bounding rectangle box ($44 \times 72$ dp) and cast a square shadow behind the rounded capsules.
+    - Solution: Aligned with Google Material Design 3 and Apple HIG standards:
+      - Normalized borders to crisp integer `borderWidth: 1`.
+      - Applied `Platform.select`: set `elevation: 0` on Android across `capsule`, `futureCapsule`, `activeCapsule`, and `arrowCircle`, while preserving subtle, curved box-shadows on Web and iOS.
+      - Result: 100% elimination of square shadow artifacts on Android mobile, creating a clean, lightweight, tier-1 segmented date strip.
+
+30. **HeroCalorieCard Macro Visual Affordance & Track Polish (`HeroCalorieCard.tsx`)**:
+    - Grounded in Gestalt shape hierarchy: preserved Linear Progress Bars to prevent "Circle Overload" against the hero 120px circular calorie dial.
+    - Clean typography: pure, uncluttered macro labels (`Carbs`, `Protein`, `Fat`) without extra dot noise.
+    - Replaced dull gray `#E2E8F0` track with accessible, soft-tinted pastel tracks: Carbs (`#FEF3C7`), Protein (`#DCFCE7`), Fat (`#FFEDD5`).
+    - Elevated bar height from 5px to 6px with smooth rounded pill caps (`borderRadius: 3`), ensuring macros are warm, distinct, and visually identifiable even at 0g.
+
+31. **Universal 4-Tier Color Design System Rollout (`colors.ts`, `DailyHabitsCard.tsx`, `AnalyticsScreen.tsx`)**:
+    - Formalized 4-tier functional tokens (Primary Fill, Pastel Track, Hairline Border, Dark Accessible Text) across Carbs (`#F8D558`), Protein (`#67BD6E`), Fat (`#F47551`), Fiber (`#10B981`), Water (`#0284C7`), and Steps (`#EA580C`).
+    - Steps Unified to Kinetic Flame Orange (`#EA580C`): eliminates color collision between physical movement and dietary Fat (`#F47551`).
+    - `DailyHabitsCard`: Water and Steps dials upgraded to soft-tinted circular tracks (`Colors.waterTrack` `#E0F2FE` and `Colors.stepsTrack` `#FFEDD5`), creating high-contrast complementary balance (Sky Blue + Kinetic Orange).
+    - `AnalyticsScreen`: Resolved "Green Flame" cognitive conflict on Calories tab (flame icon now uses `#F47551` and active text `#0F172A`), aligning metric identity and reserving Green purely for "On Budget" evaluation and Protein.
+    - `AnalyticsScreen` Macro Tracks & Tooltip: Macro Averages Card now features pastel background tracks (`Colors.proteinLight`, `Colors.carbsLight`, `Colors.fatLight`, `Colors.fiberLight`) matching HeroCalorieCard; tooltip letters use accessible dark text tokens (`Colors.proteinDark`, `Colors.carbsDark`, `Colors.fatDark`); chart bars & legend dots fully tokenized to `Colors.water`, `Colors.waterSecondary`, `Colors.steps`, and `Colors.stepsSecondary`.
+
+32. **Complete Elimination of Green from Calorie Tracking & Analytics Charts**:
+    - **Problem Identified**: The legacy financial budget metaphor ("under budget = green, over budget = red") caused calorie bars, selected bar outlines, active day dots, the "On Budget" legend, and the tooltip status badge to render in bright green (`#67BD6E`). This created cognitive collision with Protein (`#67BD6E`) and broke the mental model that Calories = Warm Coral (`#F47551`).
+    - **Resolution**:
+      - `AnalyticsScreen.tsx`: Updated 7D and 30D/1Y calorie chart bars to use `Colors.primary` (`#F47551`) for on-budget days and `#DC2626` (Alert Crimson) for surplus days.
+      - Selected bar outline and active day indicator dot bound to `Colors.primary`.
+      - Chart legend "On Budget" dot updated to `Colors.primary`; "Surplus" dot updated to `#DC2626`.
+      - Interactive tooltip status badge updated from green (`tooltipPillGreen`) to warm coral (`tooltipPillWarm`: `#FFF5F1` background, `#FFD5C6` border, `Colors.primaryDark` text, and `Colors.primary` checkmark).
+      - `HeroCalorieCard.tsx`: Removed the 95–105% green dial override so the hero calorie dial stays brand Warm Coral (`Colors.primary`).
+      - `TopDateStrip.tsx`: Date capsule progress ring stroke standardized to `Colors.primary` instead of turning green at >= 90%.
+      - `MealCard.tsx`: Meal calorie progress bar updated to `Colors.primary` / `Colors.primaryDark` instead of green.
+      - Result: 100% green-free Calorie tracking across the entire app; green is now exclusively and unambiguously reserved for Protein (`#67BD6E`).
+
+33. **Architectural Dead Code Purge & Component Structure Simplification**:
+    - Safely eliminated 15 orphaned, duplicate, and superseded component files (~3,500 lines of dead code):
+      - **Dashboard Prototypes (6):** `CalorieBudgetCard.tsx`, `ActivityCard.tsx`, `AppleActivityCard.tsx`, `DietJourneyChart.tsx`, `FigmaDatePicker.tsx`, `HydrationTracker.tsx` (all superseded by `HeroCalorieCard.tsx` and `DailyHabitsCard.tsx`).
+      - **Duplicate Profile Modal Sheets (4):** `AwardsModalSheet.tsx`, `GoalsModalSheet.tsx`, `MetabolicSummaryModalSheet.tsx`, `PreferencesModalSheet.tsx` (superseded by full-screen views in `src/screens/profile/`). Removed empty `src/components/profile/modals` folder.
+      - **Orphaned Profile Cards (4):** `AccountSecurityCard.tsx`, `BodyCompositionCard.tsx`, `DailyTargetsCard.tsx`, `PreferencesCard.tsx` (integrated into `PreferencesScreen.tsx` and `ProfileMetricInspector.tsx`).
+      - **Unused Loaders (1):** `BrandRingLoader.tsx` (standardized on `AppLoadingScreen` and `BouncingDotsLoader`).
+    - Cleaned export barrel in `src/components/index.ts`.
+    - Total component files reduced from 67 to 52; active app architecture is now 1:1 with reality. All 13 test suites (106 tests) pass with 0 errors.
+
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

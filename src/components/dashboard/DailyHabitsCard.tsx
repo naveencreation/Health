@@ -114,8 +114,8 @@ const DailyHabitsCardComponent: React.FC = () => {
               size={dialSize}
               strokeWidth={strokeWidth}
               progress={waterRatio}
-              strokeColor="#0284C7"
-              backgroundColor="#F1F5F9"
+              strokeColor={Colors.water}
+              backgroundColor={Colors.waterTrack}
             />
 
             {/* Inner Hero Content */}
@@ -163,7 +163,7 @@ const DailyHabitsCardComponent: React.FC = () => {
         {/* RIGHT POD: Movement 👟 */}
         <View style={styles.stepPod}>
           <View style={styles.stepPodBadge}>
-            <Ionicons name="footsteps-outline" size={13} color="#F47551" />
+            <Ionicons name="footsteps-outline" size={13} color={Colors.steps} />
             <Text style={styles.stepPodBadgeText}>Movement</Text>
           </View>
 
@@ -172,8 +172,8 @@ const DailyHabitsCardComponent: React.FC = () => {
               size={dialSize}
               strokeWidth={strokeWidth}
               progress={stepRatio}
-              strokeColor="#F47551"
-              backgroundColor="#F1F5F9"
+              strokeColor={Colors.steps}
+              backgroundColor={Colors.stepsTrack}
             />
 
             {/* Inner Hero Content */}
@@ -202,7 +202,7 @@ const DailyHabitsCardComponent: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Decrease steps by 1,000"
               >
-                <Ionicons name="remove" size={15} color="#F47551" />
+                <Ionicons name="remove" size={15} color={Colors.steps} />
               </Pressable>
             ) : null}
             <Pressable
@@ -212,7 +212,7 @@ const DailyHabitsCardComponent: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Add 1,000 steps"
             >
-              <Ionicons name="add" size={15} color="#F47551" />
+              <Ionicons name="add" size={15} color={Colors.steps} />
               <Text style={styles.stepAddBtnText}>1k steps</Text>
             </Pressable>
           </View>
@@ -439,20 +439,20 @@ const styles = StyleSheet.create({
   stepPodBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5F1',
+    backgroundColor: Colors.stepsLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     borderCurve: 'continuous',
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.stepsBorder,
     gap: 4,
   },
   stepPodBadgeText: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 11,
-    color: '#F47551',
+    color: Colors.steps,
   },
   gaugeCanvas: {
     position: 'relative',
@@ -479,28 +479,28 @@ const styles = StyleSheet.create({
   innerSubTextBlue: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 10,
-    color: '#0284C7',
+    color: Colors.water,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   innerSubTextCoral: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 10,
-    color: '#F47551',
+    color: Colors.steps,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   metricRatioTextBlue: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 13.5,
-    color: '#0284C7',
+    color: Colors.water,
     marginTop: 8,
     textAlign: 'center',
   },
   metricRatioTextCoral: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 13.5,
-    color: '#F47551',
+    color: Colors.steps,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   waterAddBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#0284C7',
+    color: Colors.water,
   },
   stepMinusBtn: {
     width: 32,
@@ -562,16 +562,16 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.stepsBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5F1',
+    backgroundColor: Colors.stepsLight,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.stepsBorder,
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 9,
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   stepAddBtnText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 11.5,
-    color: '#F47551',
+    color: Colors.steps,
   },
   // Logged Activities Strip
   activitiesStrip: {

@@ -145,7 +145,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             {/* Visual Calorie Consumption Progress Bar */}
             <AnimatedProgressBar
               progress={mealProgress}
-              fillColor={isOverBudget ? Colors.primary : Colors.protein}
+              fillColor={isOverBudget ? Colors.primaryDark : Colors.primary}
               height={4}
               trackColor="rgba(15, 23, 42, 0.06)"
               style={{ marginTop: 4 }}
