@@ -177,10 +177,12 @@ const formatDateGroupHeader = (dateStr: string): string => {
 
 export interface WaterIntakeHistoryScreenProps {
   onBack: () => void;
+  onOpenReport?: () => void;
 }
 
 export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> = ({
   onBack,
+  onOpenReport,
 }) => {
   const insets = useSafeAreaInsets();
   const {
@@ -342,8 +344,23 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             </Text>
           </View>
 
-          {/* Symmetrical spacer to keep title perfectly centered */}
-          <View style={styles.headerRightSpacer} />
+          {/* Report Button */}
+          {onOpenReport ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.navCircleBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={onOpenReport}
+              hitSlop={HIT_SLOP_10}
+              accessibilityRole="button"
+              accessibilityLabel="View Hydration Report"
+            >
+              <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+            </Pressable>
+          ) : (
+            <View style={styles.headerRightSpacer} />
+          )}
         </View>
       </View>
 

@@ -55,3 +55,16 @@ export { SlideInSubScreen } from './common/SlideInSubScreen';
 
 // Onboarding Components
 export { OnboardingHeader } from './onboarding';
+
+// Report Components
+export {
+  ChartTypeToggle,
+  ChartTooltipPin,
+  DrinkCompletionCard,
+  HydrateVolumeCard,
+  DrinkTypesCard,
+  type ChartType,
+  type DayCompletionData,
+  type DayHydrateData,
+  type DrinkTypeBreakdown,
+} from './report';

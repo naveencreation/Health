@@ -25,6 +25,7 @@ import {
 } from '@/components';
 import { HeroDropletCardRef } from '@/components/water/HeroDropletCard';
 import { WaterIntakeHistoryScreen } from './WaterIntakeHistoryScreen';
+import { WaterReportScreen } from './WaterReportScreen';
 import { useDailyLog } from '@/context/HealthContext';
 import { getBeverageName } from '@/utils/beverageUtils';
 
@@ -101,9 +102,17 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   const [isHistoryScreenVisible, setIsHistoryScreenVisible] = useState(false);
   const [isClosingHistory, setIsClosingHistory] = useState(false);
 
+  // Dedicated Full-Screen Water Report sub-screen
+  const [isReportScreenVisible, setIsReportScreenVisible] = useState(false);
+  const [isClosingReport, setIsClosingReport] = useState(false);
+
   // Handle Android hardware back button
   useEffect(() => {
     const handleHardwareBack = () => {
+      if (isReportScreenVisible) {
+        setIsClosingReport(true);
+        return true;
+      }
       if (isHistoryScreenVisible) {
         setIsClosingHistory(true);
         return true;
@@ -117,7 +126,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       handleHardwareBack
     );
     return () => subscription.remove();
-  }, [onBack, isHistoryScreenVisible]);
+  }, [onBack, isHistoryScreenVisible, isReportScreenVisible]);
 
   // Cleanup undo timer on unmount
   useEffect(() => {
@@ -271,7 +280,25 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
           screenWidth={Math.min(screenWidth, 480)}
           zIndex={200}
         >
-          <WaterIntakeHistoryScreen onBack={() => setIsClosingHistory(true)} />
+          <WaterIntakeHistoryScreen
+            onBack={() => setIsClosingHistory(true)}
+            onOpenReport={() => setIsReportScreenVisible(true)}
+          />
+        </SlideInSubScreen>
+      )}
+
+      {/* 9. Dedicated Full-Screen Water Report Screen */}
+      {isReportScreenVisible && (
+        <SlideInSubScreen
+          isClosing={isClosingReport}
+          onClosed={() => {
+            setIsReportScreenVisible(false);
+            setIsClosingReport(false);
+          }}
+          screenWidth={Math.min(screenWidth, 480)}
+          zIndex={220}
+        >
+          <WaterReportScreen onBack={() => setIsClosingReport(true)} />
         </SlideInSubScreen>
       )}
 

@@ -18,3 +18,4 @@ export { AnalyticsScreen, AnalyticsTab } from './main/AnalyticsScreen';
 export { ProfileScreen, ProfileTab } from './main/ProfileScreen';
 export { WaterTrackerScreen } from './main/WaterTrackerScreen';
 export { WaterIntakeHistoryScreen } from './main/WaterIntakeHistoryScreen';
+export { WaterReportScreen } from './main/WaterReportScreen';
