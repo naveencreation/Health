@@ -5,6 +5,7 @@ export { MealSection } from './dashboard/MealSection';
 export { DailyHabitsCard } from './dashboard/DailyHabitsCard';
 export { WaterTracker } from './dashboard/WaterTracker';
 export { WeightTrackerCard } from './dashboard/WeightTrackerCard';
+export { TodayBMICard } from './dashboard/TodayBMICard';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
 
 // Water Tracking Components
@@ -72,8 +73,16 @@ export {
   DrinkCompletionCard,
   HydrateVolumeCard,
   DrinkTypesCard,
+  WeightSummaryCard,
+  WeightTrendCard,
+  WeightDeltaCard,
+  WeightContextCard,
   type ChartType,
   type DayCompletionData,
   type DayHydrateData,
   type DrinkTypeBreakdown,
+  type WeightSummaryData,
+  type DayWeightTrendData,
+  type DayWeightDeltaData,
+  type WeightContextBreakdown,
 } from './report';

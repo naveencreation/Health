@@ -22,6 +22,7 @@ import {
   SlideInSubScreen,
 } from '@/components';
 import { WeightHistoryScreen } from './WeightHistoryScreen';
+import { WeightReportScreen } from './WeightReportScreen';
 import { useDailyLog } from '@/context/HealthContext';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -47,6 +48,10 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
   const [isHistoryScreenVisible, setIsHistoryScreenVisible] = useState(false);
   const [isClosingHistory, setIsClosingHistory] = useState(false);
 
+  // Dedicated Full-Screen Weight Report sub-screen
+  const [isReportScreenVisible, setIsReportScreenVisible] = useState(false);
+  const [isClosingReport, setIsClosingReport] = useState(false);
+
   // Reversible Undo Toast state
   const [undoToast, setUndoToast] = useState<{
     entry: WeightHistoryItem;
@@ -56,6 +61,10 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
   // Handle Android hardware back button
   useEffect(() => {
     const handleHardwareBack = () => {
+      if (isReportScreenVisible) {
+        setIsClosingReport(true);
+        return true;
+      }
       if (isHistoryScreenVisible) {
         setIsClosingHistory(true);
         return true;
@@ -74,7 +83,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
     return () => subscription.remove();
-  }, [onBack, isHistoryScreenVisible, isLogModalVisible, isSettingsModalVisible]);
+  }, [onBack, isReportScreenVisible, isHistoryScreenVisible, isLogModalVisible, isSettingsModalVisible]);
 
   // Clean up undo timer on unmount
   useEffect(() => {
@@ -125,7 +134,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
   };
 
   return (
-    <View style={[styles.screenContainer, { paddingTop: Math.max(insets.top, 12) }]}>
+    <View style={[styles.screenContainer, { paddingTop: 6 }]}>
       {/* 1. Header Toolbar (Back Arrow, Title, Settings Gear) */}
       <View style={styles.navBar}>
         <View style={styles.navSideWrapper}>
@@ -148,6 +157,19 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
         </View>
 
         <View style={styles.navSideWrapperRight}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.circleNavBtn,
+              pressed && styles.circleNavBtnPressed,
+            ]}
+            onPress={() => setIsReportScreenVisible(true)}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Weight Report and Analytics"
+          >
+            <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+          </Pressable>
+
           <Pressable
             style={({ pressed }) => [
               styles.circleNavBtn,
@@ -202,6 +224,24 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
         >
           <WeightHistoryScreen
             onBack={() => setIsClosingHistory(true)}
+            onOpenReport={() => setIsReportScreenVisible(true)}
+          />
+        </SlideInSubScreen>
+      )}
+
+      {/* 4. Dedicated Full-Screen Weight Report Sub-Screen */}
+      {isReportScreenVisible && (
+        <SlideInSubScreen
+          isClosing={isClosingReport}
+          onClosed={() => {
+            setIsReportScreenVisible(false);
+            setIsClosingReport(false);
+          }}
+          screenWidth={Math.min(screenWidth, 480)}
+          zIndex={300}
+        >
+          <WeightReportScreen
+            onBack={() => setIsClosingReport(true)}
           />
         </SlideInSubScreen>
       )}
@@ -266,12 +306,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   navSideWrapper: {
-    width: 44,
+    minWidth: 88,
     alignItems: 'flex-start',
   },
   navSideWrapperRight: {
-    width: 44,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
   },
   navCenterWrapper: {
     flex: 1,

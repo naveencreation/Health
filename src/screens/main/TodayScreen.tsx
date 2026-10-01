@@ -21,6 +21,7 @@ import {
   DailyHabitsCard,
   WaterTracker,
   WeightTrackerCard,
+  TodayBMICard,
 } from '@/components';
 import { MealType } from '@/types';
 
@@ -145,7 +146,10 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         {/* 6. Weight Tracker Card matching media_1790853712174.png */}
         <WeightTrackerCard onOpenFullTracker={onOpenWeightTracker} />
 
-        {/* 7. Side-by-Side Habits: Hydration & Activity Dual Dials */}
+        {/* 7. Compact BMI Spectrum Card */}
+        <TodayBMICard />
+
+        {/* 8. Side-by-Side Habits: Hydration & Activity Dual Dials */}
         <DailyHabitsCard />
       </Animated.ScrollView>
     </View>

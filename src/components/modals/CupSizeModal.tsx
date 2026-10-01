@@ -15,6 +15,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface CupSizeOption {
   ml: number;
@@ -92,6 +93,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
   onClose,
   onSelect,
 }) => {
+  const insets = useSafeAreaInsets();
   const [selectedSize, setSelectedSize] = useState<number>(currentCupSize);
   const [selectedBeverage, setSelectedBeverage] = useState<string>(currentBeverage);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
@@ -190,7 +192,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
       >
         <Pressable style={styles.backdrop} onPress={onClose} />
 
-        <View style={styles.sheetContainer}>
+        <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           {/* Header */}
           <View style={styles.headerRow}>
             <Pressable
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     maxHeight: '85%',
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    paddingBottom: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,

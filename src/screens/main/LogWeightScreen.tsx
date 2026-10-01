@@ -266,7 +266,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
       setWeightKg((prev) => {
         const currentLbs = prev * 2.20462;
         const nextLbs = Math.max(44, Math.min(660, currentLbs + deltaInCurrentUnit));
-        const nextKg = Math.round((nextLbs / 2.20462) * 10) / 10;
+        // Use 2-decimal kg precision so that +/- 0.1 lbs (~0.045 kg) increments cleanly without quantization lock
+        const nextKg = Math.round((nextLbs / 2.20462) * 100) / 100;
         return nextKg;
       });
     }
@@ -287,7 +288,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
         setWeightKg(Math.min(300, Math.max(20, Math.round(parsed * 10) / 10)));
       } else {
         const inKg = parsed / 2.20462;
-        setWeightKg(Math.min(300, Math.max(20, Math.round(inKg * 10) / 10)));
+        setWeightKg(Math.min(300, Math.max(20, Math.round(inKg * 100) / 100)));
       }
     }
   };
@@ -303,7 +304,11 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
       ? customNote ? `${selectedTag} • ${customNote}` : selectedTag
       : customNote;
 
-    const roundedKg = Math.round(weightKg * 10) / 10;
+    // Retain 2-decimal precision for lbs so displaying in lbs never drifts or loses 0.1 increments
+    const roundedKg = unit === 'lbs'
+      ? Math.round(weightKg * 100) / 100
+      : Math.round(weightKg * 10) / 10;
+
     if (targetEntryId) {
       updateWeightEntry(
         targetEntryId,

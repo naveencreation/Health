@@ -3,3 +3,10 @@ export { ChartTooltipPin } from './ChartTooltipPin';
 export { DrinkCompletionCard, DayCompletionData } from './DrinkCompletionCard';
 export { HydrateVolumeCard, DayHydrateData } from './HydrateVolumeCard';
 export { DrinkTypesCard, DrinkTypeBreakdown } from './DrinkTypesCard';
+
+// Weight Report Components
+export { WeightSummaryCard, WeightSummaryData } from './WeightSummaryCard';
+export { WeightTrendCard, DayWeightTrendData } from './WeightTrendCard';
+export { WeightDeltaCard, DayWeightDeltaData } from './WeightDeltaCard';
+export { WeightContextCard, WeightContextBreakdown } from './WeightContextCard';
+export { BMIGaugeCard, BMIGaugeCardProps, BMICategory } from './BMIGaugeCard';

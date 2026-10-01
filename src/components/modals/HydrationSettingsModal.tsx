@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface HydrationSettingsModalProps {
   visible: boolean;
@@ -33,6 +34,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
   onClose,
   onOpenGoalModal,
 }) => {
+  const insets = useSafeAreaInsets();
   const { userGoals, updateGoals } = useGoals();
   const [reminderInterval, setReminderInterval] = useState('2h');
 
@@ -73,7 +75,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
-        <View style={styles.sheetContainer}>
+        <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
           {/* Header */}
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>

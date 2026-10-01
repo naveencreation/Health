@@ -333,6 +333,110 @@
     - **Adaptive Viewport Compression & Keyboard Responsiveness ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx))**:
       - Root Cause: On small viewports (iPhone SE / smaller Android devices), opening the soft keyboard compressed available viewport height from ~800dp to ~480dp, risking element squishing and pushing note inputs or CTA buttons off-screen.
       - Resolution: Added `Keyboard.addListener` detection (`isKeyboardOpen`). When the keyboard is active, conditionally hides the micro-steppers row (`steppersContainer`, saving ~54dp), scales the digital hero display from 54px to 38px, tightens hero card, date ribbon, and context card vertical paddings, and applies `keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}`, guaranteeing that 100% of the UI remains un-squished, fully visible, and interactive with zero vertical scrolling.
+39. **Comprehensive Weight Report Screen & Analytical Architecture ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Parity with Hydration Reporting**: Ported the high-density analytical experience of `WaterReportScreen` into the Weight domain, tailored for continuous body state tracking with `Weekly` (7 days), `Monthly` (4-5 weekly intervals), and `Yearly` (12 months) timeframes with `< Period >` date range navigation.
+    - **Period Overview KPI Card ([WeightSummaryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightSummaryCard.tsx))**: 4-pod summary showing Net Change ($\Delta$ with directional emerald `#10B981` / rose `#FF3B5C`), Current/Latest weigh-in, Period Average, and Goal Distance pill (`7.4 kg to goal` / `Goal Achieved! 🎉`).
+    - **Dual-Mode Trend Chart with Goal Reference Line ([WeightTrendCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightTrendCard.tsx))**:
+      - Line Mode: Smooth SVG spline with area gradient and intelligent linear interpolation across empty weigh-in days so paths connect cleanly without gaps. Features an overlaid dashed horizontal reference line for **Goal Weight** with milestone label (`Goal: 65.0 kg`).
+      - Bar Mode: Chunky capsule bars (`barWidth: 18–28px`) in brand Rose (`Colors.weight = '#FF3B5C'`).
+      - Interactive Pin Tooltip: Pins circular needle badge (`ChartTooltipPin`) above selected day, displaying exact weight and unit.
+      - Auto-Scaling Y-Axis: Dynamically calculates Y-bounds based on min/max weights and goal target.
+    - **Weight Fluctuation Delta Card ([WeightDeltaCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightDeltaCard.tsx))**: Dual-mode diverging chart showing day-to-day / interval $\pm \Delta$ variance centered on a zero baseline ($0.0$). Negative bars (losses) extend downward in emerald green; positive bars (gains) extend upward in warm coral.
+    - **Weigh-In Conditions Donut Card ([WeightContextCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightContextCard.tsx))**: SVG Donut chart (`DONUT_SIZE: 126`, `STROKE_WIDTH: 13`) with 2-column legend visualizing context habits (`Morning fasted`, `Post workout`, `Pre meal`, `Evening`) and center readout (`80% Fasted Logs`).
+    - **Seamless App-Wide Entrypoints**: Added dedicated `stats-chart-outline` button in the header of `WeightTrackerScreen.tsx` and wired existing `onOpenReport` in `WeightHistoryScreen.tsx`, mounting `WeightReportScreen` via `SlideInSubScreen` with hardware back support.
+40. **Weight History Header Report Icon & Resilient Fallback Wiring ([WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**:
+    - **Contextual Access**: Users reviewing their weigh-in timeline now have immediate access to the full Weight Report without having to return to the parent tracker screen first.
+    - **Unconditional Header Action Button**: Added `<Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />` circular action button (`width: 40, height: 40, borderRadius: 20`) alongside the coral `+` log button.
+    - **Dual Wiring Architecture**:
+      - If `onOpenReport` callback is provided by the parent (`WeightTrackerScreen`), it calls `onOpenReport()` to trigger the parent's `SlideInSubScreen` (`zIndex: 300`).
+      - If `onOpenReport` is absent (e.g. standalone usage), `WeightHistoryScreen` automatically activates its own internal fallback `SlideInSubScreen` with hardware `BackHandler` dismissal.
+    - **Pixel-Perfect Header Balance**: Styled `headerLeftWrapper` (`width: 88, alignItems: 'flex-start'`) to match `headerRightActions` (`width: 88, justifyContent: 'flex-end', gap: 8`), guaranteeing that the "Weight History" title remains centered with mathematical symmetry.
+41. **Weight Report Fine-Tuning, Subheader Copy & Data Connection Integrity ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Empathetic & Precise Copywriting**:
+      - Updated screen header to `"Weight Report"` with balanced layout (`width: 40` empty spacer balancing the back chevron).
+      - Replaced sterile statistical jargon (`"daily mean"`) with natural health phrasing (`"period average"`).
+      - Updated pod subheaders to `"across this period"` and `"recorded weigh-in"`. If a selected period has no entries, explicitly displays `"--"` and `"no entry in period"`.
+      - Enhanced goal distance badge to `🎯 7.4 kg to goal` / `🎉 Goal Reached!`.
+      - Updated Weigh-In Conditions card subtitle to `"Routine & habit consistency"`.
+    - **Timeframe-Aware Dynamic Subheaders**:
+      - Made the Weight Fluctuation card subtitle context-sensitive:
+        - Weekly: `"Day-to-day ± variance (kg)"`
+        - Monthly: `"Week-over-week ± variance (kg)"`
+        - Yearly: `"Month-over-month ± variance (kg)"`
+    - **Visual Logic & Color Semantics**:
+      - Fixed zero-variance coloring (`delta === 0`): rendered in neutral Slate (`#94A3B8`) rather than gain-red (`#FF3B5C`).
+      - Prevented synthetic flat horizontal line in Line Mode when only 1 weigh-in exists; renders a clean focal node dot with interactive tooltip.
+      - Updated interactive pins on unlogged days to display `"No entry"` instead of ambiguous `"--"`.
+    - **Data Connection & Calculation Integrity**:
+      - Multi-day lookback seed: Seeds Monday's weekly delta by looking back up to 7 days prior to Monday for the user's latest baseline weigh-in.
+      - Resilient data extraction: Added automatic fallback to `log.weightEntries[0].weightKg` if `log.weightKg` is missing or 0 across weekly, monthly, and yearly loops.
+      - Eliminated mock data fallbacks: When a period has 0 logs, `WeightContextCard` now displays an honest zero-state (`"0 No Logs"`) with a helpful prompt encouraging users to tag conditions, rather than rendering sample mock data.
+42. **Safe Areas & System Bars Hierarchy Audit (Expo SDK 57 & Edge-to-Edge Compliance)**:
+    - **App Architecture Validation**: Verified root `App.tsx` wraps the app in `<SafeAreaProvider>`, `<StatusBar style="dark" />`, and `<NavigationBar style="dark" />` with `<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>` wrapping `<View style={styles.contentArea}>`.
+    - **Double Top Inset Bug Resolved**:
+      - Because `contentArea` is already padded by `insets.top`, sub-screens inside `SlideInSubScreen` are already placed beneath the status bar.
+      - Identified that `WeightTrackerScreen.tsx` (`paddingTop: Math.max(insets.top, 12)`), `WeightHistoryScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`), `WeightReportScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`), and `WaterReportScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`) were inadvertently applying `insets.top` twice, causing an unnatural 118px empty whitespace gap on iOS / Android edge-to-edge.
+      - Fixed all four screens to use consistent `{ paddingTop: 6 }`, harmonizing with `WaterTrackerScreen.tsx` and `WaterIntakeHistoryScreen.tsx`.
+    - **Modal Validation**: Confirmed that `LogWeightModal.tsx` (`presentationStyle="fullScreen"`) correctly applies `insets.top` and `insets.bottom` because full-screen modals bypass root `SafeAreaView`. Enhanced bottom sheet modals (`CupSizeModal.tsx`, `HydrationSettingsModal.tsx`, `WeightGoalSettingsModal.tsx`) to dynamically pad their bottom sheets using `Math.max(insets.bottom, 16..24)` to safely avoid collision with Android edge-to-edge system navigation bars and iOS home indicators.
+43. **Weight Trend Chart Card Reference Alignment ([WeightTrendCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightTrendCard.tsx))**:
+    - **Header & Title**: Updated card title to `"Weight (kg)"` (dynamic to selected unit).
+    - **Dual Legend**: Added horizontal `● Selected` (solid vibrant orange dot) and `--- Weight Goal` (dashed orange indicator) side-by-side matching the reference images.
+    - **0-to-100 Y-Axis Scale**: Replaced floating truncated scale with standard baseline scale starting at 0 (`[100, 80, 60, 40, 20, 0]` with 20-step intervals), allowing bars to rise naturally from 0 and positioning 70-80 kg in the upper quartile.
+    - **Reference Squircles Toggle**: Refined `ChartTypeToggle.tsx` squircle buttons (`32x28`, `borderRadius: 8`, active background `#FF5B26`).
+    - **Pill Pillar Bars (Bar Mode)**: Modeled full-height vertical pill columns rising from 0, with unselected bars rendered in soft peach-coral (`#FFAA94`) and selected bar in solid vibrant orange (`#FF5B26`).
+    - **Node Styling (Line Mode)**: Unselected nodes rendered as crisp hollow white donuts with thick orange rim (`r=6.5, strokeWidth=3`), while selected node renders as a solid vibrant orange dot (`r=7`).
+    - **Circular Tooltip Badge ([ChartTooltipPin.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ChartTooltipPin.tsx))**: Thick 3.2px orange border, stacked bold value (`78.9`) and small unit (`kg`) with needle touching the apex of bars and line nodes.
+    - **Clean X-Axis**: Displaying clean day numbers (`16, 17, 18, 19...`) centered under each column.
+44. **Streamlined Weight Report Screen ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Eliminated Redundant Charts**: Removed `WeightDeltaCard` (day-to-day ± variance) and `WeightContextCard` (weigh-in conditions donut chart).
+    - **Clean, Focused Experience**: Reduced visual cognitive load and scroll fatigue. The report is now centered entirely around:
+      1. Timeframe segmented tabs (`Weekly | Monthly | Yearly`)
+      2. Date range navigator (`< Dec 16 – Dec 22 >`)
+      3. Period Overview Summary card (`WeightSummaryCard`)
+      4. Hero `Weight (kg)` trend chart with 0-to-100 scale, `Selected` & `Weight Goal` legend, and `Line ⇄ Bar` toggle (`WeightTrendCard`)
+    - **Code Cleanup**: Removed all unused tag mapping logic (`QUICK_TAG_COLORS`), delta calculation loops, and unused state hooks, dramatically improving screen mount performance.
+45. **BMI Radial Speedometer Gauge Architecture ([BMIGaugeCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/BMIGaugeCard.tsx))**:
+    - **Header & Dynamic Status Pill**: Top row features title `"BMI (kg/m2)"` and dynamic classification pill badge displaying active status (e.g. `[Normal]` in emerald green `#22C55E`, `[Overweight]` in amber `#EAB308`, etc.).
+    - **240° Radial Speedometer SVG**:
+      - Sweep spans $240^\circ$ ($150^\circ$ bottom-left to $390^\circ$ bottom-right, centered at $(140, 116)$ on a $280\times 224$ canvas with $R = 90$ and stroke width $14$).
+      - Composed of 8 distinct WHO classification segments mapped proportionally to BMI spans ($[15.0, 42.0]$, total span $27.0$):
+        1. Very severely underweight ($< 16.0$, `#0284C7`)
+        2. Severely underweight ($16.0 - 16.9$, `#0EA5E9`)
+        3. Underweight ($17.0 - 18.4$, `#06B6D4`)
+        4. Normal ($18.5 - 24.9$, `#22C55E`)
+        5. Overweight ($25.0 - 29.9$, `#EAB308`)
+        6. Obese Class I ($30.0 - 34.9$, `#F97316`)
+        7. Obese Class II ($35.0 - 39.9$, `#EF4444`)
+        8. Obese Class III ($\ge 40.0$, `#DC2626`)
+      - Semicircular rounded end-caps on the outer extremities with seamless butt joins between internal segments.
+      - Concentric inner ring of 17 precision instrument tick marks in light slate (`#CBD5E1`).
+    - **Center Hub & Smooth 60fps Native-Driver Pointer Needle**:
+      - Tapered gradient blade needle with rounded apex, transitioning from semi-transparent to solid active category color.
+      - Center hollow donut hub ring (`r = 16`, `borderWidth = 4`, white background with colored border matching active tier).
+      - Silky smooth needle movement powered by React Native `Animated.spring` with native driver (`useNativeDriver: true`) and angular interpolation (`-120deg` at $150^\circ$ to `+120deg` at $390^\circ$), ensuring 60fps/120fps GPU performance, graceful reduced-motion support, and full Jest testing compatibility.
+    - **Central Readout**: Prominent bold numeric BMI display (`22.9`, 38px bold) and `"BMI (kg/m2)"` label nestled directly in the lower opening between the arc tips.
+    - **WHO Classification Table**: Comprehensive 8-category legend with colored dots, tier labels, and BMI threshold ranges; active tier is dynamically highlighted in bold dark text (`#0F172A`).
+    - **Seamless Screen Wiring ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**: Mounted directly below `WeightTrendCard`, dynamically pulling latest period weigh-in (`periodSummaryData.currentWeightKg ?? userGoals.currentWeightKg ?? 72.5`) and height (`userGoals.heightCm ?? 178`).
+46. **Weight Tracker Flow Edge-Case Hardening & Mathematical Precision**:
+    - **0.1 lbs Stepper Quantization Resolution ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx), [WeightGoalSettingsModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/WeightGoalSettingsModal.tsx))**: Upgraded pound-stepping kg calculation to 2-decimal precision (`Math.round((nextLbs / 2.20462) * 100) / 100`). Resolves the critical math lock where $\pm 0.1\text{ lbs}$ ($\approx 0.045\text{ kg}$) was smaller than $0.1\text{ kg}$ resolution and rounded back to the initial value, freezing the stepper.
+    - **Zero-Variance Neutral Badge ([WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx), [WeightHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/WeightHistoryCard.tsx))**: Added `isZero` condition rendering a neutral slate badge (`#94A3B8`) with horizontal dash icon (`remove`) and `0.0 kg/lbs` text (no minus sign), eliminating false green downward indicators when weight is unchanged.
+    - **Intra-Day Timestamp & Entry Restoration on Undo ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx), [WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**: Extended `logWeight` to accept `customLoggedAt` and `customId`. Tapping Undo on a deleted weigh-in now perfectly restores the original timestamp, unique ID, and chronological position in the intra-day feed.
+    - **Timezone-Safe Backfilling ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx))**: Replaced forced `T08:00:00.000Z` UTC string with local morning date construction (`new Date(y, m - 1, d, 8, 0, 0)`), preventing negative timezone offsets (UTC-8, UTC-10) from rolling over into the previous calendar day.
+47. **Compact BMI Spectrum Card on Dashboard Today Screen ([TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx), [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx))**:
+    - **Visual Hierarchy & Header**: Displays bold card header `"BMI (kg/m2)"` on the left and a circular 32px edit button `( ✎ )` on the right which triggers `LogWeightModal` to update weight.
+    - **Numeric Readout & Active Category**: Prominent 32px bold numeric BMI value (e.g. `22.9`) paired with an inline category subtitle (e.g. `Normal` in `#64748B`). Dynamically computes BMI from `currentLog?.weightKg ?? userGoals.currentWeightKg ?? 72.5` and `userGoals.heightCm ?? 178`.
+    - **8-Segment Proportional Spectrum Track**: Horizontal capsule bar segmented into the 8 clinical WHO categories:
+      1. Very severely underweight ($< 16.0$, span: 1.0, `#0284C7`)
+      2. Severely underweight ($16.0 - 16.9$, span: 1.0, `#0EA5E9`)
+      3. Underweight ($17.0 - 18.4$, span: 1.5, `#06B6D4`)
+      4. Normal ($18.5 - 24.9$, span: 6.5, `#22C55E`)
+      5. Overweight ($25.0 - 29.9$, span: 5.0, `#EAB308`)
+      6. Obese Class I ($30.0 - 34.9$, span: 5.0, `#F97316`)
+      7. Obese Class II ($35.0 - 39.9$, span: 5.0, `#EF4444`)
+      8. Obese Class III ($\ge 40.0$, span: 2.0, `#DC2626`)
+    - **Sliding Upward Triangle Indicator**: 14px upward SVG triangle caret sliding horizontally beneath the spectrum track, pointing exactly to the user's BMI position. Powered by `Animated.spring` with `useNativeDriver: true` and `AccessibilityInfo.isReduceMotionEnabled()` support.
+    - **Seamless Dashboard Feed Integration**: Mounted directly beneath `WeightTrackerCard` in `TodayScreen.tsx` with identical margins and borders for visual cadence.
+    - **Testing**: Added comprehensive unit test suite ([TodayBMICard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/TodayBMICard.test.tsx)) covering WHO categorization, dynamic metric display, edit modal interaction, and layout changes. 15/15 test suites and 129/129 tests passing.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

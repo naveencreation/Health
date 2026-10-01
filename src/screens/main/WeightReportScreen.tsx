@@ -13,18 +13,16 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import {
-  DrinkCompletionCard,
-  DayCompletionData,
-  HydrateVolumeCard,
-  DayHydrateData,
-  DrinkTypesCard,
-  DrinkTypeBreakdown,
+  WeightSummaryCard,
+  WeightSummaryData,
+  WeightTrendCard,
+  DayWeightTrendData,
+  BMIGaugeCard,
 } from '@/components/report';
-import { getBeverageConfig } from '@/utils/beverageUtils';
 
 export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
 
-export interface WaterReportScreenProps {
+export interface WeightReportScreenProps {
   onBack: () => void;
 }
 
@@ -40,32 +38,30 @@ const FULL_MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) => {
+export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }) => {
   const insets = useSafeAreaInsets();
   const { dailyLogs } = useDailyLog();
   const { userGoals } = useGoals();
-  const dailyWaterGoal = userGoals.waterGoalMl ?? 2500;
+
+  const unit = userGoals.weightUnit || 'kg';
+  const unitFactor = unit === 'lbs' ? 2.20462 : 1;
 
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  });
-  const [selectedHydrateDayIndex, setSelectedHydrateDayIndex] = useState<number>(() => {
+
+  const [selectedTrendIndex, setSelectedTrendIndex] = useState<number>(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
     return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   });
 
-  // Calculate Date Range Label, Chart Items, and All Dates based on timeframe & periodOffset
+  // Calculate Date Range Info and Trend Items
   const dateRangeInfo = useMemo(() => {
     const now = new Date();
 
     // 1. WEEKLY TIMEFRAME (7 individual days Mon–Sun)
     if (timeframe === 'weekly') {
-      const currentDay = now.getDay(); // 0 is Sun, 1 is Mon...
+      const currentDay = now.getDay();
       const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
       const monday = new Date(now);
       monday.setDate(now.getDate() + diffToMonday + periodOffset * 7);
@@ -85,30 +81,40 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
           ? `${monMonth} ${monDay} - ${sunDay}, ${year}`
           : `${monMonth} ${monDay} - ${sunMonth} ${sunDay}, ${year}`;
 
-      const days: DayCompletionData[] = Array.from({ length: 7 }, (_, i) => {
+      const allDates: string[] = [];
+      const trendItems: DayWeightTrendData[] = [];
+
+      for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
         const dateStr = `${yyyy}-${mm}-${dd}`;
+        allDates.push(dateStr);
+
         const log = dailyLogs[dateStr];
-        const intakeMl = log?.waterMl ?? 0;
-        const completionPct = dailyWaterGoal > 0 ? Math.round((intakeMl / dailyWaterGoal) * 100) : 0;
-        return {
+        const rawWeightKg =
+          log && typeof log.weightKg === 'number' && log.weightKg > 0
+            ? log.weightKg
+            : log?.weightEntries && log.weightEntries.length > 0
+            ? log.weightEntries[0].weightKg
+            : null;
+        const displayWeight = rawWeightKg !== null ? rawWeightKg * unitFactor : null;
+
+        trendItems.push({
           dateStr,
           dayNum: d.getDate(),
           dayName: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
-          intakeMl,
-          goalMl: dailyWaterGoal,
-          completionPct,
-        };
-      });
+          weightKg: rawWeightKg,
+          displayWeight,
+        });
+      }
 
       return {
         label,
-        chartItems: days,
-        allDates: days.map((d) => d.dateStr),
+        trendItems,
+        allDates,
         canGoForward: periodOffset < 0,
       };
     }
@@ -128,7 +134,6 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         allDates.push(`${year}-${mm}-${dd}`);
       }
 
-      // Group month into 4 or 5 interval buckets
       const bucketRanges = [
         { start: 1, end: 7, name: '1-7' },
         { start: 8, end: 14, name: '8-14' },
@@ -137,186 +142,175 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         ...(daysInMonth > 28 ? [{ start: 29, end: daysInMonth, name: `29-${daysInMonth}` }] : []),
       ];
 
-      const chartItems: DayCompletionData[] = bucketRanges.map((bucket, idx) => {
-        let bucketTotalMl = 0;
-        const count = bucket.end - bucket.start + 1;
+      const trendItems: DayWeightTrendData[] = [];
+
+      bucketRanges.forEach((bucket, idx) => {
+        let sumKg = 0;
+        let count = 0;
+
         for (let d = bucket.start; d <= bucket.end; d++) {
           const mm = String(monthIdx + 1).padStart(2, '0');
           const dd = String(d).padStart(2, '0');
           const log = dailyLogs[`${year}-${mm}-${dd}`];
-          bucketTotalMl += log?.waterMl ?? 0;
+          const rawWeight =
+            log && typeof log.weightKg === 'number' && log.weightKg > 0
+              ? log.weightKg
+              : log?.weightEntries && log.weightEntries.length > 0
+              ? log.weightEntries[0].weightKg
+              : null;
+          if (rawWeight !== null) {
+            sumKg += rawWeight;
+            count += 1;
+          }
         }
-        const avgDailyMl = Math.round(bucketTotalMl / count);
-        const completionPct = dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
-        return {
-          dateStr: `w_${idx + 1}`,
+
+        const avgKg = count > 0 ? Math.round((sumKg / count) * 10) / 10 : null;
+        const displayAvg = avgKg !== null ? avgKg * unitFactor : null;
+
+        trendItems.push({
+          dateStr: `w${idx + 1}`,
           dayNum: `W${idx + 1}`,
           dayName: bucket.name,
-          intakeMl: avgDailyMl,
-          goalMl: dailyWaterGoal,
-          completionPct,
-        };
+          weightKg: avgKg,
+          displayWeight: displayAvg,
+        });
       });
 
       return {
         label,
-        chartItems,
+        trendItems,
         allDates,
         canGoForward: periodOffset < 0,
       };
     }
 
-    // 3. YEARLY TIMEFRAME (12 Months: Jan to Dec with monthly daily averages)
+    // 3. YEARLY TIMEFRAME (12 monthly buckets Jan–Dec)
     const targetYear = now.getFullYear() + periodOffset;
     const label = `${targetYear}`;
     const allDates: string[] = [];
+    const trendItems: DayWeightTrendData[] = [];
 
-    const chartItems: DayCompletionData[] = Array.from({ length: 12 }, (_, m) => {
+    for (let m = 0; m < 12; m++) {
       const daysInM = new Date(targetYear, m + 1, 0).getDate();
-      let monthTotalMl = 0;
+      let sumKg = 0;
+      let count = 0;
+
       for (let day = 1; day <= daysInM; day++) {
         const mm = String(m + 1).padStart(2, '0');
         const dd = String(day).padStart(2, '0');
         const dateStr = `${targetYear}-${mm}-${dd}`;
         allDates.push(dateStr);
+
         const log = dailyLogs[dateStr];
-        monthTotalMl += log?.waterMl ?? 0;
+        const rawWeight =
+          log && typeof log.weightKg === 'number' && log.weightKg > 0
+            ? log.weightKg
+            : log?.weightEntries && log.weightEntries.length > 0
+            ? log.weightEntries[0].weightKg
+            : null;
+        if (rawWeight !== null) {
+          sumKg += rawWeight;
+          count += 1;
+        }
       }
-      const avgDailyMl = Math.round(monthTotalMl / daysInM);
-      const completionPct = dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
-      return {
-        dateStr: `m_${m + 1}`,
-        dayNum: MONTH_NAMES[m],
-        dayName: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][m],
-        intakeMl: avgDailyMl,
-        goalMl: dailyWaterGoal,
-        completionPct,
-      };
-    });
+
+      const avgKg = count > 0 ? Math.round((sumKg / count) * 10) / 10 : null;
+      const displayAvg = avgKg !== null ? avgKg * unitFactor : null;
+
+      trendItems.push({
+        dateStr: `m_${m}`,
+        dayNum: m + 1,
+        dayName: MONTH_NAMES[m],
+        weightKg: avgKg,
+        displayWeight: displayAvg,
+      });
+    }
 
     return {
       label,
-      chartItems,
+      trendItems,
       allDates,
       canGoForward: periodOffset < 0,
     };
-  }, [timeframe, periodOffset, dailyLogs, dailyWaterGoal]);
+  }, [timeframe, periodOffset, dailyLogs, unitFactor]);
 
-  const handlePrevPeriod = () => setPeriodOffset((prev) => prev - 1);
+  // Adjust selected trend index safely when timeframe changes
+  const safeTrendIndex = Math.min(
+    Math.max(0, selectedTrendIndex),
+    Math.max(0, dateRangeInfo.trendItems.length - 1)
+  );
+
+  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
+    setTimeframe(newTimeframe);
+    setPeriodOffset(0);
+    setSelectedTrendIndex(0);
+  };
+
+  const handlePrevPeriod = () => {
+    setPeriodOffset((prev) => prev - 1);
+  };
+
   const handleNextPeriod = () => {
     if (dateRangeInfo.canGoForward) {
       setPeriodOffset((prev) => prev + 1);
     }
   };
 
-  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
-    if (newTimeframe !== timeframe) {
-      setTimeframe(newTimeframe);
-      setPeriodOffset(0); // Reset to current period
-      setSelectedDayIndex(0);
-      setSelectedHydrateDayIndex(0);
-    }
-  };
-
-  // Safe selected indices within bounds of current timeframe's items
-  const safeCompIndex = Math.min(selectedDayIndex, Math.max(0, dateRangeInfo.chartItems.length - 1));
-  const safeHydrateIndex = Math.min(selectedHydrateDayIndex, Math.max(0, dateRangeInfo.chartItems.length - 1));
-
-  // Volume data for HydrateVolumeCard
-  const volumeData: DayHydrateData[] = useMemo(() => {
-    return dateRangeInfo.chartItems.map((item) => ({
-      dateStr: item.dateStr,
-      dayNum: item.dayNum,
-      dayName: item.dayName,
-      intakeMl: item.intakeMl,
-    }));
-  }, [dateRangeInfo.chartItems]);
-
-  // Average completion % across the period for the donut cutout center
-  const periodAvgCompletion = useMemo(() => {
-    if (dateRangeInfo.chartItems.length === 0) return 100;
-    const activeItems = dateRangeInfo.chartItems.filter((i) => i.intakeMl > 0);
-    if (activeItems.length === 0) return 100;
-    const sum = activeItems.reduce((acc, curr) => acc + curr.completionPct, 0);
-    return Math.round(sum / activeItems.length);
-  }, [dateRangeInfo.chartItems]);
-
-  // Dynamic beverage distribution calculated across all dates in the selected period
-  const periodDrinkBreakdown: { breakdown: DrinkTypeBreakdown[]; totalMl: number } = useMemo(() => {
-    const intakeByBev: Record<string, number> = {};
-    let totalMl = 0;
-
-    dateRangeInfo.allDates.forEach((dateStr) => {
-      const log = dailyLogs[dateStr];
-      if (!log) return;
-
-      const entries = log.waterEntries ?? [];
-      if (entries.length > 0) {
-        entries.forEach((entry) => {
-          const bevId = entry.beverageType || 'water';
-          intakeByBev[bevId] = (intakeByBev[bevId] || 0) + (entry.amountMl || 0);
-          totalMl += entry.amountMl || 0;
-        });
-      } else if (log.waterMl && log.waterMl > 0) {
-        intakeByBev['water'] = (intakeByBev['water'] || 0) + log.waterMl;
-        totalMl += log.waterMl;
+  // Compute Period Overview Summary Data
+  const periodSummaryData: WeightSummaryData = useMemo(() => {
+    const validWeights: number[] = [];
+    dateRangeInfo.trendItems.forEach((item) => {
+      if (item.weightKg !== null && item.weightKg > 0) {
+        validWeights.push(item.weightKg);
       }
     });
 
-    if (totalMl === 0) {
-      return { breakdown: [], totalMl: 0 };
+    if (validWeights.length === 0) {
+      return {
+        netChangeKg: 0,
+        currentWeightKg: userGoals.currentWeightKg ?? null,
+        avgWeightKg: null,
+        targetWeightKg: userGoals.targetWeightKg,
+        startWeightKg: userGoals.startWeightKg,
+        unit,
+      };
     }
 
-    const rawBreakdown: DrinkTypeBreakdown[] = Object.entries(intakeByBev)
-      .filter(([_, amount]) => amount > 0)
-      .map(([id, amount]) => {
-        const config = getBeverageConfig(id);
-        const pct = Math.round((amount / totalMl) * 100);
-        return {
-          id,
-          name: config.name,
-          color: config.color,
-          amountMl: amount,
-          pct,
-        };
-      });
+    const firstWeight = validWeights[0];
+    const lastWeight = validWeights[validWeights.length - 1];
+    const netChangeKg =
+      validWeights.length > 1 ? Math.round((lastWeight - firstWeight) * 100) / 100 : 0;
 
-    rawBreakdown.sort((a, b) => b.amountMl - a.amountMl);
+    const sum = validWeights.reduce((acc, curr) => acc + curr, 0);
+    const avgWeightKg = Math.round((sum / validWeights.length) * 10) / 10;
 
-    // Mathematical guarantee: segments always sum to exactly 100%
-    const currentSum = rawBreakdown.reduce((sum, item) => sum + item.pct, 0);
-    if (currentSum !== 100 && rawBreakdown.length > 0) {
-      rawBreakdown[0].pct += 100 - currentSum;
-    }
-
-    return { breakdown: rawBreakdown, totalMl };
-  }, [dateRangeInfo.allDates, dailyLogs]);
+    return {
+      netChangeKg,
+      currentWeightKg: lastWeight,
+      avgWeightKg,
+      targetWeightKg: userGoals.targetWeightKg,
+      startWeightKg: userGoals.startWeightKg,
+      unit,
+    };
+  }, [dateRangeInfo.trendItems, userGoals, unit]);
 
   return (
     <View style={[styles.rootContainer, { paddingTop: 6 }]}>
-      {/* 1. Header matching Reference Screen */}
+      {/* 1. Header Row */}
       <View style={styles.headerRow}>
         <Pressable
           style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
           onPress={onBack}
           hitSlop={HIT_SLOP_10}
           accessibilityRole="button"
-          accessibilityLabel="Back to Water Tracker"
+          accessibilityLabel="Back to Weight Tracker"
         >
           <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
         </Pressable>
 
-        <Text style={styles.headerTitle}>Report</Text>
+        <Text style={styles.headerTitle}>Weight Report</Text>
 
-        <Pressable
-          style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
-          onPress={() => {}}
-          hitSlop={HIT_SLOP_10}
-          accessibilityRole="button"
-          accessibilityLabel="Report Options"
-        >
-          <Ionicons name="ellipsis-vertical" size={18} color={Colors.iconNavy} />
-        </Pressable>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -327,7 +321,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 2. Timeframe Segmented Tabs (Weekly | Monthly | Yearly) */}
+        {/* 2. Timeframe Segment Tabs (Weekly | Monthly | Yearly) */}
         <View style={styles.timeframeSegmentContainer}>
           {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
             const isActive = timeframe === tab;
@@ -393,29 +387,28 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
           </Pressable>
         </View>
 
-        {/* 4. Drink Completion Card (Dual Bar ⇄ Line) */}
-        <DrinkCompletionCard
-          days={dateRangeInfo.chartItems}
-          selectedIndex={safeCompIndex}
-          onSelectDay={setSelectedDayIndex}
-          activeColor="#2563EB"
-          defaultChartType="bar"
+        {/* 4. Period Overview Summary Card */}
+        <WeightSummaryCard
+          data={periodSummaryData}
+          activeColor={Colors.weight}
         />
 
-        {/* 5. Hydrate Volume Card (Dual Line ⇄ Bar) */}
-        <HydrateVolumeCard
-          days={volumeData}
-          selectedIndex={safeHydrateIndex}
-          onSelectDay={setSelectedHydrateDayIndex}
-          activeColor="#2563EB"
+        {/* 5. Hero Weight Trend Card (Dual Line ⇄ Bar with Goal Reference Line) */}
+        <WeightTrendCard
+          days={dateRangeInfo.trendItems}
+          selectedIndex={safeTrendIndex}
+          onSelectDay={setSelectedTrendIndex}
+          targetWeightKg={userGoals.targetWeightKg}
+          unit={unit}
+          activeColor={Colors.weight}
           defaultChartType="line"
         />
 
-        {/* 6. Drink Types Card (SVG Donut + 2-Column Legend) */}
-        <DrinkTypesCard
-          breakdown={periodDrinkBreakdown.breakdown}
-          totalIntakeMl={periodDrinkBreakdown.totalMl}
-          centerPct={periodAvgCompletion}
+        {/* 6. BMI Speedometer Gauge Visualizer */}
+        <BMIGaugeCard
+          weightKg={periodSummaryData.currentWeightKg ?? userGoals.currentWeightKg ?? 72.5}
+          heightCm={userGoals.heightCm ?? 178}
+          unit={unit}
         />
       </ScrollView>
     </View>
@@ -433,12 +426,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 10,
-  },
-  headerTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
-    color: '#0F172A',
-    letterSpacing: -0.3,
+    backgroundColor: '#FAF9F6',
   },
   navCircleBtn: {
     width: 40,
@@ -454,49 +442,54 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 1.5 },
-        shadowOpacity: 0.06,
+        shadowOpacity: 0.04,
         shadowRadius: 4,
       },
       android: {
-        elevation: 1,
+        elevation: 1.5,
       },
     }),
   },
   btnPressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
+  },
+  headerTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 18,
+    color: '#0F172A',
+    letterSpacing: -0.2,
   },
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 40,
   },
-  // Timeframe Segment Tabs
   timeframeSegmentContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEF2F6',
-    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
     padding: 4,
     marginBottom: 16,
   },
   timeframeTab: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 10,
   },
   timeframeTabActive: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#FFFFFF',
     ...Platform.select({
       ios: {
-        shadowColor: '#2563EB',
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.22,
-        shadowRadius: 5,
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
       },
       android: {
         elevation: 2,
@@ -504,35 +497,36 @@ const styles = StyleSheet.create({
     }),
   },
   timeframeTabText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
-    color: '#475569',
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 13,
+    color: '#64748B',
   },
   timeframeTabTextActive: {
-    color: '#FFFFFF',
+    fontFamily: Fonts.poppins.semiBold,
+    color: '#0F172A',
   },
-  // Date Range Navigator
   dateNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    marginBottom: 18,
+    paddingHorizontal: 4,
+    marginBottom: 16,
   },
   dateNavArrowBtn: {
     width: 32,
     height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
   },
   dateNavArrowDisabled: {
-    opacity: 0.35,
+    opacity: 0.4,
   },
   dateRangeText: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
-    color: '#1E293B',
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13.5,
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
 });

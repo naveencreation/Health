@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface WeightGoalSettingsModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
   onClose,
   onSave,
 }) => {
+  const insets = useSafeAreaInsets();
   const { userGoals, updateGoals } = useGoals();
 
   const [unit, setUnit] = useState<'kg' | 'lbs'>(userGoals.weightUnit || 'kg');
@@ -45,7 +47,8 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
     } else {
       const currentLbs = startKg * 2.20462;
       const nextLbs = Math.max(66, Math.min(660, currentLbs + deltaCurrentUnit));
-      setStartKg(Math.round((nextLbs / 2.20462) * 10) / 10);
+      // 2-decimal kg precision ensures +/- 0.1 lbs changes register cleanly
+      setStartKg(Math.round((nextLbs / 2.20462) * 100) / 100);
     }
   };
 
@@ -55,14 +58,15 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
     } else {
       const currentLbs = goalKg * 2.20462;
       const nextLbs = Math.max(66, Math.min(660, currentLbs + deltaCurrentUnit));
-      setGoalKg(Math.round((nextLbs / 2.20462) * 10) / 10);
+      // 2-decimal kg precision ensures +/- 0.1 lbs changes register cleanly
+      setGoalKg(Math.round((nextLbs / 2.20462) * 100) / 100);
     }
   };
 
   const handleSave = () => {
     const payload = {
-      startWeightKg: startKg,
-      targetWeightKg: goalKg,
+      startWeightKg: unit === 'lbs' ? Math.round(startKg * 100) / 100 : Math.round(startKg * 10) / 10,
+      targetWeightKg: unit === 'lbs' ? Math.round(goalKg * 100) / 100 : Math.round(goalKg * 10) / 10,
       weightUnit: unit,
     };
     updateGoals(payload);
@@ -83,7 +87,7 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           {/* Header */}
           <View style={styles.modalHeader}>
             <View>
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     paddingHorizontal: 22,
     paddingTop: 22,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    paddingBottom: 24,
     maxHeight: '90%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },

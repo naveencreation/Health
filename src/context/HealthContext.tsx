@@ -277,7 +277,7 @@ export interface HealthContextType {
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
   addSteps: (stepsCount: number) => void;
-  logWeight: (weightKg: number, date?: string, note?: string) => void;
+  logWeight: (weightKg: number, date?: string, note?: string, customLoggedAt?: string, customId?: string) => void;
   updateWeightEntry: (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => void;
   deleteWeightEntry: (id: string, date?: string) => void;
   addCustomFood: (food: Omit<FoodItem, 'id'>) => FoodItem;
@@ -1210,25 +1210,36 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [selectedDate]);
 
-  const logWeight = useCallback((weightKg: number, date?: string, note?: string) => {
+  const logWeight = useCallback((
+    weightKg: number,
+    date?: string,
+    note?: string,
+    customLoggedAt?: string,
+    customId?: string
+  ) => {
     const targetDate = date || selectedDate;
     const now = new Date();
     const todayStr = getTodayDateString(now);
     const isToday = targetDate === todayStr;
     const rounded = Math.round(weightKg * 10) / 10;
 
-    // For today, use exact current timestamp.
-    // For past dates (backfilled weigh-in), anchor timestamp to targetDate (08:00:00 morning weigh-in standard)
-    // to ensure intra-day sorting never places a past-date entry into today's timeline.
-    const loggedAt = isToday
-      ? now.toISOString()
-      : `${targetDate}T08:00:00.000Z`;
+    let defaultLoggedAt: string;
+    let defaultTimestampNum: number;
 
-    const timestampNum = isToday
-      ? Date.now()
-      : new Date(`${targetDate}T08:00:00.000Z`).getTime();
+    if (isToday) {
+      defaultLoggedAt = now.toISOString();
+      defaultTimestampNum = Date.now();
+    } else {
+      const [y, m, d] = targetDate.split('-').map(Number);
+      const localMorning = new Date(y, m - 1, d, 8, 0, 0);
+      defaultLoggedAt = localMorning.toISOString();
+      defaultTimestampNum = localMorning.getTime();
+    }
 
-    const entryId = 'weight_' + timestampNum + '_' + Math.random().toString(36).substring(2, 6);
+    const loggedAt = customLoggedAt || defaultLoggedAt;
+    const timestampNum = customLoggedAt ? new Date(customLoggedAt).getTime() : defaultTimestampNum;
+    const entryId = customId || ('weight_' + timestampNum + '_' + Math.random().toString(36).substring(2, 6));
+
     const newEntry: WeightLogEntry = {
       id: entryId,
       weightKg: rounded,
@@ -1244,13 +1255,21 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         steps: 0,
         activities: [],
       };
-      const prevEntries = existing.weightEntries ? [...existing.weightEntries] : [];
+      const prevEntries = existing.weightEntries ? existing.weightEntries.filter((e) => e.id !== entryId) : [];
+      const mergedEntries = [newEntry, ...prevEntries].sort((a, b) => {
+        const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+        const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      const primaryWeight = mergedEntries[0].weightKg;
+
       const updatedLogs = {
         ...prev,
         [targetDate]: {
           ...existing,
-          weightKg: rounded,
-          weightEntries: [newEntry, ...prevEntries],
+          weightKg: primaryWeight,
+          weightEntries: mergedEntries,
         },
       };
 
@@ -1262,8 +1281,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (sortedDates.length > 0 && sortedDates[0] === targetDate) {
         setUserGoals((g) => ({
           ...g,
-          currentWeightKg: rounded,
-          startWeightKg: g.startWeightKg ? g.startWeightKg : rounded,
+          currentWeightKg: primaryWeight,
+          startWeightKg: g.startWeightKg ? g.startWeightKg : primaryWeight,
         }));
       }
 
@@ -1333,7 +1352,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           weightEntries: remainingTarget,
         };
 
-        // Add to destDate
+        // Add to destDate and sort chronologically
         const destLog = prev[destDate] || {
           date: destDate,
           meals: [],
@@ -1341,16 +1360,26 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           steps: 0,
           activities: [],
         };
-        const destEntries = destLog.weightEntries ? [...destLog.weightEntries] : [];
+        const destEntries = destLog.weightEntries ? destLog.weightEntries.filter((e) => e.id !== id) : [];
+        const mergedDest = [updatedEntry, ...destEntries].sort((a, b) => {
+          const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+          const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+          return timeB - timeA;
+        });
+
         updatedLogs[destDate] = {
           ...destLog,
-          weightKg: updatedEntry.weightKg,
-          weightEntries: [updatedEntry, ...destEntries],
+          weightKg: mergedDest.length > 0 ? mergedDest[0].weightKg : undefined,
+          weightEntries: mergedDest,
         };
       } else {
         const updatedEntries = existing.weightEntries.map((e) =>
           e.id === id ? updatedEntry : e
-        );
+        ).sort((a, b) => {
+          const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+          const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+          return timeB - timeA;
+        });
         const latestWeight = updatedEntries.length > 0 ? updatedEntries[0].weightKg : existing.weightKg;
         updatedLogs[targetDate] = {
           ...existing,

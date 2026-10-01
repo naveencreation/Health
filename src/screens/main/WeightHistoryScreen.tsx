@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   useWindowDimensions,
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
@@ -16,6 +17,8 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { WeightEntryActionPopover } from '@/components/weight/WeightEntryActionPopover';
 import { LogWeightModal } from '@/components/modals/LogWeightModal';
+import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
+import { WeightReportScreen } from './WeightReportScreen';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -168,6 +171,37 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
   // Edit Modal State
   const [editingEntry, setEditingEntry] = useState<WeightHistoryEntry | null>(null);
 
+  // Fallback Internal Report Screen state
+  const [isInternalReportVisible, setIsInternalReportVisible] = useState(false);
+  const [isClosingInternalReport, setIsClosingInternalReport] = useState(false);
+
+  // Hardware back button support for Android
+  useEffect(() => {
+    const handleHardwareBack = () => {
+      if (isInternalReportVisible) {
+        setIsClosingInternalReport(true);
+        return true;
+      }
+      if (isAddModalVisible) {
+        setIsAddModalVisible(false);
+        return true;
+      }
+      if (editingEntry) {
+        setEditingEntry(null);
+        return true;
+      }
+      if (activeMenu) {
+        setActiveMenu(null);
+        return true;
+      }
+      onBack();
+      return true;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
+    return () => sub.remove();
+  }, [isInternalReportVisible, isAddModalVisible, editingEntry, activeMenu, onBack]);
+
   // Compile full sorted timeline of weigh-ins, grouped by date
   const dateGroups = useMemo(() => {
     // 1. Gather all entries into a flat array first to accurately calculate deltas
@@ -277,7 +311,13 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
-    logWeight(undoToast.entry.weightKg, undoToast.entry.date, undoToast.entry.note);
+    logWeight(
+      undoToast.entry.weightKg,
+      undoToast.entry.date,
+      undoToast.entry.note,
+      undoToast.entry.loggedAt,
+      undoToast.entry.id
+    );
     setUndoToast(null);
   };
 
@@ -288,22 +328,24 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
   };
 
   return (
-    <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 10) }]}>
+    <View style={[styles.rootContainer, { paddingTop: 6 }]}>
       {/* 1. Header Bar */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.navCircleBtn,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={onBack}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel="Back to Weight Tracker"
-          >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
-          </Pressable>
+          <View style={styles.headerLeftWrapper}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.navCircleBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={onBack}
+              hitSlop={HIT_SLOP_10}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Weight Tracker"
+            >
+              <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            </Pressable>
+          </View>
 
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle} numberOfLines={1}>
@@ -312,20 +354,25 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
           </View>
 
           <View style={styles.headerRightActions}>
-            {onOpenReport && (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.navCircleBtn,
-                  pressed && styles.btnPressed,
-                ]}
-                onPress={onOpenReport}
-                hitSlop={HIT_SLOP_10}
-                accessibilityRole="button"
-                accessibilityLabel="View Weight Report"
-              >
-                <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
-              </Pressable>
-            )}
+            <Pressable
+              style={({ pressed }) => [
+                styles.navCircleBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={() => {
+                if (onOpenReport) {
+                  onOpenReport();
+                } else {
+                  setIsInternalReportVisible(true);
+                }
+              }}
+              hitSlop={HIT_SLOP_10}
+              accessibilityRole="button"
+              accessibilityLabel="View Weight Report"
+            >
+              <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+            </Pressable>
+
             <Pressable
               style={({ pressed }) => [
                 styles.navAddBtn,
@@ -365,8 +412,9 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                   const isFirst = idx === 0;
                   const displayWeight = toDisplay(entry.weightKg).toFixed(1);
                   const displayDelta = toDisplay(Math.abs(entry.deltaKg)).toFixed(1);
-                  const isLoss = entry.deltaKg < 0;
-                  const isGain = entry.deltaKg > 0;
+                  const isZero = Math.abs(entry.deltaKg) < 0.05;
+                  const isLoss = !isZero && entry.deltaKg < 0;
+                  const isGain = !isZero && entry.deltaKg > 0;
                   const timeString = formatTime(entry.loggedAt);
 
                   return (
@@ -402,10 +450,11 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                           style={[
                             styles.deltaIconCircle,
                             isGain && styles.deltaIconCircleGain,
+                            isZero && styles.deltaIconCircleZero,
                           ]}
                         >
                           <Ionicons
-                            name={isGain ? 'chevron-up' : 'chevron-down'}
+                            name={isZero ? 'remove' : isGain ? 'chevron-up' : 'chevron-down'}
                             size={11}
                             color="#FFFFFF"
                           />
@@ -414,9 +463,10 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                           style={[
                             styles.deltaText,
                             isGain && styles.deltaTextGain,
+                            isZero && styles.deltaTextZero,
                           ]}
                         >
-                          {isLoss ? `- ${displayDelta} ${unit}` : isGain ? `+ ${displayDelta} ${unit}` : `- 0.0 ${unit}`}
+                          {isZero ? `0.0 ${unit}` : isLoss ? `- ${displayDelta} ${unit}` : `+ ${displayDelta} ${unit}`}
                         </Text>
                       </View>
 
@@ -499,6 +549,22 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
           </Animated.View>
         </View>
       )}
+      {/* 6. Dedicated Full-Screen Weight Report Sub-Screen (Fallback) */}
+      {isInternalReportVisible && (
+        <SlideInSubScreen
+          isClosing={isClosingInternalReport}
+          onClosed={() => {
+            setIsInternalReportVisible(false);
+            setIsClosingInternalReport(false);
+          }}
+          screenWidth={Math.min(screenWidth, 480)}
+          zIndex={300}
+        >
+          <WeightReportScreen
+            onBack={() => setIsClosingInternalReport(true)}
+          />
+        </SlideInSubScreen>
+      )}
     </View>
   );
 };
@@ -518,6 +584,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 44,
+  },
+  headerLeftWrapper: {
+    width: 88,
+    alignItems: 'flex-start',
   },
   navCircleBtn: {
     width: 40,
@@ -542,7 +612,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 6,
   },
   headerTitle: {
     fontFamily: Fonts.poppins.bold,
@@ -552,8 +622,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   headerRightActions: {
+    width: 88,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
   },
   navAddBtn: {
@@ -672,6 +744,9 @@ const styles = StyleSheet.create({
   deltaIconCircleGain: {
     backgroundColor: '#F43F5E',
   },
+  deltaIconCircleZero: {
+    backgroundColor: '#94A3B8',
+  },
   deltaText: {
     fontSize: 12.5,
     fontFamily: Fonts.poppins.semiBold,
@@ -679,6 +754,9 @@ const styles = StyleSheet.create({
   },
   deltaTextGain: {
     color: '#F43F5E',
+  },
+  deltaTextZero: {
+    color: '#64748B',
   },
   menuTriggerBtn: {
     padding: 6,

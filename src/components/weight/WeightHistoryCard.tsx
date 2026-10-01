@@ -289,8 +289,9 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
             {displayedList.map((item, index) => {
               const displayWeight = toDisplay(item.weightKg).toFixed(1);
               const displayDelta = toDisplay(Math.abs(item.deltaKg)).toFixed(1);
-              const isLoss = item.deltaKg < 0;
-              const isGain = item.deltaKg > 0;
+              const isZero = Math.abs(item.deltaKg) < 0.05;
+              const isLoss = !isZero && item.deltaKg < 0;
+              const isGain = !isZero && item.deltaKg > 0;
               const isLast = index === displayedList.length - 1;
               const timeString = formatLogTime(item.loggedAt);
 
@@ -327,10 +328,11 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                           style={[
                             styles.deltaIconCircle,
                             isGain && styles.deltaIconCircleGain,
+                            isZero && styles.deltaIconCircleZero,
                           ]}
                         >
                           <Ionicons
-                            name={isGain ? 'chevron-up' : 'chevron-down'}
+                            name={isZero ? 'remove' : isGain ? 'chevron-up' : 'chevron-down'}
                             size={11}
                             color="#FFFFFF"
                           />
@@ -339,9 +341,10 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                           style={[
                             styles.deltaText,
                             isGain && styles.deltaTextGain,
+                            isZero && styles.deltaTextZero,
                           ]}
                         >
-                          {isLoss ? `- ${displayDelta} ${unit}` : isGain ? `+ ${displayDelta} ${unit}` : `- 0.0 ${unit}`}
+                          {isZero ? `0.0 ${unit}` : isLoss ? `- ${displayDelta} ${unit}` : `+ ${displayDelta} ${unit}`}
                         </Text>
                       </View>
 
@@ -552,6 +555,9 @@ const styles = StyleSheet.create({
   deltaIconCircleGain: {
     backgroundColor: '#F43F5E', // Rose 500
   },
+  deltaIconCircleZero: {
+    backgroundColor: '#94A3B8', // Slate 400
+  },
   deltaText: {
     fontSize: 13,
     fontFamily: Fonts.poppins.semiBold,
@@ -560,6 +566,9 @@ const styles = StyleSheet.create({
   },
   deltaTextGain: {
     color: '#F43F5E',
+  },
+  deltaTextZero: {
+    color: '#64748B',
   },
   optionsBtn: {
     padding: 6,

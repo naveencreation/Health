@@ -22,3 +22,4 @@ export { WaterReportScreen } from './main/WaterReportScreen';
 export { WeightTrackerScreen } from './main/WeightTrackerScreen';
 export { WeightHistoryScreen } from './main/WeightHistoryScreen';
 export { LogWeightScreen } from './main/LogWeightScreen';
+export { WeightReportScreen } from './main/WeightReportScreen';
