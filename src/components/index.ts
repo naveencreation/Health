@@ -8,6 +8,7 @@ export { RiaCoachCard } from './dashboard/RiaCoachCard';
 
 // Water Tracking Components
 export { DropletVisualizer } from './water/DropletVisualizer';
+export { WaterGaugeVisualizer } from './water/WaterGaugeVisualizer';
 export { HeroDropletCard } from './water/HeroDropletCard';
 export { WaterHistoryCard } from './water/WaterHistoryCard';
 export { WaterBottomDock } from './water/WaterBottomDock';

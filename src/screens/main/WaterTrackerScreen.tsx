@@ -140,7 +140,6 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   const handleDrink = (amount: number, beverage: string) => {
     if (isFutureDate) return;
     addWater(amount, beverage);
-    heroDropletRef.current?.triggerSlosh('up');
 
     // Show floating Undo toast for 4.5 seconds
     if (undoTimeoutRef.current) {
@@ -158,7 +157,6 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       clearTimeout(undoTimeoutRef.current);
     }
     addWater(-undoToast.amount, undoToast.beverage);
-    heroDropletRef.current?.triggerSlosh('down');
     setUndoToast(null);
   };
 
@@ -166,7 +164,6 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
     if (isFutureDate || currentWater <= 0) return;
     const targetBev = beverage || beverageType;
     addWater(-amount, targetBev);
-    heroDropletRef.current?.triggerSlosh('down');
   };
 
   const handlePressSettings = () => {
