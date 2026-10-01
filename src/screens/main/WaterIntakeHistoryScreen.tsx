@@ -570,7 +570,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
 
       {/* 5. Floating Undo Toast (Industry Standard) */}
       {undoToast && (
-        <View style={styles.undoToastWrapper} pointerEvents="box-none">
+        <View style={[styles.undoToastWrapper, { pointerEvents: 'box-none' as any }]}>
           <Animated.View
             entering={FadeInDown.duration(200)}
             exiting={FadeOutDown.duration(180)}

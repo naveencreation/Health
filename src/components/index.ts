@@ -4,6 +4,7 @@ export { TopDateStrip } from './dashboard/TopDateStrip';
 export { MealSection } from './dashboard/MealSection';
 export { DailyHabitsCard } from './dashboard/DailyHabitsCard';
 export { WaterTracker } from './dashboard/WaterTracker';
+export { WeightTrackerCard } from './dashboard/WeightTrackerCard';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
 
 // Water Tracking Components
@@ -13,6 +14,11 @@ export { HeroDropletCard } from './water/HeroDropletCard';
 export { WaterHistoryCard } from './water/WaterHistoryCard';
 export { WaterBottomDock } from './water/WaterBottomDock';
 export { WaterEntryActionPopover } from './water/WaterEntryActionPopover';
+
+// Weight Tracking Components
+export { HeroWeightCard } from './weight/HeroWeightCard';
+export { WeightHistoryCard, type WeightHistoryItem } from './weight/WeightHistoryCard';
+export { WeightEntryActionPopover } from './weight/WeightEntryActionPopover';
 
 // Diary Components
 export { MealCard } from './diary/MealCard';
@@ -28,6 +34,8 @@ export { FoodVisionModal } from './modals/FoodVisionModal';
 export { DailyWaterGoalModal } from './modals/DailyWaterGoalModal';
 export { CupSizeModal } from './modals/CupSizeModal';
 export { HydrationSettingsModal } from './modals/HydrationSettingsModal';
+export { LogWeightModal } from './modals/LogWeightModal';
+export { WeightGoalSettingsModal } from './modals/WeightGoalSettingsModal';
 
 // Navigation
 export { Header } from './navigation/Header';

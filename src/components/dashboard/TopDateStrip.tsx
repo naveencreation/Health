@@ -57,7 +57,7 @@ const parseDateString = (dateStr: string): Date => {
 };
 
 export interface TopDateStripProps {
-  metric?: 'calories' | 'water';
+  metric?: 'calories' | 'water' | 'weight';
   style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
@@ -74,10 +74,11 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(selectedDate).getMonth());
 
   const isWater = metric === 'water';
+  const isWeight = metric === 'weight';
   const budget = userGoals.dailyCalorieBudget || 2000;
   const waterGoal = userGoals.waterGoalMl || 2000;
-  const progressColor = isWater ? Colors.water : Colors.primary;
-  const trackColor = isWater ? Colors.waterTrack : '#E2E8F0';
+  const progressColor = isWater ? Colors.water : isWeight ? Colors.weight : Colors.primary;
+  const trackColor = isWater ? Colors.waterTrack : isWeight ? Colors.weightTrack : '#E2E8F0';
 
   // Real-world today reference
   const todayStr = useMemo(() => toDateString(new Date()), []);
@@ -121,6 +122,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       if (isWater) {
         const waterMl = log && typeof log.waterMl === 'number' ? log.waterMl : 0;
         progress = Math.min(1, Math.max(0, waterMl / waterGoal));
+      } else if (isWeight) {
+        const hasWeight = Boolean(log && typeof log.weightKg === 'number' && log.weightKg > 0);
+        progress = hasWeight ? 1 : 0;
       } else {
         const cals = log && Array.isArray(log.meals)
           ? log.meals.reduce((sum, item) => sum + item.calories, 0)
@@ -131,7 +135,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       const hasData = Boolean(
         (log && Array.isArray(log.meals) && log.meals.length > 0) ||
         (log && typeof log.waterMl === 'number' && log.waterMl > 0) ||
-        (log && typeof log.steps === 'number' && log.steps > 0)
+        (log && typeof log.steps === 'number' && log.steps > 0) ||
+        (log && typeof log.weightKg === 'number' && log.weightKg > 0)
       );
 
       days.push({
@@ -160,7 +165,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     }
 
     return { weekDays: days, monthHeaderTitle: title };
-  }, [selectedDate, dailyLogs, budget, todayStr, isWater, waterGoal]);
+  }, [selectedDate, dailyLogs, budget, todayStr, isWater, isWeight, waterGoal]);
 
   // Open calendar synchronized to currently selected date's month
   const handleOpenCalendar = () => {
@@ -221,6 +226,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       const log = dailyLogs[dateStr];
       const hasMeals = isWater
         ? Boolean(log && typeof log.waterMl === 'number' && log.waterMl > 0)
+        : isWeight
+        ? Boolean(log && typeof log.weightKg === 'number' && log.weightKg > 0)
         : Boolean(log && Array.isArray(log.meals) && log.meals.length > 0);
 
       cells.push({
@@ -234,7 +241,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     }
 
     return cells;
-  }, [calendarYear, calendarMonth, dailyLogs, todayStr, selectedDate, isWater]);
+  }, [calendarYear, calendarMonth, dailyLogs, todayStr, selectedDate, isWater, isWeight]);
 
   return (
     <View style={[styles.container, style]}>
@@ -265,12 +272,13 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
               <Ionicons
                 name="arrow-undo-outline"
                 size={12}
-                color={isWater ? Colors.waterDark : Colors.primaryDark}
+                color={isWater ? Colors.waterDark : isWeight ? Colors.weightDark : Colors.primaryDark}
               />
               <Text
                 style={[
                   styles.todayPillText,
                   isWater && { color: Colors.waterDark },
+                  isWeight && { color: Colors.weightDark },
                 ]}
               >
                 Today

@@ -53,6 +53,13 @@ export interface WaterLogEntry {
   loggedAt: string;
 }
 
+export interface WeightLogEntry {
+  id: string;
+  weightKg: number;
+  loggedAt: string;
+  note?: string;
+}
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   meals: LoggedMealItem[];
@@ -60,6 +67,8 @@ export interface DailyLog {
   steps: number;
   activities: WorkoutActivity[];
   waterEntries?: WaterLogEntry[];
+  weightKg?: number;
+  weightEntries?: WeightLogEntry[];
 }
 
 export interface UserGoals {

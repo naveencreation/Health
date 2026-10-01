@@ -234,7 +234,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
         </Pressable>
 
         {/* 3. Integrated Bottom Metric Readout */}
-        <View style={styles.readoutContainer} pointerEvents="box-none">
+        <View style={[styles.readoutContainer, { pointerEvents: 'box-none' as any }]}>
           <Text style={styles.largeMetricNumber} numberOfLines={1}>
             {currentWater}
           </Text>

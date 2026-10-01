@@ -80,6 +80,14 @@ export const Colors = {
   burnBorder: '#FFD5C6',
   burnDark: '#C2410C',
 
+  // Weight & Body Metrics (Pink/Coral Palette matching reference)
+  weight: '#FF3B5C',         // Vibrant Coral / Hot Pink
+  weightSecondary: '#F43F5E',// Rose 500
+  weightLight: '#FFF1F2',    // Rose 50
+  weightTrack: '#EEF2F6',    // Pill progress track
+  weightBorder: '#FECDD3',   // Rose 200
+  weightDark: '#BE123C',     // Rose 700
+
   // Shadows
   shadowColor: '#000000',
 };

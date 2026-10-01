@@ -20,6 +20,7 @@ import {
   RiaCoachCard,
   DailyHabitsCard,
   WaterTracker,
+  WeightTrackerCard,
 } from '@/components';
 import { MealType } from '@/types';
 
@@ -35,6 +36,7 @@ interface TodayScreenProps {
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
   onOpenWaterTracker?: () => void;
+  onOpenWeightTracker?: () => void;
 }
 
 const TodayScreenComponent: React.FC<TodayScreenProps> = ({
@@ -49,6 +51,7 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   initialScrollOffset = 0,
   onScrollPositionChange,
   onOpenWaterTracker,
+  onOpenWeightTracker,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -139,7 +142,10 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         {/* 5. Interactive Water Tracker Droplet Card */}
         <WaterTracker onPressHeader={onOpenWaterTracker} />
 
-        {/* 6. Side-by-Side Habits: Hydration & Activity Dual Dials */}
+        {/* 6. Weight Tracker Card matching media_1790853712174.png */}
+        <WeightTrackerCard onOpenFullTracker={onOpenWeightTracker} />
+
+        {/* 7. Side-by-Side Habits: Hydration & Activity Dual Dials */}
         <DailyHabitsCard />
       </Animated.ScrollView>
     </View>

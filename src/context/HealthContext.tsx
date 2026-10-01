@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData, WaterLogEntry } from '@/types';
+import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData, WaterLogEntry, WeightLogEntry } from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { auth, db } from '@/services/firebase';
@@ -12,7 +12,7 @@ import {
   updateProfile,
   deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, query, orderBy, limit } from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
 
 export const STORAGE_KEYS = {
@@ -58,6 +58,8 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
     waterMl: cleanWater,
     steps: cleanSteps,
     waterEntries: log.waterEntries || [],
+    weightKg: log.weightKg,
+    weightEntries: log.weightEntries || [],
   };
 };
 
@@ -107,7 +109,7 @@ const DEFAULT_GOALS: UserGoals = {
   stepReminder: false,
 };
 
-const getTodayDateString = (date = new Date()): string => {
+export const getTodayDateString = (date = new Date()): string => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
@@ -275,6 +277,9 @@ export interface HealthContextType {
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
   addSteps: (stepsCount: number) => void;
+  logWeight: (weightKg: number, date?: string, note?: string) => void;
+  updateWeightEntry: (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => void;
+  deleteWeightEntry: (id: string, date?: string) => void;
   addCustomFood: (food: Omit<FoodItem, 'id'>) => FoodItem;
   deleteCustomFood: (foodId: string) => void;
   weeklyLogs: WeeklyTrendItem[];
@@ -323,6 +328,9 @@ export type DailyLogContextValue = Pick<
   | 'addWorkout'
   | 'removeWorkout'
   | 'addSteps'
+  | 'logWeight'
+  | 'updateWeightEntry'
+  | 'deleteWeightEntry'
 >;
 
 export type AnalyticsContextValue = Pick<HealthContextType, 'weeklyLogs' | 'dailyLogs'>;
@@ -396,10 +404,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const mergedGoals: UserGoals = {
               ...DEFAULT_GOALS,
               ...data.goals,
-              age: data.age ?? data.goals.age,
-              gender: data.gender ?? data.goals.gender,
-              goal: data.goal ?? data.goals.goal,
-              weightUnit: data.weightUnit ?? data.goals.weightUnit,
+              age: data.goals?.age ?? data.age,
+              gender: data.goals?.gender ?? data.gender,
+              goal: data.goals?.goal ?? data.goal,
+              weightUnit: data.goals?.weightUnit ?? data.weightUnit ?? 'kg',
+              startWeightKg: data.goals?.startWeightKg ?? data.startWeightKg ?? data.weight ?? 68.0,
+              currentWeightKg: data.goals?.currentWeightKg ?? data.weight ?? 68.0,
+              heightCm: data.goals?.heightCm ?? data.heightCm ?? 175,
             };
             setUserGoals(mergedGoals);
             AsyncStorage.setItem(userGoalsKey, JSON.stringify(mergedGoals)).catch(() => {});
@@ -562,7 +573,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setIsAuthLoading(false);
         }
 
-        const savedGoals = await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS);
+        const userScopedGoals = parsedAuth?.id && !isGuest
+          ? await AsyncStorage.getItem(getUserGoalsKey(parsedAuth.id))
+          : null;
+        const savedGoals = userScopedGoals || (await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS));
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
 
         if (savedGoals) {
@@ -742,11 +756,27 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         !isLoggingOutRef.current &&
         !isHydratingRef.current &&
         auth.currentUser &&
-        !currentUser?.isGuest &&
-        hydratedUidRef.current === auth.currentUser.uid
+        !currentUser?.isGuest
       ) {
         try {
-          const payload = sanitizeForFirestore({ goals: userGoals });
+          const profileUpdates: Record<string, any> = {
+            updatedAt: new Date().toISOString(),
+            goals: userGoals,
+          };
+          if (typeof userGoals.currentWeightKg === 'number' && userGoals.currentWeightKg >= 10 && userGoals.currentWeightKg <= 500) {
+            profileUpdates.weight = userGoals.currentWeightKg;
+          }
+          if (userGoals.weightUnit === 'kg' || userGoals.weightUnit === 'lbs') {
+            profileUpdates.weightUnit = userGoals.weightUnit;
+          }
+          if (typeof userGoals.startWeightKg === 'number' && userGoals.startWeightKg >= 10 && userGoals.startWeightKg <= 500) {
+            profileUpdates.startWeightKg = userGoals.startWeightKg;
+          }
+          if (typeof userGoals.heightCm === 'number' && userGoals.heightCm >= 50 && userGoals.heightCm <= 300) {
+            profileUpdates.heightCm = userGoals.heightCm;
+          }
+
+          const payload = sanitizeForFirestore(profileUpdates);
           setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
             if (__DEV__) console.warn('userGoals setDoc async error:', err);
           });
@@ -1180,6 +1210,172 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [selectedDate]);
 
+  const logWeight = useCallback((weightKg: number, date?: string, note?: string) => {
+    const targetDate = date || selectedDate;
+    const now = new Date();
+    const todayStr = getTodayDateString(now);
+    const isToday = targetDate === todayStr;
+    const rounded = Math.round(weightKg * 10) / 10;
+
+    // For today, use exact current timestamp.
+    // For past dates (backfilled weigh-in), anchor timestamp to targetDate (08:00:00 morning weigh-in standard)
+    // to ensure intra-day sorting never places a past-date entry into today's timeline.
+    const loggedAt = isToday
+      ? now.toISOString()
+      : `${targetDate}T08:00:00.000Z`;
+
+    const timestampNum = isToday
+      ? Date.now()
+      : new Date(`${targetDate}T08:00:00.000Z`).getTime();
+
+    const entryId = 'weight_' + timestampNum + '_' + Math.random().toString(36).substring(2, 6);
+    const newEntry: WeightLogEntry = {
+      id: entryId,
+      weightKg: rounded,
+      loggedAt,
+      note,
+    };
+
+    setDailyLogs((prev) => {
+      const existing = prev[targetDate] || {
+        date: targetDate,
+        meals: [],
+        waterMl: 0,
+        steps: 0,
+        activities: [],
+      };
+      const prevEntries = existing.weightEntries ? [...existing.weightEntries] : [];
+      const updatedLogs = {
+        ...prev,
+        [targetDate]: {
+          ...existing,
+          weightKg: rounded,
+          weightEntries: [newEntry, ...prevEntries],
+        },
+      };
+
+      // Determine if targetDate is the chronologically latest weigh-in
+      const sortedDates = Object.keys(updatedLogs)
+        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
+        .sort((a, b) => b.localeCompare(a));
+
+      if (sortedDates.length > 0 && sortedDates[0] === targetDate) {
+        setUserGoals((g) => ({
+          ...g,
+          currentWeightKg: rounded,
+          startWeightKg: g.startWeightKg ? g.startWeightKg : rounded,
+        }));
+      }
+
+      return updatedLogs;
+    });
+  }, [selectedDate]);
+
+  const deleteWeightEntry = useCallback((id: string, date?: string) => {
+    const targetDate = date || selectedDate;
+    setDailyLogs((prev) => {
+      const existing = prev[targetDate];
+      if (!existing || !existing.weightEntries) return prev;
+      const remaining = existing.weightEntries.filter((e) => e.id !== id);
+      const nextWeight = remaining.length > 0 ? remaining[0].weightKg : undefined;
+      const updatedLogs = {
+        ...prev,
+        [targetDate]: {
+          ...existing,
+          weightKg: nextWeight,
+          weightEntries: remaining,
+        },
+      };
+
+      // Recalculate latest weight so currentWeightKg never gets stuck on deleted entry
+      const sortedDates = Object.keys(updatedLogs)
+        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
+        .sort((a, b) => b.localeCompare(a));
+
+      if (sortedDates.length > 0) {
+        const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
+        setUserGoals((g) => ({
+          ...g,
+          currentWeightKg: newestWeight,
+        }));
+      } else {
+        setUserGoals((g) => ({
+          ...g,
+          currentWeightKg: g.startWeightKg || 68.0,
+        }));
+      }
+
+      return updatedLogs;
+    });
+  }, [selectedDate]);
+
+  const updateWeightEntry = useCallback((id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => {
+    const targetDate = date || selectedDate;
+    const destDate = newDate || targetDate;
+
+    setDailyLogs((prev) => {
+      const existing = prev[targetDate];
+      if (!existing || !existing.weightEntries) return prev;
+
+      const foundEntry = existing.weightEntries.find((e) => e.id === id);
+      if (!foundEntry) return prev;
+
+      const updatedEntry: WeightLogEntry = { ...foundEntry, ...updates };
+      let updatedLogs = { ...prev };
+
+      if (destDate !== targetDate) {
+        // Remove from targetDate
+        const remainingTarget = existing.weightEntries.filter((e) => e.id !== id);
+        const nextTargetWeight = remainingTarget.length > 0 ? remainingTarget[0].weightKg : undefined;
+        updatedLogs[targetDate] = {
+          ...existing,
+          weightKg: nextTargetWeight,
+          weightEntries: remainingTarget,
+        };
+
+        // Add to destDate
+        const destLog = prev[destDate] || {
+          date: destDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+        };
+        const destEntries = destLog.weightEntries ? [...destLog.weightEntries] : [];
+        updatedLogs[destDate] = {
+          ...destLog,
+          weightKg: updatedEntry.weightKg,
+          weightEntries: [updatedEntry, ...destEntries],
+        };
+      } else {
+        const updatedEntries = existing.weightEntries.map((e) =>
+          e.id === id ? updatedEntry : e
+        );
+        const latestWeight = updatedEntries.length > 0 ? updatedEntries[0].weightKg : existing.weightKg;
+        updatedLogs[targetDate] = {
+          ...existing,
+          weightKg: latestWeight,
+          weightEntries: updatedEntries,
+        };
+      }
+
+      // If needed, keep currentWeightKg in sync with the chronologically newest date
+      const sortedDates = Object.keys(updatedLogs)
+        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
+        .sort((a, b) => b.localeCompare(a));
+
+      if (sortedDates.length > 0) {
+        const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
+        setUserGoals((g) => ({
+          ...g,
+          currentWeightKg: newestWeight,
+        }));
+      }
+
+      return updatedLogs;
+    });
+  }, [selectedDate]);
+
   const addCustomFood = useCallback((foodData: Omit<FoodItem, 'id'>): FoodItem => {
     const newFood: FoodItem = {
       ...foodData,
@@ -1493,6 +1689,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             updatedAt: new Date().toISOString(),
           });
           await setDoc(doc(db, 'users', fbUser.uid), profilePayload, { merge: true });
+          hydratedUidRef.current = fbUser.uid;
 
           // Initialize a fresh clean 0-kcal day for the new user
           const todayStr = getTodayDateString();
@@ -1595,14 +1792,35 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const fbUser = auth.currentUser;
       if (fbUser) {
         const uid = fbUser.uid;
-        // 1. Delete Firestore user document
+
+        // 1. Purge all user subcollections in Firestore before root document deletion (prevents orphaned PII)
+        const subcollections = ['dailyLogs', 'customFoods', 'chatHistory'];
+        for (const sub of subcollections) {
+          try {
+            const colRef = collection(db, 'users', uid, sub);
+            const snap = await getDocs(colRef);
+            if (!snap.empty) {
+              const BATCH_SIZE = 400;
+              for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
+                const batch = writeBatch(db);
+                const chunk = snap.docs.slice(i, i + BATCH_SIZE);
+                chunk.forEach((d) => batch.delete(d.ref));
+                await batch.commit();
+              }
+            }
+          } catch (subErr) {
+            console.warn(`Error purging subcollection ${sub} during account deletion:`, subErr);
+          }
+        }
+
+        // 2. Delete Firestore root user document
         try {
           await deleteDoc(doc(db, 'users', uid));
         } catch (fsErr) {
           console.warn('Error deleting Firestore user document:', fsErr);
         }
 
-        // 2. Delete user from Firebase Auth
+        // 3. Delete user from Firebase Auth
         try {
           await deleteUser(fbUser);
         } catch (authErr: any) {
@@ -1620,11 +1838,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
         }
 
-        // 3. Clear user-scoped offline storage
+        // 4. Clear user-scoped offline storage and keys
         try {
           await AsyncStorage.removeItem(getUserLogsKey(uid));
           await AsyncStorage.removeItem(getUserGoalsKey(uid));
+          await AsyncStorage.removeItem(getUserCustomFoodsKey(uid));
         } catch (e) {}
+
+        // 5. Purge any stored Gemini API key
+        await SecureKeyStorage.removeApiKey().catch(() => {});
       }
 
       // 4. Clear local state and cache
@@ -1700,6 +1922,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addWorkout,
       removeWorkout,
       addSteps,
+      logWeight,
+      updateWeightEntry,
+      deleteWeightEntry,
       addCustomFood,
       deleteCustomFood,
       weeklyLogs,
@@ -1739,6 +1964,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addWorkout,
       removeWorkout,
       addSteps,
+      logWeight,
+      updateWeightEntry,
+      deleteWeightEntry,
       addCustomFood,
       deleteCustomFood,
       weeklyLogs,
@@ -1793,6 +2021,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addWorkout,
     removeWorkout,
     addSteps,
+    logWeight,
+    updateWeightEntry,
+    deleteWeightEntry,
   }), [
     selectedDate,
     shiftDate,
@@ -1817,6 +2048,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addWorkout,
     removeWorkout,
     addSteps,
+    logWeight,
+    updateWeightEntry,
+    deleteWeightEntry,
   ]);
 
   const analyticsValue = useMemo<AnalyticsContextValue>(() => ({

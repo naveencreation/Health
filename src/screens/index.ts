@@ -19,3 +19,6 @@ export { ProfileScreen, ProfileTab } from './main/ProfileScreen';
 export { WaterTrackerScreen } from './main/WaterTrackerScreen';
 export { WaterIntakeHistoryScreen } from './main/WaterIntakeHistoryScreen';
 export { WaterReportScreen } from './main/WaterReportScreen';
+export { WeightTrackerScreen } from './main/WeightTrackerScreen';
+export { WeightHistoryScreen } from './main/WeightHistoryScreen';
+export { LogWeightScreen } from './main/LogWeightScreen';

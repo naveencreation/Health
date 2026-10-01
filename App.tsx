@@ -28,6 +28,7 @@ import {
   AnalyticsScreen,
   ProfileScreen,
   WaterTrackerScreen,
+  WeightTrackerScreen,
 } from '@/screens';
 
 // Components, Navigation & Modals
@@ -96,6 +97,23 @@ function MainApp() {
   const handleWaterTrackerClosed = useCallback(() => {
     setIsClosingWaterTracker(false);
     setWaterTrackerVisible(false);
+  }, []);
+
+  const [weightTrackerVisible, setWeightTrackerVisible] = useState(false);
+  const [isClosingWeightTracker, setIsClosingWeightTracker] = useState(false);
+
+  const handleOpenWeightTracker = useCallback(() => {
+    setIsClosingWeightTracker(false);
+    setWeightTrackerVisible(true);
+  }, []);
+
+  const handleCloseWeightTracker = useCallback(() => {
+    setIsClosingWeightTracker(true);
+  }, []);
+
+  const handleWeightTrackerClosed = useCallback(() => {
+    setIsClosingWeightTracker(false);
+    setWeightTrackerVisible(false);
   }, []);
 
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
@@ -239,6 +257,9 @@ function MainApp() {
     if (waterTrackerVisible) {
       handleCloseWaterTracker();
     }
+    if (weightTrackerVisible) {
+      handleCloseWeightTracker();
+    }
     if (tab === 'today' && activeTabRef.current === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'diary' && activeTabRef.current === 'diary') {
@@ -249,7 +270,7 @@ function MainApp() {
       profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setActiveTab(tab);
-  }, [waterTrackerVisible, handleCloseWaterTracker]);
+  }, [waterTrackerVisible, handleCloseWaterTracker, weightTrackerVisible, handleCloseWeightTracker]);
 
   const saveScrollOffset = React.useCallback((tab: TabType, offset: number) => {
     scrollOffsetsRef.current[tab] = Math.max(0, offset);
@@ -270,6 +291,7 @@ function MainApp() {
     authModalVisible,
     signOutModalVisible,
     waterTrackerVisible,
+    weightTrackerVisible,
   });
 
   useEffect(() => {
@@ -283,6 +305,7 @@ function MainApp() {
       authModalVisible,
       signOutModalVisible,
       waterTrackerVisible,
+      weightTrackerVisible,
     };
   }, [
     foodModalVisible,
@@ -294,6 +317,7 @@ function MainApp() {
     authModalVisible,
     signOutModalVisible,
     waterTrackerVisible,
+    weightTrackerVisible,
   ]);
 
   // Android Hardware Back Handler - Single stable subscription
@@ -301,6 +325,7 @@ function MainApp() {
     const onHardwareBackPress = () => {
       const ms = modalStatesRef.current;
       if (ms.waterTrackerVisible) { handleCloseWaterTracker(); return true; }
+      if (ms.weightTrackerVisible) { handleCloseWeightTracker(); return true; }
       if (ms.foodModalVisible) { setFoodModalVisible(false); return true; }
       if (ms.foodVisionVisible) { setFoodVisionVisible(false); return true; }
       if (ms.byokSetupVisible) { setByokSetupVisible(false); return true; }
@@ -319,7 +344,7 @@ function MainApp() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
     return () => subscription.remove();
-  }, [handleCloseWaterTracker]);
+  }, [handleCloseWaterTracker, handleCloseWeightTracker]);
 
   const handleOpenSignIn = React.useCallback(() => {
     setAuthInitialMode('signin');
@@ -430,6 +455,7 @@ function MainApp() {
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
               onOpenWaterTracker={handleOpenWaterTracker}
+              onOpenWeightTracker={handleOpenWeightTracker}
             />
           )}
 
@@ -473,12 +499,24 @@ function MainApp() {
           {/* Slide-In Water Tracker Sub-Screen (Mounted within contentArea so BottomNavBar remains visible) */}
           {waterTrackerVisible && (
             <SlideInSubScreen
-              screenWidth={screenWidth}
+              screenWidth={Math.min(screenWidth, 480)}
               isClosing={isClosingWaterTracker}
               onClosed={handleWaterTrackerClosed}
               zIndex={200}
             >
               <WaterTrackerScreen onBack={handleCloseWaterTracker} />
+            </SlideInSubScreen>
+          )}
+
+          {/* Slide-In Weight Tracker Sub-Screen */}
+          {weightTrackerVisible && (
+            <SlideInSubScreen
+              screenWidth={Math.min(screenWidth, 480)}
+              isClosing={isClosingWeightTracker}
+              onClosed={handleWeightTrackerClosed}
+              zIndex={200}
+            >
+              <WeightTrackerScreen onBack={handleCloseWeightTracker} />
             </SlideInSubScreen>
           )}
         </View>
