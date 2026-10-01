@@ -548,13 +548,20 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   iconCircleSelected: {
+    borderWidth: 2,
     borderColor: Colors.water,
     backgroundColor: '#F0F9FF',
-    shadowColor: Colors.water,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.water,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   selectedBadge: {
     position: 'absolute',

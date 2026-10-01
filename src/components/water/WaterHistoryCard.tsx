@@ -21,6 +21,7 @@ import {
   getBeverageBg,
   renderBeverageIconElement,
 } from '@/utils/beverageUtils';
+import { WaterEntryActionPopover } from './WaterEntryActionPopover';
 
 const formatLogTime = (isoString?: string): string => {
   if (!isoString) {
@@ -179,8 +180,12 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   // View All Modal state
   const [isViewAllModalOpen, setIsViewAllModalOpen] = useState(false);
 
-  // Selected entry for action menu
-  const [selectedEntry, setSelectedEntry] = useState<WaterLogEntry | null>(null);
+  // Floating Popover state for Edit / Delete
+  const [actionMenu, setActionMenu] = useState<{
+    entry: WaterLogEntry;
+    positionY: number;
+    positionX?: number;
+  } | null>(null);
 
   // Edit entry modal state
   const [editingEntry, setEditingEntry] = useState<WaterLogEntry | null>(null);
@@ -190,14 +195,16 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   // Entry pending delete confirmation
   const [entryToDelete, setEntryToDelete] = useState<WaterLogEntry | null>(null);
 
-  const handleOpenActionMenu = (entry: WaterLogEntry) => {
-    setSelectedEntry(entry);
+  const handleOpenActionMenu = (entry: WaterLogEntry, event?: any) => {
+    const y = event?.nativeEvent?.pageY || 350;
+    const x = event?.nativeEvent?.pageX;
+    setActionMenu({ entry, positionY: y, positionX: x });
   };
 
   const handleStartEdit = () => {
-    if (!selectedEntry) return;
-    const entryToEdit = selectedEntry;
-    setSelectedEntry(null);
+    if (!actionMenu) return;
+    const entryToEdit = actionMenu.entry;
+    setActionMenu(null);
     setEditVolume(entryToEdit.amountMl);
     setEditBeverage(entryToEdit.beverageType || 'water');
     setEditingEntry(entryToEdit);
@@ -221,9 +228,9 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   };
 
   const handlePromptDelete = () => {
-    if (!selectedEntry) return;
-    const toDelete = selectedEntry;
-    setSelectedEntry(null);
+    if (!actionMenu) return;
+    const toDelete = actionMenu.entry;
+    setActionMenu(null);
     setEntryToDelete(toDelete);
   };
 
@@ -320,7 +327,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                     styles.menuTriggerBtn,
                     pressed && styles.btnPressed,
                   ]}
-                  onPress={() => handleOpenActionMenu(entry)}
+                  onPress={(e) => handleOpenActionMenu(entry, e)}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
@@ -351,103 +358,15 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
         </View>
       )}
 
-      {/* 3. Entry Action Menu Sheet (Edit Amount / Delete Entry) */}
-      <Modal
-        visible={!!selectedEntry}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSelectedEntry(null)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setSelectedEntry(null)}
-        >
-          <Pressable
-            style={styles.actionSheetContent}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {/* Header with entry details */}
-            <View style={styles.actionSheetHeader}>
-              <View
-                style={[
-                  styles.actionEntryIconBox,
-                  { backgroundColor: getBeverageBg(selectedEntry?.beverageType) },
-                ]}
-              >
-                {renderBeverageIconElement(selectedEntry?.beverageType, 20)}
-              </View>
-              <Text style={styles.actionSheetTitle}>
-                {getBeverageName(selectedEntry?.beverageType)}
-              </Text>
-              <Text style={styles.actionSheetSubtitle}>
-                {selectedEntry?.amountMl} mL • {formatLogTime(selectedEntry?.loggedAt)}
-              </Text>
-            </View>
-
-            {/* Action Options */}
-            <View style={styles.actionMenuRowsContainer}>
-              {/* Option 1: ✎ Edit Amount */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.actionMenuRow,
-                  pressed && styles.btnPressed,
-                ]}
-                onPress={handleStartEdit}
-                accessibilityRole="button"
-                accessibilityLabel="Edit logged water amount"
-              >
-                <View style={styles.editActionIconBox}>
-                  <Feather name="edit-2" size={17} color={Colors.water} />
-                </View>
-                <View style={styles.actionMenuTextContainer}>
-                  <Text style={styles.actionMenuPrimaryText}>Edit Amount</Text>
-                  <Text style={styles.actionMenuSecondaryText}>
-                    Adjust volume (e.g. {selectedEntry?.amountMl} mL)
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-              </Pressable>
-
-              <View style={styles.actionMenuDivider} />
-
-              {/* Option 2: 🗑 Delete Entry */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.actionMenuRow,
-                  pressed && styles.btnPressed,
-                ]}
-                onPress={handlePromptDelete}
-                accessibilityRole="button"
-                accessibilityLabel="Delete hydration entry"
-              >
-                <View style={styles.deleteActionIconBox}>
-                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                </View>
-                <View style={styles.actionMenuTextContainer}>
-                  <Text style={styles.deleteActionPrimaryText}>Delete Entry</Text>
-                  <Text style={styles.actionMenuSecondaryText}>
-                    Remove from today’s logged total
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-              </Pressable>
-            </View>
-
-            {/* Cancel Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.cancelBtn,
-                pressed && styles.btnPressed,
-              ]}
-              onPress={() => setSelectedEntry(null)}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* 3. Floating Action Popover Menu (Matching Reference Screenshot) */}
+      <WaterEntryActionPopover
+        visible={!!actionMenu}
+        positionY={actionMenu?.positionY || 350}
+        positionX={actionMenu?.positionX}
+        onEdit={handleStartEdit}
+        onDelete={handlePromptDelete}
+        onClose={() => setActionMenu(null)}
+      />
 
       {/* 4. Edit Entry Modal Sheet */}
       <Modal
@@ -723,7 +642,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                         styles.menuTriggerBtn,
                         pressed && styles.btnPressed,
                       ]}
-                      onPress={() => handleOpenActionMenu(entry)}
+                      onPress={(e) => handleOpenActionMenu(entry, e)}
                       hitSlop={8}
                     >
                       <Ionicons name="ellipsis-vertical" size={16} color="#64748B" />
@@ -826,12 +745,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#F8FAFC',
   },
   beverageIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   beverageInfo: {
     flex: 1,

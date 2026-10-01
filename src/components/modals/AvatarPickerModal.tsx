@@ -312,11 +312,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.shadowColor,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   heroCheckBadge: {
     position: 'absolute',

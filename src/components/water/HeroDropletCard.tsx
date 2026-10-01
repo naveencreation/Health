@@ -1,4 +1,4 @@
-import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useRef, useMemo, useImperativeHandle, forwardRef } from 'react';
 import {
   View,
   Text,
@@ -20,24 +20,7 @@ import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from './DropletVisualizer';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
-
-// Compact Drinking Glass SVG Vector
-const GlassVectorIcon: React.FC<{ size?: number }> = ({ size = 18 }) => (
-  <Svg width={size} height={Math.round(size * 1.2)} viewBox="0 0 20 24">
-    <Path
-      d="M 3 2 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 17 2 Z"
-      fill="#E0F2FE"
-      stroke="#38BDF8"
-      strokeWidth={1.4}
-    />
-    <Path
-      d="M 4.2 10 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 15.8 10 Z"
-      fill="#0284C7"
-    />
-    <Circle cx="8" cy="18" r="0.9" fill="#FFFFFF" opacity={0.9} />
-    <Circle cx="12" cy="15" r="1" fill="#FFFFFF" opacity={0.9} />
-  </Svg>
-);
+import { getBeverageName, renderBeverageIconElement } from '@/utils/beverageUtils';
 
 export interface HeroDropletCardRef {
   triggerSlosh: (direction?: 'up' | 'down' | 'mount') => void;
@@ -52,7 +35,7 @@ export interface HeroDropletCardProps {
   onOpenGoalModal?: () => void;
   onOpenCupSelector?: () => void;
   onDrink?: (amount: number, beverage: string) => void;
-  onDeduct?: (amount: number) => void;
+  onDeduct?: (amount: number, beverage?: string) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -91,7 +74,19 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
   const [isDrinking, setIsDrinking] = useState(false);
   const [isDeducting, setIsDeducting] = useState(false);
 
-  const canDeduct = currentWater > 0 && !isFutureDate;
+  // Check if today contains logged entries matching the active beverage
+  const hasMatchingBeverage = useMemo(() => {
+    const entries = dailyLogs[selectedDate]?.waterEntries;
+    if (!entries || entries.length === 0) {
+      return currentWater > 0;
+    }
+    const targetType = (beverageType || 'water').toLowerCase();
+    return entries.some(
+      (e) => (e.beverageType || 'water').toLowerCase() === targetType && e.amountMl > 0
+    );
+  }, [dailyLogs, selectedDate, beverageType, currentWater]);
+
+  const canDeduct = hasMatchingBeverage && currentWater > 0 && !isFutureDate;
 
   const handlePressDrink = () => {
     if (isDrinking || isFutureDate) return;
@@ -110,7 +105,7 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
   const handlePressDeduct = () => {
     if (!canDeduct || isDeducting) return;
     setIsDeducting(true);
-    onDeduct?.(cupSize);
+    onDeduct?.(cupSize, beverageType);
     dropletRef.current?.triggerSlosh('down');
     dropletScale.value = withSequence(
       withTiming(0.96, { duration: 80 }),
@@ -121,36 +116,6 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
     }, 350);
   };
 
-  const renderBeverageIcon = () => {
-    switch (beverageType) {
-      case 'coffee':
-        return <Ionicons name="cafe-outline" size={19} color="#854D0E" />;
-      case 'tea':
-        return <MaterialCommunityIcons name="tea" size={19} color="#15803D" />;
-      case 'juice':
-        return <MaterialCommunityIcons name="cup-water" size={19} color="#EA580C" />;
-      case 'sport':
-        return <MaterialCommunityIcons name="bottle-tonic-outline" size={19} color="#0284C7" />;
-      case 'coconut':
-        return <Ionicons name="leaf-outline" size={19} color="#16A34A" />;
-      case 'smoothie':
-        return <MaterialCommunityIcons name="blender-outline" size={19} color="#9333EA" />;
-      case 'chocolate':
-        return <MaterialCommunityIcons name="coffee" size={19} color="#78350F" />;
-      case 'carbonated':
-        return <MaterialCommunityIcons name="glass-cocktail" size={19} color="#F97316" />;
-      case 'soda':
-        return <MaterialCommunityIcons name="glass-flute" size={19} color="#E11D48" />;
-      case 'wine':
-        return <Ionicons name="wine-outline" size={19} color="#9F1239" />;
-      case 'beer':
-        return <Ionicons name="beer-outline" size={19} color="#D97706" />;
-      case 'liquor':
-        return <MaterialCommunityIcons name="bottle-tonic-plus-outline" size={19} color="#475569" />;
-      default:
-        return <GlassVectorIcon size={18} />;
-    }
-  };
 
   // Droplet Visualizer ref for slosh physics
   const dropletRef = useRef<DropletVisualizerRef>(null);
@@ -252,7 +217,11 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
           onPress={handlePressDeduct}
           disabled={!canDeduct || isDeducting}
           accessibilityRole="button"
-          accessibilityLabel={`Deduct ${cupSize} mL water`}
+          accessibilityLabel={
+            canDeduct
+              ? `Deduct ${cupSize} mL ${getBeverageName(beverageType)}`
+              : `No ${getBeverageName(beverageType)} logged today`
+          }
         >
           <Ionicons
             name="remove"
@@ -271,10 +240,10 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
           onPress={isFutureDate ? undefined : onOpenCupSelector}
           disabled={isFutureDate}
           accessibilityRole="button"
-          accessibilityLabel={`Change container, currently ${cupSize} mL ${beverageType}`}
+          accessibilityLabel={`Change container, currently ${cupSize} mL ${getBeverageName(beverageType)}`}
         >
           <View style={styles.cupIconBox}>
-            {renderBeverageIcon()}
+            {renderBeverageIconElement(beverageType, 18)}
           </View>
           <Text style={styles.cupSizeText}>{cupSize} mL</Text>
           <Ionicons name="chevron-down" size={13} color={Colors.water} style={styles.cupChevron} />
@@ -291,7 +260,7 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
           onPress={handlePressDrink}
           disabled={isDrinking || isFutureDate}
           accessibilityRole="button"
-          accessibilityLabel={`Drink ${cupSize} mL water`}
+          accessibilityLabel={`Add ${cupSize} mL ${getBeverageName(beverageType)}`}
         >
           <Ionicons
             name={isDrinking ? 'checkmark' : 'add'}

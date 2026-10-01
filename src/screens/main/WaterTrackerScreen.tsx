@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -25,6 +26,7 @@ import {
 import { HeroDropletCardRef } from '@/components/water/HeroDropletCard';
 import { WaterIntakeHistoryScreen } from './WaterIntakeHistoryScreen';
 import { useDailyLog } from '@/context/HealthContext';
+import { getBeverageName } from '@/utils/beverageUtils';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -47,6 +49,12 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
   const [isCupModalVisible, setIsCupModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
+  const [undoToast, setUndoToast] = useState<{
+    amount: number;
+    beverage: string;
+  } | null>(null);
+  const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [cupSize, setCupSize] = useState<number>(300);
   const [beverageType, setBeverageType] = useState<string>('water');
 
@@ -111,15 +119,44 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
     return () => subscription.remove();
   }, [onBack, isHistoryScreenVisible]);
 
+  // Cleanup undo timer on unmount
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleDrink = (amount: number, beverage: string) => {
     if (isFutureDate) return;
     addWater(amount, beverage);
     heroDropletRef.current?.triggerSlosh('up');
+
+    // Show floating Undo toast for 4.5 seconds
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    setUndoToast({ amount, beverage });
+    undoTimeoutRef.current = setTimeout(() => {
+      setUndoToast(null);
+    }, 4500);
   };
 
-  const handleDeduct = (amount: number) => {
+  const handleUndo = () => {
+    if (!undoToast) return;
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    addWater(-undoToast.amount, undoToast.beverage);
+    heroDropletRef.current?.triggerSlosh('down');
+    setUndoToast(null);
+  };
+
+  const handleDeduct = (amount: number, beverage?: string) => {
     if (isFutureDate || currentWater <= 0) return;
-    addWater(-amount);
+    const targetBev = beverage || beverageType;
+    addWater(-amount, targetBev);
     heroDropletRef.current?.triggerSlosh('down');
   };
 
@@ -237,6 +274,34 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
           <WaterIntakeHistoryScreen onBack={() => setIsClosingHistory(true)} />
         </SlideInSubScreen>
       )}
+
+      {/* 4. Floating Undo Toast (Waterllama / Industry Standard) */}
+      {undoToast && (
+        <View style={styles.undoToastWrapper} pointerEvents="box-none">
+          <Animated.View
+            entering={FadeInDown.duration(200)}
+            exiting={FadeOutDown.duration(180)}
+            style={styles.undoToastCard}
+          >
+            <View style={styles.undoToastInfo}>
+              <Ionicons name="checkmark-circle" size={17} color="#059669" />
+              <Text style={styles.undoToastText} numberOfLines={1}>
+                Added {undoToast.amount} mL {getBeverageName(undoToast.beverage)}
+              </Text>
+            </View>
+            <Pressable
+              style={({ pressed }) => [styles.undoBtn, pressed && styles.btnPressed]}
+              onPress={handleUndo}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Undo adding ${undoToast.amount} mL ${getBeverageName(undoToast.beverage)}`}
+            >
+              <Ionicons name="arrow-undo" size={13} color="#38BDF8" />
+              <Text style={styles.undoBtnText}>Undo</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      )}
     </View>
   );
 };
@@ -296,5 +361,61 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 4,
     gap: 12,
+  },
+  undoToastWrapper: {
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  undoToastCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    borderCurve: 'continuous',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: 420,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  undoToastInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    marginRight: 10,
+  },
+  undoToastText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 13,
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  undoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+  },
+  undoBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 12,
+    color: '#38BDF8',
+  },
+  btnPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.96 }],
   },
 });

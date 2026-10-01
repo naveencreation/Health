@@ -50,9 +50,9 @@ export const MiniWaterGlassSvg: React.FC<{ size?: number; fillPercent?: number }
   size = 20,
   fillPercent = 0.65,
 }) => {
-  const height = Math.round(size * 1.2);
+  const height = Math.round(size * 1.25);
   return (
-    <Svg width={size} height={height} viewBox="0 0 20 24">
+    <Svg width={size} height={height} viewBox="-1 -1 22 26">
       <Path
         d="M 3 2 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 17 2 Z"
         fill="#E0F2FE"

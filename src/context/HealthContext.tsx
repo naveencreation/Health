@@ -977,21 +977,43 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updatedEntries = [newEntry, ...updatedEntries];
       } else if (ml < 0 && updatedEntries.length > 0) {
         let remainingToDeduct = Math.abs(ml);
+        const targetType = (beverageType || 'water').toLowerCase();
+        const hasMatching = updatedEntries.some(
+          (e) => (e.beverageType || 'water').toLowerCase() === targetType
+        );
+
         const nextEntries: WaterLogEntry[] = [];
+        let actualDeducted = 0;
+
         for (const entry of updatedEntries) {
-          if (remainingToDeduct <= 0) {
+          const entryType = (entry.beverageType || 'water').toLowerCase();
+          const isTarget = hasMatching ? entryType === targetType : true;
+
+          if (!isTarget || remainingToDeduct <= 0) {
             nextEntries.push(entry);
           } else if (entry.amountMl <= remainingToDeduct) {
             remainingToDeduct -= entry.amountMl;
+            actualDeducted += entry.amountMl;
           } else {
             nextEntries.push({
               ...entry,
               amountMl: entry.amountMl - remainingToDeduct,
             });
+            actualDeducted += remainingToDeduct;
             remainingToDeduct = 0;
           }
         }
         updatedEntries = nextEntries;
+        const effectiveDeducted = actualDeducted > 0 ? actualDeducted : Math.abs(ml);
+        const recalculated = Math.max(0, existing.waterMl - effectiveDeducted);
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            waterMl: recalculated,
+            waterEntries: recalculated === 0 ? [] : updatedEntries,
+          },
+        };
       }
 
       if (updated === 0) {

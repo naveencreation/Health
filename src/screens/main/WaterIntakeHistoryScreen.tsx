@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 import { useDailyLog } from '@/context/HealthContext';
@@ -22,6 +23,7 @@ import {
   getBeverageBg,
   renderBeverageIconElement,
 } from '@/utils/beverageUtils';
+import { WaterEntryActionPopover } from '@/components/water/WaterEntryActionPopover';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -181,14 +183,37 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   onBack,
 }) => {
   const insets = useSafeAreaInsets();
-  const { dailyLogs, selectedDate, setSelectedDate, removeWaterEntry, updateWaterEntry } = useDailyLog();
+  const {
+    dailyLogs,
+    selectedDate,
+    setSelectedDate,
+    removeWaterEntry,
+    updateWaterEntry,
+    addWater,
+  } = useDailyLog();
 
   // Floating Popover state for Edit / Delete
   const [activeMenu, setActiveMenu] = useState<{
     entry: WaterLogEntry;
     date: string;
     positionY: number;
+    positionX?: number;
   } | null>(null);
+
+  // 1-Tap Undo Delete Toast State
+  const [undoToast, setUndoToast] = useState<{
+    entry: WaterLogEntry;
+    date: string;
+  } | null>(null);
+  const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Edit Modal State
   const [editingEntry, setEditingEntry] = useState<{
@@ -198,8 +223,6 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   const [editVolume, setEditVolume] = useState<number>(300);
   const [editBeverage, setEditBeverage] = useState<string>('water');
 
-  // Calendar Jump Picker Modal
-  const [isCalendarModalVisible, setIsCalendarModalVisible] = useState(false);
 
   // Group dates chronologically descending
   const dateGroups = useMemo(() => {
@@ -244,13 +267,33 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   // Open popover menu next to the 3-dots trigger
   const handleOpenMenu = (entry: WaterLogEntry, date: string, event: any) => {
     const y = event?.nativeEvent?.pageY || 300;
-    setActiveMenu({ entry, date, positionY: y });
+    const x = event?.nativeEvent?.pageX;
+    setActiveMenu({ entry, date, positionY: y, positionX: x });
   };
 
   const handleDelete = () => {
     if (!activeMenu) return;
-    removeWaterEntry(activeMenu.entry.id, activeMenu.date);
+    const { entry, date } = activeMenu;
+    removeWaterEntry(entry.id, date);
     setActiveMenu(null);
+
+    // Show floating Undo snackbar for 4.5 seconds
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    setUndoToast({ entry, date });
+    undoTimeoutRef.current = setTimeout(() => {
+      setUndoToast(null);
+    }, 4500);
+  };
+
+  const handleUndoDelete = () => {
+    if (!undoToast) return;
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+    }
+    addWater(undoToast.entry.amountMl, undoToast.entry.beverageType);
+    setUndoToast(null);
   };
 
   const handleStartEdit = () => {
@@ -272,7 +315,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   };
 
   const renderBeverageIcon = (entry: WaterLogEntry) => {
-    return renderBeverageIconElement(entry.beverageType, 22);
+    return renderBeverageIconElement(entry.beverageType, 20);
   };
 
   return (
@@ -299,18 +342,8 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             </Text>
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.navCircleBtn,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={() => setIsCalendarModalVisible(true)}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel="View date calendar"
-          >
-            <Ionicons name="calendar-outline" size={20} color={Colors.iconNavy} />
-          </Pressable>
+          {/* Symmetrical spacer to keep title perfectly centered */}
+          <View style={styles.headerRightSpacer} />
         </View>
       </View>
 
@@ -385,57 +418,15 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
         ))}
       </ScrollView>
 
-      {/* 3. Floating Action Popover Menu (Matching Screenshot 2) */}
-      <Modal
+      {/* 3. Floating Action Popover Menu (Matching Reference Screenshot) */}
+      <WaterEntryActionPopover
         visible={!!activeMenu}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setActiveMenu(null)}
-      >
-        <Pressable
-          style={styles.popoverOverlay}
-          onPress={() => setActiveMenu(null)}
-        >
-          <View
-            style={[
-              styles.popoverCard,
-              {
-                top: Math.min(
-                  Math.max(activeMenu?.positionY || 200, 100),
-                  Platform.OS === 'web' ? 600 : 700
-                ),
-              },
-            ]}
-          >
-            {/* ✎ Edit Action */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.popoverRow,
-                pressed && styles.popoverRowPressed,
-              ]}
-              onPress={handleStartEdit}
-            >
-              <Feather name="edit-2" size={16} color="#0F172A" />
-              <Text style={styles.popoverEditText}>Edit</Text>
-            </Pressable>
-
-            {/* Thin Divider Line */}
-            <View style={styles.popoverDivider} />
-
-            {/* 🗑 Delete Action */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.popoverRow,
-                pressed && styles.popoverRowPressed,
-              ]}
-              onPress={handleDelete}
-            >
-              <Ionicons name="trash-outline" size={17} color="#EF4444" />
-              <Text style={styles.popoverDeleteText}>Delete</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+        positionY={activeMenu?.positionY || 300}
+        positionX={activeMenu?.positionX}
+        onEdit={handleStartEdit}
+        onDelete={handleDelete}
+        onClose={() => setActiveMenu(null)}
+      />
 
       {/* 4. Edit Entry Modal Sheet */}
       <Modal
@@ -559,66 +550,34 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
         </View>
       </Modal>
 
-      {/* 5. Calendar Jump Picker Modal */}
-      <Modal
-        visible={isCalendarModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsCalendarModalVisible(false)}
-      >
-        <Pressable
-          style={styles.popoverOverlay}
-          onPress={() => setIsCalendarModalVisible(false)}
-        >
-          <View style={styles.calendarModalContent}>
-            <View style={styles.calendarHeaderRow}>
-              <Text style={styles.calendarTitle}>Jump to Date</Text>
-              <Pressable
-                style={styles.editCloseBtn}
-                onPress={() => setIsCalendarModalVisible(false)}
-              >
-                <Ionicons name="close" size={20} color="#64748B" />
-              </Pressable>
+
+      {/* 5. Floating Undo Toast (Industry Standard) */}
+      {undoToast && (
+        <View style={styles.undoToastWrapper} pointerEvents="box-none">
+          <Animated.View
+            entering={FadeInDown.duration(200)}
+            exiting={FadeOutDown.duration(180)}
+            style={styles.undoToastCard}
+          >
+            <View style={styles.undoToastInfo}>
+              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Text style={styles.undoToastText} numberOfLines={1}>
+                Deleted {undoToast.entry.amountMl} mL {getBeverageName(undoToast.entry.beverageType)}
+              </Text>
             </View>
-            <Text style={styles.calendarSubtitle}>
-              Select any past date to review its historical hydration logs.
-            </Text>
-            <View style={styles.calendarDatesList}>
-              {dateGroups.map((g) => {
-                const isCurrent = g.dateStr === selectedDate;
-                return (
-                  <Pressable
-                    key={`jump_${g.dateStr}`}
-                    style={({ pressed }) => [
-                      styles.jumpDateItem,
-                      isCurrent && styles.jumpDateItemActive,
-                      pressed && styles.btnPressed,
-                    ]}
-                    onPress={() => {
-                      setSelectedDate(g.dateStr);
-                      setIsCalendarModalVisible(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Switch to ${g.headerTitle}`}
-                  >
-                    <View style={styles.jumpDateTextRow}>
-                      <Text style={[styles.jumpDateText, isCurrent && styles.jumpDateTextActive]}>
-                        {g.headerTitle}
-                      </Text>
-                      {isCurrent && (
-                        <View style={styles.currentActiveDot} />
-                      )}
-                    </View>
-                    <Text style={[styles.jumpDateMl, isCurrent && styles.jumpDateMlActive]}>
-                      {g.totalMl} mL
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
+            <Pressable
+              style={({ pressed }) => [styles.undoBtn, pressed && styles.btnPressed]}
+              onPress={handleUndoDelete}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Undo deleting ${undoToast.entry.amountMl} mL ${getBeverageName(undoToast.entry.beverageType)}`}
+            >
+              <Ionicons name="arrow-undo" size={13} color="#38BDF8" />
+              <Text style={styles.undoBtnText}>Undo</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      )}
     </View>
   );
 };
@@ -709,7 +668,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#F8FAFC',
   },
   beverageIconCol: {
-    width: 36,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -917,83 +879,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#FFFFFF',
   },
-  // Calendar Jump Picker Content
-  calendarModalContent: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    padding: 20,
-    alignSelf: 'center',
-    marginTop: 100,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  calendarHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  calendarTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 17,
-    color: '#0F172A',
-  },
-  calendarSubtitle: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 14,
-  },
-  calendarDatesList: {
-    gap: 8,
-  },
-  jumpDateItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  jumpDateItemActive: {
-    backgroundColor: '#F0F9FF',
-    borderColor: '#BAE6FD',
-  },
-  jumpDateTextRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  currentActiveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.water,
-  },
-  jumpDateText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
-    color: '#0F172A',
-  },
-  jumpDateTextActive: {
-    color: Colors.water,
-  },
-  jumpDateMl: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 14,
-    color: '#64748B',
-  },
-  jumpDateMlActive: {
-    color: Colors.water,
+  headerRightSpacer: {
+    width: 40,
+    height: 40,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -1047,5 +935,57 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.75,
+  },
+  undoToastWrapper: {
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  undoToastCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    borderCurve: 'continuous',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: 420,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  undoToastInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    marginRight: 10,
+  },
+  undoToastText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 13,
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  undoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+  },
+  undoBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 12,
+    color: '#38BDF8',
   },
 });

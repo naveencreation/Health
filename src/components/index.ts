@@ -11,6 +11,7 @@ export { DropletVisualizer } from './water/DropletVisualizer';
 export { HeroDropletCard } from './water/HeroDropletCard';
 export { WaterHistoryCard } from './water/WaterHistoryCard';
 export { WaterBottomDock } from './water/WaterBottomDock';
+export { WaterEntryActionPopover } from './water/WaterEntryActionPopover';
 
 // Diary Components
 export { MealCard } from './diary/MealCard';
