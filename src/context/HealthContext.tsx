@@ -49,8 +49,8 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
   const isMockLog =
     (log.activities || []).some((a) => a.id === 'act_1') ||
     (log.meals || []).some((m) => m.id.startsWith('sample_'));
-  const cleanWater = (isMockLog && log.waterMl === 1250) || log.waterMl === 1250 ? 0 : (log.waterMl || 0);
-  const cleanSteps = (isMockLog && log.steps === 4620) || log.steps === 4620 ? 0 : (log.steps || 0);
+  const cleanWater = isMockLog && log.waterMl === 1250 ? 0 : (log.waterMl || 0);
+  const cleanSteps = isMockLog && log.steps === 4620 ? 0 : (log.steps || 0);
   return {
     ...log,
     meals: cleanMeals,
@@ -269,7 +269,8 @@ export interface HealthContextType {
   removeMealItem: (mealId: string) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
   addWater: (ml: number, beverageType?: string) => void;
-  removeWaterEntry: (id: string) => void;
+  removeWaterEntry: (id: string, date?: string) => void;
+  updateWaterEntry: (id: string, updates: Partial<WaterLogEntry>, date?: string) => void;
   resetWater: () => void;
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
@@ -317,6 +318,7 @@ export type DailyLogContextValue = Pick<
   | 'updateMealQuantity'
   | 'addWater'
   | 'removeWaterEntry'
+  | 'updateWaterEntry'
   | 'resetWater'
   | 'addWorkout'
   | 'removeWorkout'
@@ -349,6 +351,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const hydratedUidRef = useRef<string | null>(null);
   const firestoreLogDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firestoreGoalsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedLogsRef = useRef<Record<string, string>>({});
 
   // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
   const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
@@ -420,12 +423,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           cloudLogs[d.id] = cleansed;
 
           // If legacy document in cloud had mock data, sanitize and overwrite it
-          const hadMock =
+          const isMock =
             (rawLog.activities || []).some((a) => a.id === 'act_1') ||
-            (rawLog.meals || []).some((m) => m.id.startsWith('sample_')) ||
-            rawLog.waterMl === 1250 ||
-            rawLog.steps === 4620;
-          if (hadMock) {
+            (rawLog.meals || []).some((m) => m.id.startsWith('sample_'));
+          if (isMock) {
             setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), sanitizeForFirestore(cleansed), { merge: true }).catch(() => {});
           }
         }
@@ -447,8 +448,25 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const todayKey = getTodayDateString();
       const merged: Record<string, DailyLog> = { ...initialUserLogs };
 
-      for (const [dateKey, log] of Object.entries(cloudLogs)) {
-        merged[dateKey] = log;
+      for (const [dateKey, cloudLog] of Object.entries(cloudLogs)) {
+        const localLog = initialUserLogs[dateKey];
+        if (!localLog) {
+          merged[dateKey] = cloudLog;
+        } else {
+          const localWater = localLog.waterMl || 0;
+          const cloudWater = cloudLog.waterMl || 0;
+          const localEntries = localLog.waterEntries || [];
+          const cloudEntries = cloudLog.waterEntries || [];
+
+          merged[dateKey] = {
+            ...cloudLog,
+            meals: cloudLog.meals && cloudLog.meals.length > 0 ? cloudLog.meals : (localLog.meals || []),
+            waterMl: Math.max(cloudWater, localWater),
+            waterEntries: cloudEntries.length >= localEntries.length ? cloudEntries : localEntries,
+            steps: Math.max(cloudLog.steps || 0, localLog.steps || 0),
+            activities: cloudLog.activities && cloudLog.activities.length > 0 ? cloudLog.activities : (localLog.activities || []),
+          };
+        }
       }
 
       // Guarantee today has an entry if not present
@@ -676,17 +694,31 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         !currentUser?.isGuest &&
         hydratedUidRef.current === auth.currentUser.uid
       ) {
-        const activeLog = dailyLogs[selectedDate];
-        if (activeLog) {
-          try {
-            const payload = sanitizeForFirestore(activeLog);
-            setDoc(doc(db, 'users', auth.currentUser.uid, 'dailyLogs', selectedDate), payload, { merge: true }).catch((err) => {
-              if (__DEV__) console.warn('dailyLogs setDoc async error:', err);
-            });
-          } catch (err) {
-            if (__DEV__) console.warn('dailyLogs setDoc sync error:', err);
+        const datesToSync = new Set<string>([selectedDate]);
+        for (const dateKey of Object.keys(dailyLogs)) {
+          const serialized = JSON.stringify(dailyLogs[dateKey]);
+          if (lastSyncedLogsRef.current[dateKey] !== serialized) {
+            datesToSync.add(dateKey);
           }
         }
+
+        datesToSync.forEach((dKey) => {
+          const log = dailyLogs[dKey];
+          if (log) {
+            try {
+              const payload = sanitizeForFirestore(log);
+              setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, { merge: true })
+                .then(() => {
+                  lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
+                })
+                .catch((err) => {
+                  if (__DEV__) console.warn('dailyLogs setDoc async error:', err);
+                });
+            } catch (err) {
+              if (__DEV__) console.warn('dailyLogs setDoc sync error:', err);
+            }
+          }
+        });
       }
     }, 1000);
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
@@ -929,11 +961,18 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let updatedEntries = existing.waterEntries ? [...existing.waterEntries] : [];
 
       if (ml > 0) {
+        const now = new Date();
+        const timePart = now.toTimeString().split(' ')[0];
+        const todayStr = getTodayDateString();
+        const loggedAt = selectedDate === todayStr
+          ? now.toISOString()
+          : `${selectedDate}T${timePart}.000Z`;
+
         const newEntry: WaterLogEntry = {
           id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
           amountMl: ml,
           beverageType,
-          loggedAt: new Date().toISOString(),
+          loggedAt,
         };
         updatedEntries = [newEntry, ...updatedEntries];
       } else if (ml < 0 && updatedEntries.length > 0) {
@@ -966,18 +1005,76 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [selectedDate]);
 
-  const removeWaterEntry = useCallback((id: string) => {
+  const removeWaterEntry = useCallback((id: string, date?: string) => {
+    const targetDate = date || selectedDate;
     setDailyLogs((prev) => {
-      const existing = prev[selectedDate];
-      if (!existing || !existing.waterEntries) return prev;
+      const existing = prev[targetDate];
+      if (!existing) return prev;
+
+      // Handle synthetic/legacy unitemized entries
+      if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
+        return {
+          ...prev,
+          [targetDate]: {
+            ...existing,
+            waterMl: 0,
+            waterEntries: [],
+          },
+        };
+      }
+
+      if (!existing.waterEntries) return prev;
       const target = existing.waterEntries.find((e) => e.id === id);
       const amountDeducted = target ? target.amountMl : 0;
       return {
         ...prev,
-        [selectedDate]: {
+        [targetDate]: {
           ...existing,
           waterMl: Math.max(0, existing.waterMl - amountDeducted),
           waterEntries: existing.waterEntries.filter((e) => e.id !== id),
+        },
+      };
+    });
+  }, [selectedDate]);
+
+  const updateWaterEntry = useCallback((id: string, updates: Partial<WaterLogEntry>, date?: string) => {
+    const targetDate = date || selectedDate;
+    setDailyLogs((prev) => {
+      const existing = prev[targetDate];
+      if (!existing) return prev;
+      let entries = existing.waterEntries ? [...existing.waterEntries] : [];
+
+      // Handle synthetic/legacy unitemized entries
+      if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
+        const newAmount = updates.amountMl !== undefined ? updates.amountMl : existing.waterMl;
+        const newType = updates.beverageType || 'water';
+        return {
+          ...prev,
+          [targetDate]: {
+            ...existing,
+            waterMl: newAmount,
+            waterEntries: [
+              {
+                id: 'water_' + Date.now(),
+                amountMl: newAmount,
+                beverageType: newType,
+                loggedAt: `${targetDate}T08:00:00.000Z`,
+              },
+            ],
+          },
+        };
+      }
+
+      const updatedEntries = entries.map((e) =>
+        e.id === id ? { ...e, ...updates } : e
+      );
+      const recalculatedWater = updatedEntries.reduce((sum, e) => sum + (e.amountMl || 0), 0);
+      return {
+        ...prev,
+        [targetDate]: {
+          ...existing,
+          waterMl: recalculatedWater,
+          waterEntries: updatedEntries,
         },
       };
     });
@@ -1572,6 +1669,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updateMealQuantity,
       addWater,
       removeWaterEntry,
+      updateWaterEntry,
       resetWater,
       addWorkout,
       removeWorkout,
@@ -1610,6 +1708,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updateMealQuantity,
       addWater,
       removeWaterEntry,
+      updateWaterEntry,
       resetWater,
       addWorkout,
       removeWorkout,
@@ -1663,6 +1762,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     updateMealQuantity,
     addWater,
     removeWaterEntry,
+    updateWaterEntry,
     resetWater,
     addWorkout,
     removeWorkout,
@@ -1686,6 +1786,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     updateMealQuantity,
     addWater,
     removeWaterEntry,
+    updateWaterEntry,
     resetWater,
     addWorkout,
     removeWorkout,

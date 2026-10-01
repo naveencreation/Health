@@ -25,6 +25,7 @@ export { BYOKSetupModal } from './modals/BYOKSetupModal';
 export { FoodVisionModal } from './modals/FoodVisionModal';
 export { DailyWaterGoalModal } from './modals/DailyWaterGoalModal';
 export { CupSizeModal } from './modals/CupSizeModal';
+export { HydrationSettingsModal } from './modals/HydrationSettingsModal';
 
 // Navigation
 export { Header } from './navigation/Header';

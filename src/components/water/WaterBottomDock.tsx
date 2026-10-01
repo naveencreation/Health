@@ -16,7 +16,10 @@ import { Fonts } from '@/theme/typography';
 export interface WaterBottomDockProps {
   cupSize: number;
   beverageType?: string;
+  currentWater?: number;
+  isFutureDate?: boolean;
   onDrink: (amountMl: number, beverageType: string) => void;
+  onDeduct?: (amountMl: number) => void;
   onOpenCupSelector: () => void;
   style?: StyleProp<ViewStyle>;
 }
@@ -42,22 +45,38 @@ const DockGlassIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
 export const WaterBottomDock: React.FC<WaterBottomDockProps> = ({
   cupSize = 300,
   beverageType = 'water',
+  currentWater = 0,
+  isFutureDate = false,
   onDrink,
+  onDeduct,
   onOpenCupSelector,
   style,
 }) => {
   const insets = useSafeAreaInsets();
   const [isDrinking, setIsDrinking] = useState(false);
+  const [isDeducting, setIsDeducting] = useState(false);
+
+  const canDeduct = currentWater > 0 && !isFutureDate;
 
   const handlePressDrink = () => {
-    if (isDrinking) return;
+    if (isDrinking || isFutureDate) return;
     setIsDrinking(true);
     onDrink(cupSize, beverageType);
 
-    // Revert state after momentary feedback animation (matching reference screenshot)
+    // Fast feedback animation (350ms) to allow responsive multi-logging
     setTimeout(() => {
       setIsDrinking(false);
-    }, 650);
+    }, 350);
+  };
+
+  const handlePressDeduct = () => {
+    if (!canDeduct || isDeducting) return;
+    setIsDeducting(true);
+    onDeduct?.(cupSize);
+
+    setTimeout(() => {
+      setIsDeducting(false);
+    }, 350);
   };
 
   const renderBeverageIcon = () => {
@@ -91,34 +110,66 @@ export const WaterBottomDock: React.FC<WaterBottomDockProps> = ({
       <Pressable
         style={({ pressed }) => [
           styles.cupSelectorBtn,
-          pressed && styles.btnPressed,
+          isFutureDate && styles.btnDisabled,
+          pressed && !isFutureDate && styles.btnPressed,
         ]}
-        onPress={onOpenCupSelector}
+        onPress={isFutureDate ? undefined : onOpenCupSelector}
+        disabled={isFutureDate}
         accessibilityRole="button"
         accessibilityLabel="Change cup size or beverage type"
       >
         {renderBeverageIcon()}
       </Pressable>
 
-      {/* 2. Primary Drink Action Button */}
+      {/* 2. Quick Minus / Deduct Button */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.minusBtn,
+          !canDeduct && styles.minusBtnDisabled,
+          isDeducting && styles.minusBtnActive,
+          pressed && canDeduct && styles.btnPressed,
+        ]}
+        onPress={handlePressDeduct}
+        disabled={!canDeduct || isDeducting}
+        accessibilityRole="button"
+        accessibilityLabel={`Deduct ${cupSize} mL of water`}
+      >
+        <Ionicons
+          name="remove"
+          size={22}
+          color={canDeduct ? (isDeducting ? '#FFFFFF' : '#0284C7') : '#CBD5E1'}
+        />
+      </Pressable>
+
+      {/* 3. Primary Drink Action Button */}
       <Pressable
         style={({ pressed }) => [
           styles.drinkBtn,
+          isFutureDate && styles.drinkBtnDisabled,
           isDrinking && styles.drinkBtnActive,
-          pressed && styles.btnPressed,
+          pressed && !isFutureDate && styles.btnPressed,
         ]}
         onPress={handlePressDrink}
-        disabled={isDrinking}
+        disabled={isDrinking || isFutureDate}
         accessibilityRole="button"
-        accessibilityLabel={`Drink ${cupSize} mL of ${beverageType}`}
+        accessibilityLabel={
+          isFutureDate
+            ? 'Cannot log hydration for future dates'
+            : `Drink ${cupSize} mL of ${beverageType}`
+        }
       >
         <Text
           style={[
             styles.drinkBtnText,
+            isFutureDate && styles.drinkBtnTextDisabled,
             isDrinking && styles.drinkBtnTextActive,
           ]}
         >
-          {isDrinking ? 'Drinking...' : `Drink (${cupSize} mL)`}
+          {isFutureDate
+            ? 'Cannot log for future date'
+            : isDrinking
+            ? 'Drinking...'
+            : `Drink (${cupSize} mL)`}
         </Text>
       </Pressable>
     </View>
@@ -164,6 +215,31 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
+  minusBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  minusBtnActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  minusBtnDisabled: {
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    opacity: 0.45,
+  },
   drinkBtn: {
     flex: 1,
     height: 48,
@@ -197,5 +273,17 @@ const styles = StyleSheet.create({
   btnPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.97 }],
+  },
+  btnDisabled: {
+    opacity: 0.45,
+  },
+  drinkBtnDisabled: {
+    backgroundColor: '#F1F5F9',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  drinkBtnTextDisabled: {
+    color: '#94A3B8',
+    fontFamily: Fonts.poppins.medium,
   },
 });

@@ -10,7 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDailyLog } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
 import { Fonts } from '@/theme/typography';
@@ -123,6 +123,41 @@ const WaterGlassIcon: React.FC<{ size?: number }> = ({ size = 26 }) => {
   );
 };
 
+// Helper to render distinct beverage icon
+const renderRowBeverageIcon = (beverageType?: string) => {
+  switch (beverageType) {
+    case 'coffee':
+      return <Ionicons name="cafe" size={18} color="#854D0E" />;
+    case 'tea':
+      return <MaterialCommunityIcons name="tea" size={18} color="#15803D" />;
+    case 'juice':
+      return <MaterialCommunityIcons name="cup-water" size={18} color="#EA580C" />;
+    case 'sport':
+      return <MaterialCommunityIcons name="bottle-tonic-outline" size={18} color="#0284C7" />;
+    case 'smoothie':
+      return <MaterialCommunityIcons name="blender-outline" size={18} color="#9333EA" />;
+    case 'wine':
+      return <Ionicons name="wine-outline" size={18} color="#9F1239" />;
+    case 'beer':
+      return <Ionicons name="beer-outline" size={18} color="#D97706" />;
+    default:
+      return <WaterGlassIcon size={20} />;
+  }
+};
+
+const getBeverageBg = (beverageType?: string) => {
+  switch (beverageType) {
+    case 'coffee': return '#FEF3C7';
+    case 'tea': return '#DCFCE7';
+    case 'juice': return '#FFEDD5';
+    case 'sport': return '#E0F2FE';
+    case 'smoothie': return '#F3E8FF';
+    case 'wine': return '#FFE4E6';
+    case 'beer': return '#FEF9C3';
+    default: return '#E0F2FE';
+  }
+};
+
 export interface WaterHistoryCardProps {
   onViewAll?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -132,27 +167,42 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   onViewAll,
   style,
 }) => {
-  const { selectedDate, dailyLogs, removeWaterEntry, resetWater } = useDailyLog();
+  const { selectedDate, dailyLogs, removeWaterEntry, updateWaterEntry, resetWater, addWater } = useDailyLog();
 
   const currentLog = dailyLogs[selectedDate];
   const waterEntries = currentLog?.waterEntries ?? [];
   const totalWaterMl = currentLog?.waterMl ?? 0;
 
-  // Synthesize entry if waterMl > 0 but entries array is empty (fallback persistence)
+  // Synthesize entry if waterMl > 0 but entries array is empty or partial (guarantees entries match total)
   const displayEntries: WaterLogEntry[] = React.useMemo(() => {
-    if (waterEntries.length > 0) return waterEntries;
+    if (waterEntries.length > 0) {
+      const entriesSum = waterEntries.reduce((sum, e) => sum + (e.amountMl || 0), 0);
+      const diff = totalWaterMl - entriesSum;
+      if (diff > 0) {
+        return [
+          ...waterEntries,
+          {
+            id: 'legacy_balance',
+            amountMl: diff,
+            beverageType: 'water',
+            loggedAt: currentLog?.date ? `${currentLog.date}T08:00:00.000Z` : new Date().toISOString(),
+          },
+        ];
+      }
+      return waterEntries;
+    }
     if (totalWaterMl > 0) {
       return [
         {
           id: 'synthetic_initial',
           amountMl: totalWaterMl,
           beverageType: 'water',
-          loggedAt: new Date().toISOString(),
+          loggedAt: currentLog?.date ? `${currentLog.date}T08:00:00.000Z` : new Date().toISOString(),
         },
       ];
     }
     return [];
-  }, [waterEntries, totalWaterMl]);
+  }, [waterEntries, totalWaterMl, currentLog?.date]);
 
   // View All Modal state
   const [isViewAllModalOpen, setIsViewAllModalOpen] = useState(false);
@@ -160,18 +210,55 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   // Selected entry for action menu
   const [selectedEntry, setSelectedEntry] = useState<WaterLogEntry | null>(null);
 
+  // Edit entry modal state
+  const [editingEntry, setEditingEntry] = useState<WaterLogEntry | null>(null);
+  const [editVolume, setEditVolume] = useState<number>(300);
+
+  // Entry pending delete confirmation
+  const [entryToDelete, setEntryToDelete] = useState<WaterLogEntry | null>(null);
+
   const handleOpenActionMenu = (entry: WaterLogEntry) => {
     setSelectedEntry(entry);
   };
 
-  const handleDeleteEntry = () => {
+  const handleStartEdit = () => {
     if (!selectedEntry) return;
-    if (selectedEntry.id === 'synthetic_initial') {
-      resetWater();
-    } else {
-      removeWaterEntry(selectedEntry.id);
-    }
+    const entryToEdit = selectedEntry;
     setSelectedEntry(null);
+    setEditVolume(entryToEdit.amountMl);
+    setEditingEntry(entryToEdit);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingEntry) return;
+    if (editingEntry.id === 'synthetic_initial') {
+      resetWater();
+      addWater(editVolume);
+    } else if (editingEntry.id === 'legacy_balance') {
+      addWater(editVolume - editingEntry.amountMl);
+    } else {
+      updateWaterEntry(editingEntry.id, { amountMl: editVolume }, selectedDate);
+    }
+    setEditingEntry(null);
+  };
+
+  const handlePromptDelete = () => {
+    if (!selectedEntry) return;
+    const toDelete = selectedEntry;
+    setSelectedEntry(null);
+    setEntryToDelete(toDelete);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!entryToDelete) return;
+    if (entryToDelete.id === 'synthetic_initial') {
+      resetWater();
+    } else if (entryToDelete.id === 'legacy_balance') {
+      addWater(-entryToDelete.amountMl);
+    } else {
+      removeWaterEntry(entryToDelete.id, selectedDate);
+    }
+    setEntryToDelete(null);
   };
 
   const handleViewAllPress = () => {
@@ -182,15 +269,22 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
     }
   };
 
-  // Preview shows up to 3 entries in the card
+  // Preview shows up to 3 recent entries in the card
   const previewEntries = displayEntries.slice(0, 3);
   const hasEntries = displayEntries.length > 0;
 
   return (
     <View style={[styles.card, style]}>
-      {/* 1. Header Row (History & View All -> matching reference screenshot) */}
+      {/* 1. Header Row (History & View All with counter badge) */}
       <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>History</Text>
+        <View style={styles.headerLeftRow}>
+          <Text style={styles.headerTitle}>History</Text>
+          {displayEntries.length > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{displayEntries.length}</Text>
+            </View>
+          )}
+        </View>
 
         <Pressable
           style={({ pressed }) => [styles.viewAllBtn, pressed && styles.btnPressed]}
@@ -220,8 +314,13 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                 style={[styles.historyRow, !isFirst && styles.rowBorderTop]}
               >
                 {/* Beverage Visual Icon */}
-                <View style={styles.beverageIconBox}>
-                  <WaterGlassIcon size={22} />
+                <View
+                  style={[
+                    styles.beverageIconBox,
+                    { backgroundColor: getBeverageBg(entry.beverageType) },
+                  ]}
+                >
+                  {renderRowBeverageIcon(entry.beverageType)}
                 </View>
 
                 {/* Beverage Name & Timestamp */}
@@ -237,6 +336,10 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                       ? 'Sport Drink'
                       : entry.beverageType === 'smoothie'
                       ? 'Smoothie'
+                      : entry.beverageType === 'wine'
+                      ? 'Wine'
+                      : entry.beverageType === 'beer'
+                      ? 'Beer'
                       : 'Water'}
                   </Text>
                   <Text style={styles.beverageTime}>
@@ -263,10 +366,28 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
               </View>
             );
           })}
+
+          {/* Footer indicator for remaining records if > 3 */}
+          {displayEntries.length > 3 && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.moreFooterBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={handleViewAllPress}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`View all ${displayEntries.length} water logs`}
+            >
+              <Text style={styles.moreFooterText}>
+                +{displayEntries.length - 3} more {displayEntries.length - 3 === 1 ? 'record' : 'records'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
 
-      {/* 3. Action Sheet / Delete Confirmation Modal */}
+      {/* 3. Entry Action Menu Sheet (Edit Amount / Delete Entry) */}
       <Modal
         visible={!!selectedEntry}
         transparent={true}
@@ -281,13 +402,236 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
             style={styles.actionSheetContent}
             onPress={(e) => e.stopPropagation()}
           >
+            {/* Header with entry details */}
             <View style={styles.actionSheetHeader}>
-              <View style={styles.actionSheetIconBox}>
+              <View
+                style={[
+                  styles.actionEntryIconBox,
+                  { backgroundColor: getBeverageBg(selectedEntry?.beverageType) },
+                ]}
+              >
+                {renderRowBeverageIcon(selectedEntry?.beverageType)}
+              </View>
+              <Text style={styles.actionSheetTitle}>
+                {selectedEntry?.beverageType === 'coffee'
+                  ? 'Coffee'
+                  : selectedEntry?.beverageType === 'tea'
+                  ? 'Tea'
+                  : selectedEntry?.beverageType === 'juice'
+                  ? 'Juice'
+                  : selectedEntry?.beverageType === 'sport'
+                  ? 'Sport Drink'
+                  : selectedEntry?.beverageType === 'smoothie'
+                  ? 'Smoothie'
+                  : selectedEntry?.beverageType === 'wine'
+                  ? 'Wine'
+                  : selectedEntry?.beverageType === 'beer'
+                  ? 'Beer'
+                  : 'Water'}
+              </Text>
+              <Text style={styles.actionSheetSubtitle}>
+                {selectedEntry?.amountMl} mL • {formatLogTime(selectedEntry?.loggedAt)}
+              </Text>
+            </View>
+
+            {/* Action Options */}
+            <View style={styles.actionMenuRowsContainer}>
+              {/* Option 1: ✎ Edit Amount */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionMenuRow,
+                  pressed && styles.btnPressed,
+                ]}
+                onPress={handleStartEdit}
+                accessibilityRole="button"
+                accessibilityLabel="Edit logged water amount"
+              >
+                <View style={styles.editActionIconBox}>
+                  <Feather name="edit-2" size={17} color={Colors.water} />
+                </View>
+                <View style={styles.actionMenuTextContainer}>
+                  <Text style={styles.actionMenuPrimaryText}>Edit Amount</Text>
+                  <Text style={styles.actionMenuSecondaryText}>
+                    Adjust volume (e.g. {selectedEntry?.amountMl} mL)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </Pressable>
+
+              <View style={styles.actionMenuDivider} />
+
+              {/* Option 2: 🗑 Delete Entry */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionMenuRow,
+                  pressed && styles.btnPressed,
+                ]}
+                onPress={handlePromptDelete}
+                accessibilityRole="button"
+                accessibilityLabel="Delete hydration entry"
+              >
+                <View style={styles.deleteActionIconBox}>
+                  <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                </View>
+                <View style={styles.actionMenuTextContainer}>
+                  <Text style={styles.deleteActionPrimaryText}>Delete Entry</Text>
+                  <Text style={styles.actionMenuSecondaryText}>
+                    Remove from today’s logged total
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            {/* Cancel Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={() => setSelectedEntry(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+            >
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 4. Edit Entry Modal Sheet */}
+      <Modal
+        visible={!!editingEntry}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setEditingEntry(null)}
+      >
+        <View style={styles.editModalOverlay}>
+          <Pressable
+            style={styles.editModalBackdrop}
+            onPress={() => setEditingEntry(null)}
+          />
+          <View style={styles.editModalSheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.editHeaderRow}>
+              <View>
+                <Text style={styles.editModalTitle}>Edit Water Entry</Text>
+                <Text style={styles.editModalSubtitle}>
+                  Logged at {formatLogTime(editingEntry?.loggedAt)}
+                </Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.editCloseBtn,
+                  pressed && styles.btnPressed,
+                ]}
+                onPress={() => setEditingEntry(null)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close edit modal"
+              >
+                <Ionicons name="close" size={20} color="#64748B" />
+              </Pressable>
+            </View>
+
+            {/* Stepper Volume Editor */}
+            <View style={styles.stepperContainer}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.stepperBtn,
+                  pressed && styles.btnPressed,
+                ]}
+                onPress={() => setEditVolume((v) => Math.max(50, v - 50))}
+                accessibilityRole="button"
+                accessibilityLabel="Decrease 50 mL"
+              >
+                <Ionicons name="remove" size={22} color={Colors.water} />
+              </Pressable>
+              <View style={styles.stepperValueBox}>
+                <Text style={styles.stepperValueText}>{editVolume}</Text>
+                <Text style={styles.stepperUnitText}>mL</Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.stepperBtn,
+                  pressed && styles.btnPressed,
+                ]}
+                onPress={() => setEditVolume((v) => Math.min(3000, v + 50))}
+                accessibilityRole="button"
+                accessibilityLabel="Increase 50 mL"
+              >
+                <Ionicons name="add" size={22} color={Colors.water} />
+              </Pressable>
+            </View>
+
+            {/* Quick Presets */}
+            <View style={styles.presetChipsRow}>
+              {[150, 250, 300, 400, 500].map((preset) => {
+                const isActive = editVolume === preset;
+                return (
+                  <Pressable
+                    key={`edit_preset_${preset}`}
+                    style={({ pressed }) => [
+                      styles.presetChip,
+                      isActive && styles.presetChipActive,
+                      pressed && styles.btnPressed,
+                    ]}
+                    onPress={() => setEditVolume(preset)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set to ${preset} mL`}
+                  >
+                    <Text
+                      style={[
+                        styles.presetChipText,
+                        isActive && styles.presetChipTextActive,
+                      ]}
+                    >
+                      {preset} mL
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Save Button */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.saveEditBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={handleSaveEdit}
+              accessibilityRole="button"
+              accessibilityLabel="Save Changes"
+            >
+              <Text style={styles.saveEditBtnText}>Save Changes</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 5. Delete Confirmation Modal */}
+      <Modal
+        visible={!!entryToDelete}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setEntryToDelete(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setEntryToDelete(null)}
+        >
+          <Pressable
+            style={styles.actionSheetContent}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.deleteConfirmHeader}>
+              <View style={styles.deleteConfirmIconBox}>
                 <Ionicons name="trash-outline" size={24} color="#EF4444" />
               </View>
-              <Text style={styles.actionSheetTitle}>Delete Hydration Entry?</Text>
-              <Text style={styles.actionSheetSubtitle}>
-                This will remove {selectedEntry?.amountMl} mL from today’s logged total.
+              <Text style={styles.deleteConfirmTitle}>Delete Hydration Entry?</Text>
+              <Text style={styles.deleteConfirmSubtitle}>
+                This will remove {entryToDelete?.amountMl} mL from today’s logged total.
               </Text>
             </View>
 
@@ -297,7 +641,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                   styles.deleteConfirmBtn,
                   pressed && styles.btnPressed,
                 ]}
-                onPress={handleDeleteEntry}
+                onPress={handleConfirmDelete}
                 accessibilityRole="button"
                 accessibilityLabel="Confirm delete entry"
               >
@@ -309,7 +653,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                   styles.cancelBtn,
                   pressed && styles.btnPressed,
                 ]}
-                onPress={() => setSelectedEntry(null)}
+                onPress={() => setEntryToDelete(null)}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel delete"
               >
@@ -320,7 +664,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
         </Pressable>
       </Modal>
 
-      {/* 4. Full View All History Modal Sheet */}
+      {/* 6. Full View All History Modal Sheet */}
       <Modal
         visible={isViewAllModalOpen}
         transparent={true}
@@ -367,8 +711,13 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                     key={entry.id || `full_entry_${index}`}
                     style={[styles.historyRow, index > 0 && styles.rowBorderTop]}
                   >
-                    <View style={styles.beverageIconBox}>
-                      <WaterGlassIcon size={22} />
+                    <View
+                      style={[
+                        styles.beverageIconBox,
+                        { backgroundColor: getBeverageBg(entry.beverageType) },
+                      ]}
+                    >
+                      {renderRowBeverageIcon(entry.beverageType)}
                     </View>
                     <View style={styles.beverageInfo}>
                       <Text style={styles.beverageName}>
@@ -380,6 +729,12 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                           ? 'Juice'
                           : entry.beverageType === 'sport'
                           ? 'Sport Drink'
+                          : entry.beverageType === 'smoothie'
+                          ? 'Smoothie'
+                          : entry.beverageType === 'wine'
+                          ? 'Wine'
+                          : entry.beverageType === 'beer'
+                          ? 'Beer'
                           : 'Water'}
                       </Text>
                       <Text style={styles.beverageTime}>
@@ -427,6 +782,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerLeftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  countBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#E0F2FE',
+  },
+  countBadgeText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 11,
+    color: '#0284C7',
   },
   headerTitle: {
     fontFamily: Fonts.poppins.bold,
@@ -509,6 +880,21 @@ const styles = StyleSheet.create({
   menuTriggerBtn: {
     padding: 6,
   },
+  moreFooterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
+    gap: 4,
+  },
+  moreFooterText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#64748B',
+  },
   // Modal / Action Sheet Styles
   modalOverlay: {
     flex: 1,
@@ -519,11 +905,11 @@ const styles = StyleSheet.create({
   },
   actionSheetContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     borderCurve: 'continuous',
     width: '100%',
     maxWidth: 340,
-    padding: 22,
+    padding: 20,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -532,9 +918,92 @@ const styles = StyleSheet.create({
   },
   actionSheetHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  actionSheetIconBox: {
+  actionEntryIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  actionSheetTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 17,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  actionSheetSubtitle: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  actionMenuRowsContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    paddingVertical: 2,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  actionMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  actionMenuDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 12,
+  },
+  editActionIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  deleteActionIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  actionMenuTextContainer: {
+    flex: 1,
+  },
+  actionMenuPrimaryText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 14,
+    color: '#0F172A',
+  },
+  deleteActionPrimaryText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 14,
+    color: '#EF4444',
+  },
+  actionMenuSecondaryText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  // Delete Confirmation Styles
+  deleteConfirmHeader: {
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  deleteConfirmIconBox: {
     width: 52,
     height: 52,
     borderRadius: 26,
@@ -543,14 +1012,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  actionSheetTitle: {
+  deleteConfirmTitle: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 17,
     color: '#0F172A',
     textAlign: 'center',
     marginBottom: 6,
   },
-  actionSheetSubtitle: {
+  deleteConfirmSubtitle: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 13,
     color: '#64748B',
@@ -585,6 +1054,136 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 15,
     color: '#475569',
+  },
+  // Edit Modal Sheet Styles
+  editModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
+  editModalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  editModalSheet: {
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderCurve: 'continuous',
+    paddingTop: 12,
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 20,
+  },
+  editHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  editModalTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 18,
+    color: '#0F172A',
+  },
+  editModalSubtitle: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  editCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    marginVertical: 12,
+  },
+  stepperBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F0F9FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  stepperValueBox: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  stepperValueText: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 36,
+    color: '#0F172A',
+  },
+  stepperUnitText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 16,
+    color: '#64748B',
+  },
+  presetChipsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginVertical: 14,
+    flexWrap: 'wrap',
+  },
+  presetChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  presetChipActive: {
+    backgroundColor: '#F0F9FF',
+    borderColor: Colors.water,
+  },
+  presetChipText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#64748B',
+  },
+  presetChipTextActive: {
+    fontFamily: Fonts.poppins.semiBold,
+    color: Colors.water,
+  },
+  saveEditBtn: {
+    height: 48,
+    backgroundColor: Colors.water,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  saveEditBtnText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
   },
   // View All Modal Sheet
   viewAllOverlay: {

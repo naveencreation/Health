@@ -32,6 +32,7 @@ rules_version = '2';
 //   - steps: number (optional, >= 0 and <= 250,000 steps)
 //   - meals: list (optional, <= 200 items, array of logged meals)
 //   - activities: list (optional, <= 100 items, array of logged workouts)
+//   - waterEntries: list (optional, <= 200 items, array of individual water logs)
 //
 // Subcollection: users/{userId}/customFoods/{foodId}
 // Document ID: custom food item ID (e.g. custom_1726834000000)
@@ -103,12 +104,13 @@ service cloud.firestore {
 
     function isValidDailyLogDoc(date) {
       let data = request.resource.data;
-      return data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities']) &&
+      return data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities', 'waterEntries']) &&
         (!('date' in data) || (data.date is string && data.date.size() <= 30 && data.date == date)) &&
         (!('waterMl' in data) || (data.waterMl is number && data.waterMl >= 0 && data.waterMl <= 30000)) &&
         (!('steps' in data) || (data.steps is number && data.steps >= 0 && data.steps <= 250000)) &&
         (!('meals' in data) || (data.meals is list && data.meals.size() <= 200)) &&
-        (!('activities' in data) || (data.activities is list && data.activities.size() <= 100));
+        (!('activities' in data) || (data.activities is list && data.activities.size() <= 100)) &&
+        (!('waterEntries' in data) || (data.waterEntries is list && data.waterEntries.size() <= 200));
     }
 
     function isValidCustomFoodDoc() {

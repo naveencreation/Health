@@ -192,8 +192,56 @@
       - **Duplicate Profile Modal Sheets (4):** `AwardsModalSheet.tsx`, `GoalsModalSheet.tsx`, `MetabolicSummaryModalSheet.tsx`, `PreferencesModalSheet.tsx` (superseded by full-screen views in `src/screens/profile/`). Removed empty `src/components/profile/modals` folder.
       - **Orphaned Profile Cards (4):** `AccountSecurityCard.tsx`, `BodyCompositionCard.tsx`, `DailyTargetsCard.tsx`, `PreferencesCard.tsx` (integrated into `PreferencesScreen.tsx` and `ProfileMetricInspector.tsx`).
       - **Unused Loaders (1):** `BrandRingLoader.tsx` (standardized on `AppLoadingScreen` and `BouncingDotsLoader`).
-    - Cleaned export barrel in `src/components/index.ts`.
     - Total component files reduced from 67 to 52; active app architecture is now 1:1 with reality. All 13 test suites (106 tests) pass with 0 errors.
+
+22. **Water Tracker & Water Intake History Domain Architecture**:
+    - **Clean Domain Separation (`src/components/water/`)**:
+      - `DropletVisualizer.tsx`: Reusable SVG sinusoidal wave physics engine with dual overlapping wave layers, teardrop contour halo, and Reanimated GPU "Slosh & Settle" physics.
+      - `HeroDropletCard.tsx`: Sized to `145 × 185` for non-scrolling full-screen proportions, large readout (`42px`), and tap-to-slosh gesture.
+      - `WaterHistoryCard.tsx`: Compact preview card (~125px) showing 1 latest drink entry or the dual-clipboard empty vector illustration with "No records yet".
+      - `WaterBottomDock.tsx`: Sticky bottom bar with container icon pill and "Drink (300 mL)" CTA with "Drinking..." momentary state.
+    - **Modals (`src/components/modals/`)**:
+      - `DailyWaterGoalModal.tsx`: Goal stepper ($\pm 100\text{ mL}$) and quick presets.
+      - `CupSizeModal.tsx`: "Switch Cup Size" with 10 volume presets ($100–600\text{ mL}$, $+$ custom input) and 12 beverage types.
+    - **Strict Non-Scrolling Full-Screen Viewport**:
+      - Refactored `WaterTrackerScreen.tsx` from `<ScrollView>` to `flex: 1` non-scrolling layout where Header, Week Strip, Hero Droplet, History Preview, and Bottom Dock fit in 100% viewport height with 0px overflow.
+    - **Dedicated Full-Screen History (`WaterIntakeHistoryScreen.tsx`)**:
+      - Top bar: Back arrow `←`, `Water Intake History`, Calendar icon `📅`.
+      - Date-grouped hydration feed (`Today, <Date>`, `Yesterday, <Date>`, past dates).
+      - Custom SVG beverage vectors (glass with bubbles, measuring mug, coffee cup with sleeve, juice with citrus garnish, steaming tea cup, tumbler).
+      - Floating popover menu (`✎ Edit`, `🗑 Delete`).
+      - Stepper edit modal and delete actions live-synchronized with `HealthContext` (`removeWaterEntry`, `updateWaterEntry`).
+
+23. **Water Tracker Edge-Case & Data Safety Audit Refinements**:
+    - **Data Safety Fix (`HealthContext.tsx`)**: Guarded `cleanWater` in `cleanDailyLog` so that `waterMl === 1250` and `steps === 4620` are only cleaned when `isMockLog` is true. Genuine user logs of 1250 mL / 4620 steps are preserved.
+    - **Multi-Entry Preview & Legacy Balance (`WaterHistoryCard.tsx`)**:
+      - Expanded the preview card from 1 to the 3 most recent entries, eliminating the visual mismatch between the 1500 mL hero total and history list.
+      - Added dynamic entry count badge next to `"History"` (e.g. `History [5]`).
+      - Added compact footer indicator (`+X more record(s)`) when entries exceed 3, keeping `View All →` solely in the header to avoid duplicate CTAs.
+      - Added tailored beverage icons and pastel color backgrounds for Coffee, Tea, Juice, Sport Drinks, Smoothies, Wine, Beer, and Water.
+      - Integrated unitemized legacy balance protection (`legacy_balance`) so historical totals without granular entries never vanish when adding a new drink.
+    - **Goal Celebration & Progress Subtitle (`HeroDropletCard.tsx`)**:
+      - Added a clean progress subtitle under the daily goal: `{percentage}% · {remainingMl} mL remaining`.
+      - Added an emerald celebration pill when intake meets or exceeds 100%: `Daily goal achieved! 🎉` or `Goal achieved! (+{overflow} mL)`.
+
+24. **Hydration Settings, Future Date Guards & Quick Minus Decrement**:
+    - **`HydrationSettingsModal.tsx`**: Added full hydration preferences sheet triggered via header settings cog with reminder toggles (`Every 1h`, `2h`, `3h`), metric/imperial unit switcher (`mL` vs `fl oz`), goal adjust shortcut, and scientific beverage hydration guide.
+    - **Future Date Guard (`WaterTrackerScreen.tsx` & `WaterBottomDock.tsx`)**: Added real-world date comparison `isFutureDate = selectedDate > todayStr`. When selecting a future day, the dock button disables with `"Cannot log for future date"` to avoid corrupting forward logs.
+    - **Quick Minus (`−`) Button (`WaterBottomDock.tsx`)**: Added a 48px circular `−` button to the dock. When `currentWater > 0`, tapping deducts `cupSize` (e.g. $-300\text{ mL}$) and triggers `heroDropletRef.current?.triggerSlosh('down')` with reverse wave physics. Dims and disables when `currentWater === 0` or on future dates.
+    - **Debounce Optimization**: Reduced button lock duration to 350ms for responsive multi-glass logging.
+
+25. **Entry Actions Parity in Preview Card (`WaterHistoryCard.tsx`)**:
+    - **Direct Action Menu**: Tapping `⋮` on any preview row (or inside the "View All" modal) now opens a dedicated action sheet displaying the beverage's custom icon, name, volume, and logged time, with options for **`✎ Edit Amount`** and **`🗑 Delete Entry`** plus **`Cancel`**.
+    - **Edit Amount Stepper Sheet**: Features an interactive volume stepper ($\pm 50\text{ mL}$, min 50, max 3000), quick preset chips ($150, 250, 300, 400, 500\text{ mL}$), and a "Save Changes" CTA that updates the entry in real time via `updateWaterEntry` (or `addWater` for synthetic/legacy balance entries) without leaving the screen.
+    - **Safe Delete Flow**: Choosing "Delete Entry" prompts a clean confirmation dialog displaying the exact mL being removed from today's intake before executing `removeWaterEntry`, preventing accidental loss.
+    - **Full Parity in "View All" Modal**: Upgraded the inner "View All" modal rows to also render contextual beverage icons and backgrounds, and wired their `⋮` triggers to the same edit/delete flow.
+
+26. **Water Data Storage & Cloud Sync Deep Audit & Fixes**:
+    - **Firestore Security Rules Schema Fix & Live Deploy (`firestore.rules`)**: Identified and fixed a critical rule bug where `isValidDailyLogDoc` had strict `data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities'])`. Because `waterEntries` was missing, the remote Firebase backend rejected every document containing `waterEntries` with `FirebaseError: Missing or insufficient permissions.`. Added `'waterEntries'` to `hasOnly`, added list validation (`size <= 200`), validated via Firebase MCP, and successfully deployed to live Firebase via `firebase_deploy`.
+    - **Multi-Date Firestore Sync (`HealthContext.tsx`)**: Replaced the hardcoded single-date `selectedDate` upload with a dirty-date tracker that syncs any modified log date (e.g. past dates edited from the history screen) to Cloud Firestore.
+    - **Offline-First Merging Protection (`HealthContext.tsx`)**: In `fetchAndHydrateUserData`, replaced destructive `merged[dateKey] = cloudLog` with an intelligent non-destructive merge (`Math.max(cloudWater, localWater)` and richer `waterEntries`), preventing offline water intake from being overwritten by a stale cloud document.
+    - **Synthetic & Legacy Entry Global Support**: `removeWaterEntry` and `updateWaterEntry` in `HealthContext.tsx` now natively handle `synth_`, `synthetic_`, and `legacy_` IDs so unitemized historical water can be updated or deleted from any screen without failing silently.
+    - **Past Date Timestamp Accuracy**: In `addWater`, timestamps now use `${selectedDate}T${timePart}.000Z` when logging on historical dates instead of attributing them to today's date.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

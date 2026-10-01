@@ -52,6 +52,10 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
       ? propGoal
       : (userGoals.waterGoalMl || 2500);
 
+  const percentage = Math.round((currentWater / Math.max(1, goalWater)) * 100);
+  const remainingMl = Math.max(0, goalWater - currentWater);
+  const isGoalMet = currentWater >= goalWater;
+
   // Droplet Visualizer ref for slosh physics
   const dropletRef = useRef<DropletVisualizerRef>(null);
 
@@ -89,8 +93,8 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
             ref={dropletRef}
             currentWater={currentWater}
             maxWater={goalWater}
-            width={170}
-            height={215}
+            width={145}
+            height={185}
             showHalo={true}
           />
         </Animated.View>
@@ -122,6 +126,22 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
           style={styles.pencilIcon}
         />
       </Pressable>
+
+      {/* 4. Hydration Goal Progress & Celebration Status */}
+      {isGoalMet ? (
+        <View style={styles.goalAchievedPill}>
+          <Ionicons name="checkmark-circle" size={13} color="#059669" />
+          <Text style={styles.goalAchievedText}>
+            {currentWater > goalWater
+              ? `Goal achieved! (+${currentWater - goalWater} mL)`
+              : 'Daily goal achieved! 🎉'}
+          </Text>
+        </View>
+      ) : (
+        <Text style={styles.progressSubText}>
+          {percentage}% · {remainingMl} mL remaining
+        </Text>
+      )}
     </View>
   );
 });
@@ -133,7 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderCurve: 'continuous',
-    paddingVertical: 32,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     alignItems: 'center',
     marginHorizontal: 16,
@@ -152,7 +172,7 @@ const styles = StyleSheet.create({
   dropletWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   metricRow: {
     flexDirection: 'row',
@@ -161,10 +181,10 @@ const styles = StyleSheet.create({
   },
   largeMetricNumber: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 48,
-    lineHeight: 54,
+    fontSize: 42,
+    lineHeight: 46,
     color: '#0F172A',
-    letterSpacing: -1.2,
+    letterSpacing: -1,
   },
   unitText: {
     fontFamily: Fonts.poppins.medium,
@@ -196,5 +216,26 @@ const styles = StyleSheet.create({
   },
   pencilIcon: {
     marginLeft: 4,
+  },
+  goalAchievedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  goalAchievedText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 12,
+    color: '#059669',
+  },
+  progressSubText: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
   },
 });

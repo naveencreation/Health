@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   BackHandler,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,8 +19,11 @@ import {
   WaterHistoryCard,
   WaterBottomDock,
   CupSizeModal,
+  HydrationSettingsModal,
+  SlideInSubScreen,
 } from '@/components';
 import { HeroDropletCardRef } from '@/components/water/HeroDropletCard';
+import { WaterIntakeHistoryScreen } from './WaterIntakeHistoryScreen';
 import { useDailyLog } from '@/context/HealthContext';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -34,17 +38,40 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   onOpenSettings,
 }) => {
   const insets = useSafeAreaInsets();
-  const { addWater } = useDailyLog();
+  const { width: screenWidth } = useWindowDimensions();
+  const { selectedDate, dailyLogs, addWater } = useDailyLog();
   const heroDropletRef = useRef<HeroDropletCardRef>(null);
+
+  const currentWater = dailyLogs[selectedDate]?.waterMl ?? 0;
 
   const [isGoalModalVisible, setIsGoalModalVisible] = useState(false);
   const [isCupModalVisible, setIsCupModalVisible] = useState(false);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [cupSize, setCupSize] = useState<number>(300);
   const [beverageType, setBeverageType] = useState<string>('water');
+
+  // Real-world today reference to guard against future date logging
+  const todayStr = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
+
+  const isFutureDate = selectedDate > todayStr;
+
+  // Dedicated Full-Screen Water Intake History sub-screen
+  const [isHistoryScreenVisible, setIsHistoryScreenVisible] = useState(false);
+  const [isClosingHistory, setIsClosingHistory] = useState(false);
 
   // Handle Android hardware back button
   useEffect(() => {
     const handleHardwareBack = () => {
+      if (isHistoryScreenVisible) {
+        setIsClosingHistory(true);
+        return true;
+      }
       onBack();
       return true;
     };
@@ -54,11 +81,26 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       handleHardwareBack
     );
     return () => subscription.remove();
-  }, [onBack]);
+  }, [onBack, isHistoryScreenVisible]);
 
   const handleDrink = (amount: number, beverage: string) => {
+    if (isFutureDate) return;
     addWater(amount, beverage);
     heroDropletRef.current?.triggerSlosh('up');
+  };
+
+  const handleDeduct = (amount: number) => {
+    if (isFutureDate || currentWater <= 0) return;
+    addWater(-amount);
+    heroDropletRef.current?.triggerSlosh('down');
+  };
+
+  const handlePressSettings = () => {
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      setIsSettingsModalVisible(true);
+    }
   };
 
   return (
@@ -90,7 +132,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
               styles.circleNavBtn,
               pressed && styles.circleNavBtnPressed,
             ]}
-            onPress={onOpenSettings}
+            onPress={handlePressSettings}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
             accessibilityLabel="Hydration settings and goals"
@@ -100,43 +142,49 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
         </View>
       </View>
 
-      {/* 2. Main Scroll Content Area */}
+      {/* 2. Main Scrollable Dashboard Content */}
       <ScrollView
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 100, 120) },
+          { paddingBottom: Math.max(insets.bottom + 84, 104) },
         ]}
         showsVerticalScrollIndicator={false}
+        bounces={true}
       >
-        {/* 1. Reusable Top Date Strip in Water Mode (Blends directly into canvas like TodayScreen) */}
+        {/* Reusable Top Date Strip in Water Mode */}
         <TopDateStrip metric="water" />
 
-        {/* 2. Scaled Hero Droplet Card with Minute Curvature & Interactive Physics */}
+        {/* Scaled Hero Droplet Card with Minute Curvature & Interactive Physics */}
         <HeroDropletCard
           ref={heroDropletRef}
           onOpenGoalModal={() => setIsGoalModalVisible(true)}
         />
 
-        {/* 3. Chronological Hydration History & Empty State Card */}
-        <WaterHistoryCard />
+        {/* Compact History Card Preview (3 items + View All) */}
+        <WaterHistoryCard
+          onViewAll={() => setIsHistoryScreenVisible(true)}
+        />
       </ScrollView>
 
-      {/* 3. Sticky Bottom Action Dock */}
+      {/* 4. Bottom Action Dock with Quick Add & Quick Minus */}
       <WaterBottomDock
         cupSize={cupSize}
         beverageType={beverageType}
+        currentWater={currentWater}
+        isFutureDate={isFutureDate}
         onDrink={handleDrink}
+        onDeduct={handleDeduct}
         onOpenCupSelector={() => setIsCupModalVisible(true)}
       />
 
-      {/* 4. Daily Goal Editor Modal Sheet */}
+      {/* 5. Daily Goal Editor Modal Sheet */}
       <DailyWaterGoalModal
         visible={isGoalModalVisible}
         onClose={() => setIsGoalModalVisible(false)}
       />
 
-      {/* 5. Switch Cup Size & Beverage Picker Modal */}
+      {/* 6. Switch Cup Size & Beverage Picker Modal */}
       <CupSizeModal
         visible={isCupModalVisible}
         currentCupSize={cupSize}
@@ -147,6 +195,28 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
           setBeverageType(newBev);
         }}
       />
+
+      {/* 7. Hydration Settings & Preferences Modal */}
+      <HydrationSettingsModal
+        visible={isSettingsModalVisible}
+        onClose={() => setIsSettingsModalVisible(false)}
+        onOpenGoalModal={() => setIsGoalModalVisible(true)}
+      />
+
+      {/* 8. Dedicated Full-Screen Water Intake History Screen */}
+      {isHistoryScreenVisible && (
+        <SlideInSubScreen
+          isClosing={isClosingHistory}
+          onClosed={() => {
+            setIsHistoryScreenVisible(false);
+            setIsClosingHistory(false);
+          }}
+          screenWidth={Math.min(screenWidth, 480)}
+          zIndex={200}
+        >
+          <WaterIntakeHistoryScreen onBack={() => setIsClosingHistory(true)} />
+        </SlideInSubScreen>
+      )}
     </View>
   );
 };
@@ -204,7 +274,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 8,
-    gap: 14,
+    paddingTop: 4,
+    gap: 12,
   },
 });
