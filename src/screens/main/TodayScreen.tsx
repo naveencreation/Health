@@ -17,11 +17,6 @@ import {
   TopDateStrip,
   HeroCalorieCard,
   MealSection,
-  RiaCoachCard,
-  DailyHabitsCard,
-  WaterTracker,
-  WeightTrackerCard,
-  TodayBMICard,
 } from '@/components';
 import { MealType } from '@/types';
 
@@ -134,23 +129,8 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         {/* 2. Hero Calorie Card */}
         <HeroCalorieCard />
 
-        {/* 3. Meals Section (Breakfast, Lunch, Dinner) */}
+        {/* 3. Meals Section (Breakfast, Lunch, Dinner, Snacks) */}
         <MealSection onAddFood={onAddFood} />
-
-        {/* 4. Ria AI Nutritionist Coach Insights */}
-        <RiaCoachCard onOpenChat={onOpenRiaChat} />
-
-        {/* 5. Interactive Water Tracker Droplet Card */}
-        <WaterTracker onPressHeader={onOpenWaterTracker} />
-
-        {/* 6. Weight Tracker Card matching media_1790853712174.png */}
-        <WeightTrackerCard onOpenFullTracker={onOpenWeightTracker} />
-
-        {/* 7. Compact BMI Spectrum Card */}
-        <TodayBMICard />
-
-        {/* 8. Side-by-Side Habits: Hydration & Activity Dual Dials */}
-        <DailyHabitsCard />
       </Animated.ScrollView>
     </View>
   );

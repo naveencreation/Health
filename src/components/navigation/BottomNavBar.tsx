@@ -6,7 +6,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType } from '@/types';
 
-export type TabType = 'today' | 'diary' | 'analytics' | 'profile';
+export type TabType = 'today' | 'tracker' | 'analytics' | 'profile';
 
 interface BottomNavBarProps {
   activeTab: TabType;
@@ -44,21 +44,21 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
         </Text>
       </Pressable>
 
-      {/* Tab 2: Meals Diary (book-outline) */}
+      {/* Tab 2: Health Trackers & Biometrics (pulse-outline) */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-        onPress={() => onTabChange('diary')}
+        onPress={() => onTabChange('tracker')}
         accessibilityRole="tab"
-        accessibilityLabel="Meals Diary"
-        accessibilityState={{ selected: activeTab === 'diary' }}
+        accessibilityLabel="Health Trackers and Biometrics"
+        accessibilityState={{ selected: activeTab === 'tracker' }}
       >
         <Ionicons
-          name={activeTab === 'diary' ? 'book' : 'book-outline'}
+          name={activeTab === 'tracker' ? 'pulse' : 'pulse-outline'}
           size={20}
-          color={activeTab === 'diary' ? Colors.iconNavy : '#8E95A2'}
+          color={activeTab === 'tracker' ? Colors.iconNavy : '#8E95A2'}
         />
-        <Text style={[styles.tabLabel, activeTab === 'diary' ? styles.tabLabelActive : null]}>
-          Diary
+        <Text style={[styles.tabLabel, activeTab === 'tracker' ? styles.tabLabelActive : null]}>
+          Tracker
         </Text>
       </Pressable>
 

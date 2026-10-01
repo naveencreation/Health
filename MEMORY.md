@@ -437,6 +437,21 @@
     - **Sliding Upward Triangle Indicator**: 14px upward SVG triangle caret sliding horizontally beneath the spectrum track, pointing exactly to the user's BMI position. Powered by `Animated.spring` with `useNativeDriver: true` and `AccessibilityInfo.isReduceMotionEnabled()` support.
     - **Seamless Dashboard Feed Integration**: Mounted directly beneath `WeightTrackerCard` in `TodayScreen.tsx` with identical margins and borders for visual cadence.
     - **Testing**: Added comprehensive unit test suite ([TodayBMICard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/TodayBMICard.test.tsx)) covering WHO categorization, dynamic metric display, edit modal interaction, and layout changes. 15/15 test suites and 129/129 tests passing.
+48. **Diary Tab Pivot to Dedicated Health Trackers Hub ([TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx), [BottomNavBar.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/navigation/BottomNavBar.tsx), [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx), [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx))**:
+    - **Architectural Motivation**: Eliminated the redundant `DiaryScreen` (which duplicated Today's meal cards) and resolved cognitive load/overlength scrolling on `TodayScreen`.
+    - **Navigation Rebrand (`BottomNavBar.tsx`)**: Rebranded Tab 2 from `'diary'` to `'tracker'` with universal health biomarker icon (`pulse` / `pulse-outline`) and label `"Tracker"`.
+    - **Dedicated Ria AI Top Deck**: Positioned [RiaCoachCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/RiaCoachCard.tsx) as the premier top hero card on `TrackerScreen`, establishing a dedicated gateway for daily AI synthesis and full-screen [RiaChatModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/RiaChatModal.tsx) access.
+    - **Biometric Trackers Suite (Zero UI Distortion)**: Moved biometric trackers into `TrackerScreen` in precise visual hierarchy:
+      1. Top Header (`"Trackers"`, formatted date subtitle, Search & Notifications quick actions)
+      2. 7-Day Date Selector ([TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx))
+      3. Ria AI Coach Top Deck ([RiaCoachCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/RiaCoachCard.tsx))
+      4. Water Tracker ([WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx) → launches [WaterTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterTrackerScreen.tsx))
+      5. Weight Tracker ([WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx) → launches [WeightTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightTrackerScreen.tsx))
+      6. Compact BMI Spectrum Card ([TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx))
+      7. Dual Dial Daily Habits ([DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx))
+    - **100% Wiring & Event Binding ([App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx))**: Connected `onOpenRiaChat`, `onOpenWaterTracker`, `onOpenWeightTracker`, `onSearchPress`, `onNotificationsPress`, scroll offset preservation (`trackerScrollRef`, `saveTrackerScrollOffset`), and Android back button handling.
+    - **Streamlined Today Screen ([TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx))**: Stripped duplicate tracker cards so Today Screen serves exclusively as the clean, lightning-fast Daily Nutrition & Energy Hub (`Header` → `TopDateStrip` → `HeroCalorieCard` → `MealSection`).
+    - **Testing**: Added unit test suite ([TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx)). All 16 test suites and 133 tests passing with 0 TypeScript compilation errors.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

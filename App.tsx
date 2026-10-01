@@ -24,7 +24,7 @@ import { MealType } from '@/types';
 import {
   WelcomeScreen,
   TodayScreen,
-  DiaryScreen,
+  TrackerScreen,
   AnalyticsScreen,
   ProfileScreen,
   WaterTrackerScreen,
@@ -58,12 +58,12 @@ function MainApp() {
   const activeTabRef = useRef<TabType>('today');
   const scrollOffsetsRef = useRef<Record<TabType, number>>({
     today: 0,
-    diary: 0,
+    tracker: 0,
     analytics: 0,
     profile: 0,
   });
   const todayScrollRef = useRef<ScrollView>(null);
-  const diaryScrollRef = useRef<ScrollView>(null);
+  const trackerScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
   const profileScrollRef = useRef<ScrollView>(null);
 
@@ -262,8 +262,8 @@ function MainApp() {
     }
     if (tab === 'today' && activeTabRef.current === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'diary' && activeTabRef.current === 'diary') {
-      diaryScrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
+      trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'analytics' && activeTabRef.current === 'analytics') {
       analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'profile' && activeTabRef.current === 'profile') {
@@ -276,7 +276,7 @@ function MainApp() {
     scrollOffsetsRef.current[tab] = Math.max(0, offset);
   }, []);
   const saveTodayScrollOffset = React.useCallback((offset: number) => saveScrollOffset('today', offset), [saveScrollOffset]);
-  const saveDiaryScrollOffset = React.useCallback((offset: number) => saveScrollOffset('diary', offset), [saveScrollOffset]);
+  const saveTrackerScrollOffset = React.useCallback((offset: number) => saveScrollOffset('tracker', offset), [saveScrollOffset]);
   const saveAnalyticsScrollOffset = React.useCallback((offset: number) => saveScrollOffset('analytics', offset), [saveScrollOffset]);
   const saveProfileScrollOffset = React.useCallback((offset: number) => saveScrollOffset('profile', offset), [saveScrollOffset]);
 
@@ -459,12 +459,14 @@ function MainApp() {
             />
           )}
 
-          {activeTab === 'diary' && (
-            <DiaryScreen
-              scrollRef={diaryScrollRef}
-              initialScrollOffset={scrollOffsetsRef.current.diary}
-              onScrollPositionChange={saveDiaryScrollOffset}
-              onAddFood={handleOpenFoodLogger}
+          {activeTab === 'tracker' && (
+            <TrackerScreen
+              scrollRef={trackerScrollRef}
+              initialScrollOffset={scrollOffsetsRef.current.tracker}
+              onScrollPositionChange={saveTrackerScrollOffset}
+              onOpenRiaChat={handleOpenRiaChat}
+              onOpenWaterTracker={handleOpenWaterTracker}
+              onOpenWeightTracker={handleOpenWeightTracker}
               onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={handleOpenNotifications}
               onAvatarPress={handleOpenAvatarModal}

@@ -13,7 +13,7 @@ export { WeightSelectionScreen } from './onboarding/WeightSelectionScreen';
 
 // Main App Screens
 export { TodayScreen } from './main/TodayScreen';
-export { DiaryScreen, DiaryTab } from './main/DiaryScreen';
+export { TrackerScreen, TrackerScreen as TrackerTab } from './main/TrackerScreen';
 export { AnalyticsScreen, AnalyticsTab } from './main/AnalyticsScreen';
 export { ProfileScreen, ProfileTab } from './main/ProfileScreen';
 export { WaterTrackerScreen } from './main/WaterTrackerScreen';
