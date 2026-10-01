@@ -1,4 +1,4 @@
-import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   View,
   Text,
@@ -14,10 +14,30 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from './DropletVisualizer';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+
+// Compact Drinking Glass SVG Vector
+const GlassVectorIcon: React.FC<{ size?: number }> = ({ size = 18 }) => (
+  <Svg width={size} height={Math.round(size * 1.2)} viewBox="0 0 20 24">
+    <Path
+      d="M 3 2 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 17 2 Z"
+      fill="#E0F2FE"
+      stroke="#38BDF8"
+      strokeWidth={1.4}
+    />
+    <Path
+      d="M 4.2 10 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 15.8 10 Z"
+      fill="#0284C7"
+    />
+    <Circle cx="8" cy="18" r="0.9" fill="#FFFFFF" opacity={0.9} />
+    <Circle cx="12" cy="15" r="1" fill="#FFFFFF" opacity={0.9} />
+  </Svg>
+);
 
 export interface HeroDropletCardRef {
   triggerSlosh: (direction?: 'up' | 'down' | 'mount') => void;
@@ -26,7 +46,13 @@ export interface HeroDropletCardRef {
 export interface HeroDropletCardProps {
   currentWater?: number;
   goalWater?: number;
+  cupSize?: number;
+  beverageType?: string;
+  isFutureDate?: boolean;
   onOpenGoalModal?: () => void;
+  onOpenCupSelector?: () => void;
+  onDrink?: (amount: number, beverage: string) => void;
+  onDeduct?: (amount: number) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -34,7 +60,13 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
   {
     currentWater: propWater,
     goalWater: propGoal,
+    cupSize = 300,
+    beverageType = 'water',
+    isFutureDate = false,
     onOpenGoalModal,
+    onOpenCupSelector,
+    onDrink,
+    onDeduct,
     style,
   }: HeroDropletCardProps,
   ref: React.ForwardedRef<HeroDropletCardRef>
@@ -55,6 +87,70 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
   const percentage = Math.round((currentWater / Math.max(1, goalWater)) * 100);
   const remainingMl = Math.max(0, goalWater - currentWater);
   const isGoalMet = currentWater >= goalWater;
+
+  const [isDrinking, setIsDrinking] = useState(false);
+  const [isDeducting, setIsDeducting] = useState(false);
+
+  const canDeduct = currentWater > 0 && !isFutureDate;
+
+  const handlePressDrink = () => {
+    if (isDrinking || isFutureDate) return;
+    setIsDrinking(true);
+    onDrink?.(cupSize, beverageType);
+    dropletRef.current?.triggerSlosh('up');
+    dropletScale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, { damping: 12, stiffness: 220 })
+    );
+    setTimeout(() => {
+      setIsDrinking(false);
+    }, 350);
+  };
+
+  const handlePressDeduct = () => {
+    if (!canDeduct || isDeducting) return;
+    setIsDeducting(true);
+    onDeduct?.(cupSize);
+    dropletRef.current?.triggerSlosh('down');
+    dropletScale.value = withSequence(
+      withTiming(0.96, { duration: 80 }),
+      withSpring(1, { damping: 12, stiffness: 220 })
+    );
+    setTimeout(() => {
+      setIsDeducting(false);
+    }, 350);
+  };
+
+  const renderBeverageIcon = () => {
+    switch (beverageType) {
+      case 'coffee':
+        return <Ionicons name="cafe-outline" size={19} color="#854D0E" />;
+      case 'tea':
+        return <MaterialCommunityIcons name="tea" size={19} color="#15803D" />;
+      case 'juice':
+        return <MaterialCommunityIcons name="cup-water" size={19} color="#EA580C" />;
+      case 'sport':
+        return <MaterialCommunityIcons name="bottle-tonic-outline" size={19} color="#0284C7" />;
+      case 'coconut':
+        return <Ionicons name="leaf-outline" size={19} color="#16A34A" />;
+      case 'smoothie':
+        return <MaterialCommunityIcons name="blender-outline" size={19} color="#9333EA" />;
+      case 'chocolate':
+        return <MaterialCommunityIcons name="coffee" size={19} color="#78350F" />;
+      case 'carbonated':
+        return <MaterialCommunityIcons name="glass-cocktail" size={19} color="#F97316" />;
+      case 'soda':
+        return <MaterialCommunityIcons name="glass-flute" size={19} color="#E11D48" />;
+      case 'wine':
+        return <Ionicons name="wine-outline" size={19} color="#9F1239" />;
+      case 'beer':
+        return <Ionicons name="beer-outline" size={19} color="#D97706" />;
+      case 'liquor':
+        return <MaterialCommunityIcons name="bottle-tonic-plus-outline" size={19} color="#475569" />;
+      default:
+        return <GlassVectorIcon size={18} />;
+    }
+  };
 
   // Droplet Visualizer ref for slosh physics
   const dropletRef = useRef<DropletVisualizerRef>(null);
@@ -142,6 +238,68 @@ export const HeroDropletCard = forwardRef(function HeroDropletCard(
           {percentage}% · {remainingMl} mL remaining
         </Text>
       )}
+
+      {/* 5. Symmetrical Stepper Trio Quick Logger: [ ( - )   [ 🥤 300 mL ▾ ]   ( + ) ] */}
+      <View style={styles.stepperTrioRow}>
+        {/* Left: Quick Minus Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.stepperMinusBtn,
+            !canDeduct && styles.btnDisabled,
+            isDeducting && styles.btnDeducting,
+            pressed && canDeduct && styles.btnPressed,
+          ]}
+          onPress={handlePressDeduct}
+          disabled={!canDeduct || isDeducting}
+          accessibilityRole="button"
+          accessibilityLabel={`Deduct ${cupSize} mL water`}
+        >
+          <Ionicons
+            name="remove"
+            size={22}
+            color={canDeduct ? (isDeducting ? '#FFFFFF' : Colors.water) : '#CBD5E1'}
+          />
+        </Pressable>
+
+        {/* Center: Container & Beverage Capsule Pill */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.cupSelectorPill,
+            isFutureDate && styles.btnDisabled,
+            pressed && !isFutureDate && styles.btnPressed,
+          ]}
+          onPress={isFutureDate ? undefined : onOpenCupSelector}
+          disabled={isFutureDate}
+          accessibilityRole="button"
+          accessibilityLabel={`Change container, currently ${cupSize} mL ${beverageType}`}
+        >
+          <View style={styles.cupIconBox}>
+            {renderBeverageIcon()}
+          </View>
+          <Text style={styles.cupSizeText}>{cupSize} mL</Text>
+          <Ionicons name="chevron-down" size={13} color={Colors.water} style={styles.cupChevron} />
+        </Pressable>
+
+        {/* Right: Quick Add Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.stepperPlusBtn,
+            isFutureDate && styles.btnDisabled,
+            isDrinking && styles.btnDrinking,
+            pressed && !isFutureDate && styles.btnPressed,
+          ]}
+          onPress={handlePressDrink}
+          disabled={isDrinking || isFutureDate}
+          accessibilityRole="button"
+          accessibilityLabel={`Drink ${cupSize} mL water`}
+        >
+          <Ionicons
+            name={isDrinking ? 'checkmark' : 'add'}
+            size={24}
+            color="#FFFFFF"
+          />
+        </Pressable>
+      </View>
     </View>
   );
 });
@@ -237,5 +395,96 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     marginTop: 2,
+  },
+  stepperTrioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(15, 23, 42, 0.05)',
+    width: '100%',
+  },
+  stepperMinusBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  btnDeducting: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  cupSelectorPill: {
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: '#F0F9FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    gap: 6,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  cupIconBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cupSizeText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  cupChevron: {
+    marginLeft: -1,
+  },
+  stepperPlusBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.water,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.water,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  btnDrinking: {
+    backgroundColor: '#059669',
+    shadowColor: '#059669',
+  },
+  btnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.94 }],
+  },
+  btnDisabled: {
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    opacity: 0.45,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

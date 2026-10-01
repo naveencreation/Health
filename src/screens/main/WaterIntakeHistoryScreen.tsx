@@ -16,6 +16,12 @@ import { useDailyLog } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import {
+  BEVERAGE_DEFINITIONS,
+  getBeverageName,
+  getBeverageBg,
+  renderBeverageIconElement,
+} from '@/utils/beverageUtils';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -175,7 +181,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   onBack,
 }) => {
   const insets = useSafeAreaInsets();
-  const { dailyLogs, selectedDate, removeWaterEntry, updateWaterEntry } = useDailyLog();
+  const { dailyLogs, selectedDate, setSelectedDate, removeWaterEntry, updateWaterEntry } = useDailyLog();
 
   // Floating Popover state for Edit / Delete
   const [activeMenu, setActiveMenu] = useState<{
@@ -266,19 +272,11 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   };
 
   const renderBeverageIcon = (entry: WaterLogEntry) => {
-    const bev = entry.beverageType;
-    const amount = entry.amountMl;
-
-    if (bev === 'coffee') return <CoffeeCupIcon size={26} />;
-    if (bev === 'tea') return <TeaCupIcon size={26} />;
-    if (bev === 'juice') return <JuiceGlassIcon size={26} />;
-    if (amount >= 500) return <WaterMugIcon size={26} />;
-    if (amount === 400) return <TumblerBottleIcon size={24} />;
-    return <GlassWaterIcon size={24} />;
+    return renderBeverageIconElement(entry.beverageType, 22);
   };
 
   return (
-    <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 12) }]}>
+    <View style={[styles.rootContainer, { paddingTop: 6 }]}>
       {/* 1. Header Bar matching screenshot */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
@@ -321,7 +319,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 40, 60) },
+          { paddingBottom: 20 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -343,20 +341,19 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
                       style={[styles.entryRow, !isFirst && styles.rowBorderTop]}
                     >
                       {/* Left Beverage Icon */}
-                      <View style={styles.beverageIconCol}>
+                      <View
+                        style={[
+                          styles.beverageIconCol,
+                          { backgroundColor: getBeverageBg(entry.beverageType) },
+                        ]}
+                      >
                         {renderBeverageIcon(entry)}
                       </View>
 
                       {/* Beverage Name & Timestamp */}
                       <View style={styles.beverageInfoCol}>
                         <Text style={styles.beverageName}>
-                          {entry.beverageType === 'coffee'
-                            ? 'Coffee'
-                            : entry.beverageType === 'tea'
-                            ? 'Tea'
-                            : entry.beverageType === 'juice'
-                            ? 'Juice'
-                            : 'Water'}
+                          {getBeverageName(entry.beverageType)}
                         </Text>
                         <Text style={styles.beverageTime}>
                           {formatTime(entry.loggedAt)}
@@ -508,6 +505,46 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               ))}
             </View>
 
+            {/* Beverage Type Selector Chips */}
+            <View style={styles.editSectionRow}>
+              <Text style={styles.editSectionLabel}>Beverage Type</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.editBeverageChipsRow}
+            >
+              {BEVERAGE_DEFINITIONS.map((bev) => {
+                const isSelected = editBeverage === bev.id;
+                return (
+                  <Pressable
+                    key={`edit_bev_${bev.id}`}
+                    style={({ pressed }) => [
+                      styles.editBeverageChip,
+                      isSelected && [
+                        styles.editBeverageChipSelected,
+                        { borderColor: bev.color, backgroundColor: `${bev.color}15` },
+                      ],
+                      pressed && styles.btnPressed,
+                    ]}
+                    onPress={() => setEditBeverage(bev.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${bev.name} beverage`}
+                  >
+                    {renderBeverageIconElement(bev.id, 16)}
+                    <Text
+                      style={[
+                        styles.editBeverageChipText,
+                        isSelected && [styles.editBeverageChipTextSelected, { color: bev.color }],
+                      ]}
+                    >
+                      {bev.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
             {/* Save Button */}
             <Pressable
               style={({ pressed }) => [
@@ -547,16 +584,37 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               Select any past date to review its historical hydration logs.
             </Text>
             <View style={styles.calendarDatesList}>
-              {dateGroups.map((g) => (
-                <Pressable
-                  key={`jump_${g.dateStr}`}
-                  style={styles.jumpDateItem}
-                  onPress={() => setIsCalendarModalVisible(false)}
-                >
-                  <Text style={styles.jumpDateText}>{g.headerTitle}</Text>
-                  <Text style={styles.jumpDateMl}>{g.totalMl} mL</Text>
-                </Pressable>
-              ))}
+              {dateGroups.map((g) => {
+                const isCurrent = g.dateStr === selectedDate;
+                return (
+                  <Pressable
+                    key={`jump_${g.dateStr}`}
+                    style={({ pressed }) => [
+                      styles.jumpDateItem,
+                      isCurrent && styles.jumpDateItemActive,
+                      pressed && styles.btnPressed,
+                    ]}
+                    onPress={() => {
+                      setSelectedDate(g.dateStr);
+                      setIsCalendarModalVisible(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Switch to ${g.headerTitle}`}
+                  >
+                    <View style={styles.jumpDateTextRow}>
+                      <Text style={[styles.jumpDateText, isCurrent && styles.jumpDateTextActive]}>
+                        {g.headerTitle}
+                      </Text>
+                      {isCurrent && (
+                        <View style={styles.currentActiveDot} />
+                      )}
+                    </View>
+                    <Text style={[styles.jumpDateMl, isCurrent && styles.jumpDateMlActive]}>
+                      {g.totalMl} mL
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         </Pressable>
@@ -903,15 +961,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  jumpDateItemActive: {
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+  },
+  jumpDateTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  currentActiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.water,
   },
   jumpDateText: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 14,
     color: '#0F172A',
   },
+  jumpDateTextActive: {
+    color: Colors.water,
+  },
   jumpDateMl: {
     fontFamily: Fonts.poppins.bold,
     fontSize: 14,
+    color: '#64748B',
+  },
+  jumpDateMlActive: {
     color: Colors.water,
   },
   emptyContainer: {
@@ -924,6 +1005,45 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     marginTop: 8,
+  },
+  editSectionRow: {
+    marginTop: 14,
+    marginBottom: 6,
+    paddingHorizontal: 2,
+  },
+  editSectionLabel: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#334155',
+  },
+  editBeverageChipsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    marginBottom: 10,
+  },
+  editBeverageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  editBeverageChipSelected: {
+    borderWidth: 1.5,
+  },
+  editBeverageChipText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#475569',
+  },
+  editBeverageChipTextSelected: {
+    fontFamily: Fonts.poppins.semiBold,
   },
   btnPressed: {
     opacity: 0.75,

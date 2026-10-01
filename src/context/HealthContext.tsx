@@ -994,6 +994,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updatedEntries = nextEntries;
       }
 
+      if (updated === 0) {
+        updatedEntries = [];
+      }
+
       return {
         ...prev,
         [selectedDate]: {

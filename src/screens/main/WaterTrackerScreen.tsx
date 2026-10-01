@@ -8,6 +8,7 @@ import {
   BackHandler,
   useWindowDimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -17,7 +18,6 @@ import {
   HeroDropletCard,
   DailyWaterGoalModal,
   WaterHistoryCard,
-  WaterBottomDock,
   CupSizeModal,
   HydrationSettingsModal,
   SlideInSubScreen,
@@ -49,6 +49,34 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
   const [cupSize, setCupSize] = useState<number>(300);
   const [beverageType, setBeverageType] = useState<string>('water');
+
+  // Load saved container preferences (cupSize & beverageType)
+  useEffect(() => {
+    AsyncStorage.getItem('@calori_water_cup_pref')
+      .then((val) => {
+        if (val) {
+          try {
+            const parsed = JSON.parse(val);
+            if (typeof parsed.size === 'number' && parsed.size > 0) {
+              setCupSize(parsed.size);
+            }
+            if (typeof parsed.beverage === 'string' && parsed.beverage) {
+              setBeverageType(parsed.beverage);
+            }
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSelectCup = (newSize: number, newBev: string) => {
+    setCupSize(newSize);
+    setBeverageType(newBev);
+    AsyncStorage.setItem(
+      '@calori_water_cup_pref',
+      JSON.stringify({ size: newSize, beverage: newBev })
+    ).catch(() => {});
+  };
 
   // Real-world today reference to guard against future date logging
   const todayStr = useMemo(() => {
@@ -104,7 +132,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   };
 
   return (
-    <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 12) }]}>
+    <View style={[styles.rootContainer, { paddingTop: 6 }]}>
       {/* 1. Top Navigation Bar */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
@@ -147,7 +175,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 84, 104) },
+          { paddingBottom: 24 },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={true}
@@ -155,10 +183,16 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
         {/* Reusable Top Date Strip in Water Mode */}
         <TopDateStrip metric="water" />
 
-        {/* Scaled Hero Droplet Card with Minute Curvature & Interactive Physics */}
+        {/* Scaled Hero Droplet Card with Symmetrical Stepper Trio */}
         <HeroDropletCard
           ref={heroDropletRef}
+          cupSize={cupSize}
+          beverageType={beverageType}
+          isFutureDate={isFutureDate}
+          onDrink={handleDrink}
+          onDeduct={handleDeduct}
           onOpenGoalModal={() => setIsGoalModalVisible(true)}
+          onOpenCupSelector={() => setIsCupModalVisible(true)}
         />
 
         {/* Compact History Card Preview (3 items + View All) */}
@@ -166,17 +200,6 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
           onViewAll={() => setIsHistoryScreenVisible(true)}
         />
       </ScrollView>
-
-      {/* 4. Bottom Action Dock with Quick Add & Quick Minus */}
-      <WaterBottomDock
-        cupSize={cupSize}
-        beverageType={beverageType}
-        currentWater={currentWater}
-        isFutureDate={isFutureDate}
-        onDrink={handleDrink}
-        onDeduct={handleDeduct}
-        onOpenCupSelector={() => setIsCupModalVisible(true)}
-      />
 
       {/* 5. Daily Goal Editor Modal Sheet */}
       <DailyWaterGoalModal
@@ -190,10 +213,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
         currentCupSize={cupSize}
         currentBeverage={beverageType}
         onClose={() => setIsCupModalVisible(false)}
-        onSelect={(newSize, newBev) => {
-          setCupSize(newSize);
-          setBeverageType(newBev);
-        }}
+        onSelect={handleSelectCup}
       />
 
       {/* 7. Hydration Settings & Preferences Modal */}

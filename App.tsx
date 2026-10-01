@@ -236,6 +236,9 @@ function MainApp() {
   }, [addWater]);
 
   const handleTabChange = React.useCallback((tab: TabType) => {
+    if (waterTrackerVisible) {
+      handleCloseWaterTracker();
+    }
     if (tab === 'today' && activeTabRef.current === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'diary' && activeTabRef.current === 'diary') {
@@ -246,7 +249,7 @@ function MainApp() {
       profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setActiveTab(tab);
-  }, []); // stable — reads activeTab via ref, not closure
+  }, [waterTrackerVisible, handleCloseWaterTracker]);
 
   const saveScrollOffset = React.useCallback((tab: TabType, offset: number) => {
     scrollOffsetsRef.current[tab] = Math.max(0, offset);
@@ -409,8 +412,9 @@ function MainApp() {
     }
 
     return (
-      <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneContainer}>
+        {/* Main tabs wrapped with top safe area; bottom handled by BottomNavBar */}
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         {/* Only the active tab is mounted; scroll offsets are retained in refs. */}
         <View style={styles.contentArea}>
           {activeTab === 'today' && (
@@ -465,6 +469,18 @@ function MainApp() {
               onSignOut={handleSignOutCompleted}
             />
           )}
+
+          {/* Slide-In Water Tracker Sub-Screen (Mounted within contentArea so BottomNavBar remains visible) */}
+          {waterTrackerVisible && (
+            <SlideInSubScreen
+              screenWidth={screenWidth}
+              isClosing={isClosingWaterTracker}
+              onClosed={handleWaterTrackerClosed}
+              zIndex={200}
+            >
+              <WaterTrackerScreen onBack={handleCloseWaterTracker} />
+            </SlideInSubScreen>
+          )}
         </View>
 
         {/* Bottom Navigation */}
@@ -475,18 +491,7 @@ function MainApp() {
           onQuickLogWater={handleQuickWater}
           onOpenFoodVision={handleOpenFoodVision}
         />
-
-        {/* Full-Screen Water Tracker Sub-Screen */}
-        {waterTrackerVisible && (
-          <SlideInSubScreen
-            screenWidth={screenWidth}
-            isClosing={isClosingWaterTracker}
-            onClosed={handleWaterTrackerClosed}
-            zIndex={600}
-          >
-            <WaterTrackerScreen onBack={handleCloseWaterTracker} />
-          </SlideInSubScreen>
-        )}
+        </SafeAreaView>
 
         {/* Food Logging Modal */}
         <FoodLogModal
@@ -544,18 +549,7 @@ function MainApp() {
           onCancel={() => setSignOutModalVisible(false)}
         />
 
-        {/* Full-Page Slide-In Water Tracker Sub-Screen */}
-        {waterTrackerVisible && (
-          <SlideInSubScreen
-            isClosing={isClosingWaterTracker}
-            onClosed={handleWaterTrackerClosed}
-            screenWidth={screenWidth}
-          >
-            <WaterTrackerScreen onBack={handleCloseWaterTracker} />
-          </SlideInSubScreen>
-        )}
-        </View>
-      </SafeAreaView>
+      </View>
     );
   };
 
@@ -600,14 +594,17 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    width: '100%',
     backgroundColor: Colors.background,
-    alignItems: 'center',
   },
   phoneContainer: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
+    alignSelf: 'center',
     backgroundColor: Colors.background,
+    position: 'relative',
+    overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? {
           shadowColor: '#0F172A',

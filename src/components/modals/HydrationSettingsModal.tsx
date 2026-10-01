@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Switch,
   ScrollView,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -25,6 +26,8 @@ const INTERVAL_OPTIONS = [
   { id: '3h', label: '3 hours' },
 ];
 
+const REMINDER_INTERVAL_KEY = '@calori_water_reminder_interval';
+
 export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
   visible,
   onClose,
@@ -32,7 +35,20 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
 }) => {
   const { userGoals, updateGoals } = useGoals();
   const [reminderInterval, setReminderInterval] = useState('2h');
-  const [preferredUnit, setPreferredUnit] = useState<'ml' | 'oz'>('ml');
+
+  // Load persisted reminder interval preference
+  useEffect(() => {
+    AsyncStorage.getItem(REMINDER_INTERVAL_KEY)
+      .then((saved) => {
+        if (saved) setReminderInterval(saved);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSelectInterval = (val: string) => {
+    setReminderInterval(val);
+    AsyncStorage.setItem(REMINDER_INTERVAL_KEY, val).catch(() => {});
+  };
 
   const isReminderOn = userGoals.waterReminder ?? true;
 
@@ -136,7 +152,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
                             styles.intervalPill,
                             isSelected && styles.intervalPillActive,
                           ]}
-                          onPress={() => setReminderInterval(opt.id)}
+                          onPress={() => handleSelectInterval(opt.id)}
                           accessibilityRole="button"
                           accessibilityLabel={`Remind every ${opt.label}`}
                         >
@@ -156,56 +172,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
               )}
             </View>
 
-            {/* 3. Preferred Volume Units */}
-            <View style={styles.settingCard}>
-              <View style={styles.cardHeaderRow}>
-                <View style={[styles.cardIconBox, { backgroundColor: '#FAF5FF' }]}>
-                  <MaterialCommunityIcons name="scale" size={18} color="#9333EA" />
-                </View>
-                <View style={styles.cardTextCol}>
-                  <Text style={styles.cardTitle}>Measurement Unit</Text>
-                  <Text style={styles.cardDesc}>Display intake in mL or fl oz</Text>
-                </View>
-              </View>
-
-              <View style={styles.unitToggleRow}>
-                <Pressable
-                  style={[
-                    styles.unitChip,
-                    preferredUnit === 'ml' && styles.unitChipActive,
-                  ]}
-                  onPress={() => setPreferredUnit('ml')}
-                >
-                  <Text
-                    style={[
-                      styles.unitChipText,
-                      preferredUnit === 'ml' && styles.unitChipTextActive,
-                    ]}
-                  >
-                    Milliliters (mL)
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  style={[
-                    styles.unitChip,
-                    preferredUnit === 'oz' && styles.unitChipActive,
-                  ]}
-                  onPress={() => setPreferredUnit('oz')}
-                >
-                  <Text
-                    style={[
-                      styles.unitChipText,
-                      preferredUnit === 'oz' && styles.unitChipTextActive,
-                    ]}
-                  >
-                    Fluid Ounces (fl oz)
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* 4. Beverage Hydration Science Guide */}
+            {/* 3. Beverage Hydration Science Guide */}
             <View style={styles.infoCard}>
               <View style={styles.infoHeaderRow}>
                 <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
@@ -400,33 +367,6 @@ const styles = StyleSheet.create({
   intervalPillTextActive: {
     fontFamily: Fonts.poppins.semiBold,
     color: Colors.water,
-  },
-  unitToggleRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  unitChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-  },
-  unitChipActive: {
-    borderColor: '#9333EA',
-    backgroundColor: '#FAF5FF',
-  },
-  unitChipText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 12,
-    color: '#475569',
-  },
-  unitChipTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
-    color: '#9333EA',
   },
   infoCard: {
     backgroundColor: '#F0F9FF',

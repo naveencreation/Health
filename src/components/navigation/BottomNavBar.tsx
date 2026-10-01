@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -20,8 +21,11 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
   onTabChange,
   onOpenFoodVision,
 }) => {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 6);
+
   return (
-    <View style={styles.barContainer}>
+    <View style={[styles.barContainer, { paddingBottom: bottomPadding, height: 56 + bottomPadding }]}>
       {/* Tab 1: Today */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
@@ -114,8 +118,6 @@ const styles = StyleSheet.create({
   barContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    height: Platform.OS === 'ios' ? 76 : 64,
-    paddingBottom: Platform.OS === 'ios' ? 12 : 0,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0, 0, 0, 0.08)',
     alignItems: 'center',

@@ -102,23 +102,27 @@ export const WaterBottomDock: React.FC<WaterBottomDockProps> = ({
     <View
       style={[
         styles.dockContainer,
-        { paddingBottom: Math.max(insets.bottom, 16) },
+        { paddingBottom: 10 },
         style,
       ]}
     >
-      {/* 1. Left Circular Cup / Beverage Selector Button */}
+      {/* 1. Left Cup / Beverage Selector Capsule Pill */}
       <Pressable
         style={({ pressed }) => [
-          styles.cupSelectorBtn,
+          styles.cupSelectorPill,
           isFutureDate && styles.btnDisabled,
           pressed && !isFutureDate && styles.btnPressed,
         ]}
         onPress={isFutureDate ? undefined : onOpenCupSelector}
         disabled={isFutureDate}
         accessibilityRole="button"
-        accessibilityLabel="Change cup size or beverage type"
+        accessibilityLabel={`Change container, currently ${cupSize} mL ${beverageType}`}
       >
-        {renderBeverageIcon()}
+        <View style={styles.cupIconBox}>
+          {renderBeverageIcon()}
+        </View>
+        <Text style={styles.cupSizeText}>{cupSize} mL</Text>
+        <Ionicons name="chevron-down" size={13} color="#0284C7" style={styles.cupChevron} />
       </Pressable>
 
       {/* 2. Quick Minus / Deduct Button */}
@@ -155,7 +159,7 @@ export const WaterBottomDock: React.FC<WaterBottomDockProps> = ({
         accessibilityLabel={
           isFutureDate
             ? 'Cannot log hydration for future dates'
-            : `Drink ${cupSize} mL of ${beverageType}`
+            : `Log ${cupSize} mL drink`
         }
       >
         <Text
@@ -166,10 +170,10 @@ export const WaterBottomDock: React.FC<WaterBottomDockProps> = ({
           ]}
         >
           {isFutureDate
-            ? 'Cannot log for future date'
+            ? 'Cannot log'
             : isDrinking
-            ? 'Drinking...'
-            : `Drink (${cupSize} mL)`}
+            ? '✓ Added'
+            : '+ Drink'}
         </Text>
       </Pressable>
     </View>
@@ -187,8 +191,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
+    gap: 10,
+    paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
@@ -199,21 +203,36 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  cupSelectorBtn: {
-    width: 48,
+  cupSelectorPill: {
     height: 48,
+    paddingHorizontal: 12,
     borderRadius: 24,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F0F9FF',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: '#BAE6FD',
+    gap: 6,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
+  },
+  cupIconBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cupSizeText: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  cupChevron: {
+    marginLeft: -1,
   },
   minusBtn: {
     width: 48,

@@ -15,6 +15,12 @@ import { useDailyLog } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import {
+  BEVERAGE_DEFINITIONS,
+  getBeverageName,
+  getBeverageBg,
+  renderBeverageIconElement,
+} from '@/utils/beverageUtils';
 
 const formatLogTime = (isoString?: string): string => {
   if (!isoString) {
@@ -123,40 +129,6 @@ const WaterGlassIcon: React.FC<{ size?: number }> = ({ size = 26 }) => {
   );
 };
 
-// Helper to render distinct beverage icon
-const renderRowBeverageIcon = (beverageType?: string) => {
-  switch (beverageType) {
-    case 'coffee':
-      return <Ionicons name="cafe" size={18} color="#854D0E" />;
-    case 'tea':
-      return <MaterialCommunityIcons name="tea" size={18} color="#15803D" />;
-    case 'juice':
-      return <MaterialCommunityIcons name="cup-water" size={18} color="#EA580C" />;
-    case 'sport':
-      return <MaterialCommunityIcons name="bottle-tonic-outline" size={18} color="#0284C7" />;
-    case 'smoothie':
-      return <MaterialCommunityIcons name="blender-outline" size={18} color="#9333EA" />;
-    case 'wine':
-      return <Ionicons name="wine-outline" size={18} color="#9F1239" />;
-    case 'beer':
-      return <Ionicons name="beer-outline" size={18} color="#D97706" />;
-    default:
-      return <WaterGlassIcon size={20} />;
-  }
-};
-
-const getBeverageBg = (beverageType?: string) => {
-  switch (beverageType) {
-    case 'coffee': return '#FEF3C7';
-    case 'tea': return '#DCFCE7';
-    case 'juice': return '#FFEDD5';
-    case 'sport': return '#E0F2FE';
-    case 'smoothie': return '#F3E8FF';
-    case 'wine': return '#FFE4E6';
-    case 'beer': return '#FEF9C3';
-    default: return '#E0F2FE';
-  }
-};
 
 export interface WaterHistoryCardProps {
   onViewAll?: () => void;
@@ -213,6 +185,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   // Edit entry modal state
   const [editingEntry, setEditingEntry] = useState<WaterLogEntry | null>(null);
   const [editVolume, setEditVolume] = useState<number>(300);
+  const [editBeverage, setEditBeverage] = useState<string>('water');
 
   // Entry pending delete confirmation
   const [entryToDelete, setEntryToDelete] = useState<WaterLogEntry | null>(null);
@@ -226,6 +199,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
     const entryToEdit = selectedEntry;
     setSelectedEntry(null);
     setEditVolume(entryToEdit.amountMl);
+    setEditBeverage(entryToEdit.beverageType || 'water');
     setEditingEntry(entryToEdit);
   };
 
@@ -233,11 +207,15 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
     if (!editingEntry) return;
     if (editingEntry.id === 'synthetic_initial') {
       resetWater();
-      addWater(editVolume);
+      addWater(editVolume, editBeverage);
     } else if (editingEntry.id === 'legacy_balance') {
-      addWater(editVolume - editingEntry.amountMl);
+      addWater(editVolume - editingEntry.amountMl, editBeverage);
     } else {
-      updateWaterEntry(editingEntry.id, { amountMl: editVolume }, selectedDate);
+      updateWaterEntry(
+        editingEntry.id,
+        { amountMl: editVolume, beverageType: editBeverage },
+        selectedDate
+      );
     }
     setEditingEntry(null);
   };
@@ -320,27 +298,13 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                     { backgroundColor: getBeverageBg(entry.beverageType) },
                   ]}
                 >
-                  {renderRowBeverageIcon(entry.beverageType)}
+                  {renderBeverageIconElement(entry.beverageType, 18)}
                 </View>
 
                 {/* Beverage Name & Timestamp */}
                 <View style={styles.beverageInfo}>
                   <Text style={styles.beverageName}>
-                    {entry.beverageType === 'coffee'
-                      ? 'Coffee'
-                      : entry.beverageType === 'tea'
-                      ? 'Tea'
-                      : entry.beverageType === 'juice'
-                      ? 'Juice'
-                      : entry.beverageType === 'sport'
-                      ? 'Sport Drink'
-                      : entry.beverageType === 'smoothie'
-                      ? 'Smoothie'
-                      : entry.beverageType === 'wine'
-                      ? 'Wine'
-                      : entry.beverageType === 'beer'
-                      ? 'Beer'
-                      : 'Water'}
+                    {getBeverageName(entry.beverageType)}
                   </Text>
                   <Text style={styles.beverageTime}>
                     {formatLogTime(entry.loggedAt)}
@@ -410,24 +374,10 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                   { backgroundColor: getBeverageBg(selectedEntry?.beverageType) },
                 ]}
               >
-                {renderRowBeverageIcon(selectedEntry?.beverageType)}
+                {renderBeverageIconElement(selectedEntry?.beverageType, 20)}
               </View>
               <Text style={styles.actionSheetTitle}>
-                {selectedEntry?.beverageType === 'coffee'
-                  ? 'Coffee'
-                  : selectedEntry?.beverageType === 'tea'
-                  ? 'Tea'
-                  : selectedEntry?.beverageType === 'juice'
-                  ? 'Juice'
-                  : selectedEntry?.beverageType === 'sport'
-                  ? 'Sport Drink'
-                  : selectedEntry?.beverageType === 'smoothie'
-                  ? 'Smoothie'
-                  : selectedEntry?.beverageType === 'wine'
-                  ? 'Wine'
-                  : selectedEntry?.beverageType === 'beer'
-                  ? 'Beer'
-                  : 'Water'}
+                {getBeverageName(selectedEntry?.beverageType)}
               </Text>
               <Text style={styles.actionSheetSubtitle}>
                 {selectedEntry?.amountMl} mL • {formatLogTime(selectedEntry?.loggedAt)}
@@ -594,6 +544,46 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
               })}
             </View>
 
+            {/* Beverage Type Selector Chips */}
+            <View style={styles.editSectionRow}>
+              <Text style={styles.editSectionLabel}>Beverage Type</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.editBeverageChipsRow}
+            >
+              {BEVERAGE_DEFINITIONS.map((bev) => {
+                const isSelected = editBeverage === bev.id;
+                return (
+                  <Pressable
+                    key={`edit_bev_${bev.id}`}
+                    style={({ pressed }) => [
+                      styles.editBeverageChip,
+                      isSelected && [
+                        styles.editBeverageChipSelected,
+                        { borderColor: bev.color, backgroundColor: `${bev.color}15` },
+                      ],
+                      pressed && styles.btnPressed,
+                    ]}
+                    onPress={() => setEditBeverage(bev.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${bev.name} beverage`}
+                  >
+                    {renderBeverageIconElement(bev.id, 16)}
+                    <Text
+                      style={[
+                        styles.editBeverageChipText,
+                        isSelected && [styles.editBeverageChipTextSelected, { color: bev.color }],
+                      ]}
+                    >
+                      {bev.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
             {/* Save Button */}
             <Pressable
               style={({ pressed }) => [
@@ -717,25 +707,11 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                         { backgroundColor: getBeverageBg(entry.beverageType) },
                       ]}
                     >
-                      {renderRowBeverageIcon(entry.beverageType)}
+                      {renderBeverageIconElement(entry.beverageType, 18)}
                     </View>
                     <View style={styles.beverageInfo}>
                       <Text style={styles.beverageName}>
-                        {entry.beverageType === 'coffee'
-                          ? 'Coffee'
-                          : entry.beverageType === 'tea'
-                          ? 'Tea'
-                          : entry.beverageType === 'juice'
-                          ? 'Juice'
-                          : entry.beverageType === 'sport'
-                          ? 'Sport Drink'
-                          : entry.beverageType === 'smoothie'
-                          ? 'Smoothie'
-                          : entry.beverageType === 'wine'
-                          ? 'Wine'
-                          : entry.beverageType === 'beer'
-                          ? 'Beer'
-                          : 'Water'}
+                        {getBeverageName(entry.beverageType)}
                       </Text>
                       <Text style={styles.beverageTime}>
                         {formatLogTime(entry.loggedAt)}
@@ -1258,6 +1234,45 @@ const styles = StyleSheet.create({
   viewAllListContent: {
     paddingTop: 4,
     paddingBottom: 24,
+  },
+  editSectionRow: {
+    marginTop: 14,
+    marginBottom: 6,
+    paddingHorizontal: 2,
+  },
+  editSectionLabel: {
+    fontFamily: Fonts.poppins.semiBold,
+    fontSize: 13,
+    color: '#334155',
+  },
+  editBeverageChipsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    marginBottom: 10,
+  },
+  editBeverageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  editBeverageChipSelected: {
+    borderWidth: 1.5,
+  },
+  editBeverageChipText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#475569',
+  },
+  editBeverageChipTextSelected: {
+    fontFamily: Fonts.poppins.semiBold,
   },
   btnPressed: {
     opacity: 0.75,

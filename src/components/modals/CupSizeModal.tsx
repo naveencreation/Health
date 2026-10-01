@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
@@ -18,13 +19,14 @@ import { Colors } from '@/theme/colors';
 export interface CupSizeOption {
   ml: number;
   label: string;
+  isCustom?: boolean;
 }
 
 export interface BeverageOption {
   id: string;
   name: string;
   iconName: any;
-  iconFamily: 'ionicons' | 'mci';
+  iconFamily: 'ionicons' | 'mci' | 'svg';
   color: string;
 }
 
@@ -42,6 +44,7 @@ const CUP_PRESETS: CupSizeOption[] = [
 ];
 
 const BEVERAGE_TYPES: BeverageOption[] = [
+  { id: 'water', name: 'Water', iconName: 'water', iconFamily: 'svg', color: '#0284C7' },
   { id: 'coffee', name: 'Coffee', iconName: 'cafe-outline', iconFamily: 'ionicons', color: '#854D0E' },
   { id: 'tea', name: 'Tea', iconName: 'tea', iconFamily: 'mci', color: '#15803D' },
   { id: 'juice', name: 'Juice', iconName: 'cup-water', iconFamily: 'mci', color: '#EA580C' },
@@ -56,7 +59,7 @@ const BEVERAGE_TYPES: BeverageOption[] = [
   { id: 'liquor', name: 'Liquor', iconName: 'bottle-tonic-plus-outline', iconFamily: 'mci', color: '#475569' },
 ];
 
-// Mini SVG glass vector for the 250 - 350 mL options
+// Mini SVG glass vector for presets & water option
 const MiniGlassSvg: React.FC<{ fillPercent?: number }> = ({ fillPercent = 0.65 }) => (
   <Svg width={20} height={24} viewBox="0 0 20 24">
     <Path
@@ -93,30 +96,86 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
   const [selectedBeverage, setSelectedBeverage] = useState<string>(currentBeverage);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
   const [customMlInput, setCustomMlInput] = useState<string>('');
+  const [customError, setCustomError] = useState<string | null>(null);
+  const [customPresets, setCustomPresets] = useState<number[]>([]);
+
+  // Load persistent custom cup presets
+  useEffect(() => {
+    AsyncStorage.getItem('@calori_custom_cup_presets')
+      .then((val) => {
+        if (val) {
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed)) {
+              setCustomPresets(parsed.filter((n: any) => typeof n === 'number' && n >= 50 && n <= 3000));
+            }
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Sync state whenever modal opens
+  useEffect(() => {
+    if (visible) {
+      setSelectedSize(currentCupSize);
+      setSelectedBeverage(currentBeverage);
+      setIsCustomMode(false);
+      setCustomMlInput('');
+      setCustomError(null);
+    }
+  }, [visible, currentCupSize, currentBeverage]);
+
+  // Combine default presets with user custom presets
+  const allPresets = useMemo(() => {
+    const customList: CupSizeOption[] = customPresets
+      .filter((ml) => !CUP_PRESETS.some((p) => p.ml === ml))
+      .map((ml) => ({
+        ml,
+        label: `${ml} mL`,
+        isCustom: true,
+      }));
+    const merged = [...CUP_PRESETS, ...customList];
+    merged.sort((a, b) => a.ml - b.ml);
+    return merged;
+  }, [customPresets]);
 
   const handleSelectCup = (ml: number) => {
     setSelectedSize(ml);
     setIsCustomMode(false);
-    onSelect(ml, selectedBeverage);
-    onClose();
+    setCustomError(null);
   };
 
   const handleSelectBeverage = (beverageId: string) => {
     setSelectedBeverage(beverageId);
-    onSelect(selectedSize, beverageId);
-    onClose();
   };
 
   const handleApplyCustomMl = () => {
-    const parsed = parseInt(customMlInput, 10);
-    if (!isNaN(parsed) && parsed > 0 && parsed <= 5000) {
-      setSelectedSize(parsed);
-      setIsCustomMode(false);
-      setCustomMlInput('');
-      onSelect(parsed, selectedBeverage);
-      onClose();
+    const parsed = parseInt(customMlInput.trim(), 10);
+    if (isNaN(parsed) || parsed < 50 || parsed > 3000) {
+      setCustomError('Please enter an amount between 50 and 3,000 mL');
+      return;
+    }
+    setSelectedSize(parsed);
+    setCustomError(null);
+    setIsCustomMode(false);
+    setCustomMlInput('');
+
+    // Save as persistent preset if not already present
+    const isBase = CUP_PRESETS.some((p) => p.ml === parsed);
+    if (!isBase && !customPresets.includes(parsed)) {
+      const updated = [...customPresets, parsed].sort((a, b) => a - b);
+      setCustomPresets(updated);
+      AsyncStorage.setItem('@calori_custom_cup_presets', JSON.stringify(updated)).catch(() => {});
     }
   };
+
+  const handleConfirm = () => {
+    onSelect(selectedSize, selectedBeverage);
+    onClose();
+  };
+
+  const activeBeverage = BEVERAGE_TYPES.find((b) => b.id === selectedBeverage) || BEVERAGE_TYPES[0];
 
   return (
     <Modal
@@ -139,12 +198,12 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
               onPress={onClose}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Close cup size selector"
+              accessibilityLabel="Close container selector"
             >
               <Ionicons name="close" size={24} color="#0F172A" />
             </Pressable>
 
-            <Text style={styles.headerTitle}>Switch Cup Size</Text>
+            <Text style={styles.headerTitle}>Container & Beverage</Text>
 
             <View style={styles.headerPlaceholder} />
           </View>
@@ -153,10 +212,16 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
             style={styles.scrollArea}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {/* 1. Cup Volume Presets Grid */}
+            {/* 1. Section: Container Size */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Container Size</Text>
+              <Text style={styles.sectionSubtitle}>Tap to choose volume</Text>
+            </View>
+
             <View style={styles.gridContainer}>
-              {CUP_PRESETS.map((preset) => {
+              {allPresets.map((preset) => {
                 const isSelected = selectedSize === preset.ml && !isCustomMode;
                 return (
                   <Pressable
@@ -166,6 +231,8 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                       pressed && styles.btnPressed,
                     ]}
                     onPress={() => handleSelectCup(preset.ml)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${preset.label} container size`}
                   >
                     <View
                       style={[
@@ -188,6 +255,11 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                           color={isSelected ? Colors.water : '#0284C7'}
                         />
                       )}
+                      {isSelected && (
+                        <View style={styles.selectedBadge}>
+                          <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                        </View>
+                      )}
                     </View>
                     <Text
                       style={[
@@ -201,13 +273,18 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                 );
               })}
 
-              {/* Add Custom New Volume */}
+              {/* Add Custom New Volume Button */}
               <Pressable
                 style={({ pressed }) => [
                   styles.gridItem,
                   pressed && styles.btnPressed,
                 ]}
-                onPress={() => setIsCustomMode(true)}
+                onPress={() => {
+                  setIsCustomMode(!isCustomMode);
+                  setCustomError(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Add custom container volume"
               >
                 <View
                   style={[
@@ -216,7 +293,11 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                     isCustomMode && styles.iconCircleSelected,
                   ]}
                 >
-                  <Ionicons name="add" size={26} color={Colors.water} />
+                  <Ionicons
+                    name={isCustomMode ? 'remove' : 'add'}
+                    size={26}
+                    color={Colors.water}
+                  />
                 </View>
                 <Text
                   style={[
@@ -224,7 +305,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                     isCustomMode && styles.itemLabelSelected,
                   ]}
                 >
-                  Add New
+                  {isCustomMode ? 'Cancel' : 'Add New'}
                 </Text>
               </Pressable>
             </View>
@@ -232,15 +313,33 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
             {/* Custom Input Inline Box */}
             {isCustomMode && (
               <View style={styles.customInputContainer}>
-                <Text style={styles.customInputTitle}>Enter Custom Amount (mL)</Text>
+                <View style={styles.customInputHeader}>
+                  <Text style={styles.customInputTitle}>Enter Custom Amount (mL)</Text>
+                  <Pressable
+                    onPress={() => {
+                      setIsCustomMode(false);
+                      setCustomError(null);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.cancelCustomText}>Cancel</Text>
+                  </Pressable>
+                </View>
+
                 <View style={styles.customInputRow}>
                   <TextInput
-                    style={styles.customInput}
+                    style={[
+                      styles.customInput,
+                      customError ? styles.customInputError : null,
+                    ]}
                     placeholder="e.g. 750"
                     placeholderTextColor="#94A3B8"
                     keyboardType="number-pad"
                     value={customMlInput}
-                    onChangeText={setCustomMlInput}
+                    onChangeText={(t) => {
+                      setCustomMlInput(t.replace(/[^0-9]/g, ''));
+                      if (customError) setCustomError(null);
+                    }}
                     maxLength={4}
                     autoFocus={true}
                   />
@@ -254,17 +353,18 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                     <Text style={styles.applyBtnText}>Apply</Text>
                   </Pressable>
                 </View>
+                {customError && (
+                  <Text style={styles.errorText}>{customError}</Text>
+                )}
               </View>
             )}
 
-            {/* 2. "Or Drink" Section Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Or Drink</Text>
-              <View style={styles.dividerLine} />
+            {/* 2. Section: Beverage Type */}
+            <View style={[styles.sectionHeaderRow, { marginTop: 20 }]}>
+              <Text style={styles.sectionTitle}>Beverage Type</Text>
+              <Text style={styles.sectionSubtitle}>Select what you're drinking</Text>
             </View>
 
-            {/* 3. Beverage Types Grid */}
             <View style={styles.gridContainer}>
               {BEVERAGE_TYPES.map((bev) => {
                 const isSelected = selectedBeverage === bev.id;
@@ -276,14 +376,21 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                       pressed && styles.btnPressed,
                     ]}
                     onPress={() => handleSelectBeverage(bev.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${bev.name} beverage`}
                   >
                     <View
                       style={[
                         styles.iconCircle,
-                        isSelected && styles.iconCircleSelected,
+                        isSelected && [
+                          styles.iconCircleSelected,
+                          { borderColor: bev.color, backgroundColor: `${bev.color}15` },
+                        ],
                       ]}
                     >
-                      {bev.iconFamily === 'ionicons' ? (
+                      {bev.id === 'water' ? (
+                        <MiniGlassSvg fillPercent={0.75} />
+                      ) : bev.iconFamily === 'ionicons' ? (
                         <Ionicons name={bev.iconName} size={22} color={bev.color} />
                       ) : (
                         <MaterialCommunityIcons
@@ -292,11 +399,16 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                           color={bev.color}
                         />
                       )}
+                      {isSelected && (
+                        <View style={[styles.selectedBadge, { backgroundColor: bev.color }]}>
+                          <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                        </View>
+                      )}
                     </View>
                     <Text
                       style={[
                         styles.itemLabel,
-                        isSelected && styles.itemLabelSelected,
+                        isSelected && [styles.itemLabelSelected, { color: bev.color }],
                       ]}
                       numberOfLines={1}
                     >
@@ -307,6 +419,24 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
               })}
             </View>
           </ScrollView>
+
+          {/* Sticky Bottom Confirmation Button */}
+          <View style={styles.footerContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.confirmBtn,
+                pressed && styles.btnPressed,
+              ]}
+              onPress={handleConfirm}
+              accessibilityRole="button"
+              accessibilityLabel={`Set container to ${selectedSize} mL ${activeBeverage.name}`}
+            >
+              <Text style={styles.confirmBtnText}>
+                Set Container · {selectedSize} mL {activeBeverage.name}
+              </Text>
+              <Ionicons name="checkmark-circle" size={19} color="#FFFFFF" />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -337,7 +467,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     maxHeight: '85%',
     paddingTop: 16,
-    paddingBottom: 28,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
@@ -349,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -363,7 +493,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 18,
+    fontSize: 17,
     color: '#0F172A',
     textAlign: 'center',
   },
@@ -375,8 +505,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 14,
+    paddingBottom: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  sectionSubtitle: {
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 12,
+    color: '#94A3B8',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -386,7 +533,7 @@ const styles = StyleSheet.create({
   gridItem: {
     width: '25%',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   iconCircle: {
     width: 58,
@@ -398,6 +545,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
+    position: 'relative',
   },
   iconCircleSelected: {
     borderColor: Colors.water,
@@ -407,6 +555,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 2,
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.water,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   addCircle: {
     borderStyle: 'dashed',
@@ -432,11 +593,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  customInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   customInputTitle: {
     fontFamily: Fonts.poppins.semiBold,
     fontSize: 13,
     color: '#334155',
-    marginBottom: 8,
+  },
+  cancelCustomText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#64748B',
   },
   customInputRow: {
     flexDirection: 'row',
@@ -454,6 +625,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0F172A',
   },
+  customInputError: {
+    borderColor: '#EF4444',
+  },
   applyBtn: {
     backgroundColor: Colors.water,
     paddingHorizontal: 20,
@@ -467,26 +641,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
   },
-  // Divider
-  dividerRow: {
+  errorText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 6,
+  },
+  // Sticky Bottom Confirmation Footer
+  footerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+  },
+  confirmBtn: {
+    height: 48,
+    borderRadius: 24,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.water,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 18,
-    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: Colors.water,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
+  confirmBtnText: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13,
-    color: '#94A3B8',
-    marginHorizontal: 12,
+    fontSize: 15,
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
   btnPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.82,
+    transform: [{ scale: 0.96 }],
   },
 });
