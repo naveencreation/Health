@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   Pressable,
+  Platform,
   StyleProp,
   ViewStyle,
 } from 'react-native';
@@ -12,7 +13,7 @@ import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from '@/components/water/DropletVisualizer';
 import { Fonts } from '@/theme/typography';
 
-const DEFAULT_STEP = 100;
+const DEFAULT_STEP = 250;
 
 export interface WaterTrackerProps {
   initialWater?: number;
@@ -26,7 +27,7 @@ export interface WaterTrackerProps {
 export const WaterTracker: React.FC<WaterTrackerProps> = ({
   initialWater,
   maxWater: propMaxWater,
-  step = DEFAULT_STEP,
+  step: propStep,
   onWaterChange,
   onPressHeader,
   style,
@@ -44,6 +45,7 @@ export const WaterTracker: React.FC<WaterTrackerProps> = ({
       ? propMaxWater
       : (userGoals.waterGoalMl || 2500);
 
+  const step = propStep ?? DEFAULT_STEP;
   const dropletRef = useRef<DropletVisualizerRef>(null);
 
   const handlePlus = () => {
@@ -61,159 +63,162 @@ export const WaterTracker: React.FC<WaterTrackerProps> = ({
     }
   };
 
-  const percentage = maxWater > 0 ? Math.round((currentWater / maxWater) * 100) : 0;
-
   return (
     <View style={[styles.card, style]}>
-      {/* 1. Header */}
+      {/* 1. Left Column: Title with Navigation Chevron & Intake Statistics */}
       <Pressable
-        style={styles.headerRow}
+        style={({ pressed }) => [styles.leftColumn, pressed && styles.leftColumnPressed]}
         onPress={onPressHeader}
         accessibilityRole="button"
-        accessibilityLabel="Water Tracker details"
+        accessibilityLabel="Open Water Tracker details"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Text style={styles.headerTitle}>Water Tracker</Text>
-        <Feather name="arrow-right" size={20} color="#007AFF" />
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Water</Text>
+          <Feather name="chevron-right" size={17} color="#0EA5E9" style={styles.titleChevron} />
+        </View>
+        <View style={styles.mainStatRow}>
+          <Text style={styles.mainStatText}>{currentWater.toLocaleString()}</Text>
+          <Text style={styles.unitText}>mL</Text>
+        </View>
+        <Text style={styles.subStatText}>/ {maxWater.toLocaleString()} mL</Text>
       </Pressable>
 
-      {/* 2. Divider */}
-      <View style={styles.divider} />
+      {/* 2. Right Column: Symmetrical Stepper Trio with 3D Teardrop Droplet */}
+      <View style={styles.rightColumn}>
+        {/* Minus Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.controlButton,
+            pressed ? styles.buttonPressed : null,
+            currentWater <= 0 ? styles.buttonDisabled : null,
+          ]}
+          onPress={handleMinus}
+          disabled={currentWater <= 0}
+          accessibilityRole="button"
+          accessibilityLabel={`Decrease water by ${step} mL`}
+          hitSlop={8}
+        >
+          <Feather
+            name="minus"
+            size={20}
+            color={currentWater <= 0 ? '#CBD5E1' : '#0EA5E9'}
+          />
+        </Pressable>
 
-      {/* 3. Body: 2-Column Row */}
-      <View style={styles.bodyRow}>
-        {/* Left Column: Text Statistics */}
-        <View style={styles.leftColumn}>
-          <View style={styles.mainStatRow}>
-            <Text style={styles.mainStatText}>{currentWater}</Text>
-            <Text style={styles.unitText}>mL</Text>
-          </View>
-          <Text style={styles.subStatText}>/ {maxWater} mL</Text>
-          <Text style={styles.percentageText}>{percentage}% completed</Text>
-        </View>
+        {/* Center Droplet with Outer 3D Halo Contour & Dual Wave Simulation */}
+        <Pressable
+          style={styles.dropletWrapper}
+          onPress={onPressHeader}
+          accessibilityRole="button"
+          accessibilityLabel="Water visualizer, tap for details"
+        >
+          <DropletVisualizer
+            ref={dropletRef}
+            currentWater={currentWater}
+            maxWater={maxWater}
+            width={58}
+            height={72}
+            showHalo={true}
+          />
+        </Pressable>
 
-        {/* Right Column: Interactive Controls */}
-        <View style={styles.rightColumn}>
-          {/* Minus Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.controlButton,
-              pressed ? styles.buttonPressed : null,
-              currentWater <= 0 ? styles.buttonDisabled : null,
-            ]}
-            onPress={handleMinus}
-            disabled={currentWater <= 0}
-            accessibilityRole="button"
-            accessibilityLabel="Decrease water by 100 mL"
-            hitSlop={8}
-          >
-            <Feather
-              name="minus"
-              size={20}
-              color={currentWater <= 0 ? '#C7C7CC' : '#007AFF'}
-            />
-          </Pressable>
-
-          {/* Animated SVG Droplet with Dual Wave Liquid Simulation */}
-          <View style={styles.dropletContainer}>
-            <DropletVisualizer
-              ref={dropletRef}
-              currentWater={currentWater}
-              maxWater={maxWater}
-              width={76}
-              height={96}
-            />
-          </View>
-
-          {/* Plus Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.controlButton,
-              pressed ? styles.buttonPressed : null,
-              currentWater >= maxWater ? styles.buttonDisabled : null,
-            ]}
-            onPress={handlePlus}
-            disabled={currentWater >= maxWater}
-            accessibilityRole="button"
-            accessibilityLabel="Increase water by 100 mL"
-            hitSlop={8}
-          >
-            <Feather
-              name="plus"
-              size={20}
-              color={currentWater >= maxWater ? '#C7C7CC' : '#007AFF'}
-            />
-          </Pressable>
-        </View>
+        {/* Plus Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.controlButton,
+            pressed ? styles.buttonPressed : null,
+            currentWater >= maxWater ? styles.buttonDisabled : null,
+          ]}
+          onPress={handlePlus}
+          disabled={currentWater >= maxWater}
+          accessibilityRole="button"
+          accessibilityLabel={`Increase water by ${step} mL`}
+          hitSlop={8}
+        >
+          <Feather
+            name="plus"
+            size={20}
+            color={currentWater >= maxWater ? '#CBD5E1' : '#0EA5E9'}
+          />
+        </Pressable>
       </View>
     </View>
   );
 };
 
-
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 24,
-    marginHorizontal: 16,
+    borderCurve: 'continuous',
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginHorizontal: 20,
     marginTop: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 4,
-  },
-  headerRow: {
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1C1C1E',
-    letterSpacing: -0.3,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F2F2F7',
-    marginVertical: 18,
-  },
-  bodyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   leftColumn: {
     flex: 1,
     justifyContent: 'center',
+  },
+  leftColumnPressed: {
+    opacity: 0.7,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 18,
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+  titleChevron: {
+    marginLeft: 3,
+    marginTop: 1,
   },
   mainStatRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   mainStatText: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#1C1C1E',
-    letterSpacing: -0.5,
+    fontFamily: Fonts.poppins.bold,
+    fontSize: 32,
+    lineHeight: 38,
+    color: '#0F172A',
+    letterSpacing: -0.6,
   },
   unitText: {
-    fontSize: 18,
-    color: '#8E8E93',
-    fontWeight: '500',
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 16,
+    color: '#334155',
     marginLeft: 4,
+    lineHeight: 22,
   },
   subStatText: {
+    fontFamily: Fonts.poppins.regular,
     fontSize: 14,
-    color: '#8E8E93',
-    marginTop: 4,
-  },
-  percentageText: {
-    fontSize: 14,
-    color: '#8E8E93',
+    color: '#64748B',
     marginTop: 2,
+    lineHeight: 18,
   },
   rightColumn: {
     flexDirection: 'row',
@@ -221,26 +226,27 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
-    borderColor: '#007AFF',
+    borderColor: '#0EA5E9',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
   buttonPressed: {
-    opacity: 0.7,
+    opacity: 0.75,
     transform: [{ scale: 0.94 }],
   },
   buttonDisabled: {
-    borderColor: '#E5E5EA',
+    borderColor: '#E2E8F0',
     opacity: 0.5,
   },
-  dropletContainer: {
-    width: 76,
-    height: 96,
+  dropletWrapper: {
+    width: 58,
+    height: 72,
     alignItems: 'center',
     justifyContent: 'center',
   },

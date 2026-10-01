@@ -452,6 +452,22 @@
     - **100% Wiring & Event Binding ([App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx))**: Connected `onOpenRiaChat`, `onOpenWaterTracker`, `onOpenWeightTracker`, `onSearchPress`, `onNotificationsPress`, scroll offset preservation (`trackerScrollRef`, `saveTrackerScrollOffset`), and Android back button handling.
     - **Streamlined Today Screen ([TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx))**: Stripped duplicate tracker cards so Today Screen serves exclusively as the clean, lightning-fast Daily Nutrition & Energy Hub (`Header` → `TopDateStrip` → `HeroCalorieCard` → `MealSection`).
     - **Testing**: Added unit test suite ([TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx)). All 16 test suites and 133 tests passing with 0 TypeScript compilation errors.
+49. **Compact Water Tracker Card Reference Alignment ([WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx))**:
+    - **Ultra-Compact Visual Footprint**: Reduced card height from ~195px down to a sleek ~105px, eliminating the old divider line, chevron arrow, and redundant `0% completed` text.
+    - **Header & Metric Stack**: Bold left title `"Water"` (18px, `#0F172A`), large intake readout (`32px` bold value + `16px` medium `" mL"` aligned to baseline), and subtle target subtitle (`/ 2,500 mL` in `#64748B`).
+    - **Symmetrical Stepper Trio with 3D Teardrop Droplet**:
+      - Circular outline minus button `( − )` (`40×40px`, `1.5px` sky blue border `#0EA5E9`), disabled when water is 0 mL.
+      - Center scaled [DropletVisualizer](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/DropletVisualizer.tsx) (`58×72px`) with outer 3D halo contour (`showHalo={true}`), soft cavity gradient, and dual GPU wave slosh physics.
+      - Circular outline plus button `( + )` (`40×40px`, `1.5px` sky blue border `#0EA5E9`), incrementing intake by step (default 250 mL).
+    - **Navigation & Affordance**: Title row features an inline sky blue chevron `[ Water › ]` (`Feather chevron-right`, `#0EA5E9`), clearly communicating to users that tapping the title navigates forward to [WaterTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterTrackerScreen.tsx).
+    - **Testing**: Added dedicated unit test suite ([WaterTracker.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/WaterTracker.test.tsx)). All 17 test suites and 137 tests passing with 0 TypeScript errors.
+50. **Compact Weight Tracker Card Reference Alignment ([WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx))**:
+    - **Ultra-Compact Visual Footprint**: Removed the old dividing line, chevron arrow, and gray circular pencil button.
+    - **Header & Metric Stack**: Title row features `[ Weight › ]` with coral/orange chevron (`Feather chevron-right`, `#FF5B26`). Left metric row shows bold 32px weight value (`78.5`), medium unit (`kg`), and inline directional delta badge (`[ ˇ - 0.2 kg ]` with emerald circle & downward chevron).
+    - **Vibrant Orange "Update" Pill Button**: Replaced pencil icon with a solid vibrant coral-orange pill button (`backgroundColor: '#FF5B26'`, white text) on the right, which opens [LogWeightModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/LogWeightModal.tsx).
+    - **Chunky Orange Progress Bar**: Chunky 13px capsule progress bar in matching `#FF5B26` coral-orange animating from Starting weight to Goal weight.
+    - **Range Footer**: Subtle Starting (`80.0 kg`) and Goal (`75.0 kg`) range indicators below the progress track.
+    - **Testing**: Added unit test suite ([WeightTrackerCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/WeightTrackerCard.test.tsx)). All 18 test suites and 140 tests passing with 0 TypeScript compilation errors.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
