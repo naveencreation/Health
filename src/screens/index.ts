@@ -24,3 +24,4 @@ export { WeightHistoryScreen } from './main/WeightHistoryScreen';
 export { LogWeightScreen } from './main/LogWeightScreen';
 export { WeightReportScreen } from './main/WeightReportScreen';
 export { StepTrackerScreen } from './main/StepTrackerScreen';
+export { StepReportScreen } from './main/StepReportScreen';

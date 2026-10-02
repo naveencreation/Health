@@ -605,6 +605,36 @@
       - Added Tier 1 backfill check to `checkInitialStatus` on screen mount: if permission was already granted previously, automatically queries and populates past 7 days into `dailyLogs` immediately.
       - Enables the "View All" modal to render all days (Today, Yesterday, past 7 days) in reverse chronological order with daily session threshold expansion.
     - **Verification**: Fully covered by unit tests in `healthService.test.ts`, `StepTrackerScreen.test.tsx`, `StepHistoryCard.test.tsx`, `StepHistoryModal.test.tsx`, and `HealthContext-test.tsx`. All test suites pass.
+59. **Step Report Screen Creation & History Header Wiring**:
+    - **Step Report Screen Template ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**: Created blank step report template matching `WaterReportScreen.tsx` and `WeightReportScreen.tsx` aesthetics, with `#FAF9F6` background, safe area insets, standard 40x40 circular white elevated navigation buttons (`chevron-back` left, `ellipsis-vertical` right), Poppins bold header title (`"Step Report"`), Android hardware back button handler, and placeholder container for upcoming step analytics and charts.
+    - **Export**: Exported `StepReportScreen` in `src/screens/index.ts`.
+    - **Header Icon Replacement ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**: Replaced the calendar icon (`calendar-outline`) in the history header with the report icon (`stats-chart-outline`, size 20, `#0F172A`, `accessibilityLabel="View Step Report"`).
+    - **Navigation Wiring**: Integrated `SlideInSubScreen` (zIndex 300) inside `StepHistoryModal.tsx` to mount `StepReportScreen` on report button tap, allowing seamless slide-in over the history feed and slide-out back to history. Propagated optional `onOpenReport?: () => void` in `StepHistoryModalProps` and `StepHistoryCardProps`.
+    - **Testing & Verification**: Updated `StepHistoryModal.test.tsx` to assert the report button and its press action. Verified with `npx tsc --noEmit` (0 errors) and jest test suites (13 passed, 0 failed).
+60. **Step Report Analytics: Timeframe Tabs, Date Range Navigator & Step Completion Card**:
+    - **StepCompletionCard ([StepCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCompletionCard.tsx))**:
+      - Built interactive chart card matching user reference with Bar Chart (Image 2) and Line/Area Chart (Image 3) toggled via `ChartTypeToggle` (`activeColor="#F97316"`).
+      - **Color Palette**: Saturated step brand orange (`#F97316`) for active tab, selected bar, trend line, goal line, and tooltip pin; soft warm peach (`#FED7AA`) for unselected bars; `#FFF7ED` to transparent gradient fill for line area.
+      - **Adaptive Y-Axis**: 7-level scale (e.g. 7000 to 1000) with horizontal dashed Step Goal benchmark line across the canvas (`strokeDasharray="6, 5"`).
+      - **Interactive Selection & Tooltip Pin**: Tapping any day updates the selected point and positions `ChartTooltipPin` directly above the bar/node showing `{steps} steps` with downward needle pointer.
+      - **X-Axis Day Numbers**: Labels (e.g. `16`, `17`, `18`, `19`, `20`, `21`, `22`) aligned under each column.
+    - **Timeframe Segmented Tabs ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+      - Pill container with `Weekly`, `Monthly`, `Yearly` options; active tab highlighted with `#F97316` and bold white text.
+    - **Date Range Picker Navigator**:
+      - Formatted labels (e.g. `Sep 28 – Oct 4, 2026`), with `<` and `>` period switching and future-navigation guard.
+    - **Unit Tests**: Added `StepCompletionCard.test.tsx` and `StepReportScreen.test.tsx`. All 20 step tests pass across 5 test suites.
+61. **Step Distance & Active Calorie Burn Trend Card ([StepDistanceCalorieCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepDistanceCalorieCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+    - **Header & Dual-Metric Switching**: Card header features bold title `"Distance & Calories"` and `ChartTypeToggle` (Bar ⇄ Line). Below the title is a segmented mode switch (`[ 📍 Distance (km) ]` | `[ 🔥 Calories (kcal) ]`) with smooth indicator styling and `#F97316` brand active state.
+    - **Dual Subheader Legend**: Shows `● Selected` bullet and dashed indicator line for `--- Daily Avg ({avgValue} {unit})` computed dynamically for the active period.
+    - **Adaptive Dual Chart Rendering**:
+      - **Bar Mode**: Rendered using rounded-top capsule bars (`borderTopLeftRadius: barWidth / 2`, `borderTopRightRadius: barWidth / 2`). Unselected days render in soft warm peach (`#FED7AA`), and the selected day renders in solid flame orange (`#F97316`).
+      - **Line / Area Mode**: Rendered using SVG path with vertical gradient area fill (`#metricAreaGrad`: `#F97316` at 22% opacity fading to 0% at bottom), stroke line (width 3.5, `#F97316`), and circular nodes.
+    - **Interactive Day Selection & Tooltip Pin**: Tapping any day column positions `ChartTooltipPin` dynamically above the bar or node showing `{val} {unit}` (e.g. `5.2 km` or `272 kcal`).
+    - **Period Summary Footer Tiles**:
+      - **Left Tile**: Total Distance (`{totalDistance} km`) with daily average subtext (`~{avg} km/day`) and location icon in `#EA580C`.
+      - **Right Tile**: Active Calories (`{totalCalories} kcal`) with daily average subtext (`~{avg} kcal/day`) and flame icon in `#EA580C`.
+    - **Timeframe Aggregation**: Accurately aggregates across Weekly, Monthly, and Yearly calendar date sets via `periodSummary` in `StepReportScreen.tsx`, providing true period totals and daily averages.
+    - **Testing & Verification**: Created `StepDistanceCalorieCard.test.tsx` (all 4 tests pass). Clean `npx tsc --noEmit` with 0 compiler errors. Full suite of 24 step tests passing across 6 test suites.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

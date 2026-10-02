@@ -9,11 +9,14 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { DailyLog, StepLogEntry } from '@/types';
+import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
+import { StepReportScreen } from '@/screens/main/StepReportScreen';
 import {
   formatHistoryDateHeader,
   calculateStepMetrics,
@@ -41,6 +44,7 @@ export interface StepHistoryModalProps {
   dailyLogs?: Record<string, DailyLog>;
   onClose: () => void;
   onDeleteEntry?: (entry: StepLogEntry, dateStr: string) => void;
+  onOpenReport?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -61,8 +65,22 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
   dailyLogs = {},
   onClose,
   onDeleteEntry,
+  onOpenReport,
 }) => {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+
+  // Step Report screen slide-in state
+  const [isReportVisible, setIsReportVisible] = useState(false);
+  const [isClosingReport, setIsClosingReport] = useState(false);
+
+  const handleOpenReport = useCallback(() => {
+    if (onOpenReport) {
+      onOpenReport();
+    } else {
+      setIsReportVisible(true);
+    }
+  }, [onOpenReport]);
 
   // Primary anchor date (defaulting to today if not provided)
   const anchorDate = useMemo(() => {
@@ -279,12 +297,12 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
 
           <Pressable
             style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
-            onPress={() => setIsCalendarOpen(true)}
+            onPress={handleOpenReport}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
-            accessibilityLabel="Pick date"
+            accessibilityLabel="View Step Report"
           >
-            <Ionicons name="calendar-outline" size={22} color="#0F172A" />
+            <Ionicons name="stats-chart-outline" size={20} color="#0F172A" />
           </Pressable>
         </View>
 
@@ -602,6 +620,21 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
             </Pressable>
           </Pressable>
         </Modal>
+
+        {/* Dedicated Full-Screen Step Report Sub-Screen */}
+        {isReportVisible && (
+          <SlideInSubScreen
+            isClosing={isClosingReport}
+            onClosed={() => {
+              setIsReportVisible(false);
+              setIsClosingReport(false);
+            }}
+            screenWidth={Math.min(screenWidth, 480)}
+            zIndex={300}
+          >
+            <StepReportScreen onBack={() => setIsClosingReport(true)} />
+          </SlideInSubScreen>
+        )}
       </View>
     </Modal>
   );

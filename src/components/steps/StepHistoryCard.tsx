@@ -33,6 +33,7 @@ export interface StepHistoryCardProps {
   customEntries?: StepLogEntry[];
   dailyLogs?: Record<string, DailyLog>;
   onDeleteEntry?: (entry: StepLogEntry) => void;
+  onOpenReport?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -43,6 +44,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
   customEntries,
   dailyLogs,
   onDeleteEntry,
+  onOpenReport,
   style,
 }) => {
   // Popover state
@@ -224,6 +226,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
         dailyLogs={dailyLogs}
         onClose={() => setIsModalOpen(false)}
         onDeleteEntry={onDeleteEntry ? (entry) => onDeleteEntry(entry) : undefined}
+        onOpenReport={onOpenReport}
       />
     </View>
   );

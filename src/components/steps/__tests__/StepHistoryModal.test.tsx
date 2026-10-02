@@ -23,8 +23,16 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
+
+jest.mock('@/screens/main/StepReportScreen', () => ({
+  StepReportScreen: () => null,
 }));
 
 describe('StepHistoryModal', () => {
@@ -39,7 +47,8 @@ describe('StepHistoryModal', () => {
     }));
   };
 
-  test('renders top header with back button, center title and calendar button', async () => {
+  test('renders top header with back button, center title and report button', async () => {
+    const handleOpenReport = jest.fn();
     const { getByText, getByLabelText } = await render(
       <StepHistoryModal
         visible={true}
@@ -47,12 +56,16 @@ describe('StepHistoryModal', () => {
         entries={createMockEntries(3)}
         totalSteps={1800}
         onClose={jest.fn()}
+        onOpenReport={handleOpenReport}
       />
     );
 
     expect(getByText('Step Counter History')).toBeTruthy();
     expect(getByLabelText('Back')).toBeTruthy();
-    expect(getByLabelText('Pick date')).toBeTruthy();
+    expect(getByLabelText('View Step Report')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('View Step Report'));
+    expect(handleOpenReport).toHaveBeenCalledTimes(1);
   });
 
   test('calls onClose when back button is pressed', async () => {

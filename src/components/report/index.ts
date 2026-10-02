@@ -8,4 +8,6 @@ export { DrinkTypesCard, DrinkTypeBreakdown } from './DrinkTypesCard';
 export { WeightSummaryCard, WeightSummaryData } from './WeightSummaryCard';
 export { WeightTrendCard, DayWeightTrendData } from './WeightTrendCard';
 export { BMIGaugeCard, BMIGaugeCardProps, BMICategory } from './BMIGaugeCard';
-
+// Step Report Components
+export { StepCompletionCard, DayStepData, StepCompletionCardProps } from './StepCompletionCard';
+export { StepDistanceCalorieCard, DayMetricData, MetricMode, StepDistanceCalorieCardProps } from './StepDistanceCalorieCard';
