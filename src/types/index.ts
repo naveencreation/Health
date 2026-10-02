@@ -60,6 +60,18 @@ export interface WeightLogEntry {
   note?: string;
 }
 
+export interface StepLogEntry {
+  id: string;
+  steps: number;
+  durationMinutes: number;
+  caloriesBurned: number;
+  distanceKm: number;
+  loggedAt: string; // ISO string
+  startTime?: string;
+  endTime?: string;
+  source?: 'health_connect' | 'manual' | 'synthetic';
+}
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   meals: LoggedMealItem[];
@@ -69,6 +81,7 @@ export interface DailyLog {
   waterEntries?: WaterLogEntry[];
   weightKg?: number;
   weightEntries?: WeightLogEntry[];
+  stepEntries?: StepLogEntry[];
 }
 
 export interface UserGoals {

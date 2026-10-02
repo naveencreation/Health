@@ -21,6 +21,15 @@ export { HeroWeightCard } from './weight/HeroWeightCard';
 export { WeightHistoryCard, type WeightHistoryItem } from './weight/WeightHistoryCard';
 export { WeightEntryActionPopover } from './weight/WeightEntryActionPopover';
 
+// Step Tracking Components
+export { HeroStepCard } from './steps/HeroStepCard';
+export { StepGaugeVisualizer } from './steps/StepGaugeVisualizer';
+export { RunningShoeSvg } from './steps/RunningShoeSvg';
+export { StepHistoryCard } from './steps/StepHistoryCard';
+export { StepEntryActionPopover } from './steps/StepEntryActionPopover';
+export { StepHistoryModal } from './steps/StepHistoryModal';
+export { HealthConnectSyncCard } from './steps/HealthConnectSyncCard';
+
 // Diary Components
 export { MealCard } from './diary/MealCard';
 

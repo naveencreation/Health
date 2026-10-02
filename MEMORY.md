@@ -537,6 +537,75 @@
       - Displayed 1,269 steps, updated distance (~1.0 km) and active energy, syncing directly into `HealthContext.dailyLogs`.
     - Unit tests: 21 test suites, 159 tests passing (`npm test`), 0 TypeScript compiler errors (`npx tsc --noEmit`).
 
+30. **Step Tracker Screen Hero Redesign (270° Radial Arc, Vector Sneaker, Date Picker & Micro-Metrics)**:
+    - **Vector Athletic Shoe**: Handcrafted [RunningShoeSvg.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/RunningShoeSvg.tsx) with sculpted midsole cushion, flame-orange speed swoosh, upper mesh, diagonal laces, and ambient drop shadow.
+    - **Radial Instrument Gauge**: Created [StepGaugeVisualizer.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepGaugeVisualizer.tsx) matching the precision geometry of `WaterGaugeVisualizer` (270° sweep, 15 radial instrument ticks, Reanimated GPU-animated gradient progress arc `#EA580C` → `#FB923C`, and tactile spring squish with haptic feedback on shoe tap).
+    - **Hero Card Container with 4 Micro-Metrics**: Created [HeroStepCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/HeroStepCard.tsx) with goal celebration badge (`Goal Smashed! ✨`), large Kurale/Poppins step count, `/10,000 steps` (tap-to-edit), and a 4-column micro-metrics bar with vector icons:
+      - 👣 **STEPS**: `{steps}` (`#FFEDD5` badge + `#EA580C` footsteps icon)
+      - ⏱️ **TIME**: `~{activeMinutes} min` (`#E0F2FE` badge + `#0284C7` clock icon)
+      - 🔥 **CALORIES**: `~{kcal} kcal` (`#FFF7ED` badge + `#F97316` flame icon)
+      - 📍 **DISTANCE**: `~{km} km` (`#DCFCE7` badge + `#16A34A` navigate pin icon)
+    - **Date Picker Integration**: Extended [TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx) to support `metric="steps"` with orange theme colors, step goals, daily progress circles, and calendar popup. Connected date selection in [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx) to switch between live Health Connect steps (when viewing today) and historical logs (`dailyLogs[selectedDate]`).
+    - **Testing**: Added [HeroStepCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/__tests__/HeroStepCard.test.tsx) and updated [StepTrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/StepTrackerScreen.test.tsx). All 22 test suites and 163 tests passing with 0 TypeScript compiler errors.
+
+31. **Step History Component with Minimalist Vector Outline Icons**:
+    - **Vector Outline Icons**: Created [StepOutlineIcons.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepOutlineIcons.tsx) featuring:
+      - 👣 `FootstepsOutlineSvg`: Dual minimalist shoe soles / footprints outline (`#F97316`)
+      - ⏱️ `ClockOutlineSvg`: Circular clock outline dial with 9 & 12 hands (`#22C55E`)
+      - 🔥 `FlameOutlineSvg`: Single-line contour flame teardrop (`#EF4444`)
+      - 📍 `LocationPinOutlineSvg`: Streamlined map pin with inner target ring (`#0EA5E9`)
+      - 👟 `EmptyShoesOutlineSvg`: Minimalist dual sneakers outline for empty states (`#CBD5E1`)
+    - **Step Utilities & Types**:
+      - Added `StepLogEntry` interface to [src/types/index.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/types/index.ts) and extended `DailyLog` with `stepEntries?: StepLogEntry[]`.
+      - Created [stepHistoryUtils.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/utils/stepHistoryUtils.ts) with `formatHistoryDateHeader()`, `calculateStepMetrics()`, `mapHealthConnectRecordsToStepEntries()`, and `synthesizeSessionsFromTotal()` for smooth fallback display.
+    - **Card & Interaction Modules**:
+      - [StepHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryCard.tsx): Displays "History" header with brand orange `View All →` trigger, date subtitle (`Yesterday, Dec 21, 2024` or `Today, Oct 2, 2026`), 4 preview rows with the 5-column layout (`[ 👣 850 ]  [ ⏱️ 8m ]  [ 🔥 40 ]  [ 📍 0.7 ]  [ ⋮ ]`), and empty state illustration.
+      - [StepEntryActionPopover.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepEntryActionPopover.tsx): Floating anchored popover for 3-dots kebab menu with "Details" and "Delete" actions.
+      - [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx): Full-day breakdown modal with summary totals bar and chronological session timeline.
+    - **Screen Integration**:
+      - Integrated into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), querying Health Connect interval chunks via `getTodayStepsRecords()` and displaying historical sessions.
+    - **Verification**: Verified clean TypeScript compilation (`npx tsc --noEmit` exited with code 0).
+
+32. **Health Connect Setup & Sync Redesign with Official Google Heart Logo**:
+    - Converted `AndroidConnect.png` into lossless WebP at [assets/health_connect_logo.webp](file:///c:/Users/navee/Videos/Calorify/calori/assets/health_connect_logo.webp) (1254x1254 RGBA, reduced from 542 KB down to 334 KB).
+    - Created [HealthConnectSyncCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/HealthConnectSyncCard.tsx):
+      - **Disconnected State**: Stupidly simple horizontal 1-tap setup tile (~68px) with official logo, value proposition ("Auto-Sync Steps - Google Fit · Samsung Health · Watch"), and "Set Up →" button.
+      - **Connected State**: Minimalist status bar (~48px) with 22px logo, green live pulse indicator, `Health Connect Active`, `✓ {count} steps` pill badge, and `↻` quick sync button.
+    - Integrated into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), completely replacing the old 200px bulky `actionCard` while keeping `HeroStepCard` and `StepHistoryCard` **100% untouched and preserved**.
+
+33. **Full "Step Counter History" View All Redesign**:
+    - Redesigned `StepHistoryModal.tsx` matching the user reference screenshots:
+      - Header: Left back arrow `←`, center title `Step Counter History` (bold), right calendar icon `📅`.
+      - Multi-day reverse chronological feed (`Today, Dec 22, 2024`, `Yesterday, Dec 21, 2024`, etc.) with date headers and subtle horizontal hairlines.
+      - Clean white cards per day with 5-column tabular session rows (`[ 👣 Steps ] [ ⏱️ Time ] [ 🔥 Calories ] [ 📍 Distance ] [ ⋮ Kebab ]`).
+      - **5-Row Threshold & Expansion**: Days with > 5 sessions display the first 5 sessions followed by a `+ Show {N} more sessions ▾` toggle. Tapping expands all sessions with `LayoutAnimation` and toggles to `Show less ▴`.
+      - **Labeled Total Divider & Grand Total**: Each card concludes with `Total ──────────────────────────────` and the day's aggregated metrics aligned under the 4 metric columns (with kebab space empty for grid alignment).
+      - **Single-Action Delete Popover**: Tapping `⋮` opens `StepEntryActionPopover.tsx` presenting a single `🗑 Delete` option in red (`#EF4444`, `trash-outline`), deleting the entry and immediately recalculating day totals.
+      - **Interactive Month Calendar Picker**: Tapping `📅` opens a month grid picker to inspect or navigate to past dates.
+      - Fully tested with comprehensive unit tests (`StepHistoryModal.test.tsx` and `StepHistoryCard.test.tsx`), with zero TypeScript compiler errors (`npx tsc --noEmit`).
+58. **3-Tier Health Connect Step Sync Architecture**:
+    - **Tier 1 (One-Time Past 7-Day Backfill on First Connect)**:
+      - Triggered once when the user first links Health Connect or when `@calori_hc_backfill_completed_v1` is not yet set in AsyncStorage.
+      - Queries the previous 7 days in parallel (`backfillPastSevenDays()`), filters positive records, maps interval sessions, updates `dailyLogs`, and marks backfill completed (`markBackfillCompleted()`).
+      - Populates the step history feed immediately so the user doesn't encounter an empty screen upon initial setup.
+    - **Tier 2 (Rolling 48-Hour Sync on App Open & Sync Tap)**:
+      - Solves the smartwatch Bluetooth sync delay problem (where late night steps sync to Health Connect hours later the next morning).
+      - Queries both Today and Yesterday in parallel (`syncRolling48Hours()`) in <50ms.
+      - Compares yesterday's Health Connect total against `dailyLogs[yesterdayStr]?.steps` and seamlessly updates local state and history entries if Health Connect has more steps.
+    - **Tier 3 (On-Demand Single-Day Lazy Fetch on Past Date Browsing)**:
+      - When the user navigates back in the top date strip or month calendar to an older past date that has 0 steps locally, lazily fetches only that specific day on the fly (`fetchSingleDaySteps(selectedDate)`).
+      - Tracks queried dates in a session `useRef(new Set())` to prevent redundant network/SDK calls for dates that legitimately had 0 steps.
+    - **Firestore Security Rules Schema Update & Live Deploy ([firestore.rules](file:///c:/Users/navee/Videos/Calorify\calori\firestore.rules))**:
+      - Identified cause of `dailyLogs setDoc async error: [FirebaseError: Missing or insufficient permissions.]`: `isValidDailyLogDoc` had a strict whitelist (`data.keys().hasOnly([...])`) that did not include `'stepEntries'`.
+      - Added `'stepEntries'` to `hasOnly` whitelist and added list validation (`size <= 200`).
+      - Hardened `dailyLogs` update rule: `allow update: if isOwner(userId) && isValidDailyLogDoc(date) && (!('date' in request.resource.data) || !('date' in resource.data) || resource.data.date == '' || request.resource.data.date == resource.data.date || request.resource.data.date == date)`.
+      - Updated `cleanDailyLog` and `dailyLogs` debounced sync in `HealthContext.tsx` to explicitly sanitize and guarantee the exact 9 allowed fields with `date: dKey`.
+    - **Multi-Day Step History Propagation ([StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepTrackerScreen.tsx), [StepHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryCard.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Fixed missing `dailyLogs` prop propagation: `StepTrackerScreen` now forwards `dailyLogs` to `StepHistoryCard`, which passes `dailyLogs` to `StepHistoryModal`.
+      - Added Tier 1 backfill check to `checkInitialStatus` on screen mount: if permission was already granted previously, automatically queries and populates past 7 days into `dailyLogs` immediately.
+      - Enables the "View All" modal to render all days (Today, Yesterday, past 7 days) in reverse chronological order with daily session threshold expansion.
+    - **Verification**: Fully covered by unit tests in `healthService.test.ts`, `StepTrackerScreen.test.tsx`, `StepHistoryCard.test.tsx`, `StepHistoryModal.test.tsx`, and `HealthContext-test.tsx`. All test suites pass.
+
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

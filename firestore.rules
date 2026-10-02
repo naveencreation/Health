@@ -35,6 +35,7 @@ rules_version = '2';
 //   - waterEntries: list (optional, <= 200 items, array of individual water logs)
 //   - weightKg: number (optional, >= 0 and <= 500 kg)
 //   - weightEntries: list (optional, <= 100 items, array of individual weight logs)
+//   - stepEntries: list (optional, <= 200 items, array of individual step logs)
 //
 // Subcollection: users/{userId}/customFoods/{foodId}
 // Document ID: custom food item ID (e.g. custom_1726834000000)
@@ -106,7 +107,7 @@ service cloud.firestore {
 
     function isValidDailyLogDoc(date) {
       let data = request.resource.data;
-      return data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities', 'waterEntries', 'weightKg', 'weightEntries']) &&
+      return data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities', 'waterEntries', 'weightKg', 'weightEntries', 'stepEntries']) &&
         (!('date' in data) || (data.date is string && data.date.size() <= 30 && data.date == date)) &&
         (!('waterMl' in data) || (data.waterMl is number && data.waterMl >= 0 && data.waterMl <= 30000)) &&
         (!('steps' in data) || (data.steps is number && data.steps >= 0 && data.steps <= 250000)) &&
@@ -114,7 +115,8 @@ service cloud.firestore {
         (!('activities' in data) || (data.activities is list && data.activities.size() <= 100)) &&
         (!('waterEntries' in data) || (data.waterEntries is list && data.waterEntries.size() <= 200)) &&
         (!('weightKg' in data) || (data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 500)) &&
-        (!('weightEntries' in data) || (data.weightEntries is list && data.weightEntries.size() <= 100));
+        (!('weightEntries' in data) || (data.weightEntries is list && data.weightEntries.size() <= 100)) &&
+        (!('stepEntries' in data) || (data.stepEntries is list && data.stepEntries.size() <= 200));
     }
 
     function isValidCustomFoodDoc() {
@@ -182,7 +184,7 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && isValidDailyLogDoc(date);
         allow update: if isOwner(userId) && isValidDailyLogDoc(date) &&
-          (!('date' in request.resource.data) || request.resource.data.date == resource.data.date);
+          (!('date' in request.resource.data) || !('date' in resource.data) || resource.data.date == '' || request.resource.data.date == resource.data.date || request.resource.data.date == date);
         allow delete: if isOwner(userId);
       }
 

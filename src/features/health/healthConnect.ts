@@ -53,16 +53,35 @@ export async function initializeHealthConnect(): Promise<boolean> {
   }
 }
 
-export async function getTodayStepsAggregate() {
+/**
+ * Computes exact start and end ISO strings for a given YYYY-MM-DD date in local timezone
+ */
+export function getDateStartAndEndIso(dateStr: string): { startTime: string; endTime: string } {
+  const [yearStr, monthStr, dayStr] = dateStr.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  const day = parseInt(dayStr, 10);
+
+  const start = new Date(year, month, day, 0, 0, 0, 0);
+  const end = new Date(year, month, day, 23, 59, 59, 999);
+
+  return {
+    startTime: start.toISOString(),
+    endTime: end.toISOString(),
+  };
+}
+
+export function getTodayDateIsoString(d = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export async function getStepsAggregateForDate(dateStr: string) {
   if (Platform.OS !== 'android') {
     return null;
   }
-
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
 
   try {
     const ready = await initializeHealthConnect();
@@ -70,34 +89,29 @@ export async function getTodayStepsAggregate() {
       return null;
     }
 
+    const { startTime, endTime } = getDateStartAndEndIso(dateStr);
+
     const result = await aggregateRecord({
       recordType: 'Steps',
       timeRangeFilter: {
         operator: 'between',
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
+        startTime,
+        endTime,
       },
     });
 
-    console.log('[HealthConnect] Raw aggregate result:', JSON.stringify(result));
-
+    console.log(`[HealthConnect] Aggregate result for ${dateStr}:`, JSON.stringify(result));
     return result;
   } catch (error) {
-    console.error('[HealthConnect] Failed to read steps aggregate:', error);
+    console.error(`[HealthConnect] Failed to read steps aggregate for ${dateStr}:`, error);
     return null;
   }
 }
 
-export async function getTodayStepsRecords() {
+export async function getStepsRecordsForDate(dateStr: string) {
   if (Platform.OS !== 'android') {
     return [];
   }
-
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
 
   try {
     const ready = await initializeHealthConnect();
@@ -105,19 +119,28 @@ export async function getTodayStepsRecords() {
       return [];
     }
 
+    const { startTime, endTime } = getDateStartAndEndIso(dateStr);
+
     const response = await readRecords('Steps', {
       timeRangeFilter: {
         operator: 'between',
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
+        startTime,
+        endTime,
       },
     });
 
-    console.log('[HealthConnect] Raw step records count:', response?.records?.length || 0);
-
+    console.log(`[HealthConnect] Records count for ${dateStr}:`, response?.records?.length || 0);
     return response?.records || [];
   } catch (error) {
-    console.error('[HealthConnect] Failed to read step records:', error);
+    console.error(`[HealthConnect] Failed to read step records for ${dateStr}:`, error);
     return [];
   }
+}
+
+export async function getTodayStepsAggregate() {
+  return getStepsAggregateForDate(getTodayDateIsoString());
+}
+
+export async function getTodayStepsRecords() {
+  return getStepsRecordsForDate(getTodayDateIsoString());
 }

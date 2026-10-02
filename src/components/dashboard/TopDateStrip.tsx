@@ -57,7 +57,7 @@ const parseDateString = (dateStr: string): Date => {
 };
 
 export interface TopDateStripProps {
-  metric?: 'calories' | 'water' | 'weight';
+  metric?: 'calories' | 'water' | 'weight' | 'steps';
   style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
@@ -75,10 +75,24 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
 
   const isWater = metric === 'water';
   const isWeight = metric === 'weight';
+  const isSteps = metric === 'steps';
   const budget = userGoals.dailyCalorieBudget || 2000;
   const waterGoal = userGoals.waterGoalMl || 2000;
-  const progressColor = isWater ? Colors.water : isWeight ? Colors.weight : Colors.primary;
-  const trackColor = isWater ? Colors.waterTrack : isWeight ? Colors.weightTrack : '#E2E8F0';
+  const stepGoal = userGoals.stepGoal || 10000;
+  const progressColor = isWater
+    ? Colors.water
+    : isWeight
+    ? Colors.weight
+    : isSteps
+    ? Colors.steps
+    : Colors.primary;
+  const trackColor = isWater
+    ? Colors.waterTrack
+    : isWeight
+    ? Colors.weightTrack
+    : isSteps
+    ? '#F1F5F9'
+    : '#E2E8F0';
 
   // Real-world today reference
   const todayStr = useMemo(() => toDateString(new Date()), []);
@@ -125,6 +139,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       } else if (isWeight) {
         const hasWeight = Boolean(log && typeof log.weightKg === 'number' && log.weightKg > 0);
         progress = hasWeight ? 1 : 0;
+      } else if (isSteps) {
+        const steps = log && typeof log.steps === 'number' ? log.steps : 0;
+        progress = Math.min(1, Math.max(0, steps / stepGoal));
       } else {
         const cals = log && Array.isArray(log.meals)
           ? log.meals.reduce((sum, item) => sum + item.calories, 0)
@@ -165,7 +182,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     }
 
     return { weekDays: days, monthHeaderTitle: title };
-  }, [selectedDate, dailyLogs, budget, todayStr, isWater, isWeight, waterGoal]);
+  }, [selectedDate, dailyLogs, budget, todayStr, isWater, isWeight, isSteps, waterGoal, stepGoal]);
 
   // Open calendar synchronized to currently selected date's month
   const handleOpenCalendar = useCallback(() => {
@@ -674,9 +691,9 @@ const styles = StyleSheet.create({
   },
   // Inactive White Capsule
   capsule: {
-    width: 44,
+    width: 42,
     height: 72,
-    borderRadius: 22,
+    borderRadius: 21,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -748,9 +765,9 @@ const styles = StyleSheet.create({
 
   // Active High-Contrast Capsule
   activeCapsule: {
-    width: 46,
+    width: 44,
     height: 76,
-    borderRadius: 23,
+    borderRadius: 22,
     backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'space-between',

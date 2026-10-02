@@ -14,6 +14,10 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, query, orderBy, limit } from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
+import {
+  mapHealthConnectRecordsToStepEntries,
+  synthesizeSessionsFromTotal,
+} from '@/utils/stepHistoryUtils';
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -60,6 +64,7 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
     waterEntries: log.waterEntries || [],
     weightKg: log.weightKg,
     weightEntries: log.weightEntries || [],
+    stepEntries: log.stepEntries || [],
   };
 };
 
@@ -277,6 +282,8 @@ export interface HealthContextType {
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
   addSteps: (stepsCount: number) => void;
+  removeStepEntry: (id: string, date?: string) => void;
+  batchUpdateDailySteps: (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => void;
   logWeight: (weightKg: number, date?: string, note?: string, customLoggedAt?: string, customId?: string) => void;
   updateWeightEntry: (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => void;
   deleteWeightEntry: (id: string, date?: string) => void;
@@ -293,7 +300,7 @@ export interface HealthContextType {
   loginDemo: () => Promise<void>;
 }
 
-const HealthContext = createContext<HealthContextType | undefined>(undefined);
+export const HealthContext = createContext<HealthContextType | undefined>(undefined);
 
 export type AuthContextValue = Pick<
   HealthContextType,
@@ -328,6 +335,8 @@ export type DailyLogContextValue = Pick<
   | 'addWorkout'
   | 'removeWorkout'
   | 'addSteps'
+  | 'removeStepEntry'
+  | 'batchUpdateDailySteps'
   | 'logWeight'
   | 'updateWeightEntry'
   | 'deleteWeightEntry'
@@ -438,7 +447,18 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             (rawLog.activities || []).some((a) => a.id === 'act_1') ||
             (rawLog.meals || []).some((m) => m.id.startsWith('sample_'));
           if (isMock) {
-            setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), sanitizeForFirestore(cleansed), { merge: true }).catch(() => {});
+            const cleanPayload = sanitizeForFirestore({
+              date: d.id,
+              waterMl: typeof cleansed.waterMl === 'number' ? Math.max(0, cleansed.waterMl) : 0,
+              steps: typeof cleansed.steps === 'number' ? Math.max(0, cleansed.steps) : 0,
+              meals: Array.isArray(cleansed.meals) ? cleansed.meals : [],
+              activities: Array.isArray(cleansed.activities) ? cleansed.activities : [],
+              ...(Array.isArray(cleansed.waterEntries) ? { waterEntries: cleansed.waterEntries } : {}),
+              ...(typeof cleansed.weightKg === 'number' ? { weightKg: cleansed.weightKg } : {}),
+              ...(Array.isArray(cleansed.weightEntries) ? { weightEntries: cleansed.weightEntries } : {}),
+              ...(Array.isArray(cleansed.stepEntries) ? { stepEntries: cleansed.stepEntries } : {}),
+            });
+            setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), cleanPayload, { merge: true }).catch(() => {});
           }
         }
       } catch (colErr) {
@@ -720,7 +740,17 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const log = dailyLogs[dKey];
           if (log) {
             try {
-              const payload = sanitizeForFirestore(log);
+              const payload = sanitizeForFirestore({
+                date: dKey,
+                waterMl: typeof log.waterMl === 'number' ? Math.max(0, log.waterMl) : 0,
+                steps: typeof log.steps === 'number' ? Math.max(0, log.steps) : 0,
+                meals: Array.isArray(log.meals) ? log.meals : [],
+                activities: Array.isArray(log.activities) ? log.activities : [],
+                ...(Array.isArray(log.waterEntries) ? { waterEntries: log.waterEntries } : {}),
+                ...(typeof log.weightKg === 'number' ? { weightKg: log.weightKg } : {}),
+                ...(Array.isArray(log.weightEntries) ? { weightEntries: log.weightEntries } : {}),
+                ...(Array.isArray(log.stepEntries) ? { stepEntries: log.stepEntries } : {}),
+              });
               setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, { merge: true })
                 .then(() => {
                   lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
@@ -1209,6 +1239,67 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
     });
   }, [selectedDate]);
+
+  const removeStepEntry = useCallback((id: string, date?: string) => {
+    const targetDate = date || selectedDate;
+    setDailyLogs((prev) => {
+      const existing = prev[targetDate];
+      if (!existing) return prev;
+
+      const currentEntries = existing.stepEntries || [];
+      const entryToRemove = currentEntries.find((e) => e.id === id);
+      const stepsToDeduct = entryToRemove ? entryToRemove.steps : 0;
+
+      const updatedEntries = currentEntries.filter((e) => e.id !== id);
+      const updatedSteps = Math.max(0, existing.steps - stepsToDeduct);
+
+      return {
+        ...prev,
+        [targetDate]: {
+          ...existing,
+          steps: updatedSteps,
+          stepEntries: updatedEntries,
+        },
+      };
+    });
+  }, [selectedDate]);
+
+  const batchUpdateDailySteps = useCallback(
+    (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => {
+      if (!updates || updates.length === 0) return;
+
+      setDailyLogs((prev) => {
+        const nextLogs = { ...prev };
+
+        updates.forEach(({ dateStr, steps, records }) => {
+          if (!dateStr) return;
+          const existing = nextLogs[dateStr] || {
+            date: dateStr,
+            meals: [],
+            waterMl: 0,
+            steps: 0,
+            activities: [],
+          };
+
+          let stepEntries = existing.stepEntries;
+          if (records && records.length > 0) {
+            stepEntries = mapHealthConnectRecordsToStepEntries(records);
+          } else if (steps > 0 && (!stepEntries || stepEntries.length === 0)) {
+            stepEntries = synthesizeSessionsFromTotal(steps, dateStr);
+          }
+
+          nextLogs[dateStr] = {
+            ...existing,
+            steps,
+            stepEntries,
+          };
+        });
+
+        return nextLogs;
+      });
+    },
+    []
+  );
 
   const logWeight = useCallback((
     weightKg: number,
@@ -1951,6 +2042,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addWorkout,
       removeWorkout,
       addSteps,
+      removeStepEntry,
+      batchUpdateDailySteps,
       logWeight,
       updateWeightEntry,
       deleteWeightEntry,
@@ -1993,6 +2086,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addWorkout,
       removeWorkout,
       addSteps,
+      removeStepEntry,
+      batchUpdateDailySteps,
       logWeight,
       updateWeightEntry,
       deleteWeightEntry,
@@ -2050,6 +2145,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addWorkout,
     removeWorkout,
     addSteps,
+    removeStepEntry,
+    batchUpdateDailySteps,
     logWeight,
     updateWeightEntry,
     deleteWeightEntry,
@@ -2077,6 +2174,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     addWorkout,
     removeWorkout,
     addSteps,
+    removeStepEntry,
+    batchUpdateDailySteps,
     logWeight,
     updateWeightEntry,
     deleteWeightEntry,
