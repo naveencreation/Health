@@ -521,6 +521,22 @@
     - Integrated `<SlideInSubScreen>` in [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx) with state management (`stepTrackerVisible`, `isClosingStepTracker`, open/close/closed callbacks, and hardware back dismissal).
     - Added unit test suite [StepTrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/StepTrackerScreen.test.tsx) and updated [TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx). 20 test suites, 152 tests passing.
 
+29. **Android Health Connect Integration (Phase 1: Working Steps Milestone — Verified Live on Device)**:
+    - Installed `react-native-health-connect` (`^4.1.3`) and `expo-build-properties` (`~57.0.4`).
+    - Configured plugins and Android SDK targets (`compileSdkVersion: 36`, `targetSdkVersion: 36`, `minSdkVersion: 26`) + `android.permission.health.READ_STEPS` in [app.json](file:///c:/Users/navee/Videos/Calorify/calori/app.json).
+    - Executed clean Android prebuild (`npx expo prebuild --clean --platform android`).
+    - Created isolated feature module under `src/features/health/`:
+      - [healthConnect.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthConnect.ts): `isHealthConnectAvailable()`, `initializeHealthConnect()`, `getTodayStepsAggregate()` (aggregated queries between 00:00:00 and 23:59:59.999 today), `getTodayStepsRecords()` (raw step records fallback for 3rd-party apps).
+      - [healthPermissions.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthPermissions.ts): `hasStepsPermission()`, `requestStepsPermission()`, `openHealthSettings()` (guarantees `initializeHealthConnect()` is awaited first to prevent `ClientNotInitialized` exception).
+      - [healthService.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthService.ts): `connectHealth()`, `getTodaySteps()` (dual aggregate + raw records fallback).
+      - [HealthScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/HealthScreen.tsx): Standalone test/dev component.
+    - Product UI Integration:
+      - Wired into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx): Connection badge, hero count display, `~km` and `~kcal` calculation, "Connect Health Connect" / "Sync Health Data" button, direct link to manage Health Connect settings, and automatic sync to `currentLog.steps` in `HealthContext`.
+    - **Live Device Verification**: Verified live on physical Android device connected with Google Fit:
+      - Query returned: `'{"dataOrigins":["com.google.android.apps.fitness"],"COUNT_TOTAL":1269}'`
+      - Displayed 1,269 steps, updated distance (~1.0 km) and active energy, syncing directly into `HealthContext.dailyLogs`.
+    - Unit tests: 21 test suites, 159 tests passing (`npm test`), 0 TypeScript compiler errors (`npx tsc --noEmit`).
+
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
