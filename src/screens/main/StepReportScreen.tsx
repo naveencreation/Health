@@ -16,8 +16,8 @@ import { useDailyLog, useGoals } from '@/context/HealthContext';
 import {
   StepCompletionCard,
   DayStepData,
-  StepDistanceCalorieCard,
-  DayMetricData,
+  StepCalorieBurnCard,
+  DayCalorieData,
 } from '@/components/report';
 import { calculateStepMetrics } from '@/utils/stepHistoryUtils';
 
@@ -230,16 +230,14 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
     Math.max(0, dateRangeInfo.chartItems.length - 1)
   );
 
-  // Derive distance & calorie metrics for each period item
-  const metricItems: DayMetricData[] = useMemo(() => {
+  // Derive calorie metrics for each period item
+  const calorieItems: DayCalorieData[] = useMemo(() => {
     return dateRangeInfo.chartItems.map((item) => {
       const metrics = calculateStepMetrics(item.steps);
       return {
         dateStr: item.dateStr,
         dayNum: item.dayNum,
         dayName: item.dayName,
-        steps: item.steps,
-        distanceKm: metrics.distanceKm,
         calories: metrics.calories,
       };
     });
@@ -387,18 +385,14 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
           defaultChartType="bar"
         />
 
-        {/* 2. Distance & Active Calorie Burn Trend Card */}
-        <StepDistanceCalorieCard
-          days={metricItems}
+        {/* 2. Active Calorie Burn Trend Card */}
+        <StepCalorieBurnCard
+          days={calorieItems}
           selectedIndex={safeCompIndex}
           onSelectDay={setSelectedDayIndex}
           activeColor="#EA580C"
           defaultChartType="bar"
-          defaultMetricMode="distance"
-          periodTotalDistance={periodSummary.totalDistanceKm}
-          periodTotalCalories={periodSummary.totalCalories}
-          periodAvgDistance={periodSummary.avgDistanceKm}
-          periodAvgCalories={periodSummary.avgCalories}
+          periodDailyAvgCalories={periodSummary.avgCalories}
         />
       </ScrollView>
     </View>

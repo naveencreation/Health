@@ -623,18 +623,16 @@
     - **Date Range Picker Navigator**:
       - Formatted labels (e.g. `Sep 28 – Oct 4, 2026`), with `<` and `>` period switching and future-navigation guard.
     - **Unit Tests**: Added `StepCompletionCard.test.tsx` and `StepReportScreen.test.tsx`. All 20 step tests pass across 5 test suites.
-61. **Step Distance & Active Calorie Burn Trend Card ([StepDistanceCalorieCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepDistanceCalorieCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
-    - **Header & Dual-Metric Switching**: Card header features bold title `"Distance & Calories"` and `ChartTypeToggle` (Bar ⇄ Line). Below the title is a segmented mode switch (`[ 📍 Distance (km) ]` | `[ 🔥 Calories (kcal) ]`) with smooth indicator styling and `#F97316` brand active state.
-    - **Dual Subheader Legend**: Shows `● Selected` bullet and dashed indicator line for `--- Daily Avg ({avgValue} {unit})` computed dynamically for the active period.
+61. **Active Calorie Burn Card ([StepCalorieBurnCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCalorieBurnCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+    - **Focused Active Energy Scope**: Streamlined the step energy analytics to focus exclusively on Active Calorie Burn (`kcal`), completely removing the redundant distance tab and the two bottom micro-summary tiles to keep the interface clean, elegant, and directly tied to Calorify's core calorie-tracking mission.
+    - **Header & Controls**: Features bold title `"Active Calorie Burn"` with `ChartTypeToggle` (Bar ⇄ Line) with smooth indicator styling.
+    - **Subheader Legend**: Shows `● Selected` bullet and dashed indicator line for `--- Daily Avg ({avgValue} kcal)` dynamically computed from `periodDailyAvgCalories`.
     - **Adaptive Dual Chart Rendering**:
       - **Bar Mode**: Rendered using rounded-top capsule bars (`borderTopLeftRadius: barWidth / 2`, `borderTopRightRadius: barWidth / 2`). Unselected days render in soft warm peach (`#FED7AA`), and the selected day renders in solid flame orange (`#F97316`).
-      - **Line / Area Mode**: Rendered using SVG path with vertical gradient area fill (`#metricAreaGrad`: `#F97316` at 22% opacity fading to 0% at bottom), stroke line (width 3.5, `#F97316`), and circular nodes.
-    - **Interactive Day Selection & Tooltip Pin**: Tapping any day column positions `ChartTooltipPin` dynamically above the bar or node showing `{val} {unit}` (e.g. `5.2 km` or `272 kcal`).
-    - **Period Summary Footer Tiles**:
-      - **Left Tile**: Total Distance (`{totalDistance} km`) with daily average subtext (`~{avg} km/day`) and location icon in `#EA580C`.
-      - **Right Tile**: Active Calories (`{totalCalories} kcal`) with daily average subtext (`~{avg} kcal/day`) and flame icon in `#EA580C`.
-    - **Timeframe Aggregation**: Accurately aggregates across Weekly, Monthly, and Yearly calendar date sets via `periodSummary` in `StepReportScreen.tsx`, providing true period totals and daily averages.
-    - **Testing & Verification**: Created `StepDistanceCalorieCard.test.tsx` (all 4 tests pass). Clean `npx tsc --noEmit` with 0 compiler errors. Full suite of 24 step tests passing across 6 test suites.
+      - **Line / Area Mode**: Rendered using SVG path with vertical gradient area fill (`#calorieAreaGrad`: `#F97316` at 22% opacity fading to 0% at bottom), stroke line (width 3.5, `#F97316`), and circular nodes.
+    - **Interactive Day Selection & Tooltip Pin**: Tapping any day column positions `ChartTooltipPin` dynamically above the bar or node showing `{calories}` with `kcal` unit text.
+    - **Clean Footer**: Clean X-axis row with day numbers, letting the card breathe without duplicate summary footer tiles.
+    - **Testing & Verification**: Created `StepCalorieBurnCard.test.tsx` (all 4 tests pass). Clean `npx tsc --noEmit` with 0 compiler errors. Full suite of 24 step tests passing across 6 test suites.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

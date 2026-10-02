@@ -10,4 +10,4 @@ export { WeightTrendCard, DayWeightTrendData } from './WeightTrendCard';
 export { BMIGaugeCard, BMIGaugeCardProps, BMICategory } from './BMIGaugeCard';
 // Step Report Components
 export { StepCompletionCard, DayStepData, StepCompletionCardProps } from './StepCompletionCard';
-export { StepDistanceCalorieCard, DayMetricData, MetricMode, StepDistanceCalorieCardProps } from './StepDistanceCalorieCard';
+export { StepCalorieBurnCard, DayCalorieData, StepCalorieBurnCardProps } from './StepCalorieBurnCard';

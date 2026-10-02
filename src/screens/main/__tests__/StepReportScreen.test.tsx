@@ -63,10 +63,8 @@ describe('StepReportScreen', () => {
     expect(getAllByText('Selected').length).toBeGreaterThanOrEqual(1);
     expect(getByText('Step Goal')).toBeTruthy();
 
-    // Distance & Calories card
-    expect(getByText('Distance & Calories')).toBeTruthy();
-    expect(getByText('Total Distance')).toBeTruthy();
-    expect(getByText('Active Calories')).toBeTruthy();
+    // Active Calorie Burn card
+    expect(getByText('Active Calorie Burn')).toBeTruthy();
   });
 
   test('switches timeframe to Monthly and Yearly when tabs are clicked', async () => {

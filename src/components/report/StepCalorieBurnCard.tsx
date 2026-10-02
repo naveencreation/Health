@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Platform,
   LayoutChangeEvent,
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -16,58 +15,42 @@ import Svg, {
   Stop,
   Line,
 } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
-export type MetricMode = 'distance' | 'calories';
-
-export interface DayMetricData {
+export interface DayCalorieData {
   dateStr: string;
   dayNum: number | string;
   dayName: string;
-  steps: number;
-  distanceKm: number;
   calories: number;
 }
 
-export interface StepDistanceCalorieCardProps {
-  days: DayMetricData[];
+export interface StepCalorieBurnCardProps {
+  days: DayCalorieData[];
   selectedIndex: number;
   onSelectDay: (index: number) => void;
   activeColor?: string;
   defaultChartType?: ChartType;
-  defaultMetricMode?: MetricMode;
-  periodTotalDistance?: number;
-  periodTotalCalories?: number;
-  periodAvgDistance?: number;
-  periodAvgCalories?: number;
+  periodDailyAvgCalories?: number;
 }
 
 const CHART_HEIGHT = 175;
-const Y_AXIS_WIDTH = 42;
+const Y_AXIS_WIDTH = 38;
 const TOP_PAD = 14;
 const BOTTOM_PAD = 10;
 const USABLE_HEIGHT = CHART_HEIGHT - TOP_PAD - BOTTOM_PAD; // 151px
 
-export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = ({
+export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
   activeColor = '#F97316',
   defaultChartType = 'bar',
-  defaultMetricMode = 'distance',
-  periodTotalDistance,
-  periodTotalCalories,
-  periodAvgDistance,
-  periodAvgCalories,
+  periodDailyAvgCalories,
 }) => {
-  const [metricMode, setMetricMode] = useState<MetricMode>(defaultMetricMode);
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
   const [canvasWidth, setCanvasWidth] = useState<number>(0);
-
-  const isDistance = metricMode === 'distance';
 
   const handleCanvasLayout = (e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
@@ -76,72 +59,31 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
     }
   };
 
-  // Extract current values based on active metric mode
-  const currentValues = useMemo(() => {
-    return days.map((d) => (isDistance ? d.distanceKm : d.calories));
-  }, [days, isDistance]);
-
-  // Aggregate totals and period averages
-  const { totalDistance, totalCalories, avgValue, maxValue } = useMemo(() => {
-    const count = Math.max(1, days.length);
-    const computedTotDist = days.reduce((sum, d) => sum + (d.distanceKm || 0), 0);
-    const computedTotCal = days.reduce((sum, d) => sum + (d.calories || 0), 0);
-
-    const finalTotDist = periodTotalDistance ?? Math.round(computedTotDist * 10) / 10;
-    const finalTotCal = periodTotalCalories ?? Math.round(computedTotCal);
-
-    const finalAvgDist = periodAvgDistance ?? Math.round((finalTotDist / count) * 10) / 10;
-    const finalAvgCal = periodAvgCalories ?? Math.round(finalTotCal / count);
-
-    const avg = isDistance ? finalAvgDist : finalAvgCal;
-    const maxVal = Math.max(0, ...currentValues);
-
-    return {
-      totalDistance: finalTotDist,
-      totalCalories: finalTotCal,
-      avgValue: avg,
-      maxValue: maxVal,
-    };
-  }, [
-    days,
-    isDistance,
-    currentValues,
-    periodTotalDistance,
-    periodTotalCalories,
-    periodAvgDistance,
-    periodAvgCalories,
-  ]);
-
-  // Calculate dynamic adaptive Y-axis bounds & ticks
-  const { maxY, yTicks } = useMemo(() => {
-    if (isDistance) {
-      // Distance bounds in km (e.g. 10.0, 8.0, 6.0, 4.0, 2.0, 0.0 or adaptive)
-      let ceiling = 8;
-      if (maxValue <= 4) ceiling = 5;
-      else if (maxValue <= 8) ceiling = 10;
-      else if (maxValue <= 15) ceiling = 16;
-      else ceiling = Math.ceil(maxValue / 5) * 5;
-
-      const step = ceiling / 5;
-      const ticks = [ceiling, ceiling - step, ceiling - step * 2, ceiling - step * 3, ceiling - step * 4, 0].map(
-        (v) => Math.round(v * 10) / 10
-      );
-      return { maxY: ceiling, yTicks: ticks };
-    } else {
-      // Calorie bounds in kcal (e.g. 500, 400, 300, 200, 100, 0 or adaptive)
-      let ceiling = 400;
-      if (maxValue <= 250) ceiling = 300;
-      else if (maxValue <= 500) ceiling = 600;
-      else if (maxValue <= 800) ceiling = 900;
-      else ceiling = Math.ceil(maxValue / 200) * 200;
-
-      const step = ceiling / 5;
-      const ticks = [ceiling, ceiling - step, ceiling - step * 2, ceiling - step * 3, ceiling - step * 4, 0].map(
-        (v) => Math.round(v)
-      );
-      return { maxY: ceiling, yTicks: ticks };
+  // Calculate period daily average
+  const avgValue = useMemo(() => {
+    if (typeof periodDailyAvgCalories === 'number') {
+      return Math.round(periodDailyAvgCalories);
     }
-  }, [isDistance, maxValue]);
+    const count = Math.max(1, days.length);
+    const sum = days.reduce((acc, d) => acc + (d.calories || 0), 0);
+    return Math.round(sum / count);
+  }, [days, periodDailyAvgCalories]);
+
+  // Dynamic adaptive Y-axis bounds & ticks
+  const { maxY, yTicks } = useMemo(() => {
+    const maxVal = Math.max(0, ...days.map((d) => d.calories));
+    let ceiling = 400;
+    if (maxVal <= 250) ceiling = 300;
+    else if (maxVal <= 500) ceiling = 600;
+    else if (maxVal <= 800) ceiling = 900;
+    else ceiling = Math.ceil(maxVal / 200) * 200;
+
+    const step = ceiling / 5;
+    const ticks = [ceiling, ceiling - step, ceiling - step * 2, ceiling - step * 3, ceiling - step * 4, 0].map(
+      (v) => Math.round(v)
+    );
+    return { maxY: ceiling, yTicks: ticks };
+  }, [days]);
 
   const numDays = Math.max(1, days.length);
   const colWidth = canvasWidth > 0 ? canvasWidth / numDays : 0;
@@ -149,10 +91,9 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
 
   // Selected Day data
   const selectedDay = days[selectedIndex] ?? days[0];
-  const selectedValue = selectedDay ? (isDistance ? selectedDay.distanceKm : selectedDay.calories) : 0;
-  const selectedUnit = isDistance ? 'km' : 'kcal';
+  const selectedCalories = selectedDay ? selectedDay.calories : 0;
 
-  // Helper function to map metric value to Y pixel position
+  // Helper function to map calorie value to Y pixel position
   const getY = (val: number) => {
     const clamped = Math.max(0, Math.min(maxY, val));
     return CHART_HEIGHT - BOTTOM_PAD - (clamped / maxY) * USABLE_HEIGHT;
@@ -162,10 +103,9 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
 
   // Calculate SVG line points for line chart mode
   const points = days.map((d, i) => {
-    const val = isDistance ? d.distanceKm : d.calories;
     const x = (i + 0.5) * colWidth;
-    const y = getY(val);
-    return { x, y, val };
+    const y = getY(d.calories);
+    return { x, y, val: d.calories };
   });
 
   const linePath = points.length > 0
@@ -183,9 +123,9 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
 
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Header: Title, Metric Segmented Switch, and Chart Type Toggle */}
+      {/* 1. Header: Title and Chart Type Toggle */}
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Distance & Calories</Text>
+        <Text style={styles.cardTitle}>Active Calorie Burn</Text>
         <ChartTypeToggle
           chartType={chartType}
           onChange={setChartType}
@@ -193,42 +133,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
         />
       </View>
 
-      {/* Metric Mode Toggle Tabs (Distance | Calories) */}
-      <View style={styles.modeToggleRow}>
-        <Pressable
-          style={[styles.modeTab, isDistance && styles.modeTabActive]}
-          onPress={() => setMetricMode('distance')}
-          accessibilityRole="button"
-          accessibilityLabel="Distance mode"
-        >
-          <Ionicons
-            name="location-sharp"
-            size={14}
-            color={isDistance ? '#FFFFFF' : '#64748B'}
-          />
-          <Text style={[styles.modeTabText, isDistance && styles.modeTabTextActive]}>
-            Distance (km)
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.modeTab, !isDistance && styles.modeTabActive]}
-          onPress={() => setMetricMode('calories')}
-          accessibilityRole="button"
-          accessibilityLabel="Calories mode"
-        >
-          <Ionicons
-            name="flame"
-            size={14}
-            color={!isDistance ? '#FFFFFF' : '#64748B'}
-          />
-          <Text style={[styles.modeTabText, !isDistance && styles.modeTabTextActive]}>
-            Calories (kcal)
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* 2. Subheader Legend Row: [● Selected]  [--- Daily Avg] */}
+      {/* 2. Subheader Legend Row: [● Selected]  [--- Daily Avg (X kcal)] */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: activeColor }]} />
@@ -247,7 +152,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
             />
           </Svg>
           <Text style={styles.legendText}>
-            Daily Avg ({avgValue} {selectedUnit})
+            Daily Avg ({avgValue} kcal)
           </Text>
         </View>
       </View>
@@ -290,27 +195,26 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
             <Animated.View entering={FadeIn.duration(180)} style={styles.barColumnsRow}>
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
-                const val = isDistance ? day.distanceKm : day.calories;
-                const barHeight = val <= 0
+                const barHeight = day.calories <= 0
                   ? 8
-                  : Math.max(12, (Math.min(val, maxY) / maxY) * USABLE_HEIGHT);
+                  : Math.max(12, (Math.min(day.calories, maxY) / maxY) * USABLE_HEIGHT);
 
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD + 2);
 
                 return (
                   <Pressable
-                    key={`bar_metric_${day.dateStr}_${idx}`}
+                    key={`bar_cal_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${val} ${selectedUnit}`}
+                    accessibilityLabel={`Day ${day.dayNum}: ${day.calories} kcal`}
                   >
                     {/* Floating Tooltip Pin for Selected Bar */}
                     {isSelected && (
                       <View style={[styles.barPinContainer, { bottom: pinBottom }]}>
                         <ChartTooltipPin
-                          valueText={selectedValue.toString()}
-                          unitText={selectedUnit}
+                          valueText={selectedCalories.toString()}
+                          unitText="kcal"
                           activeColor={activeColor}
                         />
                       </View>
@@ -339,7 +243,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
               {canvasWidth > 0 && points.length > 0 && (
                 <Svg width={canvasWidth} height={CHART_HEIGHT} style={StyleSheet.absoluteFill}>
                   <Defs>
-                    <LinearGradient id="metricAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <LinearGradient id="calorieAreaGrad" x1="0" y1="0" x2="0" y2="1">
                       <Stop offset="0" stopColor={activeColor} stopOpacity="0.22" />
                       <Stop offset="0.65" stopColor={activeColor} stopOpacity="0.08" />
                       <Stop offset="1" stopColor={activeColor} stopOpacity="0" />
@@ -347,7 +251,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
                   </Defs>
 
                   {/* Gradient Area Fill */}
-                  <Path d={areaPath} fill="url(#metricAreaGrad)" />
+                  <Path d={areaPath} fill="url(#calorieAreaGrad)" />
 
                   {/* Connecting Line */}
                   <Path
@@ -362,7 +266,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
                   {/* Nodes on Line */}
                   {points.map((p, i) => (
                     <Circle
-                      key={`metric_node_${i}`}
+                      key={`calorie_node_${i}`}
                       cx={p.x}
                       cy={p.y}
                       r={i === selectedIndex ? 6.5 : 5}
@@ -386,8 +290,8 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
                   ]}
                 >
                   <ChartTooltipPin
-                    valueText={selectedValue.toString()}
-                    unitText={selectedUnit}
+                    valueText={selectedCalories.toString()}
+                    unitText="kcal"
                     activeColor={activeColor}
                   />
                 </View>
@@ -395,18 +299,15 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
 
               {/* Touch Overlay to Select Days in Line Mode */}
               <View style={styles.touchOverlayRow}>
-                {days.map((day, idx) => {
-                  const val = isDistance ? day.distanceKm : day.calories;
-                  return (
-                    <Pressable
-                      key={`line_metric_touch_${day.dateStr}_${idx}`}
-                      style={styles.lineColTouch}
-                      onPress={() => onSelectDay(idx)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Day ${day.dayNum}: ${val} ${selectedUnit}`}
-                    />
-                  );
-                })}
+                {days.map((day, idx) => (
+                  <Pressable
+                    key={`line_cal_touch_${day.dateStr}_${idx}`}
+                    style={styles.lineColTouch}
+                    onPress={() => onSelectDay(idx)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Day ${day.dayNum}: ${day.calories} kcal`}
+                  />
+                ))}
               </View>
             </Animated.View>
           )}
@@ -421,7 +322,7 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
             const isSelected = idx === selectedIndex;
             return (
               <Pressable
-                key={`x_metric_label_${day.dateStr}_${idx}`}
+                key={`x_cal_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
@@ -437,37 +338,6 @@ export const StepDistanceCalorieCard: React.FC<StepDistanceCalorieCardProps> = (
               </Pressable>
             );
           })}
-        </View>
-      </View>
-
-      {/* 5. Period Total Summary Tiles: Distance & Calories */}
-      <View style={styles.summaryFooterRow}>
-        {/* Left Tile: Distance */}
-        <View style={styles.summaryTile}>
-          <View style={styles.summaryIconBox}>
-            <Ionicons name="location-outline" size={18} color="#EA580C" />
-          </View>
-          <View style={styles.summaryTextBox}>
-            <Text style={styles.summaryLabel}>Total Distance</Text>
-            <Text style={styles.summaryValue}>{totalDistance} km</Text>
-            <Text style={styles.summarySub}>
-              ~{Math.round((totalDistance / numDays) * 10) / 10} km/day
-            </Text>
-          </View>
-        </View>
-
-        {/* Right Tile: Active Calories */}
-        <View style={styles.summaryTile}>
-          <View style={styles.summaryIconBox}>
-            <Ionicons name="flame-outline" size={18} color="#EA580C" />
-          </View>
-          <View style={styles.summaryTextBox}>
-            <Text style={styles.summaryLabel}>Active Calories</Text>
-            <Text style={styles.summaryValue}>{totalCalories.toLocaleString()} kcal</Text>
-            <Text style={styles.summarySub}>
-              ~{Math.round(totalCalories / numDays)} kcal/day
-            </Text>
-          </View>
         </View>
       </View>
     </View>
@@ -501,46 +371,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
-  },
-  modeToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 12,
-  },
-  modeTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    borderRadius: 9,
-    gap: 6,
-  },
-  modeTabActive: {
-    backgroundColor: '#F97316',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#F97316',
-        shadowOffset: { width: 0, height: 1.5 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  modeTabText: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 12,
-    color: '#64748B',
-  },
-  modeTabTextActive: {
-    fontFamily: Fonts.poppins.bold,
-    color: '#FFFFFF',
   },
   legendRow: {
     flexDirection: 'row',
@@ -661,54 +491,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.bold,
     color: '#0F172A',
   },
-  summaryFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 18,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  summaryTile: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF9F6',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.04)',
-    gap: 10,
-  },
-  summaryIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryTextBox: {
-    flex: 1,
-  },
-  summaryLabel: {
-    fontFamily: Fonts.poppins.medium,
-    fontSize: 11,
-    color: '#64748B',
-  },
-  summaryValue: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 15,
-    color: '#0F172A',
-    letterSpacing: -0.2,
-  },
-  summarySub: {
-    fontFamily: Fonts.poppins.regular,
-    fontSize: 10,
-    color: '#94A3B8',
-    marginTop: 1,
-  },
 });
 
-export default StepDistanceCalorieCard;
+export default StepCalorieBurnCard;

@@ -5,3 +5,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
 # Project memory
 
 Read `MEMORY.md` for the full project context, architecture, and work history before making changes.
+
+# Verification Workflow
+
+Before running tests, ALWAYS run `npx tsc --noEmit` first. Only run tests if there are no TypeScript errors.
