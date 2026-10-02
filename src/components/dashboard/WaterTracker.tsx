@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ export interface WaterTrackerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const WaterTracker: React.FC<WaterTrackerProps> = ({
+const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
   initialWater,
   maxWater: propMaxWater,
   step: propStep,
@@ -48,20 +48,20 @@ export const WaterTracker: React.FC<WaterTrackerProps> = ({
   const step = propStep ?? DEFAULT_STEP;
   const dropletRef = useRef<DropletVisualizerRef>(null);
 
-  const handlePlus = () => {
+  const handlePlus = useCallback(() => {
     addWater(step, 'water');
     dropletRef.current?.triggerSlosh('up');
     onWaterChange?.(currentWater + step);
-  };
+  }, [addWater, step, onWaterChange, currentWater]);
 
-  const handleMinus = () => {
+  const handleMinus = useCallback(() => {
     if (currentWater > 0) {
       const deduct = Math.min(step, currentWater);
       addWater(-deduct, 'water');
       dropletRef.current?.triggerSlosh('down');
       onWaterChange?.(Math.max(0, currentWater - deduct));
     }
-  };
+  }, [addWater, step, currentWater, onWaterChange]);
 
   return (
     <View style={[styles.card, style]}>
@@ -251,3 +251,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export const WaterTracker = React.memo(WaterTrackerComponent);
+

@@ -468,6 +468,29 @@
     - **Chunky Orange Progress Bar**: Chunky 13px capsule progress bar in matching `#FF5B26` coral-orange animating from Starting weight to Goal weight.
     - **Range Footer**: Subtle Starting (`80.0 kg`) and Goal (`75.0 kg`) range indicators below the progress track.
     - **Testing**: Added unit test suite ([WeightTrackerCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/WeightTrackerCard.test.tsx)). All 18 test suites and 140 tests passing with 0 TypeScript compilation errors.
+51. **Dead Code Elimination, Interface Tightening & Re-Render Performance Optimization**:
+    - **Purged 6 Orphaned / Superseded Files & Duplicate Asset**:
+      - `WaterBottomDock.tsx`: Orphaned when dock controls were integrated directly into [HeroDropletCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/HeroDropletCard.tsx).
+      - `WeightDeltaCard.tsx` & `WeightContextCard.tsx`: Orphaned during the Weight Report chart streamlining.
+      - `SearchFoodModal.tsx`: 544 lines of dead prototype code superseded by [FoodLogModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/FoodLogModal.tsx).
+      - `DropletVisualizer.tsx` & `HeroDropletCard.tsx` shims in `src/components/dashboard/`: 2-line re-export shims with 0 references.
+      - `assets/icon.png`: Orphaned duplicate of `logo.png` (removed).
+    - **Barrel & Export Cleanup**:
+      - Cleaned barrel exports in `src/components/index.ts`, `src/components/water/index.ts`, and `src/components/report/index.ts`.
+    - **Component Interface Tightening & Dead Prop Elimination**:
+      - [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx): Removed unused `onOpenWaterTracker` and `onOpenWeightTracker` props.
+      - [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx): Removed unused `onAvatarPress`, `onSignInPress`, `onSignOutPress` from `TrackerScreenProps`.
+      - [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx): Removed 5 unused header callback props.
+      - [BottomNavBar.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/navigation/BottomNavBar.tsx): Removed unused `Platform`, `MealType`, `onQuickLogFood`, and `onQuickLogWater`.
+      - [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx): Removed dead callbacks (`handleQuickWater`, unused `useDailyLog` import) and stopped passing dead props.
+    - **Re-Render & Performance Optimization**:
+      - [TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx): Wrapped touch gesture handlers (`onTouchStart`, `onTouchEnd`) and calendar navigation (`handleOpenCalendar`, `prevMonth`, `nextMonth`) with `useCallback`.
+      - [WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx): Wrapped `handlePlus` and `handleMinus` with `useCallback` and wrapped component with `React.memo`.
+      - [WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx): Hoisted `toDisplayWeight` pure function, wrapped `handleSaveModal` with `useCallback`, and wrapped component with `React.memo`.
+      - [TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx): Wrapped `handleBarLayout` and `handleEditPress` with `useCallback` and wrapped component with `React.memo`.
+    - **Verification**:
+      - Full TypeScript type check (`npx tsc --noEmit`) passed with 0 errors.
+      - All 18 test suites and 140 unit tests passing.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
@@ -478,7 +501,7 @@
 - **One-time re-login** was required after switching auth persistence from AsyncStorage → SecureStore.
 - **Reduced motion** is respected in `AnimatedProgressBar`, `AnimatedSvgRing`, and the `FoodLogModal` toast (via `AccessibilityInfo.isReduceMotionEnabled()`).
 - **Native splash renders a single image only** — no text/layout, so "logo + wordmark" must be a pre-composited PNG.
-- **Android adaptive-icon assets are mismatched** (`android-icon-background.png` is a blue geometric design, `android-icon-monochrome.png` reads as a chevron, not the flame) — left unwired. `icon.png` is an orphan duplicate of `logo.png`.
+- **Android adaptive-icon assets are mismatched** (`android-icon-background.png` is a blue geometric design, `android-icon-monochrome.png` reads as a chevron, not the flame) — left unwired.
 - **No `expo-navigation-bar` config plugin** — light-only app, the OS already renders dark nav buttons correctly via color-scheme; `enforceContrast: false` would just disable useful OS logic.
 - **Metro config** keeps `unstable_enablePackageExports: false` for Firebase. Reanimated 4 uses package exports — if bundling errors ("cannot resolve react-native-worklets"), flip it to `true`.
 - **Android `elevation` polygon tessellation on circles:** Setting `elevation > 0` on circular `View` elements (`borderRadius: 50%`) forces Android's `ViewOutlineProvider` to approximate the circle using an 8-vertex polygon for 3D shadow casting, creating a visible octagon shape along borders. Fix: use `Platform.select({ ios: { shadow... }, android: { elevation: 0 } })` and integer `borderWidth: 2` on circular selections (e.g., [`CupSizeModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/CupSizeModal.tsx) and [`AvatarPickerModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/AvatarPickerModal.tsx)).
@@ -486,7 +509,6 @@
 ## Known / pending items
 
 - Verify the Reanimated bundle on a device (Metro resolution wasn't exercised in-session).
-- Optionally delete the orphaned `assets/icon.png`.
 - Optionally regenerate a proper Android monochrome + background adaptive-icon layer from the flame.
 - `expo-doctor` reports a pre-existing patch mismatch (`expo` / `@expo/metro-runtime`) — unrelated to the work above.
 

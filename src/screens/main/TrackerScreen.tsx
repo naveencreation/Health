@@ -34,9 +34,6 @@ export interface TrackerScreenProps {
   onOpenWeightTracker?: () => void;
   onSearchPress?: () => void;
   onNotificationsPress?: () => void;
-  onAvatarPress?: () => void;
-  onSignInPress?: () => void;
-  onSignOutPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;

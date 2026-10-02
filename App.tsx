@@ -15,7 +15,7 @@ import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
-import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
+import { HealthProvider, useAuth, useGoals } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { MealType } from '@/types';
@@ -50,7 +50,6 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 function MainApp() {
-  const { addWater } = useDailyLog();
   const { userGoals, updateGoals } = useGoals();
   const { isAuthenticated, isAuthLoading, currentUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('today');
@@ -248,10 +247,6 @@ function MainApp() {
     else slot = 'dinner';
     handleOpenFoodLogger(slot);
   }, [handleOpenFoodLogger]);
-
-  const handleQuickWater = React.useCallback(() => {
-    addWater(250);
-  }, [addWater]);
 
   const handleTabChange = React.useCallback((tab: TabType) => {
     if (waterTrackerVisible) {
@@ -454,8 +449,6 @@ function MainApp() {
               onAvatarPress={handleOpenAvatarModal}
               onSignInPress={handleOpenSignIn}
               onSignOutPress={handleSignOutPress}
-              onOpenWaterTracker={handleOpenWaterTracker}
-              onOpenWeightTracker={handleOpenWeightTracker}
             />
           )}
 
@@ -469,9 +462,6 @@ function MainApp() {
               onOpenWeightTracker={handleOpenWeightTracker}
               onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={handleOpenNotifications}
-              onAvatarPress={handleOpenAvatarModal}
-              onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOutPress}
             />
           )}
 
@@ -480,11 +470,6 @@ function MainApp() {
               scrollRef={analyticsScrollRef}
               initialScrollOffset={scrollOffsetsRef.current.analytics}
               onScrollPositionChange={saveAnalyticsScrollOffset}
-              onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={handleOpenNotifications}
-              onAvatarPress={handleOpenAvatarModal}
-              onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOutPress}
             />
           )}
 
@@ -527,8 +512,6 @@ function MainApp() {
         <BottomNavBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          onQuickLogFood={handleOpenFoodLogger}
-          onQuickLogWater={handleQuickWater}
           onOpenFoodVision={handleOpenFoodVision}
         />
         </SafeAreaView>

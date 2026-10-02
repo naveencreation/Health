@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -58,7 +58,7 @@ export interface TodayBMICardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const TodayBMICard: React.FC<TodayBMICardProps> = ({
+const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
   onOpenLogModal,
   style,
 }) => {
@@ -109,20 +109,20 @@ export const TodayBMICard: React.FC<TodayBMICardProps> = ({
     }).start();
   }, [progressRatio, barWidth, pointerAnim]);
 
-  const handleBarLayout = (e: LayoutChangeEvent) => {
+  const handleBarLayout = useCallback((e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
     if (width > 0 && width !== barWidth) {
       setBarWidth(width);
     }
-  };
+  }, [barWidth]);
 
-  const handleEditPress = () => {
+  const handleEditPress = useCallback(() => {
     if (onOpenLogModal) {
       onOpenLogModal();
     } else {
       setInternalModalVisible(true);
     }
-  };
+  }, [onOpenLogModal]);
 
   return (
     <>
@@ -291,3 +291,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export const TodayBMICard = React.memo(TodayBMICardComponent);
+

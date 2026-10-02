@@ -31,8 +31,6 @@ interface TodayScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
-  onOpenWaterTracker?: () => void;
-  onOpenWeightTracker?: () => void;
 }
 
 const TodayScreenComponent: React.FC<TodayScreenProps> = ({
@@ -46,8 +44,6 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   scrollRef,
   initialScrollOffset = 0,
   onScrollPositionChange,
-  onOpenWaterTracker,
-  onOpenWeightTracker,
 }) => {
   const [refreshing, setRefreshing] = useState(false);
 

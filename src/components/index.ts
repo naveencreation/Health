@@ -13,7 +13,6 @@ export { DropletVisualizer } from './water/DropletVisualizer';
 export { WaterGaugeVisualizer } from './water/WaterGaugeVisualizer';
 export { HeroDropletCard } from './water/HeroDropletCard';
 export { WaterHistoryCard } from './water/WaterHistoryCard';
-export { WaterBottomDock } from './water/WaterBottomDock';
 export { WaterEntryActionPopover } from './water/WaterEntryActionPopover';
 
 // Weight Tracking Components
@@ -29,7 +28,6 @@ export { AvatarPickerModal } from './modals/AvatarPickerModal';
 export { FoodLogModal } from './modals/FoodLogModal';
 export { NotificationModal } from './modals/NotificationModal';
 export { RiaChatModal } from './modals/RiaChatModal';
-export { SearchFoodModal } from './modals/SearchFoodModal';
 export { BYOKSetupModal } from './modals/BYOKSetupModal';
 export { FoodVisionModal } from './modals/FoodVisionModal';
 export { DailyWaterGoalModal } from './modals/DailyWaterGoalModal';
@@ -75,14 +73,12 @@ export {
   DrinkTypesCard,
   WeightSummaryCard,
   WeightTrendCard,
-  WeightDeltaCard,
-  WeightContextCard,
+  BMIGaugeCard,
   type ChartType,
   type DayCompletionData,
   type DayHydrateData,
   type DrinkTypeBreakdown,
   type WeightSummaryData,
   type DayWeightTrendData,
-  type DayWeightDeltaData,
-  type WeightContextBreakdown,
 } from './report';
+

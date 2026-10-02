@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -87,11 +87,11 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   // Touch gesture tracking for swipe navigation
   const touchStartX = useRef<number>(0);
 
-  const onTouchStart = (e: GestureResponderEvent) => {
+  const onTouchStart = useCallback((e: GestureResponderEvent) => {
     touchStartX.current = e.nativeEvent.pageX;
-  };
+  }, []);
 
-  const onTouchEnd = (e: GestureResponderEvent) => {
+  const onTouchEnd = useCallback((e: GestureResponderEvent) => {
     const dx = e.nativeEvent.pageX - touchStartX.current;
     if (dx > 48) {
       // Swiped right -> go to previous week
@@ -100,7 +100,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       // Swiped left -> go to next week
       shiftDate(7);
     }
-  };
+  }, [shiftDate]);
 
   // 7 Days of the currently selected week (SUN to SAT)
   const { weekDays, monthHeaderTitle } = useMemo(() => {
@@ -168,31 +168,33 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   }, [selectedDate, dailyLogs, budget, todayStr, isWater, isWeight, waterGoal]);
 
   // Open calendar synchronized to currently selected date's month
-  const handleOpenCalendar = () => {
+  const handleOpenCalendar = useCallback(() => {
     const d = parseDateString(selectedDate);
     setCalendarYear(d.getFullYear());
     setCalendarMonth(d.getMonth());
     setIsCalendarOpen(true);
-  };
+  }, [selectedDate]);
 
   // Calendar Modal Navigation
-  const prevMonth = () => {
-    if (calendarMonth === 0) {
-      setCalendarMonth(11);
-      setCalendarYear((y) => y - 1);
-    } else {
-      setCalendarMonth((m) => m - 1);
-    }
-  };
+  const prevMonth = useCallback(() => {
+    setCalendarMonth((m) => {
+      if (m === 0) {
+        setCalendarYear((y) => y - 1);
+        return 11;
+      }
+      return m - 1;
+    });
+  }, []);
 
-  const nextMonth = () => {
-    if (calendarMonth === 11) {
-      setCalendarMonth(0);
-      setCalendarYear((y) => y + 1);
-    } else {
-      setCalendarMonth((m) => m + 1);
-    }
-  };
+  const nextMonth = useCallback(() => {
+    setCalendarMonth((m) => {
+      if (m === 11) {
+        setCalendarYear((y) => y + 1);
+        return 0;
+      }
+      return m + 1;
+    });
+  }, []);
 
   // Generate days grid for month modal
   const monthGrid = useMemo(() => {

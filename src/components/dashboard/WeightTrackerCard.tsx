@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,10 @@ export interface WeightTrackerCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const WeightTrackerCard: React.FC<WeightTrackerCardProps> = ({
+const toDisplayWeight = (kg: number, unit: string) =>
+  unit === 'kg' ? kg : Math.round(kg * 2.20462 * 10) / 10;
+
+const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
   onOpenFullTracker,
   onWeightLogged,
   style,
@@ -49,10 +52,9 @@ export const WeightTrackerCard: React.FC<WeightTrackerCardProps> = ({
     : 65.0;
 
   // Convert for display if lbs
-  const toDisplay = (kg: number) => (unit === 'kg' ? kg : Math.round(kg * 2.20462 * 10) / 10);
-  const displayCurrent = toDisplay(currentWeight).toFixed(1);
-  const displayStart = toDisplay(startWeight).toFixed(1);
-  const displayGoal = toDisplay(goalWeight).toFixed(1);
+  const displayCurrent = toDisplayWeight(currentWeight, unit).toFixed(1);
+  const displayStart = toDisplayWeight(startWeight, unit).toFixed(1);
+  const displayGoal = toDisplayWeight(goalWeight, unit).toFixed(1);
 
   // Calculate Delta (vs previous weigh-in entry or vs startWeight)
   const delta = useMemo(() => {
@@ -78,7 +80,7 @@ export const WeightTrackerCard: React.FC<WeightTrackerCardProps> = ({
     return Math.round(diffFromStart * 10) / 10;
   }, [currentLog?.weightEntries, dailyLogs, selectedDate, currentWeight, startWeight]);
 
-  const displayDelta = toDisplay(Math.abs(delta)).toFixed(1);
+  const displayDelta = toDisplayWeight(Math.abs(delta), unit).toFixed(1);
   const isLoss = delta < 0;
   const isGain = delta > 0;
   const isZero = delta === 0;
@@ -113,9 +115,9 @@ export const WeightTrackerCard: React.FC<WeightTrackerCardProps> = ({
     width: `${progressSV.value}%`,
   }));
 
-  const handleSaveModal = (savedKg: number) => {
+  const handleSaveModal = useCallback((savedKg: number) => {
     onWeightLogged?.(savedKg);
-  };
+  }, [onWeightLogged]);
 
   return (
     <>
@@ -384,3 +386,6 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
 });
+
+export const WeightTrackerCard = React.memo(WeightTrackerCardComponent);
+

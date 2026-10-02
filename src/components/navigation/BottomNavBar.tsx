@@ -1,18 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { MealType } from '@/types';
 
 export type TabType = 'today' | 'tracker' | 'analytics' | 'profile';
 
 interface BottomNavBarProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
-  onQuickLogFood?: (mealType: MealType) => void;
-  onQuickLogWater?: () => void;
   onOpenFoodVision?: () => void;
 }
 
