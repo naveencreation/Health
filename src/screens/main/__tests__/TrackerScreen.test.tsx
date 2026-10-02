@@ -53,6 +53,11 @@ jest.mock('@/components', () => {
       </Pressable>
     ),
     TodayBMICard: () => <Text testID="today-bmi-card">TodayBMICard</Text>,
+    MovementTrackerCard: ({ onPressHeader }: any) => (
+      <Pressable testID="movement-tracker-card" onPress={onPressHeader}>
+        <Text>MovementTrackerCard</Text>
+      </Pressable>
+    ),
     DailyHabitsCard: () => <Text testID="daily-habits-card">DailyHabitsCard</Text>,
   };
 });
@@ -67,7 +72,7 @@ describe('TrackerScreen', () => {
     expect(getByTestId('water-tracker-card')).toBeTruthy();
     expect(getByTestId('weight-tracker-card')).toBeTruthy();
     expect(getByTestId('today-bmi-card')).toBeTruthy();
-    expect(getByTestId('daily-habits-card')).toBeTruthy();
+    expect(getByTestId('movement-tracker-card')).toBeTruthy();
   });
 
   test('wires onOpenRiaChat callback when Ria card is tapped', async () => {
@@ -92,5 +97,13 @@ describe('TrackerScreen', () => {
 
     fireEvent.press(getByTestId('weight-tracker-card'));
     expect(mockWeightTracker).toHaveBeenCalledTimes(1);
+  });
+
+  test('wires onOpenStepTracker callback when MovementTrackerCard is tapped', async () => {
+    const mockStepTracker = jest.fn();
+    const { getByTestId } = await render(<TrackerScreen onOpenStepTracker={mockStepTracker} />);
+
+    fireEvent.press(getByTestId('movement-tracker-card'));
+    expect(mockStepTracker).toHaveBeenCalledTimes(1);
   });
 });

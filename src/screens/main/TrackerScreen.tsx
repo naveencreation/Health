@@ -25,13 +25,14 @@ import {
   WaterTracker,
   WeightTrackerCard,
   TodayBMICard,
-  DailyHabitsCard,
+  MovementTrackerCard,
 } from '@/components';
 
 export interface TrackerScreenProps {
   onOpenRiaChat?: () => void;
   onOpenWaterTracker?: () => void;
   onOpenWeightTracker?: () => void;
+  onOpenStepTracker?: () => void;
   onSearchPress?: () => void;
   onNotificationsPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
@@ -53,6 +54,7 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
   onOpenRiaChat,
   onOpenWaterTracker,
   onOpenWeightTracker,
+  onOpenStepTracker,
   onSearchPress,
   onNotificationsPress,
   scrollRef,
@@ -206,8 +208,8 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
         {/* 5. Compact BMI Spectrum Card */}
         <TodayBMICard />
 
-        {/* 6. Dual Dial Daily Habits (Hydration & Activity) */}
-        <DailyHabitsCard />
+        {/* 6. Standalone Movement (Steps & Activity) Card */}
+        <MovementTrackerCard onPressHeader={onOpenStepTracker} />
       </Animated.ScrollView>
     </View>
   );

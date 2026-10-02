@@ -29,6 +29,7 @@ import {
   ProfileScreen,
   WaterTrackerScreen,
   WeightTrackerScreen,
+  StepTrackerScreen,
 } from '@/screens';
 
 // Components, Navigation & Modals
@@ -113,6 +114,23 @@ function MainApp() {
   const handleWeightTrackerClosed = useCallback(() => {
     setIsClosingWeightTracker(false);
     setWeightTrackerVisible(false);
+  }, []);
+
+  const [stepTrackerVisible, setStepTrackerVisible] = useState(false);
+  const [isClosingStepTracker, setIsClosingStepTracker] = useState(false);
+
+  const handleOpenStepTracker = useCallback(() => {
+    setIsClosingStepTracker(false);
+    setStepTrackerVisible(true);
+  }, []);
+
+  const handleCloseStepTracker = useCallback(() => {
+    setIsClosingStepTracker(true);
+  }, []);
+
+  const handleStepTrackerClosed = useCallback(() => {
+    setIsClosingStepTracker(false);
+    setStepTrackerVisible(false);
   }, []);
 
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
@@ -255,6 +273,9 @@ function MainApp() {
     if (weightTrackerVisible) {
       handleCloseWeightTracker();
     }
+    if (stepTrackerVisible) {
+      handleCloseStepTracker();
+    }
     if (tab === 'today' && activeTabRef.current === 'today') {
       todayScrollRef.current?.scrollTo({ y: 0, animated: true });
     } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
@@ -265,7 +286,7 @@ function MainApp() {
       profileScrollRef.current?.scrollTo({ y: 0, animated: true });
     }
     setActiveTab(tab);
-  }, [waterTrackerVisible, handleCloseWaterTracker, weightTrackerVisible, handleCloseWeightTracker]);
+  }, [waterTrackerVisible, handleCloseWaterTracker, weightTrackerVisible, handleCloseWeightTracker, stepTrackerVisible, handleCloseStepTracker]);
 
   const saveScrollOffset = React.useCallback((tab: TabType, offset: number) => {
     scrollOffsetsRef.current[tab] = Math.max(0, offset);
@@ -287,6 +308,7 @@ function MainApp() {
     signOutModalVisible,
     waterTrackerVisible,
     weightTrackerVisible,
+    stepTrackerVisible,
   });
 
   useEffect(() => {
@@ -301,6 +323,7 @@ function MainApp() {
       signOutModalVisible,
       waterTrackerVisible,
       weightTrackerVisible,
+      stepTrackerVisible,
     };
   }, [
     foodModalVisible,
@@ -313,6 +336,7 @@ function MainApp() {
     signOutModalVisible,
     waterTrackerVisible,
     weightTrackerVisible,
+    stepTrackerVisible,
   ]);
 
   // Android Hardware Back Handler - Single stable subscription
@@ -321,6 +345,7 @@ function MainApp() {
       const ms = modalStatesRef.current;
       if (ms.waterTrackerVisible) { handleCloseWaterTracker(); return true; }
       if (ms.weightTrackerVisible) { handleCloseWeightTracker(); return true; }
+      if (ms.stepTrackerVisible) { handleCloseStepTracker(); return true; }
       if (ms.foodModalVisible) { setFoodModalVisible(false); return true; }
       if (ms.foodVisionVisible) { setFoodVisionVisible(false); return true; }
       if (ms.byokSetupVisible) { setByokSetupVisible(false); return true; }
@@ -460,6 +485,7 @@ function MainApp() {
               onOpenRiaChat={handleOpenRiaChat}
               onOpenWaterTracker={handleOpenWaterTracker}
               onOpenWeightTracker={handleOpenWeightTracker}
+              onOpenStepTracker={handleOpenStepTracker}
               onSearchPress={handleGlobalSearchPress}
               onNotificationsPress={handleOpenNotifications}
             />
@@ -504,6 +530,18 @@ function MainApp() {
               zIndex={200}
             >
               <WeightTrackerScreen onBack={handleCloseWeightTracker} />
+            </SlideInSubScreen>
+          )}
+
+          {/* Slide-In Step Tracker Sub-Screen */}
+          {stepTrackerVisible && (
+            <SlideInSubScreen
+              screenWidth={Math.min(screenWidth, 480)}
+              isClosing={isClosingStepTracker}
+              onClosed={handleStepTrackerClosed}
+              zIndex={200}
+            >
+              <StepTrackerScreen onBack={handleCloseStepTracker} />
             </SlideInSubScreen>
           )}
         </View>

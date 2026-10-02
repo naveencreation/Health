@@ -491,6 +491,35 @@
     - **Verification**:
       - Full TypeScript type check (`npx tsc --noEmit`) passed with 0 errors.
       - All 18 test suites and 140 unit tests passing.
+52. **Standalone Movement Tracker Card Reference Alignment & Full Suite Fine-Tuning ([MovementTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/MovementTrackerCard.tsx), [DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx), [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx))**:
+    - **Architectural Motivation (Option A)**: Eliminated the redundant duplicate hydration pod from the legacy `DailyHabitsCard.tsx` (Card #3 on `TrackerScreen` is already the dedicated [WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx)). Transformed the legacy dual-dial card into a sleek, standalone **Movement** card matching the visual language of `WaterTracker`, `WeightTrackerCard`, and `TodayBMICard` (~105px base height, 20px continuous rounded corners, `#FFFFFF` card surface, `#0F172A` soft shadow).
+    - **Header & Metric Stack with Auto Distance**:
+      - Title row: `[ Movement › ]` with Kinetic Flame Orange chevron (`Feather chevron-right`, `#EA580C`), signaling navigation affordance.
+      - Stat stack: 32px bold number (`6,420`), medium unit (`steps`), and 3-biomarker context (`/ 10,000 steps • ~4.9 km • ~257 kcal`).
+      - Top-right action: Soft-tinted `+ Workout` pill button (`#FFF7ED` bg, `#FED7AA` border, `#EA580C` text & barbell icon) opening the workout logging modal.
+    - **Chunky Kinetic Flame Orange Progress Bar, Celebration Badge & Stepper Controls**:
+      - Chunky 12px capsule progress bar (`#FFEDD5` track, `#EA580C` fill via Reanimated `withTiming`).
+      - Goal progress readout: Shows `{actualStepPercent}% of daily goal` when under goal, or a golden celebration badge `[ ✨ Goal Smashed! (110%) ]` (`#FEF3C7` bg, `#B45309` text) when steps >= goal.
+      - Symmetrical steppers with Haptic feedback (`expo-haptics`): Circular outline minus stepper `( − )` (deducts 1,000 steps, disabled when steps <= 0) and soft-tinted plus stepper `( + 1k )` (adds 1,000 steps).
+    - **Collapsible Logged Workouts Section with Timestamps & Tap-to-Edit**:
+      - Hairline divider appearing only when `currentLog.activities` contains logged workouts.
+      - Header showing count (`Today's Workouts (1)`) and total active burn (`+130 kcal total`).
+      - Activity chips display contextual emoji (`🚶`, `🏋️`, `🏃`, `🧘`, `🚴`, `🏊`, `⚡`, `🏸`), name, duration, calories, and time stamp (e.g. `• 9:30 AM`).
+      - Tapping an activity chip enters edit mode (`Edit Activity` / `Update Workout`).
+      - 1-tap delete button with tactile haptic feedback.
+    - **Quick Workout Logging Modal with Proportional Calorie Calculation**:
+      - 8 curated presets: Brisk Walk (30m, 130 kcal), Gym / Weights (45m, 220 kcal), Running (25m, 240 kcal), Yoga & Stretch (35m, 110 kcal), Cycling (30m, 190 kcal), Swimming (30m, 240 kcal), HIIT & Cardio (20m, 180 kcal), Badminton (40m, 220 kcal).
+      - Proportional calorie auto-calculation: Changing duration automatically adjusts estimated calories according to activity burn rate per minute.
+    - **Backwards Compatibility**:
+      - Retained [DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx) as an alias re-exporting `MovementTrackerCard` with default `testID="daily-habits-card"`.
+    - **Testing**: Added unit test suite ([MovementTrackerCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/MovementTrackerCard.test.tsx)). All 19 test suites and 149 unit tests passing with 0 TypeScript compilation errors.
+
+28. **Step Tracker Screen Foundation & Slide-In Wiring** — wired dedicated sub-screen navigation to `[ Movement › ]`:
+    - Created [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx) with top safe-area insets, back button, title "Step Tracker", settings icon placeholder, scroll container, and Android hardware back handling.
+    - Exported `StepTrackerScreen` in [src/screens/index.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/index.ts).
+    - Wired `onOpenStepTracker` through [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx) to `<MovementTrackerCard onPressHeader={onOpenStepTracker} />`.
+    - Integrated `<SlideInSubScreen>` in [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx) with state management (`stepTrackerVisible`, `isClosingStepTracker`, open/close/closed callbacks, and hardware back dismissal).
+    - Added unit test suite [StepTrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/StepTrackerScreen.test.tsx) and updated [TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx). 20 test suites, 152 tests passing.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
