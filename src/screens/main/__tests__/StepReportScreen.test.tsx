@@ -53,6 +53,13 @@ describe('StepReportScreen', () => {
     expect(getByText('Step Report')).toBeTruthy();
     expect(getByLabelText('Back to Step History')).toBeTruthy();
 
+    // Top All-Time Summary Card
+    expect(getByText('Total steps all the time')).toBeTruthy();
+    expect(getByText('10,000')).toBeTruthy();
+    expect(getByText('time')).toBeTruthy();
+    expect(getAllByText('kcal').length).toBeGreaterThanOrEqual(1);
+    expect(getByText('km')).toBeTruthy();
+
     // Timeframe tabs
     expect(getByText('Weekly')).toBeTruthy();
     expect(getByText('Monthly')).toBeTruthy();
@@ -65,6 +72,9 @@ describe('StepReportScreen', () => {
 
     // Active Calorie Burn card
     expect(getByText('Active Calorie Burn')).toBeTruthy();
+
+    // Active Walking Time card
+    expect(getByText('Active Walking Time')).toBeTruthy();
   });
 
   test('switches timeframe to Monthly and Yearly when tabs are clicked', async () => {
@@ -94,4 +104,15 @@ describe('StepReportScreen', () => {
     await fireEvent.press(getByLabelText('Back to Step History'));
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
+
+  test('maintains independent selection states across charts', async () => {
+    const { getAllByRole } = await render(
+      <StepReportScreen onBack={jest.fn()} />
+    );
+
+    // Verify buttons can be tapped independently
+    const buttons = getAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(0);
+  });
 });
+

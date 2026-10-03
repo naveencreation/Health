@@ -18,6 +18,9 @@ import {
   DayStepData,
   StepCalorieBurnCard,
   DayCalorieData,
+  StepTimeDurationCard,
+  DayTimeData,
+  StepTotalSummaryCard,
 } from '@/components/report';
 import { calculateStepMetrics } from '@/utils/stepHistoryUtils';
 
@@ -48,8 +51,18 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
 
-  // Selected Day Index (defaulting to today's day of week: Mon=0, Sun=6)
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => {
+  // Independent Selected Day Index per chart so clicking one chart does not affect others
+  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  });
+  const [selectedCalorieIndex, setSelectedCalorieIndex] = useState<number>(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  });
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState<number>(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
     return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -220,15 +233,17 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
     if (newTimeframe !== timeframe) {
       setTimeframe(newTimeframe);
       setPeriodOffset(0); // Reset to current period
-      setSelectedDayIndex(0);
+      setSelectedStepIndex(0);
+      setSelectedCalorieIndex(0);
+      setSelectedTimeIndex(0);
     }
   };
 
-  // Safe selected index within bounds
-  const safeCompIndex = Math.min(
-    selectedDayIndex,
-    Math.max(0, dateRangeInfo.chartItems.length - 1)
-  );
+  // Safe selected indices within bounds for each independent chart
+  const maxChartIndex = Math.max(0, dateRangeInfo.chartItems.length - 1);
+  const safeStepIndex = Math.min(selectedStepIndex, maxChartIndex);
+  const safeCalorieIndex = Math.min(selectedCalorieIndex, maxChartIndex);
+  const safeTimeIndex = Math.min(selectedTimeIndex, maxChartIndex);
 
   // Derive calorie metrics for each period item
   const calorieItems: DayCalorieData[] = useMemo(() => {
@@ -242,6 +257,31 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
       };
     });
   }, [dateRangeInfo.chartItems]);
+
+  // Derive walking duration metrics for each period item
+  const timeItems: DayTimeData[] = useMemo(() => {
+    return dateRangeInfo.chartItems.map((item) => {
+      const metrics = calculateStepMetrics(item.steps);
+      return {
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        durationMinutes: metrics.durationMinutes,
+      };
+    });
+  }, [dateRangeInfo.chartItems]);
+
+  // Average daily duration minutes in current period
+  const periodDailyAvgDurationMinutes = useMemo(() => {
+    const totalDays = Math.max(1, dateRangeInfo.allDates.length);
+    let totalMins = 0;
+    for (const dStr of dateRangeInfo.allDates) {
+      const log = dailyLogs[dStr];
+      const s = log?.steps ?? 0;
+      totalMins += calculateStepMetrics(s).durationMinutes;
+    }
+    return Math.round(totalMins / totalDays);
+  }, [dateRangeInfo.allDates, dailyLogs]);
 
   // Comprehensive period totals & daily averages across all calendar dates in period
   const periodSummary = useMemo(() => {
@@ -273,10 +313,26 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
     };
   }, [dateRangeInfo.allDates, dailyLogs]);
 
+  // All-time step metrics across all recorded history
+  const allTimeSummary = useMemo(() => {
+    let allSteps = 0;
+    Object.values(dailyLogs).forEach((log) => {
+      allSteps += log?.steps ?? 0;
+    });
+    const metrics = calculateStepMetrics(allSteps);
+    return {
+      totalSteps: allSteps,
+      totalDurationMinutes: metrics.durationMinutes,
+      totalCalories: metrics.calories,
+      totalDistanceKm: metrics.distanceKm,
+    };
+  }, [dailyLogs]);
+
   return (
     <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 14) }]}>
-      {/* 1. Top Navigation Header */}
-      <View style={styles.headerRow}>
+      <View style={styles.mobileContainer}>
+        {/* 1. Top Navigation Header */}
+        <View style={styles.headerRow}>
         <Pressable
           style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
           onPress={onBack}
@@ -309,7 +365,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Timeframe Segmented Tabs (Weekly | Monthly | Yearly - Image 1) */}
+        {/* 1. Timeframe Segmented Tabs (Weekly | Monthly | Yearly) - Placed at the top matching other report screens */}
         <View style={styles.timeframeSegmentContainer}>
           {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
             const isActive = timeframe === tab;
@@ -338,7 +394,15 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
           })}
         </View>
 
-        {/* Date Range Navigator (< Sep 28 – Oct 4, 2026 > - Image 1) */}
+        {/* 2. All-Time Summary Card */}
+        <StepTotalSummaryCard
+          totalSteps={allTimeSummary.totalSteps}
+          totalDurationMinutes={allTimeSummary.totalDurationMinutes}
+          totalCalories={allTimeSummary.totalCalories}
+          totalDistanceKm={allTimeSummary.totalDistanceKm}
+        />
+
+        {/* 3. Date Range Navigator (< Sep 28 – Oct 4, 2026 >) */}
         <View style={styles.dateNavRow}>
           <Pressable
             style={({ pressed }) => [
@@ -375,26 +439,37 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
           </Pressable>
         </View>
 
-        {/* 1. Step Completion Bar & Line Chart Card (Image 2 & Image 3) */}
+        {/* 4. Chart 1: Step Completion Bar & Line Chart Card */}
         <StepCompletionCard
           days={dateRangeInfo.chartItems}
-          selectedIndex={safeCompIndex}
-          onSelectDay={setSelectedDayIndex}
+          selectedIndex={safeStepIndex}
+          onSelectDay={setSelectedStepIndex}
           stepGoal={dailyStepGoal}
           activeColor="#F97316"
           defaultChartType="bar"
         />
 
-        {/* 2. Active Calorie Burn Trend Card */}
+        {/* 5. Chart 2: Active Calorie Burn Trend Card */}
         <StepCalorieBurnCard
           days={calorieItems}
-          selectedIndex={safeCompIndex}
-          onSelectDay={setSelectedDayIndex}
+          selectedIndex={safeCalorieIndex}
+          onSelectDay={setSelectedCalorieIndex}
           activeColor="#EA580C"
           defaultChartType="bar"
           periodDailyAvgCalories={periodSummary.avgCalories}
         />
+
+        {/* 6. Chart 3: Active Walking Time Trend Card */}
+        <StepTimeDurationCard
+          days={timeItems}
+          selectedIndex={safeTimeIndex}
+          onSelectDay={setSelectedTimeIndex}
+          activeColor="#F97316"
+          defaultChartType="bar"
+          periodDailyAvgMinutes={periodDailyAvgDurationMinutes}
+        />
       </ScrollView>
+      </View>
     </View>
   );
 };
@@ -403,6 +478,12 @@ const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
     backgroundColor: '#FAF9F6',
+    alignItems: 'center',
+  },
+  mobileContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
   },
   headerRow: {
     flexDirection: 'row',

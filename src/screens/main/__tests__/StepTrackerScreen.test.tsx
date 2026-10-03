@@ -37,12 +37,20 @@ jest.mock('react-native-safe-area-context', () => ({
 
 const mockAddSteps = jest.fn();
 const mockBatchUpdateDailySteps = jest.fn();
+const mockTodayStr = (() => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+})();
+
 jest.mock('@/context/HealthContext', () => ({
   useDailyLog: () => ({
-    selectedDate: '2026-10-02',
+    selectedDate: mockTodayStr,
     currentLog: { steps: 5200 },
     dailyLogs: {
-      '2026-10-02': { steps: 5200 },
+      [mockTodayStr]: { steps: 5200 },
     },
     addSteps: mockAddSteps,
     batchUpdateDailySteps: mockBatchUpdateDailySteps,
@@ -128,7 +136,7 @@ describe('StepTrackerScreen', () => {
     });
     (health.getTodaySteps as jest.Mock).mockResolvedValue(7842);
     (health.syncRolling48Hours as jest.Mock).mockResolvedValue({
-      today: { dateStr: '2026-10-02', steps: 7842, records: [] },
+      today: { dateStr: mockTodayStr, steps: 7842, records: [] },
       yesterday: { dateStr: '2026-10-01', steps: 5000, records: [] },
     });
 
@@ -155,7 +163,7 @@ describe('StepTrackerScreen', () => {
       { dateStr: '2026-09-30', steps: 4500, records: [] },
     ]);
     (health.syncRolling48Hours as jest.Mock).mockResolvedValue({
-      today: { dateStr: '2026-10-02', steps: 8000, records: [] },
+      today: { dateStr: mockTodayStr, steps: 8000, records: [] },
       yesterday: { dateStr: '2026-10-01', steps: 6000, records: [] },
     });
 

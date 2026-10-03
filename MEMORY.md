@@ -633,6 +633,40 @@
     - **Interactive Day Selection & Tooltip Pin**: Tapping any day column positions `ChartTooltipPin` dynamically above the bar or node showing `{calories}` with `kcal` unit text.
     - **Clean Footer**: Clean X-axis row with day numbers, letting the card breathe without duplicate summary footer tiles.
     - **Testing & Verification**: Created `StepCalorieBurnCard.test.tsx` (all 4 tests pass). Clean `npx tsc --noEmit` with 0 compiler errors. Full suite of 24 step tests passing across 6 test suites.
+62. **Responsive Mobile Screen Layout & Proportion Alignment for Step Screens**:
+    - **Centered Mobile Viewport Containers ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx), [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepTrackerScreen.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Solved the ultra-wide stretching issue when running in web browser or tablet orientations by wrapping all screen content in `mobileContainer` (`maxWidth: 480`, `width: '100%'`, `alignItems: 'center'` on root).
+      - On physical mobile phones (width < 480px), automatically renders 100% full width edge-to-edge.
+      - On Web, Desktop, and Tablet browsers, centers as a crisp, authentic mobile phone viewport.
+    - **Responsive Bar Width & Gap Scaling ([StepCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCompletionCard.tsx), [StepCalorieBurnCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCalorieBurnCard.tsx))**:
+      - Changed `barWidth` lower bound from 22px to 10px (`Math.min(34, Math.max(10, Math.round(colWidth * 0.62)))`).
+      - Eliminates bar crowding and overlapping in 12-month Yearly view on mobile phones, while preserving chunky 28-34px capsule bars in Weekly (7-day) and Monthly (4-5 week) views.
+      - Added dynamic X-axis font scaling (`days.length > 7 && { fontSize: 10 }`) to guarantee 12 month labels never wrap on narrow devices.
+    - **History Metrics Grid Optimization ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Adjusted `valueText` font size to 14.5px, ensuring 4-digit formatted steps (`1,250`) and units never wrap or clip on narrow 360px Android devices.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 24 step unit tests pass across 6 test suites.
+63. **Step Report Top All-Time Summary Card ([StepTotalSummaryCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepTotalSummaryCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+    - **Visual Reference Match (1:1 Reference Screenshot)**: Built top summary card positioned at the very top of `StepReportScreen`:
+      - **Top Header**: Centered dual footsteps SVG (`#8B5CF6`), bold 34px total step count (e.g. `256,480`), and subtitle `"Total steps all the time"`.
+      - **Hairline Horizontal Divider**: Crisp `#F1F5F9` separator.
+      - **Bottom 3-Column Metrics Section with Hairline Dividers**:
+        1. **Duration**: Orange outline clock SVG (`#F97316`), bold formatted duration (e.g. `85h 24m` or `45m`), label `"time"`.
+        2. **Active Energy**: Red flame outline SVG (`#EF4444`), bold calorie count (e.g. `20,492`), label `"kcal"`.
+        3. **Distance**: Green location pin outline SVG (`#22C55E`), bold distance with 2 decimal places (e.g. `294.35`), label `"km"`.
+    - **All-Time Aggregation Engine**: `StepReportScreen` computes `allTimeSummary` from all recorded history in `dailyLogs`, aggregating total steps, active calorie burn, distance in km, and active walking duration.
+    - **Locale-Consistent Number Formatting**: Utilized `toLocaleString('en-US')` so digit groupings consistently adhere to 3-digit comma notation (e.g. `256,480`) across all devices and locales.
+    - **Component Export & Unit Tests**: Exported from `src/components/report/index.ts`. Created `StepTotalSummaryCard.test.tsx` and updated `StepReportScreen.test.tsx`.
+    - **Verification**: Verified with `npx tsc --noEmit` (0 errors) and Jest test suites (all 23 tests pass across 6 test suites).
+64. **Step Report Layout Harmonization, Decoupled Chart Selection & Active Walking Time Chart**:
+    - **Timeframe Segmented Tabs at Top ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**: Moved `timeframeSegmentContainer` (`Weekly | Monthly | Yearly`) to the very top of `scrollContent` above `StepTotalSummaryCard`, creating 100% structural parity with `WaterReportScreen.tsx` and `WeightReportScreen.tsx`.
+    - **Independent Multi-Chart Day Selection**: Decoupled the single shared selection state into three isolated state hooks: `selectedStepIndex`, `selectedCalorieIndex`, and `selectedTimeIndex` with bounds safety (`maxChartIndex`). Clicking any bar or node in one chart updates only that specific card's pin tooltip and bar highlight without affecting any other charts.
+    - **Active Walking Time Chart Component ([StepTimeDurationCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepTimeDurationCard.tsx))**:
+      - Built a dedicated time chart representing walking duration in minutes/hours corresponding to the `"time"` metric in `StepTotalSummaryCard`.
+      - **Modes**: Features `ChartTypeToggle` for Bar (rounded-top capsule bars) and Line (smooth curve, circular nodes, vertical gradient fill `#timeAreaGrad`).
+      - **Adaptive Y-Axis**: Dynamically generates readable bounds and ticks in hours/minutes (e.g. `2h`, `1.5h`, `1h`, `45m`, `30m`, `0`).
+      - **Tooltip Pin**: Speech bubble pin with downward tail showing formatted time (`X min` or `X.X hr`).
+      - **Subheader Legend**: Displays `● Selected` and `--- Daily Avg ({formattedDuration})`.
+    - **Testing & Verification**: Created `StepTimeDurationCard.test.tsx` and updated `StepReportScreen.test.tsx`. Passed strict `npx tsc --noEmit` verification (0 errors) and all 29 step unit tests pass across 7 test suites.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Platform,
   LayoutChangeEvent,
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -20,37 +19,35 @@ import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
-export interface DayStepData {
+export interface DayTimeData {
   dateStr: string;
   dayNum: number | string;
   dayName: string;
-  steps: number;
-  goalSteps: number;
-  completionPct: number;
+  durationMinutes: number;
 }
 
-export interface StepCompletionCardProps {
-  days: DayStepData[];
+export interface StepTimeDurationCardProps {
+  days: DayTimeData[];
   selectedIndex: number;
   onSelectDay: (index: number) => void;
-  stepGoal?: number;
   activeColor?: string;
   defaultChartType?: ChartType;
+  periodDailyAvgMinutes?: number;
 }
 
-const CHART_HEIGHT = 185;
-const Y_AXIS_WIDTH = 42;
+const CHART_HEIGHT = 175;
+const Y_AXIS_WIDTH = 38;
 const TOP_PAD = 14;
 const BOTTOM_PAD = 10;
-const USABLE_HEIGHT = CHART_HEIGHT - TOP_PAD - BOTTOM_PAD; // 161px
+const USABLE_HEIGHT = CHART_HEIGHT - TOP_PAD - BOTTOM_PAD; // 151px
 
-export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
+export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  stepGoal = 6000,
   activeColor = '#F97316',
   defaultChartType = 'bar',
+  periodDailyAvgMinutes,
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
   const [canvasWidth, setCanvasWidth] = useState<number>(0);
@@ -62,60 +59,86 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
     }
   };
 
-  // Adaptive Y-Axis calculation (matching 7000 down to 1000 or custom)
-  const { maxY, yTicks, stepGoalDisplay } = useMemo(() => {
-    const goal = stepGoal && stepGoal > 0 ? stepGoal : 6000;
-    const maxLogged = days.length > 0 ? Math.max(...days.map((d) => d.steps || 0)) : 0;
-    const highest = Math.max(goal, maxLogged);
-
-    let ceiling = 7000;
-    let step = 1000;
-
-    if (highest <= 3500) {
-      ceiling = 4000;
-      step = 500;
-    } else if (highest <= 7000) {
-      ceiling = 7000;
-      step = 1000;
-    } else if (highest <= 12000) {
-      ceiling = 12000;
-      step = 2000;
-    } else {
-      ceiling = Math.ceil(highest / 2000) * 2000;
-      step = Math.round(ceiling / 6);
+  // Calculate period daily average minutes
+  const avgValue = useMemo(() => {
+    if (typeof periodDailyAvgMinutes === 'number') {
+      return Math.round(periodDailyAvgMinutes);
     }
+    const count = Math.max(1, days.length);
+    const sum = days.reduce((acc, d) => acc + (d.durationMinutes || 0), 0);
+    return Math.round(sum / count);
+  }, [days, periodDailyAvgMinutes]);
 
-    const ticks: number[] = [];
-    const minTick = ceiling >= 7000 && step === 1000 ? 1000 : 0;
-    for (let v = ceiling; v >= minTick; v -= step) {
-      ticks.push(Math.round(v));
+  // Format duration into readable "1h 24m" or "45m"
+  const formatDurationDisplay = (mins: number) => {
+    if (mins <= 0) return '0m';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0) {
+      return m > 0 ? `${h}h ${m}m` : `${h}h`;
     }
+    return `${m}m`;
+  };
 
-    return { maxY: ceiling, yTicks: ticks, stepGoalDisplay: goal };
-  }, [days, stepGoal]);
+  // Dynamic adaptive Y-axis bounds & ticks
+  const { maxY, yTicks } = useMemo(() => {
+    const maxVal = Math.max(0, ...days.map((d) => d.durationMinutes));
+    let ceiling = 60;
+    if (maxVal <= 30) ceiling = 30;
+    else if (maxVal <= 60) ceiling = 60;
+    else if (maxVal <= 90) ceiling = 90;
+    else if (maxVal <= 120) ceiling = 120;
+    else if (maxVal <= 180) ceiling = 180;
+    else ceiling = Math.ceil(maxVal / 60) * 60;
+
+    const step = ceiling / 5;
+    const ticks = [ceiling, ceiling - step, ceiling - step * 2, ceiling - step * 3, ceiling - step * 4, 0].map(
+      (v) => Math.round(v)
+    );
+    return { maxY: ceiling, yTicks: ticks };
+  }, [days]);
+
+  // Format tick labels (e.g. 2h, 1.5h, 60m, 30m, 0)
+  const formatYTick = (mins: number) => {
+    if (mins === 0) return '0';
+    if (mins >= 60 && mins % 60 === 0) return `${mins / 60}h`;
+    if (mins >= 60) return `${(mins / 60).toFixed(1)}h`;
+    return `${mins}m`;
+  };
 
   const numDays = Math.max(1, days.length);
   const colWidth = canvasWidth > 0 ? canvasWidth / numDays : 0;
-  // Chunky capsule bar width responsive to screen width & timeframe
   const barWidth = Math.min(34, Math.max(10, Math.round(colWidth * 0.62)));
 
-  // Selected Day step data
+  // Selected Day data
   const selectedDay = days[selectedIndex] ?? days[0];
-  const selectedSteps = selectedDay ? selectedDay.steps : 0;
+  const selectedMinutes = selectedDay ? selectedDay.durationMinutes : 0;
 
-  // Helper function to map step value to Y pixel position
+  // Format pin text
+  const getPinData = (mins: number) => {
+    if (mins < 60) {
+      return { valueText: `${mins}`, unitText: 'min' };
+    }
+    const hours = (mins / 60).toFixed(1);
+    return {
+      valueText: hours.endsWith('.0') ? hours.slice(0, -2) : hours,
+      unitText: 'hr',
+    };
+  };
+
+  // Helper function to map duration to Y pixel position
   const getY = (val: number) => {
     const clamped = Math.max(0, Math.min(maxY, val));
     return CHART_HEIGHT - BOTTOM_PAD - (clamped / maxY) * USABLE_HEIGHT;
   };
 
-  const goalY = getY(stepGoalDisplay);
+  const avgY = getY(avgValue);
 
   // Calculate SVG line points for line chart mode
   const points = days.map((d, i) => {
     const x = (i + 0.5) * colWidth;
-    const y = getY(d.steps);
-    return { x, y, steps: d.steps };
+    const y = getY(d.durationMinutes);
+    return { x, y, val: d.durationMinutes };
   });
 
   const linePath = points.length > 0
@@ -130,12 +153,13 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
     : '';
 
   const selectedPoint = points[selectedIndex];
+  const selectedPin = getPinData(selectedMinutes);
 
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Card Header Row: Title & View Mode Toggle */}
+      {/* 1. Header: Title and Chart Type Toggle */}
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Step</Text>
+        <Text style={styles.cardTitle}>Active Walking Time</Text>
         <ChartTypeToggle
           chartType={chartType}
           onChange={setChartType}
@@ -143,7 +167,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
         />
       </View>
 
-      {/* 2. Subheader Legend Row: [● Selected]  [--- Step Goal] */}
+      {/* 2. Subheader Legend Row: [● Selected]  [--- Daily Avg (Xh Ym)] */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: activeColor }]} />
@@ -161,7 +185,9 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
               strokeDasharray="4, 3"
             />
           </Svg>
-          <Text style={styles.legendText}>Step Goal</Text>
+          <Text style={styles.legendText}>
+            Daily Avg ({formatDurationDisplay(avgValue)})
+          </Text>
         </View>
       </View>
 
@@ -169,16 +195,16 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
       <View style={styles.chartWrapper}>
         {/* Y-Axis Column */}
         <View style={styles.yAxisColumn}>
-          {yTicks.map((tick) => (
-            <Text key={`tick_${tick}`} style={styles.yTickText}>
-              {tick}
+          {yTicks.map((tick, idx) => (
+            <Text key={`time_tick_${tick}_${idx}`} style={styles.yTickText}>
+              {formatYTick(tick)}
             </Text>
           ))}
         </View>
 
         {/* Canvas Area */}
         <View style={styles.canvasContainer} onLayout={handleCanvasLayout}>
-          {/* SVG Overlay for Dashed Step Goal Line */}
+          {/* SVG Overlay for Dashed Daily Average Benchmark Line */}
           {canvasWidth > 0 && (
             <Svg
               width={canvasWidth}
@@ -188,9 +214,9 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
             >
               <Line
                 x1={0}
-                y1={goalY}
+                y1={avgY}
                 x2={canvasWidth}
-                y2={goalY}
+                y2={avgY}
                 stroke={activeColor}
                 strokeWidth={1.5}
                 strokeDasharray="6, 5"
@@ -199,37 +225,37 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
           )}
 
           {chartType === 'bar' ? (
-            /* Bar Chart Mode (Matching Image 2) */
+            /* Bar Chart Mode */
             <Animated.View entering={FadeIn.duration(180)} style={styles.barColumnsRow}>
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
-                const barHeight = day.steps <= 0
+                const barHeight = day.durationMinutes <= 0
                   ? 8
-                  : Math.max(12, (Math.min(day.steps, maxY) / maxY) * USABLE_HEIGHT);
+                  : Math.max(12, (Math.min(day.durationMinutes, maxY) / maxY) * USABLE_HEIGHT);
 
-                // Tooltip position directly above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD + 2);
+                const dayPin = getPinData(day.durationMinutes);
 
                 return (
                   <Pressable
-                    key={`bar_day_${day.dateStr}_${idx}`}
+                    key={`bar_time_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.steps.toLocaleString()} steps`}
+                    accessibilityLabel={`Day ${day.dayNum}: ${formatDurationDisplay(day.durationMinutes)}`}
                   >
                     {/* Floating Tooltip Pin for Selected Bar */}
                     {isSelected && (
                       <View style={[styles.barPinContainer, { bottom: pinBottom }]}>
                         <ChartTooltipPin
-                          valueText={selectedSteps.toLocaleString()}
-                          unitText="steps"
+                          valueText={dayPin.valueText}
+                          unitText={dayPin.unitText}
                           activeColor={activeColor}
                         />
                       </View>
                     )}
 
-                    {/* Rounded Top Bar */}
+                    {/* Rounded Top Capsule Bar */}
                     <View
                       style={[
                         styles.barPill,
@@ -247,12 +273,12 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
               })}
             </Animated.View>
           ) : (
-            /* Line / Area Chart Mode (Matching Image 3) */
+            /* Line / Area Chart Mode */
             <Animated.View entering={FadeIn.duration(180)} style={styles.lineAreaContainer}>
               {canvasWidth > 0 && points.length > 0 && (
                 <Svg width={canvasWidth} height={CHART_HEIGHT} style={StyleSheet.absoluteFill}>
                   <Defs>
-                    <LinearGradient id="stepAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <LinearGradient id="timeAreaGrad" x1="0" y1="0" x2="0" y2="1">
                       <Stop offset="0" stopColor={activeColor} stopOpacity="0.22" />
                       <Stop offset="0.65" stopColor={activeColor} stopOpacity="0.08" />
                       <Stop offset="1" stopColor={activeColor} stopOpacity="0" />
@@ -260,7 +286,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                   </Defs>
 
                   {/* Gradient Area Fill */}
-                  <Path d={areaPath} fill="url(#stepAreaGrad)" />
+                  <Path d={areaPath} fill="url(#timeAreaGrad)" />
 
                   {/* Connecting Line */}
                   <Path
@@ -275,7 +301,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                   {/* Nodes on Line */}
                   {points.map((p, i) => (
                     <Circle
-                      key={`node_${i}`}
+                      key={`time_node_${i}`}
                       cx={p.x}
                       cy={p.y}
                       r={i === selectedIndex ? 6.5 : 5}
@@ -299,8 +325,8 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                   ]}
                 >
                   <ChartTooltipPin
-                    valueText={selectedSteps.toLocaleString()}
-                    unitText="steps"
+                    valueText={selectedPin.valueText}
+                    unitText={selectedPin.unitText}
                     activeColor={activeColor}
                   />
                 </View>
@@ -310,11 +336,11 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
               <View style={styles.touchOverlayRow}>
                 {days.map((day, idx) => (
                   <Pressable
-                    key={`line_touch_${day.dateStr}_${idx}`}
+                    key={`line_time_touch_${day.dateStr}_${idx}`}
                     style={styles.lineColTouch}
                     onPress={() => onSelectDay(idx)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.steps.toLocaleString()} steps`}
+                    accessibilityLabel={`Day ${day.dayNum}: ${formatDurationDisplay(day.durationMinutes)}`}
                   />
                 ))}
               </View>
@@ -331,7 +357,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
             const isSelected = idx === selectedIndex;
             return (
               <Pressable
-                key={`x_label_${day.dateStr}_${idx}`}
+                key={`x_time_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
@@ -374,11 +400,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   cardTitle: {
     fontFamily: Fonts.poppins.bold,
-    fontSize: 19,
+    fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -387,7 +413,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     marginBottom: 14,
-    paddingLeft: 2,
   },
   legendItem: {
     flexDirection: 'row',
@@ -395,12 +420,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   legendDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   legendDashSvg: {
-    marginTop: 1,
+    marginRight: -2,
   },
   legendText: {
     fontFamily: Fonts.poppins.medium,
@@ -410,20 +435,21 @@ const styles = StyleSheet.create({
   chartWrapper: {
     flexDirection: 'row',
     height: CHART_HEIGHT,
+    position: 'relative',
   },
   yAxisColumn: {
     width: Y_AXIS_WIDTH,
     height: CHART_HEIGHT,
-    justifyContent: 'space-between',
     paddingTop: TOP_PAD - 7,
     paddingBottom: BOTTOM_PAD - 7,
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   yTickText: {
     fontFamily: Fonts.poppins.regular,
     fontSize: 11,
     color: '#94A3B8',
-    textAlign: 'left',
+    lineHeight: 14,
   },
   canvasContainer: {
     flex: 1,
@@ -436,7 +462,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     height: CHART_HEIGHT,
     paddingBottom: BOTTOM_PAD,
-    zIndex: 10,
   },
   dayColTouchable: {
     flex: 1,
@@ -447,22 +472,20 @@ const styles = StyleSheet.create({
   },
   barPinContainer: {
     position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 30,
+    alignItems: 'center',
+    zIndex: 10,
   },
   barPill: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    minHeight: 8,
   },
   lineAreaContainer: {
     flex: 1,
     height: CHART_HEIGHT,
     position: 'relative',
-    zIndex: 10,
   },
   linePinContainer: {
     position: 'absolute',
-    zIndex: 30,
+    zIndex: 10,
   },
   touchOverlayRow: {
     position: 'absolute',
@@ -475,27 +498,27 @@ const styles = StyleSheet.create({
   },
   lineColTouch: {
     flex: 1,
-    height: CHART_HEIGHT,
+    height: '100%',
   },
   xAxisRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   xAxisLabelsContainer: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   xLabelCol: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 2,
   },
   xLabelText: {
     fontFamily: Fonts.poppins.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: '#94A3B8',
   },
   xLabelTextSelected: {
     fontFamily: Fonts.poppins.bold,
@@ -503,4 +526,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StepCompletionCard;
+export default StepTimeDurationCard;

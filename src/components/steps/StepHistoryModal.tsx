@@ -281,8 +281,9 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
       statusBarTranslucent={true}
     >
       <View style={[styles.screenContainer, { paddingTop: Math.max(insets.top, 14) }]}>
-        {/* Top Header matching reference: [ ← ] [ Step Counter History ] [ 📅 ] */}
-        <View style={styles.topHeader}>
+        <View style={styles.mobileContainer}>
+          {/* Top Header matching reference: [ ← ] [ Step Counter History ] [ 📅 ] */}
+          <View style={styles.topHeader}>
           <Pressable
             style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
             onPress={onClose}
@@ -635,6 +636,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
             <StepReportScreen onBack={() => setIsClosingReport(true)} />
           </SlideInSubScreen>
         )}
+        </View>
       </View>
     </Modal>
   );
@@ -649,6 +651,13 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     backgroundColor: '#FAF9F6',
+    alignItems: 'center',
+  },
+  mobileContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    position: 'relative',
   },
   topHeader: {
     flexDirection: 'row',
@@ -750,7 +759,7 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontFamily: Fonts.poppins.semiBold,
-    fontSize: 15.5,
+    fontSize: 14.5,
     color: '#0F172A',
     letterSpacing: -0.2,
   },

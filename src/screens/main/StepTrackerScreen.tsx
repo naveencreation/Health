@@ -278,7 +278,8 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 1. Header with Back Button & Screen Title */}
+      <View style={styles.mobileContainer}>
+        {/* 1. Header with Back Button & Screen Title */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
         <Pressable
           style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
@@ -339,6 +340,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
           onOpenSettings={openHealthSettings}
         />
       </ScrollView>
+      </View>
     </View>
   );
 };
@@ -347,6 +349,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAF9F6',
+    alignItems: 'center',
+  },
+  mobileContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
   },
   header: {
     flexDirection: 'row',

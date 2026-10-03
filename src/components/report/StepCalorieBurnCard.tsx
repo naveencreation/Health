@@ -87,7 +87,7 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
 
   const numDays = Math.max(1, days.length);
   const colWidth = canvasWidth > 0 ? canvasWidth / numDays : 0;
-  const barWidth = Math.min(34, Math.max(22, Math.round(colWidth * 0.62)));
+  const barWidth = Math.min(34, Math.max(10, Math.round(colWidth * 0.62)));
 
   // Selected Day data
   const selectedDay = days[selectedIndex] ?? days[0];
@@ -330,6 +330,7 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
                 <Text
                   style={[
                     styles.xLabelText,
+                    days.length > 7 && { fontSize: 10 },
                     isSelected && styles.xLabelTextSelected,
                   ]}
                 >
