@@ -119,20 +119,17 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
 const styles = StyleSheet.create({
   gaugeContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   title: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#0F172A',
   },
@@ -144,7 +141,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   bigValue: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     color: '#0F172A',
     letterSpacing: -0.5,
@@ -154,7 +151,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   statusText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13.5,
   },
   statusUnder: {
@@ -267,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   tickText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10.5,
     color: '#94A3B8',
   },
@@ -278,12 +275,12 @@ const styles = StyleSheet.create({
     borderTopColor: '#F8FAFC',
   },
   contextText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11.5,
     color: '#64748B',
   },
   boldText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#334155',
   },
 });

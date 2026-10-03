@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface WeightGoalSettingsModalProps {
@@ -266,21 +267,21 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   modalSubtitle: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 12,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -303,38 +304,40 @@ const styles = StyleSheet.create({
   unitPillContainer: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     padding: 3,
     marginBottom: 14,
   },
   unitTab: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 13,
+    borderRadius: 8,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   unitTabActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   unitTabText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
   },
   unitTabTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
     color: '#0F172A',
   },
   stepperCard: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     padding: 12,
@@ -348,16 +351,19 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   stepperBtnText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#334155',
   },
   valueDisplay: {
@@ -367,13 +373,13 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontSize: 26,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     color: '#0F172A',
   },
   unitText: {
     fontSize: 14,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
     marginLeft: 4,
   },
@@ -383,7 +389,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0FDF4',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 14,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     gap: 8,
     marginTop: 6,
     marginBottom: 20,
@@ -392,24 +399,22 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#166534',
   },
   summaryBold: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
   },
   saveBtn: {
-    backgroundColor: '#FF5722', // Mockup's vibrant coral-orange
-    borderRadius: 16,
-    paddingVertical: 15,
+    backgroundColor: Colors.weight,
+    height: 52,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF5722',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   saveBtnPressed: {
     opacity: 0.88,
@@ -417,7 +422,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },

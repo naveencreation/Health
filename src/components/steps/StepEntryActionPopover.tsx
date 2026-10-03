@@ -159,12 +159,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   menuText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#0F172A',
   },
   deleteText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#EF4444',
   },

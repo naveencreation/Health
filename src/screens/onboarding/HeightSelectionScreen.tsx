@@ -15,6 +15,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 import { OnboardingHeader } from '@/components/onboarding';
 
 export type HeightUnit = 'cm' | 'ft';
@@ -389,11 +390,8 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
     justifyContent: 'space-between',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',
-        } as any)
-      : {}),
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressedSubtle: {
     opacity: 0.65,
@@ -408,7 +406,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   screenTitle: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 36,
     color: '#0F172A',
@@ -416,7 +414,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   screenSubtitle: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -431,8 +429,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     width: 200,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 10,
     borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     padding: 4,
     alignSelf: 'center',
     marginTop: 16,
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   unitButton: {
     flex: 1,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 8,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,17 +451,10 @@ const styles = StyleSheet.create({
   },
   unitButtonActive: {
     backgroundColor: '#FFFFFF',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.08)',
-        } as any)
-      : {
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-          elevation: 2,
-        }),
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   unitButtonInactive: {
     backgroundColor: 'transparent',
@@ -470,11 +463,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   unitTextActive: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#0F172A',
   },
   unitTextInactive: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
   },
 
@@ -492,20 +485,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   displayNumber: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 64,
     lineHeight: 72,
     color: '#0F172A',
     letterSpacing: -1,
   },
   displayUnit: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 22,
     color: '#64748B',
     marginLeft: 6,
   },
   displayUnitSmall: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 20,
     color: '#64748B',
     marginLeft: 4,
@@ -514,7 +507,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryCmHint: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#64748B',
     marginTop: -2,
@@ -530,13 +523,15 @@ const styles = StyleSheet.create({
     width: 280,
     height: 200,
     backgroundColor: '#F8FAFC',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
+    elevation: 0,
+    shadowOpacity: 0,
     ...(Platform.OS === 'web'
       ? ({
           cursor: 'grab',
@@ -616,12 +611,12 @@ const styles = StyleSheet.create({
     width: 48,
   },
   tickLabelDefault: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
   },
   tickLabelCenter: {
     color: '#0F172A',
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
   },
   tickLabelSpacer: {
@@ -662,24 +657,21 @@ const styles = StyleSheet.create({
     width: 220,
     height: 52,
     backgroundColor: Colors.primary,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   continueButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 0.2,
@@ -688,7 +680,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   skipText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     color: '#64748B',
   },
@@ -704,12 +696,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   signInLinkText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
   },
   signInLinkBold: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#F47551', // Calori Coral!
   },
 });

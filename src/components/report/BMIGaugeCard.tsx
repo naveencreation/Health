@@ -432,17 +432,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 2.5,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -451,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -465,7 +456,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statusPillText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#FFFFFF',
     letterSpacing: -0.1,
@@ -495,17 +486,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 4,
     backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1.5 },
-        shadowOpacity: 0.08,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
   },
   centerReadoutContainer: {
     position: 'absolute',
@@ -516,7 +496,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerBMINumber: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 38,
     color: '#0F172A',
     lineHeight: 44,
@@ -524,7 +504,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   centerBMILabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12.5,
     color: '#64748B',
     lineHeight: 16,
@@ -562,19 +542,19 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   categoryName: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
     color: '#64748B',
     letterSpacing: -0.1,
   },
   categoryRange: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
     color: '#64748B',
     letterSpacing: -0.1,
   },
   categoryTextActive: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
   },
 });

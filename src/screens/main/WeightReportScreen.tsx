@@ -429,33 +429,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F6',
   },
   navCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderCurve: 'continuous',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1.5 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
   },
   btnPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.96 }],
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -471,9 +459,9 @@ const styles = StyleSheet.create({
   timeframeSegmentContainer: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
-    borderRadius: 14,
+    borderRadius: 12,
     borderCurve: 'continuous',
-    padding: 4,
+    padding: 2.5,
     marginBottom: 16,
   },
   timeframeTab: {
@@ -486,25 +474,18 @@ const styles = StyleSheet.create({
   },
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   timeframeTabText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: '#64748B',
   },
   timeframeTabTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
   },
   dateNavRow: {
@@ -518,7 +499,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -526,8 +509,8 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   dateRangeText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 13.5,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
     color: '#0F172A',
     letterSpacing: -0.2,
   },

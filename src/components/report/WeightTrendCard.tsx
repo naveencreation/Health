@@ -49,7 +49,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
   onSelectDay,
   targetWeightKg,
   unit = 'kg',
-  activeColor = '#FF5B26',
+  activeColor = '#F43F5E',
   defaultChartType = 'line',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -470,22 +470,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 16,
     marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -493,7 +484,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -521,7 +512,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   legendText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12.5,
     color: '#64748B',
   },
@@ -537,7 +528,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   yTickText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#64748B',
   },
@@ -613,13 +604,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   dayNumText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
     lineHeight: 16,
   },
   dayNumTextSelected: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
   },
 });

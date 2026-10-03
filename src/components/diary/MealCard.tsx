@@ -307,31 +307,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 10,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   cardActive: {
     borderColor: 'rgba(15, 23, 42, 0.08)',
-    ...Platform.select({
-      ios: { shadowOpacity: 0.06 },
-      web: { shadowOpacity: 0.05 },
-      android: { elevation: 2 },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   dimmedCard: {
     opacity: 0.75,
@@ -378,7 +360,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mealTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
@@ -393,7 +375,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   recommendedText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11.5,
     color: '#64748B',
     marginTop: 2,
@@ -434,14 +416,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   calorieNumber: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     lineHeight: 22,
   },
   calorieUnit: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#94A3B8',
   },
@@ -455,23 +437,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(103, 189, 110, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.protein,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      web: {
-        shadowColor: Colors.protein,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   dimmedAddButton: {
     opacity: 0.65,
@@ -498,13 +465,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   foodName: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14.5,
     fontWeight: '600',
     color: '#0F172A',
   },
   foodServing: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#64748B',
     marginTop: 2,
@@ -519,7 +486,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 14,
+    borderRadius: 10,
     borderCurve: 'continuous',
     height: 30,
     paddingHorizontal: 5,
@@ -534,7 +501,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepperQty: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 12.5,
     fontWeight: '700',
     color: '#0F172A',
@@ -542,7 +509,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   foodCalories: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
@@ -568,7 +535,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FAF9F6', // Warm porcelain tint
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -589,16 +556,16 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
   },
   macroDotCarbs: {
-    backgroundColor: '#F8D558', // Warm Golden Amber
+    backgroundColor: Colors.carbs,
   },
   macroDotProtein: {
-    backgroundColor: '#67BD6E', // Fresh Avocado Leaf Green
+    backgroundColor: Colors.protein,
   },
   macroDotFat: {
-    backgroundColor: '#F47551', // Signature Sun Coral
+    backgroundColor: Colors.fat,
   },
   macroSummaryText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11.5,
     fontWeight: '600',
     color: '#334155',

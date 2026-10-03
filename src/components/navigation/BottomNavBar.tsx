@@ -135,13 +135,13 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }],
   },
   tabLabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
     color: '#8E95A2',
     marginTop: 3,
   },
   tabLabelActive: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
     color: Colors.iconNavy,
   },

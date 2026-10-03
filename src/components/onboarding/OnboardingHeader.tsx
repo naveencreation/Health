@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressedSubtle: {
     opacity: 0.7,
@@ -119,20 +119,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 2px 6px rgba(244, 117, 81, 0.35)',
-        } as any)
-      : {
-          shadowColor: Colors.primary,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-          elevation: 2,
-        }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   logoText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
     color: '#0F172A',
     letterSpacing: -0.4,
@@ -147,12 +138,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   stepIndicatorText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },

@@ -13,7 +13,7 @@ interface ChartTypeToggleProps {
 export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
   chartType,
   onChange,
-  activeColor = '#2563EB',
+  activeColor = '#F47551',
 }) => {
   const isBar = chartType === 'bar';
   const isLine = chartType === 'line';
@@ -64,24 +64,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    borderRadius: 10,
-    padding: 3,
+    borderRadius: 8,
+    padding: 2.5,
     gap: 2,
   },
   toggleBtn: {
     width: 32,
     height: 28,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   toggleBtnActive: {
-    backgroundColor: '#FF5B26',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: '#F47551',
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

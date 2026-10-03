@@ -44,7 +44,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  activeColor = '#2563EB',
+  activeColor = '#0284C7',
   defaultChartType = 'line',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -299,18 +299,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.05)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -324,7 +315,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -342,7 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   yTickText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#94A3B8',
     lineHeight: 13,
@@ -414,11 +405,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   xLabelText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
   xLabelTextSelected: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
   },
 });

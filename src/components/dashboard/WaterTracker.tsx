@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from '@/components/water/DropletVisualizer';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 
 const DEFAULT_STEP = 250;
 
@@ -161,23 +162,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   leftColumn: {
     flex: 1,
@@ -192,7 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -206,21 +192,21 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   mainStatText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     lineHeight: 38,
     color: '#0F172A',
     letterSpacing: -0.6,
   },
   unitText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 16,
     color: '#334155',
     marginLeft: 4,
     lineHeight: 22,
   },
   subStatText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
     color: '#64748B',
     marginTop: 2,
@@ -232,12 +218,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   controlButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    borderWidth: 1.5,
-    borderColor: '#0EA5E9',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: Colors.water,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',

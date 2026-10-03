@@ -207,23 +207,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -231,7 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -240,7 +225,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
     backgroundColor: '#FFFFFF',
@@ -258,14 +242,14 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   bmiNumber: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     color: '#0F172A',
     lineHeight: 38,
     letterSpacing: -0.6,
   },
   categoryName: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     color: '#64748B',
     marginLeft: 8,

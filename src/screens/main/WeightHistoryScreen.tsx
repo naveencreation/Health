@@ -105,7 +105,7 @@ const EmptyWeightHistoryIllustration: React.FC<{ onAdd?: () => void }> = ({ onAd
         d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z"
         fill="#FFF1EE"
       />
-      <Circle cx="50" cy="18" r="1.5" fill="#FF5722" />
+      <Circle cx="50" cy="18" r="1.5" fill={Colors.weight} />
     </Svg>
     <Text style={styles.emptyTitle}>No weight logs found</Text>
     <Text style={styles.emptySubtitle}>Weigh-in logs for previous days will appear here</Text>
@@ -424,7 +424,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                     >
                       {/* Left Scale Icon */}
                       <View style={styles.scaleIconBox}>
-                        <MaterialCommunityIcons name="scale-bathroom" size={22} color="#FF5722" />
+                        <MaterialCommunityIcons name="scale-bathroom" size={22} color={Colors.weight} />
                       </View>
 
                       {/* Weight, Time & Note */}
@@ -590,19 +590,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   navCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1.5,
   },
   btnPressed: {
     opacity: 0.7,
@@ -615,7 +610,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     textAlign: 'center',
@@ -629,17 +624,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   navAddBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: Colors.weight,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.weight,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   headerRightSpacer: {
     width: 40,
@@ -654,7 +644,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   groupHeaderTitle: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: '#94A3B8',
     paddingHorizontal: 20,
@@ -662,18 +652,15 @@ const styles = StyleSheet.create({
   },
   groupCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     marginHorizontal: 16,
     paddingHorizontal: 18,
     paddingVertical: 4,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   entryRow: {
     flexDirection: 'row',
@@ -685,9 +672,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#F8FAFC',
   },
   scaleIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 10,
     borderCurve: 'continuous',
     backgroundColor: '#FFF1EE',
     alignItems: 'center',
@@ -704,13 +691,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   weightText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15.5,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   timeText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#94A3B8',
   },
@@ -724,7 +711,7 @@ const styles = StyleSheet.create({
   },
   tagPillText: {
     fontSize: 11,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#475569',
   },
   deltaBadge: {
@@ -749,7 +736,7 @@ const styles = StyleSheet.create({
   },
   deltaText: {
     fontSize: 12.5,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#10B981',
   },
   deltaTextGain: {
@@ -769,13 +756,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   emptyTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#334155',
     marginTop: 12,
   },
   emptySubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#94A3B8',
     marginTop: 4,
@@ -788,16 +775,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.weight,
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 14,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     marginTop: 18,
-    shadowColor: Colors.weight,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   emptyAddBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 13.5,
     color: '#FFFFFF',
   },
@@ -812,7 +797,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#0F172A',
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 16,
     shadowColor: '#000',
@@ -829,7 +815,7 @@ const styles = StyleSheet.create({
   },
   undoToastText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#FFFFFF',
     flex: 1,
   },
@@ -844,7 +830,7 @@ const styles = StyleSheet.create({
   },
   undoBtnText: {
     fontSize: 12.5,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#38BDF8',
   },
 });

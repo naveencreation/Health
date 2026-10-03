@@ -90,8 +90,8 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
         <View style={styles.metricsBar}>
           {/* A. Steps Metric */}
           <View style={styles.metricItem}>
-            <View style={[styles.metricIconCircle, { backgroundColor: '#FFEDD5' }]}>
-              <Ionicons name="footsteps" size={15} color="#EA580C" />
+            <View style={[styles.metricIconCircle, { backgroundColor: Colors.stepsTrack }]}>
+              <Ionicons name="footsteps" size={15} color={Colors.steps} />
             </View>
             <Text style={styles.metricValue} numberOfLines={1}>
               {currentSteps.toLocaleString()}
@@ -154,11 +154,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 16,
     marginHorizontal: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 14,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: 20,
   },
   cardHeader: {
@@ -169,7 +166,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cardEyebrow: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
     color: '#64748B',
     letterSpacing: 0.8,
@@ -182,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   progressPillText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#475569',
   },
@@ -197,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3C7',
   },
   celebrationText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
     color: '#B45309',
   },
@@ -229,14 +226,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   metricValue: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     color: '#0F172A',
     letterSpacing: -0.2,
     textAlign: 'center',
   },
   metricLabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 9.5,
     color: '#94A3B8',
     letterSpacing: 0.5,

@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
   },
   editText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   deleteText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#EF4444',
     letterSpacing: -0.2,

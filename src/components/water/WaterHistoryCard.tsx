@@ -667,11 +667,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 1,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -690,12 +687,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0F2FE',
   },
   countBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#0284C7',
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -708,7 +705,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   viewAllText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: Colors.water,
   },
@@ -726,7 +723,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   emptyTitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#94A3B8',
     marginTop: 8,
@@ -757,18 +754,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   beverageName: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
   },
   beverageTime: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#94A3B8',
     marginTop: 1,
   },
   beverageAmount: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#0F172A',
     marginRight: 8,
@@ -787,7 +784,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   moreFooterText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
@@ -825,14 +822,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionSheetTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     color: '#0F172A',
     textAlign: 'center',
     marginBottom: 2,
   },
   actionSheetSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
@@ -879,17 +876,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionMenuPrimaryText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
   },
   deleteActionPrimaryText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#EF4444',
   },
   actionMenuSecondaryText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#94A3B8',
     marginTop: 1,
@@ -909,14 +906,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   deleteConfirmTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     color: '#0F172A',
     textAlign: 'center',
     marginBottom: 6,
   },
   deleteConfirmSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
@@ -934,7 +931,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deleteConfirmBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#FFFFFF',
   },
@@ -947,7 +944,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#475569',
   },
@@ -989,12 +986,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   editModalTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
   },
   editModalSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#94A3B8',
     marginTop: 1,
@@ -1030,12 +1027,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   stepperValueText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 36,
     color: '#0F172A',
   },
   stepperUnitText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#64748B',
   },
@@ -1059,12 +1056,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.water,
   },
   presetChipText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
   presetChipTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: Colors.water,
   },
   saveEditBtn: {
@@ -1077,7 +1074,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   saveEditBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#FFFFFF',
   },
@@ -1130,12 +1127,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   viewAllModalTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
   },
   viewAllModalSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
     marginTop: 2,
@@ -1161,7 +1158,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   editSectionLabel: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: '#334155',
   },
@@ -1187,12 +1184,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   editBeverageChipText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#475569',
   },
   editBeverageChipTextSelected: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
   },
   btnPressed: {
     opacity: 0.75,

@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   baseText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
     lineHeight: 20.5,
     color: '#1E293B',
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   boldText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
   },
   boldRia: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   heading1: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     fontSize: 17,
     lineHeight: 23,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heading2: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     fontSize: 15.5,
     lineHeight: 21,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   heading3: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
     fontSize: 14,
     lineHeight: 20,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
   },
   numberPrefixText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     fontSize: 13,
     lineHeight: 20,

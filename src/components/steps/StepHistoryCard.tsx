@@ -244,8 +244,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   viewAllText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: Colors.steps,
   },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   dateSubtitle: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#94A3B8',
     marginBottom: 10,
@@ -276,11 +276,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
     overflow: 'hidden',
   },
   listArea: {
@@ -322,7 +319,7 @@ const styles = StyleSheet.create({
     flex: 1.0,
   },
   valueText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15.5,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -340,13 +337,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#0F172A',
     marginTop: 12,
   },
   emptySubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#64748B',
     textAlign: 'center',

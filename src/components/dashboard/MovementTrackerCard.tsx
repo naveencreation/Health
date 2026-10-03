@@ -465,23 +465,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   topRow: {
     flexDirection: 'row',
@@ -501,7 +486,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -515,21 +500,21 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   mainStatText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     lineHeight: 38,
     color: '#0F172A',
     letterSpacing: -0.6,
   },
   unitText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 16,
     color: '#334155',
     marginLeft: 4,
     lineHeight: 22,
   },
   subStatText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
     color: '#64748B',
     marginTop: 2,
@@ -538,32 +523,21 @@ const styles = StyleSheet.create({
   workoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.stepsLight, // #FFF7ED
+    backgroundColor: Colors.stepsLight,
     borderWidth: 1,
-    borderColor: Colors.stepsBorder, // #FED7AA
+    borderColor: Colors.stepsBorder,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     gap: 4,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.steps,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
   },
   workoutButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.96 }],
   },
   workoutButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: Colors.steps,
     fontWeight: '600',
@@ -571,18 +545,18 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.stepsTrack, // #FFEDD5
+    backgroundColor: Colors.stepsTrack,
     overflow: 'hidden',
     marginTop: 14,
     width: '100%',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.steps, // #EA580C
+    backgroundColor: Colors.steps,
     borderRadius: 6,
   },
   progressFillCelebration: {
-    backgroundColor: '#EA580C',
+    backgroundColor: Colors.steps,
   },
   footerRow: {
     flexDirection: 'row',
@@ -591,12 +565,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   percentText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.steps,
   },
   percentSubText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
   },
@@ -611,7 +585,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   goalReachedText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
     color: '#B45309',
   },
@@ -652,7 +626,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   stepAddBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11.5,
     color: Colors.steps,
   },
@@ -670,12 +644,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   activitiesSectionTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#475569',
   },
   activitiesTotalBurn: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
     color: Colors.steps,
   },
@@ -706,23 +680,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activityChipName: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#1E293B',
     maxWidth: 120,
   },
   activityMetaText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#64748B',
   },
   activityBurnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11.5,
     color: Colors.steps,
   },
   activityTimeText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10.5,
     color: '#94A3B8',
   },
@@ -747,20 +721,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 12,
     borderCurve: 'continuous',
     padding: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.14,
-        shadowRadius: 24,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -774,20 +742,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   modalTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
   },
   modalSubtitle: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
     marginBottom: 8,
   },
   modalSubtitleMt14: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
@@ -803,7 +771,7 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: '#FAF9F6',
     padding: 10,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -813,14 +781,14 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.97 }],
   },
   quickName: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     fontWeight: '600',
     color: '#1E293B',
     marginTop: 4,
   },
   quickMeta: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10,
     color: '#64748B',
   },
@@ -832,7 +800,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 9,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#0F172A',
     marginTop: 4,
@@ -846,16 +814,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputLabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#64748B',
   },
   saveWorkoutBtn: {
     backgroundColor: Colors.steps,
-    borderRadius: 14,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    paddingVertical: 12,
+    height: 48,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
   saveBtnPressed: {
@@ -863,7 +832,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   saveWorkoutBtnText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',

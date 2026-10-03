@@ -256,9 +256,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -268,19 +268,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   headerSpacer: {
-    width: 34,
+    width: 38,
   },
   headerTitleCenter: {
     alignItems: 'center',
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 1,
@@ -298,7 +298,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 18,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -312,17 +313,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 0,
-      },
-    }),
   },
   heroCheckBadge: {
     position: 'absolute',
@@ -337,7 +327,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   heroAvatarName: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     color: Colors.textPrimary,
     marginTop: 8,
@@ -354,21 +344,19 @@ const styles = StyleSheet.create({
   avatarGridCard: {
     width: '31.3%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 6,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     marginBottom: 8,
   },
   avatarGridCardActive: {
     backgroundColor: '#FFFBF9',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    elevation: 3,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   pressedGridCard: {
     opacity: 0.8,
@@ -399,7 +387,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   gridAvatarName: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: Colors.textPrimary,
     textAlign: 'center',
@@ -422,10 +410,13 @@ const styles = StyleSheet.create({
   confirmBtn: {
     flexDirection: 'row',
     backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 14,
+    height: 52,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   pressedConfirmBtn: {
     opacity: 0.85,
@@ -435,7 +426,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   confirmBtnText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     color: '#FFFFFF',
   },

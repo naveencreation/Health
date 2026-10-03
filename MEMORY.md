@@ -702,6 +702,13 @@
       - Uploaded refined [DESIGN.md](file:///c:/Users/navee/Videos/Calorify/calori/DESIGN.md) via `upload_design_md` to Stitch project `4569112279491298338` (*Calorify Mobile Onboarding Flow*).
       - Generated updated Stitch design system `assets/ce0acd05616241f58c62f7e99a0c26f4` (*"Calorify Architectural Modernist"*).
       - Applied the updated design system to Stitch screens using `apply_design_system`.
+35. **Complete Design System Standardization (Phase 1–6 Rollout)**:
+    - Standardized all 6 groups of screens and components against the locked Design System in `DESIGN.md`:
+      - **Typography**: 100% pure Urbanist typography (`Fonts.urbanist.*`). `Kurale` remains strictly quarantined to the brand logo wordmark on the splash screen. `Fonts.poppins` completely purged from all screens and components.
+      - **Zero Shadows on Canvas**: Purged all card drop shadows (`elevation: 0`, `shadowOpacity: 0`). Framed canvas cards with crisp 1px borders (`rgba(15, 23, 42, 0.06)`). Only floating popovers/toasts retain subtle shadows.
+      - **Architectural Squircles**: Fixed canvas cards at `borderRadius: 10`, `borderCurve: 'continuous'`.
+      - **Buttons & Controls**: Primary CTAs standardized to `height: 52`, `borderRadius: 10`, `borderCurve: 'continuous'`, zero elevation/shadow. Circular action buttons standardized to 38×38, `borderRadius: 19`, 1px border `rgba(15, 23, 42, 0.08)`.
+      - **Verification**: Validated zero TypeScript errors (`npx tsc --noEmit` exited 0) and 100% test suite passing (30/30 test suites, 199/199 tests passing).
 
 
 

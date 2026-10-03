@@ -25,7 +25,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // ~355.0
 
 // Template sample breakdown matching the reference design
 export const DEFAULT_SAMPLE_BREAKDOWN: DrinkTypeBreakdown[] = [
-  { id: 'water', name: 'Water', color: '#2563EB', amountMl: 1250, pct: 50 },
+  { id: 'water', name: 'Water', color: '#0284C7', amountMl: 1250, pct: 50 },
   { id: 'juice', name: 'Juice', color: '#F97316', amountMl: 375, pct: 15 },
   { id: 'coffee', name: 'Coffee', color: '#78350F', amountMl: 300, pct: 12 },
   { id: 'tea', name: 'Tea', color: '#EA580C', amountMl: 200, pct: 8 },
@@ -166,21 +166,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.05)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -209,14 +200,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   donutCenterPct: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     lineHeight: 22,
     letterSpacing: -0.3,
   },
   donutCenterLabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 9.5,
     color: '#94A3B8',
     textAlign: 'center',
@@ -243,13 +234,13 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   legendItemText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#334155',
     flexShrink: 1,
   },
   legendItemPct: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11.5,
     color: '#64748B',
   },

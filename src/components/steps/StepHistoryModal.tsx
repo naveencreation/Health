@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F6',
   },
   screenTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   dateHeaderText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13.5,
     color: '#8E95A5',
     marginRight: 12,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     flex: 1.0,
   },
   valueText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14.5,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   expandToggleText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#64748B',
   },
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   totalLabel: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13.5,
     color: '#94A3B8',
     marginRight: 10,
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayEmptyText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#94A3B8',
   },
@@ -831,13 +831,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#0F172A',
     marginTop: 16,
   },
   emptySub: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   calendarMonthTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#0F172A',
   },
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
   calendarWeekdayText: {
     width: 36,
     textAlign: 'center',
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#94A3B8',
   },
@@ -920,13 +920,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F97316',
   },
   calendarDayText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#0F172A',
   },
   calendarDayTextSelected: {
     color: '#FFFFFF',
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
   },
   calendarStepDot: {
     position: 'absolute',

@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 import { OnboardingHeader } from '@/components/onboarding';
 
 interface AgeSelectionScreenProps {
@@ -339,15 +340,9 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
     justifyContent: 'space-between',
-    // Desktop frame preview shadow
-    ...(Platform.OS === 'web'
-      ? {
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.08,
-          shadowRadius: 30,
-        }
-      : {}),
+    // Desktop frame preview border
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
 
   // Title: What’s your Age?
@@ -358,7 +353,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   screenTitle: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 36,
     color: '#0F172A',
@@ -366,7 +361,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   screenSubtitle: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -395,19 +390,12 @@ const styles = StyleSheet.create({
     width: 138,
     height: 84,
     backgroundColor: Colors.primary,
-    borderRadius: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignSelf: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 6,
+    elevation: 0,
+    shadowOpacity: 0,
     pointerEvents: 'none',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 8px 24px rgba(244, 117, 81, 0.4)',
-        } as any)
-      : {}),
   },
   pickerScrollView: {
     width: '100%',
@@ -446,7 +434,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.96 }],
   },
   selectedAgeText: {
-    fontFamily: 'Kurale_400Regular',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 68,
     lineHeight: 80,
     color: '#FFFFFF',
@@ -454,7 +442,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   ageTextMid: {
-    fontFamily: 'Kurale_400Regular',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 44,
     lineHeight: 80,
     textAlign: 'center',
@@ -462,7 +450,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   ageTextDim: {
-    fontFamily: 'Kurale_400Regular',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 34,
     lineHeight: 80,
     textAlign: 'center',
@@ -480,23 +468,21 @@ const styles = StyleSheet.create({
     width: 220,
     height: 52,
     backgroundColor: Colors.primary,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   continueButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 0.2,
@@ -505,7 +491,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   skipText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     color: '#64748B',
   },
@@ -521,12 +507,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   signInLinkText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
   },
   signInLinkBold: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#F47551',
   },
 });

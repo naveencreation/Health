@@ -384,20 +384,19 @@ const styles = StyleSheet.create({
   },
   pillActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   pillText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12.5,
     color: '#64748B',
     includeFontPadding: false,
   },
   pillTextActive: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: Colors.primary,
   },
   telemetryCard: {
@@ -407,12 +406,9 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -421,7 +417,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#0F172A',
   },
@@ -433,7 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   goalPillText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
@@ -447,13 +443,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   bigWeightValue: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     color: '#0F172A',
     letterSpacing: -0.5,
   },
   weightUnit: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#64748B',
   },
@@ -469,7 +465,7 @@ const styles = StyleSheet.create({
   },
   weightTrackFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.weight,
     borderRadius: 4,
   },
   milestonesRow: {
@@ -479,19 +475,19 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   milestoneText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10.5,
     color: '#94A3B8',
   },
   milestoneProgressText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10.5,
-    color: Colors.primary,
+    color: Colors.weight,
   },
   milestoneTextActive: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10.5,
-    color: Colors.primary,
+    color: Colors.weight,
   },
   contextSummaryRow: {
     flexDirection: 'row',
@@ -503,13 +499,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#F8FAFC',
   },
   contextSummaryText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11.5,
     color: '#64748B',
     flex: 1,
   },
   boldText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#334155',
   },
   macroSplitBar: {
@@ -538,12 +534,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   legendLabel: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#94A3B8',
   },
   legendVal: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#0F172A',
     marginTop: 1,

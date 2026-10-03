@@ -390,11 +390,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: 16,
   },
   cardHeader: {
@@ -404,7 +401,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -429,7 +426,7 @@ const styles = StyleSheet.create({
     marginRight: -2,
   },
   legendText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
@@ -447,7 +444,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   yTickText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#94A3B8',
     lineHeight: 14,
@@ -517,12 +514,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   xLabelText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#94A3B8',
   },
   xLabelTextSelected: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
   },
 });

@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1EE', // Soft coral background
   },
   countBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#FF5722',
   },
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
     color: '#FF5722',
   },
@@ -467,13 +467,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   emptyTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#334155',
     marginTop: 10,
   },
   emptySubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#94A3B8',
     marginTop: 2,
@@ -500,14 +500,14 @@ const styles = StyleSheet.create({
   },
   itemWeightText: {
     fontSize: 16,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   itemTimeText: {
     fontSize: 12,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     color: '#94A3B8',
   },
   metaRow: {
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   },
   itemDateText: {
     fontSize: 12,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#64748B',
   },
   tagPill: {
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   },
   tagPillText: {
     fontSize: 10.5,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#475569',
   },
   rightActionCol: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   },
   deltaText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
     color: '#10B981',
   },
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   moreFooterText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12.5,
     color: '#64748B',
   },

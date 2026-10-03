@@ -17,6 +17,7 @@ import Animated, {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { LogWeightModal } from '@/components/modals/LogWeightModal';
 
 export interface WeightTrackerCardProps {
@@ -232,23 +233,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 1.5,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   topRow: {
     flexDirection: 'row',
@@ -268,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -282,14 +268,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weightValueText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     lineHeight: 38,
     color: '#0F172A',
     letterSpacing: -0.6,
   },
   weightUnitText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 16,
     color: '#334155',
     marginLeft: 4,
@@ -312,69 +298,60 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deltaCircleLoss: {
-    backgroundColor: '#22C55E', // Vibrant Emerald green
+    backgroundColor: '#22C55E',
   },
   deltaCircleGain: {
-    backgroundColor: '#EF4444', // Coral Red
+    backgroundColor: '#F43F5E',
   },
   deltaCircleZero: {
-    backgroundColor: '#94A3B8', // Slate
+    backgroundColor: '#94A3B8',
   },
   deltaText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
   },
   deltaTextLoss: {
     color: '#16A34A',
   },
   deltaTextGain: {
-    color: '#DC2626',
+    color: '#F43F5E',
   },
   deltaTextZero: {
     color: '#94A3B8',
   },
   updateButton: {
-    backgroundColor: '#FF5B26', // Vibrant Orange matching reference
-    borderRadius: 20,
+    backgroundColor: Colors.weight,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 9,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#FF5B26',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   updateButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.96 }],
   },
   updateButtonText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#FFFFFF',
     letterSpacing: -0.2,
   },
   progressTrack: {
-    height: 13,
-    borderRadius: 6.5,
-    backgroundColor: '#EEF2F6',
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.weightTrack,
     overflow: 'hidden',
     marginTop: 14,
     width: '100%',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FF5B26', // Vibrant Orange matching Update button
-    borderRadius: 6.5,
+    backgroundColor: Colors.weight,
+    borderRadius: 6,
   },
   footerRow: {
     flexDirection: 'row',
@@ -384,11 +361,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 13,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     color: '#64748B',
   },
   footerValue: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#334155',
   },
 });

@@ -46,7 +46,7 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({
       ? '#64748B'
       : isFavorable
       ? '#10B981'
-      : '#FF3B5C'
+      : '#F43F5E'
     : '#94A3B8';
 
   const changeIcon = hasChange && changeVal !== 0
@@ -145,20 +145,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
     padding: 16,
     marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -171,7 +162,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
@@ -187,7 +178,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   goalHintText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
   },
@@ -200,7 +191,7 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
   },
   goalAchievedText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#059669',
   },
@@ -226,7 +217,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   podLabel: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
     color: '#94A3B8',
     letterSpacing: 0.5,
@@ -237,19 +228,19 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   podValue: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   podUnit: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#64748B',
     marginLeft: 3,
   },
   podSubLabel: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10.5,
     color: '#94A3B8',
     marginTop: 2,

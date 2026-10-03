@@ -435,32 +435,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   headerTitle: {
-    fontFamily: Fonts.poppins.bold,
-    fontSize: 20,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 18,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
   navCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderCurve: 'continuous',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1.5 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
   },
   btnPressed: {
     opacity: 0.78,
@@ -473,45 +461,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 8,
   },
-  // Timeframe Segment Tabs
+  // Timeframe Segment Tabs (12px track / 10px squircle active pill per DESIGN.md)
   timeframeSegmentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2F6',
-    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
     borderCurve: 'continuous',
-    padding: 4,
+    padding: 2.5,
     marginBottom: 16,
   },
   timeframeTab: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeframeTabActive: {
-    backgroundColor: '#2563EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#2563EB',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.22,
-        shadowRadius: 5,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   timeframeTabText: {
-    fontFamily: Fonts.poppins.semiBold,
-    fontSize: 14,
-    color: '#475569',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: '#64748B',
   },
   timeframeTabTextActive: {
-    color: '#FFFFFF',
+    color: '#0F172A',
+    fontFamily: Fonts.urbanist.bold,
   },
   // Date Range Navigator
   dateNavRow: {
@@ -527,14 +509,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
   },
   dateNavArrowDisabled: {
     opacity: 0.35,
   },
   dateRangeText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#1E293B',
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
 });

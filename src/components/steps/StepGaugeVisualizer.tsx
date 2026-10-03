@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     zIndex: 12,
   },
   largeMetricNumber: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 38,
     color: '#0F172A',
     lineHeight: 44,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   goalSubtitle: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#64748B',
     lineHeight: 18,

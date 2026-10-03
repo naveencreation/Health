@@ -12,7 +12,7 @@ interface ChartTooltipPinProps {
 export const ChartTooltipPin: React.FC<ChartTooltipPinProps> = ({
   valueText,
   unitText,
-  activeColor = '#2563EB',
+  activeColor = '#F47551',
 }) => {
   return (
     <View style={styles.pinWrapper} pointerEvents="none">
@@ -49,17 +49,17 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.16,
-        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 3,
+        elevation: 2,
       },
     }),
   },
   valueText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
     color: '#0F172A',
     textAlign: 'center',
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     lineHeight: 13,
   },
   unitText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 8,
     color: '#64748B',
     textAlign: 'center',

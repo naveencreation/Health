@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 import { useAuth } from '@/context/HealthContext';
 import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
@@ -511,11 +512,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',
-        } as any)
-      : {}),
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   flexOne: {
     flex: 1,
@@ -533,7 +531,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   titleText: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 36,
     color: '#0F172A',
@@ -542,7 +540,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   subtitleText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -558,12 +556,12 @@ const styles = StyleSheet.create({
     borderColor: '#DCFCE7',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     marginTop: 10,
   },
   biometricsPillText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#166534',
   },
@@ -575,13 +573,13 @@ const styles = StyleSheet.create({
     borderColor: '#FCA5A5',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     gap: 10,
     marginBottom: 16,
   },
   errorAlertText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#B91C1C',
     flex: 1,
@@ -590,7 +588,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   inputLabel: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#64748B',
     letterSpacing: 0.6,
@@ -600,9 +598,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingHorizontal: 14,
     height: 50,
@@ -619,7 +617,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
     color: '#0F172A',
     backgroundColor: 'transparent',
@@ -629,7 +627,6 @@ const styles = StyleSheet.create({
       ? ({
           outlineStyle: 'none',
           outlineWidth: 0,
-          boxShadow: '0 0 0 1000px transparent inset',
         } as any)
       : {}),
   },
@@ -638,7 +635,7 @@ const styles = StyleSheet.create({
   },
   requirementsBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 10,
     marginBottom: 14,
@@ -652,38 +649,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reqText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: '#94A3B8',
   },
   reqTextActive: {
     color: '#10B981',
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
   },
 
   // Standardized 52px CTA Button (Colors.primary / #FFFFFF)
   submitButton: {
     backgroundColor: Colors.primary,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
+    elevation: 0,
+    shadowOpacity: 0,
     marginTop: 8,
     marginBottom: 16,
-    ...(Platform.OS === 'web'
-      ? ({
-          cursor: 'pointer',
-          boxShadow: '0px 6px 18px rgba(244, 117, 81, 0.4)',
-        } as any)
-      : {}),
   },
   pressedButton: {
     opacity: 0.9,
@@ -698,7 +686,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButtonText: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 0.2,
@@ -711,12 +699,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   footerText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
   },
   footerLinkText: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: '#F47551',
   },

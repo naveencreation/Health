@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerName: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#94A3B8',
   },
   headerSub: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 10.5,
     color: '#64748B',
   },
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: {
     flex: 1,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#EA580C',
   },
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   connectPillText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 10.5,
     color: '#FFFFFF',
   },
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   bubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 18,
+    borderRadius: 12,
     borderCurve: 'continuous',
     maxWidth: '90%',
   },
@@ -786,11 +786,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: 'rgba(244, 117, 81, 0.15)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   bubbleUser: {
     backgroundColor: '#F47551',
@@ -808,15 +805,15 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   bubbleTextRia: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     color: '#1E293B',
   },
   bubbleTextUser: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     color: '#FFFFFF',
   },
   timestamp: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 9.5,
     marginTop: 4,
     textAlign: 'right',
@@ -834,7 +831,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   streamingLabel: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     color: '#F47551',
   },
@@ -853,7 +850,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   stopBtnText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11.5,
     color: '#FFFFFF',
   },
@@ -872,7 +869,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
   },
   pressedQuickChip: {
@@ -880,7 +877,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   quickChipText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11.5,
     color: '#475569',
   },
@@ -902,7 +899,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 10 : 8,
     paddingBottom: Platform.OS === 'ios' ? 10 : 8,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
     lineHeight: 18,
     color: '#0F172A',
@@ -928,11 +925,8 @@ const styles = StyleSheet.create({
   },
   sendBtnActive: {
     backgroundColor: '#F47551',
-    shadowColor: '#F47551',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   pressedSendBtn: {
     transform: [{ scale: 0.94 }],

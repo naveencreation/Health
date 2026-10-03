@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     marginRight: 1,
   },
   monthTitleText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     lineHeight: 19,
     color: '#0F172A',
@@ -631,7 +631,8 @@ const styles = StyleSheet.create({
     borderColor: '#FFD5C6',
     paddingHorizontal: 9,
     paddingVertical: 3.5,
-    borderRadius: 14,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     gap: 5,
   },
   todayPillDot: {
@@ -641,7 +642,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   todayPillText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: Colors.primaryDark,
     fontWeight: '600',
@@ -660,23 +661,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 0,
-      },
-    }),
   },
   btnPressed: {
     opacity: 0.65,
@@ -700,23 +684,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 0,
-      },
-    }),
   },
   futureCapsule: {
     backgroundColor: '#FFFFFF',
@@ -736,7 +703,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   dayNumText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     fontWeight: '700',
     color: '#334155',
@@ -753,7 +720,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F47551',
   },
   dayNameText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
     fontWeight: '600',
     color: '#64748B',
@@ -772,23 +739,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.22,
-        shadowRadius: 8,
-      },
-      web: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.22,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 0,
-      },
-    }),
   },
   activeCircleWrapper: {
     width: 32,
@@ -803,13 +753,13 @@ const styles = StyleSheet.create({
     left: 0,
   },
   activeDayNumText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   activeDayNameText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -832,7 +782,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 350,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     padding: 20,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
@@ -860,7 +811,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   modalMonthTitle: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
@@ -881,7 +832,7 @@ const styles = StyleSheet.create({
   modalWeekdayText: {
     width: 36,
     textAlign: 'center',
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#94A3B8',
     fontWeight: '600',
@@ -914,18 +865,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.fatLight,
   },
   modalDayText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#1E293B',
   },
   modalDayTextSelected: {
     color: '#FFFFFF',
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
   },
   modalDayTextToday: {
     color: Colors.primaryDark,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontWeight: '700',
   },
   modalMealDot: {
@@ -949,11 +900,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     backgroundColor: Colors.fatLight,
   },
   modalTodayBtnText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.primaryDark,
     fontWeight: '600',

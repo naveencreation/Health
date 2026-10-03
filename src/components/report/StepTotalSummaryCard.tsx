@@ -102,11 +102,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: 16,
   },
   topSection: {
@@ -120,13 +117,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   bigNumberText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 34,
     color: '#0F172A',
     letterSpacing: -0.5,
   },
   subtitleText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#64748B',
     marginTop: 6,
@@ -149,7 +146,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   metricValueText: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 19,
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -157,7 +154,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   metricLabelText: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#94A3B8',
   },

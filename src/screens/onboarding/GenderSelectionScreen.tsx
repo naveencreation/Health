@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 import { OnboardingHeader } from '@/components/onboarding';
 
 export type GenderType = 'female' | 'male' | 'other';
@@ -208,11 +209,8 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
     justifyContent: 'space-between',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 12px 30px rgba(0, 0, 0, 0.08)',
-        } as any)
-      : {}),
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
 
   // Title & Context
@@ -222,7 +220,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   screenTitle: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 36,
     color: '#0F172A',
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   screenSubtitle: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -250,7 +248,8 @@ const styles = StyleSheet.create({
   genderCard: {
     width: '100%',
     height: 76,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -266,38 +265,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFBF9',
     borderWidth: 1.5,
     borderColor: '#F47551',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 8px 20px rgba(244, 117, 81, 0.14)',
-        } as any)
-      : {
-          shadowColor: '#F47551',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 10,
-          elevation: 4,
-        }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   genderCardUnselected: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)',
-        } as any)
-      : {
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
-        }),
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   iconBadge: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -325,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   genderTitle: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     lineHeight: 22,
     color: '#334155',
@@ -334,16 +316,16 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   genderSubtitle: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
     color: '#64748B',
     marginTop: 2,
   },
   radioCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -355,17 +337,8 @@ const styles = StyleSheet.create({
   radioSelected: {
     backgroundColor: '#F47551',
     borderWidth: 0,
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0px 2px 6px rgba(244, 117, 81, 0.3)',
-        } as any)
-      : {
-          shadowColor: '#F47551',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 2,
-        }),
+    elevation: 0,
+    shadowOpacity: 0,
   },
 
   // Footer & Continue CTA
@@ -378,29 +351,21 @@ const styles = StyleSheet.create({
     width: 220,
     height: 52,
     backgroundColor: Colors.primary,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-    ...(Platform.OS === 'web'
-      ? ({
-          cursor: 'pointer',
-          boxShadow: '0px 6px 18px rgba(244, 117, 81, 0.4)',
-        } as any)
-      : {}),
+    elevation: 0,
+    shadowOpacity: 0,
   },
   continueButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   continueButtonText: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 0.2,
@@ -409,7 +374,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   skipText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     color: '#64748B',
   },
@@ -425,12 +390,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   signInLinkText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     color: '#64748B',
   },
   signInLinkBold: {
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: Fonts.urbanist.semiBold,
     color: '#F47551',
   },
 });
