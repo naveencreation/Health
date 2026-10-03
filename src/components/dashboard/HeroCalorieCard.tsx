@@ -8,6 +8,7 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Platform,
 } from 'react-native';
 import Svg, { Circle, Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
@@ -652,18 +653,29 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
     backgroundColor: '#FFFFFF', // Crisp Frost White surface!
-    borderRadius: 24,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: 18,
+    paddingBottom: 18,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-    overflow: 'hidden',
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 14,
+      },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   cardTopHeader: {
     flexDirection: 'row',

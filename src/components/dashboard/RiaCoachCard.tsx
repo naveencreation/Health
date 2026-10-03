@@ -205,7 +205,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FAF9F6',
-    borderRadius: 24,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     marginHorizontal: 16,

@@ -146,7 +146,8 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 28,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
     paddingTop: 18,
@@ -177,6 +178,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
   },
   progressPillText: {
@@ -191,6 +193,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: '#FEF3C7',
   },
   celebrationText: {

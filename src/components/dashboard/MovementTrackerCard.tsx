@@ -456,7 +456,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingTop: 18,
@@ -472,8 +472,14 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.04,
         shadowRadius: 8,
       },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+      },
       android: {
-        elevation: 2,
+        elevation: 1.5,
       },
     }),
   },

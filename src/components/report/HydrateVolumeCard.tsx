@@ -293,7 +293,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 18,
     paddingHorizontal: 16,

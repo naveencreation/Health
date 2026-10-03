@@ -142,7 +142,8 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#F1F5F9',
     padding: 16,

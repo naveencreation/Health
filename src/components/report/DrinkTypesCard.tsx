@@ -160,7 +160,7 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 18,
     paddingHorizontal: 16,

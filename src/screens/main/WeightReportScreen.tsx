@@ -472,6 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
+    borderCurve: 'continuous',
     padding: 4,
     marginBottom: 16,
   },
@@ -481,6 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
+    borderCurve: 'continuous',
   },
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',

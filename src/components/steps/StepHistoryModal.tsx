@@ -713,6 +713,7 @@ const styles = StyleSheet.create({
   dayCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.05)',
     shadowColor: '#0F172A',

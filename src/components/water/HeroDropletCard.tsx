@@ -191,7 +191,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingTop: 14,
     paddingBottom: 16,

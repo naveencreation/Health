@@ -424,7 +424,7 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingTop: 20,

@@ -357,7 +357,8 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     paddingTop: 18,
     paddingBottom: 16,
     paddingHorizontal: 16,

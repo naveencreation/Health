@@ -374,6 +374,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',

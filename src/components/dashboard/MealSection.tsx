@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#0F172A',
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
     paddingHorizontal: 20,
     marginBottom: 10,
-    marginTop: 4,
+    marginTop: 6,
   },
 });

@@ -161,7 +161,7 @@ function MainApp() {
         const fontLink = document.createElement('link');
         fontLink.id = linkId;
         fontLink.rel = 'stylesheet';
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&display=swap';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap';
         document.head.appendChild(fontLink);
       }
 
@@ -173,33 +173,73 @@ function MainApp() {
         style.innerHTML = `
           /* Map React Native static font names to Google Fonts on Web */
           @font-face {
+            font-family: 'Urbanist_400Regular';
+            src: local('Urbanist Regular'), local('Urbanist-Regular'), local('Urbanist'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Urbanist_500Medium';
+            src: local('Urbanist Medium'), local('Urbanist-Medium'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Urbanist_600SemiBold';
+            src: local('Urbanist SemiBold'), local('Urbanist-SemiBold'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Urbanist_700Bold';
+            src: local('Urbanist Bold'), local('Urbanist-Bold'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
+            font-family: 'Urbanist_800ExtraBold';
+            src: local('Urbanist ExtraBold'), local('Urbanist-ExtraBold'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+            font-display: swap;
+          }
+          @font-face {
             font-family: 'Poppins_400Regular';
-            src: local('Poppins Regular'), local('Poppins-Regular'), local('Poppins'),
-                 url('https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrFJA.ttf') format('truetype');
+            src: local('Urbanist Regular'), local('Urbanist'), local('Poppins Regular'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
           }
           @font-face {
             font-family: 'Poppins_500Medium';
-            src: local('Poppins Medium'), local('Poppins-Medium'),
-                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9V1s.ttf') format('truetype');
+            src: local('Urbanist Medium'), local('Urbanist'), local('Poppins Medium'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
             font-weight: 500;
             font-style: normal;
             font-display: swap;
           }
           @font-face {
             font-family: 'Poppins_600SemiBold';
-            src: local('Poppins SemiBold'), local('Poppins-SemiBold'),
-                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6V1s.ttf') format('truetype');
+            src: local('Urbanist SemiBold'), local('Urbanist'), local('Poppins SemiBold'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
             font-weight: 600;
             font-style: normal;
             font-display: swap;
           }
           @font-face {
             font-family: 'Poppins_700Bold';
-            src: local('Poppins Bold'), local('Poppins-Bold'),
-                 url('https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7V1s.ttf') format('truetype');
+            src: local('Urbanist Bold'), local('Urbanist'), local('Poppins Bold'),
+                 url('https://fonts.gstatic.com/s/urbanist/v15/L0xjDF02iPh-KgFr1CeE.ttf') format('truetype');
             font-weight: 700;
             font-style: normal;
             font-display: swap;
@@ -213,9 +253,11 @@ function MainApp() {
             font-display: swap;
           }
 
-          /* Default modern sans-serif fallback so Times New Roman never renders on Web */
+          /* Default modern sans-serif fallback (Urbanist first) */
           html, body, #root, div, span, text, input, button, textarea {
-            font-family: Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: Urbanist, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
 
           /* Pure warm neutral backdrop for web desktop view */

@@ -667,6 +667,44 @@
       - **Tooltip Pin**: Speech bubble pin with downward tail showing formatted time (`X min` or `X.X hr`).
       - **Subheader Legend**: Displays `● Selected` and `--- Daily Avg ({formattedDuration})`.
     - **Testing & Verification**: Created `StepTimeDurationCard.test.tsx` and updated `StepReportScreen.test.tsx`. Passed strict `npx tsc --noEmit` verification (0 errors) and all 29 step unit tests pass across 7 test suites.
+65. **Global Card & Surface Corner Smoothing (`borderCurve: 'continuous'` Squircles)**:
+    - **Apple-Style $G^2$ Superellipse Curvature**: Applied `borderCurve: 'continuous'` systematically across all cards and containers that had standard circular `borderRadius`, bringing full visual harmony with the hero cards (`HeroCalorieCard`, `MovementTrackerCard`, `WeightTrackerCard`, `WaterTracker`):
+      - **Report Cards**: `StepTotalSummaryCard.tsx`, `StepCompletionCard.tsx`, `StepCalorieBurnCard.tsx`, `StepTimeDurationCard.tsx`, `WeightSummaryCard.tsx`, and `WeightTrendCard.tsx`.
+      - **Step Tracker Elements**: `HeroStepCard.tsx` (card, progress pill, celebration pill), `HealthConnectSyncCard.tsx` (connected bar, setup card, setup CTA button, steps badge), `StepHistoryCard.tsx` (card container), and `StepHistoryModal.tsx` (`dayCard`).
+      - **Navigation & Timeframe Controls**: `StepReportScreen.tsx` (`navCircleBtn`, `timeframeSegmentContainer`, `timeframeTab`), `StepTrackerScreen.tsx` (`iconBtn`), `WaterReportScreen.tsx` (`timeframeSegmentContainer`, `timeframeTab`), and `WeightReportScreen.tsx` (`timeframeSegmentContainer`, `timeframeTab`).
+      - **Weight Elements**: `HeroWeightCard.tsx` (`card`, `updateButton`).
+66. **Unified Urbanist Typography & Cross-Platform Squircle Card Smoothing Overhaul**:
+    - **Urbanist Typography Integration**: Installed `@expo-google-fonts/urbanist` and extracted static TTFs (`400Regular`, `500Medium`, `600SemiBold`, `700Bold`, `800ExtraBold`) to `assets/fonts/` and `android/app/src/main/assets/fonts/`. Registered fonts in `app.json` `expo-font` plugin for 0ms native boot.
+    - **Typography Mapping (`src/theme/typography.ts`)**: Added `Fonts.urbanist` token and mapped `Fonts.poppins` directly to Urbanist across all weights so the entire app (all 200+ components) immediately renders in crisp, modernist Urbanist.
+    - **Web Typography CDN & Antialiasing (`App.tsx`)**: Injected Google Fonts CDN stylesheet for Urbanist and explicit `@font-face` definitions on Web. Set `Urbanist` as the primary font family in global web styles with `-webkit-font-smoothing: antialiased`.
+    - **Cross-Platform Squircle & Shadow Tuning**:
+      - `HeroCalorieCard.tsx`: Upgraded to 26px continuous radius, `borderCurve: 'continuous'`, whisper border `rgba(15, 23, 42, 0.06)`, and platform-specific soft ambient shadow (`Platform.select`) so Web doesn't get clipped by Android elevation.
+      - `MealCard.tsx`: Upgraded to 22px continuous radius, `borderCurve: 'continuous'`, whisper border, soft multi-layer shadow, and circular action buttons.
+      - `MealSection.tsx`: Tuned `sectionTitle` letter-spacing (`-0.4`) for crisp Urbanist presentation.
+      - `WaterTracker.tsx`, `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `MovementTrackerCard.tsx`: Harmonized to 22px squircle radius with `Platform.select` web shadows.
+67. **Architectural Nearly-Square Card Radius Refinement (`borderRadius: 10px`)**:
+    - **User Preference Alignment**: Transitioned all cards from bulbous 20–26px radiuses to a crisp, architectural **`10px`** radius with `borderCurve: 'continuous'` — creating a modern, nearly-square silhouette with just a subtle softened edge.
+    - **Components Updated**:
+      - **Dashboard**: `HeroCalorieCard.tsx`, `WaterTracker.tsx`, `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `MovementTrackerCard.tsx` (card + quickCard), `RiaCoachCard.tsx`.
+      - **Diary**: `MealCard.tsx` (card container).
+      - **Report Screens**: `StepTotalSummaryCard.tsx`, `StepCompletionCard.tsx`, `StepCalorieBurnCard.tsx`, `StepTimeDurationCard.tsx`, `WeightSummaryCard.tsx`, `WeightTrendCard.tsx`, `HydrateVolumeCard.tsx`, `DrinkTypesCard.tsx`, `DrinkCompletionCard.tsx`, `BMIGaugeCard.tsx`.
+      - **Trackers & Profile**: `HeroStepCard.tsx`, `StepHistoryCard.tsx`, `HealthConnectSyncCard.tsx` (setupCard & connectedBar), `HeroWeightCard.tsx`, `WeightHistoryCard.tsx`, `HeroDropletCard.tsx`, `WaterHistoryCard.tsx`, `ProfileHeaderCard.tsx`, `ProfileMetricInspector.tsx`, `ProfileQuickNavGrid.tsx`, `WorkoutHistoryCard.tsx`.
+    - **Verification**: Clean `npx tsc --noEmit` check (0 errors) and all 30 test suites (199/199 unit tests) passed.
+
+68. **Stitch MCP `DESIGN.md` Generation, Upload & Design System Application**:
+    - **Forensic Codebase Design System Audit**: Conducted an exhaustive audit of colors (`src/theme/colors.ts`), fonts (`Urbanist` geometric sans-serif across 100% of telemetry and UI), layout tokens, safe areas, 10px continuous squircle geometry, and interaction timing (`withTiming` 80–120ms).
+    - **Local `DESIGN.md` Full Refinement**: Updated [DESIGN.md](file:///c:/Users/navee/Videos/Calorify/calori/DESIGN.md) at the repository root encoding strict frontmatter design tokens:
+      - **Colors**: Full 12-element Master Functional Color System with matched active fill and 10%–15% container tints (Calories `#F47551`, Protein `#67BD6E`, Carbs `#F8D558`, Fat `#E07A5F`, Fibre `#059669`, Water `#0284C7`, Steps `#F97316`, Weight `#F43F5E`) + Stitch Material 3 aliases (`secondary: '#67BD6E'`, `tertiary: '#F8D558'`).
+      - **Zero Card Float Shadows**: Flat architectural planes resting on linen porcelain canvas defined exclusively by 1px whisper borders (`rgba(15, 23, 42, 0.06)` or `#E2E8F0`) with `elevation: 0` and `shadowOpacity: 0` (no bottom shadow halos or smudges). Floating overlays & toasts maintain crisp 1px borders and controlled elevation.
+      - **Typography**: 100% Pure Urbanist across all UI, telemetry numbers (`telemetry-hero: 42px`, `telemetry-card: 32px`, `telemetry-macro: 22px`, `telemetry-unit: 13px`), and onboarding pickers. Kurale restricted strictly to solitary logo wordmark.
+      - **Shapes & Controls**: 10px squircle cards (`borderCurve: 'continuous'`), 16px bottom sheet modals, 12px/10px segmented tabs, 52px primary action buttons, 48px/10px form search inputs, 64px bottom nav with 52px floating FAB (+), and report chart tokens (gridlines, bar geometry, tooltip pins).
+    - **Stitch MCP Sync**:
+      - Uploaded refined [DESIGN.md](file:///c:/Users/navee/Videos/Calorify/calori/DESIGN.md) via `upload_design_md` to Stitch project `4569112279491298338` (*Calorify Mobile Onboarding Flow*).
+      - Generated updated Stitch design system `assets/ce0acd05616241f58c62f7e99a0c26f4` (*"Calorify Architectural Modernist"*).
+      - Applied the updated design system to Stitch screens using `apply_design_system`.
+
+
+
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

@@ -402,7 +402,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 20,
     marginHorizontal: 16,

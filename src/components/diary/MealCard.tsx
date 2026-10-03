@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -300,22 +300,38 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
-    borderRadius: 20,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderRadius: 10,
     borderCurve: 'continuous',
     marginHorizontal: 16,
     marginBottom: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+      },
+      web: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.03,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 1.5,
+      },
+    }),
   },
   cardActive: {
-    borderColor: 'rgba(0, 0, 0, 0.08)',
-    shadowOpacity: 0.06,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    ...Platform.select({
+      ios: { shadowOpacity: 0.06 },
+      web: { shadowOpacity: 0.05 },
+      android: { elevation: 2 },
+    }),
   },
   dimmedCard: {
     opacity: 0.75,
@@ -439,11 +455,23 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(103, 189, 110, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.protein,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.protein,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      web: {
+        shadowColor: Colors.protein,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   dimmedAddButton: {
     opacity: 0.65,

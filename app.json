@@ -38,7 +38,12 @@
             "./assets/fonts/Poppins_400Regular.ttf",
             "./assets/fonts/Poppins_500Medium.ttf",
             "./assets/fonts/Poppins_600SemiBold.ttf",
-            "./assets/fonts/Poppins_700Bold.ttf"
+            "./assets/fonts/Poppins_700Bold.ttf",
+            "./assets/fonts/Urbanist_400Regular.ttf",
+            "./assets/fonts/Urbanist_500Medium.ttf",
+            "./assets/fonts/Urbanist_600SemiBold.ttf",
+            "./assets/fonts/Urbanist_700Bold.ttf",
+            "./assets/fonts/Urbanist_800ExtraBold.ttf"
           ]
         }
       ],

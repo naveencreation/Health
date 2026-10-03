@@ -189,7 +189,8 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     padding: 20,
     marginHorizontal: 16,
     marginTop: 14,
@@ -298,6 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF5722', // Mockup's vibrant coral-orange
     height: 52,
     borderRadius: 26,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,

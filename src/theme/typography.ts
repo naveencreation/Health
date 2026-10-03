@@ -8,20 +8,42 @@ export const Fonts = {
     ? 'Kurale_400Regular, Kurale, Georgia, serif'
     : 'Kurale_400Regular',
 
-  // Modern Geometric Humanist Sans font from Figma (used for Today Calorie, Date Picker, Macros, Meals)
+  // Modernist Geometric Sans font (Core brand typography for cards, numbers, macros, and headings)
+  urbanist: {
+    regular: isWeb
+      ? 'Urbanist_400Regular, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_400Regular',
+    medium: isWeb
+      ? 'Urbanist_500Medium, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_500Medium',
+    semiBold: isWeb
+      ? 'Urbanist_600SemiBold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_600SemiBold',
+    bold: isWeb
+      ? 'Urbanist_700Bold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_700Bold',
+    extraBold: isWeb
+      ? 'Urbanist_800ExtraBold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_800ExtraBold',
+  },
+
+  // Backward-compatible mapping so all existing components seamlessly adopt Urbanist
   poppins: {
     regular: isWeb
-      ? 'Poppins_400Regular, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Poppins_400Regular',
+      ? 'Urbanist_400Regular, Urbanist, Poppins_400Regular, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_400Regular',
     medium: isWeb
-      ? 'Poppins_500Medium, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Poppins_500Medium',
+      ? 'Urbanist_500Medium, Urbanist, Poppins_500Medium, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_500Medium',
     semiBold: isWeb
-      ? 'Poppins_600SemiBold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Poppins_600SemiBold',
+      ? 'Urbanist_600SemiBold, Urbanist, Poppins_600SemiBold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_600SemiBold',
     bold: isWeb
-      ? 'Poppins_700Bold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Poppins_700Bold',
+      ? 'Urbanist_700Bold, Urbanist, Poppins_700Bold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_700Bold',
+    extraBold: isWeb
+      ? 'Urbanist_800ExtraBold, Urbanist, Poppins_700Bold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : 'Urbanist_800ExtraBold',
   },
 };
 

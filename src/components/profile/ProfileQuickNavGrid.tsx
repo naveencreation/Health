@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   gridCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,

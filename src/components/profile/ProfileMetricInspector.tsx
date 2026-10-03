@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   telemetryCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 18,
     marginBottom: 14,

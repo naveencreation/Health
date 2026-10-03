@@ -467,7 +467,8 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#F1F5F9',
     paddingHorizontal: 18,

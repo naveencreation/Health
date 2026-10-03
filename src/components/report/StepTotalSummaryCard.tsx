@@ -96,7 +96,8 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     paddingVertical: 22,
     paddingHorizontal: 16,
     borderWidth: 1,
