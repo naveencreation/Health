@@ -138,7 +138,7 @@ function MainApp() {
   useEffect(() => {
     // Fonts are natively bundled into APK/app binary assets (0ms load time)
     requestAnimationFrame(() => {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {});
     });
   }, []);
 

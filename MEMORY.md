@@ -729,6 +729,72 @@
     - **Remote MCP Registration**: Added `expo-mcp` (`mcp-remote https://mcp.expo.dev/mcp`) to `~/.gemini/config/mcp_config.json` for AI assistant integration.
     - **Account Verified**: Verified Expo CLI authentication with `npx expo whoami` (`naveen0004`).
     - **Verification**: Clean `npx tsc --noEmit` (0 errors).
+70. **Expo Model Context Protocol (MCP) App-Wide Phase-by-Phase Audit**:
+    - **Methodology**: Systematically audited all 7 major application areas against official Expo SDK 57 documentation fetched directly via `expo-mcp` tools (`read_documentation`).
+    - **Phase 1 (Project Config, Native Manifest & System UI)**:
+      - Validated `app.json` configuration, `Theme.SplashScreen` Android 12+ API, edge-to-edge status bar & navigation bar handling.
+      - Hardened `app.json`: added `"ios": { "config": { "usesNonExemptEncryption": false } }` (skipping App Store export compliance prompts for SecureStore) and `"ios": { "deploymentTarget": "16.4" }` in `expo-build-properties` to prevent CocoaPods version drift.
+      - Hardened `SplashScreen.hideAsync()` in `App.tsx` with `.catch(() => {})` against promise rejections on fast unmounts.
+    - **Phase 2 (Assets, Storage & Haptics)**:
+      - Embedded static fonts (`expo-font`) build-time linking verified against SDK 57 documentation.
+      - Audited `expo-image` usages: verified universal WebP support, `cachePolicy="memory-disk"`, and zero legacy `react-native` Image imports.
+      - Hardened `expo-image-picker`: configured plugin in `app.json` with `"microphonePermission": false` so Android/iOS don't request unnecessary `RECORD_AUDIO` permissions for food photography.
+      - Audited `expo-secure-store`: confirmed hex-encoded safe keys in `firebase.ts` and `_` sanitized keys in `SecureKeyStorage.ts`.
+      - Hardened `expo-haptics`: added `.catch(() => {})` in `MovementTrackerCard.tsx`'s `triggerHaptic` for safe cross-platform vibration failure handling.
+    - **Phase 3 (Health Connect & Reanimated)**:
+      - Audited `react-native-health-connect`: confirmed correct Android 14+ permissions (`READ_STEPS`), `ACTION_SHOW_PERMISSIONS_RATIONALE`, and `ViewPermissionUsageActivity` alias in `AndroidManifest.xml`, alongside graceful non-Android/Expo Go fallback.
+      - Confirmed Reanimated 4.5.1 + worklets 0.10.1 UI-thread animations.
+    - **Phase 4 (Validation)**:
+      - Validated zero TypeScript compilation errors (`npx tsc --noEmit` exited 0).
+      - Validated 100% test suite passing (30/30 test suites, 199/199 tests passing).
+71. **Analytics Screen Modernization & Unified Tracker Report Architecture ([AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx), [ReportPickerModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ReportPickerModal.tsx), [CalorieCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/CalorieCompletionCard.tsx), [MacroBreakdownCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroBreakdownCard.tsx))**:
+    - **Monolith Elimination**: Completely replaced the legacy 2,550-line ad-hoc implementation of `AnalyticsScreen.tsx`, reducing it to a lean ~570 lines of clean, modular, and maintainable architecture.
+    - **Header Title + Interactive Capsule Dropdown**: Replaced fragmented tab bars with an ergonomic porcelain capsule selector button in the screen header (`[ 🍽️ Nutrition & Calories ▾ ]`). Tapping opens a bottom sheet (`ReportPickerModal.tsx`) to switch between the 4 core health pillars:
+      1. `🍽️ Nutrition & Calories` (`CalorieCompletionCard`, `MacroBreakdownCard`, `StepCalorieBurnCard`)
+      2. `👟 Step Activity` (`StepCompletionCard`, `StepCalorieBurnCard`, `StepTimeDurationCard`, `StepTotalSummaryCard`)
+      3. `💧 Hydration Intake` (`DrinkCompletionCard`, `HydrateVolumeCard`, `DrinkTypesCard`)
+      4. `⚖️ Weight & Body` (`WeightSummaryCard`, `WeightTrendCard`, `BMIGaugeCard`)
+    - **Shared Controls Bar**: Standardized timeframe pill segments (`Weekly` | `Monthly` | `Yearly`) with subtle continuous squircle active indicator, paired with a synchronous date range navigator (`< Sep 28 – Oct 4, 2026 >`).
+    - **Tracker Component Reuse**: Directly mounted the high-fidelity chart cards authored for the individual trackers (`src/components/report/`), ensuring pixel-perfect visual consistency across the entire app.
+    - **Mobile Bottom Sheet Framing**: Constrained `ReportPickerModal` with `maxWidth: 480`, `width: '100%'`, `alignSelf: 'center'` and centered overlay (`alignItems: 'center'`) plus top drag handle bar, ensuring it fits cleanly into the mobile phone container on web and native mobile devices rather than stretching full-width across desktop screens.
+    - **Independent Card Selection State Isolation**: Decoupled the previously shared `selectedDayIndex` into independent states (`selectedStepIndex`, `selectedStepCalorieIndex`, `selectedStepTimeIndex`, `selectedWaterIndex`, etc.) with synchronous bounds clamping. Tapping or inspecting a day in one card (e.g. `StepCompletionCard`) no longer unexpectedly triggers selection changes or moves tooltips in sibling cards (`StepCalorieBurnCard`, `StepTimeDurationCard`), matching `StepReportScreen` architecture.
+    - **Step Summary Metrics Card Hierarchy**: Positioned `StepTotalSummaryCard` (total steps, duration, calories burned, distance) directly below the date range navigator and above the charts, providing instant high-level overview metrics before granular day-by-day chart details.
+    - **Primary Screen Header Sizing Standardization**: Upgraded the `Analytics` header title from `fontSize: 18` to the primary tab design standard: `fontSize: 26`, `lineHeight: 32`, `fontWeight: '700'`, `letterSpacing: -0.5`, wrapped in `minHeight: 56` container with `minHeight: 42` inner row, matching `TrackerScreen` and `ProfileScreen`.
+    - **Weight Summary Micro Cards Redesign**: Refactored `WeightSummaryCard.tsx` into 3 separate porcelain cards side by side (`Weight Lost`, `Current Weight`, `Goal Weight`) with bold numbers (`fontSize: 18, fontWeight: '700'`) and clean slate subtitle labels, matching the user reference design.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 30 test suites (199 tests) passing.
+72. **Dedicated Nutrients & Calories Report Card Suite Redesign ([CalorieCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/CalorieCompletionCard.tsx), [MacroDistributionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroDistributionCard.tsx), [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx))**:
+    - **Aesthetics & Architecture Grounding**: Designed from user reference mockups to deliver high-end nutrition tracking visuals with independent selection states and reactive tap feedback.
+    - **`Calorie (kcal)` Card**:
+      - Title: `Calorie (kcal)` with segmented Bar ⇄ Line visualizer toggle (`#8DBE3B` lime active pill).
+      - Subheader: Synchronous legend indicators (`● Selected` with active green dot, `--- Calorie Intake Goal` with dashed stroke).
+      - Goal Reference: Dashed reference guide line plotted across the chart at `calorieGoal` (e.g. 2,500 kcal).
+      - Dual Visualizer Modes:
+        - Bar Mode: Stadium pill columns with unselected pastel lime (`#D4E7A5`) and selected vivid lime (`#8DBE3B`).
+        - Line Mode: Smooth cubic Bezier curves (`C` path commands) with a gradient fill under the curve (`#8DBE3B` 25% → 0%), hollow circular unselected nodes, and filled selected node.
+      - Teardrop Tooltip Pin: Floating green circular teardrop pin indicator showing exact intake (e.g. `2100 kcal`) positioned directly above the selected node/bar with downward pointing triangle.
+    - **`Nutrition (%)` Card**:
+      - Title: `Nutrition (%)` with subtle hairline divider.
+      - Legend: 🔴 Carbs (`#EF4444`), 🟠 Protein (`#F97316`), 🔵 Fat (`#0EA5E9`).
+      - 100% Stacked Bar Geometry: 4-tier Y-axis (`100, 75, 50, 25`), columns stacked from top (Fat) to bottom (Carbs) with 2.5px gap separators, and per-column SVG `<ClipPath>` with rounded stadium caps (`rx={barWidth / 2}`).
+      - Dual State Styling: Unselected bars use soft pastel shades (`#FECDD3`, `#FED7AA`, `#BAE6FD`), while the selected day pops in vivid colors.
+      - Floating Speech-Bubble Popover: Displays exact macronutrient percentages (`Carbs XX%`, `Protein XX%`, `Fat XX%`) with a pointer triangle tracking the selected column.
+    - **Integration into `AnalyticsScreen.tsx`**:
+      - Calculated Atwater caloric ratios (`Carbs 4 kcal/g`, `Protein 4 kcal/g`, `Fat 9 kcal/g`) with fallback to user's personalized `userGoals` target macro distribution when no meals are logged.
+      - Wired `selectedMacroRatioIndex` with safe bounds clamping and timeframe reset.
+      - Placed `<MacroDistributionCard>` immediately below `<CalorieCompletionCard>` in the `Nutrition & Calories` report view.
+    - **Verification**: Zero TypeScript errors (`npx tsc --noEmit` exited 0) and all 30 test suites (199 tests) passing.
+
+53. **Macro Target Compliance Chart Redesign & Precision Formatting ([MacroDistributionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroDistributionCard.tsx), [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx))**:
+    - **Architectural Motivation (Option A)**: Transformed the nutrition card into a single-macro Target Compliance Chart matching the visual layout of `CalorieCompletionCard`. Replaced the previous 3-stacked bar design with an anchored dropdown selector allowing users to inspect Protein, Carbs, Fat, and Fiber separately against their personal goals.
+    - **Card Curvature & Dropdown Stacking**:
+      - Fixed container styling to continuous squircle `borderRadius: 12`, `borderCurve: 'continuous'`, with zero float shadow (`elevation: 0`, `shadowOpacity: 0`).
+      - Anchored dropdown menu styled with solid opaque `#FFFFFF` surface (`elevation: 40`, `zIndex: 99999`, soft slate border `rgba(15, 23, 42, 0.1)`) so underlying SVG chart elements never bleed through.
+    - **Single Decimal Place Formatting**:
+      - Added `formatMacroValue(val: number): string` ensuring at most one digit appears after the decimal point (e.g. `24.67` -> `24.7`, `12` -> `12`).
+      - Applied to SVG teardrop pin tooltips, goal labels, and accessibility tags to eliminate floating-point precision artifacts in meals and aggregations.
+    - **Verification**:
+      - `npx tsc --noEmit` passed with 0 errors.
+      - Component tests in `MacroDistributionCard.test.tsx` (9 tests) and `CalorieCompletionCard.test.tsx` (5 tests) passed 100%.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

@@ -13,3 +13,11 @@ export { StepCompletionCard, DayStepData, StepCompletionCardProps } from './Step
 export { StepCalorieBurnCard, DayCalorieData, StepCalorieBurnCardProps } from './StepCalorieBurnCard';
 export { StepTimeDurationCard, DayTimeData, StepTimeDurationCardProps } from './StepTimeDurationCard';
 export { StepTotalSummaryCard, StepTotalSummaryCardProps } from './StepTotalSummaryCard';
+
+// Nutrition & Calorie Report Components
+export { CalorieCompletionCard, DayCalorieIntakeData, CalorieCompletionCardProps } from './CalorieCompletionCard';
+export { MacroBreakdownCard, MacroNutrientData, MacroBreakdownCardProps } from './MacroBreakdownCard';
+export { MacroDistributionCard, DayMacroRatioData, MacroDistributionCardProps } from './MacroDistributionCard';
+
+// Report Picker Modal
+export { ReportPickerModal, ReportCategory, REPORT_CATEGORIES, ReportPickerModalProps } from './ReportPickerModal';

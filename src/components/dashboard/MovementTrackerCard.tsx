@@ -72,7 +72,7 @@ const formatActivityTime = (loggedAt?: string): string => {
 
 const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
   try {
-    Haptics.impactAsync(style);
+    Haptics.impactAsync(style).catch(() => {});
   } catch {
     // Non-fatal fallback for environments where haptics are unavailable
   }

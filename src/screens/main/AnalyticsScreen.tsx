@@ -1,95 +1,139 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
   ScrollView,
-  useWindowDimensions,
+  Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  interpolate,
-  withTiming,
-  Easing,
-  SharedValue,
-} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
-import { useAnalytics, useGoals, useDailyLog } from '@/context/HealthContext';
-import { WorkoutHistoryCard } from '@/components/analytics/WorkoutHistoryCard';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { DailyLog } from '@/types';
+import { calculateStepMetrics } from '@/utils/stepHistoryUtils';
+import { getBeverageConfig } from '@/utils/beverageUtils';
+
+// Standardized Report Components
+import {
+  ReportPickerModal,
+  ReportCategory,
+  REPORT_CATEGORIES,
+  CalorieCompletionCard,
+  DayCalorieIntakeData,
+  MacroDistributionCard,
+  DayMacroRatioData,
+  StepCompletionCard,
+  DayStepData,
+  StepCalorieBurnCard,
+  DayCalorieData,
+  StepTimeDurationCard,
+  DayTimeData,
+  StepTotalSummaryCard,
+  DrinkCompletionCard,
+  DayCompletionData,
+  HydrateVolumeCard,
+  DayHydrateData,
+  DrinkTypesCard,
+  DrinkTypeBreakdown,
+  WeightSummaryCard,
+  WeightSummaryData,
+  WeightTrendCard,
+  DayWeightTrendData,
+  BMIGaugeCard,
+} from '@/components/report';
 
 
-
-
-type TimeRange = '7d' | '30d';
-
-interface WeeklyCluster {
-  id: string;
-  label: string;
-  avgCalories: number;
-  avgWaterMl: number;
-  avgSteps: number;
-  totalBurn: number;
-  daysLogged: number;
-}
-
-const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
-const HIT_SLOP_4 = { top: 8, bottom: 8, left: 4, right: 4 };
-
-// Precision vertical metrics for pixel-perfect chart and benchmark alignment
-const BAR_TOP_SPACE = 20;
-const BAR_TRACK_HEIGHT = 96;
-const BAR_BOTTOM_SPACE = 26;
-const CHART_CANVAS_HEIGHT = BAR_TOP_SPACE + BAR_TRACK_HEIGHT + BAR_BOTTOM_SPACE; // 142px
-
-interface AnalyticsScreenProps {
+export interface AnalyticsScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
 }
 
-const AnimatedBarFill = React.memo(function AnimatedBarFill({
-  heightPct,
-  color,
-  barAnim,
-}: {
-  heightPct: number;
-  color: string;
-  barAnim: SharedValue<number>;
-}) {
-  const fillStyle = useAnimatedStyle(() => ({
-    height: `${interpolate(barAnim.value, [0, 1], [0, Math.max(10, heightPct)])}%`,
-  }));
-  return <Animated.View style={[styles.barFill, fillStyle, { backgroundColor: color }]} />;
-});
+export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
+
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+const FULL_MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
+
+/**
+ * Extracts aggregate macronutrients and calories safely from a DailyLog.
+ */
+function getLogNutrition(log?: DailyLog) {
+  if (!log) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, burnedCalories: 0 };
+  let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
+  if (Array.isArray(log.meals)) {
+    log.meals.forEach((m) => {
+      calories += m.calories || 0;
+      protein += m.protein || 0;
+      carbs += m.carbs || 0;
+      fat += m.fat || 0;
+      fiber += m.fiber || 0;
+    });
+  }
+  let burnedCalories = 0;
+  if (Array.isArray(log.activities)) {
+    log.activities.forEach((a) => {
+      burnedCalories += a.caloriesBurned || 0;
+    });
+  }
+  return { calories, protein, carbs, fat, fiber, burnedCalories };
+}
 
 const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   scrollRef,
   initialScrollOffset = 0,
   onScrollPositionChange,
 }) => {
-  const { width: screenWidth } = useWindowDimensions();
-  const isSmallDevice = screenWidth < 375;
-  const isVerySmallDevice = screenWidth < 340;
-
-  const { weeklyLogs, dailyLogs } = useAnalytics();
+  const insets = useSafeAreaInsets();
+  const { dailyLogs } = useDailyLog();
   const { userGoals } = useGoals();
-  const { selectedDate } = useDailyLog();
 
-  type MetricTab = 'calories' | 'water' | 'steps';
+  // Active Report Category (defaults to Nutrition)
+  const [activeReport, setActiveReport] = useState<ReportCategory>('nutrition');
+  const [reportPickerVisible, setReportPickerVisible] = useState(false);
 
+  // Timeframe and Navigation Offset
+  const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
+  const [periodOffset, setPeriodOffset] = useState<number>(0);
 
-  const [timeRange, setTimeRange] = useState<TimeRange>('7d');
-  const [metricTab, setMetricTab] = useState<MetricTab>('calories');
-  const [selectedBarIdx, setSelectedBarIdx] = useState<number | null>(6); // shared across tabs
-  const [selectedClusterIdx, setSelectedClusterIdx] = useState<number | null>(3);
+  // Default day index (Mon=0..Sun=6)
+  const defaultDayIndex = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  }, []);
 
+  // Independent Selected Day Index per chart so clicking one chart does not affect others
+  // 1. Nutrition
+  const [selectedCalorieIndex, setSelectedCalorieIndex] = useState<number>(defaultDayIndex);
+  const [selectedMacroRatioIndex, setSelectedMacroRatioIndex] = useState<number>(defaultDayIndex);
+
+  // 2. Step Activity (Step count, Calorie burn, Active duration)
+  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(defaultDayIndex);
+  const [selectedStepCalorieIndex, setSelectedStepCalorieIndex] = useState<number>(defaultDayIndex);
+  const [selectedStepTimeIndex, setSelectedStepTimeIndex] = useState<number>(defaultDayIndex);
+
+  // 3. Hydration Intake (Completion & Volume)
+  const [selectedWaterIndex, setSelectedWaterIndex] = useState<number>(defaultDayIndex);
+  const [selectedHydrateVolumeIndex, setSelectedHydrateVolumeIndex] = useState<number>(defaultDayIndex);
+
+  // 4. Weight & Body Trend
+  const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(defaultDayIndex);
+
+  // Preserve scroll offset if mounted from tab switch
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (initialScrollOffset > 0) {
@@ -99,1512 +143,718 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     return () => cancelAnimationFrame(frame);
   }, [initialScrollOffset, scrollRef]);
 
-  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
-  }, [onScrollPositionChange]);
-
-  // Animations -- shared across all metric tabs
-  const scrollY = useSharedValue(0);
-  const barAnim = useSharedValue(0);
-  const tooltipAnim = useSharedValue(1);
-
-  const budget = userGoals.dailyCalorieBudget || 2200;
-  const waterGoal = userGoals.waterGoalMl || 2000;
-  const stepGoal = userGoals.stepGoal || 10000;
-  const targetProtein = userGoals.targetProtein || 90;
-  const targetCarbs = userGoals.targetCarbs || 110;
-  const targetFat = userGoals.targetFat || 70;
-  const targetFiber = userGoals.targetFiber || 30;
-
-  // Responsive bar width calculations so bars fit gracefully on any device without crowding
-  const barWidth7D = isVerySmallDevice ? 20 : isSmallDevice ? 24 : 28;
-  const barWidth30D = isVerySmallDevice ? 28 : isSmallDevice ? 34 : 40;
-
-  // Animate bars on horizon or metric tab change
-  useEffect(() => {
-    barAnim.value = 0;
-    barAnim.value = withTiming(1, {
-      duration: 380,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [timeRange, metricTab, barAnim]);
-
-  const triggerTooltipAnim = useCallback(() => {
-    tooltipAnim.value = 0;
-    tooltipAnim.value = withTiming(1, { duration: 150 });
-  }, [tooltipAnim]);
-
-  const handleTimeRangeChange = useCallback((range: TimeRange) => {
-    if (range === timeRange) return;
-    setTimeRange(range);
-    setSelectedBarIdx(range === '7d' ? 6 : null);
-    setSelectedClusterIdx(range === '30d' ? 3 : null);
-  }, [timeRange]);
-
-  const handleMetricTabChange = useCallback((tab: MetricTab) => {
-    if (tab === metricTab) return;
-    setMetricTab(tab);
-    // Reset selection so tooltip shows cleanly for the new metric
-    setSelectedBarIdx(timeRange === '7d' ? 6 : null);
-    setSelectedClusterIdx(timeRange === '30d' ? 3 : null);
-  }, [metricTab, timeRange]);
-
-  const getDateString = (date: Date): string => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    onScrollPositionChange?.(y);
   };
 
-  const formatTooltipDate = (dateStr: string): string => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${d.getDate()} ${months[d.getMonth()]}`;
-    }
-    return dateStr;
-  };
+  // User Goals with clean fallbacks
+  const dailyCalorieGoal = userGoals.dailyCalorieBudget || 2000;
+  const dailyStepGoal = userGoals.stepGoal || 6000;
+  const dailyWaterGoal = userGoals.waterGoalMl || 2500;
+  const userWeightKg = userGoals.currentWeightKg || 70;
+  const userHeightCm = userGoals.heightCm || 175;
+  const weightUnit = userGoals.weightUnit || 'kg';
+  const unitFactor = weightUnit === 'lbs' ? 2.20462 : 1;
 
-  // 30-Day Dataset: 4 Weekly Clusters computed dynamically from actual dailyLogs
-  const thirtyDayClusters = useMemo((): WeeklyCluster[] => {
-    const parts = (selectedDate || '').split('-');
-    const curr = parts.length === 3
-      ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
-      : new Date();
+  // Active Report Meta configuration
+  const activeReportMeta = useMemo(() => {
+    return REPORT_CATEGORIES.find((c) => c.id === activeReport) || REPORT_CATEGORIES[0];
+  }, [activeReport]);
 
-    const clusters: WeeklyCluster[] = [];
-    for (let w = 3; w >= 0; w--) {
-      let sumCals = 0;
-      let sumWater = 0;
-      let sumSteps = 0;
-      let sumBurn = 0;
-      let daysLogged = 0;
+  // Compute Active Period Date Range & Days
+  const dateRangeInfo = useMemo(() => {
+    const now = new Date();
 
-      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-        const d = new Date(curr);
-        d.setDate(curr.getDate() - (w * 7 + dayOffset));
-        const dateStr = getDateString(d);
+    // 1. WEEKLY (Mon - Sun, 7 days)
+    if (timeframe === 'weekly') {
+      const currentDay = now.getDay();
+      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMonday + periodOffset * 7);
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const monMonth = MONTH_NAMES[monday.getMonth()];
+      const sunMonth = MONTH_NAMES[sunday.getMonth()];
+      const monDay = monday.getDate();
+      const sunDay = sunday.getDate();
+      const year = sunday.getFullYear();
+
+      const label =
+        monMonth === sunMonth
+          ? `${monMonth} ${monDay} – ${sunDay}, ${year}`
+          : `${monMonth} ${monDay} – ${sunMonth} ${sunDay}, ${year}`;
+
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
         const log = dailyLogs[dateStr];
-        if (log) {
-          const cals = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + m.calories, 0) : 0;
-          if (cals > 0) {
-            sumCals += cals;
-            daysLogged++;
-          }
-          sumWater += log.waterMl || 0;
-          sumSteps += log.steps || 0;
-          const workoutBurn = Array.isArray(log.activities)
-            ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0)
-            : 0;
-          const stepBurn = (log.steps || 0) > 0 ? Math.round((log.steps || 0) * 0.04) : 0;
-          sumBurn += (workoutBurn + stepBurn);
-        }
-      }
 
-      const divisor = Math.max(1, daysLogged);
-      clusters.push({
-        id: `week_${3 - w}`,
-        label: w === 0 ? 'This Wk' : `Wk -${w}`,
-        avgCalories: Math.round(sumCals / divisor),
-        avgWaterMl: Math.round(sumWater / 7),
-        avgSteps: Math.round(sumSteps / 7),
-        totalBurn: sumBurn,
-        daysLogged,
+        return {
+          dateStr,
+          dayNum: d.getDate(),
+          dayName: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+          log,
+        };
       });
+
+      return {
+        label,
+        days,
+        allDates: days.map((d) => d.dateStr),
+        canGoForward: periodOffset < 0,
+      };
     }
-    return clusters;
-  }, [dailyLogs]);
 
-  // Total days with real logged meals in the past 30 days
-  const totalDaysLoggedPast30 = useMemo(() => {
-    return thirtyDayClusters.reduce((sum, c) => sum + c.daysLogged, 0);
-  }, [thirtyDayClusters]);
+    // 2. MONTHLY (Calendar month grouped into interval buckets)
+    if (timeframe === 'monthly') {
+      const targetMonth = new Date(now.getFullYear(), now.getMonth() + periodOffset, 1);
+      const year = targetMonth.getFullYear();
+      const monthIdx = targetMonth.getMonth();
+      const label = `${FULL_MONTH_NAMES[monthIdx]} ${year}`;
+      const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
 
-  // ==========================================
-  // TRUE 7-DAY & 30-DAY AGGREGATE CALCULATIONS
-  // ==========================================
-  const weeklyMetrics = useMemo(() => {
-    const loggedDays = weeklyLogs.filter((d) => d.calories > 0);
-    const loggedCount = loggedDays.length;
+      const bucketRanges = [
+        { start: 1, end: 7, name: '1-7' },
+        { start: 8, end: 14, name: '8-14' },
+        { start: 15, end: 21, name: '15-21' },
+        { start: 22, end: 28, name: '22-28' },
+        ...(daysInMonth > 28 ? [{ start: 29, end: daysInMonth, name: `29-${daysInMonth}` }] : []),
+      ];
 
-    // Calories & Deficit
-    const sumCalories = loggedDays.reduce((sum, d) => sum + d.calories, 0);
-    const avgDailyCalories = loggedCount > 0 ? Math.round(sumCalories / loggedCount) : 0;
-    const totalBurn = weeklyLogs.reduce((sum, d) => sum + (d.burned || 0), 0);
-    
-    // Net Deficit Calculation: based on days actually logged
-    const effectiveBudget = budget * loggedCount;
-    const netDiff = loggedCount > 0 ? (effectiveBudget + totalBurn) - sumCalories : 0;
-    const isDeficit = netDiff >= 0;
-    const projectedFatLossKg = loggedCount > 0 ? (Math.abs(netDiff) / 7700).toFixed(2) : '0.00';
-
-    // Consistency
-    const onBudgetDays = loggedDays.filter((d) => d.calories <= d.target * 1.05).length;
-    const adherencePct = loggedCount > 0 ? Math.round((onBudgetDays / loggedCount) * 100) : 0;
-
-    // True 7-Day Macros
-    const sumProtein = loggedDays.reduce((sum, d) => sum + (d.protein || 0), 0);
-    const sumCarbs = loggedDays.reduce((sum, d) => sum + (d.carbs || 0), 0);
-    const sumFat = loggedDays.reduce((sum, d) => sum + (d.fat || 0), 0);
-    const sumFiber = loggedDays.reduce((sum, d) => sum + (d.fiber || 0), 0);
-
-    const avgProtein = loggedCount > 0 ? Math.round(sumProtein / loggedCount) : 0;
-    const avgCarbs = loggedCount > 0 ? Math.round(sumCarbs / loggedCount) : 0;
-    const avgFat = loggedCount > 0 ? Math.round(sumFat / loggedCount) : 0;
-    const avgFiber = loggedCount > 0 ? Math.round(sumFiber / loggedCount) : 0;
-
-    // Hydration
-    const totalWater = weeklyLogs.reduce((sum, d) => sum + (d.waterMl || 0), 0);
-    const avgWater = Math.round(totalWater / 7);
-    const waterGoalMetDays = weeklyLogs.filter((d) => (d.waterMl || 0) >= waterGoal).length;
-
-    // Movement
-    const totalSteps = weeklyLogs.reduce((sum, d) => sum + (d.steps || 0), 0);
-    const avgSteps = Math.round(totalSteps / 7);
-    const totalDistanceKm = (totalSteps * 0.00078).toFixed(1);
-
-    return {
-      loggedCount,
-      avgDailyCalories,
-      totalBurn,
-      netDiff,
-      isDeficit,
-      projectedFatLossKg,
-      onBudgetDays,
-      adherencePct,
-      avgProtein,
-      avgCarbs,
-      avgFat,
-      avgFiber,
-      avgWater,
-      waterGoalMetDays,
-      avgSteps,
-      totalDistanceKm,
-    };
-  }, [weeklyLogs, budget, waterGoal]);
-
-  // True 30-Day Aggregate Calculations across 4-week window
-  const thirtyDayMetrics = useMemo(() => {
-    let totalCals = 0;
-    let totalWater = 0;
-    let totalSteps = 0;
-    let totalBurn = 0;
-    let totalLoggedDays = 0;
-    let onBudgetDays = 0;
-    let waterGoalMetDays = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
-
-    let totalFiber30 = 0;
-
-    const parts = (selectedDate || '').split('-');
-    const curr = parts.length === 3
-      ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10))
-      : new Date();
-
-    for (let dayOffset = 0; dayOffset < 28; dayOffset++) {
-      const d = new Date(curr);
-      d.setDate(curr.getDate() - dayOffset);
-      const dateStr = getDateString(d);
-      const log = dailyLogs[dateStr];
-      if (log) {
-        const cals = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + m.calories, 0) : 0;
-        if (cals > 0) {
-          totalCals += cals;
-          totalLoggedDays++;
-          if (cals <= budget * 1.05) {
-            onBudgetDays++;
-          }
-          const p = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.protein || 0), 0) : 0;
-          const c = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.carbs || 0), 0) : 0;
-          const f = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.fat || 0), 0) : 0;
-          const fb = Array.isArray(log.meals) ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0) : 0;
-          totalProtein += p;
-          totalCarbs += c;
-          totalFat += f;
-          totalFiber30 += fb;
-        }
-        const water = log.waterMl || 0;
-        totalWater += water;
-        if (water >= waterGoal) {
-          waterGoalMetDays++;
-        }
-        const steps = log.steps || 0;
-        totalSteps += steps;
-        const workoutBurn = Array.isArray(log.activities)
-          ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0)
-          : 0;
-        const stepBurn = steps > 0 ? Math.round(steps * 0.04) : 0;
-        totalBurn += (workoutBurn + stepBurn);
+      const allDates: string[] = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mm = String(monthIdx + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        allDates.push(`${year}-${mm}-${dd}`);
       }
+
+      const days = bucketRanges.map((bucket, idx) => {
+        const bucketDates: string[] = [];
+        for (let d = bucket.start; d <= bucket.end; d++) {
+          const mm = String(monthIdx + 1).padStart(2, '0');
+          const dd = String(d).padStart(2, '0');
+          bucketDates.push(`${year}-${mm}-${dd}`);
+        }
+
+        return {
+          dateStr: bucketDates[0],
+          dayNum: bucket.name,
+          dayName: `W${idx + 1}`,
+          bucketDates,
+        };
+      });
+
+      return {
+        label,
+        days,
+        allDates,
+        canGoForward: periodOffset < 0,
+      };
     }
 
-    const divisor = Math.max(1, totalLoggedDays);
-    const avgDailyCalories = totalLoggedDays > 0 ? Math.round(totalCals / totalLoggedDays) : 0;
-    const avgWater = Math.round(totalWater / 28);
-    const avgSteps = Math.round(totalSteps / 28);
-    const totalDistanceKm = (totalSteps * 0.00078).toFixed(1);
-    const adherencePct = totalLoggedDays > 0 ? Math.round((onBudgetDays / totalLoggedDays) * 100) : 0;
+    // 3. YEARLY (12 calendar months Jan - Dec)
+    const targetYear = now.getFullYear() + periodOffset;
+    const label = `${targetYear}`;
+    const allDates: string[] = [];
 
-    const avgProtein = totalLoggedDays > 0 ? Math.round(totalProtein / divisor) : 0;
-    const avgCarbs = totalLoggedDays > 0 ? Math.round(totalCarbs / divisor) : 0;
-    const avgFat = totalLoggedDays > 0 ? Math.round(totalFat / divisor) : 0;
-    const avgFiber = totalLoggedDays > 0 ? Math.round(totalFiber30 / divisor) : 0;
+    const days = MONTH_NAMES.map((name, monthIdx) => {
+      const daysInMonth = new Date(targetYear, monthIdx + 1, 0).getDate();
+      const monthDates: string[] = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const mm = String(monthIdx + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const ds = `${targetYear}-${mm}-${dd}`;
+        monthDates.push(ds);
+        allDates.push(ds);
+      }
 
-    const effectiveBudget = budget * totalLoggedDays;
-    const netDiff = totalLoggedDays > 0 ? (effectiveBudget + totalBurn) - totalCals : 0;
-    const isDeficit = netDiff >= 0;
+      return {
+        dateStr: monthDates[0],
+        dayNum: monthIdx + 1,
+        dayName: name,
+        monthDates,
+      };
+    });
 
     return {
-      loggedCount: totalLoggedDays,
-      avgDailyCalories,
-      totalBurn,
-      netDiff,
-      isDeficit,
-      adherencePct,
-      avgWater,
-      waterGoalMetDays,
-      avgSteps,
-      totalDistanceKm,
-      avgProtein,
-      avgCarbs,
-      avgFat,
-      avgFiber,
+      label,
+      days,
+      allDates,
+      canGoForward: periodOffset < 0,
     };
-  }, [dailyLogs, selectedDate, budget, waterGoal]);
+  }, [timeframe, periodOffset, dailyLogs]);
 
+  // Safe selected indices within bounds for each independent chart
+  const maxDayIndex = Math.max(0, dateRangeInfo.days.length - 1);
+  const safeCalorieIndex = Math.min(selectedCalorieIndex, maxDayIndex);
+  const safeMacroRatioIndex = Math.min(selectedMacroRatioIndex, maxDayIndex);
+  const safeStepIndex = Math.min(selectedStepIndex, maxDayIndex);
+  const safeStepCalorieIndex = Math.min(selectedStepCalorieIndex, maxDayIndex);
+  const safeStepTimeIndex = Math.min(selectedStepTimeIndex, maxDayIndex);
+  const safeWaterIndex = Math.min(selectedWaterIndex, maxDayIndex);
+  const safeHydrateVolumeIndex = Math.min(selectedHydrateVolumeIndex, maxDayIndex);
+  const safeWeightIndex = Math.min(selectedWeightIndex, maxDayIndex);
 
-  // Dynamically points to the active horizon's true performance metrics
-  const currentMetrics = timeRange === '7d' ? weeklyMetrics : thirtyDayMetrics;
+  // =========================================================================
+  // 1. NUTRITION REPORT DATA
+  // =========================================================================
+  const calorieDays: DayCalorieIntakeData[] = useMemo(() => {
+    return dateRangeInfo.days.map((item) => {
+      if ('log' in item) {
+        const nutrition = getLogNutrition(item.log);
+        return {
+          dateStr: item.dateStr,
+          dayNum: item.dayNum,
+          dayName: item.dayName,
+          calories: nutrition.calories,
+          goalCalories: dailyCalorieGoal,
+          burnedCalories: nutrition.burnedCalories,
+        };
+      }
 
-  // Selected Day for Interactive Tooltip (Always shows calories, goal, and status!)
-  const activeTooltipData = useMemo(() => {
-    if (timeRange === '7d' && selectedBarIdx !== null) {
-      const item = weeklyLogs[selectedBarIdx];
-      if (!item) return null;
-      const targetVal = item.target || budget;
-      const diff = item.calories - targetVal;
-      const isOnBudget = item.calories <= targetVal * 1.05;
-      const remaining = Math.max(0, targetVal - item.calories);
+      // Monthly or Yearly aggregated bucket
+      const dates = (item as any).bucketDates || (item as any).monthDates || [];
+      let totalCal = 0;
+      let activeDaysCount = 0;
+
+      dates.forEach((d: string) => {
+        const nutrition = getLogNutrition(dailyLogs[d]);
+        if (nutrition.calories > 0) {
+          totalCal += nutrition.calories;
+          activeDaysCount++;
+        }
+      });
+
+      const avgCal = activeDaysCount > 0 ? Math.round(totalCal / activeDaysCount) : 0;
       return {
-        label: selectedBarIdx === weeklyLogs.length - 1 ? 'Today' : item.dayName,
-        dateFormatted: formatTooltipDate(item.date),
-        calories: item.calories,
-        hasData: item.calories > 0,
-        targetVal,
-        diff,
-        remaining,
-        isOnBudget,
-        protein: item.protein,
-        carbs: item.carbs,
-        fat: item.fat,
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        calories: avgCal,
+        goalCalories: dailyCalorieGoal,
       };
-    }
-    if (timeRange === '30d' && selectedClusterIdx !== null) {
-      const cluster = thirtyDayClusters[selectedClusterIdx];
-      if (!cluster) return null;
+    });
+  }, [dateRangeInfo.days, dailyCalorieGoal, dailyLogs]);
+
+  // 100% Stacked Macronutrient Distribution Days
+  const macroRatioDays: DayMacroRatioData[] = useMemo(() => {
+    // Determine user's target fallback ratio if day has 0 food logged
+    const targetCarbsKcal = (userGoals?.targetCarbs || 225) * 4;
+    const targetProteinKcal = (userGoals?.targetProtein || 100) * 4;
+    const targetFatKcal = (userGoals?.targetFat || 78) * 9;
+    const targetTotalKcal = targetCarbsKcal + targetProteinKcal + targetFatKcal;
+    const defaultCarbsPct = targetTotalKcal > 0 ? Math.round((targetCarbsKcal / targetTotalKcal) * 100) : 45;
+    const defaultProteinPct = targetTotalKcal > 0 ? Math.round((targetProteinKcal / targetTotalKcal) * 100) : 20;
+    const defaultFatPct = Math.max(0, 100 - defaultCarbsPct - defaultProteinPct);
+
+    return dateRangeInfo.days.map((item) => {
+      let proteinG = 0;
+      let carbsG = 0;
+      let fatG = 0;
+      let fiberG = 0;
+
+      if ('log' in item) {
+        const nutrition = getLogNutrition(item.log);
+        proteinG = Math.round(nutrition.protein * 10) / 10;
+        carbsG = Math.round(nutrition.carbs * 10) / 10;
+        fatG = Math.round(nutrition.fat * 10) / 10;
+        fiberG = Math.round(nutrition.fiber * 10) / 10;
+      } else {
+        const dates = (item as any).bucketDates || (item as any).monthDates || [];
+        let pSum = 0, cSum = 0, fSum = 0, fibSum = 0, count = 0;
+        dates.forEach((d: string) => {
+          const nutrition = getLogNutrition(dailyLogs[d]);
+          if (nutrition.calories > 0) {
+            pSum += nutrition.protein;
+            cSum += nutrition.carbs;
+            fSum += nutrition.fat;
+            fibSum += nutrition.fiber;
+            count++;
+          }
+        });
+        if (count > 0) {
+          proteinG = Math.round((pSum / count) * 10) / 10;
+          carbsG = Math.round((cSum / count) * 10) / 10;
+          fatG = Math.round((fSum / count) * 10) / 10;
+          fiberG = Math.round((fibSum / count) * 10) / 10;
+        }
+      }
+
+      const cKcal = carbsG * 4;
+      const pKcal = proteinG * 4;
+      const fKcal = fatG * 9;
+      const totalKcal = cKcal + pKcal + fKcal;
+
+      let carbsPct = defaultCarbsPct;
+      let proteinPct = defaultProteinPct;
+      let fatPct = defaultFatPct;
+
+      if (totalKcal > 0) {
+        carbsPct = Math.round((cKcal / totalKcal) * 100);
+        proteinPct = Math.round((pKcal / totalKcal) * 100);
+        fatPct = Math.max(0, 100 - carbsPct - proteinPct);
+      }
+
       return {
-        label: cluster.label,
-        dateFormatted: `${cluster.daysLogged}/7 days logged`,
-        calories: cluster.avgCalories,
-        hasData: cluster.daysLogged > 0,
-        targetVal: budget,
-        diff: cluster.avgCalories - budget,
-        remaining: Math.max(0, budget - cluster.avgCalories),
-        isOnBudget: cluster.avgCalories <= budget * 1.05,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        carbsPct,
+        proteinPct,
+        fatPct,
+        carbsGrams: carbsG,
+        proteinGrams: proteinG,
+        fatGrams: fatG,
+        fiberGrams: fiberG,
+        carbs: carbsG,
+        protein: proteinG,
+        fat: fatG,
+        fiber: fiberG,
       };
-    }
-    return null;
-  }, [timeRange, selectedBarIdx, selectedClusterIdx, weeklyLogs, thirtyDayClusters, budget]);
+    });
+  }, [dateRangeInfo.days, dailyLogs, userGoals]);
 
-  // Selected Day for Interactive Water Tooltip (shares selectedBarIdx with other tabs)
-  const activeWaterTooltipData = useMemo(() => {
-    if (timeRange === '7d' && selectedBarIdx !== null) {
-      const item = weeklyLogs[selectedBarIdx];
-      if (!item) return null;
-      const targetVal = waterGoal;
-      const val = item.waterMl || 0;
-      const diff = val - targetVal;
-      const isMet = val >= targetVal;
-      const remaining = Math.max(0, targetVal - val);
-      const glasses = (val / 250).toFixed(1).replace(/\.0$/, '');
+
+  // =========================================================================
+  // 2. STEP REPORT DATA
+  // =========================================================================
+  const { stepDays, calorieBurnDays, timeDays, stepSummary } = useMemo(() => {
+    let totalSteps = 0;
+    let totalCalories = 0;
+    let totalDistanceKm = 0;
+    let totalDurationMinutes = 0;
+
+    const sDays: DayStepData[] = [];
+    const cDays: DayCalorieData[] = [];
+    const tDays: DayTimeData[] = [];
+
+    dateRangeInfo.days.forEach((item) => {
+      let steps = 0;
+
+      if ('log' in item) {
+        steps = item.log?.steps || 0;
+      } else {
+        const dates = (item as any).bucketDates || (item as any).monthDates || [];
+        let bucketSum = 0;
+        let count = 0;
+        dates.forEach((d: string) => {
+          const s = dailyLogs[d]?.steps;
+          if (s && s > 0) {
+            bucketSum += s;
+            count++;
+          }
+        });
+        steps = count > 0 ? Math.round(bucketSum / count) : 0;
+      }
+
+      totalSteps += steps;
+
+      const metrics = calculateStepMetrics(steps, userWeightKg);
+      totalCalories += metrics.calories;
+      totalDistanceKm += metrics.distanceKm;
+      totalDurationMinutes += metrics.durationMinutes;
+
+      sDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        steps,
+        goalSteps: dailyStepGoal,
+        completionPct: dailyStepGoal > 0 ? Math.round((steps / dailyStepGoal) * 100) : 0,
+      });
+
+      cDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        calories: metrics.calories,
+      });
+
+      tDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        durationMinutes: metrics.durationMinutes,
+      });
+    });
+
+    return {
+      stepDays: sDays,
+      calorieBurnDays: cDays,
+      timeDays: tDays,
+      stepSummary: {
+        totalSteps,
+        totalCalories,
+        totalDistanceKm: Number(totalDistanceKm.toFixed(1)),
+        totalDurationMinutes,
+      },
+    };
+  }, [dateRangeInfo.days, dailyLogs, dailyStepGoal, userWeightKg]);
+
+  // =========================================================================
+  // 3. WATER REPORT DATA
+  // =========================================================================
+  const { waterCompletionDays, hydrateDays, drinkTypesBreakdown, totalDrinkVolume } = useMemo(() => {
+    const cDays: DayCompletionData[] = [];
+    const hDays: DayHydrateData[] = [];
+    const beverageMap: Record<string, number> = {};
+    let grandVolumeMl = 0;
+
+    dateRangeInfo.days.forEach((item) => {
+      let ml = 0;
+
+      if ('log' in item) {
+        ml = item.log?.waterMl || 0;
+        item.log?.waterEntries?.forEach((wl) => {
+          const bevId = wl.beverageType || 'water';
+          beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
+          grandVolumeMl += wl.amountMl || 0;
+        });
+      } else {
+        const dates = (item as any).bucketDates || (item as any).monthDates || [];
+        let bucketSum = 0;
+        let count = 0;
+        dates.forEach((d: string) => {
+          const w = dailyLogs[d]?.waterMl;
+          if (w && w > 0) {
+            bucketSum += w;
+            count++;
+          }
+          dailyLogs[d]?.waterEntries?.forEach((wl) => {
+            const bevId = wl.beverageType || 'water';
+            beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
+            grandVolumeMl += wl.amountMl || 0;
+          });
+        });
+        ml = count > 0 ? Math.round(bucketSum / count) : 0;
+      }
+
+      cDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        intakeMl: ml,
+        goalMl: dailyWaterGoal,
+        completionPct: dailyWaterGoal > 0 ? Math.round((ml / dailyWaterGoal) * 100) : 0,
+      });
+
+      hDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        intakeMl: ml,
+      });
+    });
+
+    const breakdown: DrinkTypeBreakdown[] = Object.keys(beverageMap).map((bevId) => {
+      const cfg = getBeverageConfig(bevId);
+      const volumeMl = beverageMap[bevId];
       return {
-        label: selectedBarIdx === weeklyLogs.length - 1 ? 'Today' : item.dayName,
-        dateFormatted: formatTooltipDate(item.date),
-        waterMl: val,
-        hasData: val > 0,
-        targetVal,
-        diff,
-        remaining,
-        isMet,
-        glasses,
+        id: bevId,
+        name: cfg.name,
+        color: cfg.color,
+        amountMl: volumeMl,
+        pct: grandVolumeMl > 0 ? Math.round((volumeMl / grandVolumeMl) * 100) : 0,
       };
+    });
+
+    breakdown.sort((a, b) => b.amountMl - a.amountMl);
+
+    return {
+      waterCompletionDays: cDays,
+      hydrateDays: hDays,
+      drinkTypesBreakdown: breakdown,
+      totalDrinkVolume: grandVolumeMl,
+    };
+  }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
+
+  // =========================================================================
+  // 4. WEIGHT REPORT DATA
+  // =========================================================================
+  const { weightTrendDays, weightSummary } = useMemo(() => {
+    const tDays: DayWeightTrendData[] = [];
+    let latestWeight = userWeightKg;
+
+    dateRangeInfo.days.forEach((item) => {
+      let w = userWeightKg;
+
+      if ('log' in item && item.log?.weightKg) {
+        w = item.log.weightKg;
+        latestWeight = w;
+      }
+
+      const displayWeight = Number((w * unitFactor).toFixed(1));
+      tDays.push({
+        dateStr: item.dateStr,
+        dayNum: item.dayNum,
+        dayName: item.dayName,
+        weightKg: w,
+        displayWeight,
+      });
+    });
+
+    const startW = userGoals.startWeightKg || latestWeight;
+    const currentW = latestWeight;
+    const targetW = userGoals.targetWeightKg || 68;
+    const netChange = currentW - startW;
+
+    const summary: WeightSummaryData = {
+      currentWeightKg: Number(currentW.toFixed(1)),
+      startWeightKg: Number(startW.toFixed(1)),
+      targetWeightKg: Number(targetW.toFixed(1)),
+      netChangeKg: Number(netChange.toFixed(1)),
+      avgWeightKg: Number(currentW.toFixed(1)),
+      unit: weightUnit,
+    };
+
+    return {
+      weightTrendDays: tDays,
+      weightSummary: summary,
+    };
+  }, [dateRangeInfo.days, userWeightKg, unitFactor, weightUnit, userGoals]);
+
+  // Date Navigation Handlers
+  const handlePrevPeriod = () => setPeriodOffset((prev) => prev - 1);
+  const handleNextPeriod = () => {
+    if (dateRangeInfo.canGoForward) {
+      setPeriodOffset((prev) => Math.min(0, prev + 1));
     }
-    if (timeRange === '30d' && selectedClusterIdx !== null) {
-      const cluster = thirtyDayClusters[selectedClusterIdx];
-      if (!cluster) return null;
-      const val = cluster.avgWaterMl;
-      const diff = val - waterGoal;
-      const isMet = val >= waterGoal;
-      const remaining = Math.max(0, waterGoal - val);
-      const glasses = (val / 250).toFixed(1).replace(/\.0$/, '');
-      return {
-        label: cluster.label,
-        dateFormatted: `${cluster.daysLogged}/7 days logged`,
-        waterMl: val,
-        hasData: cluster.daysLogged > 0,
-        targetVal: waterGoal,
-        diff,
-        remaining,
-        isMet,
-        glasses,
-      };
+  };
+
+  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
+    if (newTimeframe !== timeframe) {
+      setTimeframe(newTimeframe);
+      setPeriodOffset(0);
+      setSelectedCalorieIndex(0);
+      setSelectedMacroRatioIndex(0);
+      setSelectedStepIndex(0);
+      setSelectedStepCalorieIndex(0);
+      setSelectedStepTimeIndex(0);
+      setSelectedWaterIndex(0);
+      setSelectedHydrateVolumeIndex(0);
+      setSelectedWeightIndex(0);
     }
-    return null;
-  }, [timeRange, selectedBarIdx, selectedClusterIdx, weeklyLogs, thirtyDayClusters, waterGoal]);
-
-  // Selected Day for Interactive Steps Tooltip (shares selectedBarIdx with other tabs)
-  const activeStepTooltipData = useMemo(() => {
-    if (timeRange === '7d' && selectedBarIdx !== null) {
-      const item = weeklyLogs[selectedBarIdx];
-      if (!item) return null;
-      const targetVal = stepGoal;
-      const val = item.steps || 0;
-      const diff = val - targetVal;
-      const isMet = val >= targetVal;
-      const remaining = Math.max(0, targetVal - val);
-      const distanceKm = (val * 0.00078).toFixed(1);
-      const stepBurn = val > 0 ? Math.round(val * 0.04) : 0;
-      return {
-        label: selectedBarIdx === weeklyLogs.length - 1 ? 'Today' : item.dayName,
-        dateFormatted: formatTooltipDate(item.date),
-        steps: val,
-        hasData: val > 0,
-        targetVal,
-        diff,
-        remaining,
-        isMet,
-        distanceKm,
-        stepBurn,
-      };
-    }
-    if (timeRange === '30d' && selectedClusterIdx !== null) {
-      const cluster = thirtyDayClusters[selectedClusterIdx];
-      if (!cluster) return null;
-      const val = cluster.avgSteps;
-      const diff = val - stepGoal;
-      const isMet = val >= stepGoal;
-      const remaining = Math.max(0, stepGoal - val);
-      const distanceKm = (val * 0.00078).toFixed(1);
-      const stepBurn = val > 0 ? Math.round(val * 0.04) : 0;
-      return {
-        label: cluster.label,
-        dateFormatted: `${cluster.daysLogged}/7 days logged`,
-        steps: val,
-        hasData: cluster.daysLogged > 0,
-        targetVal: stepGoal,
-        diff,
-        remaining,
-        isMet,
-        distanceKm,
-        stepBurn,
-      };
-    }
-    return null;
-  }, [timeRange, selectedBarIdx, selectedClusterIdx, weeklyLogs, thirtyDayClusters, stepGoal]);
-
-  // Scroll animations
-  const handleScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  const titleStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(scrollY.value, [0, 50], [0, -3], 'clamp') },
-      { scale: interpolate(scrollY.value, [0, 50], [1, 0.78], 'clamp') },
-    ],
-  }));
-
-  const subtitleAtRestStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 25], [1, 0], 'clamp'),
-  }));
-
-  const adaptiveContextStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [20, 45], [0, 1], 'clamp'),
-    transform: [{ translateY: interpolate(scrollY.value, [20, 45], [4, 0], 'clamp') }],
-  }));
-
-  const headerBorderStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [15, 40], [0, 1], 'clamp'),
-  }));
-
-  const tooltipStyle = useAnimatedStyle(() => ({
-    opacity: tooltipAnim.value,
-    transform: [{ scale: interpolate(tooltipAnim.value, [0, 1], [0.94, 1]) }],
-  }));
-
-  // Dynamic max scale for bar charts so peak days don't cap out (respects active horizon)
-  const maxChartCalorie = useMemo(() => {
-    const values = timeRange === '7d'
-      ? weeklyLogs.map((d) => d.calories)
-      : thirtyDayClusters.map((c) => c.avgCalories);
-    const maxLogged = Math.max(...values, budget);
-    return Math.max(budget * 1.25, maxLogged * 1.1);
-  }, [weeklyLogs, thirtyDayClusters, timeRange, budget]);
-
-  const maxChartWater = useMemo(() => {
-    const values = timeRange === '7d'
-      ? weeklyLogs.map((d) => d.waterMl || 0)
-      : thirtyDayClusters.map((c) => c.avgWaterMl);
-    const maxLogged = Math.max(...values, waterGoal);
-    return Math.max(waterGoal * 1.25, maxLogged * 1.1);
-  }, [weeklyLogs, thirtyDayClusters, timeRange, waterGoal]);
-
-  const maxChartSteps = useMemo(() => {
-    const values = timeRange === '7d'
-      ? weeklyLogs.map((d) => d.steps || 0)
-      : thirtyDayClusters.map((c) => c.avgSteps);
-    const maxLogged = Math.max(...values, stepGoal);
-    return Math.max(stepGoal * 1.25, maxLogged * 1.1);
-  }, [weeklyLogs, thirtyDayClusters, timeRange, stepGoal]);
+  };
 
   return (
     <View style={styles.rootContainer}>
-      {/* 0. Dedicated Nutrition & Health Trends Top App Bar */}
+      {/* 1. Header with Screen Title and Dropdown Capsule */}
       <View style={styles.headerContainer}>
-        <Animated.View style={[styles.headerBorder, headerBorderStyle]} />
-
         <View style={styles.headerMainRow}>
-          {/* Title: Scales down smoothly on scroll with margin to prevent crowding */}
-          <Animated.View
-            style={[
-              { flex: 1, transformOrigin: 'left center', justifyContent: 'center', marginRight: 10 },
-              titleStyle,
-            ]}
+          <Text style={styles.headerTitle}>Analytics</Text>
+
+          {/* Report Selector Capsule Button */}
+          <Pressable
+            style={({ pressed }) => [styles.reportCapsuleBtn, pressed && styles.btnPressed]}
+            onPress={() => setReportPickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Active report: ${activeReportMeta.title}. Tap to change report.`}
           >
-            <Text
-              style={styles.headerTitle}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
-              Nutrition & Health Trends
-            </Text>
-          </Animated.View>
-
-          {/* Right Action: Time Horizon Selector Pill */}
-          <View style={styles.horizonHeaderPill}>
-            <Pressable
-              style={[
-                styles.horizonPillBtn,
-                timeRange === '7d' ? styles.horizonPillBtnActive : null,
-              ]}
-              onPress={() => handleTimeRangeChange('7d')}
-              hitSlop={HIT_SLOP_4}
-              accessibilityRole="button"
-              accessibilityLabel="Show 7-day analytics"
-            >
-              <Text
-                style={[
-                  styles.horizonPillText,
-                  timeRange === '7d' ? styles.horizonPillTextActive : null,
-                ]}
-              >
-                7D
-              </Text>
-            </Pressable>
-
-            <Pressable
-              style={[
-                styles.horizonPillBtn,
-                timeRange === '30d' ? styles.horizonPillBtnActive : null,
-              ]}
-              onPress={() => handleTimeRangeChange('30d')}
-              hitSlop={HIT_SLOP_4}
-              accessibilityRole="button"
-              accessibilityLabel="Show 30-day analytics"
-            >
-              <Text
-                style={[
-                  styles.horizonPillText,
-                  timeRange === '30d' ? styles.horizonPillTextActive : null,
-                ]}
-              >
-                30D
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Subtitle Zone: At rest displays description; on scroll reveals adaptive status pill */}
-        <View style={styles.subtitleZone}>
-          <Animated.View
-            style={[styles.subtitleStack, subtitleAtRestStyle]}
-            pointerEvents="none"
-          >
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
-              {timeRange === '7d'
-                ? 'Your weekly nutrition & habit consistency'
-                : 'Your 30-day nutrition & habit consistency'}
-            </Text>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.subtitleStack,
-              adaptiveContextStyle,
-            ]}
-          >
-            <View style={styles.adaptiveStatusBadge}>
-              <View
-                style={[
-                  styles.adaptiveStatusDot,
-                  { backgroundColor: currentMetrics.isDeficit ? Colors.protein : Colors.primary },
-                ]}
-              />
-              <Text style={styles.adaptiveStatusText}>
-                {timeRange === '7d' ? '7-Day Trend' : '30-Day Trend'}
-              </Text>
-                <Text style={styles.adaptiveStatusDivider}>|</Text>
-              <Text style={styles.adaptiveStatusMetric}>
-                {currentMetrics.loggedCount === 0
-                  ? 'Tracking baseline'
-                  : currentMetrics.isDeficit
-                  ? `-${currentMetrics.netDiff.toLocaleString()} kcal Deficit`
-                  : `+${Math.abs(currentMetrics.netDiff).toLocaleString()} kcal Surplus`}
-              </Text>
+            <View style={[styles.capsuleIconWrap, { backgroundColor: activeReportMeta.iconBg }]}>
+              <Ionicons name={activeReportMeta.iconName} size={15} color={activeReportMeta.iconColor} />
             </View>
-          </Animated.View>
+            <Text style={styles.capsuleTitle} numberOfLines={1}>
+              {activeReportMeta.title}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color="#64748B" style={styles.capsuleChevron} />
+          </Pressable>
         </View>
       </View>
 
-      {/* Main Scrollable Content */}
-      <Animated.ScrollView
-        ref={scrollRef as any}
-        style={styles.container}
-        contentContainerStyle={styles.content}
+      {/* 2. Unified Controls Bar: Timeframe Segment & Date Range Navigator */}
+      <View style={styles.controlsBar}>
+        {/* Timeframe Switcher Tabs */}
+        <View style={styles.timeframeSegmentContainer}>
+          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
+            const isActive = timeframe === tab;
+            const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
+            return (
+              <Pressable
+                key={tab}
+                style={[
+                  styles.timeframeTab,
+                  isActive && styles.timeframeTabActive,
+                ]}
+                onPress={() => handleChangeTimeframe(tab)}
+                accessibilityRole="button"
+                accessibilityLabel={`${displayLabel} timeframe`}
+              >
+                <Text
+                  style={[
+                    styles.timeframeTabText,
+                    isActive && styles.timeframeTabTextActive,
+                  ]}
+                >
+                  {displayLabel}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Date Range Navigator */}
+        <View style={styles.dateNavigator}>
+          <Pressable
+            style={({ pressed }) => [styles.navArrowBtn, pressed && styles.btnPressed]}
+            onPress={handlePrevPeriod}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Previous time period"
+          >
+            <Ionicons name="chevron-back" size={18} color="#0F172A" />
+          </Pressable>
+
+          <Text style={styles.dateRangeText} numberOfLines={1}>
+            {dateRangeInfo.label}
+          </Text>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.navArrowBtn,
+              !dateRangeInfo.canGoForward && styles.navArrowDisabled,
+              pressed && dateRangeInfo.canGoForward && styles.btnPressed,
+            ]}
+            onPress={handleNextPeriod}
+            disabled={!dateRangeInfo.canGoForward}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Next time period"
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={dateRangeInfo.canGoForward ? '#0F172A' : 'rgba(15, 23, 42, 0.2)'}
+            />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* 3. Main Scrollable Content */}
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollArea}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom + 16, 96) },
+        ]}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
         onScroll={handleScroll}
-        onMomentumScrollEnd={handleScrollEnd}
-        onScrollEndDrag={handleScrollEnd}
+        scrollEventThrottle={16}
       >
-        {/* ========================================================= */}
-        {/* LAYER 1: THE VERDICT — Executive Performance Hero Card    */}
-        {/* ========================================================= */}
-        <View style={styles.heroCard}>
-          {/* Top Row: Category & Adherence Pill */}
-          <View style={[styles.heroCardHeaderRow, isSmallDevice ? { flexWrap: 'wrap', gap: 6 } : null]}>
-            <View style={styles.heroTagWrap}>
-              <Text style={styles.heroCategoryLabel}>
-                {timeRange === '7d' ? 'WEEKLY PERFORMANCE' : '30-DAY PERFORMANCE'}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.adherenceBadge,
-                currentMetrics.isDeficit ? styles.adherenceBadgeGreen : styles.adherenceBadgeCoral,
-              ]}
-            >
-              <Ionicons
-                name={currentMetrics.isDeficit ? 'shield-checkmark' : 'alert-circle'}
-                size={13}
-                color={currentMetrics.isDeficit ? '#15803D' : Colors.primaryDark}
-              />
-              <Text
-                style={[
-                  styles.adherenceBadgeText,
-                  currentMetrics.isDeficit ? styles.adherenceTextGreen : styles.adherenceTextCoral,
-                ]}
-              >
-                {currentMetrics.adherencePct}% on target
-              </Text>
-            </View>
-          </View>
+        {/* NUTRITION & CALORIES REPORT */}
+        {activeReport === 'nutrition' && (
+          <>
+            <CalorieCompletionCard
+              days={calorieDays}
+              selectedIndex={safeCalorieIndex}
+              onSelectDay={setSelectedCalorieIndex}
+              calorieGoal={dailyCalorieGoal}
+            />
 
-          {/* Primary Hero Metric: Average Daily Calories */}
-          <View style={styles.heroValueContainer}>
-            <View style={styles.heroMainValueRow}>
-              <Text
-                style={styles.heroMainValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {currentMetrics.loggedCount > 0
-                  ? currentMetrics.avgDailyCalories.toLocaleString()
-                  : budget.toLocaleString()}
-              </Text>
-              <Text style={styles.heroUnit}>kcal / day</Text>
-            </View>
-            <Text
-              style={styles.heroBenchmarkSub}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
-              <Text>Goal: {budget.toLocaleString()} kcal</Text>
-              {currentMetrics.loggedCount > 0 ? (
-                currentMetrics.avgDailyCalories <= budget ? (
-                  <>
-                    <Text style={styles.heroBenchmarkDot}>{' \u2022 '}</Text>
-                    <Text style={styles.heroTextGreen}>
-                      -{Math.abs(budget - currentMetrics.avgDailyCalories).toLocaleString()} kcal under budget
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.heroBenchmarkDot}>{' \u2022 '}</Text>
-                    <Text style={styles.heroTextCoral}>
-                      +{Math.abs(currentMetrics.avgDailyCalories - budget).toLocaleString()} kcal over budget
-                    </Text>
-                  </>
-                )
-              ) : (
-                <>
-                  <Text style={styles.heroBenchmarkDot}>{' \u2022 '}</Text>
-                  <Text style={styles.heroBenchmarkSubMuted}>Tracking baseline</Text>
-                </>
-              )}
-            </Text>
-          </View>
+            <MacroDistributionCard
+              days={macroRatioDays}
+              selectedIndex={safeMacroRatioIndex}
+              onSelectDay={setSelectedMacroRatioIndex}
+              targets={{
+                protein: userGoals?.targetProtein || 140,
+                carbs: userGoals?.targetCarbs || 220,
+                fat: userGoals?.targetFat || 65,
+                fiber: userGoals?.targetFiber || 30,
+              }}
+            />
+          </>
+        )}
 
-          {/* 3 Vitality Pillars (Nutrition | Hydration | Movement) */}
-          <View style={styles.kpiTriadRow}>
-            {/* Pillar 1: Nutrition Intake */}
-            <View style={[styles.kpiCol, styles.kpiColBorder]}>
-              <View style={styles.pillarTitleRow}>
-                <Ionicons name="nutrition-outline" size={12} color={Colors.primary} />
-                <Text style={styles.pillarTitle}>INTAKE</Text>
-              </View>
-              <Text
-                style={styles.kpiValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {currentMetrics.avgDailyCalories.toLocaleString()}
-              </Text>
-              <Text style={styles.kpiLabel} numberOfLines={1}>
-                {currentMetrics.loggedCount === 0
-                  ? 'No logs'
-                  : currentMetrics.avgDailyCalories <= budget
-                  ? 'On Budget'
-                  : 'Surplus'}
-              </Text>
-            </View>
+        {/* STEP ACTIVITY REPORT */}
+        {activeReport === 'steps' && (
+          <>
+            <StepTotalSummaryCard
+              totalSteps={stepSummary.totalSteps}
+              totalCalories={stepSummary.totalCalories}
+              totalDistanceKm={stepSummary.totalDistanceKm}
+              totalDurationMinutes={stepSummary.totalDurationMinutes}
+            />
 
-            {/* Pillar 2: Hydration Consistency */}
-            <View style={[styles.kpiCol, styles.kpiColBorder]}>
-              <View style={styles.pillarTitleRow}>
-                <Ionicons name="water-outline" size={12} color="#0284C7" />
-                <Text style={styles.pillarTitle}>WATER</Text>
-              </View>
-              <Text
-                style={styles.kpiValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {(currentMetrics.avgWater / 1000).toFixed(1)} L
-              </Text>
-              <Text style={styles.kpiLabel} numberOfLines={1}>
-                {currentMetrics.waterGoalMetDays}/{timeRange === '7d' ? '7' : '28'} days met
-              </Text>
-            </View>
+            <StepCompletionCard
+              days={stepDays}
+              selectedIndex={safeStepIndex}
+              onSelectDay={setSelectedStepIndex}
+              stepGoal={dailyStepGoal}
+            />
 
-            {/* Pillar 3: Movement / Steps */}
-            <View style={styles.kpiCol}>
-              <View style={styles.pillarTitleRow}>
-                <Ionicons name="footsteps-outline" size={12} color="#EA580C" />
-                <Text style={styles.pillarTitle}>STEPS</Text>
-              </View>
-              <Text
-                style={styles.kpiValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {currentMetrics.avgSteps >= 1000 ? `${(currentMetrics.avgSteps / 1000).toFixed(1)}k` : currentMetrics.avgSteps}
-              </Text>
-              <Text style={styles.kpiLabel} numberOfLines={1}>
-                {currentMetrics.totalDistanceKm} km total
-              </Text>
-            </View>
-          </View>
-        </View>
+            <StepCalorieBurnCard
+              days={calorieBurnDays}
+              selectedIndex={safeStepCalorieIndex}
+              onSelectDay={setSelectedStepCalorieIndex}
+            />
 
-        {/* ========================================================= */}
-        {/* LAYER 2: THE PATTERN — Calories · Water · Steps Chart     */}
-        {/* ========================================================= */}
-        <View style={styles.chartCard}>
-          {/* Card Title */}
-          <View style={styles.chartHeaderBlock}>
-            <View style={styles.chartTitleRow}>
-              <View style={styles.chartTitleCol}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {metricTab === 'calories' ? 'Daily Calorie Intake'
-                    : metricTab === 'water' ? 'Daily Water Intake'
-                    : 'Daily Steps & Movement'}
-                </Text>
-                <Text style={styles.cardSubtitle} numberOfLines={1}>
-                  {metricTab === 'calories' ? 'Tap any bar to inspect daily macros'
-                    : metricTab === 'water' ? 'Tap any bar to inspect hydration'
-                    : 'Tap any bar to inspect daily activity'}
-                </Text>
-              </View>
+            <StepTimeDurationCard
+              days={timeDays}
+              selectedIndex={safeStepTimeIndex}
+              onSelectDay={setSelectedStepTimeIndex}
+            />
+          </>
+        )}
 
-              {/* Dynamic goal badge */}
-              {metricTab === 'calories' ? (
-                <View style={styles.chartBudgetBadge}>
-                  <Ionicons name="flame" size={11} color={Colors.primary} />
-                  <Text style={styles.chartBudgetBadgeText}>{budget.toLocaleString()} kcal</Text>
-                </View>
-              ) : metricTab === 'water' ? (
-                <View style={styles.chartWaterBadge}>
-                  <Ionicons name="water" size={11} color={Colors.water} />
-                  <Text style={styles.chartWaterBadgeText}>{(waterGoal / 1000).toFixed(1)} L</Text>
-                </View>
-              ) : (
-                <View style={styles.chartStepsBadge}>
-                  <Ionicons name="footsteps" size={11} color={Colors.steps} />
-                  <Text style={styles.chartStepsBadgeText}>
-                    {stepGoal >= 1000 ? `${(stepGoal / 1000).toFixed(0)}k` : stepGoal} steps
-                  </Text>
-                </View>
-              )}
-            </View>
+        {/* HYDRATION INTAKE REPORT */}
+        {activeReport === 'water' && (
+          <>
+            <DrinkCompletionCard
+              days={waterCompletionDays}
+              selectedIndex={safeWaterIndex}
+              onSelectDay={setSelectedWaterIndex}
+            />
 
-            {/* Metric Tab Switcher */}
-            <View style={styles.metricTabRow}>
-              {(['calories', 'water', 'steps'] as const).map((tab) => (
-                <Pressable
-                  key={tab}
-                  style={[styles.metricTab, metricTab === tab ? styles.metricTabActive : null]}
-                  onPress={() => handleMetricTabChange(tab)}
-                  hitSlop={HIT_SLOP_8}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: metricTab === tab }}
-                >
-                  <Ionicons
-                    name={
-                      tab === 'calories' ? 'flame' :
-                      tab === 'water' ? 'water' : 'footsteps'
-                    }
-                    size={11}
-                    color={
-                      metricTab === tab
-                        ? (tab === 'calories' ? Colors.primary
-                            : tab === 'water' ? Colors.water
-                            : Colors.steps)
-                        : '#94A3B8'
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.metricTabText,
-                      metricTab === tab
-                        ? (tab === 'calories' ? styles.metricTabTextCalories
-                            : tab === 'water' ? styles.metricTabTextWater
-                            : styles.metricTabTextSteps)
-                        : null,
-                    ]}
-                  >
-                    {tab === 'calories' ? 'Calories' : tab === 'water' ? 'Water' : 'Steps'}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <HydrateVolumeCard
+              days={hydrateDays}
+              selectedIndex={safeHydrateVolumeIndex}
+              onSelectDay={setSelectedHydrateVolumeIndex}
+            />
 
-            {/* Dynamic Legend Row */}
-            <View style={styles.chartLegendRow}>
-              <View style={styles.legendItem}>
-                <View style={styles.legendDashSample} />
-                <Text style={styles.legendLabel}>Goal Line</Text>
-              </View>
-              {metricTab === 'calories' ? (<>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
-                  <Text style={styles.legendLabel}>On Budget</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#DC2626' }]} />
-                  <Text style={styles.legendLabel}>Surplus</Text>
-                </View>
-              </>) : metricTab === 'water' ? (<>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.water }]} />
-                  <Text style={styles.legendLabel}>Goal Met</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.waterSecondary }]} />
-                  <Text style={styles.legendLabel}>In Progress</Text>
-                </View>
-              </>) : (<>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.steps }]} />
-                  <Text style={styles.legendLabel}>Goal Met</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.stepsSecondary }]} />
-                  <Text style={styles.legendLabel}>Active</Text>
-                </View>
-              </>)}
-            </View>
-          </View>
+            <DrinkTypesCard
+              breakdown={drinkTypesBreakdown}
+              totalIntakeMl={totalDrinkVolume}
+            />
+          </>
+        )}
 
-          {/* ---- TOOLTIP: Calories ---- */}
-          {metricTab === 'calories' && activeTooltipData ? (
-            <Animated.View
-              style={[
-                styles.tooltipContainer,
-                tooltipStyle,
-              ]}
-            >
-              <View style={styles.tooltipMainRow}>
-                <View style={styles.tooltipLeft}>
-                  <Text style={styles.tooltipDayLabel} numberOfLines={1}>
-                    {activeTooltipData.label}{' '}
-                    <Text style={styles.tooltipDateSep}>|  </Text>
-                    <Text style={styles.tooltipDateText}>{activeTooltipData.dateFormatted}</Text>
-                  </Text>
-                  <View style={styles.tooltipCalorieRow}>
-                    <Text style={styles.tooltipCalsBold} numberOfLines={1}>
-                      {activeTooltipData.calories.toLocaleString()}
-                    </Text>
-                    <Text style={styles.tooltipCalsBudget} numberOfLines={1}>
-                      / {activeTooltipData.targetVal.toLocaleString()} kcal
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.tooltipStatusPill,
-                    activeTooltipData.hasData
-                      ? (activeTooltipData.isOnBudget ? styles.tooltipPillWarm : styles.tooltipPillCoral)
-                      : styles.tooltipPillNeutral,
-                  ]}
-                >
-                  <Ionicons
-                    name={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? 'checkmark-circle' : 'alert-circle') : 'time-outline'}
-                    size={12}
-                    color={activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? Colors.primary : '#DC2626') : Colors.water}
-                  />
-                  <Text
-                    style={[
-                      styles.tooltipStatusText,
-                      activeTooltipData.hasData ? (activeTooltipData.isOnBudget ? styles.tooltipTextWarm : styles.tooltipTextCoral) : styles.tooltipTextNeutral,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {activeTooltipData.hasData
-                      ? (activeTooltipData.diff <= 0 ? `${Math.abs(activeTooltipData.diff)} kcal under` : `+${activeTooltipData.diff} kcal over`)
-                      : `${activeTooltipData.remaining.toLocaleString()} kcal left`}
-                  </Text>
-                </View>
-              </View>
-              {activeTooltipData.hasData && activeTooltipData.protein > 0 ? (
-                <View style={styles.tooltipMacroRow}>
-                  <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: Colors.proteinDark, fontWeight: '700' }}>P </Text>{Math.round(activeTooltipData.protein)}g
-                  </Text>
-                  <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: Colors.carbsDark, fontWeight: '700' }}>C </Text>{Math.round(activeTooltipData.carbs)}g
-                  </Text>
-                  <Text style={styles.tooltipMacroPill} numberOfLines={1}>
-                    <Text style={{ color: Colors.fatDark, fontWeight: '700' }}>F </Text>{Math.round(activeTooltipData.fat)}g
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.tooltipEmptyRow}>
-                  <Ionicons name="restaurant-outline" size={12} color="#94A3B8" />
-                  <Text style={styles.tooltipEmptySub} numberOfLines={1}>No meals logged yet  -  Start logging today</Text>
-                </View>
-              )}
-            </Animated.View>
-          ) : null}
+        {/* WEIGHT & BODY REPORT */}
+        {activeReport === 'weight' && (
+          <>
+            <WeightSummaryCard data={weightSummary} />
 
-          {/* ---- TOOLTIP: Water ---- */}
-          {metricTab === 'water' && activeWaterTooltipData ? (
-            <Animated.View
-              style={[
-                styles.tooltipContainer,
-                tooltipStyle,
-              ]}
-            >
-              <View style={styles.tooltipMainRow}>
-                <View style={styles.tooltipLeft}>
-                  <Text style={styles.tooltipDayLabel} numberOfLines={1}>
-                    {activeWaterTooltipData.label}{' '}
-                    <Text style={styles.tooltipDateSep}>|  </Text>
-                    <Text style={styles.tooltipDateText}>{activeWaterTooltipData.dateFormatted}</Text>
-                  </Text>
-                  <View style={styles.tooltipCalorieRow}>
-                    <Text style={styles.tooltipCalsBold} numberOfLines={1}>
-                      {(activeWaterTooltipData.waterMl / 1000).toFixed(1)} L
-                    </Text>
-                    <Text style={styles.tooltipCalsBudget} numberOfLines={1}>
-                      / {(activeWaterTooltipData.targetVal / 1000).toFixed(1)} L
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.tooltipStatusPill,
-                    activeWaterTooltipData.hasData
-                      ? (activeWaterTooltipData.isMet ? styles.tooltipPillBlueMet : styles.tooltipPillBlue)
-                      : styles.tooltipPillNeutral,
-                  ]}
-                >
-                  <Ionicons
-                    name={activeWaterTooltipData.hasData ? (activeWaterTooltipData.isMet ? 'checkmark-circle' : 'water') : 'time-outline'}
-                    size={12}
-                    color={activeWaterTooltipData.hasData ? (activeWaterTooltipData.isMet ? '#0284C7' : '#0369A1') : '#64748B'}
-                  />
-                  <Text
-                    style={[
-                      styles.tooltipStatusText,
-                      activeWaterTooltipData.hasData
-                        ? (activeWaterTooltipData.isMet ? styles.tooltipTextBlueMet : styles.tooltipTextBlue)
-                        : styles.tooltipTextNeutral,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {activeWaterTooltipData.hasData
-                      ? (activeWaterTooltipData.isMet
-                          ? (activeWaterTooltipData.diff > 0 ? `+${(activeWaterTooltipData.diff / 1000).toFixed(1)} L over` : 'Goal Met')
-                          : `${(activeWaterTooltipData.remaining / 1000).toFixed(1)} L left`)
-                      : `${(waterGoal / 1000).toFixed(1)} L left`}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.tooltipWaterRow}>
-                <Ionicons name="sparkles" size={11} color="#0284C7" />
-                <Text style={styles.tooltipWaterSub} numberOfLines={1}>
-                  {activeWaterTooltipData.hasData
-                    ? `~${activeWaterTooltipData.glasses} glasses  -  ${activeWaterTooltipData.isMet ? 'Optimal hydration' : 'Keep hydrating'}`
-                    : 'No water logged yet  -  Drink a glass to start'}
-                </Text>
-              </View>
-            </Animated.View>
-          ) : null}
+            <WeightTrendCard
+              days={weightTrendDays}
+              selectedIndex={safeWeightIndex}
+              onSelectDay={setSelectedWeightIndex}
+              unit={weightUnit}
+              targetWeightKg={userGoals.targetWeightKg}
+            />
 
-          {/* ---- TOOLTIP: Steps ---- */}
-          {metricTab === 'steps' && activeStepTooltipData ? (
-            <Animated.View
-              style={[
-                styles.tooltipContainer,
-                tooltipStyle,
-              ]}
-            >
-              <View style={styles.tooltipMainRow}>
-                <View style={styles.tooltipLeft}>
-                  <Text style={styles.tooltipDayLabel} numberOfLines={1}>
-                    {activeStepTooltipData.label}{' '}
-                    <Text style={styles.tooltipDateSep}>|  </Text>
-                    <Text style={styles.tooltipDateText}>{activeStepTooltipData.dateFormatted}</Text>
-                  </Text>
-                  <View style={styles.tooltipCalorieRow}>
-                    <Text style={styles.tooltipCalsBold} numberOfLines={1}>
-                      {activeStepTooltipData.steps.toLocaleString()}
-                    </Text>
-                    <Text style={styles.tooltipCalsBudget} numberOfLines={1}>
-                      / {activeStepTooltipData.targetVal.toLocaleString()} steps
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={[
-                    styles.tooltipStatusPill,
-                    activeStepTooltipData.hasData
-                      ? (activeStepTooltipData.isMet ? styles.tooltipPillOrangeMet : styles.tooltipPillOrange)
-                      : styles.tooltipPillNeutral,
-                  ]}
-                >
-                  <Ionicons
-                    name={activeStepTooltipData.hasData ? (activeStepTooltipData.isMet ? 'checkmark-circle' : 'flame') : 'time-outline'}
-                    size={12}
-                    color={activeStepTooltipData.hasData ? (activeStepTooltipData.isMet ? '#EA580C' : '#C2410C') : '#64748B'}
-                  />
-                  <Text
-                    style={[
-                      styles.tooltipStatusText,
-                      activeStepTooltipData.hasData
-                        ? (activeStepTooltipData.isMet ? styles.tooltipTextOrangeMet : styles.tooltipTextOrange)
-                        : styles.tooltipTextNeutral,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {activeStepTooltipData.hasData
-                      ? (activeStepTooltipData.isMet
-                          ? (activeStepTooltipData.diff > 0 ? `+${activeStepTooltipData.diff.toLocaleString()} over` : 'Goal Met')
-                          : `${activeStepTooltipData.remaining.toLocaleString()} left`)
-                      : `${stepGoal.toLocaleString()} left`}
-                  </Text>
-                </View>
-              </View>
-              {activeStepTooltipData.hasData ? (
-                <View style={styles.tooltipStepsRow}>
-                  <View style={styles.tooltipStepsSubPill}>
-                    <Ionicons name="navigate-outline" size={11} color="#C2410C" />
-                    <Text style={styles.tooltipStepsPill} numberOfLines={1}>{activeStepTooltipData.distanceKm} km</Text>
-                  </View>
-                  <View style={styles.tooltipStepsSubPill}>
-                    <Ionicons name="flame-outline" size={11} color="#C2410C" />
-                    <Text style={styles.tooltipStepsPill} numberOfLines={1}>+{activeStepTooltipData.stepBurn} kcal</Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.tooltipEmptyRow}>
-                  <Ionicons name="footsteps-outline" size={12} color="#94A3B8" />
-                  <Text style={styles.tooltipEmptySub} numberOfLines={1}>No steps recorded yet  -  Take a walk today</Text>
-                </View>
-              )}
-            </Animated.View>
-          ) : null}
+            <BMIGaugeCard
+              weightKg={userWeightKg}
+              heightCm={userHeightCm}
+              unit={weightUnit}
+            />
+          </>
+        )}
+      </ScrollView>
 
-          {/* ---- CHART CANVAS ---- */}
-          <View style={styles.chartWrapper}>
-            {/* Dashed Goal Benchmark Line */}
-            <View
-              style={[
-                styles.benchmarkLineContainer,
-                {
-                  top: BAR_TOP_SPACE + Math.round(
-                    (1 - (metricTab === 'calories' ? budget / maxChartCalorie
-                           : metricTab === 'water' ? waterGoal / maxChartWater
-                           : stepGoal / maxChartSteps)
-                    ) * BAR_TRACK_HEIGHT
-                  ),
-                },
-              ]}
-            >
-              <View style={styles.benchmarkDashedLine} />
-            </View>
-
-            {/* 7-Day Responsive Bars */}
-            {timeRange === '7d' ? (
-              <View style={styles.chartContainer}>
-                {weeklyLogs.map((item, index) => {
-                  const isSelected = selectedBarIdx === index;
-
-                  // Metric-specific values
-                  const val = metricTab === 'calories' ? item.calories
-                              : metricTab === 'water' ? (item.waterMl || 0)
-                              : (item.steps || 0);
-                  const maxVal = metricTab === 'calories' ? maxChartCalorie
-                                 : metricTab === 'water' ? maxChartWater
-                                 : maxChartSteps;
-                  const goal = metricTab === 'calories' ? budget
-                               : metricTab === 'water' ? waterGoal
-                               : stepGoal;
-                  const hasData = val > 0;
-                  const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? Colors.water : Colors.steps;
-                  const barColorOther = metricTab === 'calories' ? '#DC2626' : metricTab === 'water' ? Colors.waterSecondary : Colors.stepsSecondary;
-                  const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
-
-                  const topLabel = metricTab === 'calories' ? `${val}`
-                                   : metricTab === 'water' ? `${(val / 1000).toFixed(1)}L`
-                                   : val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
-
-                  return (
-                    <Pressable
-                      key={`${metricTab}_${item.date}`}
-                      style={styles.barCol}
-                      onPress={() => {
-                        setSelectedBarIdx(index);
-                        triggerTooltipAnim();
-                      }}
-                      hitSlop={HIT_SLOP_4}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.dayName}: ${topLabel}`}
-                    >
-                      <Text
-                        style={[styles.barTopText, isSelected ? styles.barTopTextActive : null]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.75}
-                      >
-                        {hasData ? topLabel : ''}
-                      </Text>
-
-                      <View
-                        style={[
-                          styles.barTrack,
-                          { width: barWidth7D },
-                          !hasData ? styles.barTrackEmpty : null,
-                          isSelected ? { borderColor: hasData ? (isGood ? barColorMet : barColorOther) : barColorMet, borderWidth: 1.5 } : null,
-                        ]}
-                      >
-                        {hasData ? (
-                          <AnimatedBarFill
-                            heightPct={heightPct}
-                            color={isGood ? barColorMet : barColorOther}
-                            barAnim={barAnim}
-                          />
-                        ) : null}
-                      </View>
-
-                      <Text style={[styles.barBottomText, isSelected ? styles.barDayActive : null]} numberOfLines={1}>
-                        {index === weeklyLogs.length - 1 ? 'Today' : item.dayName}
-                      </Text>
-
-                      {isSelected ? (
-                        <View style={[styles.activeDayDot, { backgroundColor: hasData ? (isGood ? barColorMet : barColorOther) : barColorMet }]} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
-
-            {/* 30-Day Cluster Bars */}
-            {timeRange === '30d' ? (
-              <View style={styles.chartContainer}>
-                {thirtyDayClusters.map((cluster, index) => {
-                  const isSelected = selectedClusterIdx === index;
-
-                  const val = metricTab === 'calories' ? cluster.avgCalories
-                              : metricTab === 'water' ? cluster.avgWaterMl
-                              : cluster.avgSteps;
-                  const maxVal = metricTab === 'calories' ? maxChartCalorie
-                                 : metricTab === 'water' ? maxChartWater
-                                 : maxChartSteps;
-                  const goal = metricTab === 'calories' ? budget
-                               : metricTab === 'water' ? waterGoal
-                               : stepGoal;
-                  const hasData = cluster.daysLogged > 0;
-                  const isGood = metricTab === 'calories' ? val <= budget * 1.05 : val >= goal;
-                  const barColorMet = metricTab === 'calories' ? Colors.primary : metricTab === 'water' ? Colors.water : Colors.steps;
-                  const barColorOther = metricTab === 'calories' ? '#DC2626' : metricTab === 'water' ? Colors.waterSecondary : Colors.stepsSecondary;
-                  const heightPct = hasData ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
-
-                  const topLabel = metricTab === 'calories' ? `${val}`
-                                   : metricTab === 'water' ? `${(val / 1000).toFixed(1)}L`
-                                   : val >= 1000 ? `${(val / 1000).toFixed(1)}k` : `${val}`;
-
-                  return (
-                    <Pressable
-                      key={`${metricTab}_cluster_${cluster.id}`}
-                      style={styles.barCol30}
-                      onPress={() => {
-                        setSelectedClusterIdx(index);
-                        triggerTooltipAnim();
-                      }}
-                      hitSlop={HIT_SLOP_4}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${cluster.label}: ${topLabel}`}
-                    >
-                      <Text
-                        style={[styles.barTopText, isSelected ? styles.barTopTextActive : null]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.75}
-                      >
-                        {hasData ? topLabel : ''}
-                      </Text>
-
-                      <View
-                        style={[
-                          styles.barTrack30,
-                          { width: barWidth30D },
-                          !hasData ? styles.barTrackEmpty : null,
-                          isSelected ? { borderColor: isGood ? barColorMet : barColorOther, borderWidth: 1.5 } : null,
-                        ]}
-                      >
-                        {hasData ? (
-                          <AnimatedBarFill
-                            heightPct={heightPct}
-                            color={isGood ? barColorMet : barColorOther}
-                            barAnim={barAnim}
-                          />
-                        ) : null}
-                      </View>
-
-                      <Text style={[styles.barBottomText30, isSelected ? styles.barDayActive : null]} numberOfLines={1}>
-                        {cluster.label}
-                      </Text>
-
-                      {isSelected ? (
-                        <View style={[styles.activeDayDot, { backgroundColor: isGood ? barColorMet : barColorOther }]} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : null}
-          </View>
-
-          {/* Helper hint for 30-day mode if data is low */}
-          {timeRange === '30d' && totalDaysLoggedPast30 < 10 ? (
-            <View style={styles.lowDataNotice}>
-              <Ionicons name="information-circle-outline" size={14} color="#64748B" />
-              <Text style={styles.lowDataNoticeText}>
-                Logged {totalDaysLoggedPast30} days in past month. Weekly averages grow richer with daily logging.
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        {/* ========================================================= */}
-        {/* LAYER 5: MACRONUTRIENT PROGRESS (3 Clean Rows)            */}
-        {/* ========================================================= */}
-        <View style={styles.macroCard}>
-
-          <View style={styles.sectionHeaderRow}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {timeRange === '7d' ? 'Weekly Macro Averages' : '30-Day Macro Averages'}
-              </Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>
-                {timeRange === '7d'
-                  ? 'Daily average intake vs target goals'
-                  : '30-day average daily intake vs target goals'}
-              </Text>
-            </View>
-            <View style={styles.macroQualityTag}>
-              <Ionicons name="sparkles" size={11} color={Colors.protein} />
-              <Text style={styles.macroQualityTagText}>
-                {timeRange === '7d' ? '7-Day Targets' : '30-Day Targets'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Row 1: Protein */}
-          <View style={styles.macroRowBlock}>
-            <View style={styles.macroRowTop}>
-              <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: Colors.protein }]} />
-                <Text style={styles.macroRowLabel}>PROTEIN</Text>
-              </View>
-              <View
-                style={
-                  currentMetrics.loggedCount === 0
-                    ? styles.macroBadgeNeutral
-                    : currentMetrics.avgProtein >= targetProtein * 0.9
-                    ? styles.macroBadgeGreen
-                    : styles.macroBadgeNeutral
-                }
-              >
-                {currentMetrics.loggedCount > 0 && currentMetrics.avgProtein >= targetProtein ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                ) : null}
-                <Text
-                  style={
-                    currentMetrics.loggedCount === 0
-                      ? styles.macroBadgeTextNeutral
-                      : currentMetrics.avgProtein >= targetProtein * 0.9
-                      ? styles.macroBadgeTextGreen
-                      : styles.macroBadgeTextNeutral
-                  }
-                >
-                  {currentMetrics.loggedCount === 0
-                    ? 'No logs'
-                    : currentMetrics.avgProtein >= targetProtein
-                    ? 'Target Met'
-                    : `${Math.round((currentMetrics.avgProtein / targetProtein) * 100)}% Met`}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.macroRowValues}>
-              <Text style={styles.macroRowGramsBold}>{currentMetrics.avgProtein}g</Text>
-              <Text style={styles.macroRowGoalText}> / {targetProtein}g daily goal</Text>
-            </View>
-
-            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.proteinLight }]}>
-              <View
-                style={[
-                  styles.macroProgressFill,
-                  {
-                    width: `${Math.min(100, Math.round((currentMetrics.avgProtein / targetProtein) * 100))}%`,
-                    backgroundColor: Colors.protein,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-
-          {/* Row 2: Carbs */}
-          <View style={styles.macroRowBlock}>
-            <View style={styles.macroRowTop}>
-              <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: Colors.carbs }]} />
-                <Text style={styles.macroRowLabel}>CARBS</Text>
-              </View>
-              <View
-                style={
-                  currentMetrics.loggedCount === 0
-                    ? styles.macroBadgeNeutral
-                    : currentMetrics.avgCarbs > targetCarbs * 1.1
-                    ? styles.macroBadgeCoral
-                    : styles.macroBadgeGreen
-                }
-              >
-                {currentMetrics.loggedCount > 0 && currentMetrics.avgCarbs <= targetCarbs * 1.05 ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                ) : null}
-                <Text
-                  style={
-                    currentMetrics.loggedCount === 0
-                      ? styles.macroBadgeTextNeutral
-                      : currentMetrics.avgCarbs > targetCarbs * 1.1
-                      ? styles.macroBadgeTextCoral
-                      : styles.macroBadgeTextGreen
-                  }
-                >
-                  {currentMetrics.loggedCount === 0
-                    ? 'No logs'
-                    : currentMetrics.avgCarbs > targetCarbs
-                    ? `+${currentMetrics.avgCarbs - targetCarbs}g Over`
-                    : 'On Budget'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.macroRowValues}>
-              <Text style={styles.macroRowGramsBold}>{currentMetrics.avgCarbs}g</Text>
-              <Text style={styles.macroRowGoalText}> / {targetCarbs}g daily goal</Text>
-            </View>
-
-            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.carbsLight }]}>
-              <View
-                style={[
-                  styles.macroProgressFill,
-                  {
-                    width: `${Math.min(100, Math.round((currentMetrics.avgCarbs / targetCarbs) * 100))}%`,
-                    backgroundColor: Colors.carbs,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-
-          {/* Row 3: Fat */}
-          <View style={[styles.macroRowBlock, { marginBottom: 2 }]}>
-            <View style={styles.macroRowTop}>
-              <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: Colors.fat }]} />
-                <Text style={styles.macroRowLabel}>FAT</Text>
-              </View>
-              <View
-                style={
-                  currentMetrics.loggedCount === 0
-                    ? styles.macroBadgeNeutral
-                    : currentMetrics.avgFat > targetFat * 1.1
-                    ? styles.macroBadgeCoral
-                    : styles.macroBadgeGreen
-                }
-              >
-                {currentMetrics.loggedCount > 0 && currentMetrics.avgFat <= targetFat * 1.05 ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                ) : null}
-                <Text
-                  style={
-                    currentMetrics.loggedCount === 0
-                      ? styles.macroBadgeTextNeutral
-                      : currentMetrics.avgFat > targetFat * 1.1
-                      ? styles.macroBadgeTextCoral
-                      : styles.macroBadgeTextGreen
-                  }
-                >
-                  {currentMetrics.loggedCount === 0
-                    ? 'No logs'
-                    : currentMetrics.avgFat > targetFat
-                    ? `+${currentMetrics.avgFat - targetFat}g Over`
-                    : 'On Budget'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.macroRowValues}>
-              <Text style={styles.macroRowGramsBold}>{currentMetrics.avgFat}g</Text>
-              <Text style={styles.macroRowGoalText}> / {targetFat}g daily goal</Text>
-            </View>
-
-            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.fatLight }]}>
-              <View
-                style={[
-                  styles.macroProgressFill,
-                  {
-                    width: `${Math.min(100, Math.round((currentMetrics.avgFat / targetFat) * 100))}%`,
-                    backgroundColor: Colors.fat,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-          {/* Row 4: Fiber */}
-          <View style={[styles.macroRowBlock, { marginBottom: 2 }]}>
-            <View style={styles.macroRowTop}>
-              <View style={styles.macroRowLabelWrap}>
-                <View style={[styles.macroRowDot, { backgroundColor: Colors.fiber }]} />
-                <Text style={styles.macroRowLabel}>FIBER</Text>
-              </View>
-              <View
-                style={
-                  currentMetrics.loggedCount === 0
-                    ? styles.macroBadgeNeutral
-                    : (currentMetrics as any).avgFiber >= targetFiber * 0.9
-                    ? styles.macroBadgeGreen
-                    : styles.macroBadgeNeutral
-                }
-              >
-                {currentMetrics.loggedCount > 0 && (currentMetrics as any).avgFiber >= targetFiber ? (
-                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                ) : null}
-                <Text
-                  style={
-                    currentMetrics.loggedCount === 0
-                      ? styles.macroBadgeTextNeutral
-                      : (currentMetrics as any).avgFiber >= targetFiber * 0.9
-                      ? styles.macroBadgeTextGreen
-                      : styles.macroBadgeTextNeutral
-                  }
-                >
-                  {currentMetrics.loggedCount === 0
-                    ? 'No logs'
-                    : (currentMetrics as any).avgFiber >= targetFiber
-                    ? 'Target Met'
-                    : `${Math.round(((currentMetrics as any).avgFiber / targetFiber) * 100)}% Met`}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.macroRowValues}>
-              <Text style={styles.macroRowGramsBold}>{(currentMetrics as any).avgFiber ?? 0}g</Text>
-              <Text style={styles.macroRowGoalText}> / {targetFiber}g daily goal</Text>
-            </View>
-
-            <View style={[styles.macroProgressTrack, { backgroundColor: Colors.fiberLight }]}>
-              <View
-                style={[
-                  styles.macroProgressFill,
-                  {
-                    width: `${Math.min(100, Math.round(((currentMetrics as any).avgFiber / targetFiber) * 100))}%`,
-                    backgroundColor: Colors.fiber,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* ========================================================= */}
-        {/* LAYER 6: WORKOUT HISTORY CARD                             */}
-        {/* ========================================================= */}
-        <WorkoutHistoryCard timeRange={timeRange} />
-
-      </Animated.ScrollView>
+      {/* 4. Report Selector Bottom Sheet Modal */}
+      <ReportPickerModal
+        visible={reportPickerVisible}
+        activeReport={activeReport}
+        onSelectReport={setActiveReport}
+        onClose={() => setReportPickerVisible(false)}
+      />
     </View>
   );
 };
@@ -1618,932 +868,157 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F6',
   },
   headerContainer: {
-    backgroundColor: '#FAF9F6',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 6,
-    position: 'relative',
-    zIndex: 10,
-  },
-  headerBorder: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    paddingTop: 10,
+    paddingBottom: 8,
+    backgroundColor: '#FAF9F6',
+    minHeight: 56,
+    justifyContent: 'center',
   },
   headerMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 40,
+    minHeight: 42,
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '700',
+    fontSize: 26,
+    lineHeight: 32,
     color: '#0F172A',
+    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
+    textAlignVertical: 'center',
   },
-  horizonHeaderPill: {
+  reportCapsuleBtn: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 6,
+    paddingLeft: 7,
+    paddingRight: 10,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    maxWidth: 220,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  capsuleIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  capsuleTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.1,
+    flexShrink: 1,
+  },
+  capsuleChevron: {
+    marginLeft: 4,
+  },
+  btnPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
+  controlsBar: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: '#FAF9F6',
+  },
+  timeframeSegmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
     borderRadius: 10,
     borderCurve: 'continuous',
-    padding: 2.5,
-    gap: 2,
-    marginLeft: 8,
+    padding: 3,
   },
-  horizonPillBtn: {
-    paddingHorizontal: 11,
-    paddingVertical: 4.5,
+  timeframeTab: {
+    flex: 1,
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
     borderCurve: 'continuous',
   },
-  horizonPillBtnActive: {
+  timeframeTabActive: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    elevation: 0,
-    shadowOpacity: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
-  horizonPillText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#64748B',
+  timeframeTabText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
     fontWeight: '600',
-    includeFontPadding: false,
-  },
-  horizonPillTextActive: {
-    fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
-    fontWeight: '700',
-  },
-  subtitleZone: {
-    height: 22,
-    position: 'relative',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  subtitleStack: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  headerSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
     color: '#64748B',
-    includeFontPadding: false,
   },
-  adaptiveStatusBadge: {
-    alignSelf: 'flex-start',
+  timeframeTabTextActive: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  dateNavigator: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginTop: 6,
+  },
+  navArrowBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-  adaptiveStatusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  navArrowDisabled: {
+    opacity: 0.35,
+    backgroundColor: 'transparent',
   },
-  adaptiveStatusText: {
+  dateRangeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
-    includeFontPadding: false,
+    marginHorizontal: 14,
+    letterSpacing: -0.2,
   },
-  adaptiveStatusDivider: {
-    fontSize: 9,
-    color: '#94A3B8',
-  },
-  adaptiveStatusMetric: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-  container: {
+  scrollArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
   },
-  content: {
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 120, // Clearance above floating bottom nav
-    gap: 14,
-  },
-
-  /* ========================================================= */
-  /* LAYER 1: HERO VERDICT CARD                                */
-  /* ========================================================= */
-  heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  heroCardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  heroTagWrap: {
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-  },
-  heroCategoryLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    letterSpacing: 0.6,
-    color: '#64748B',
-    fontWeight: '700',
-    includeFontPadding: false,
-  },
-  adherenceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-  },
-  adherenceBadgeGreen: {
-    backgroundColor: Colors.proteinLight,
-    borderColor: 'rgba(103, 189, 110, 0.35)',
-    borderWidth: 1,
-  },
-  adherenceBadgeCoral: {
-    backgroundColor: Colors.fatLight,
-    borderColor: '#FFD5C6',
-    borderWidth: 1,
-  },
-  adherenceBadgeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    fontWeight: '600',
-    includeFontPadding: false,
-  },
-  adherenceTextGreen: {
-    color: '#15803D',
-  },
-  adherenceTextCoral: {
-    color: Colors.primaryDark,
-  },
-  heroValueContainer: {
-    marginVertical: 4,
-  },
-  heroMainValueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  heroMainValue: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#0F172A',
-    letterSpacing: -0.8,
-    lineHeight: 40,
-    includeFontPadding: false,
-  },
-  heroUnit: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14.5,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-  heroBenchmarkSub: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
-    color: '#64748B',
-    marginTop: 2,
-    includeFontPadding: false,
-  },
-  heroBenchmarkDot: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '400',
-  },
-  heroBenchmarkSubMuted: {
-    color: '#94A3B8',
-  },
-  heroTextGreen: {
-    color: '#16A34A',
-    fontWeight: '600',
-  },
-  heroTextCoral: {
-    color: '#EA580C',
-    fontWeight: '600',
-  },
-  kpiTriadRow: {
-    flexDirection: 'row',
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  kpiCol: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 2,
-  },
-  kpiColBorder: {
-    borderRightWidth: 1,
-    borderRightColor: '#F1F5F9',
-  },
-  kpiValue: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15.5,
-    lineHeight: 21,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    includeFontPadding: false,
-  },
-  kpiLabel: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 9.5,
-    lineHeight: 13,
-    color: '#94A3B8',
-    marginTop: 3,
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
-  pillarTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 3,
-  },
-  pillarTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 9,
-    letterSpacing: 0.5,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-
-  /* ========================================================= */
-  /* LAYER 2: INTERACTIVE BAR CHART                            */
-  /* ========================================================= */
-  chartCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  chartHeaderBlock: {
-    marginBottom: 12,
-  },
-  chartTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chartTitleCol: {
-    flex: 1,
-    minWidth: 140,
-  },
-  cardTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: '#0F172A',
-    fontWeight: '700',
-    includeFontPadding: false,
-  },
-  cardSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
-    marginTop: 1,
-    includeFontPadding: false,
-  },
-  chartBudgetBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF5F1',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#FFD5C6',
-    gap: 4,
-  },
-  chartBudgetBadgeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    color: Colors.primaryDark,
-    fontWeight: '600',
-    includeFontPadding: false,
-  },
-  chartWaterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    gap: 4,
-  },
-  chartWaterBadgeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    color: '#0284C7',
-    fontWeight: '600',
-    includeFontPadding: false,
-  },
-  chartStepsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-    gap: 4,
-  },
-  chartStepsBadgeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    color: '#EA580C',
-    fontWeight: '600',
-    includeFontPadding: false,
-  },
-  chartLegendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 6,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendDashSample: {
-    width: 10,
-    height: 1,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#94A3B8',
-  },
-  legendDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  legendLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 9.5,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-  tooltipContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-  },
-  tooltipMainRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  tooltipLeft: {
-    flex: 1,
-    marginRight: 8,
-  },
-  tooltipDayLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: '#0F172A',
-    fontWeight: '700',
-    includeFontPadding: false,
-  },
-  tooltipDateText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '400',
-    includeFontPadding: false,
-  },
-  tooltipDateSep: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: '#CBD5E1',
-    fontWeight: '300',
-  },
-  tooltipCalorieRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-    marginTop: 2,
-  },
-  tooltipCalsBold: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-    includeFontPadding: false,
-  },
-  tooltipCalsBudget: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-  tooltipStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 4,
-    flexShrink: 0,
-  },
-  tooltipPillWarm: {
-    backgroundColor: '#FFF5F1',
-    borderWidth: 1,
-    borderColor: '#FFD5C6',
-  },
-  tooltipPillCoral: {
-    backgroundColor: '#FEE2E2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  tooltipPillNeutral: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
-  tooltipStatusText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10.5,
-    fontWeight: '700',
-    includeFontPadding: false,
-  },
-  tooltipTextWarm: {
-    color: Colors.primaryDark,
-  },
-  tooltipTextCoral: {
-    color: '#DC2626',
-  },
-  tooltipTextNeutral: {
-    color: '#0284C7',
-  },
-  tooltipPillBlueMet: {
-    backgroundColor: '#E0F2FE',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
-  tooltipPillBlue: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#E0F2FE',
-  },
-  tooltipTextBlueMet: {
-    color: '#0284C7',
-  },
-  tooltipTextBlue: {
-    color: '#0369A1',
-  },
-  tooltipPillOrangeMet: {
-    backgroundColor: '#FFEDD5',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-  },
-  tooltipPillOrange: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-  },
-  tooltipTextOrangeMet: {
-    color: '#EA580C',
-  },
-  tooltipTextOrange: {
-    color: '#C2410C',
-  },
-  tooltipWaterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  tooltipWaterSub: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#0369A1',
-    includeFontPadding: false,
-    flex: 1,
-  },
-  tooltipStepsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  tooltipStepsPill: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#C2410C',
-    includeFontPadding: false,
-  },
-  tooltipStepsSubPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  tooltipMacroRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  tooltipMacroPill: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#475569',
-    includeFontPadding: false,
-  },
-  tooltipEmptyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  tooltipEmptySub: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
-    color: '#64748B',
-    includeFontPadding: false,
-    flex: 1,
-  },
-  chartWrapper: {
-    position: 'relative',
-    height: CHART_CANVAS_HEIGHT,
-    marginTop: 4,
-  },
-  benchmarkLineContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  benchmarkDashedLine: {
-    flex: 1,
-    height: 0,
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
-    borderTopColor: 'rgba(15, 23, 42, 0.16)',
-  },
-  chartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: '100%',
-    zIndex: 2,
-  },
-  barCol: {
-    flex: 1,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  barCol30: {
-    flex: 1,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  barTopText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 9,
-    lineHeight: 12,
-    color: '#94A3B8',
-    marginBottom: 6,
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
-  barTopTextActive: {
-    fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
-    fontWeight: '700',
-  },
-  barTrack: {
-    height: BAR_TRACK_HEIGHT,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-  },
-  barTrack30: {
-    height: BAR_TRACK_HEIGHT,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-  },
-  barTrackEmpty: {
-    borderStyle: 'dashed',
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FAF9F6',
-  },
-  barFill: {
-    width: '100%',
-    borderRadius: 6,
-  },
-  barBottomText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 10,
-    lineHeight: 14,
-    color: '#64748B',
-    marginTop: 6,
-    includeFontPadding: false,
-  },
-  barBottomText30: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 10,
-    lineHeight: 14,
-    color: '#64748B',
-    marginTop: 6,
-    includeFontPadding: false,
-  },
-  barDayActive: {
-    fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
-    fontWeight: '700',
-  },
-  activeDayDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 3,
-  },
-  lowDataNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F8FAFC',
-    padding: 8,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    marginTop: 10,
-  },
-  lowDataNoticeText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: '#64748B',
-    flex: 1,
-    includeFontPadding: false,
-  },
-
-  /* Metric Tab Switcher */
-  metricTabRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 10,
-    marginBottom: 2,
-  },
-  metricTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  metricTabActive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  metricTabText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: '#94A3B8',
-    includeFontPadding: false,
-  },
-  metricTabTextCalories: {
-    color: '#0F172A',
-    fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
-  },
-  metricTabTextWater: {
-    color: '#0284C7',
-    fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
-  },
-  metricTabTextSteps: {
-    color: '#EA580C',
-    fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
-  },
-
-
-  /* LAYER 3: 7-DAY MACRONUTRIENT BALANCE (Harmonious Trio)    */
-  /* ========================================================= */
-  macroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  macroQualityTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.proteinLight,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 4,
-  },
-  macroQualityTagText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
-    color: '#15803D',
-    letterSpacing: 0.4,
-    includeFontPadding: false,
-  },
-  macroRowBlock: {
-    marginTop: 14,
-  },
-  macroRowTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  macroRowLabelWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  macroRowDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  macroRowLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10.5,
-    color: '#475569',
-    letterSpacing: 0.5,
-    includeFontPadding: false,
-  },
-  macroRowValues: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 6,
-  },
-  macroRowGramsBold: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#0F172A',
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    includeFontPadding: false,
-  },
-  macroRowGoalText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    color: '#64748B',
-    includeFontPadding: false,
-  },
-  macroProgressTrack: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  macroProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  macroBadgeGreen: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.proteinLight,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 3.5,
-  },
-  macroBadgeTextGreen: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: '#15803D',
-    includeFontPadding: false,
-  },
-  macroBadgeCoral: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.fatLight,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 3.5,
-  },
-  macroBadgeTextCoral: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: Colors.primaryDark,
-    includeFontPadding: false,
-  },
-  macroBadgeNeutral: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F9FF',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 3.5,
-  },
-  macroBadgeTextNeutral: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: '#0284C7',
-    includeFontPadding: false,
+    paddingTop: 4,
   },
 });

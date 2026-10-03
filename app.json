@@ -11,7 +11,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.calorify.app",
       "buildNumber": "1",
-      "backgroundColor": "#FAF9F6"
+      "backgroundColor": "#FAF9F6",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.calorify.app",
@@ -48,6 +51,14 @@
         }
       ],
       "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Calorify to access your photos to select meal images.",
+          "cameraPermission": "Allow Calorify to access your camera to snap meal photos.",
+          "microphonePermission": false
+        }
+      ],
       "expo-secure-store",
       [
         "expo-splash-screen",
@@ -65,6 +76,9 @@
             "compileSdkVersion": 36,
             "targetSdkVersion": 36,
             "minSdkVersion": 26
+          },
+          "ios": {
+            "deploymentTarget": "16.4"
           }
         }
       ]
