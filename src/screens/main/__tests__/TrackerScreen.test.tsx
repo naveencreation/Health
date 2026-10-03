@@ -58,7 +58,6 @@ jest.mock('@/components', () => {
         <Text>MovementTrackerCard</Text>
       </Pressable>
     ),
-    DailyHabitsCard: () => <Text testID="daily-habits-card">DailyHabitsCard</Text>,
   };
 });
 

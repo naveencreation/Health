@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { MovementTrackerCard } from '../MovementTrackerCard';
-import { DailyHabitsCard } from '../DailyHabitsCard';
 
 const mockAddSteps = jest.fn();
 const mockAddWorkout = jest.fn();
@@ -163,12 +162,5 @@ describe('MovementTrackerCard', () => {
 
     expect(mockRemoveWorkout).toHaveBeenCalledWith('act-1');
     expect(mockAddWorkout).toHaveBeenCalledWith('Brisk Walk', 30, 130);
-  });
-
-  test('DailyHabitsCard backward-compatibility alias renders MovementTrackerCard', async () => {
-    const { getByTestId, getByText } = await render(<DailyHabitsCard />);
-
-    expect(getByTestId('daily-habits-card')).toBeTruthy();
-    expect(getByText('Movement')).toBeTruthy();
   });
 });

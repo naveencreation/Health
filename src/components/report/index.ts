@@ -16,7 +16,6 @@ export { StepTotalSummaryCard, StepTotalSummaryCardProps } from './StepTotalSumm
 
 // Nutrition & Calorie Report Components
 export { CalorieCompletionCard, DayCalorieIntakeData, CalorieCompletionCardProps } from './CalorieCompletionCard';
-export { MacroBreakdownCard, MacroNutrientData, MacroBreakdownCardProps } from './MacroBreakdownCard';
 export { MacroDistributionCard, DayMacroRatioData, MacroDistributionCardProps } from './MacroDistributionCard';
 
 // Report Picker Modal

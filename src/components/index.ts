@@ -2,7 +2,6 @@
 export { HeroCalorieCard } from './dashboard/HeroCalorieCard';
 export { TopDateStrip } from './dashboard/TopDateStrip';
 export { MealSection } from './dashboard/MealSection';
-export { DailyHabitsCard } from './dashboard/DailyHabitsCard';
 export { MovementTrackerCard, type MovementTrackerCardProps } from './dashboard/MovementTrackerCard';
 export { WaterTracker } from './dashboard/WaterTracker';
 export { WeightTrackerCard } from './dashboard/WeightTrackerCard';
