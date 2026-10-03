@@ -723,6 +723,12 @@
     - **Circular Card Buttons**: Upgraded bare 40×40 hit targets to standard 38×38 circular porcelain cards (`borderRadius: 19`, `backgroundColor: '#FFFFFF'`, 1px border `rgba(15, 23, 42, 0.08)`).
     - **Focused Action Controls**: Maintained clean focus with the Back button (`chevron-back`, size 22) on the left and the Step Report analytics chart button (`stats-chart-outline`, size 19) on the right, keeping the header clean without unnecessary calendar clutter.
     - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 23 unit tests pass across 6 test suites.
+69. **Expo Model Context Protocol (MCP) Setup ([package.json](file:///c:/Users/navee/Videos/Calorify/calori/package.json), [mcp_config.json](file:///C:/Users/navee/.gemini/config/mcp_config.json))**:
+    - **Local Capability Package**: Installed `expo-mcp` (`~0.2.1`) into `devDependencies` for SDK 57 local automation, screenshot capture, DevTools, and React Native view inspection.
+    - **NPM Start Script**: Added `"start:mcp": "npx cross-env EXPO_UNSTABLE_MCP_SERVER=1 expo start"` to easily run the development server with local MCP capabilities enabled across all platforms.
+    - **Remote MCP Registration**: Added `expo-mcp` (`mcp-remote https://mcp.expo.dev/mcp`) to `~/.gemini/config/mcp_config.json` for AI assistant integration.
+    - **Account Verified**: Verified Expo CLI authentication with `npx expo whoami` (`naveen0004`).
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors).
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
