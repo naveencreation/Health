@@ -329,7 +329,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
   }, [dailyLogs]);
 
   return (
-    <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 14) }]}>
+    <View style={[styles.rootContainer, { paddingTop: 6 }]}>
       <View style={styles.mobileContainer}>
         {/* 1. Top Navigation Header */}
         <View style={styles.headerRow}>
@@ -394,15 +394,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
           })}
         </View>
 
-        {/* 2. All-Time Summary Card */}
-        <StepTotalSummaryCard
-          totalSteps={allTimeSummary.totalSteps}
-          totalDurationMinutes={allTimeSummary.totalDurationMinutes}
-          totalCalories={allTimeSummary.totalCalories}
-          totalDistanceKm={allTimeSummary.totalDistanceKm}
-        />
-
-        {/* 3. Date Range Navigator (< Sep 28 – Oct 4, 2026 >) */}
+        {/* 2. Date Range Navigator (< Sep 28 – Oct 4, 2026 >) */}
         <View style={styles.dateNavRow}>
           <Pressable
             style={({ pressed }) => [
@@ -438,6 +430,14 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
             />
           </Pressable>
         </View>
+
+        {/* 3. All-Time Summary Card */}
+        <StepTotalSummaryCard
+          totalSteps={allTimeSummary.totalSteps}
+          totalDurationMinutes={allTimeSummary.totalDurationMinutes}
+          totalCalories={allTimeSummary.totalCalories}
+          totalDistanceKm={allTimeSummary.totalDistanceKm}
+        />
 
         {/* 4. Chart 1: Step Completion Bar & Line Chart Card */}
         <StepCompletionCard
@@ -510,6 +510,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   scrollArea: {

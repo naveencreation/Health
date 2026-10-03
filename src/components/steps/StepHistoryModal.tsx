@@ -14,7 +14,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { DailyLog, StepLogEntry } from '@/types';
+
+const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
 import { StepReportScreen } from '@/screens/main/StepReportScreen';
 import {
@@ -282,30 +285,38 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
     >
       <View style={[styles.screenContainer, { paddingTop: Math.max(insets.top, 14) }]}>
         <View style={styles.mobileContainer}>
-          {/* Top Header matching reference: [ ← ] [ Step Counter History ] [ 📅 ] */}
+          {/* Top Header: [ Back ] [ Step Counter History ] [ Step Report ] */}
           <View style={styles.topHeader}>
-          <Pressable
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
-            onPress={onClose}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-          >
-            <Ionicons name="arrow-back" size={24} color="#0F172A" />
-          </Pressable>
+            <View style={styles.headerSideWrapper}>
+              <Pressable
+                style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
+                onPress={onClose}
+                hitSlop={HIT_SLOP_10}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+              >
+                <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+              </Pressable>
+            </View>
 
-          <Text style={styles.screenTitle}>Step Counter History</Text>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.screenTitle} numberOfLines={1}>
+                Step Counter History
+              </Text>
+            </View>
 
-          <Pressable
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
-            onPress={handleOpenReport}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="View Step Report"
-          >
-            <Ionicons name="stats-chart-outline" size={20} color="#0F172A" />
-          </Pressable>
-        </View>
+            <View style={[styles.headerSideWrapper, styles.headerRightWrapper]}>
+              <Pressable
+                style={({ pressed }) => [styles.iconBtn, pressed && styles.btnPressed]}
+                onPress={handleOpenReport}
+                hitSlop={HIT_SLOP_10}
+                accessibilityRole="button"
+                accessibilityLabel="View Step Report"
+              >
+                <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+              </Pressable>
+            </View>
+          </View>
 
         {/* Scrollable multi-day feed */}
         <ScrollView
@@ -664,23 +675,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingTop: 4,
+    paddingBottom: 12,
     backgroundColor: '#FAF9F6',
+    minHeight: 44,
+  },
+  headerSideWrapper: {
+    width: 44,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  headerRightWrapper: {
+    alignItems: 'flex-end',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   screenTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 20,
+    fontSize: 18,
     color: '#0F172A',
+    fontWeight: '700',
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.65,
+    opacity: 0.75,
     transform: [{ scale: 0.96 }],
   },
   scrollArea: {

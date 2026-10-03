@@ -280,7 +280,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
     <View style={styles.container}>
       <View style={styles.mobileContainer}>
         {/* 1. Header with Back Button & Screen Title */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
+      <View style={[styles.header, { paddingTop: 6 }]}>
         <Pressable
           style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
           onPress={onBack}
@@ -288,7 +288,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="chevron-back" size={22} color="#0F172A" />
         </Pressable>
 
         <Text style={styles.headerTitle}>Step Tracker</Text>
@@ -307,7 +307,10 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
       {/* 2. Scrollable Body with Date Picker, Circular Hero Gauge & Health Connect Card */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: Math.max(insets.bottom + 16, 90) },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Top Date Strip in Steps Mode */}
@@ -368,6 +371,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   iconBtn: {

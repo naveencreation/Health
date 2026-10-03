@@ -371,6 +371,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
+    fontWeight: '700',
+    letterSpacing: -0.3,
     textAlign: 'center',
   },
   scrollArea: {

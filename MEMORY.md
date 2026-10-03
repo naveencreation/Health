@@ -712,6 +712,17 @@
 
 
 
+67. **Safe Area Inset & Navigation Icon Parity Overhaul ([StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepReportScreen.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx))**:
+    - **Double Top Safe Area Inset Resolution**: Removed redundant `Math.max(insets.top, 14)` on `StepTrackerScreen.tsx` header and `StepReportScreen.tsx` root container, standardizing both to `paddingTop: 6`. Because parent wrappers (`App.tsx`'s `<SafeAreaView edges={['top', 'left', 'right']}>` and `StepHistoryModal.tsx`'s `screenContainer`) already absorb the device status bar / notch inset, applying it again caused an excessive 44-59px blank whitespace gap.
+    - **Dynamic ScrollView Bottom Safe Area**: Replaced hardcoded `paddingBottom: 90` with dynamic `{ paddingBottom: Math.max(insets.bottom + 16, 90) }` in `StepTrackerScreen.tsx`'s `contentContainerStyle`, ensuring edge-to-edge Android/iOS gesture navigation bars never obstruct the Health Connect card.
+    - **App-Wide Navigation Icon Parity**: Harmonized legacy `arrow-back` icons in `StepTrackerScreen.tsx` and `StepHistoryModal.tsx` to `chevron-back` (size 22, `#0F172A`), matching `WaterTrackerScreen`, `WaterReportScreen`, `WeightReportScreen`, and `PreferencesScreen`.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 13 test suites pass across `StepTrackerScreen.test.tsx`, `StepReportScreen.test.tsx`, and `StepHistoryModal.test.tsx`.
+68. **Step Counter History Header Modernization ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx))**:
+    - **Dead-Center Balanced Header Architecture**: Replaced the unconstrained `space-between` header layout with a symmetrical 3-column architecture: `headerSideWrapper` (width 44, left-aligned) + `headerTitleContainer` (`flex: 1`, centered) + `headerSideWrapper` (width 44, right-aligned). Guaranteed mathematical centering of `"Step Counter History"` on all devices.
+    - **Typography Standardized**: Upgraded header title from `fontSize: 20` to `fontSize: 18`, `Fonts.urbanist.bold`, `fontWeight: '700'`, `letterSpacing: -0.3`, matching `WaterIntakeHistoryScreen.tsx` and `WeightHistoryScreen.tsx`.
+    - **Circular Card Buttons**: Upgraded bare 40×40 hit targets to standard 38×38 circular porcelain cards (`borderRadius: 19`, `backgroundColor: '#FFFFFF'`, 1px border `rgba(15, 23, 42, 0.08)`).
+    - **Focused Action Controls**: Maintained clean focus with the Back button (`chevron-back`, size 22) on the left and the Step Report analytics chart button (`stats-chart-outline`, size 19) on the right, keeping the header clean without unnecessary calendar clutter.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 23 unit tests pass across 6 test suites.
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 

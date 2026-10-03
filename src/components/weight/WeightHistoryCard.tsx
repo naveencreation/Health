@@ -276,7 +276,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
             <Feather
               name={onViewAll ? 'arrow-right' : isExpanded ? 'chevron-up' : 'arrow-right'}
               size={15}
-              color="#FF5722"
+              color="#F43F5E"
             />
           </Pressable>
         </View>
@@ -379,7 +379,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                 <Text style={styles.moreFooterText}>
                   +{historyItems.length - 4} more records
                 </Text>
-                <Feather name="arrow-right" size={13} color="#FF5722" />
+                <Feather name="arrow-right" size={13} color="#F43F5E" />
               </Pressable>
             )}
           </View>
@@ -409,11 +409,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -437,12 +434,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: '#FFF1EE', // Soft coral background
+    backgroundColor: '#FFF1F2', // Soft rose background
   },
   countBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#FF5722',
+    color: '#F43F5E', // Weight rose
   },
   viewAllBtn: {
     flexDirection: 'row',
@@ -455,7 +452,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.urbanist.semiBold,
     fontWeight: '600',
-    color: '#FF5722',
+    color: '#F43F5E', // Weight rose
   },
   btnPressed: {
     opacity: 0.7,
@@ -545,10 +542,10 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   deltaIconCircle: {
-    width: 17,
-    height: 17,
-    borderRadius: 8.5,
-    backgroundColor: '#10B981', // Emerald 500
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#10B981', // Emerald 500 — weight loss
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -571,13 +568,15 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   optionsBtn: {
-    padding: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(15, 23, 42, 0.06)',
   },
   moreFooterBtn: {
     flexDirection: 'row',
@@ -586,7 +585,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 4,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: 'rgba(15, 23, 42, 0.06)',
     gap: 6,
   },
   moreFooterText: {

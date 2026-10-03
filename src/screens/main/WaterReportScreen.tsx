@@ -425,7 +425,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F6',
   },
   headerRow: {
     flexDirection: 'row',
@@ -438,6 +438,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   navCircleBtn: {

@@ -418,7 +418,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF9F6',
   },
   headerRow: {
     flexDirection: 'row',
@@ -426,7 +426,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#FAF9F6',
   },
   navCircleBtn: {
     width: 38,
@@ -446,7 +445,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#0F172A',
-    letterSpacing: -0.2,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   scrollArea: {
     flex: 1,
