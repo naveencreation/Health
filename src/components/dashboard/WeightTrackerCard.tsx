@@ -134,8 +134,11 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View style={styles.titleRow}>
+              <View style={styles.iconBadge}>
+                <Ionicons name="scale-outline" size={14} color={Colors.weight} />
+              </View>
               <Text style={styles.title}>Weight</Text>
-              <Feather name="chevron-right" size={17} color="#FF5B26" style={styles.titleChevron} />
+              <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
             </View>
 
             <View style={styles.metricRow}>
@@ -179,7 +182,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
             </View>
           </Pressable>
 
-          {/* Right Action: Vibrant Orange Update Button */}
+          {/* Right Action: Refined Pastel Rose Update Button */}
           <Pressable
             style={({ pressed }) => [
               styles.updateButton,
@@ -190,6 +193,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
             accessibilityLabel="Update weight"
             hitSlop={8}
           >
+            <Ionicons name="add" size={14} color={Colors.weight} />
             <Text style={styles.updateButtonText}>Update</Text>
           </Pressable>
         </View>
@@ -251,17 +255,26 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 6,
+  },
+  iconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF1F2',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
+    fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   titleChevron: {
-    marginLeft: 3,
-    marginTop: 1,
+    marginLeft: 1,
   },
   metricRow: {
     flexDirection: 'row',
@@ -320,25 +333,28 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   updateButton: {
-    backgroundColor: Colors.weight,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingVertical: 9,
-    paddingHorizontal: 20,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#FFF1F2',
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     elevation: 0,
     shadowOpacity: 0,
   },
   updateButtonPressed: {
-    opacity: 0.85,
+    opacity: 0.8,
     transform: [{ scale: 0.96 }],
   },
   updateButtonText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
+    fontSize: 13,
+    color: Colors.weight,
+    letterSpacing: -0.1,
   },
   progressTrack: {
     height: 12,

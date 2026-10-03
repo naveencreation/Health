@@ -23,6 +23,7 @@ jest.mock('@/context/HealthContext', () => ({
 
 jest.mock('@expo/vector-icons', () => ({
   Feather: 'Feather',
+  Ionicons: 'Ionicons',
 }));
 
 jest.mock('@/components/water/DropletVisualizer', () => {

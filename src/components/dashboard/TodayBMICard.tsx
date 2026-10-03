@@ -12,7 +12,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { LogWeightModal } from '@/components/modals/LogWeightModal';
@@ -127,9 +127,17 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
   return (
     <>
       <View style={[styles.card, style]}>
-        {/* 1. Header: Title & Circular Edit Button */}
+        {/* 1. Header: Semantic Icon Badge, Title, Unit Tag & Circular Edit Button */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>BMI (kg/m2)</Text>
+          <View style={styles.titleLeft}>
+            <View style={styles.iconBadge}>
+              <Ionicons name="speedometer-outline" size={14} color="#059669" />
+            </View>
+            <Text style={styles.headerTitle}>BMI</Text>
+            <View style={styles.unitTag}>
+              <Text style={styles.unitTagText}>kg/m²</Text>
+            </View>
+          </View>
           <Pressable
             style={({ pressed }) => [styles.editCircleBtn, pressed && styles.btnPressed]}
             onPress={handleEditPress}
@@ -137,7 +145,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Update weight to recalculate BMI"
           >
-            <Feather name="edit-2" size={14} color="#64748B" />
+            <Feather name="edit-2" size={13} color="#64748B" />
           </Pressable>
         </View>
 
@@ -215,16 +223,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  titleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  iconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
+  unitTag: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+    borderCurve: 'continuous',
+    marginLeft: 2,
+  },
+  unitTagText: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 11,
+    color: '#64748B',
+  },
   editCircleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
     backgroundColor: '#FFFFFF',

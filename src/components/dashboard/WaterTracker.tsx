@@ -8,7 +8,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from '@/components/water/DropletVisualizer';
 import { Fonts } from '@/theme/typography';
@@ -75,8 +75,11 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <View style={styles.titleRow}>
+          <View style={styles.iconBadge}>
+            <Ionicons name="water" size={14} color={Colors.water} />
+          </View>
           <Text style={styles.title}>Water</Text>
-          <Feather name="chevron-right" size={17} color="#0EA5E9" style={styles.titleChevron} />
+          <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
         </View>
         <View style={styles.mainStatRow}>
           <Text style={styles.mainStatText}>{currentWater.toLocaleString()}</Text>
@@ -175,17 +178,26 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 6,
+  },
+  iconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
+    fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   titleChevron: {
-    marginLeft: 3,
-    marginTop: 1,
+    marginLeft: 1,
   },
   mainStatRow: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@ jest.mock('@/context/HealthContext', () => ({
 
 jest.mock('@expo/vector-icons', () => ({
   Feather: 'Feather',
+  Ionicons: 'Ionicons',
 }));
 
 jest.mock('@/components/modals/LogWeightModal', () => ({
@@ -79,7 +80,8 @@ describe('TodayBMICard', () => {
 
       const { getByText, getByLabelText } = await render(<TodayBMICard />);
 
-      expect(getByText('BMI (kg/m2)')).toBeTruthy();
+      expect(getByText('BMI')).toBeTruthy();
+      expect(getByText('kg/m²')).toBeTruthy();
       expect(getByText('22.9')).toBeTruthy();
       expect(getByText('Normal')).toBeTruthy();
       expect(getByLabelText('Update weight to recalculate BMI')).toBeTruthy();
@@ -123,7 +125,8 @@ describe('TodayBMICard', () => {
       });
 
       const { getByText } = await render(<TodayBMICard />);
-      expect(getByText('BMI (kg/m2)')).toBeTruthy();
+      expect(getByText('BMI')).toBeTruthy();
+      expect(getByText('kg/m²')).toBeTruthy();
     });
   });
 });

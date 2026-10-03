@@ -217,8 +217,11 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
           hitSlop={HIT_SLOP_8}
         >
           <View style={styles.titleRow}>
+            <View style={styles.iconBadge}>
+              <Ionicons name="footsteps-outline" size={14} color={Colors.steps} />
+            </View>
             <Text style={styles.title}>Movement</Text>
-            <Feather name="chevron-right" size={17} color={Colors.steps} style={styles.titleChevron} />
+            <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
           </View>
 
           <View style={styles.mainStatRow}>
@@ -483,17 +486,26 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 6,
+  },
+  iconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
+    fontSize: 16,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   titleChevron: {
-    marginLeft: 3,
-    marginTop: 1,
+    marginLeft: 1,
   },
   mainStatRow: {
     flexDirection: 'row',
@@ -527,8 +539,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.stepsBorder,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderCurve: 'continuous',
     gap: 4,
   },
