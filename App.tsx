@@ -17,8 +17,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import { HealthProvider, useAuth, useGoals } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
-import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { MealType } from '@/types';
+import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
+
+
+
 
 // Structured Screens
 import {
@@ -71,6 +75,17 @@ function MainApp() {
   React.useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
+
+  // Sync background habit notifications
+  useEffect(() => {
+    if (isAuthenticated) {
+      NotificationScheduler.syncSchedules({
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday: false,
+      }).catch(() => {});
+    }
+  }, [isAuthenticated, userGoals.streakDays]);
+
 
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);

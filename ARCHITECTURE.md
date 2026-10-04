@@ -1,231 +1,299 @@
-# Calorify — Production Architecture Blueprint
+# Calorify — Scalable & Foolproof Architecture Blueprint
 
-> **Status:** Active Reference & Roadmap  
-> **Target Framework:** Expo SDK 57 (React Native 0.86, React 19.2, TypeScript 6)  
-> **Architecture Pattern:** Feature-First Vertical Slice Architecture + Shared Core Engine  
+> **Status:** Active Reference & Scalable Blueprint  
+> **Branch:** `cmd-v4` (Stable baseline backed up on `v1-stable`)  
+> **Framework:** Expo SDK 57 (React Native 0.86, React 19.2, TypeScript 6)  
 
 ---
 
-## 1. Architectural Philosophy & Vision
+## 1. High-Level System Architecture
 
-As Calorify transitions from a simple 3-metric tracker into an all-in-one health, nutrition, and lifestyle platform, the codebase requires an architecture that prevents file sprawl, eliminates duplicate code, and isolates domain logic.
-
-### Core Principles
-1. **Vertical Feature Slicing:** Every health domain (Nutrition, Hydration, Movement, Body, AI Coach, Gamification, Subscription) is self-contained. Adding a new feature (e.g. *Sleep* or *Fasting*) creates a single new folder under `src/features/` without polluting existing code.
-2. **Strict Domain Isolation:** Modifying Hydration code has **zero risk** of causing regressions in Nutrition or Steps.
-3. **Reusable Core Engine (`src/core/`):** Universal primitives (Charts, Haptics, Notifications, Payments, Theme, Base UI) are maintained centrally and shared across all features.
-4. **Offline-First & Frictionless:** Supports anonymous guest exploration, local offline persistence, and seamless cloud syncing to Firestore.
+Calorify is structured so that **every single file has one clear, unambiguous home**:
+* **`theme/`, `types/`, `context/`**: The core data contracts and styling tokens.
+* **`utils/` & `services/`**: Cross-cutting system helpers (Haptics, Notifications, Payments, Firebase, AI).
+* **`components/`**: Reusable visual building blocks, **The 4 Health Trackers**, detail gauges, and report charts.
+* **`features/`**: Autonomous business engines (Health Connect, Gamification/Achievements, Onboarding, Subscriptions).
+* **`screens/`**: Top-level screen views rendered by navigation.
 
 ```mermaid
 graph TD
-    App[App.tsx / Navigation Root] --> Core[src/core/]
-    App --> Features[src/features/]
+    App[App.tsx] --> Navigation[src/navigation/]
+    Navigation --> Screens[src/screens/]
+    Screens --> Trackers[The 4 Health Trackers]
+    Screens --> Reports[Report & Analytics Charts]
     
-    subgraph CoreEngine [src/core/ Foundation]
-        Theme[theme/]
-        Haptics[haptics/]
-        Notifs[notifications/]
-        Payments[payments/]
-        Charts[charts/]
-        UI[components/]
+    subgraph TrackersAndUI [src/components/]
+        Trackers[dashboard/ Tracker Cards]
+        DetailViews[water/, steps/, weight/, diary/]
+        Reports[report/ Charts]
+        SharedUI[common/, charts/, modals/]
     end
 
-    subgraph FeatureSlices [src/features/ Domains]
-        Nutrition[nutrition/]
-        Hydration[hydration/]
-        Movement[movement/]
-        Body[body/]
-        AICoach[ai-coach/]
-        Gamification[gamification/]
-        Onboarding[onboarding/]
-        Subscription[subscription/]
-        Analytics[analytics/]
+    subgraph BusinessFeatures [src/features/]
+        HealthConnect[health/ - Health Connect Sync]
+        Gamification[gamification/ - Streaks & Badges]
+        Onboarding[onboarding/ - Wizard & Calculations]
+        Subscription[subscription/ - Pro Paywall]
     end
 
-    FeatureSlices --> CoreEngine
-    Features --> Context[src/context/ & Data Sync]
+    subgraph SystemEngines [src/services/ & src/utils/]
+        Haptics[utils/haptics.ts]
+        Notifs[services/notifications/]
+        Payments[services/payments/]
+        Firebase[services/firebase.ts]
+        RiaAI[services/ai/]
+    end
+
+    TrackersAndUI --> SystemEngines
+    BusinessFeatures --> SystemEngines
+    Screens --> Context[src/context/HealthContext.tsx]
 ```
 
 ---
 
-## 2. Complete Folder Hierarchy & Responsibilities
+## 2. Complete File-by-File Directory Map
+
+Every file in the application is cataloged below with its exact path, current status, and responsibility.
 
 ```
 src/
-├── core/                         # Cross-Cutting Foundation (Zero business domain logic)
-│   ├── theme/                    # Design tokens (Colors, Typography, Spacing, Squircles)
-│   ├── haptics/                  # Centralized tactile feedback engine
-│   ├── notifications/            # Local push scheduler & trigger rules
-│   ├── payments/                 # In-App Purchases, StoreKit/Billing, Entitlement checks
-│   ├── charts/                   # Shared Chart Engine (TeardropPin, BarPath, Scales, Toggles)
-│   ├── components/               # Pure UI Primitives (Button, Card, Badge, Header, Loaders)
-│   └── utils/                    # Generic utilities (date formatting, string helpers)
 │
-├── features/                     # Self-Contained Business Domains
-│   ├── nutrition/                # Food tracking, Calorie balance, Macro compliance
-│   ├── hydration/                # Water intake, Beverage categorization, Drink gauge
-│   ├── movement/                 # Steps, Workouts, Health Connect sync
-│   ├── body/                     # Weight tracking, Target delta, Clinical BMI
-│   ├── ai-coach/                 # Ria AI persona, Multimodal vision, Context memory
-│   ├── gamification/             # Achievements, Streaks, Badges, Confetti celebrations
-│   ├── onboarding/               # Multi-step wizard, Caloric budget calculation, Primers
-│   ├── subscription/             # Pro paywall, Feature gating, Plan selector
-│   └── analytics/                # Multi-category reporting shell & timeframe aggregators
+├── theme/                                      # [THEME TOKENS - Single Source of Truth]
+│   ├── colors.ts                               # Primary terracotta (#F47551), slate (#0F172A), semantic macro colors
+│   └── typography.ts                           # Kurale (serif), Poppins (headings), Urbanist (metrics) tokens
 │
-├── context/                      # Global State & Cloud Sync
-│   ├── HealthContext.tsx         # Unified health data store
-│   └── AuthContext.tsx           # Authentication state & guest mode
+├── types/                                      # [GLOBAL CONTRACTS & DATA MODELS]
+│   └── index.ts                                # DailyLog, MealItem, ActivityItem, UserGoals, WeightEntry types
 │
-├── services/                     # External Infrastructure & APIs
-│   ├── firebase.ts               # Firebase App, Auth, and Firestore instance
-│   └── storage.ts                # AsyncStorage / SecureStore wrappers
+├── context/                                    # [GLOBAL STATE & SYNC]
+│   └── HealthContext.tsx                       # Single source of truth for daily logs, goals, and Firestore sync
 │
-├── navigation/                   # Top-level Navigators & Transitions
-│   ├── AppNavigator.tsx          # Screen router / subscreen coordinator
-│   └── BottomNavBar.tsx          # Custom bottom navigation bar
+├── utils/                                      # [SYSTEM UTILITIES & TACTILE ENGINE]
+│   ├── beverageUtils.tsx                       # Drink icon resolution, standard drink sizes, hydration factors
+│   ├── stepHistoryUtils.ts                     # Aggregation math for 7-day, 30-day, and yearly step records
+│   └── haptics.ts                              # [NEW] Centralized Haptic Engine (selection, impact, success, error)
 │
-└── types/                        # Global shared data contracts
+├── services/                                   # [EXTERNAL INFRASTRUCTURE & APIS]
+│   ├── firebase.ts                             # Firebase Auth instance & Firestore owner-scoped connection
+│   │
+│   ├── ai/                                     # [RIA AI GEMINI ENGINE]
+│   │   ├── AIService.ts                        # Master facade for chat and vision analysis
+│   │   ├── config/AIConfig.ts                  # Model parameters (gemini-2.0-flash), temperature, safety thresholds
+│   │   ├── context/NutritionContextBuilder.ts  # Injects user goals, weight, and remaining calories into prompts
+│   │   ├── errors/AIErrorMapper.ts             # User-friendly translation of rate-limit, network, and quota errors
+│   │   ├── gateway/AIRateLimiter.ts            # Sliding-window rate limiter preventing API abuse
+│   │   ├── memory/ConversationMemoryManager.ts # Context window budget manager
+│   │   ├── memory/GeminiTokenEstimator.ts      # Fast client-side token consumption estimation
+│   │   ├── memory/TokenBudgetManager.ts        # Sliding memory trimmer
+│   │   ├── observability/AIObservability.ts    # Request latency, token cost, and success metrics
+│   │   ├── providers/GeminiProvider.ts         # Direct HTTP REST client to Google Gemini API
+│   │   ├── storage/ChatHistoryStorage.ts       # Local chat session caching in AsyncStorage
+│   │   ├── storage/SecureKeyStorage.ts         # Encrypted API key storage via expo-secure-store
+│   │   ├── types/ai.types.ts                   # ChatMessage, FoodAnalysisResult, AIState interfaces
+│   │   ├── validation/AIInputValidator.ts      # Sanitizes prompts and base64 images before transmission
+│   │   ├── validation/AIOutputValidator.ts     # Validates and parses structured JSON from food image scans
+│   │   └── validation/EdgeImagePreprocessor.ts # Resizes and compresses food photos to <1MB WebP/JPEG
+│   │
+│   ├── notifications/                          # [ACTIVE & TESTED] [NOTIFICATION SCHEDULER]
+│   │   ├── index.ts                            # Barrel export
+│   │   ├── notificationService.ts              # Native push & local notification permission and trigger client
+│   │   └── notificationScheduler.ts            # Logic for Hydration nudges, Meal prompts, and Streak protection
+│   │
+│   └── payments/                               # [ACTIVE & TESTED] [IN-APP PURCHASES & SUBSCRIPTIONS]
+│       ├── paymentService.ts                   # StoreKit / Google Play Billing / RevenueCat client
+│       └── entitlementManager.ts               # Validates active Pro subscription and gates premium features
+│
+├── components/                                 # [REUSABLE UI COMPONENTS & CARDS]
+│   │
+│   ├── common/                                 # [BASE DESIGN SYSTEM PRIMITIVES]
+│   │   ├── AnimatedProgressBar.tsx             # Reanimated smooth progress fill
+│   │   ├── AnimatedSvgRing.tsx                 # Smooth circular arc loader / dial
+│   │   ├── AppLoadingScreen.tsx                # Splash fallback screen while fonts and auth load
+│   │   ├── BouncingDotsLoader.tsx              # Three-dot bounce indicator for Ria AI thinking states
+│   │   ├── ConfirmationModal.tsx               # Reusable danger/confirmation alert dialog
+│   │   ├── ErrorBoundary.tsx                   # React root crash catcher preventing white-screen crashes
+│   │   ├── FoodIconBadge.tsx                   # Category icon badge for meal cards
+│   │   ├── FoodImage.tsx                       # expo-image wrapper with caching and placeholder blurhash
+│   │   ├── GeminiIcon.tsx                      # Brand sparkle icon for AI features
+│   │   ├── MarkdownText.tsx                    # Custom markdown renderer for AI responses
+│   │   ├── ScreenTransitionContainer.tsx       # Standard page fade/slide container
+│   │   ├── SlideInSubScreen.tsx                # Smooth hardware-accelerated subscreen transition wrapper
+│   │   └── UserAvatar.tsx                      # Circular profile avatar with fallback initials
+│   │
+│   ├── charts/                                 # [SHARED CHART PRIMITIVES]
+│   │   ├── ChartTeardropPin.tsx                # Universal vector teardrop pin with white disc and unit label
+│   │   ├── ChartTypeToggle.tsx                 # Squircle toggle switching between Bar and Line chart views
+│   │   └── chartMath.ts                        # Quadratic bezier corner bar paths (buildBarPath) and Y-axis scales
+│   │
+│   ├── modals/                                 # [ACTION MODALS & DIALOGS]
+│   │   ├── AvatarPickerModal.tsx               # Preset avatar selector
+│   │   ├── BYOKSetupModal.tsx                  # "Bring Your Own Key" setup dialog for Gemini API key
+│   │   ├── CupSizeModal.tsx                    # Drink container volume picker (250ml, 330ml, 500ml, custom)
+│   │   ├── DailyWaterGoalModal.tsx             # Target daily hydration setter
+│   │   ├── FoodLogModal.tsx                    # Manual food entry drawer with macro calculators
+│   │   ├── FoodVisionModal.tsx                 # Camera viewport for AI food scanning
+│   │   ├── HydrationSettingsModal.tsx          # Hydration preferences and reminder times
+│   │   ├── LogWeightModal.tsx                  # Weigh-in entry modal with date picker and note
+│   │   ├── NotificationModal.tsx               # In-app alert notification viewer
+│   │   ├── RiaChatModal.tsx                    # Full-screen conversational AI coach chat interface
+│   │   ├── SearchFoodModal.tsx                 # Fast food database search with barcode lookup
+│   │   └── WeightGoalSettingsModal.tsx         # Target weight and target date configuration
+│   │
+│   ├── navigation/                             # [APP NAVIGATION SHELL]
+│   │   ├── Header.tsx                          # Top app bar with avatar, streak counter, and notification bell
+│   │   └── BottomNavBar.tsx                    # Floating 4-tab bar (Today, Trackers, Analytics, Profile)
+│   │
+│   ├── dashboard/                              # [THE 4 HEALTH TRACKER CARDS (Dashboard / Today Screen)]
+│   │   ├── HeroCalorieCard.tsx                 # 🥗 TRACKER 1: Calorie dial, daily budget, and Atwater macro split
+│   │   ├── MealSection.tsx                     # 🥗 TRACKER 1: Breakfast, Lunch, Dinner, Snack collapsible groups
+│   │   ├── WaterTracker.tsx                    # 💧 TRACKER 2: Water tracker with ±100ml / ±250ml quick steppers
+│   │   ├── MovementTrackerCard.tsx             # 👟 TRACKER 3: Step count, active burn, goal badge, and workout logger
+│   │   ├── WeightTrackerCard.tsx               # ⚖️ TRACKER 4: Recent weigh-in, target delta, and quick log button
+│   │   ├── TodayBMICard.tsx                    # ⚖️ TRACKER 4: WHO Clinical BMI category gauge (Normal, Overweight, etc.)
+│   │   ├── RiaCoachCard.tsx                    # 🤖 AI greeting card with contextual daily insight pills
+│   │   └── TopDateStrip.tsx                    # Horizontal interactive 7-day calendar strip
+│   │
+│   ├── water/                                  # [HYDRATION DETAIL & HISTORY GAUGES]
+│   │   ├── DropletVisualizer.tsx               # Real-time liquid wave slosh physics droplet
+│   │   ├── HeroDropletCard.tsx                 # Detail screen hero water intake summary
+│   │   ├── WaterGaugeVisualizer.tsx            # 270° radial speedometer gauge with center droplet
+│   │   ├── WaterHistoryCard.tsx                # Chronological logged drink list with timestamps
+│   │   └── WaterEntryActionPopover.tsx         # Quick edit / delete popover for water entries
+│   │
+│   ├── steps/                                  # [MOVEMENT DETAIL & HISTORY GAUGES]
+│   │   ├── HeroStepCard.tsx                    # Detail screen hero step summary with distance & active time
+│   │   ├── StepGaugeVisualizer.tsx             # Radial circular step progress gauge
+│   │   ├── StepHistoryCard.tsx                 # Daily step history card with weekly comparison
+│   │   ├── StepHistoryModal.tsx                # Full-screen historical step inspection drawer
+│   │   ├── HealthConnectSyncCard.tsx           # Google Health Connect status and manual sync trigger
+│   │   ├── RunningShoeSvg.tsx                  # Custom vector athletic shoe illustration
+│   │   ├── StepOutlineIcons.tsx                # Metric outline vector icon set
+│   │   └── StepEntryActionPopover.tsx          # Quick edit / delete popover for activity entries
+│   │
+│   ├── weight/                                 # [WEIGHT DETAIL & HISTORY GAUGES]
+│   │   ├── HeroWeightCard.tsx                  # Detail screen weight hero with starting, current, and goal stats
+│   │   ├── WeightHistoryCard.tsx               # Chronological weigh-in log with weight change delta badges
+│   │   └── WeightEntryActionPopover.tsx        # Quick edit / delete popover for weight entries
+│   │
+│   ├── diary/                                  # [FOOD LOG DETAIL COMPONENTS]
+│   │   └── MealCard.tsx                        # Individual food item card with thumbnail, calories, and macros
+│   │
+│   ├── profile/                                # [USER PROFILE & METABOLIC COMPONENTS]
+│   │   ├── ProfileHeaderCard.tsx               # User avatar, name, and joined milestone banner
+│   │   ├── ProfileMetricInspector.tsx          # Quick biomarker grid (Height, Weight, BMI, Activity Level)
+│   │   ├── ProfileQuickNavGrid.tsx             # Settings navigation grid (Goals, Preferences, Awards)
+│   │   └── ClinicalBmiGauge.tsx                # Compact clinical BMI zone gauge
+│   │
+│   └── report/                                 # [ALL ANALYTICAL & REPORT CHARTS (Analytics Screen)]
+│       ├── CalorieCompletionCard.tsx           # 🥗 Nutrition Report: Daily calorie compliance vs target budget
+│       ├── MacroDistributionCard.tsx           # 🥗 Nutrition Report: Protein, Carbs, Fat, Fiber compliance chart
+│       ├── StepCompletionCard.tsx              # 👟 Steps Report: Daily step completion vs daily step goal
+│       ├── StepCalorieBurnCard.tsx             # 👟 Steps Report: Active calorie burn correlation chart
+│       ├── StepTimeDurationCard.tsx            # 👟 Steps Report: Active workout duration chart
+│       ├── StepTotalSummaryCard.tsx            # 👟 Steps Report: Total steps, kilometers, and minutes summary
+│       ├── DrinkCompletionCard.tsx             # 💧 Water Report: Daily hydration completion percentage chart
+│       ├── HydrateVolumeCard.tsx               # 💧 Water Report: Absolute liter volume trend with Line/Bar toggle
+│       ├── DrinkTypesCard.tsx                  # 💧 Water Report: SVG Donut breakdown of beverage categories
+│       ├── WeightTrendCard.tsx                 # ⚖️ Weight Report: Historical weight progression trendline
+│       ├── WeightSummaryCard.tsx               # ⚖️ Weight Report: Net lost / gained delta card
+│       ├── BMIGaugeCard.tsx                    # ⚖️ Weight Report: Large clinical BMI gauge with zone markers
+│       └── ReportPickerModal.tsx               # 📊 Report Category selector (Nutrition, Steps, Water, Weight)
+│
+├── features/                                   # [SELF-CONTAINED BUSINESS DOMAINS]
+│   │
+│   ├── health/                                 # [GOOGLE HEALTH CONNECT SYNC]
+│   │   ├── healthConnect.ts                    # Native SDK initialization and availability check
+│   │   ├── healthPermissions.ts                # Permission request contract (READ_STEPS, READ_CALORIES)
+│   │   ├── healthService.ts                    # 7-day historical backfill and real-time aggregate reader
+│   │   └── HealthScreen.tsx                    # Health Connect diagnostics and permission repair screen
+│   │
+│   ├── onboarding/                             # [ACTIVE & TESTED] [ONBOARDING WIZARD]
+│   │   ├── index.ts                            # Barrel export
+│   │   ├── screens/OnboardingWizardScreen.tsx  # Multi-step master orchestrator
+│   │   ├── components/PermissionPrimerStep.tsx # Pre-permission explainers for Camera & Health Connect
+│   │   ├── components/PlanCalculationStep.tsx  # Dynamic Mifflin-St Jeor daily budget calculator
+│   │   └── services/onboardingCalculator.ts    # BMR, TDEE, and macro gram formula engine
+│   │
+│   ├── gamification/                           # [ACTIVE & TESTED] [ACHIEVEMENTS, STREAKS & REWARDS]
+│   │   ├── index.ts                            # Barrel export
+│   │   ├── engine/AchievementEvaluator.ts      # Automated rule engine that audits logs & unlocks badges
+│   │   ├── engine/achievementRules.ts          # Definitions for all badges (7-Day Streak, Water Master, etc.)
+│   │   ├── components/AchievementBadge.tsx     # Vector badge icon with Bronze/Silver/Gold/Diamond tiers
+│   │   ├── components/StreakFlameBadge.tsx     # Fire streak badge with counter
+│   │   ├── components/CelebrationModal.tsx     # Full-screen celebration dialog on badge unlock
+│   │   └── screens/AchievementCenterScreen.tsx # Showcase grid of locked and unlocked trophies
+│   │
+│   └── subscription/                           # [ACTIVE & TESTED] [PRO MONETIZATION & FEATURE GATING]
+│       ├── index.ts                            # Barrel export
+│       ├── hooks/usePro.ts                     # Hook providing `{ isPro: boolean, activePlanId, purchasePlan, restorePurchases }`
+│       ├── components/ProGate.tsx              # Wrapper component that locks UI if user is on Free tier
+│       ├── components/ProBadge.tsx             # Elegant gold "PRO" tag for premium UI elements
+│       ├── components/ProMembershipCard.tsx    # In-profile active membership / upgrade CTA card
+│       └── screens/ProPaywallModal.tsx         # High-converting monthly, annual & lifetime subscription paywall
+│
+├── screens/                                    # [TOP-LEVEL SCREEN SHELLS]
+│   ├── main/
+│   │   ├── TodayScreen.tsx                     # Main daily diary and food intake view
+│   │   ├── TrackerScreen.tsx                   # Central dashboard hosting all 4 health tracker cards
+│   │   ├── AnalyticsScreen.tsx                 # Consolidated weekly/monthly/yearly reports
+│   │   ├── ProfileScreen.tsx                   # User settings, preferences, and account management (Integrated with AchievementCenter & ProPaywall)
+│   │   ├── WaterTrackerScreen.tsx              # Dedicated hydration subscreen
+│   │   ├── StepTrackerScreen.tsx               # Dedicated steps subscreen
+│   │   ├── WeightTrackerScreen.tsx             # Dedicated weight subscreen
+│   │   ├── WaterIntakeHistoryScreen.tsx        # Hydration history subscreen
+│   │   ├── WeightHistoryScreen.tsx             # Weight history subscreen
+│   │   ├── LogWeightScreen.tsx                 # Manual weight logging screen
+│   │   ├── WaterReportScreen.tsx               # Standalone hydration report view
+│   │   ├── StepReportScreen.tsx                # Standalone step report view
+│   │   └── WeightReportScreen.tsx              # Standalone weight report view
+│   │
+│   ├── auth/
+│   │   ├── WelcomeScreen.tsx                   # App splash / initial landing view (triggers OnboardingWizardScreen)
+│   │   ├── SignInScreen.tsx                    # Email & Google Sign-In
+│   │   ├── SignUpScreen.tsx                    # Registration flow
+│   │   └── ForgotPasswordScreen.tsx            # Password reset email trigger
+│   │
+│   └── profile/
+│       ├── GoalsScreen.tsx                     # Calorie budget, step target, and water goal editor
+│       ├── PreferencesScreen.tsx               # Units, haptic toggle, Gemini BYOK, Pro status & notification toggles
+│       ├── MetabolicSummaryScreen.tsx          # BMR, TDEE, and metabolic breakdown
+│       └── AwardsScreen.tsx                    # Legacy awards screen (ProfileScreen now uses AchievementCenterScreen)
+│
+├── data/                                       # [BUNDLED STATIC ASSETS & CATALOGS]
+│   ├── foodDatabase.ts                         # Curated offline catalog of 100+ foods with verified macros
+│   └── avatars.ts                              # Curated list of vector avatar options
+│
+└── assets/                                     # [LOCAL IMAGES & STATIC ASSETS]
+    ├── adaptive-icon.png                       # Android adaptive foreground icon
+    ├── favicon.png                             # Web favicon
+    └── splash.png                              # Native boot splash image
 ```
 
 ---
 
-## 3. Detailed Folder & Module Responsibilities
+## 3. The 4 Health Trackers Quick Reference
 
-### 3.1 `src/core/` — The Bedrock Engine
+For total clarity, here is how each of the 4 Health Trackers is mapped across the app:
 
-The `core` directory contains code that any feature can import, but `core` **never imports from `features`**.
-
-| Directory | Scope & Responsibility | Key Files |
-|---|---|---|
-| `core/theme/` | Single source of truth for visual tokens: brand palette, semantic colors, font weights, standard radii. | `colors.ts`, `typography.ts` |
-| `core/haptics/` | Unified wrapper over `expo-haptics`. Pre-tuned feedback profiles (`selection`, `light`, `medium`, `heavy`, `success`, `error`). Respects user mute setting. | `haptics.ts`, `hapticProfiles.ts` |
-| `core/notifications/` | Local notification scheduling (hydration nudges, meal reminders, streak saver alerts). Handles OS permission requests and badges. | `notificationService.ts`, `notificationScheduler.ts` |
-| `core/payments/` | Handles Apple App Store / Google Play In-App Purchases and Subscriptions. Entitlement checks, receipt validation, restore purchases. | `paymentService.ts`, `useSubscription.ts` |
-| `core/charts/` | The universal chart kit. Vector teardrop pin (`ChartTeardropPin`), SVG quadratic bar paths (`buildBarPath`), Y-axis scales, squircle bar/line toggle. | `ChartTeardropPin.tsx`, `ChartTypeToggle.tsx`, `chartMath.ts` |
-| `core/components/` | Reusable design system primitives: buttons, cards, modals, avatar, screen transition containers, error boundaries. | `Button.tsx`, `Card.tsx`, `UserAvatar.tsx`, `ErrorBoundary.tsx` |
+| Tracker Domain | Dashboard Card (`components/dashboard/`) | Detail Subscreen & History (`components/<domain>/`) | Analytical Reports (`components/report/`) |
+|---|---|---|---|
+| 🥗 **Nutrition Tracker** | `HeroCalorieCard.tsx`, `MealSection.tsx` | `MealCard.tsx` (in `diary/`), `FoodLogModal.tsx` | `CalorieCompletionCard.tsx`, `MacroDistributionCard.tsx` |
+| 💧 **Hydration Tracker** | `WaterTracker.tsx` | `WaterGaugeVisualizer.tsx`, `HeroDropletCard.tsx`, `WaterHistoryCard.tsx` | `DrinkCompletionCard.tsx`, `HydrateVolumeCard.tsx`, `DrinkTypesCard.tsx` |
+| 👟 **Movement Tracker** | `MovementTrackerCard.tsx` | `HeroStepCard.tsx`, `StepGaugeVisualizer.tsx`, `StepHistoryCard.tsx`, `HealthConnectSyncCard.tsx` | `StepCompletionCard.tsx`, `StepCalorieBurnCard.tsx`, `StepTimeDurationCard.tsx`, `StepTotalSummaryCard.tsx` |
+| ⚖️ **Body Tracker** | `WeightTrackerCard.tsx`, `TodayBMICard.tsx` | `HeroWeightCard.tsx`, `WeightHistoryCard.tsx` | `WeightTrendCard.tsx`, `WeightSummaryCard.tsx`, `BMIGaugeCard.tsx` |
 
 ---
 
-### 3.2 `src/features/` — Business Domain Slices
+## 4. The 5 Major Features Status & Implementation Matrix
 
-Each feature folder is an autonomous slice containing its own components, screens, hooks, and types.
+All 5 major feature modules are implemented, tested, and integrated:
 
-#### A. `features/nutrition/`
-* **Purpose:** Everything food, meal logging, and macronutrient compliance.
-* **Components:**
-  * `HeroCalorieCard.tsx`: Dashboard hero dial and calorie intake breakdown.
-  * `MealSection.tsx`: Breakfast, Lunch, Dinner, Snack group cards.
-  * `MealCard.tsx`: Individual meal entry with thumbnail, grams, and macros.
-  * `CalorieCompletionCard.tsx`: Weekly/Monthly/Yearly calorie target chart.
-  * `MacroDistributionCard.tsx`: Single-macro target compliance chart with dropdown selector.
-* **Screens / Modals:** `TodayScreen.tsx`, `FoodLogModal.tsx`, `SearchFoodModal.tsx`.
-* **State / Logic:** Food catalog, portion calculators, Atwater caloric ratio logic.
+| Feature | Primary Location | Status | Key Files | Integration Points |
+|---|---|---|---|---|
+| **Haptic Feedback Engine** | `src/utils/` | ✅ Complete (8/8 tests) | `haptics.ts` | `BottomNavBar.tsx`, `AchievementBadge.tsx`, `ProMembershipCard.tsx`, buttons |
+| **Onboarding Wizard** | `src/features/onboarding/` | ✅ Complete (12/12 tests) | `OnboardingWizardScreen.tsx`, `onboardingCalculator.ts`, `PermissionPrimerStep.tsx`, `PlanCalculationStep.tsx` | `WelcomeScreen.tsx` |
+| **Gamification & Trophies** | `src/features/gamification/` | ✅ Complete (7/7 tests) | `AchievementEvaluator.ts`, `achievementRules.ts`, `CelebrationModal.tsx`, `AchievementBadge.tsx`, `AchievementCenterScreen.tsx` | `ProfileScreen.tsx` (Awards quick-nav action), `BottomNavBar.tsx` |
+| **Habit Notifications** | `src/services/notifications/` | ✅ Complete (6/6 tests) | `notificationService.ts`, `notificationScheduler.ts` | `PreferencesScreen.tsx` (Reminders toggle handlers), `App.tsx` (Startup habit sync) |
+| **Subscriptions & Paywall** | `src/services/payments/` & `src/features/subscription/` | ✅ Complete (10/10 tests) | `paymentService.ts`, `entitlementManager.ts`, `usePro.ts`, `ProGate.tsx`, `ProPaywallModal.tsx`, `ProMembershipCard.tsx` | `ProfileScreen.tsx` (Pro banner & badge), `PreferencesScreen.tsx`, `AnalyticsScreen.tsx` (Deep Trends gating) |
 
-#### B. `features/hydration/`
-* **Purpose:** Liquid logging, container presets, beverage classification.
-* **Components:**
-  * `WaterTrackerCard.tsx`: Dashboard card with quick steppers.
-  * `WaterGaugeVisualizer.tsx`: 270° radial speedometer gauge with beveled teardrop.
-  * `DropletVisualizer.tsx`: Sloshing liquid wave physics.
-  * `WaterHistoryCard.tsx`: Chronological entry log with drink badges.
-  * `DrinkCompletionCard.tsx`: Water completion trend chart.
-  * `HydrateVolumeCard.tsx`: Liter volume chart with line/bar toggle.
-  * `DrinkTypesCard.tsx`: Donut breakdown of beverage categories.
-* **Screens / Modals:** `WaterTrackerScreen.tsx`, `CupSizeModal.tsx`, `DailyWaterGoalModal.tsx`, `HydrationSettingsModal.tsx`.
 
-#### C. `features/movement/`
-* **Purpose:** Daily steps, physical activities, active energy burn, Google Health Connect.
-* **Components:**
-  * `MovementTrackerCard.tsx`: Standalone dashboard card with celebration badge and steppers.
-  * `HeroStepCard.tsx`: Detail view visualizer with distance and calorie stats.
-  * `StepGaugeVisualizer.tsx`: Circular step progression gauge.
-  * `StepHistoryCard.tsx`: Activity history list with quick edit/delete.
-  * `StepCompletionCard.tsx`: Step completion bar/line chart.
-  * `StepCalorieBurnCard.tsx`: Calorie burn correlation chart.
-  * `StepTimeDurationCard.tsx`: Active duration chart.
-  * `HealthConnectSyncCard.tsx`: Background sync status and manual sync trigger.
-* **Screens / Modals:** `StepTrackerScreen.tsx`, `StepHistoryModal.tsx`, Quick workout logger modal.
-* **Services:** `healthService.ts` (Google Health Connect reading, aggregate calculation, and 7-day backfill).
-
-#### D. `features/body/`
-* **Purpose:** Weight management, weight change velocity, BMI categorization.
-* **Components:**
-  * `WeightTrackerCard.tsx`: Dashboard tracker with recent weigh-in and goal delta.
-  * `HeroWeightCard.tsx`: Weight loss/gain hero summary.
-  * `WeightHistoryCard.tsx`: Historical weigh-in timeline with date stamps.
-  * `WeightTrendCard.tsx`: Weight progression line/bar chart.
-  * `WeightSummaryCard.tsx`: Milestone delta card.
-  * `BMIGaugeCard.tsx`: Clinical arc BMI gauge with Underweight/Normal/Overweight zones.
-* **Screens / Modals:** `WeightTrackerScreen.tsx`, `WeightHistoryScreen.tsx`, `LogWeightModal.tsx`, `WeightGoalSettingsModal.tsx`.
-
-#### E. `features/ai-coach/`
-* **Purpose:** "Ria" AI nutrition coach, meal photo analysis, conversation memory.
-* **Components:** `RiaCoachCard.tsx`, `RiaChatModal.tsx`, `FoodVisionModal.tsx`, `BYOKSetupModal.tsx`.
-* **Services:**
-  * `GeminiProvider.ts`: Multimodal vision and chat API connector.
-  * `EdgeImagePreprocessor.ts`: Image compression and base64 preparation.
-  * `TokenBudgetManager.ts`: Token consumption estimation and throttling.
-  * `AIRateLimiter.ts`: Sliding-window request rate limiter.
-  * `ConversationMemoryManager.ts`: User goal context injection.
-
-#### F. `features/gamification/` (Roadmap)
-* **Purpose:** User retention, habit reinforcement, milestone celebrations.
-* **Submodules:**
-  * `engine/AchievementEvaluator.ts`: Background listener that audits daily logs against unlock criteria (e.g. *7-day calorie streak, 3L water milestone, first workout logged*).
-  * `components/AchievementBadge.tsx`: Visual badge with locked/unlocked states and tier metal styling (Bronze, Silver, Gold, Platinum).
-  * `components/CelebrationModal.tsx`: Confetti particle overlay + celebratory haptic feedback upon unlocking badges.
-  * `screens/AwardsScreen.tsx`: Grid of earned and in-progress achievements.
-
-#### G. `features/onboarding/` (Roadmap)
-* **Purpose:** Frictionless user introduction, metric collection, plan creation.
-* **Screens Flow:**
-  1. `WelcomeScreen.tsx`: Brand presentation with "Get Started" and "I already have an account".
-  2. `GenderSelectionScreen.tsx`: Biological baseline calculation.
-  3. `AgeSelectionScreen.tsx`: Age input with physiological adjustments.
-  4. `HeightSelectionScreen.tsx`: Ruler picker (cm/ft).
-  5. `WeightSelectionScreen.tsx`: Current weight & target weight wheel.
-  6. `GoalSelectionScreen.tsx`: Primary objective (*Lose Weight, Maintain, Build Muscle*).
-  7. `PermissionPrimerScreen.tsx`: Explainer screens before native Camera / Health Connect prompts.
-  8. `PlanSummaryScreen.tsx`: Generated daily caloric budget and macro targets.
-
-#### H. `features/subscription/` (Roadmap)
-* **Purpose:** Monetization, premium feature gating, paywall presentation.
-* **Components & Hooks:**
-  * `usePro.ts`: Hook returning `{ isPro: boolean, entitlements: string[] }`.
-  * `ProGate.tsx`: Component wrapper that locks UI and triggers paywall if not subscribed.
-  * `ProPaywallModal.tsx`: High-converting paywall presenting monthly/annual subscription tiers.
-  * `RestorePurchasesButton.tsx`: Mandatory App Store restore trigger.
-
-#### I. `features/analytics/`
-* **Purpose:** Master reporting hub consolidating reports from all 4 health domains.
-* **Components:**
-  * `ReportPickerModal.tsx`: Fast dropdown to switch between *Nutrition*, *Steps*, *Water*, and *Weight*.
-  * `AnalyticsScreen.tsx`: Orchestrator hosting domain report tabs.
-
----
-
-## 4. App Store & Production Compliance Architecture
-
-```
-Compliance & Legal Checklist (Required Before Launch):
-├── In-App Account Deletion: Settings -> Profile -> "Delete Account"
-│   └── Action: Wipes Firebase Auth UID + deletes /users/{uid} Firestore collection
-├── Terms of Service & Privacy Policy: Accessible from Settings & Onboarding
-├── Google Health Connect Privacy Rationale: Dedicated screen in Settings
-├── Pre-Permission Primers: Explainers before Camera, Notifs, and Health Connect
-└── Restore Purchases: Dedicated button on paywall and settings
-```
-
----
-
-## 5. Phased Refactoring Roadmap
-
-To transition to this architecture cleanly **without breaking existing builds**:
-
-| Phase | Milestone | Goal |
-|---|---|---|
-| **Phase 1** (Done) | **Safe Pruning** | Pruned dead components (`WorkoutHistoryCard`, `MacroBreakdownCard`, `DailyHabitsCard`) and verified 100% test pass. |
-| **Phase 2** (Current) | **Architecture Blueprint** | Published [`ARCHITECTURE.md`](file:///c:/Users/navee/Videos/Calorify/calori/ARCHITECTURE.md) defining the target organization. |
-| **Phase 3** | **Core Setup (Charts & Haptics)** | Create `src/core/charts/` (reusable teardrop pin & bar path) and `src/core/haptics/`. |
-| **Phase 4** | **Domain Migration** | Organize existing components into `src/features/` with backward-compatible re-exports in `src/components/index.ts`. |
-| **Phase 5** | **New Feature Integration** | Implement Gamification Engine, Multi-step Onboarding, Notifications, and Pro Subscription. |

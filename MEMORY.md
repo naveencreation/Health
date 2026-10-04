@@ -796,6 +796,50 @@
       - `npx tsc --noEmit` passed with 0 errors.
       - Component tests in `MacroDistributionCard.test.tsx` (9 tests) and `CalorieCompletionCard.test.tsx` (5 tests) passed 100%.
 
+43. **Scalable Multi-Phase Feature Rollout & Architecture Hardening**:
+    - **Foolproof Folder Structure & Pruning**:
+      - Cleaned up obsolete orphaned components (`WorkoutHistoryCard.tsx`, `MacroBreakdownCard.tsx`, `DailyHabitsCard.tsx`).
+      - Created `ARCHITECTURE.md` as the definitive single source of truth mapping all 4 Health Trackers (Nutrition, Hydration, Movement, Weight) and designating modular homes in `src/features/` and `src/services/`.
+    - **Phase 1: Centralized Tactile Engine (`src/utils/haptics.ts`)**:
+      - Implemented full `haptics` facade (`selection`, `impactLight/Medium/Heavy/Rigid/Soft`, `success`, `warning`, `error`, `setEnabled`, `isEnabled`).
+      - Verified with 8/8 passing unit tests (`haptics.test.ts`).
+    - **Phase 2: Onboarding Flow & Mifflin-St Jeor Engine (`src/features/onboarding/`)**:
+      - Implemented `onboardingCalculator.ts` with validated clinical formula for BMR, TDEE, macros, water targets, and step goals with physiological safety floors (1,200 kcal female / 1,500 kcal male).
+      - Built `PlanCalculationStep.tsx` blueprint summary and `PermissionPrimerStep.tsx` pre-permission explainer.
+      - Built `OnboardingWizardScreen.tsx` master orchestrator connecting all 7 steps (`Age` -> `Weight` -> `Height` -> `Goal` -> `Gender` -> `Plan` -> `Permissions`).
+      - Integrated steps seamlessly into `WelcomeScreen.tsx`.
+      - Verified with 12/12 passing unit tests.
+    - **Phase 3: Gamification & Achievements Engine (`src/features/gamification/`)**:
+      - Implemented `achievementRules.ts` with 11 badges across 4 tiers (Bronze, Silver, Gold, Diamond) covering Nutrition, Hydration, Movement, and Consistency.
+      - Implemented `AchievementEvaluator.ts` audit engine with persistent unlocked history in AsyncStorage.
+      - Built `AchievementBadge.tsx`, `StreakFlameBadge.tsx`, `CelebrationModal.tsx`, and `AchievementCenterScreen.tsx` with category tabs and progress tracking.
+      - Verified with 7/7 passing unit tests.
+    - **Phase 4: Pro Subscription & Monetization (`src/features/subscription/` & `src/services/payments/`)**:
+      - Implemented `paymentService.ts` and `entitlementManager.ts` managing Annual (50% off), Monthly, and Lifetime tiers.
+      - Implemented `usePro.ts` hook, `ProBadge.tsx`, `ProGate.tsx` feature gating, and `ProPaywallModal.tsx` high-converting paywall.
+      - Verified with 8/8 passing unit tests.
+    - **Phase 5: Notifications & Habit Reminders (`src/services/notifications/`)**:
+      - Implemented `notificationService.ts` with fail-safe dynamic runtime resolution and preference persistence.
+      - Implemented `notificationScheduler.ts` orchestrating Hydration nudges, Breakfast/Lunch/Dinner prompts, and 21:00 Streak Protection reminders.
+      - Verified with 6/6 passing unit tests.
+    - **Phase 6: Profile, Analytics & App Shell Integration**:
+      - Built `ProMembershipCard.tsx` (VIP active membership card with renewal date vs warm gold upgrade CTA).
+      - Enhanced `ProfileHeaderCard.tsx` to display real `isPro` status with clickable PRO badge / upgrade trigger.
+      - Wired `AchievementCenterScreen.tsx` into `ProfileScreen.tsx` (sub-screen navigation on Awards tap).
+      - Wired `ProMembershipCard` and `ProPaywallModal` into `ProfileScreen.tsx` with one-tap trigger.
+      - Connected `NotificationService` and `NotificationScheduler.syncSchedules()` into `PreferencesScreen.tsx` to update background reminders on water/meal/step toggle.
+      - Added Pro status & Manage button into `PreferencesScreen.tsx`.
+      - Built comprehensive integration suite `ProfileScreen.test.tsx`.
+      - Fully resolved barrel import recursion by directing component imports to their specific domain paths.
+      - Added `AnalyticsScreen.tsx` Pro feature gating for Deep Monthly & Annual Trends, with lock indicators on timeframe tabs and `ProPaywallModal` trigger.
+      - Added startup background habit reminder synchronization in `App.tsx` on user authentication.
+      - Built `AnalyticsScreen.test.tsx` integration test suite verifying timeframe switching and Pro paywall gating (3/3 passed).
+    - **Verification**:
+      - `npx tsc --noEmit` passed with 0 errors across entire workspace.
+      - 259/259 tests passing across 45/45 test suites (100% green).
+
+
+
 ## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

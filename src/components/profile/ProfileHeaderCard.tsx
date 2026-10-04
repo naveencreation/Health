@@ -16,6 +16,8 @@ interface ProfileHeaderCardProps {
   onOpenSettings?: () => void;
   streakDays?: number;
   showNav?: boolean;
+  isPro?: boolean;
+  onPressPro?: () => void;
 }
 
 export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
@@ -28,6 +30,8 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
   onOpenSettings,
   streakDays = 7,
   showNav = false,
+  isPro = false,
+  onPressPro,
 }) => {
   return (
     <View style={styles.container}>
@@ -102,11 +106,28 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
                 <Ionicons name="person-outline" size={11} color="#64748B" />
                 <Text style={styles.guestBadgeText}>Guest Explorer</Text>
               </View>
-            ) : (
-              <View style={styles.proBadge}>
+            ) : isPro ? (
+              <Pressable
+                onPress={onPressPro}
+                disabled={!onPressPro}
+                style={styles.proBadge}
+                accessibilityRole="button"
+                accessibilityLabel="Calorify Pro Member"
+              >
                 <Ionicons name="ribbon" size={12} color="#A16207" />
                 <Text style={styles.proBadgeText}>PRO Member</Text>
-              </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={onPressPro}
+                disabled={!onPressPro}
+                style={styles.upgradeBadge}
+                accessibilityRole="button"
+                accessibilityLabel="Free tier, tap to upgrade to Pro"
+              >
+                <Ionicons name="sparkles" size={11} color="#EA580C" />
+                <Text style={styles.upgradeBadgeText}>Get Pro</Text>
+              </Pressable>
             )}
 
             <View style={styles.streakPill}>
@@ -225,6 +246,23 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#A16207',
+  },
+  upgradeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    gap: 4,
+  },
+  upgradeBadgeText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 11,
+    color: '#EA580C',
   },
   guestBadge: {
     flexDirection: 'row',

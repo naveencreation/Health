@@ -17,6 +17,8 @@ import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DailyLog } from '@/types';
 import { calculateStepMetrics } from '@/utils/stepHistoryUtils';
 import { getBeverageConfig } from '@/utils/beverageUtils';
+import { haptics } from '@/utils/haptics';
+import { usePro, ProPaywallModal } from '@/features/subscription';
 
 // Standardized Report Components
 import {
@@ -104,6 +106,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // Active Report Category (defaults to Nutrition)
   const [activeReport, setActiveReport] = useState<ReportCategory>('nutrition');
   const [reportPickerVisible, setReportPickerVisible] = useState(false);
+
+  // Pro Subscription State
+  const { isPro } = usePro();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   // Timeframe and Navigation Offset
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
@@ -629,7 +635,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     }
   };
 
-  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
+  const handleChangeTimeframe = async (newTimeframe: ReportTimeframe) => {
+    if (newTimeframe !== 'weekly' && !isPro) {
+      await haptics.impactLight();
+      setPaywallVisible(true);
+      return;
+    }
+    await haptics.selection();
     if (newTimeframe !== timeframe) {
       setTimeframe(newTimeframe);
       setPeriodOffset(0);
@@ -675,6 +687,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         <View style={styles.timeframeSegmentContainer}>
           {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
             const isActive = timeframe === tab;
+            const isLocked = !isPro && tab !== 'weekly';
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
@@ -685,16 +698,26 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 ]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
-                accessibilityLabel={`${displayLabel} timeframe`}
+                accessibilityLabel={isLocked ? `${displayLabel} timeframe (Calorify Pro required)` : `${displayLabel} timeframe`}
               >
-                <Text
-                  style={[
-                    styles.timeframeTabText,
-                    isActive && styles.timeframeTabTextActive,
-                  ]}
-                >
-                  {displayLabel}
-                </Text>
+                <View style={styles.tabContentRow}>
+                  <Text
+                    style={[
+                      styles.timeframeTabText,
+                      isActive && styles.timeframeTabTextActive,
+                    ]}
+                  >
+                    {displayLabel}
+                  </Text>
+                  {isLocked && (
+                    <Ionicons
+                      name="lock-closed"
+                      size={10}
+                      color="#94A3B8"
+                      style={{ marginLeft: 3 }}
+                    />
+                  )}
+                </View>
               </Pressable>
             );
           })}
@@ -855,6 +878,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         onSelectReport={setActiveReport}
         onClose={() => setReportPickerVisible(false)}
       />
+
+      {/* 5. Pro Paywall for Deep Trends */}
+      <ProPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+        highlightFeature="Deep Monthly & Annual Trends"
+      />
     </View>
   );
 };
@@ -958,6 +988,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 8,
     borderCurve: 'continuous',
+  },
+  tabContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',

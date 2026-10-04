@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 
+import { haptics } from '@/utils/haptics';
+
 export type TabType = 'today' | 'tracker' | 'analytics' | 'profile';
 
 interface BottomNavBarProps {
@@ -21,12 +23,22 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 6);
 
+  const handleTabPress = (tab: TabType) => {
+    haptics.selection().catch(() => {});
+    onTabChange(tab);
+  };
+
+  const handleCameraPress = () => {
+    haptics.impactMedium().catch(() => {});
+    if (onOpenFoodVision) onOpenFoodVision();
+  };
+
   return (
     <View style={[styles.barContainer, { paddingBottom: bottomPadding, height: 56 + bottomPadding }]}>
       {/* Tab 1: Today */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-        onPress={() => onTabChange('today')}
+        onPress={() => handleTabPress('today')}
         accessibilityRole="tab"
         accessibilityLabel="Today"
         accessibilityState={{ selected: activeTab === 'today' }}
@@ -44,7 +56,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
       {/* Tab 2: Health Trackers & Biometrics (pulse-outline) */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-        onPress={() => onTabChange('tracker')}
+        onPress={() => handleTabPress('tracker')}
         accessibilityRole="tab"
         accessibilityLabel="Health Trackers and Biometrics"
         accessibilityState={{ selected: activeTab === 'tracker' }}
@@ -63,7 +75,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
       <View style={styles.centerFabAnchor}>
         <Pressable
           style={({ pressed }) => [styles.centerFab, pressed ? styles.fabPressed : null]}
-          onPress={onOpenFoodVision}
+          onPress={handleCameraPress}
           accessibilityRole="button"
           accessibilityLabel="Snap and analyze meal with Ria AI"
         >
@@ -74,7 +86,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
       {/* Tab 3: Analytics */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-        onPress={() => onTabChange('analytics')}
+        onPress={() => handleTabPress('analytics')}
         accessibilityRole="tab"
         accessibilityLabel="Analytics and Trends"
         accessibilityState={{ selected: activeTab === 'analytics' }}
@@ -92,7 +104,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
       {/* Tab 4: User Profile */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-        onPress={() => onTabChange('profile')}
+        onPress={() => handleTabPress('profile')}
         accessibilityRole="tab"
         accessibilityLabel="Profile and Goals"
         accessibilityState={{ selected: activeTab === 'profile' }}

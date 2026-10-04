@@ -16,7 +16,10 @@ import { useAuth, useGoals } from '@/context/HealthContext';
 import { AIService } from '@/services/ai';
 import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
-import { ConfirmationModal } from '@/components';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
+import { NotificationService } from '@/services/notifications/notificationService';
+import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
+import { usePro, ProPaywallModal } from '@/features/subscription';
 
 const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -46,6 +49,10 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const [aiConnected, setAiConnected] = useState(false);
   const [maskedApiKey, setMaskedApiKey] = useState('');
 
+  // Pro Subscription State
+  const { isPro, activePlanId } = usePro();
+  const [paywallVisible, setPaywallVisible] = useState(false);
+
   const refreshAIStatus = async () => {
     const configured = await AIService.isKeyConfigured();
     setAiConnected(configured);
@@ -73,16 +80,43 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const handleToggleWater = (val: boolean) => {
     setWaterReminder(val);
     updateGoals({ waterReminder: val });
+    NotificationService.updateSettings({ waterReminder: val })
+      .then((settings) =>
+        NotificationScheduler.syncSchedules({
+          settings,
+          streakDays: userGoals.streakDays || 0,
+          hasLoggedMealsToday: false,
+        })
+      )
+      .catch(() => {});
   };
 
   const handleToggleMeal = (val: boolean) => {
     setMealReminder(val);
     updateGoals({ mealReminder: val });
+    NotificationService.updateSettings({ mealReminder: val })
+      .then((settings) =>
+        NotificationScheduler.syncSchedules({
+          settings,
+          streakDays: userGoals.streakDays || 0,
+          hasLoggedMealsToday: false,
+        })
+      )
+      .catch(() => {});
   };
 
   const handleToggleStep = (val: boolean) => {
     setStepReminder(val);
     updateGoals({ stepReminder: val });
+    NotificationService.updateSettings({ stepReminder: val })
+      .then((settings) =>
+        NotificationScheduler.syncSchedules({
+          settings,
+          streakDays: userGoals.streakDays || 0,
+          hasLoggedMealsToday: false,
+        })
+      )
+      .catch(() => {});
   };
 
   const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null);
@@ -300,6 +334,37 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           </Pressable>
         </View>
 
+        {/* 2.5. Calorify Pro Membership */}
+        <Text style={styles.sectionHeader}>Calorify Pro</Text>
+        <View style={styles.card}>
+          <View style={styles.accountRow}>
+            <View style={[styles.switchIconBox, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="star" size={18} color="#D97706" />
+            </View>
+            <View style={styles.flex1}>
+              <Text style={styles.accountLabel}>Membership Status</Text>
+              <Text style={styles.accountValue}>
+                {isPro
+                  ? `Calorify Pro (${activePlanId === 'pro_annual' ? 'Annual VIP' : activePlanId === 'pro_lifetime' ? 'Lifetime' : 'Monthly'})`
+                  : 'Free Tier (Standard)'}
+              </Text>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.proManageBtn,
+                pressed ? styles.pressedSubtle : null,
+              ]}
+              onPress={() => setPaywallVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel={isPro ? 'Manage Pro Subscription' : 'Upgrade to Calorify Pro'}
+            >
+              <Text style={styles.proManageBtnText}>
+                {isPro ? 'Manage' : 'Upgrade'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
         {/* 3. Notification Reminders */}
         <Text style={styles.sectionHeader}>Reminders & Alerts</Text>
         <View style={styles.card}>
@@ -455,6 +520,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         }}
       />
 
+      <ProPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
+
       <ConfirmationModal
         visible={confirmAction === 'logout'}
         title="Sign Out of Calori?"
@@ -581,6 +651,20 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.06)',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  proManageBtn: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  proManageBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    color: '#D97706',
   },
   personalityCard: {
     flexDirection: 'row',

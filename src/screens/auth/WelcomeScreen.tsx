@@ -25,6 +25,9 @@ import { WeightSelectionScreen } from '../onboarding/WeightSelectionScreen';
 import { HeightSelectionScreen, HeightUnit } from '../onboarding/HeightSelectionScreen';
 import { GoalSelectionScreen, FitnessGoal } from '../onboarding/GoalSelectionScreen';
 import { GenderSelectionScreen, GenderType } from '../onboarding/GenderSelectionScreen';
+import * as ImagePicker from 'expo-image-picker';
+import { PlanCalculationStep, PermissionPrimerStep, calculateHealthPlan } from '@/features/onboarding';
+import { requestStepsPermission } from '@/features/health/healthPermissions';
 
 type AuthScreenMode =
   | 'welcome'
@@ -35,7 +38,9 @@ type AuthScreenMode =
   | 'weight'
   | 'height'
   | 'goal'
-  | 'gender';
+  | 'gender'
+  | 'plan'
+  | 'permissions';
 
 interface WelcomeScreenProps {
   onLoginSuccess?: () => void;
@@ -254,10 +259,52 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           onBack={popMode}
           onContinue={(gender) => {
             setBiometrics((prev) => ({ ...prev, gender }));
-            pushMode('signup');
+            pushMode('plan');
           }}
           onSkip={() => pushMode('signup')}
           onSignIn={() => pushMode('signin')}
+        />
+      );
+    }
+
+    // 9. Onboarding Step 6: Personalized Plan Blueprint
+    if (mode === 'plan') {
+      const calculatedPlan = calculateHealthPlan({
+        age: biometrics.age,
+        weightKg: biometrics.weight,
+        heightCm: biometrics.height,
+        gender: biometrics.gender === 'female' ? 'female' : biometrics.gender === 'male' ? 'male' : 'other',
+        goal: biometrics.goal === 'lose' ? 'lose_weight' : biometrics.goal === 'gain' ? 'gain_muscle' : 'maintain',
+      });
+
+      return (
+        <PlanCalculationStep
+          plan={calculatedPlan}
+          onBack={popMode}
+          stepIndicator="Step 6 of 7"
+          onConfirm={() => pushMode('permissions')}
+        />
+      );
+    }
+
+    // 10. Onboarding Step 7: Permission Primer
+    if (mode === 'permissions') {
+      const handleEnablePermissions = async () => {
+        try {
+          await ImagePicker.requestCameraPermissionsAsync();
+        } catch {}
+        try {
+          if (Platform.OS === 'android') {
+            await requestStepsPermission();
+          }
+        } catch {}
+        pushMode('signup');
+      };
+
+      return (
+        <PermissionPrimerStep
+          onEnablePermissions={handleEnablePermissions}
+          onSkip={() => pushMode('signup')}
         />
       );
     }

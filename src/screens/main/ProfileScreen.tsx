@@ -22,19 +22,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals } from '@/context/HealthContext';
+import { ProfileHeaderCard } from '@/components/profile/ProfileHeaderCard';
+import { ProfileQuickNavGrid } from '@/components/profile/ProfileQuickNavGrid';
+import { ProfileMetricInspector } from '@/components/profile/ProfileMetricInspector';
+import { AvatarPickerModal } from '@/components/modals/AvatarPickerModal';
+
 import {
-  ProfileHeaderCard,
-  ProfileQuickNavGrid,
-  ProfileMetricInspector,
-  AvatarPickerModal,
-} from '@/components';
-import {
-  AwardsScreen,
   MetabolicSummaryScreen,
   PreferencesScreen,
   GoalsScreen,
 } from '@/screens/profile';
+import { AchievementCenterScreen } from '@/features/gamification';
+import { usePro, ProMembershipCard, ProPaywallModal } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
@@ -111,11 +112,13 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
 
   const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
+  const { isPro } = usePro();
 
   // Navigation Sub-View Stack ('awards' | 'summary' | 'preferences' | 'goals')
   const [navStack, setNavStack] = useState<Exclude<ProfileSubView, 'main'>[]>([]);
   const [closingView, setClosingView] = useState<Exclude<ProfileSubView, 'main'> | null>(null);
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const handleOpenSubView = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
     if (closingView) return;
@@ -165,7 +168,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const renderSubScreenContent = (view: Exclude<ProfileSubView, 'main'>) => {
     switch (view) {
       case 'awards':
-        return <AwardsScreen onBack={handleBack} />;
+        return <AchievementCenterScreen onBack={handleBack} />;
       case 'summary':
         return (
           <MetabolicSummaryScreen
@@ -254,6 +257,14 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           onOpenSettings={() => handleOpenSubView('preferences')}
           streakDays={streakDays}
           showNav={false}
+          isPro={isPro}
+          onPressPro={() => setPaywallVisible(true)}
+        />
+
+        {/* 1.5. Pro Membership or Upgrade Banner Card */}
+        <ProMembershipCard
+          onUpgradePress={() => setPaywallVisible(true)}
+          onManagePress={() => setPaywallVisible(true)}
         />
 
         {/* 2. 2×2 Quick Navigation Matrix */}
@@ -291,6 +302,12 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
         onClose={() => setAvatarPickerVisible(false)}
         onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
+      />
+
+      {/* Pro Paywall Modal */}
+      <ProPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
       />
 
       {/* Full-Page Native Stack Sub-Screens (Awards, Summary, Preferences, Goals) */}
