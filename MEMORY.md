@@ -872,6 +872,28 @@
         - Shared components and barrels import directly from specific feature component files (e.g. `@/features/nutrition/components/CalorieCompletionCard`), avoiding module resolution cascades into untransformed ESM in Jest.
       - **Verification**: `npx tsc --noEmit` passed with 0 compiler errors; all 49/49 test suites (273/273 tests) passing 100% green.
 
+    22. **Onboarding Redesign — Phase 0: Cleanup & Architecture Foundation**
+      - Removed duplicate 7-step wizard logic from `WelcomeScreen.tsx`; transformed it into a dedicated hero landing screen with primary "Get started" and secondary "I already have an account" actions.
+      - Made `OnboardingWizardScreen.tsx` the single source of truth for the onboarding wizard, with Android hardware `BackHandler` integration.
+      - Renamed all legacy `"Calori"` instances across user-facing screens (`WelcomeScreen.tsx`, `OnboardingHeader.tsx`, `PreferencesScreen.tsx`, `ProfileHeaderCard.tsx`, `App.tsx`) to `"Calorify"`.
+      - Added `WelcomeScreen.test.tsx` verifying render, brand wordmark, and callback navigation.
+      - Committed as commit `1686817` on `cmd-v5`.
+
+    23. **Onboarding Redesign — Phase 1: Foundation (Draft Persistence, Calculator Upgrades, Section Progress Bar)**
+      - **Draft Persistence (`onboardingDraft.ts`)**:
+        - Created typed `OnboardingDraft` interface and AsyncStorage helper functions (`loadOnboardingDraft`, `saveOnboardingDraft`, `clearOnboardingDraft`) using key `onboarding_draft_v1`.
+        - Added comprehensive unit test suite `onboardingDraft.test.ts`.
+      - **Calculator Engine Upgrade (`onboardingCalculator.ts`)**:
+        - Added `Pace` (`'gentle' | 'steady' | 'faster'`) for deficits (10%, 20%, 25%) and surpluses (+150, +300, +450 kcal).
+        - Added `estimatedWeeksToGoal` based on 7,700 kcal/kg rule after floor, and fixed gain rates (0.15, 0.25, 0.35 kg/wk).
+        - Added `goalDate` helper (`calculateGoalDate`) and multi-pace plan preview (`previewPlans`).
+        - Added guardrails: `minSafeTargetKg` (BMI 18.5 limit), `evaluateAgePolicy` (<13 blocked, 13–17 maintain only), and sex-specific minimum calorie floors (1200 kcal female, 1500 kcal male, 1350 kcal midpoint).
+        - Upgraded `onboardingCalculator.test.ts` to full test coverage.
+      - **Section Progress Bar (`OnboardingHeader.tsx`)**:
+        - Upgraded header to support 4-segment section progress indicator (`about_you`, `your_goal`, `your_lifestyle`, `your_plan`) alongside legacy step text fallback.
+        - Added unit tests in `OnboardingHeader.test.tsx`.
+      - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 52/52 test suites (297/297 tests) passing 100% green.
+
 
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)

@@ -1,15 +1,45 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 
-interface OnboardingHeaderProps {
+export type OnboardingSectionKey = 'about_you' | 'your_goal' | 'your_lifestyle' | 'your_plan';
+
+export interface OnboardingSectionInfo {
+  key: OnboardingSectionKey;
+  label: string;
+}
+
+export const ONBOARDING_SECTIONS: OnboardingSectionInfo[] = [
+  { key: 'about_you', label: 'About you' },
+  { key: 'your_goal', label: 'Your goal' },
+  { key: 'your_lifestyle', label: 'Your lifestyle' },
+  { key: 'your_plan', label: 'Your plan' },
+];
+
+export interface OnboardingHeaderProps {
   onBack?: () => void;
   stepText?: string;
   rightElement?: React.ReactNode;
   backAccessibilityLabel?: string;
   testID?: string;
+  /**
+   * 0-indexed section index (0: About you, 1: Your goal, 2: Your lifestyle, 3: Your plan)
+   */
+  sectionIndex?: number;
+  /**
+   * Total number of sections (defaults to 4)
+   */
+  totalSections?: number;
+  /**
+   * Optional fractional progress within the active section (0.0 to 1.0)
+   */
+  sectionProgress?: number;
+  /**
+   * Whether to display the section progress bar (defaults to true if sectionIndex is provided)
+   */
+  showProgressBar?: boolean;
 }
 
 const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
@@ -20,49 +50,106 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
   rightElement,
   backAccessibilityLabel = 'Go back',
   testID = 'onboarding-header',
+  sectionIndex,
+  totalSections = 4,
+  sectionProgress,
+  showProgressBar = sectionIndex !== undefined,
 }) => {
-  return (
-    <View style={styles.headerBar} testID={testID}>
-      {/* Left: Back Button */}
-      <View style={styles.leftContainer}>
-        {onBack ? (
-          <Pressable
-            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
-            onPress={onBack}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel={backAccessibilityLabel}
-          >
-            <Ionicons name="arrow-back" size={20} color="#1C274C" />
-          </Pressable>
-        ) : null}
-      </View>
+  const activeSection =
+    sectionIndex !== undefined && sectionIndex >= 0 && sectionIndex < ONBOARDING_SECTIONS.length
+      ? ONBOARDING_SECTIONS[sectionIndex]
+      : undefined;
 
-      {/* Center: Official Calorify Brand Logo with Flame Badge & Typography (Dead-Centered) */}
-      <View style={styles.centerContainer} pointerEvents="box-none">
-        <View style={styles.logoRow}>
-          <View style={styles.logoIconBadge}>
-            <Ionicons name="flame" size={17} color="#FFFFFF" />
+  return (
+    <View style={styles.wrapper} testID={testID}>
+      <View style={styles.headerBar}>
+        {/* Left: Back Button */}
+        <View style={styles.leftContainer}>
+          {onBack ? (
+            <Pressable
+              style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
+              onPress={onBack}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={backAccessibilityLabel}
+              testID={`${testID}-back`}
+            >
+              <Ionicons name="arrow-back" size={20} color="#1C274C" />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* Center: Official Calorify Brand Logo with Flame Badge & Typography (Dead-Centered) */}
+        <View style={styles.centerContainer} pointerEvents="box-none">
+          <View style={styles.logoRow}>
+            <View style={styles.logoIconBadge}>
+              <Ionicons name="flame" size={17} color="#FFFFFF" />
+            </View>
+            <Text style={styles.logoText}>Calorify</Text>
           </View>
-          <Text style={styles.logoText}>Calorify</Text>
+        </View>
+
+        {/* Right: Custom Right Element or Legacy Step Indicator */}
+        <View style={styles.rightContainer}>
+          {rightElement ? (
+            rightElement
+          ) : stepText && !showProgressBar ? (
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepIndicatorText}>{stepText}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
-      {/* Right: Step Indicator or Custom Right Element */}
-      <View style={styles.rightContainer}>
-        {stepText ? (
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepIndicatorText}>{stepText}</Text>
+      {/* Section Progress Bar */}
+      {showProgressBar && sectionIndex !== undefined ? (
+        <View
+          style={styles.progressContainer}
+          accessibilityRole="progressbar"
+          accessibilityLabel={
+            activeSection
+              ? `Section ${sectionIndex + 1} of ${totalSections}: ${activeSection.label}`
+              : `Section ${sectionIndex + 1} of ${totalSections}`
+          }
+          testID={`${testID}-progress`}
+        >
+          <View style={styles.segmentTrackRow}>
+            {Array.from({ length: totalSections }).map((_, index) => {
+              const isCompleted = index < sectionIndex;
+              const isActive = index === sectionIndex;
+              const progressPct = isCompleted
+                ? '100%'
+                : isActive
+                  ? `${Math.max(15, Math.min(100, Math.round((sectionProgress ?? 1) * 100)))}%`
+                  : '0%';
+
+              return (
+                <View
+                  key={`progress-segment-${index}`}
+                  style={styles.segmentBackground}
+                  testID={`${testID}-segment-${index}`}
+                >
+                  <View
+                    style={[
+                      styles.segmentFill,
+                      { width: progressPct as any },
+                    ]}
+                  />
+                </View>
+              );
+            })}
           </View>
-        ) : (
-          (rightElement ?? null)
-        )}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: '100%',
+    zIndex: 10,
+  },
   headerBar: {
     height: 48,
     flexDirection: 'row',
@@ -71,7 +158,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     position: 'relative',
     width: '100%',
-    zIndex: 10,
   },
   leftContainer: {
     minWidth: 44,
@@ -144,5 +230,29 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#64748B',
+  },
+  progressContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 8,
+    width: '100%',
+  },
+  segmentTrackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    width: '100%',
+  },
+  segmentBackground: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  segmentFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
   },
 });

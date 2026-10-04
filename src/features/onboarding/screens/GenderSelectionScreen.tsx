@@ -6,7 +6,8 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { OnboardingHeader } from '../components/OnboardingHeader';
 
-export type GenderType = 'female' | 'male' | 'other';
+import { GenderType } from '../services/onboardingCalculator';
+export type { GenderType };
 
 interface GenderSelectionScreenProps {
   onBack?: () => void;

@@ -1,5 +1,7 @@
-export type GenderType = 'male' | 'female' | 'other';
+export type GenderType = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+export type Sex = 'female' | 'male' | 'prefer_not_to_say';
 export type GoalType = 'lose_weight' | 'maintain' | 'gain_muscle';
+export type Pace = 'gentle' | 'steady' | 'faster';
 export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
 
 export interface UserBiometricsInput {
@@ -10,6 +12,7 @@ export interface UserBiometricsInput {
   targetWeightKg?: number;
   goal: GoalType;
   activityLevel?: ActivityLevel;
+  pace?: Pace;
 }
 
 export interface CalculatedHealthPlan {
@@ -23,19 +26,95 @@ export interface CalculatedHealthPlan {
   targetWaterMl: number;
   stepGoal: number;
   estimatedWeeksToGoal?: number;
+  goalDate?: string;
+  pace?: Pace;
+  isAtSafeFloor?: boolean;
+}
+
+export interface AgePolicyResult {
+  allowed: boolean;
+  forceMaintain: boolean;
+  message?: string;
+}
+
+/**
+ * Calculates the minimum safe target weight (kg) at BMI 18.5 for a given height.
+ */
+export function minSafeTargetKg(heightCm: number): number {
+  const heightM = Math.max(1, heightCm) / 100;
+  const minKg = 18.5 * heightM * heightM;
+  return Math.round(minKg * 10) / 10;
+}
+
+/**
+ * Evaluates age policy:
+ * - Under 13: block onboarding with a friendly message.
+ * - 13 to 17: force goal to 'maintain' (skip weight-loss deficit).
+ * - 18+: standard personalized calculations.
+ */
+export function evaluateAgePolicy(age: number): AgePolicyResult {
+  if (age < 13) {
+    return {
+      allowed: false,
+      forceMaintain: false,
+      message: 'Calorify is designed for users aged 13 and older.',
+    };
+  }
+  if (age >= 13 && age <= 17) {
+    return {
+      allowed: true,
+      forceMaintain: true,
+      message:
+        "Because you're still growing, we'll set a healthy maintenance budget to support your energy and development.",
+    };
+  }
+  return {
+    allowed: true,
+    forceMaintain: false,
+  };
+}
+
+/**
+ * Formats a target date from weeks into human-readable e.g. "14 Dec"
+ */
+export function calculateGoalDate(weeks: number, fromDate: Date = new Date()): string {
+  const target = new Date(fromDate.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+  const day = target.getDate();
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return `${day} ${monthNames[target.getMonth()]}`;
 }
 
 /**
  * Calculates scientifically grounded BMR, TDEE, Calorie Budget, and Macronutrient targets
- * based on the validated Mifflin-St Jeor formula.
+ * based on the validated Mifflin-St Jeor formula and pace parameters.
  */
 export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealthPlan {
-  const age = Math.max(12, Math.min(100, input.age || 25));
+  const agePolicy = evaluateAgePolicy(input.age || 25);
+  const age = Math.max(13, Math.min(100, input.age || 25));
   const weight = Math.max(30, Math.min(300, input.weightKg || 70));
   const height = Math.max(100, Math.min(250, input.heightCm || 170));
   const gender = input.gender || 'male';
-  const goal = input.goal || 'maintain';
+  let goal = input.goal || 'maintain';
+  const pace = input.pace || 'steady';
   const activity = input.activityLevel || 'moderately_active';
+
+  // Age 13-17 safety guardrail: force maintain goal
+  if (agePolicy.forceMaintain && goal === 'lose_weight') {
+    goal = 'maintain';
+  }
 
   // 1. Mifflin-St Jeor BMR Formula
   let bmr = 10 * weight + 6.25 * height - 5 * age;
@@ -44,7 +123,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   } else if (gender === 'male') {
     bmr += 5;
   } else {
-    // Non-binary / other: balanced midpoint
+    // 'prefer_not_to_say' / 'other': midpoint
     bmr -= 78;
   }
   bmr = Math.round(bmr);
@@ -59,16 +138,22 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   const multiplier = activityMultipliers[activity] || 1.55;
   const tdee = Math.round(bmr * multiplier);
 
-  // 3. Goal Adjustment & Safe Caloric Floors
+  // 3. Goal & Pace Adjustment
   let dailyCalorieBudget = tdee;
   if (goal === 'lose_weight') {
-    dailyCalorieBudget = Math.round(tdee * 0.8); // 20% healthy deficit (~500 kcal)
+    // Deficit of TDEE: gentle 10%, steady 20%, faster 25%
+    const deficitRate = pace === 'gentle' ? 0.1 : pace === 'faster' ? 0.25 : 0.2;
+    dailyCalorieBudget = Math.round(tdee * (1 - deficitRate));
   } else if (goal === 'gain_muscle') {
-    dailyCalorieBudget = Math.round(tdee + 300); // Clean lean surplus
+    // Lean surplus: gentle +150, steady +300, faster +450 kcal
+    const surplusKcal = pace === 'gentle' ? 150 : pace === 'faster' ? 450 : 300;
+    dailyCalorieBudget = Math.round(tdee + surplusKcal);
   }
 
-  // Safety floor: 1200 kcal for females, 1500 kcal for males
-  const safeFloor = gender === 'female' ? 1200 : 1500;
+  // Safety floor: 1200 kcal female, 1500 kcal male, 1350 kcal midpoint
+  const safeFloor =
+    gender === 'female' ? 1200 : gender === 'male' ? 1500 : 1350;
+  const isAtSafeFloor = dailyCalorieBudget < safeFloor;
   dailyCalorieBudget = Math.max(safeFloor, dailyCalorieBudget);
 
   // 4. Macronutrient Gram Targets
@@ -101,13 +186,27 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   };
   const stepGoal = stepGoals[activity] || 10000;
 
-  // 7. Estimated Weeks to Goal (if target weight is provided)
+  // 7. Estimated Weeks to Goal & Goal Date
   let estimatedWeeksToGoal: number | undefined;
-  if (input.targetWeightKg && input.targetWeightKg !== weight) {
+  let goalDate: string | undefined;
+
+  if (input.targetWeightKg && input.targetWeightKg !== weight && goal !== 'maintain') {
     const diffKg = Math.abs(weight - input.targetWeightKg);
-    // Healthy sustainable loss: ~0.5kg/week; lean gain: ~0.25kg/week
-    const ratePerWeek = goal === 'lose_weight' ? 0.5 : 0.25;
-    estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / ratePerWeek));
+
+    if (goal === 'lose_weight') {
+      // Lose: diffKg / (((tdee - budget) * 7) / 7700) using the budget after the floor
+      const actualDeficit = tdee - dailyCalorieBudget;
+      if (actualDeficit > 0) {
+        const weeklyLossKg = (actualDeficit * 7) / 7700;
+        estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / weeklyLossKg));
+        goalDate = calculateGoalDate(estimatedWeeksToGoal);
+      }
+    } else if (goal === 'gain_muscle') {
+      // Gain: fixed rates 0.15 / 0.25 / 0.35 kg per week
+      const ratePerWeek = pace === 'gentle' ? 0.15 : pace === 'faster' ? 0.35 : 0.25;
+      estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / ratePerWeek));
+      goalDate = calculateGoalDate(estimatedWeeksToGoal);
+    }
   }
 
   return {
@@ -121,5 +220,22 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
     targetWaterMl,
     stepGoal,
     estimatedWeeksToGoal,
+    goalDate,
+    pace,
+    isAtSafeFloor,
+  };
+}
+
+/**
+ * Returns preview plans for all three paces ('gentle', 'steady', 'faster') in one call.
+ * Used for Screen 9 (Pace selection).
+ */
+export function previewPlans(
+  input: UserBiometricsInput
+): Record<Pace, CalculatedHealthPlan> {
+  return {
+    gentle: calculateHealthPlan({ ...input, pace: 'gentle' }),
+    steady: calculateHealthPlan({ ...input, pace: 'steady' }),
+    faster: calculateHealthPlan({ ...input, pace: 'faster' }),
   };
 }
