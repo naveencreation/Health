@@ -21,33 +21,19 @@ import { SignInScreen } from './SignInScreen';
 import { SignUpScreen } from './SignUpScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
 import {
-  AgeSelectionScreen,
-  WeightSelectionScreen,
-  HeightSelectionScreen,
+  OnboardingWizardScreen,
   HeightUnit,
-  GoalSelectionScreen,
   FitnessGoal,
-  GenderSelectionScreen,
   GenderType,
-  PlanCalculationStep,
-  PermissionPrimerStep,
-  calculateHealthPlan,
 } from '@/features/onboarding';
-import * as ImagePicker from 'expo-image-picker';
-import { requestStepsPermission } from '@/features/health/healthPermissions';
 
-type AuthScreenMode =
+export type AuthScreenMode =
   | 'welcome'
+  | 'onboarding'
   | 'signin'
   | 'signup'
   | 'forgot_password'
-  | 'age'
-  | 'weight'
-  | 'height'
-  | 'goal'
-  | 'gender'
-  | 'plan'
-  | 'permissions';
+  | 'age';
 
 interface WelcomeScreenProps {
   onLoginSuccess?: () => void;
@@ -61,19 +47,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onClose,
 }) => {
   const { loginDemo } = useAuth();
-  const [history, setHistory] = useState<AuthScreenMode[]>([initialMode]);
+  const normalizeMode = (m: AuthScreenMode): AuthScreenMode => (m === 'age' ? 'onboarding' : m);
+  const [history, setHistory] = useState<AuthScreenMode[]>([normalizeMode(initialMode)]);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const mode = history[history.length - 1] || 'welcome';
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
 
   useEffect(() => {
-    setHistory([initialMode]);
+    setHistory([normalizeMode(initialMode)]);
   }, [initialMode]);
 
   const pushMode = (nextMode: AuthScreenMode) => {
+    const resolvedMode = normalizeMode(nextMode);
     setTransitionDirection('forward');
-    setHistory(prev => (prev[prev.length - 1] === nextMode ? prev : [...prev, nextMode]));
+    setHistory(prev => (prev[prev.length - 1] === resolvedMode ? prev : [...prev, resolvedMode]));
   };
 
   const popMode = () => {
@@ -96,6 +84,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   // Android Hardware Back Handler for Auth & Onboarding Flow
   useEffect(() => {
     const onHardwareBackPress = () => {
+      // If onboarding is active, OnboardingWizardScreen's own BackHandler handles internal step history.
+      if (mode === 'onboarding') {
+        return false;
+      }
       if (history.length > 1) {
         popMode();
         return true;
@@ -158,7 +150,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <SignInScreen
           onBack={popMode}
           onSuccess={onLoginSuccess}
-          onSwitchToRegister={() => pushMode('age')}
+          onSwitchToRegister={() => pushMode('onboarding')}
           onForgotPassword={() => pushMode('forgot_password')}
         />
       );
@@ -189,134 +181,54 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       return <ForgotPasswordScreen onBack={popMode} onSuccess={popMode} />;
     }
 
-    // 4. Onboarding Step 1: Age
-    if (mode === 'age') {
+    // 4. Onboarding Wizard (Single Master Orchestrator)
+    if (mode === 'onboarding') {
       return (
-        <AgeSelectionScreen
-          initialAge={biometrics.age}
-          onBack={popMode}
-          onContinue={age => {
-            setBiometrics(prev => ({ ...prev, age }));
-            pushMode('weight');
+        <OnboardingWizardScreen
+          onComplete={data => {
+            setBiometrics({
+              age: data.biometrics.age,
+              weight: data.biometrics.weightKg,
+              weightUnit: data.biometrics.weightUnit || 'kg',
+              height: data.biometrics.heightCm,
+              heightUnit: data.biometrics.heightUnit || 'cm',
+              goal:
+                data.biometrics.goal === 'lose_weight'
+                  ? 'lose'
+                  : data.biometrics.goal === 'gain_muscle'
+                    ? 'gain'
+                    : 'maintain',
+              gender:
+                data.biometrics.gender === 'female'
+                  ? 'female'
+                  : data.biometrics.gender === 'male'
+                    ? 'male'
+                    : 'other',
+            });
+            pushMode('signup');
           }}
-          onSkip={() => pushMode('signup')}
+          onBackToWelcome={popMode}
           onSignIn={() => pushMode('signin')}
-        />
-      );
-    }
-
-    // 5. Onboarding Step 2: Weight
-    if (mode === 'weight') {
-      return (
-        <WeightSelectionScreen
-          initialWeightKg={biometrics.weight}
-          onBack={popMode}
-          onContinue={(weight, weightUnit) => {
-            setBiometrics(prev => ({ ...prev, weight, weightUnit }));
-            pushMode('height');
+          onSkip={() => pushMode('signup')}
+          initialBiometrics={{
+            age: biometrics.age,
+            weightKg: biometrics.weight,
+            weightUnit: biometrics.weightUnit,
+            heightCm: biometrics.height,
+            heightUnit: biometrics.heightUnit,
+            goal:
+              biometrics.goal === 'lose'
+                ? 'lose_weight'
+                : biometrics.goal === 'gain'
+                  ? 'gain_muscle'
+                  : 'maintain',
+            gender:
+              biometrics.gender === 'female'
+                ? 'female'
+                : biometrics.gender === 'male'
+                  ? 'male'
+                  : 'other',
           }}
-          onSkip={() => pushMode('signup')}
-          onSignIn={() => pushMode('signin')}
-        />
-      );
-    }
-
-    // 6. Onboarding Step 3: Height
-    if (mode === 'height') {
-      return (
-        <HeightSelectionScreen
-          initialHeightCm={biometrics.height}
-          onBack={popMode}
-          onContinue={(height, heightUnit) => {
-            setBiometrics(prev => ({ ...prev, height, heightUnit }));
-            pushMode('goal');
-          }}
-          onSkip={() => pushMode('signup')}
-          onSignIn={() => pushMode('signin')}
-        />
-      );
-    }
-
-    // 7. Onboarding Step 4: Goal
-    if (mode === 'goal') {
-      return (
-        <GoalSelectionScreen
-          initialGoal={biometrics.goal}
-          onBack={popMode}
-          onContinue={goal => {
-            setBiometrics(prev => ({ ...prev, goal }));
-            pushMode('gender');
-          }}
-          onSkip={() => pushMode('signup')}
-          onSignIn={() => pushMode('signin')}
-        />
-      );
-    }
-
-    // 8. Onboarding Step 5: Gender
-    if (mode === 'gender') {
-      return (
-        <GenderSelectionScreen
-          initialGender={biometrics.gender}
-          onBack={popMode}
-          onContinue={gender => {
-            setBiometrics(prev => ({ ...prev, gender }));
-            pushMode('plan');
-          }}
-          onSkip={() => pushMode('signup')}
-          onSignIn={() => pushMode('signin')}
-        />
-      );
-    }
-
-    // 9. Onboarding Step 6: Personalized Plan Blueprint
-    if (mode === 'plan') {
-      const calculatedPlan = calculateHealthPlan({
-        age: biometrics.age,
-        weightKg: biometrics.weight,
-        heightCm: biometrics.height,
-        gender:
-          biometrics.gender === 'female'
-            ? 'female'
-            : biometrics.gender === 'male'
-              ? 'male'
-              : 'other',
-        goal:
-          biometrics.goal === 'lose'
-            ? 'lose_weight'
-            : biometrics.goal === 'gain'
-              ? 'gain_muscle'
-              : 'maintain',
-      });
-
-      return (
-        <PlanCalculationStep
-          plan={calculatedPlan}
-          onBack={popMode}
-          stepIndicator="Step 6 of 7"
-          onConfirm={() => pushMode('permissions')}
-        />
-      );
-    }
-
-    // 10. Onboarding Step 7: Permission Primer
-    if (mode === 'permissions') {
-      const handleEnablePermissions = async () => {
-        try {
-          await ImagePicker.requestCameraPermissionsAsync();
-        } catch {}
-        try {
-          if (Platform.OS === 'android') {
-            await requestStepsPermission();
-          }
-        } catch {}
-        pushMode('signup');
-      };
-
-      return (
-        <PermissionPrimerStep
-          onEnablePermissions={handleEnablePermissions}
-          onSkip={() => pushMode('signup')}
         />
       );
     }
@@ -350,7 +262,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <View style={styles.logoIconBadge}>
                   <Ionicons name="flame" size={18} color="#FFFFFF" />
                 </View>
-                <Text style={styles.logoText}>Calori</Text>
+                <Text style={styles.logoText}>Calorify</Text>
               </View>
             </View>
 
@@ -395,10 +307,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   styles.primaryButton,
                   pressed ? styles.pressedButton : null,
                 ]}
-                onPress={() => pushMode('age')}
+                onPress={() => pushMode('onboarding')}
                 testID="btn-welcome-get-started"
                 accessibilityRole="button"
-                accessibilityLabel="Get Started with Calori"
+                accessibilityLabel="Get Started with Calorify"
               >
                 <Text style={styles.primaryButtonText}>Get Started</Text>
               </Pressable>

@@ -706,7 +706,7 @@ function MainApp() {
         {/* In-App Sign Out Confirmation Modal */}
         <ConfirmationModal
           visible={signOutModalVisible}
-          title="Sign Out of Calori?"
+          title="Sign Out of Calorify?"
           message="You will need to sign back in to access your daily meal logs, streaks, and personalized coaching."
           confirmText="Sign Out"
           cancelText="Cancel"

@@ -141,7 +141,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   // Brand-aligned dial stroke color
   const dialStrokeColor = useMemo(() => {
     if (calLeft < 0) return Colors.primaryDark; // Warm supportive deep coral when exceeding budget
-    return Colors.primary; // Signature Calori Coral
+    return Colors.primary; // Signature Calorify Coral
   }, [calLeft]);
 
   // Macro progress ratios (Slide 0)

@@ -286,7 +286,7 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             // @ts-ignore Web wheel event
             onWheel={handleWheel}
           >
-            {/* Stationary Center Pointer Needle in Calori Coral (#F47551) */}
+            {/* Stationary Center Pointer Needle in Calorify Coral (#F47551) */}
             <View style={styles.centerNeedleContainer}>
               <View style={styles.needlePointerTriangle} />
               <View style={styles.centerNeedleLine} />
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 5,
     borderTopWidth: 5,
-    borderLeftColor: '#F47551', // Calori Coral!
+    borderLeftColor: '#F47551', // Calorify Coral!
     borderRightColor: 'transparent',
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   centerNeedleLine: {
     flex: 1,
     height: 2.5,
-    backgroundColor: '#F47551', // Calori Coral!
+    backgroundColor: '#F47551', // Calorify Coral!
     borderRadius: 1,
   },
 
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   tickLineCenter: {
     width: 48,
-    backgroundColor: '#F47551', // Calori Coral!
+    backgroundColor: '#F47551', // Calorify Coral!
     height: 3,
   },
   tickLabel: {
@@ -693,6 +693,6 @@ const styles = StyleSheet.create({
   },
   signInLinkBold: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#F47551', // Calori Coral!
+    color: '#F47551', // Calorify Coral!
   },
 });

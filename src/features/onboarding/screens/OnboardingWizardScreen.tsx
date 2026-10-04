@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { View, StyleSheet, Platform, BackHandler } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { AgeSelectionScreen } from './AgeSelectionScreen';
 import { GenderSelectionScreen } from './GenderSelectionScreen';
@@ -33,7 +33,7 @@ export interface OnboardingWizardScreenProps {
   onBackToWelcome?: () => void;
   onSignIn?: () => void;
   onSkip?: () => void;
-  initialBiometrics?: Partial<UserBiometricsInput>;
+  initialBiometrics?: Partial<UserBiometricsInput & { weightUnit?: 'kg' | 'lbs'; heightUnit?: 'cm' | 'ft' }>;
 }
 
 export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
@@ -49,9 +49,9 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
   const [weightKg, setWeightKg] = useState<number>(initialBiometrics?.weightKg ?? 70);
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(initialBiometrics?.weightUnit ?? 'kg');
   const [heightCm, setHeightCm] = useState<number>(initialBiometrics?.heightCm ?? 175);
-  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
+  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>(initialBiometrics?.heightUnit ?? 'cm');
   const [goal, setGoal] = useState<GoalType>(initialBiometrics?.goal ?? 'maintain');
   const [gender, setGender] = useState<GenderType>(initialBiometrics?.gender ?? 'male');
 
@@ -59,13 +59,22 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     setStepHistory(prev => [...prev, next]);
   };
 
-  const popStep = () => {
+  const popStep = useCallback(() => {
     if (stepHistory.length > 1) {
       setStepHistory(prev => prev.slice(0, -1));
     } else if (onBackToWelcome) {
       onBackToWelcome();
     }
-  };
+  }, [stepHistory.length, onBackToWelcome]);
+
+  useEffect(() => {
+    const onHardwareBack = () => {
+      popStep();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [popStep]);
 
   // Convert UI FitnessGoal ('lose' | 'maintain' | 'gain') to GoalType ('lose_weight' | 'maintain' | 'gain_muscle')
   const mapFitnessGoal = (g: FitnessGoal): GoalType => {

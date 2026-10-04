@@ -38,13 +38,13 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
         ) : null}
       </View>
 
-      {/* Center: Official Calori Brand Logo with Flame Badge & Typography (Dead-Centered) */}
+      {/* Center: Official Calorify Brand Logo with Flame Badge & Typography (Dead-Centered) */}
       <View style={styles.centerContainer} pointerEvents="box-none">
         <View style={styles.logoRow}>
           <View style={styles.logoIconBadge}>
             <Ionicons name="flame" size={17} color="#FFFFFF" />
           </View>
-          <Text style={styles.logoText}>Calori</Text>
+          <Text style={styles.logoText}>Calorify</Text>
         </View>
       </View>
 

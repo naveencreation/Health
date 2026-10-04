@@ -92,7 +92,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
 
         <View style={styles.identityInfo}>
           <Text style={styles.userName} numberOfLines={1}>
-            {name || (isGuest ? 'Guest Explorer' : 'Calori Member')}
+            {name || (isGuest ? 'Guest Explorer' : 'Calorify Member')}
           </Text>
           {email && email !== name ? (
             <Text style={styles.userEmail} numberOfLines={1}>

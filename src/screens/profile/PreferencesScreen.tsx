@@ -470,7 +470,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             </View>
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Cloud Backup</Text>
-              <Text style={styles.accountValue}>Auto-synced with Calori Cloud</Text>
+              <Text style={styles.accountValue}>Auto-synced with Calorify Cloud</Text>
             </View>
             <Ionicons name="checkmark-circle" size={18} color="#059669" />
           </View>
@@ -500,10 +500,10 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 onPress={handleLogoutPress}
                 disabled={isDeleting}
                 accessibilityRole="button"
-                accessibilityLabel="Sign out of Calori"
+                accessibilityLabel="Sign out of Calorify"
               >
                 <Ionicons name="log-out-outline" size={18} color="#DC2626" />
-                <Text style={styles.signOutBtnText}>Sign Out of Calori</Text>
+                <Text style={styles.signOutBtnText}>Sign Out of Calorify</Text>
               </Pressable>
 
               <View style={styles.divider} />
@@ -542,7 +542,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
       <ConfirmationModal
         visible={confirmAction === 'logout'}
-        title="Sign Out of Calori?"
+        title="Sign Out of Calorify?"
         message="Your offline meal logs and streak will remain safe on this device."
         confirmText="Sign Out"
         cancelText="Cancel"
