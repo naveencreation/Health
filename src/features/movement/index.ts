@@ -12,4 +12,6 @@ export * from './components/StepEntryActionPopover';
 export * from './screens/StepTrackerScreen';
 export * from './screens/StepReportScreen';
 
+export * from './hooks/useMovement';
+
 export * from '@/features/health';

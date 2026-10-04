@@ -13,3 +13,5 @@ export * from './screens/LogWeightScreen';
 
 export * from './modals/LogWeightModal';
 export * from './modals/WeightGoalSettingsModal';
+
+export * from './hooks/useWeight';

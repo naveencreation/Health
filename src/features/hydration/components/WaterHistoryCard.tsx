@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useDailyLog } from '@/context/HealthContext';
+import { useHydration } from '../hooks/useHydration';
 import { WaterLogEntry } from '@/types';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -140,11 +140,15 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
   onViewAll,
   style,
 }) => {
-  const { selectedDate, dailyLogs, removeWaterEntry, updateWaterEntry, resetWater, addWater } = useDailyLog();
-
-  const currentLog = dailyLogs[selectedDate];
-  const waterEntries = currentLog?.waterEntries ?? [];
-  const totalWaterMl = currentLog?.waterMl ?? 0;
+  const {
+    date,
+    currentWaterMl: totalWaterMl,
+    waterEntries,
+    removeWaterEntry,
+    updateWaterEntry,
+    resetWater,
+    addWater,
+  } = useHydration();
 
   // Synthesize entry if waterMl > 0 but entries array is empty or partial (guarantees entries match total)
   const displayEntries: WaterLogEntry[] = React.useMemo(() => {
@@ -158,7 +162,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
             id: 'legacy_balance',
             amountMl: diff,
             beverageType: 'water',
-            loggedAt: currentLog?.date ? `${currentLog.date}T08:00:00.000Z` : new Date().toISOString(),
+            loggedAt: date ? `${date}T08:00:00.000Z` : new Date().toISOString(),
           },
         ];
       }
@@ -170,12 +174,12 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
           id: 'synthetic_initial',
           amountMl: totalWaterMl,
           beverageType: 'water',
-          loggedAt: currentLog?.date ? `${currentLog.date}T08:00:00.000Z` : new Date().toISOString(),
+          loggedAt: date ? `${date}T08:00:00.000Z` : new Date().toISOString(),
         },
       ];
     }
     return [];
-  }, [waterEntries, totalWaterMl, currentLog?.date]);
+  }, [waterEntries, totalWaterMl, date]);
 
   // View All Modal state
   const [isViewAllModalOpen, setIsViewAllModalOpen] = useState(false);
@@ -221,7 +225,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
       updateWaterEntry(
         editingEntry.id,
         { amountMl: editVolume, beverageType: editBeverage },
-        selectedDate
+        date
       );
     }
     setEditingEntry(null);
@@ -241,7 +245,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
     } else if (entryToDelete.id === 'legacy_balance') {
       addWater(-entryToDelete.amountMl);
     } else {
-      removeWaterEntry(entryToDelete.id, selectedDate);
+      removeWaterEntry(entryToDelete.id, date);
     }
     setEntryToDelete(null);
   };

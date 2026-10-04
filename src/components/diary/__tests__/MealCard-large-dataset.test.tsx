@@ -25,6 +25,10 @@ jest.mock('@/context/HealthContext', () => ({
     removeMealItem: jest.fn(),
     updateMealQuantity: jest.fn(),
   }),
+  useGoals: () => ({
+    userGoals: { dailyCalorieBudget: 2000 },
+    updateGoals: jest.fn(),
+  }),
 }));
 
 const items: LoggedMealItem[] = Array.from({ length: 100 }, (_, index) => ({

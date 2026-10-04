@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useMovement } from '../hooks/useMovement';
 import { WorkoutActivity } from '@/types';
 
 // Curated quick workout presets with calorie-burn-per-minute (cpm)
@@ -89,8 +89,20 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
   style,
   testID = 'daily-habits-card',
 }) => {
-  const { currentLog, addSteps, addWorkout, removeWorkout } = useDailyLog();
-  const { userGoals } = useGoals();
+  const {
+    steps,
+    stepGoal,
+    barPercent,
+    actualStepPercent,
+    isGoalReached,
+    distanceKm,
+    stepBurnKcal,
+    workoutBurnKcal,
+    activities,
+    addSteps,
+    addWorkout,
+    removeWorkout,
+  } = useMovement();
 
   const [workoutModalVisible, setWorkoutModalVisible] = useState(false);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
@@ -98,20 +110,6 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
   const [customDuration, setCustomDuration] = useState('30');
   const [customCalories, setCustomCalories] = useState('150');
   const [activePresetCpm, setActivePresetCpm] = useState<number>(5.0);
-
-  // Movement & Step calculations
-  const steps = currentLog?.steps || 0;
-  const stepGoal = userGoals?.stepGoal || 10000;
-  const actualStepPercent = stepGoal > 0 ? Math.round((steps / stepGoal) * 100) : 0;
-  const barPercent = Math.min(100, Math.max(0, actualStepPercent));
-  const stepBurnKcal = Math.round(steps * 0.04);
-  const distanceKm = (steps * 0.00076).toFixed(1);
-  const isGoalReached = steps >= stepGoal && stepGoal > 0;
-
-  const workoutBurnKcal = useMemo(() => {
-    if (!Array.isArray(currentLog?.activities)) return 0;
-    return currentLog.activities.reduce((sum, act) => sum + (act.caloriesBurned || 0), 0);
-  }, [currentLog?.activities]);
 
   // Smooth Reanimated fill for progress bar
   const progressSV = useSharedValue(0);
@@ -203,7 +201,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
     removeWorkout(id);
   }, [removeWorkout]);
 
-  const hasActivities = Array.isArray(currentLog?.activities) && currentLog.activities.length > 0;
+  const hasActivities = activities.length > 0;
 
   return (
     <View style={[styles.card, style]} testID={testID}>
@@ -314,14 +312,14 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
         <View style={styles.activitiesSection}>
           <View style={styles.activitiesHeaderRow}>
             <Text style={styles.activitiesSectionTitle}>
-              Today's Workouts ({currentLog.activities.length})
+              Today's Workouts ({activities.length})
             </Text>
             <Text style={styles.activitiesTotalBurn}>
               +{workoutBurnKcal} kcal total
             </Text>
           </View>
 
-          {currentLog.activities.map((act) => {
+          {activities.map((act) => {
             const timeStr = formatActivityTime(act.loggedAt);
             return (
               <View key={act.id} style={styles.activityChip}>

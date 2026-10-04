@@ -2,8 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MealCard } from './MealCard';
 import { MealType } from '@/types';
-import { useDailyLog } from '@/context/HealthContext';
-import { useGoals } from '@/context/HealthContext';
+import { useNutrition } from '../hooks/useNutrition';
 import { Fonts } from '@/theme/typography';
 
 const MEAL_ICONS = {
@@ -19,10 +18,7 @@ interface MealSectionProps {
 }
 
 const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = 'Daily Meals' }) => {
-  const { mealsByType } = useDailyLog();
-  const { userGoals } = useGoals();
-
-  const budget = userGoals.dailyCalorieBudget;
+  const { mealsByType, calorieBudget: budget } = useNutrition();
   const recommended = {
     breakfast: Math.round(budget * 0.25),
     lunch: Math.round(budget * 0.35),

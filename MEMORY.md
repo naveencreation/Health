@@ -843,6 +843,15 @@
       - **Nutrition Domain (`src/features/nutrition/`)**: Consolidated `HeroCalorieCard.tsx`, `MealSection.tsx`, `MealCard.tsx`, report cards, and food modals (`FoodLogModal.tsx`, `FoodVisionModal.tsx`).
       - **Zero Regressions & Backward Compatibility**: Clean barrel proxies retained in `src/components/` and `src/screens/` ensuring 0 broken consumer imports.
       - **Verification**: `npx tsc --noEmit` passed with 0 errors; 45/45 test suites passed (259/259 tests green).
+
+    - **Path B: Domain Data Encapsulation (Clean Architecture)**:
+      - **Hydration Domain Hook (`useHydration`)**: Encapsulates water intake, remaining target volume, intake percentage, container size, entries collection, and add/update/remove/reset/goal actions. Refactored `WaterTracker.tsx`, `HeroDropletCard.tsx`, and `WaterHistoryCard.tsx`.
+      - **Movement Domain Hook (`useMovement`)**: Encapsulates steps, goals, clamped bar percentage, true percentage, distance in km, active burn, brisk walking minutes, workouts burn, total burn, workout activity logging, and step batch updates. Refactored `MovementTrackerCard.tsx` and `HeroStepCard.tsx`.
+      - **Weight Domain Hook (`useWeight`)**: Encapsulates current/start/target weight resolution, unit conversion (`kg` / `lbs`), display strings, progress toward target percentage, multi-entry and prior-day delta tracking, BMI calculation, and WHO classification. Refactored `WeightTrackerCard.tsx` and `TodayBMICard.tsx`.
+      - **Pure Calculator Extraction (`bmiCalculator.ts`)**: Decoupled `getTodayBMICategory` and `BMI_SPECTRUM_CATEGORIES` into a pure utility under `src/features/weight/utils/`, preventing UI component/asset imports inside domain hooks and unit test harnesses.
+      - **Nutrition Domain Hook (`useNutrition`)**: Encapsulates calorie budget, consumed, burned, remaining allowance, net calories, over-budget indicators, full macro distribution (carbs, protein, fat, fiber with targets and percentages), and meal items list with mutation actions. Refactored `MealSection.tsx` and `MealCard.tsx`.
+      - **Unit Test Coverage**: Created dedicated test suites for all 4 domain hooks (`useHydration.test.ts`, `useMovement.test.ts`, `useWeight.test.ts`, `useNutrition.test.ts`).
+      - **Verification**: `npx tsc --noEmit` passed with 0 compiler errors; all 49/49 test suites (273/273 tests) passing 100% green.
     - **Verification**:
       - `npx tsc --noEmit` passed with 0 errors across entire workspace.
       - 259/259 tests passing across 45/45 test suites (100% green).

@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useMovement } from '../hooks/useMovement';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { StepGaugeVisualizer, StepGaugeVisualizerRef } from './StepGaugeVisualizer';
@@ -34,8 +34,13 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
     },
     ref
   ) => {
-    const { dailyLogs, selectedDate } = useDailyLog();
-    const { userGoals } = useGoals();
+    const {
+      steps: hookSteps,
+      stepGoal: hookStepGoal,
+      distanceKm: hookDistanceKm,
+      stepBurnKcal: hookStepBurnKcal,
+      activeMinutes: hookActiveMinutes,
+    } = useMovement();
 
     const gaugeRef = useRef<StepGaugeVisualizerRef>(null);
 
@@ -44,18 +49,16 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
     }));
 
     // Step count resolution
-    const logSteps = dailyLogs[selectedDate]?.steps ?? 0;
-    const currentSteps = typeof propSteps === 'number' ? propSteps : logSteps;
-    const goalSteps = typeof propGoal === 'number' ? propGoal : (userGoals.stepGoal || 10000);
+    const currentSteps = typeof propSteps === 'number' ? propSteps : hookSteps;
+    const goalSteps = typeof propGoal === 'number' ? propGoal : hookStepGoal;
 
     const isGoalMet = currentSteps >= goalSteps && goalSteps > 0;
     const percentOfGoal = goalSteps > 0 ? Math.round((currentSteps / goalSteps) * 100) : 0;
 
     // Derived micro-metrics
-    const distanceKm = (currentSteps * 0.00076).toFixed(1);
-    const stepBurnKcal = Math.round(currentSteps * 0.04);
-    // Standard brisk walking pace estimate (~100 steps per minute)
-    const activeMinutes = Math.round(currentSteps / 100);
+    const distanceKm = typeof propSteps === 'number' ? (currentSteps * 0.00076).toFixed(1) : hookDistanceKm;
+    const stepBurnKcal = typeof propSteps === 'number' ? Math.round(currentSteps * 0.04) : hookStepBurnKcal;
+    const activeMinutes = typeof propSteps === 'number' ? Math.round(currentSteps / 100) : hookActiveMinutes;
 
     return (
       <View style={[styles.card, style]}>

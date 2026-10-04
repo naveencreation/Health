@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useHydration } from '../hooks/useHydration';
 import { WaterGaugeVisualizer, WaterGaugeVisualizerRef } from './WaterGaugeVisualizer';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -48,18 +48,17 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
     },
     ref
   ) => {
-    const { dailyLogs, selectedDate } = useDailyLog();
-    const { userGoals } = useGoals();
+    const { currentWaterMl, targetWaterMl, waterEntries } = useHydration();
 
     const currentWater =
       typeof propWater === 'number'
         ? propWater
-        : (dailyLogs[selectedDate]?.waterMl ?? 0);
+        : currentWaterMl;
 
     const goalWater =
       typeof propGoal === 'number'
         ? propGoal
-        : (userGoals.waterGoalMl || 2500);
+        : targetWaterMl;
 
     const isGoalMet = currentWater >= goalWater;
 
@@ -73,15 +72,14 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
 
     // Check if today contains logged entries matching the active beverage
     const hasMatchingBeverage = useMemo(() => {
-      const entries = dailyLogs[selectedDate]?.waterEntries;
-      if (!entries || entries.length === 0) {
+      if (!waterEntries || waterEntries.length === 0) {
         return currentWater > 0;
       }
       const targetType = (beverageType || 'water').toLowerCase();
-      return entries.some(
+      return waterEntries.some(
         (e) => (e.beverageType || 'water').toLowerCase() === targetType && e.amountMl > 0
       );
-    }, [dailyLogs, selectedDate, beverageType, currentWater]);
+    }, [waterEntries, beverageType, currentWater]);
 
     const canDeduct = hasMatchingBeverage && currentWater > 0 && !isFutureDate;
 

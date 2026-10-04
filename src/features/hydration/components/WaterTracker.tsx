@@ -9,8 +9,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DropletVisualizer, DropletVisualizerRef } from './DropletVisualizer';
+import { useHydration } from '../hooks/useHydration';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 
@@ -33,18 +33,17 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
   onPressHeader,
   style,
 }) => {
-  const { selectedDate, dailyLogs, addWater } = useDailyLog();
-  const { userGoals } = useGoals();
+  const { currentWaterMl, targetWaterMl, addWater } = useHydration();
 
   const currentWater =
     typeof initialWater === 'number'
       ? initialWater
-      : (dailyLogs[selectedDate]?.waterMl ?? 0);
+      : currentWaterMl;
 
   const maxWater =
     typeof propMaxWater === 'number'
       ? propMaxWater
-      : (userGoals.waterGoalMl || 2500);
+      : targetWaterMl;
 
   const step = propStep ?? DEFAULT_STEP;
   const dropletRef = useRef<DropletVisualizerRef>(null);

@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { LoggedMealItem, MealType } from '@/types';
-import { useDailyLog } from '@/context/HealthContext';
+import { useNutrition } from '../hooks/useNutrition';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
 
 interface MealCardProps {
@@ -40,7 +40,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   onAddPress,
   isDimmed = false,
 }) => {
-  const { removeMealItem, updateMealQuantity } = useDailyLog();
+  const { removeMealItem, updateMealQuantity } = useNutrition();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
   const expandAnim = useSharedValue(1);

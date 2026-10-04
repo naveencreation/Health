@@ -13,3 +13,4 @@ export * from './screens/WaterReportScreen';
 export * from './modals/CupSizeModal';
 export * from './modals/DailyWaterGoalModal';
 export * from './modals/HydrationSettingsModal';
+export * from './hooks/useHydration';

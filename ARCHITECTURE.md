@@ -102,6 +102,8 @@ src/
 │   │
 │   ├── hydration/                              # [💧 THE HYDRATION TRACKER DOMAIN]
 │   │   ├── index.ts                            # Domain barrel export
+│   │   ├── hooks/
+│   │   │   └── useHydration.ts                 # Domain hook (intake, goals, quick-add, progress)
 │   │   ├── components/
 │   │   │   ├── WaterTracker.tsx                # Dashboard quick-stepper intake card (±100ml / ±250ml)
 │   │   │   ├── DropletVisualizer.tsx           # Liquid wave physics slosh droplet
@@ -120,6 +122,8 @@ src/
 │   │
 │   ├── movement/                               # [👟 THE MOVEMENT & STEPS TRACKER DOMAIN]
 │   │   ├── index.ts                            # Domain barrel export
+│   │   ├── hooks/
+│   │   │   └── useMovement.ts                  # Domain hook (steps, goals, active burn, distance, workouts)
 │   │   ├── components/
 │   │   │   ├── MovementTrackerCard.tsx         # Dashboard steps, active calorie burn & manual workout logger
 │   │   │   ├── HeroStepCard.tsx                # Detail subscreen step summary with km & active duration
@@ -141,6 +145,10 @@ src/
 │   │
 │   ├── weight/                                 # [⚖️ THE BODY & WEIGHT TRACKER DOMAIN]
 │   │   ├── index.ts                            # Domain barrel export
+│   │   ├── hooks/
+│   │   │   └── useWeight.ts                    # Domain hook (current/target weight, delta, BMI calculation)
+│   │   ├── utils/
+│   │   │   └── bmiCalculator.ts                # Pure BMI calculation & WHO categorization engine
 │   │   ├── components/
 │   │   │   ├── WeightTrackerCard.tsx           # Dashboard weigh-in card with goal delta badge
 │   │   │   ├── TodayBMICard.tsx                # WHO Clinical BMI zone card (Underweight, Normal, Overweight)
@@ -159,6 +167,8 @@ src/
 │   │
 │   ├── nutrition/                              # [🥗 THE NUTRITION & CALORIE TRACKER DOMAIN]
 │   │   ├── index.ts                            # Domain barrel export
+│   │   ├── hooks/
+│   │   │   └── useNutrition.ts                 # Domain hook (budget, consumed, burned, macros, meal logs)
 │   │   ├── components/
 │   │   │   ├── HeroCalorieCard.tsx             # Dashboard calorie dial, daily budget & Atwater macro split
 │   │   │   ├── MealSection.tsx                 # Breakfast, Lunch, Dinner, Snack collapsible groups
@@ -254,12 +264,12 @@ src/
 
 Every one of the 4 Health Trackers now resides in its dedicated, cohesive domain package inside `src/features/`:
 
-| Tracker Domain | Package Location | Dashboard Card | Detail Subscreen & History | Analytical Reports | Modals |
-|---|---|---|---|---|---|
-| 💧 **Hydration** | `src/features/hydration/` | `WaterTracker.tsx` | `WaterTrackerScreen.tsx`, `WaterIntakeHistoryScreen.tsx` | `WaterReportScreen.tsx` | `CupSizeModal`, `DailyWaterGoalModal`, `HydrationSettingsModal` |
-| 👟 **Movement** | `src/features/movement/` | `MovementTrackerCard.tsx` | `StepTrackerScreen.tsx`, `HeroStepCard.tsx`, `StepGaugeVisualizer.tsx`, `StepHistoryCard.tsx` | `StepReportScreen.tsx` | `StepHistoryModal`, Health Connect Sync |
-| ⚖️ **Weight & Body** | `src/features/weight/` | `WeightTrackerCard.tsx`, `TodayBMICard.tsx` | `WeightTrackerScreen.tsx`, `WeightHistoryScreen.tsx`, `LogWeightScreen.tsx` | `WeightReportScreen.tsx` | `LogWeightModal`, `WeightGoalSettingsModal` |
-| 🥗 **Nutrition** | `src/features/nutrition/` | `HeroCalorieCard.tsx`, `MealSection.tsx` | `MealCard.tsx` (in TodayScreen) | `CalorieCompletionCard.tsx`, `MacroDistributionCard.tsx` | `FoodLogModal`, `FoodVisionModal` |
+| Tracker Domain | Package Location | Domain Hook | Dashboard Card | Detail Subscreen & History | Analytical Reports | Modals |
+|---|---|---|---|---|---|---|
+| 💧 **Hydration** | `src/features/hydration/` | `useHydration.ts` | `WaterTracker.tsx` | `WaterTrackerScreen.tsx`, `WaterIntakeHistoryScreen.tsx` | `WaterReportScreen.tsx` | `CupSizeModal`, `DailyWaterGoalModal`, `HydrationSettingsModal` |
+| 👟 **Movement** | `src/features/movement/` | `useMovement.ts` | `MovementTrackerCard.tsx` | `StepTrackerScreen.tsx`, `HeroStepCard.tsx`, `StepGaugeVisualizer.tsx`, `StepHistoryCard.tsx` | `StepReportScreen.tsx` | `StepHistoryModal`, Health Connect Sync |
+| ⚖️ **Weight & Body** | `src/features/weight/` | `useWeight.ts` | `WeightTrackerCard.tsx`, `TodayBMICard.tsx` | `WeightTrackerScreen.tsx`, `WeightHistoryScreen.tsx`, `LogWeightScreen.tsx` | `WeightReportScreen.tsx` | `LogWeightModal`, `WeightGoalSettingsModal` |
+| 🥗 **Nutrition** | `src/features/nutrition/` | `useNutrition.ts` | `HeroCalorieCard.tsx`, `MealSection.tsx` | `MealCard.tsx` (in TodayScreen) | `CalorieCompletionCard.tsx`, `MacroDistributionCard.tsx` | `FoodLogModal`, `FoodVisionModal` |
 
 ---
 
@@ -267,4 +277,5 @@ Every one of the 4 Health Trackers now resides in its dedicated, cohesive domain
 
 Every domain move is continuously verified against:
 1. `npx tsc --noEmit` — 0 TypeScript compilation errors.
-2. `npm test -- --watchAll=false` — 45/45 passing test suites (259/259 tests green).
+2. `npm test -- --watchAll=false` — 49/49 passing test suites (273/273 tests green).
+

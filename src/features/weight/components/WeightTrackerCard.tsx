@@ -15,7 +15,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { LogWeightModal } from '@/components/modals/LogWeightModal';
@@ -26,81 +26,29 @@ export interface WeightTrackerCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const toDisplayWeight = (kg: number, unit: string) =>
-  unit === 'kg' ? kg : Math.round(kg * 2.20462 * 10) / 10;
-
 const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
   onOpenFullTracker,
   onWeightLogged,
   style,
 }) => {
-  const { currentLog, dailyLogs, selectedDate } = useDailyLog();
-  const { userGoals } = useGoals();
+  const {
+    unit,
+    currentWeightKg,
+    displayCurrentWeight: displayCurrent,
+    displayStartWeight: displayStart,
+    displayTargetWeight: displayGoal,
+    displayDelta,
+    isLoss,
+    isGain,
+    progressPercent,
+    deltaKg,
+  } = useWeight();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const unit = userGoals.weightUnit || 'kg';
+  const isZero = deltaKg === 0;
+  const progressPct = progressPercent > 0 ? Math.max(4, progressPercent) : 0;
 
-  // Current weight: check today's logged weight first, then fallback to goal's currentWeightKg, then default 68.0
-  const currentWeightRaw = currentLog?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
-  const currentWeight = Math.round(currentWeightRaw * 10) / 10;
 
-  // Starting weight and goal weight (unified with user goals)
-  const startWeight = userGoals.startWeightKg
-    ? Math.round(userGoals.startWeightKg * 10) / 10
-    : (userGoals.currentWeightKg || 68.0);
-  const goalWeight = userGoals.targetWeightKg
-    ? Math.round(userGoals.targetWeightKg * 10) / 10
-    : 65.0;
-
-  // Convert for display if lbs
-  const displayCurrent = toDisplayWeight(currentWeight, unit).toFixed(1);
-  const displayStart = toDisplayWeight(startWeight, unit).toFixed(1);
-  const displayGoal = toDisplayWeight(goalWeight, unit).toFixed(1);
-
-  // Calculate Delta (vs previous weigh-in entry or vs startWeight)
-  const delta = useMemo(() => {
-    const entries = currentLog?.weightEntries || [];
-    if (entries.length > 1) {
-      const diff = entries[0].weightKg - entries[1].weightKg;
-      return Math.round(diff * 10) / 10;
-    }
-
-    // Look for previous day with weight logged
-    const sortedDates = Object.keys(dailyLogs)
-      .filter((d) => d < selectedDate && dailyLogs[d]?.weightKg)
-      .sort((a, b) => b.localeCompare(a));
-
-    if (sortedDates.length > 0) {
-      const prevDayWeight = dailyLogs[sortedDates[0]].weightKg!;
-      const diff = currentWeight - prevDayWeight;
-      return Math.round(diff * 10) / 10;
-    }
-
-    // Fallback: difference from starting weight
-    const diffFromStart = currentWeight - startWeight;
-    return Math.round(diffFromStart * 10) / 10;
-  }, [currentLog?.weightEntries, dailyLogs, selectedDate, currentWeight, startWeight]);
-
-  const displayDelta = toDisplayWeight(Math.abs(delta), unit).toFixed(1);
-  const isLoss = delta < 0;
-  const isGain = delta > 0;
-  const isZero = delta === 0;
-
-  // Calculate progress toward goal: progress% = |start - current| / |start - goal| * 100
-  const progressPct = useMemo(() => {
-    const totalSpan = Math.abs(startWeight - goalWeight);
-    if (totalSpan === 0) return 100;
-
-    let completed = 0;
-    if (startWeight >= goalWeight) {
-      completed = startWeight - currentWeight;
-    } else {
-      completed = currentWeight - startWeight;
-    }
-
-    const pct = Math.max(0, Math.min(100, (completed / totalSpan) * 100));
-    return pct > 0 ? Math.max(4, pct) : 0;
-  }, [startWeight, goalWeight, currentWeight]);
 
   // Smooth Reanimated fill
   const progressSV = useSharedValue(0);
@@ -217,7 +165,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
       {/* Quick Weigh-In Modal */}
       <LogWeightModal
         visible={modalVisible}
-        initialWeight={currentWeight}
+        initialWeight={currentWeightKg}
         onClose={() => setModalVisible(false)}
         onSave={handleSaveModal}
       />
