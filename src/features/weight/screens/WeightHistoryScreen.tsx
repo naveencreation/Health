@@ -15,8 +15,8 @@ import Svg, { Rect, Circle, Path } from 'react-native-svg';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { WeightEntryActionPopover } from '@/components/weight/WeightEntryActionPopover';
-import { LogWeightModal } from '@/components/modals/LogWeightModal';
+import { WeightEntryActionPopover } from '../components/WeightEntryActionPopover';
+import { LogWeightModal } from '../modals/LogWeightModal';
 import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
 import { WeightReportScreen } from './WeightReportScreen';
 

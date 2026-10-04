@@ -18,7 +18,7 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
-import { LogWeightModal } from '@/components/modals/LogWeightModal';
+import { LogWeightModal } from '../modals/LogWeightModal';
 
 export interface WeightTrackerCardProps {
   onOpenFullTracker?: () => void;

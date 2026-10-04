@@ -6,7 +6,7 @@ import {
   ClockOutlineSvg,
   FlameOutlineSvg,
   LocationPinOutlineSvg,
-} from '@/components/steps/StepOutlineIcons';
+} from '@/features/movement/components/StepOutlineIcons';
 
 export interface StepTotalSummaryCardProps {
   totalSteps: number;

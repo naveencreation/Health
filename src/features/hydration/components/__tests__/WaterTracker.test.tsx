@@ -26,17 +26,7 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
-jest.mock('@/components/water/DropletVisualizer', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return {
-    DropletVisualizer: React.forwardRef((_props: any, _ref: any) => (
-      <View testID="droplet-visualizer" />
-    )),
-  };
-});
-
-jest.mock('@/features/hydration/components/DropletVisualizer', () => {
+jest.mock('../DropletVisualizer', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {

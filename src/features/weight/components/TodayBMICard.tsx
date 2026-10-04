@@ -15,7 +15,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
-import { LogWeightModal } from '@/components/modals/LogWeightModal';
+import { LogWeightModal } from '../modals/LogWeightModal';
 
 import {
   BMICategoryItem,

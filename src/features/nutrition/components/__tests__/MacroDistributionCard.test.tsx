@@ -172,4 +172,3 @@ describe('MacroDistributionCard', () => {
     expect(getByText('28.7')).toBeTruthy();
   });
 });
-

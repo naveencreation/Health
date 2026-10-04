@@ -19,7 +19,7 @@ import { DailyLog, StepLogEntry } from '@/types';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
-import { StepReportScreen } from '@/screens/main/StepReportScreen';
+import { StepReportScreen } from '../screens/StepReportScreen';
 import {
   formatHistoryDateHeader,
   calculateStepMetrics,

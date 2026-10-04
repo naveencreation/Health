@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { TodayBMICard, getTodayBMICategory, BMI_SPECTRUM_CATEGORIES } from '../TodayBMICard';
+import { TodayBMICard } from '../TodayBMICard';
+import { getTodayBMICategory, BMI_SPECTRUM_CATEGORIES } from '../../utils/bmiCalculator';
 
 const mockUseDailyLog = jest.fn();
 const mockUseGoals = jest.fn();
@@ -15,7 +16,7 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
-jest.mock('@/components/modals/LogWeightModal', () => ({
+jest.mock('../../modals/LogWeightModal', () => ({
   LogWeightModal: () => null,
 }));
 

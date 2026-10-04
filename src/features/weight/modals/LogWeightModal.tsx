@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from 'react-native';
-import { LogWeightScreen, LogWeightScreenProps } from '@/screens/main/LogWeightScreen';
+import { LogWeightScreen, LogWeightScreenProps } from '../screens/LogWeightScreen';
 
 export interface LogWeightModalProps extends Omit<LogWeightScreenProps, 'onClose'> {
   visible: boolean;

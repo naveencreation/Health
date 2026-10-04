@@ -14,10 +14,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { StepLogEntry } from '@/types';
 import { TopDateStrip } from '@/components/dashboard/TopDateStrip';
-import { HeroStepCard } from '@/components/steps/HeroStepCard';
-import { StepHistoryCard } from '@/components/steps/StepHistoryCard';
-import { HealthConnectSyncCard } from '@/components/steps/HealthConnectSyncCard';
+import { HeroStepCard } from '../components/HeroStepCard';
+import { StepHistoryCard } from '../components/StepHistoryCard';
+import { HealthConnectSyncCard } from '../components/HealthConnectSyncCard';
 import {
   connectHealth,
   getTodaySteps,
@@ -330,7 +331,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
           rawHealthRecords={isViewingToday ? healthRecords : []}
           customEntries={dailyLogs[selectedDate]?.stepEntries}
           dailyLogs={dailyLogs}
-          onDeleteEntry={(entry) => removeStepEntry(entry.id, selectedDate)}
+          onDeleteEntry={(entry: StepLogEntry) => removeStepEntry(entry.id, selectedDate)}
         />
 
         {/* Minimalist Health Connect Setup & Sync Component with Official Logo */}

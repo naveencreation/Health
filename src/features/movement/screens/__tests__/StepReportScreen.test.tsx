@@ -115,4 +115,3 @@ describe('StepReportScreen', () => {
     expect(buttons.length).toBeGreaterThan(0);
   });
 });
-

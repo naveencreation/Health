@@ -63,6 +63,16 @@ src/
 ├── context/                                    # [GLOBAL STATE & SYNC]
 │   └── HealthContext.tsx                       # Single source of truth for daily logs, goals, and Firestore sync
 │
+├── data/                                       # [STATIC DATA & CATALOGS]
+│   ├── foodDatabase.ts                         # Curated offline catalog of 100+ foods with macros
+│   └── avatars.ts                              # Curated list of vector avatar options
+│
+├── assets/                                     # [EMBEDDED METADATA & ASSET MAPS]
+│   └── foodImages.ts                           # Static require map for offline food catalog visuals
+│
+├── hooks/                                      # [APPLICATION HOOKS]
+│   └── useRiaDailyInsight.ts                   # Daily AI nutrition coaching insight generator
+│
 ├── utils/                                      # [SYSTEM UTILITIES & TACTILE ENGINE]
 │   ├── beverageUtils.tsx                       # Drink icon resolution, standard drink sizes, hydration factors
 │   ├── stepHistoryUtils.ts                     # Aggregation math for 7-day, 30-day, and yearly step records
@@ -134,14 +144,16 @@ src/
 │   │   │   ├── RunningShoeSvg.tsx              # Vector athletic shoe illustration
 │   │   │   ├── StepOutlineIcons.tsx            # Outline vector metric icons
 │   │   │   └── StepEntryActionPopover.tsx      # Quick edit / delete popover for activities
-│   │   ├── screens/
-│   │   │   ├── StepTrackerScreen.tsx           # Dedicated movement subscreen
-│   │   │   └── StepReportScreen.tsx            # Step completion, burn correlation & duration report
-│   │   └── health/                             # [HEALTH CONNECT SYNC ENGINE]
-│   │       ├── healthConnect.ts                # SDK init & availability
-│   │       ├── healthPermissions.ts            # Permission contracts
-│   │       ├── healthService.ts                # 7-day historical backfill & aggregate reader
-│   │       └── HealthScreen.tsx                # Health Connect diagnostics screen
+│   │   └── screens/
+│   │       ├── StepTrackerScreen.tsx           # Dedicated movement subscreen
+│   │       └── StepReportScreen.tsx            # Step completion, burn correlation & duration report
+│   │
+│   ├── health/                                 # [HEALTH CONNECT SYNC ENGINE]
+│   │   ├── index.ts                            # Domain barrel export
+│   │   ├── healthConnect.ts                    # SDK init & availability
+│   │   ├── healthPermissions.ts                # Permission contracts
+│   │   ├── healthService.ts                    # 7-day historical backfill & aggregate reader
+│   │   └── HealthScreen.tsx                    # Health Connect diagnostics screen
 │   │
 │   ├── weight/                                 # [⚖️ THE BODY & WEIGHT TRACKER DOMAIN]
 │   │   ├── index.ts                            # Domain barrel export
@@ -236,26 +248,18 @@ src/
 │       ├── PreferencesScreen.tsx               # Units, haptic toggle, Gemini BYOK, Pro status & notification toggles
 │       └── MetabolicSummaryScreen.tsx          # BMR, TDEE, and metabolic breakdown
 │
-├── components/                                 # [SHARED PRIMITIVES & RETRO-COMPATIBILITY EXPORTS]
-│   ├── common/                                 # Base primitives (AppLoadingScreen, ErrorBoundary, UserAvatar, etc.)
-│   ├── charts/                                 # Shared chart math (buildBarPath, scales) & pins
-│   ├── modals/                                 # Global modals (AvatarPickerModal, BYOKSetupModal, RiaChatModal, etc.)
+├── components/                                 # [SHARED DESIGN SYSTEM & APP-LEVEL PRIMITIVES]
+│   ├── index.ts                                # Clean aggregator re-exporting primitives & domain components
+│   ├── common/                                 # Shared primitives (AppLoadingScreen, ErrorBoundary, SlideInSubScreen, UserAvatar)
+│   ├── dashboard/                              # TodayScreen primitives (RiaCoachCard, TopDateStrip)
+│   ├── modals/                                 # App-level modals (AvatarPickerModal, BYOKSetupModal, NotificationModal, RiaChatModal)
 │   ├── navigation/                             # Header and BottomNavBar
-│   ├── dashboard/                              # Backward-compatible re-exports for tracker cards
-│   ├── water/                                  # Backward-compatible re-exports for hydration components
-│   ├── steps/                                  # Backward-compatible re-exports for movement components
-│   └── weight/                                 # Backward-compatible re-exports for weight components
+│   ├── profile/                                # Profile primitives (ProfileHeaderCard, ProfileMetricInspector, ProfileQuickNavGrid)
+│   └── report/                                 # Analytics & chart cards (BMIGaugeCard, ChartTooltipPin, StepCompletionCard, etc.)
 │
-├── data/                                       # [STATIC DATA & CATALOGS]
-│   ├── foodDatabase.ts                         # Curated offline catalog of 100+ foods with macros
-│   └── avatars.ts                              # Curated list of vector avatar options
-│
-└── assets/                                     # [LOCAL IMAGES & STATIC ASSETS]
-    ├── adaptive-icon.png                       # Android adaptive foreground icon
-    ├── favicon.png                             # Web favicon
-    ├── splash.png                              # Native boot splash image
-    ├── health_connect_logo.webp                # Google Health Connect logo
-    └── meals/                                  # Meal category thumbnails (breakfast, lunch, dinner, snacks)
+└── assets/                                     # [LOCAL MEDIA & STATIC ASSETS]
+    ├── icons & splash                          # Android adaptive icons, favicon, splash screen, branding logos
+    └── media catalogs/                         # Avatar WebPs, offline food catalog images, brand fonts, meal thumbnails
 ```
 
 ---

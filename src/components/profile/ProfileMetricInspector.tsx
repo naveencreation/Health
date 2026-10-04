@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { ClinicalBmiGauge } from './ClinicalBmiGauge';
+import { ClinicalBmiGauge } from '@/features/weight';
 
 export type MetricTab = 'bmi' | 'weight' | 'calories' | 'steps' | 'water';
 

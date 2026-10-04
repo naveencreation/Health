@@ -179,4 +179,3 @@ describe('StepTrackerScreen', () => {
     expect(mockBatchUpdateDailySteps).toHaveBeenCalled();
   });
 });
-

@@ -851,10 +851,26 @@
       - **Pure Calculator Extraction (`bmiCalculator.ts`)**: Decoupled `getTodayBMICategory` and `BMI_SPECTRUM_CATEGORIES` into a pure utility under `src/features/weight/utils/`, preventing UI component/asset imports inside domain hooks and unit test harnesses.
       - **Nutrition Domain Hook (`useNutrition`)**: Encapsulates calorie budget, consumed, burned, remaining allowance, net calories, over-budget indicators, full macro distribution (carbs, protein, fat, fiber with targets and percentages), and meal items list with mutation actions. Refactored `MealSection.tsx` and `MealCard.tsx`.
       - **Unit Test Coverage**: Created dedicated test suites for all 4 domain hooks (`useHydration.test.ts`, `useMovement.test.ts`, `useWeight.test.ts`, `useNutrition.test.ts`).
+    - **Path C: Complete Cleanup of Legacy Duplicate Components, Shims, and Test Co-location (Single Source of Truth)**:
+      - **Deleted All Duplicate Legacy Implementations**:
+        - Purged `src/components/steps/` (`HealthConnectSyncCard`, `HeroStepCard`, `RunningShoeSvg`, `StepEntryActionPopover`, `StepGaugeVisualizer`, `StepHistoryCard`, `StepHistoryModal`, `StepOutlineIcons`).
+        - Purged `src/components/weight/` (`HeroWeightCard`, `WeightEntryActionPopover`, `WeightHistoryCard`).
+        - Purged `src/components/profile/ClinicalBmiGauge.tsx` (now unified in `@/features/weight`).
+        - Purged `src/components/report/CalorieCompletionCard.tsx` and `MacroDistributionCard.tsx` duplicates (now unified in `@/features/nutrition`).
+        - Purged `src/components/modals/` duplicates (`CupSizeModal`, `DailyWaterGoalModal`, `HydrationSettingsModal`, `LogWeightModal`, `WeightGoalSettingsModal`, `FoodLogModal`, `FoodVisionModal`).
+        - Purged `src/components/dashboard/` proxy stubs (`HeroCalorieCard`, `MealSection`, `MovementTrackerCard`, `TodayBMICard`, `WaterTracker`, `WeightTrackerCard`).
+      - **Deleted Obsolete Component Folders**: Removed empty/redundant directories `src/components/water/`, `src/components/diary/`, `src/components/onboarding/`, `src/components/steps/`, `src/components/weight/`, and `src/components/dashboard/`.
+      - **Deleted 9 Screen Shims from `src/screens/main/`**: Removed all re-export files (`WaterTrackerScreen.tsx`, `WaterIntakeHistoryScreen.tsx`, `WaterReportScreen.tsx`, `StepTrackerScreen.tsx`, `StepReportScreen.tsx`, `WeightTrackerScreen.tsx`, `WeightHistoryScreen.tsx`, `WeightReportScreen.tsx`, `LogWeightScreen.tsx`). `src/screens/main/` now strictly contains the 4 primary app tabs (`TodayScreen.tsx`, `TrackerScreen.tsx`, `AnalyticsScreen.tsx`, `ProfileScreen.tsx`).
+      - **Test Suite Domain Co-location**: Relocated all 13 test suites out of `src/components/**/__tests__/` and `src/screens/main/__tests__/` directly into their true domain directories:
+        - `src/features/movement/components/__tests__/` (`HeroStepCard.test.tsx`, `HealthConnectSyncCard.test.tsx`, `StepHistoryCard.test.tsx`, `StepHistoryModal.test.tsx`, `MovementTrackerCard.test.tsx`)
+        - `src/features/movement/screens/__tests__/` (`StepTrackerScreen.test.tsx`, `StepReportScreen.test.tsx`)
+        - `src/features/hydration/components/__tests__/` (`WaterTracker.test.tsx`)
+        - `src/features/weight/components/__tests__/` (`WeightTrackerCard.test.tsx`, `TodayBMICard.test.tsx`)
+        - `src/features/nutrition/components/__tests__/` (`MealCard-large-dataset.test.tsx`, `CalorieCompletionCard.test.tsx`, `MacroDistributionCard.test.tsx`)
+      - **Clean Facade Architecture**:
+        - `src/components/index.ts` is now a clean aggregator re-exporting primitives and domain components without any circular barrel dependencies or legacy file paths.
+        - Shared components and barrels import directly from specific feature component files (e.g. `@/features/nutrition/components/CalorieCompletionCard`), avoiding module resolution cascades into untransformed ESM in Jest.
       - **Verification**: `npx tsc --noEmit` passed with 0 compiler errors; all 49/49 test suites (273/273 tests) passing 100% green.
-    - **Verification**:
-      - `npx tsc --noEmit` passed with 0 errors across entire workspace.
-      - 259/259 tests passing across 45/45 test suites (100% green).
 
 
 

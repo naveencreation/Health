@@ -45,7 +45,7 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
-jest.mock('@/components/modals/LogWeightModal', () => {
+jest.mock('../../modals/LogWeightModal', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {

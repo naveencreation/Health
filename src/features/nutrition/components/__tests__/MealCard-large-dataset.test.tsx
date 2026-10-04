@@ -58,9 +58,9 @@ describe('MealCard large dataset benchmark harness', () => {
             mealType={mealType}
             title={mealType}
             recommendedCals={800}
-            iconFallback="🥗"
+            iconFallback="🍳"
             items={items.filter((item) => item.mealType === mealType)}
-            onAddPress={jest.fn()}
+            onAddPress={() => {}}
           />
         ))}
       </Profiler>
