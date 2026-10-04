@@ -1,4 +1,10 @@
 export * from './services/onboardingCalculator';
 export * from './components/PlanCalculationStep';
 export * from './components/PermissionPrimerStep';
+export * from './components/OnboardingHeader';
 export * from './screens/OnboardingWizardScreen';
+export * from './screens/AgeSelectionScreen';
+export { GenderSelectionScreen } from './screens/GenderSelectionScreen';
+export * from './screens/GoalSelectionScreen';
+export * from './screens/HeightSelectionScreen';
+export * from './screens/WeightSelectionScreen';

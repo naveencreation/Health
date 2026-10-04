@@ -834,6 +834,15 @@
       - Added `AnalyticsScreen.tsx` Pro feature gating for Deep Monthly & Annual Trends, with lock indicators on timeframe tabs and `ProPaywallModal` trigger.
       - Added startup background habit reminder synchronization in `App.tsx` on user authentication.
       - Built `AnalyticsScreen.test.tsx` integration test suite verifying timeframe switching and Pro paywall gating (3/3 passed).
+    - **Phase 7: Domain-Driven Restructuring (The 4 Health Trackers & Onboarding)**:
+      - **Onboarding Domain (`src/features/onboarding/`)**: Consolidated legacy `src/screens/onboarding/` (`Age`, `Gender`, `Goal`, `Height`, `Weight`) and `OnboardingHeader` into `src/features/onboarding/`, deleted the legacy directory.
+      - **Awards Cleanup**: Removed obsolete orphaned `src/screens/profile/AwardsScreen.tsx`, aliased to `AchievementCenterScreen`.
+      - **Hydration Domain (`src/features/hydration/`)**: Consolidated `WaterTracker.tsx`, gauges (`DropletVisualizer`, `HeroDropletCard`, `WaterGaugeVisualizer`), history card, popovers, and screens (`WaterTrackerScreen`, `WaterIntakeHistoryScreen`, `WaterReportScreen`) and modals.
+      - **Movement Domain (`src/features/movement/`)**: Consolidated `MovementTrackerCard.tsx`, gauges (`HeroStepCard`, `StepGaugeVisualizer`, `StepHistoryCard`), shoe illustrations, popovers, and screens (`StepTrackerScreen`, `StepReportScreen`), unified with `health/`.
+      - **Weight Domain (`src/features/weight/`)**: Consolidated `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `HeroWeightCard.tsx`, `ClinicalBmiGauge.tsx`, and screens (`WeightTrackerScreen`, `WeightHistoryScreen`, `WeightReportScreen`, `LogWeightScreen`) and modals.
+      - **Nutrition Domain (`src/features/nutrition/`)**: Consolidated `HeroCalorieCard.tsx`, `MealSection.tsx`, `MealCard.tsx`, report cards, and food modals (`FoodLogModal.tsx`, `FoodVisionModal.tsx`).
+      - **Zero Regressions & Backward Compatibility**: Clean barrel proxies retained in `src/components/` and `src/screens/` ensuring 0 broken consumer imports.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; 45/45 test suites passed (259/259 tests green).
     - **Verification**:
       - `npx tsc --noEmit` passed with 0 errors across entire workspace.
       - 259/259 tests passing across 45/45 test suites (100% green).

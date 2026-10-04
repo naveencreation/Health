@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { OnboardingHeader } from '@/components/onboarding';
+import { OnboardingHeader } from './OnboardingHeader';
 import { haptics } from '@/utils/haptics';
 import { CalculatedHealthPlan } from '../services/onboardingCalculator';
 

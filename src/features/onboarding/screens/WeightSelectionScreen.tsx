@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { OnboardingHeader } from '@/components/onboarding';
+import { OnboardingHeader } from '../components/OnboardingHeader';
 
 interface WeightSelectionScreenProps {
   onBack?: () => void;

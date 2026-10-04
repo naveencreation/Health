@@ -20,13 +20,20 @@ import { BouncingDotsLoader } from '@/components/common/BouncingDotsLoader';
 import { SignInScreen } from './SignInScreen';
 import { SignUpScreen } from './SignUpScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
-import { AgeSelectionScreen } from '../onboarding/AgeSelectionScreen';
-import { WeightSelectionScreen } from '../onboarding/WeightSelectionScreen';
-import { HeightSelectionScreen, HeightUnit } from '../onboarding/HeightSelectionScreen';
-import { GoalSelectionScreen, FitnessGoal } from '../onboarding/GoalSelectionScreen';
-import { GenderSelectionScreen, GenderType } from '../onboarding/GenderSelectionScreen';
+import {
+  AgeSelectionScreen,
+  WeightSelectionScreen,
+  HeightSelectionScreen,
+  HeightUnit,
+  GoalSelectionScreen,
+  FitnessGoal,
+  GenderSelectionScreen,
+  GenderType,
+  PlanCalculationStep,
+  PermissionPrimerStep,
+  calculateHealthPlan,
+} from '@/features/onboarding';
 import * as ImagePicker from 'expo-image-picker';
-import { PlanCalculationStep, PermissionPrimerStep, calculateHealthPlan } from '@/features/onboarding';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 
 type AuthScreenMode =

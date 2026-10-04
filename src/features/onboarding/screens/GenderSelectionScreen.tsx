@@ -7,126 +7,116 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { OnboardingHeader } from '@/components/onboarding';
+import { OnboardingHeader } from '../components/OnboardingHeader';
 
-export type FitnessGoal = 'lose' | 'maintain' | 'gain';
+export type GenderType = 'female' | 'male' | 'other';
 
-interface GoalSelectionScreenProps {
+interface GenderSelectionScreenProps {
   onBack?: () => void;
-  onContinue?: (goal: FitnessGoal) => void;
+  onContinue?: (gender: GenderType) => void;
   onSkip?: () => void;
   onSignIn?: () => void;
-  initialGoal?: FitnessGoal;
+  initialGender?: GenderType;
 }
 
-interface GoalOption {
-  id: FitnessGoal;
+interface GenderOption {
+  id: GenderType;
   title: string;
   subtitle: string;
   iconName: string;
-  iconFamily: 'ionicons' | 'mci';
   iconColor: string;
 }
 
-const GOAL_OPTIONS: GoalOption[] = [
+const GENDER_OPTIONS: GenderOption[] = [
   {
-    id: 'lose',
-    title: 'Lose weight',
-    subtitle: 'Caloric deficit for sustainable fat loss',
-    iconName: 'flame',
-    iconFamily: 'ionicons',
-    iconColor: '#F47551',
+    id: 'female',
+    title: 'Female',
+    subtitle: 'Calibrates metabolic rate formula for female biology',
+    iconName: 'female',
+    iconColor: '#EC4899',
   },
   {
-    id: 'maintain',
-    title: 'Maintain weight',
-    subtitle: 'Equilibrium to optimize daily energy & health',
-    iconName: 'scale-balance',
-    iconFamily: 'mci',
-    iconColor: '#16A34A',
+    id: 'male',
+    title: 'Male',
+    subtitle: 'Calibrates metabolic rate formula for male biology',
+    iconName: 'male',
+    iconColor: '#2563EB',
   },
   {
-    id: 'gain',
-    title: 'Gain weight',
-    subtitle: 'Caloric surplus to build strength & lean mass',
-    iconName: 'barbell',
-    iconFamily: 'ionicons',
-    iconColor: '#4F46E5',
+    id: 'other',
+    title: 'Other',
+    subtitle: 'Uses a balanced metabolic median for your calculations',
+    iconName: 'sparkles',
+    iconColor: '#7C3AED',
   },
 ];
 
 const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
-export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
+export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
   onBack,
   onContinue,
   onSkip,
   onSignIn,
-  initialGoal = 'maintain',
+  initialGender = 'male',
 }) => {
-  const [selectedGoal, setSelectedGoal] = useState<FitnessGoal>(initialGoal);
+  const [selectedGender, setSelectedGender] = useState<GenderType>(initialGender);
 
   const handleContinuePress = () => {
-    if (onContinue) onContinue(selectedGoal);
+    if (onContinue) onContinue(selectedGender);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
         {/* Top Navigation Bar */}
-        <OnboardingHeader onBack={onBack} stepText="Step 4 of 5" />
+        <OnboardingHeader onBack={onBack} stepText="Step 5 of 5" />
 
         {/* Header Title & Cognitive Context */}
         <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>
-            What goal do you{'\n'}have in mind?
-          </Text>
+          <Text style={styles.screenTitle}>What’s your gender?</Text>
           <Text style={styles.screenSubtitle}>
-            Calibrates your daily calorie target and macronutrient ratio
+            Calibrates your basal metabolic rate (BMR) calculation
           </Text>
         </View>
 
-        {/* Goal Selection Cards */}
+        {/* Gender Selection Cards */}
         <View style={styles.cardsContainer}>
-          {GOAL_OPTIONS.map((option) => {
-            const isSelected = selectedGoal === option.id;
+          {GENDER_OPTIONS.map((option) => {
+            const isSelected = selectedGender === option.id;
 
             return (
               <Pressable
                 key={option.id}
-                onPress={() => setSelectedGoal(option.id)}
+                onPress={() => setSelectedGender(option.id)}
                 style={({ pressed }) => [
-                  styles.goalCard,
-                  isSelected ? styles.goalCardSelected : styles.goalCardUnselected,
-                  pressed ? styles.goalCardPressed : null,
+                  styles.genderCard,
+                  isSelected ? styles.genderCardSelected : styles.genderCardUnselected,
+                  pressed ? styles.genderCardPressed : null,
                 ]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={`${option.title}: ${option.subtitle}`}
               >
                 {/* Left Visual Icon Badge */}
-                <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
-                  {option.iconFamily === 'ionicons' ? (
-                    <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
-                  ) : (
-                    <MaterialCommunityIcons name={option.iconName as any} size={22} color={option.iconColor} />
-                  )}
+                <View style={[styles.iconBadge, getGenderIconBgStyle(option.id)]}>
+                  <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
                 </View>
 
                 {/* Option Content: Title & Benefit Subtitle */}
                 <View style={styles.cardTextContent}>
                   <Text
                     style={[
-                      styles.goalTitle,
-                      isSelected ? styles.goalTitleSelected : null,
+                      styles.genderTitle,
+                      isSelected ? styles.genderTitleSelected : null,
                     ]}
                   >
                     {option.title}
                   </Text>
-                  <Text style={styles.goalSubtitle}>{option.subtitle}</Text>
+                  <Text style={styles.genderSubtitle}>{option.subtitle}</Text>
                 </View>
 
                 {/* Accessible Radio Indicator */}
@@ -151,7 +141,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
             style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
             onPress={handleContinuePress}
             accessibilityRole="button"
-            accessibilityLabel="Continue with selected goal"
+            accessibilityLabel="Continue with selected gender"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
@@ -164,7 +154,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
-              accessibilityLabel="Skip goal selection"
+              accessibilityLabel="Skip gender selection"
             >
               <Text style={styles.skipText}>Skip</Text>
             </Pressable>
@@ -189,14 +179,14 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   );
 };
 
-const getGoalIconBgStyle = (id: FitnessGoal) => {
+const getGenderIconBgStyle = (id: GenderType) => {
   switch (id) {
-    case 'lose':
-      return styles.iconBadgeLose;
-    case 'maintain':
-      return styles.iconBadgeMaintain;
-    case 'gain':
-      return styles.iconBadgeGain;
+    case 'female':
+      return styles.iconBadgeFemale;
+    case 'male':
+      return styles.iconBadgeMale;
+    case 'other':
+      return styles.iconBadgeOther;
     default:
       return null;
   }
@@ -255,7 +245,7 @@ const styles = StyleSheet.create({
     gap: 14,
     marginVertical: 12,
   },
-  goalCard: {
+  genderCard: {
     width: '100%',
     height: 76,
     borderRadius: 10,
@@ -271,14 +261,14 @@ const styles = StyleSheet.create({
         } as any)
       : {}),
   },
-  goalCardSelected: {
+  genderCardSelected: {
     backgroundColor: '#FFFBF9',
     borderWidth: 1.5,
     borderColor: '#F47551',
     elevation: 0,
     shadowOpacity: 0,
   },
-  goalCardUnselected: {
+  genderCardUnselected: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
@@ -293,20 +283,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBadgeLose: {
-    backgroundColor: '#FFF1EE',
+  iconBadgeFemale: {
+    backgroundColor: '#FDF2F8',
   },
-  iconBadgeMaintain: {
-    backgroundColor: '#F0FDF4',
+  iconBadgeMale: {
+    backgroundColor: '#EFF6FF',
   },
-  iconBadgeGain: {
-    backgroundColor: '#EEF2FF',
+  iconBadgeOther: {
+    backgroundColor: '#F5F3FF',
   },
   btnPressedSubtle: {
     opacity: 0.65,
     transform: [{ scale: 0.96 }],
   },
-  goalCardPressed: {
+  genderCardPressed: {
     opacity: 0.88,
     transform: [{ scale: 0.99 }],
   },
@@ -316,16 +306,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
     justifyContent: 'center',
   },
-  goalTitle: {
+  genderTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     lineHeight: 22,
     color: '#334155',
   },
-  goalTitleSelected: {
+  genderTitleSelected: {
     color: '#0F172A',
   },
-  goalSubtitle: {
+  genderSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,

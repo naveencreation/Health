@@ -36,6 +36,16 @@ jest.mock('@/components/water/DropletVisualizer', () => {
   };
 });
 
+jest.mock('@/features/hydration/components/DropletVisualizer', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    DropletVisualizer: React.forwardRef((_props: any, _ref: any) => (
+      <View testID="droplet-visualizer" />
+    )),
+  };
+});
+
 describe('WaterTracker', () => {
   beforeEach(() => {
     jest.clearAllMocks();

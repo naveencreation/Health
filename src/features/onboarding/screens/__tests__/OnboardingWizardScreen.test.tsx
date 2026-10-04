@@ -24,7 +24,7 @@ jest.mock('@/features/health/healthPermissions', () => ({
   requestStepsPermission: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('@/screens/onboarding/AgeSelectionScreen', () => {
+jest.mock('../AgeSelectionScreen', () => {
   const React = require('react');
   const { View, Text, Pressable } = require('react-native');
   return {
@@ -38,7 +38,7 @@ jest.mock('@/screens/onboarding/AgeSelectionScreen', () => {
   };
 });
 
-jest.mock('@/screens/onboarding/WeightSelectionScreen', () => {
+jest.mock('../WeightSelectionScreen', () => {
   const React = require('react');
   const { View, Text, Pressable } = require('react-native');
   return {
@@ -52,7 +52,7 @@ jest.mock('@/screens/onboarding/WeightSelectionScreen', () => {
   };
 });
 
-jest.mock('@/screens/onboarding/HeightSelectionScreen', () => {
+jest.mock('../HeightSelectionScreen', () => {
   const React = require('react');
   const { View, Text, Pressable } = require('react-native');
   return {
@@ -66,7 +66,7 @@ jest.mock('@/screens/onboarding/HeightSelectionScreen', () => {
   };
 });
 
-jest.mock('@/screens/onboarding/GoalSelectionScreen', () => {
+jest.mock('../GoalSelectionScreen', () => {
   const React = require('react');
   const { View, Pressable } = require('react-native');
   return {
@@ -79,7 +79,7 @@ jest.mock('@/screens/onboarding/GoalSelectionScreen', () => {
   };
 });
 
-jest.mock('@/screens/onboarding/GenderSelectionScreen', () => {
+jest.mock('../GenderSelectionScreen', () => {
   const React = require('react');
   const { View, Pressable } = require('react-native');
   return {

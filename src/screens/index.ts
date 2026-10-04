@@ -4,24 +4,37 @@ export { SignInScreen } from './auth/SignInScreen';
 export { SignUpScreen } from './auth/SignUpScreen';
 export { ForgotPasswordScreen } from './auth/ForgotPasswordScreen';
 
-// Onboarding Screens
-export { AgeSelectionScreen } from './onboarding/AgeSelectionScreen';
-export { HeightSelectionScreen, HeightUnit } from './onboarding/HeightSelectionScreen';
-export { GenderSelectionScreen } from './onboarding/GenderSelectionScreen';
-export { GoalSelectionScreen } from './onboarding/GoalSelectionScreen';
-export { WeightSelectionScreen } from './onboarding/WeightSelectionScreen';
+// Onboarding Screens (modularized in features/onboarding)
+export {
+  AgeSelectionScreen,
+  HeightSelectionScreen,
+  HeightUnit,
+  GenderSelectionScreen,
+  GoalSelectionScreen,
+  WeightSelectionScreen,
+  OnboardingWizardScreen,
+} from '@/features/onboarding';
 
 // Main App Screens
 export { TodayScreen } from './main/TodayScreen';
 export { TrackerScreen, TrackerScreen as TrackerTab } from './main/TrackerScreen';
 export { AnalyticsScreen, AnalyticsTab } from './main/AnalyticsScreen';
 export { ProfileScreen, ProfileTab } from './main/ProfileScreen';
-export { WaterTrackerScreen } from './main/WaterTrackerScreen';
-export { WaterIntakeHistoryScreen } from './main/WaterIntakeHistoryScreen';
-export { WaterReportScreen } from './main/WaterReportScreen';
-export { WeightTrackerScreen } from './main/WeightTrackerScreen';
-export { WeightHistoryScreen } from './main/WeightHistoryScreen';
-export { LogWeightScreen } from './main/LogWeightScreen';
-export { WeightReportScreen } from './main/WeightReportScreen';
-export { StepTrackerScreen } from './main/StepTrackerScreen';
-export { StepReportScreen } from './main/StepReportScreen';
+// Hydration Screens (modularized in features/hydration)
+export {
+  WaterTrackerScreen,
+  WaterIntakeHistoryScreen,
+  WaterReportScreen,
+} from '@/features/hydration';
+// Weight & Body Screens (modularized in features/weight)
+export {
+  WeightTrackerScreen,
+  WeightHistoryScreen,
+  LogWeightScreen,
+  WeightReportScreen,
+} from '@/features/weight';
+// Movement Screens (modularized in features/movement)
+export {
+  StepTrackerScreen,
+  StepReportScreen,
+} from '@/features/movement';

@@ -1,1 +1,1 @@
-export { OnboardingHeader } from './OnboardingHeader';
+export { OnboardingHeader } from '@/features/onboarding';

@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { AgeSelectionScreen } from '@/screens/onboarding/AgeSelectionScreen';
-import { GenderSelectionScreen } from '@/screens/onboarding/GenderSelectionScreen';
-import { GoalSelectionScreen, FitnessGoal } from '@/screens/onboarding/GoalSelectionScreen';
-import { HeightSelectionScreen } from '@/screens/onboarding/HeightSelectionScreen';
-import { WeightSelectionScreen } from '@/screens/onboarding/WeightSelectionScreen';
+import { AgeSelectionScreen } from './AgeSelectionScreen';
+import { GenderSelectionScreen } from './GenderSelectionScreen';
+import { GoalSelectionScreen, FitnessGoal } from './GoalSelectionScreen';
+import { HeightSelectionScreen } from './HeightSelectionScreen';
+import { WeightSelectionScreen } from './WeightSelectionScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
 import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
