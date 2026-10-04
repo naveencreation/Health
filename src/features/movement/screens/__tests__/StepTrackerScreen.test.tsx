@@ -121,9 +121,7 @@ describe('StepTrackerScreen', () => {
 
   test('calls onBack when back button is pressed', async () => {
     const mockBack = jest.fn();
-    const { getByLabelText } = await render(
-      <StepTrackerScreen onBack={mockBack} />
-    );
+    const { getByLabelText } = await render(<StepTrackerScreen onBack={mockBack} />);
 
     fireEvent.press(getByLabelText('Go back'));
     expect(mockBack).toHaveBeenCalledTimes(1);
@@ -168,9 +166,7 @@ describe('StepTrackerScreen', () => {
     });
 
     const mockBack = jest.fn();
-    const { getByLabelText, findByText } = await render(
-      <StepTrackerScreen onBack={mockBack} />
-    );
+    const { getByLabelText, findByText } = await render(<StepTrackerScreen onBack={mockBack} />);
 
     fireEvent.press(getByLabelText('Connect Health Connect'));
 

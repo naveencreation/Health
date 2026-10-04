@@ -12,24 +12,115 @@ export interface BeverageDefinition {
 }
 
 export const BEVERAGE_DEFINITIONS: BeverageDefinition[] = [
-  { id: 'water', name: 'Water', iconName: 'water', iconFamily: 'svg', color: '#0284C7', bgColor: '#E0F2FE' },
-  { id: 'coffee', name: 'Coffee', iconName: 'cafe-outline', iconFamily: 'ionicons', color: '#854D0E', bgColor: '#FEF3C7' },
-  { id: 'tea', name: 'Tea', iconName: 'tea', iconFamily: 'mci', color: '#15803D', bgColor: '#DCFCE7' },
-  { id: 'juice', name: 'Juice', iconName: 'cup-water', iconFamily: 'mci', color: '#EA580C', bgColor: '#FFEDD5' },
-  { id: 'sport', name: 'Sport Drink', iconName: 'bottle-tonic-outline', iconFamily: 'mci', color: '#0284C7', bgColor: '#E0F2FE' },
-  { id: 'coconut', name: 'Coconut Water', iconName: 'leaf-outline', iconFamily: 'ionicons', color: '#16A34A', bgColor: '#DCFCE7' },
-  { id: 'smoothie', name: 'Smoothie', iconName: 'blender-outline', iconFamily: 'mci', color: '#9333EA', bgColor: '#F3E8FF' },
-  { id: 'chocolate', name: 'Chocolate', iconName: 'coffee', iconFamily: 'mci', color: '#78350F', bgColor: '#FEF3C7' },
-  { id: 'carbonated', name: 'Carbonated', iconName: 'glass-cocktail', iconFamily: 'mci', color: '#F97316', bgColor: '#FFEDD5' },
-  { id: 'soda', name: 'Soda', iconName: 'glass-flute', iconFamily: 'mci', color: '#E11D48', bgColor: '#FFE4E6' },
-  { id: 'wine', name: 'Wine', iconName: 'wine-outline', iconFamily: 'ionicons', color: '#9F1239', bgColor: '#FFE4E6' },
-  { id: 'beer', name: 'Beer', iconName: 'beer-outline', iconFamily: 'ionicons', color: '#D97706', bgColor: '#FEF9C3' },
-  { id: 'liquor', name: 'Liquor', iconName: 'bottle-tonic-plus-outline', iconFamily: 'mci', color: '#475569', bgColor: '#F1F5F9' },
+  {
+    id: 'water',
+    name: 'Water',
+    iconName: 'water',
+    iconFamily: 'svg',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+  },
+  {
+    id: 'coffee',
+    name: 'Coffee',
+    iconName: 'cafe-outline',
+    iconFamily: 'ionicons',
+    color: '#854D0E',
+    bgColor: '#FEF3C7',
+  },
+  {
+    id: 'tea',
+    name: 'Tea',
+    iconName: 'tea',
+    iconFamily: 'mci',
+    color: '#15803D',
+    bgColor: '#DCFCE7',
+  },
+  {
+    id: 'juice',
+    name: 'Juice',
+    iconName: 'cup-water',
+    iconFamily: 'mci',
+    color: '#EA580C',
+    bgColor: '#FFEDD5',
+  },
+  {
+    id: 'sport',
+    name: 'Sport Drink',
+    iconName: 'bottle-tonic-outline',
+    iconFamily: 'mci',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+  },
+  {
+    id: 'coconut',
+    name: 'Coconut Water',
+    iconName: 'leaf-outline',
+    iconFamily: 'ionicons',
+    color: '#16A34A',
+    bgColor: '#DCFCE7',
+  },
+  {
+    id: 'smoothie',
+    name: 'Smoothie',
+    iconName: 'blender-outline',
+    iconFamily: 'mci',
+    color: '#9333EA',
+    bgColor: '#F3E8FF',
+  },
+  {
+    id: 'chocolate',
+    name: 'Chocolate',
+    iconName: 'coffee',
+    iconFamily: 'mci',
+    color: '#78350F',
+    bgColor: '#FEF3C7',
+  },
+  {
+    id: 'carbonated',
+    name: 'Carbonated',
+    iconName: 'glass-cocktail',
+    iconFamily: 'mci',
+    color: '#F97316',
+    bgColor: '#FFEDD5',
+  },
+  {
+    id: 'soda',
+    name: 'Soda',
+    iconName: 'glass-flute',
+    iconFamily: 'mci',
+    color: '#E11D48',
+    bgColor: '#FFE4E6',
+  },
+  {
+    id: 'wine',
+    name: 'Wine',
+    iconName: 'wine-outline',
+    iconFamily: 'ionicons',
+    color: '#9F1239',
+    bgColor: '#FFE4E6',
+  },
+  {
+    id: 'beer',
+    name: 'Beer',
+    iconName: 'beer-outline',
+    iconFamily: 'ionicons',
+    color: '#D97706',
+    bgColor: '#FEF9C3',
+  },
+  {
+    id: 'liquor',
+    name: 'Liquor',
+    iconName: 'bottle-tonic-plus-outline',
+    iconFamily: 'mci',
+    color: '#475569',
+    bgColor: '#F1F5F9',
+  },
 ];
 
 export const getBeverageConfig = (beverageId?: string): BeverageDefinition => {
   if (!beverageId) return BEVERAGE_DEFINITIONS[0];
-  const found = BEVERAGE_DEFINITIONS.find((b) => b.id.toLowerCase() === beverageId.toLowerCase());
+  const found = BEVERAGE_DEFINITIONS.find(b => b.id.toLowerCase() === beverageId.toLowerCase());
   return found || BEVERAGE_DEFINITIONS[0];
 };
 

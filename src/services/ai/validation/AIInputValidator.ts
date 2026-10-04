@@ -29,7 +29,12 @@ export class AIInputValidator {
       return {
         isValid: false,
         sanitizedText: '',
-        error: AIErrorMapper.createError('EMPTY_INPUT', 'Input text cannot be empty.', undefined, false),
+        error: AIErrorMapper.createError(
+          'EMPTY_INPUT',
+          'Input text cannot be empty.',
+          undefined,
+          false
+        ),
       };
     }
 

@@ -15,7 +15,10 @@ export class EdgeImagePreprocessor {
    * Prepares and validates base64 image data before sending to Gemini multimodal API.
    * Strips URI prefixes, verifies payload bounds, and protects against JS heap exhaustion.
    */
-  static processBase64(rawBase64: string, fallbackMime: string = 'image/jpeg'): PreprocessedImageResult {
+  static processBase64(
+    rawBase64: string,
+    fallbackMime: string = 'image/jpeg'
+  ): PreprocessedImageResult {
     if (!rawBase64 || typeof rawBase64 !== 'string') {
       return {
         isValid: false,

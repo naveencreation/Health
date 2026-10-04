@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  Switch,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, Switch, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
@@ -41,7 +33,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
   // Load persisted reminder interval preference
   useEffect(() => {
     AsyncStorage.getItem(REMINDER_INTERVAL_KEY)
-      .then((saved) => {
+      .then(saved => {
         if (saved) setReminderInterval(saved);
       })
       .catch(() => {});
@@ -66,12 +58,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
 
@@ -145,15 +132,12 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
                 <View style={styles.reminderIntervalSection}>
                   <Text style={styles.subSectionTitle}>Reminder Interval</Text>
                   <View style={styles.intervalPillRow}>
-                    {INTERVAL_OPTIONS.map((opt) => {
+                    {INTERVAL_OPTIONS.map(opt => {
                       const isSelected = reminderInterval === opt.id;
                       return (
                         <Pressable
                           key={opt.id}
-                          style={[
-                            styles.intervalPill,
-                            isSelected && styles.intervalPillActive,
-                          ]}
+                          style={[styles.intervalPill, isSelected && styles.intervalPillActive]}
                           onPress={() => handleSelectInterval(opt.id)}
                           accessibilityRole="button"
                           accessibilityLabel={`Remind every ${opt.label}`}
@@ -181,7 +165,9 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
                 <Text style={styles.infoCardTitle}>Hydration Insights</Text>
               </View>
               <Text style={styles.infoCardText}>
-                Pure water counts for 100% hydration. Other drinks such as herbal tea (~95%) and juices (~85%) provide hydration alongside essential electrolytes, while caffeine has a slight diuretic effect.
+                Pure water counts for 100% hydration. Other drinks such as herbal tea (~95%) and
+                juices (~85%) provide hydration alongside essential electrolytes, while caffeine has
+                a slight diuretic effect.
               </Text>
             </View>
           </ScrollView>

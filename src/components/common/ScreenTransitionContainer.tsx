@@ -1,9 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-} from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,20 +33,11 @@ export const ScreenTransitionContainer: React.FC<ScreenTransitionContainerProps>
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(animValue.value, [0, 0.4, 1], [0, 0.7, 1]),
-    transform: offset !== 0 ? [{ translateX: interpolate(animValue.value, [0, 1], [offset, 0]) }] : [],
+    transform:
+      offset !== 0 ? [{ translateX: interpolate(animValue.value, [0, 1], [offset, 0]) }] : [],
   }));
 
-  return (
-    <Animated.View
-      style={[
-        styles.container,
-        style,
-        animatedStyle,
-      ]}
-    >
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[styles.container, style, animatedStyle]}>{children}</Animated.View>;
 };
 
 const styles = StyleSheet.create({

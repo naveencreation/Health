@@ -9,15 +9,7 @@ import {
   LayoutAnimation,
   UIManager,
 } from 'react-native';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from '@/components/report/ChartTypeToggle';
 
@@ -65,12 +57,7 @@ const triggerLayoutAnim = () => {
  * Immune to the W3C SVG arc auto-scaling bug that distorts the old
  * semicircular dome formula when barHeight < barWidth.
  */
-function buildBarPath(
-  barX: number,
-  topY: number,
-  barWidth: number,
-  barHeight: number
-): string {
+function buildBarPath(barX: number, topY: number, barWidth: number, barHeight: number): string {
   const r = Math.min(BAR_CORNER_RADIUS, barWidth / 2, barHeight);
   const right = barX + barWidth;
   const bottom = topY + barHeight;
@@ -88,12 +75,7 @@ function buildBarPath(
  * SVG path for the teardrop tail below the circular pin head.
  * cx/cy = centre of circular head in local SVG space.
  */
-function buildTearTailPath(
-  cx: number,
-  cy: number,
-  r: number,
-  tailLen: number
-): string {
+function buildTearTailPath(cx: number, cy: number, r: number, tailLen: number): string {
   const spread = r * 0.38;
   const cp1y = cy + r + tailLen * 0.4;
   const cp2y = cy + r + tailLen * 0.82;
@@ -141,7 +123,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
   // Adaptive Y-Axis Scale
   const { maxY, yTicks } = useMemo<{ maxY: number; yTicks: number[] }>(() => {
     const goal = calorieGoal > 0 ? calorieGoal : 2500;
-    const maxLogged = days.length > 0 ? Math.max(...days.map((d) => d.calories || 0)) : 0;
+    const maxLogged = days.length > 0 ? Math.max(...days.map(d => d.calories || 0)) : 0;
     const highest = Math.max(goal, maxLogged);
 
     let ceiling = 3000;
@@ -177,7 +159,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
 
   // Check if entire period has no logged calories
   const hasAnyCalories = useMemo(() => {
-    return days.some((d) => (d.calories || 0) > 0);
+    return days.some(d => (d.calories || 0) > 0);
   }, [days]);
 
   // Coordinates for each day
@@ -283,7 +265,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
       <View style={styles.chartWrapper}>
         {/* Y-Axis Column (500, 1000, 1500, 2000, 2500, 3000) */}
         <View style={styles.yAxisColumn}>
-          {yTicks.map((tick) => {
+          {yTicks.map(tick => {
             const ratio = tick / maxY;
             const topPos = TOP_PAD + (1 - ratio) * USABLE_HEIGHT - 8;
             return (
@@ -332,8 +314,12 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
                       d={buildBarPath(coord.barX, coord.topY, coord.barWidth, coord.barHeight)}
                       fill={
                         coord.isZero
-                          ? (isSelected ? activeColor : '#E2E8F0')
-                          : (isSelected ? activeColor : '#CEE89F')
+                          ? isSelected
+                            ? activeColor
+                            : '#E2E8F0'
+                          : isSelected
+                            ? activeColor
+                            : '#CEE89F'
                       }
                     />
                   );
@@ -416,70 +402,71 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
               )}
 
               {/* ── SVG VECTOR TEARDROP PIN ───────────────────────────── */}
-              {selectedCoord && (() => {
-                const PIN_R = 19;
-                const PIN_TAIL = 9;
-                const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
-                const PIN_SVG_W = PIN_R * 2 + 6;
-                const PIN_CX = PIN_SVG_W / 2;
-                const PIN_CY = PIN_R + 2;
-                const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
-                const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
-                const tearPath = buildTearTailPath(PIN_CX, PIN_CY, PIN_R, PIN_TAIL);
-                return (
-                  <Svg
-                    x={selectedCoord.x - PIN_SVG_W / 2}
-                    y={pinSvgTop}
-                    width={PIN_SVG_W}
-                    height={PIN_TOTAL_H + 6}
-                  >
-                    {/* Drop shadow */}
-                    <Path
-                      d={buildTearTailPath(PIN_CX, PIN_CY, PIN_R + 0.5, PIN_TAIL)}
-                      fill="rgba(15,23,42,0.08)"
-                      transform="translate(0,1.5)"
-                    />
-                    {/* Tail */}
-                    <Path d={tearPath} fill={activeColor} />
-                    {/* Head circle */}
-                    <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R} fill={activeColor} />
-                    {/* Inner white disc */}
-                    <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R - 5} fill="#FFFFFF" />
-                  </Svg>
-                );
-              })()}
+              {selectedCoord &&
+                (() => {
+                  const PIN_R = 19;
+                  const PIN_TAIL = 9;
+                  const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
+                  const PIN_SVG_W = PIN_R * 2 + 6;
+                  const PIN_CX = PIN_SVG_W / 2;
+                  const PIN_CY = PIN_R + 2;
+                  const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
+                  const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
+                  const tearPath = buildTearTailPath(PIN_CX, PIN_CY, PIN_R, PIN_TAIL);
+                  return (
+                    <Svg
+                      x={selectedCoord.x - PIN_SVG_W / 2}
+                      y={pinSvgTop}
+                      width={PIN_SVG_W}
+                      height={PIN_TOTAL_H + 6}
+                    >
+                      {/* Drop shadow */}
+                      <Path
+                        d={buildTearTailPath(PIN_CX, PIN_CY, PIN_R + 0.5, PIN_TAIL)}
+                        fill="rgba(15,23,42,0.08)"
+                        transform="translate(0,1.5)"
+                      />
+                      {/* Tail */}
+                      <Path d={tearPath} fill={activeColor} />
+                      {/* Head circle */}
+                      <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R} fill={activeColor} />
+                      {/* Inner white disc */}
+                      <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R - 5} fill="#FFFFFF" />
+                    </Svg>
+                  );
+                })()}
             </Svg>
           )}
 
           {/* Native text overlay on top of inner white disc */}
-          {selectedCoord && (() => {
-            const PIN_R = 19;
-            const PIN_TAIL = 9;
-            const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
-            const PIN_SVG_W = PIN_R * 2 + 6;
-            const PIN_CY = PIN_R + 2;
-            const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
-            const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
-            return (
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.pinLabelContainer,
-                  {
-                    left: selectedCoord.x - PIN_SVG_W / 2,
-                    top: pinSvgTop + PIN_CY - 12,
-                    width: PIN_SVG_W,
-                  },
-                ]}
-              >
-                <Text style={styles.tooltipValueText}>
-                  {selectedCoord.isFuture && selectedCoord.isZero ? '--' : selectedCoord.calories}
-                </Text>
-                <Text style={styles.tooltipUnitText}>kcal</Text>
-              </View>
-            );
-          })()}
-
+          {selectedCoord &&
+            (() => {
+              const PIN_R = 19;
+              const PIN_TAIL = 9;
+              const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
+              const PIN_SVG_W = PIN_R * 2 + 6;
+              const PIN_CY = PIN_R + 2;
+              const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
+              const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
+              return (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.pinLabelContainer,
+                    {
+                      left: selectedCoord.x - PIN_SVG_W / 2,
+                      top: pinSvgTop + PIN_CY - 12,
+                      width: PIN_SVG_W,
+                    },
+                  ]}
+                >
+                  <Text style={styles.tooltipValueText}>
+                    {selectedCoord.isFuture && selectedCoord.isZero ? '--' : selectedCoord.calories}
+                  </Text>
+                  <Text style={styles.tooltipUnitText}>kcal</Text>
+                </View>
+              );
+            })()}
 
           {/* Transparent Tap Hotspots spanning full chart height */}
           <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -544,7 +531,9 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
               fill={activeColor}
             />
           </Svg>
-          <Text style={styles.emptyPeriodText}>No meals logged for this period yet. Tap a day to inspect.</Text>
+          <Text style={styles.emptyPeriodText}>
+            No meals logged for this period yet. Tap a day to inspect.
+          </Text>
         </View>
       )}
     </View>
@@ -554,7 +543,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,           // ← DESIGN.md card spec: 12px, not 20px
+    borderRadius: 12, // ← DESIGN.md card spec: 12px, not 20px
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
@@ -562,7 +551,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
-    shadowOpacity: 0,           // Zero Float Shadow Standard
+    shadowOpacity: 0, // Zero Float Shadow Standard
     elevation: 0,
   },
   headerRow: {
@@ -705,4 +694,3 @@ const styles = StyleSheet.create({
 });
 
 export default CalorieCompletionCard;
-

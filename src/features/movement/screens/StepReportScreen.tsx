@@ -1,13 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  BackHandler,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, BackHandler, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -33,13 +25,33 @@ export interface StepReportScreenProps {
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const FULL_MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) => {
@@ -128,7 +140,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
       return {
         label,
         chartItems: days,
-        allDates: days.map((d) => d.dateStr),
+        allDates: days.map(d => d.dateStr),
         canGoForward: periodOffset < 0,
       };
     }
@@ -167,7 +179,8 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
           bucketTotalSteps += log?.steps ?? 0;
         }
         const avgDailySteps = Math.round(bucketTotalSteps / count);
-        const completionPct = dailyStepGoal > 0 ? Math.round((avgDailySteps / dailyStepGoal) * 100) : 0;
+        const completionPct =
+          dailyStepGoal > 0 ? Math.round((avgDailySteps / dailyStepGoal) * 100) : 0;
         return {
           dateStr: `w_${idx + 1}`,
           dayNum: `W${idx + 1}`,
@@ -203,7 +216,8 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
         monthTotalSteps += log?.steps ?? 0;
       }
       const avgDailySteps = Math.round(monthTotalSteps / daysInM);
-      const completionPct = dailyStepGoal > 0 ? Math.round((avgDailySteps / dailyStepGoal) * 100) : 0;
+      const completionPct =
+        dailyStepGoal > 0 ? Math.round((avgDailySteps / dailyStepGoal) * 100) : 0;
       return {
         dateStr: `m_${m + 1}`,
         dayNum: MONTH_NAMES[m],
@@ -222,10 +236,10 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
     };
   }, [timeframe, periodOffset, dailyLogs, dailyStepGoal]);
 
-  const handlePrevPeriod = () => setPeriodOffset((prev) => prev - 1);
+  const handlePrevPeriod = () => setPeriodOffset(prev => prev - 1);
   const handleNextPeriod = () => {
     if (dateRangeInfo.canGoForward) {
-      setPeriodOffset((prev) => prev + 1);
+      setPeriodOffset(prev => prev + 1);
     }
   };
 
@@ -247,7 +261,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
 
   // Derive calorie metrics for each period item
   const calorieItems: DayCalorieData[] = useMemo(() => {
-    return dateRangeInfo.chartItems.map((item) => {
+    return dateRangeInfo.chartItems.map(item => {
       const metrics = calculateStepMetrics(item.steps);
       return {
         dateStr: item.dateStr,
@@ -260,7 +274,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
 
   // Derive walking duration metrics for each period item
   const timeItems: DayTimeData[] = useMemo(() => {
-    return dateRangeInfo.chartItems.map((item) => {
+    return dateRangeInfo.chartItems.map(item => {
       const metrics = calculateStepMetrics(item.steps);
       return {
         dateStr: item.dateStr,
@@ -316,7 +330,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
   // All-time step metrics across all recorded history
   const allTimeSummary = useMemo(() => {
     let allSteps = 0;
-    Object.values(dailyLogs).forEach((log) => {
+    Object.values(dailyLogs).forEach(log => {
       allSteps += log?.steps ?? 0;
     });
     const metrics = calculateStepMetrics(allSteps);
@@ -333,142 +347,133 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
       <View style={styles.mobileContainer}>
         {/* 1. Top Navigation Header */}
         <View style={styles.headerRow}>
-        <Pressable
-          style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
-          onPress={onBack}
-          hitSlop={HIT_SLOP_10}
-          accessibilityRole="button"
-          accessibilityLabel="Back to Step History"
+          <Pressable
+            style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
+            onPress={onBack}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Back to Step History"
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+          </Pressable>
+
+          <Text style={styles.headerTitle}>Step Report</Text>
+
+          <Pressable
+            style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
+            onPress={() => {}}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Report Options"
+          >
+            <Ionicons name="ellipsis-vertical" size={18} color={Colors.iconNavy} />
+          </Pressable>
+        </View>
+
+        {/* 2. Scrollable Body Content */}
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 16 },
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>Step Report</Text>
-
-        <Pressable
-          style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
-          onPress={() => {}}
-          hitSlop={HIT_SLOP_10}
-          accessibilityRole="button"
-          accessibilityLabel="Report Options"
-        >
-          <Ionicons name="ellipsis-vertical" size={18} color={Colors.iconNavy} />
-        </Pressable>
-      </View>
-
-      {/* 2. Scrollable Body Content */}
-      <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom, 24) + 16 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 1. Timeframe Segmented Tabs (Weekly | Monthly | Yearly) - Placed at the top matching other report screens */}
-        <View style={styles.timeframeSegmentContainer}>
-          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
-            const isActive = timeframe === tab;
-            const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
-            return (
-              <Pressable
-                key={tab}
-                style={[
-                  styles.timeframeTab,
-                  isActive && styles.timeframeTabActive,
-                ]}
-                onPress={() => handleChangeTimeframe(tab)}
-                accessibilityRole="button"
-                accessibilityLabel={`${displayLabel} timeframe`}
-              >
-                <Text
-                  style={[
-                    styles.timeframeTabText,
-                    isActive && styles.timeframeTabTextActive,
-                  ]}
+          {/* 1. Timeframe Segmented Tabs (Weekly | Monthly | Yearly) - Placed at the top matching other report screens */}
+          <View style={styles.timeframeSegmentContainer}>
+            {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
+              const isActive = timeframe === tab;
+              const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
+              return (
+                <Pressable
+                  key={tab}
+                  style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
+                  onPress={() => handleChangeTimeframe(tab)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${displayLabel} timeframe`}
                 >
-                  {displayLabel}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}
+                  >
+                    {displayLabel}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        {/* 2. Date Range Navigator (< Sep 28 – Oct 4, 2026 >) */}
-        <View style={styles.dateNavRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.dateNavArrowBtn,
-              pressed && styles.btnPressed,
-            ]}
-            onPress={handlePrevPeriod}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel="Previous period"
-          >
-            <Ionicons name="chevron-back" size={18} color="#64748B" />
-          </Pressable>
+          {/* 2. Date Range Navigator (< Sep 28 – Oct 4, 2026 >) */}
+          <View style={styles.dateNavRow}>
+            <Pressable
+              style={({ pressed }) => [styles.dateNavArrowBtn, pressed && styles.btnPressed]}
+              onPress={handlePrevPeriod}
+              hitSlop={HIT_SLOP_10}
+              accessibilityRole="button"
+              accessibilityLabel="Previous period"
+            >
+              <Ionicons name="chevron-back" size={18} color="#64748B" />
+            </Pressable>
 
-          <Text style={styles.dateRangeText}>{dateRangeInfo.label}</Text>
+            <Text style={styles.dateRangeText}>{dateRangeInfo.label}</Text>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.dateNavArrowBtn,
-              !dateRangeInfo.canGoForward && styles.dateNavArrowDisabled,
-              pressed && dateRangeInfo.canGoForward && styles.btnPressed,
-            ]}
-            onPress={handleNextPeriod}
-            disabled={!dateRangeInfo.canGoForward}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel="Next period"
-          >
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={dateRangeInfo.canGoForward ? '#64748B' : '#CBD5E1'}
-            />
-          </Pressable>
-        </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.dateNavArrowBtn,
+                !dateRangeInfo.canGoForward && styles.dateNavArrowDisabled,
+                pressed && dateRangeInfo.canGoForward && styles.btnPressed,
+              ]}
+              onPress={handleNextPeriod}
+              disabled={!dateRangeInfo.canGoForward}
+              hitSlop={HIT_SLOP_10}
+              accessibilityRole="button"
+              accessibilityLabel="Next period"
+            >
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={dateRangeInfo.canGoForward ? '#64748B' : '#CBD5E1'}
+              />
+            </Pressable>
+          </View>
 
-        {/* 3. All-Time Summary Card */}
-        <StepTotalSummaryCard
-          totalSteps={allTimeSummary.totalSteps}
-          totalDurationMinutes={allTimeSummary.totalDurationMinutes}
-          totalCalories={allTimeSummary.totalCalories}
-          totalDistanceKm={allTimeSummary.totalDistanceKm}
-        />
+          {/* 3. All-Time Summary Card */}
+          <StepTotalSummaryCard
+            totalSteps={allTimeSummary.totalSteps}
+            totalDurationMinutes={allTimeSummary.totalDurationMinutes}
+            totalCalories={allTimeSummary.totalCalories}
+            totalDistanceKm={allTimeSummary.totalDistanceKm}
+          />
 
-        {/* 4. Chart 1: Step Completion Bar & Line Chart Card */}
-        <StepCompletionCard
-          days={dateRangeInfo.chartItems}
-          selectedIndex={safeStepIndex}
-          onSelectDay={setSelectedStepIndex}
-          stepGoal={dailyStepGoal}
-          activeColor="#F97316"
-          defaultChartType="bar"
-        />
+          {/* 4. Chart 1: Step Completion Bar & Line Chart Card */}
+          <StepCompletionCard
+            days={dateRangeInfo.chartItems}
+            selectedIndex={safeStepIndex}
+            onSelectDay={setSelectedStepIndex}
+            stepGoal={dailyStepGoal}
+            activeColor="#F97316"
+            defaultChartType="bar"
+          />
 
-        {/* 5. Chart 2: Active Calorie Burn Trend Card */}
-        <StepCalorieBurnCard
-          days={calorieItems}
-          selectedIndex={safeCalorieIndex}
-          onSelectDay={setSelectedCalorieIndex}
-          activeColor="#EA580C"
-          defaultChartType="bar"
-          periodDailyAvgCalories={periodSummary.avgCalories}
-        />
+          {/* 5. Chart 2: Active Calorie Burn Trend Card */}
+          <StepCalorieBurnCard
+            days={calorieItems}
+            selectedIndex={safeCalorieIndex}
+            onSelectDay={setSelectedCalorieIndex}
+            activeColor="#EA580C"
+            defaultChartType="bar"
+            periodDailyAvgCalories={periodSummary.avgCalories}
+          />
 
-        {/* 6. Chart 3: Active Walking Time Trend Card */}
-        <StepTimeDurationCard
-          days={timeItems}
-          selectedIndex={safeTimeIndex}
-          onSelectDay={setSelectedTimeIndex}
-          activeColor="#F97316"
-          defaultChartType="bar"
-          periodDailyAvgMinutes={periodDailyAvgDurationMinutes}
-        />
-      </ScrollView>
+          {/* 6. Chart 3: Active Walking Time Trend Card */}
+          <StepTimeDurationCard
+            days={timeItems}
+            selectedIndex={safeTimeIndex}
+            onSelectDay={setSelectedTimeIndex}
+            activeColor="#F97316"
+            defaultChartType="bar"
+            periodDailyAvgMinutes={periodDailyAvgDurationMinutes}
+          />
+        </ScrollView>
       </View>
     </View>
   );

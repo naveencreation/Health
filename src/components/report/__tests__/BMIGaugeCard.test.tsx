@@ -66,7 +66,7 @@ describe('BMIGaugeCard', () => {
       expect(getByText('22.9')).toBeTruthy();
 
       // All 8 categories are rendered in the classification table
-      BMI_CATEGORIES.forEach((cat) => {
+      BMI_CATEGORIES.forEach(cat => {
         expect(getByText(cat.rangeLabel)).toBeTruthy();
       });
     });

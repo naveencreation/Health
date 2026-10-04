@@ -14,7 +14,9 @@ describe('<MarkdownText />', () => {
   });
 
   test('matches snapshot', async () => {
-    const tree = (await render(<MarkdownText content={'# Title\n\nSome **bold** text'} />)).toJSON();
+    const tree = (
+      await render(<MarkdownText content={'# Title\n\nSome **bold** text'} />)
+    ).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

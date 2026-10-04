@@ -42,7 +42,13 @@ const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const getWorkoutIcon = (name: string): string => {
   const lower = name.toLowerCase();
   if (lower.includes('walk')) return '🚶';
-  if (lower.includes('gym') || lower.includes('weight') || lower.includes('lift') || lower.includes('strength')) return '🏋️';
+  if (
+    lower.includes('gym') ||
+    lower.includes('weight') ||
+    lower.includes('lift') ||
+    lower.includes('strength')
+  )
+    return '🏋️';
   if (lower.includes('run') || lower.includes('jog') || lower.includes('sprint')) return '🏃';
   if (lower.includes('yoga') || lower.includes('stretch') || lower.includes('pilates')) return '🧘';
   if (lower.includes('cycl') || lower.includes('bike') || lower.includes('spin')) return '🚴';
@@ -157,27 +163,33 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
     setCustomDuration(String(act.durationMinutes));
     setCustomCalories(String(act.caloriesBurned));
     const matchingPreset = QUICK_WORKOUTS.find(
-      (p) => p.name.toLowerCase() === act.name.toLowerCase()
+      p => p.name.toLowerCase() === act.name.toLowerCase()
     );
     setActivePresetCpm(matchingPreset ? matchingPreset.cpm : 5.0);
     setWorkoutModalVisible(true);
   }, []);
 
-  const handleSelectQuickWorkout = useCallback((item: typeof QUICK_WORKOUTS[number]) => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    addWorkout(item.name, item.mins, item.cals);
-    setWorkoutModalVisible(false);
-  }, [addWorkout]);
+  const handleSelectQuickWorkout = useCallback(
+    (item: (typeof QUICK_WORKOUTS)[number]) => {
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+      addWorkout(item.name, item.mins, item.cals);
+      setWorkoutModalVisible(false);
+    },
+    [addWorkout]
+  );
 
   // Proportional calorie calculation when duration changes
-  const handleDurationChange = useCallback((text: string) => {
-    setCustomDuration(text);
-    const parsedMins = parseInt(text, 10);
-    if (!isNaN(parsedMins) && parsedMins > 0) {
-      const autoCal = Math.round(parsedMins * activePresetCpm);
-      setCustomCalories(String(autoCal));
-    }
-  }, [activePresetCpm]);
+  const handleDurationChange = useCallback(
+    (text: string) => {
+      setCustomDuration(text);
+      const parsedMins = parseInt(text, 10);
+      if (!isNaN(parsedMins) && parsedMins > 0) {
+        const autoCal = Math.round(parsedMins * activePresetCpm);
+        setCustomCalories(String(autoCal));
+      }
+    },
+    [activePresetCpm]
+  );
 
   const handleSaveWorkout = useCallback(() => {
     if (!customName.trim()) return;
@@ -196,10 +208,13 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
     setWorkoutModalVisible(false);
   }, [customName, customDuration, customCalories, editingActivityId, removeWorkout, addWorkout]);
 
-  const handleRemoveWorkout = useCallback((id: string) => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-    removeWorkout(id);
-  }, [removeWorkout]);
+  const handleRemoveWorkout = useCallback(
+    (id: string) => {
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+      removeWorkout(id);
+    },
+    [removeWorkout]
+  );
 
   const hasActivities = activities.length > 0;
 
@@ -219,7 +234,12 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
               <Ionicons name="footsteps-outline" size={14} color={Colors.steps} />
             </View>
             <Text style={styles.title}>Movement</Text>
-            <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
+            <Ionicons
+              name="chevron-forward"
+              size={14}
+              color="#94A3B8"
+              style={styles.titleChevron}
+            />
           </View>
 
           <View style={styles.mainStatRow}>
@@ -233,10 +253,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
 
         {/* Right Action: Soft-Tinted + Workout Pill Button */}
         <Pressable
-          style={({ pressed }) => [
-            styles.workoutButton,
-            pressed && styles.workoutButtonPressed,
-          ]}
+          style={({ pressed }) => [styles.workoutButton, pressed && styles.workoutButtonPressed]}
           onPress={handleOpenAddWorkoutModal}
           accessibilityRole="button"
           accessibilityLabel="Log workout"
@@ -284,18 +301,11 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
             accessibilityLabel="Decrease steps by 1,000"
             hitSlop={HIT_SLOP_8}
           >
-            <Feather
-              name="minus"
-              size={15}
-              color={steps <= 0 ? '#CBD5E1' : Colors.steps}
-            />
+            <Feather name="minus" size={15} color={steps <= 0 ? '#CBD5E1' : Colors.steps} />
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.stepAddBtn,
-              pressed && styles.stepperPressed,
-            ]}
+            style={({ pressed }) => [styles.stepAddBtn, pressed && styles.stepperPressed]}
             onPress={handlePlusSteps}
             accessibilityRole="button"
             accessibilityLabel="Add 1,000 steps"
@@ -312,14 +322,12 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
         <View style={styles.activitiesSection}>
           <View style={styles.activitiesHeaderRow}>
             <Text style={styles.activitiesSectionTitle}>
-              Today's Workouts ({activities.length})
+              {"Today's Workouts"} ({activities.length})
             </Text>
-            <Text style={styles.activitiesTotalBurn}>
-              +{workoutBurnKcal} kcal total
-            </Text>
+            <Text style={styles.activitiesTotalBurn}>+{workoutBurnKcal} kcal total</Text>
           </View>
 
-          {activities.map((act) => {
+          {activities.map(act => {
             const timeStr = formatActivityTime(act.loggedAt);
             return (
               <View key={act.id} style={styles.activityChip}>
@@ -395,7 +403,9 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
                   accessibilityLabel={`Log ${item.name} workout`}
                 >
                   <Ionicons name={item.icon} size={20} color={Colors.steps} />
-                  <Text style={styles.quickName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.quickName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
                   <Text style={styles.quickMeta}>
                     {item.mins}m • {item.cals} kcal
                   </Text>

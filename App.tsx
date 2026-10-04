@@ -21,9 +21,6 @@ import { MealType } from '@/types';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
 
-
-
-
 // Structured Screens
 import {
   WelcomeScreen,
@@ -85,7 +82,6 @@ function MainApp() {
       }).catch(() => {});
     }
   }, [isAuthenticated, userGoals.streakDays]);
-
 
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);
@@ -176,7 +172,8 @@ function MainApp() {
         const fontLink = document.createElement('link');
         fontLink.id = linkId;
         fontLink.rel = 'stylesheet';
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap';
+        fontLink.href =
+          'https://fonts.googleapis.com/css2?family=Kurale&family=Poppins:wght@400;500;600;700&family=Urbanist:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap';
         document.head.appendChild(fontLink);
       }
 
@@ -323,35 +320,57 @@ function MainApp() {
     handleOpenFoodLogger(slot);
   }, [handleOpenFoodLogger]);
 
-  const handleTabChange = React.useCallback((tab: TabType) => {
-    if (waterTrackerVisible) {
-      handleCloseWaterTracker();
-    }
-    if (weightTrackerVisible) {
-      handleCloseWeightTracker();
-    }
-    if (stepTrackerVisible) {
-      handleCloseStepTracker();
-    }
-    if (tab === 'today' && activeTabRef.current === 'today') {
-      todayScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
-      trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'analytics' && activeTabRef.current === 'analytics') {
-      analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (tab === 'profile' && activeTabRef.current === 'profile') {
-      profileScrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-    setActiveTab(tab);
-  }, [waterTrackerVisible, handleCloseWaterTracker, weightTrackerVisible, handleCloseWeightTracker, stepTrackerVisible, handleCloseStepTracker]);
+  const handleTabChange = React.useCallback(
+    (tab: TabType) => {
+      if (waterTrackerVisible) {
+        handleCloseWaterTracker();
+      }
+      if (weightTrackerVisible) {
+        handleCloseWeightTracker();
+      }
+      if (stepTrackerVisible) {
+        handleCloseStepTracker();
+      }
+      if (tab === 'today' && activeTabRef.current === 'today') {
+        todayScrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
+        trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else if (tab === 'analytics' && activeTabRef.current === 'analytics') {
+        analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
+      } else if (tab === 'profile' && activeTabRef.current === 'profile') {
+        profileScrollRef.current?.scrollTo({ y: 0, animated: true });
+      }
+      setActiveTab(tab);
+    },
+    [
+      waterTrackerVisible,
+      handleCloseWaterTracker,
+      weightTrackerVisible,
+      handleCloseWeightTracker,
+      stepTrackerVisible,
+      handleCloseStepTracker,
+    ]
+  );
 
   const saveScrollOffset = React.useCallback((tab: TabType, offset: number) => {
     scrollOffsetsRef.current[tab] = Math.max(0, offset);
   }, []);
-  const saveTodayScrollOffset = React.useCallback((offset: number) => saveScrollOffset('today', offset), [saveScrollOffset]);
-  const saveTrackerScrollOffset = React.useCallback((offset: number) => saveScrollOffset('tracker', offset), [saveScrollOffset]);
-  const saveAnalyticsScrollOffset = React.useCallback((offset: number) => saveScrollOffset('analytics', offset), [saveScrollOffset]);
-  const saveProfileScrollOffset = React.useCallback((offset: number) => saveScrollOffset('profile', offset), [saveScrollOffset]);
+  const saveTodayScrollOffset = React.useCallback(
+    (offset: number) => saveScrollOffset('today', offset),
+    [saveScrollOffset]
+  );
+  const saveTrackerScrollOffset = React.useCallback(
+    (offset: number) => saveScrollOffset('tracker', offset),
+    [saveScrollOffset]
+  );
+  const saveAnalyticsScrollOffset = React.useCallback(
+    (offset: number) => saveScrollOffset('analytics', offset),
+    [saveScrollOffset]
+  );
+  const saveProfileScrollOffset = React.useCallback(
+    (offset: number) => saveScrollOffset('profile', offset),
+    [saveScrollOffset]
+  );
 
   // Refs for modal states so BackHandler subscription does not re-register on every toggle
   const modalStatesRef = useRef({
@@ -400,17 +419,50 @@ function MainApp() {
   useEffect(() => {
     const onHardwareBackPress = () => {
       const ms = modalStatesRef.current;
-      if (ms.waterTrackerVisible) { handleCloseWaterTracker(); return true; }
-      if (ms.weightTrackerVisible) { handleCloseWeightTracker(); return true; }
-      if (ms.stepTrackerVisible) { handleCloseStepTracker(); return true; }
-      if (ms.foodModalVisible) { setFoodModalVisible(false); return true; }
-      if (ms.foodVisionVisible) { setFoodVisionVisible(false); return true; }
-      if (ms.byokSetupVisible) { setByokSetupVisible(false); return true; }
-      if (ms.notificationsVisible) { setNotificationsVisible(false); return true; }
-      if (ms.avatarModalVisible) { setAvatarModalVisible(false); return true; }
-      if (ms.riaChatVisible) { setRiaChatVisible(false); return true; }
-      if (ms.authModalVisible) { setAuthModalVisible(false); return true; }
-      if (ms.signOutModalVisible) { setSignOutModalVisible(false); return true; }
+      if (ms.waterTrackerVisible) {
+        handleCloseWaterTracker();
+        return true;
+      }
+      if (ms.weightTrackerVisible) {
+        handleCloseWeightTracker();
+        return true;
+      }
+      if (ms.stepTrackerVisible) {
+        handleCloseStepTracker();
+        return true;
+      }
+      if (ms.foodModalVisible) {
+        setFoodModalVisible(false);
+        return true;
+      }
+      if (ms.foodVisionVisible) {
+        setFoodVisionVisible(false);
+        return true;
+      }
+      if (ms.byokSetupVisible) {
+        setByokSetupVisible(false);
+        return true;
+      }
+      if (ms.notificationsVisible) {
+        setNotificationsVisible(false);
+        return true;
+      }
+      if (ms.avatarModalVisible) {
+        setAvatarModalVisible(false);
+        return true;
+      }
+      if (ms.riaChatVisible) {
+        setRiaChatVisible(false);
+        return true;
+      }
+      if (ms.authModalVisible) {
+        setAuthModalVisible(false);
+        return true;
+      }
+      if (ms.signOutModalVisible) {
+        setSignOutModalVisible(false);
+        return true;
+      }
 
       if (activeTabRef.current !== 'today') {
         setActiveTab('today');
@@ -450,7 +502,10 @@ function MainApp() {
   const handleCloseNotifications = React.useCallback(() => setNotificationsVisible(false), []);
   const handleOpenAvatarModal = React.useCallback(() => setAvatarModalVisible(true), []);
   const handleCloseAvatarModal = React.useCallback(() => setAvatarModalVisible(false), []);
-  const handleSelectAvatar = React.useCallback((newUrl: string) => updateGoals({ avatarUrl: newUrl }), [updateGoals]);
+  const handleSelectAvatar = React.useCallback(
+    (newUrl: string) => updateGoals({ avatarUrl: newUrl }),
+    [updateGoals]
+  );
   const handleOpenFoodVision = React.useCallback(() => setFoodVisionVisible(true), []);
   const handleCloseFoodVision = React.useCallback(() => setFoodVisionVisible(false), []);
   const handleOpenBYOKSetup = React.useCallback(() => setByokSetupVisible(true), []);
@@ -493,7 +548,7 @@ function MainApp() {
 
   useEffect(() => {
     if (isAppReady && isOverlayMounted) {
-      loaderOpacity.value = withTiming(0, { duration: 300 }, (finished) => {
+      loaderOpacity.value = withTiming(0, { duration: 300 }, finished => {
         if (finished) {
           runOnJS(setIsOverlayMounted)(false);
         }
@@ -517,98 +572,98 @@ function MainApp() {
       <View style={styles.phoneContainer}>
         {/* Main tabs wrapped with top safe area; bottom handled by BottomNavBar */}
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        {/* Only the active tab is mounted; scroll offsets are retained in refs. */}
-        <View style={styles.contentArea}>
-          {activeTab === 'today' && (
-            <TodayScreen
-              scrollRef={todayScrollRef}
-              initialScrollOffset={scrollOffsetsRef.current.today}
-              onScrollPositionChange={saveTodayScrollOffset}
-              onAddFood={handleOpenFoodLogger}
-              onOpenRiaChat={handleOpenRiaChat}
-              onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={handleOpenNotifications}
-              onAvatarPress={handleOpenAvatarModal}
-              onSignInPress={handleOpenSignIn}
-              onSignOutPress={handleSignOutPress}
-            />
-          )}
+          {/* Only the active tab is mounted; scroll offsets are retained in refs. */}
+          <View style={styles.contentArea}>
+            {activeTab === 'today' && (
+              <TodayScreen
+                scrollRef={todayScrollRef}
+                initialScrollOffset={scrollOffsetsRef.current.today}
+                onScrollPositionChange={saveTodayScrollOffset}
+                onAddFood={handleOpenFoodLogger}
+                onOpenRiaChat={handleOpenRiaChat}
+                onSearchPress={handleGlobalSearchPress}
+                onNotificationsPress={handleOpenNotifications}
+                onAvatarPress={handleOpenAvatarModal}
+                onSignInPress={handleOpenSignIn}
+                onSignOutPress={handleSignOutPress}
+              />
+            )}
 
-          {activeTab === 'tracker' && (
-            <TrackerScreen
-              scrollRef={trackerScrollRef}
-              initialScrollOffset={scrollOffsetsRef.current.tracker}
-              onScrollPositionChange={saveTrackerScrollOffset}
-              onOpenRiaChat={handleOpenRiaChat}
-              onOpenWaterTracker={handleOpenWaterTracker}
-              onOpenWeightTracker={handleOpenWeightTracker}
-              onOpenStepTracker={handleOpenStepTracker}
-              onSearchPress={handleGlobalSearchPress}
-              onNotificationsPress={handleOpenNotifications}
-            />
-          )}
+            {activeTab === 'tracker' && (
+              <TrackerScreen
+                scrollRef={trackerScrollRef}
+                initialScrollOffset={scrollOffsetsRef.current.tracker}
+                onScrollPositionChange={saveTrackerScrollOffset}
+                onOpenRiaChat={handleOpenRiaChat}
+                onOpenWaterTracker={handleOpenWaterTracker}
+                onOpenWeightTracker={handleOpenWeightTracker}
+                onOpenStepTracker={handleOpenStepTracker}
+                onSearchPress={handleGlobalSearchPress}
+                onNotificationsPress={handleOpenNotifications}
+              />
+            )}
 
-          {activeTab === 'analytics' && (
-            <AnalyticsScreen
-              scrollRef={analyticsScrollRef}
-              initialScrollOffset={scrollOffsetsRef.current.analytics}
-              onScrollPositionChange={saveAnalyticsScrollOffset}
-            />
-          )}
+            {activeTab === 'analytics' && (
+              <AnalyticsScreen
+                scrollRef={analyticsScrollRef}
+                initialScrollOffset={scrollOffsetsRef.current.analytics}
+                onScrollPositionChange={saveAnalyticsScrollOffset}
+              />
+            )}
 
-          {activeTab === 'profile' && (
-            <ProfileScreen
-              scrollRef={profileScrollRef}
-              initialScrollOffset={scrollOffsetsRef.current.profile}
-              onScrollPositionChange={saveProfileScrollOffset}
-              onSignIn={handleOpenSignIn}
-              onSignOut={handleSignOutCompleted}
-            />
-          )}
+            {activeTab === 'profile' && (
+              <ProfileScreen
+                scrollRef={profileScrollRef}
+                initialScrollOffset={scrollOffsetsRef.current.profile}
+                onScrollPositionChange={saveProfileScrollOffset}
+                onSignIn={handleOpenSignIn}
+                onSignOut={handleSignOutCompleted}
+              />
+            )}
 
-          {/* Slide-In Water Tracker Sub-Screen (Mounted within contentArea so BottomNavBar remains visible) */}
-          {waterTrackerVisible && (
-            <SlideInSubScreen
-              screenWidth={Math.min(screenWidth, 480)}
-              isClosing={isClosingWaterTracker}
-              onClosed={handleWaterTrackerClosed}
-              zIndex={200}
-            >
-              <WaterTrackerScreen onBack={handleCloseWaterTracker} />
-            </SlideInSubScreen>
-          )}
+            {/* Slide-In Water Tracker Sub-Screen (Mounted within contentArea so BottomNavBar remains visible) */}
+            {waterTrackerVisible && (
+              <SlideInSubScreen
+                screenWidth={Math.min(screenWidth, 480)}
+                isClosing={isClosingWaterTracker}
+                onClosed={handleWaterTrackerClosed}
+                zIndex={200}
+              >
+                <WaterTrackerScreen onBack={handleCloseWaterTracker} />
+              </SlideInSubScreen>
+            )}
 
-          {/* Slide-In Weight Tracker Sub-Screen */}
-          {weightTrackerVisible && (
-            <SlideInSubScreen
-              screenWidth={Math.min(screenWidth, 480)}
-              isClosing={isClosingWeightTracker}
-              onClosed={handleWeightTrackerClosed}
-              zIndex={200}
-            >
-              <WeightTrackerScreen onBack={handleCloseWeightTracker} />
-            </SlideInSubScreen>
-          )}
+            {/* Slide-In Weight Tracker Sub-Screen */}
+            {weightTrackerVisible && (
+              <SlideInSubScreen
+                screenWidth={Math.min(screenWidth, 480)}
+                isClosing={isClosingWeightTracker}
+                onClosed={handleWeightTrackerClosed}
+                zIndex={200}
+              >
+                <WeightTrackerScreen onBack={handleCloseWeightTracker} />
+              </SlideInSubScreen>
+            )}
 
-          {/* Slide-In Step Tracker Sub-Screen */}
-          {stepTrackerVisible && (
-            <SlideInSubScreen
-              screenWidth={Math.min(screenWidth, 480)}
-              isClosing={isClosingStepTracker}
-              onClosed={handleStepTrackerClosed}
-              zIndex={200}
-            >
-              <StepTrackerScreen onBack={handleCloseStepTracker} />
-            </SlideInSubScreen>
-          )}
-        </View>
+            {/* Slide-In Step Tracker Sub-Screen */}
+            {stepTrackerVisible && (
+              <SlideInSubScreen
+                screenWidth={Math.min(screenWidth, 480)}
+                isClosing={isClosingStepTracker}
+                onClosed={handleStepTrackerClosed}
+                zIndex={200}
+              >
+                <StepTrackerScreen onBack={handleCloseStepTracker} />
+              </SlideInSubScreen>
+            )}
+          </View>
 
-        {/* Bottom Navigation */}
-        <BottomNavBar
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onOpenFoodVision={handleOpenFoodVision}
-        />
+          {/* Bottom Navigation */}
+          <BottomNavBar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            onOpenFoodVision={handleOpenFoodVision}
+          />
         </SafeAreaView>
 
         {/* Food Logging Modal */}
@@ -628,16 +683,10 @@ function MainApp() {
         />
 
         {/* Global BYOK Setup Modal */}
-        <BYOKSetupModal
-          visible={byokSetupVisible}
-          onClose={handleCloseBYOKSetup}
-        />
+        <BYOKSetupModal visible={byokSetupVisible} onClose={handleCloseBYOKSetup} />
 
         {/* Notification Center Modal */}
-        <NotificationModal
-          visible={notificationsVisible}
-          onClose={handleCloseNotifications}
-        />
+        <NotificationModal visible={notificationsVisible} onClose={handleCloseNotifications} />
 
         {/* Avatar Picker Modal */}
         <AvatarPickerModal
@@ -666,7 +715,6 @@ function MainApp() {
           onConfirm={handleConfirmSignOut}
           onCancel={() => setSignOutModalVisible(false)}
         />
-
       </View>
     );
   };

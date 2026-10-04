@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -29,13 +22,33 @@ export interface WeightReportScreenProps {
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const FULL_MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }) => {
@@ -98,8 +111,8 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
           log && typeof log.weightKg === 'number' && log.weightKg > 0
             ? log.weightKg
             : log?.weightEntries && log.weightEntries.length > 0
-            ? log.weightEntries[0].weightKg
-            : null;
+              ? log.weightEntries[0].weightKg
+              : null;
         const displayWeight = rawWeightKg !== null ? rawWeightKg * unitFactor : null;
 
         trendItems.push({
@@ -156,8 +169,8 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
             log && typeof log.weightKg === 'number' && log.weightKg > 0
               ? log.weightKg
               : log?.weightEntries && log.weightEntries.length > 0
-              ? log.weightEntries[0].weightKg
-              : null;
+                ? log.weightEntries[0].weightKg
+                : null;
           if (rawWeight !== null) {
             sumKg += rawWeight;
             count += 1;
@@ -206,8 +219,8 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
           log && typeof log.weightKg === 'number' && log.weightKg > 0
             ? log.weightKg
             : log?.weightEntries && log.weightEntries.length > 0
-            ? log.weightEntries[0].weightKg
-            : null;
+              ? log.weightEntries[0].weightKg
+              : null;
         if (rawWeight !== null) {
           sumKg += rawWeight;
           count += 1;
@@ -247,19 +260,19 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
   };
 
   const handlePrevPeriod = () => {
-    setPeriodOffset((prev) => prev - 1);
+    setPeriodOffset(prev => prev - 1);
   };
 
   const handleNextPeriod = () => {
     if (dateRangeInfo.canGoForward) {
-      setPeriodOffset((prev) => prev + 1);
+      setPeriodOffset(prev => prev + 1);
     }
   };
 
   // Compute Period Overview Summary Data
   const periodSummaryData: WeightSummaryData = useMemo(() => {
     const validWeights: number[] = [];
-    dateRangeInfo.trendItems.forEach((item) => {
+    dateRangeInfo.trendItems.forEach(item => {
       if (item.weightKg !== null && item.weightKg > 0) {
         validWeights.push(item.weightKg);
       }
@@ -323,26 +336,18 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
       >
         {/* 2. Timeframe Segment Tabs (Weekly | Monthly | Yearly) */}
         <View style={styles.timeframeSegmentContainer}>
-          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
+          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
             const isActive = timeframe === tab;
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
                 key={tab}
-                style={[
-                  styles.timeframeTab,
-                  isActive && styles.timeframeTabActive,
-                ]}
+                style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
                 accessibilityLabel={`${displayLabel} timeframe`}
               >
-                <Text
-                  style={[
-                    styles.timeframeTabText,
-                    isActive && styles.timeframeTabTextActive,
-                  ]}
-                >
+                <Text style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}>
                   {displayLabel}
                 </Text>
               </Pressable>
@@ -353,10 +358,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
         {/* 3. Date Range Navigator (< Dec 16 - Dec 22, 2024 >) */}
         <View style={styles.dateNavRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.dateNavArrowBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.dateNavArrowBtn, pressed && styles.btnPressed]}
             onPress={handlePrevPeriod}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -388,10 +390,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
         </View>
 
         {/* 4. Period Overview Summary Card */}
-        <WeightSummaryCard
-          data={periodSummaryData}
-          activeColor={Colors.weight}
-        />
+        <WeightSummaryCard data={periodSummaryData} activeColor={Colors.weight} />
 
         {/* 5. Hero Weight Trend Card (Dual Line ⇄ Bar with Goal Reference Line) */}
         <WeightTrendCard

@@ -1,15 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  interpolate,
-  SharedValue,
-} from 'react-native-reanimated';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -28,7 +19,20 @@ interface HeaderProps {
 }
 
 const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SHORT_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const toDateString = (date: Date): string => {
   const y = date.getFullYear();
@@ -61,11 +65,17 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     if (!selectedDate) return 'Today';
     const parts = selectedDate.split('-');
     if (parts.length === 3) {
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const d = new Date(
+        parseInt(parts[0], 10),
+        parseInt(parts[1], 10) - 1,
+        parseInt(parts[2], 10)
+      );
       const dayName = SHORT_DAY_NAMES[d.getDay()];
       const monthName = SHORT_MONTHS[d.getMonth()];
       const dayNum = d.getDate();
-      return isViewingToday ? `Today • ${dayNum} ${monthName}` : `${dayName}, ${dayNum} ${monthName}`;
+      return isViewingToday
+        ? `Today • ${dayNum} ${monthName}`
+        : `${dayName}, ${dayNum} ${monthName}`;
     }
     return selectedDate;
   }, [selectedDate, isViewingToday]);
@@ -80,12 +90,16 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
   const welcomeStyle = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [0, 25], [1, 0], 'clamp') : 1,
-    transform: [{ translateY: scrollY ? interpolate(scrollY.value, [0, 25], [0, -6], 'clamp') : 0 }],
+    transform: [
+      { translateY: scrollY ? interpolate(scrollY.value, [0, 25], [0, -6], 'clamp') : 0 },
+    ],
   }));
 
   const collapsedStyle = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [20, 45], [0, 1], 'clamp') : 0,
-    transform: [{ translateY: scrollY ? interpolate(scrollY.value, [20, 45], [6, 0], 'clamp') : 0 }],
+    transform: [
+      { translateY: scrollY ? interpolate(scrollY.value, [20, 45], [6, 0], 'clamp') : 0 },
+    ],
   }));
 
   return (
@@ -104,10 +118,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Open profile"
             >
-              <UserAvatar
-                avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
-                size={51}
-              />
+              <UserAvatar avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL} size={51} />
             </Pressable>
           </Animated.View>
 
@@ -130,7 +141,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 ) : null}
               </View>
               <Text style={styles.userNameText} numberOfLines={1}>
-                {currentUser?.isGuest ? 'Guest Explorer' : (currentUser?.name || userGoals.name || 'User')}
+                {currentUser?.isGuest
+                  ? 'Guest Explorer'
+                  : currentUser?.name || userGoals.name || 'User'}
               </Text>
             </Animated.View>
 
@@ -214,10 +227,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
       {/* Guest Banner if exploring without registered account */}
       {currentUser?.isGuest && onSignInPress ? (
         <Pressable
-          style={({ pressed }) => [
-            styles.guestBanner,
-            pressed ? styles.guestBannerPressed : null,
-          ]}
+          style={({ pressed }) => [styles.guestBanner, pressed ? styles.guestBannerPressed : null]}
           onPress={onSignInPress}
           accessibilityRole="button"
           accessibilityLabel="Guest Mode, tap to sign in or create account"

@@ -8,11 +8,7 @@ interface ClinicalBmiGaugeProps {
   heightCm: number | string;
 }
 
-export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
-  bmi,
-  bmiStatus,
-  heightCm,
-}) => {
+export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStatus, heightCm }) => {
   const bmiNum = parseFloat(bmi) || 24.5;
   // Standard scale: 15 to 40
   const minBmi = 15;
@@ -83,12 +79,7 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
         </View>
 
         {/* Dynamic Indicator Thumb */}
-        <View
-          style={[
-            styles.thumbAnchor,
-            { left: `${thumbPercent}%` },
-          ]}
-        >
+        <View style={[styles.thumbAnchor, { left: `${thumbPercent}%` }]}>
           <View style={[styles.thumbOuter, getThumbBorderStyle(bmiStatus.label)]}>
             <View style={[styles.thumbInner, getThumbBgStyle(bmiStatus.label)]} />
           </View>
@@ -109,7 +100,8 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({
       {/* Context info */}
       <View style={styles.contextRow}>
         <Text style={styles.contextText}>
-          Based on height <Text style={styles.boldText}>{heightCm} cm</Text> • Normal range: 18.5 – 24.9
+          Based on height <Text style={styles.boldText}>{heightCm} cm</Text> • Normal range: 18.5 –
+          24.9
         </Text>
       </View>
     </View>

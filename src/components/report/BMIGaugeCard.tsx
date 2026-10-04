@@ -151,11 +151,7 @@ export interface BMIGaugeCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
-  weightKg,
-  heightCm,
-  style,
-}) => {
+export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({ weightKg, heightCm, style }) => {
   // Safe fallbacks matching clinical defaults across the app
   const safeWeight = typeof weightKg === 'number' && weightKg > 0 ? weightKg : 72.5;
   const safeHeight = typeof heightCm === 'number' && heightCm > 0 ? heightCm : 178;
@@ -176,7 +172,7 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
       isReducedMotion.current = enabled;
     });
   }, []);
@@ -281,7 +277,7 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
         {/* Base SVG Canvas: Colored Segments, End Caps, and Inner Ticks */}
         <Svg width={CANVAS_WIDTH} height={CANVAS_HEIGHT} style={styles.svgCanvas}>
           {/* A. 8 WHO Category Colored Segments */}
-          {arcSegments.map((seg) => (
+          {arcSegments.map(seg => (
             <Path
               key={seg.id}
               d={seg.pathD}
@@ -307,7 +303,7 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
           />
 
           {/* C. 17 Concentric Inner Instrument Ticks */}
-          {ticks.map((t) => (
+          {ticks.map(t => (
             <Line
               key={t.id}
               x1={t.x1}
@@ -385,32 +381,21 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({
 
       {/* 6. WHO Classification Table with Active Row Highlight */}
       <View style={styles.categoriesTable}>
-        {BMI_CATEGORIES.map((cat) => {
+        {BMI_CATEGORIES.map(cat => {
           const isActive = cat.id === activeCategory.id;
           return (
-            <View
-              key={cat.id}
-              style={[styles.categoryRow, isActive && styles.categoryRowActive]}
-            >
+            <View key={cat.id} style={[styles.categoryRow, isActive && styles.categoryRowActive]}>
               <View style={styles.categoryLeftCol}>
                 <View style={[styles.colorDot, { backgroundColor: cat.color }]} />
                 <Text
-                  style={[
-                    styles.categoryName,
-                    isActive && styles.categoryTextActive,
-                  ]}
+                  style={[styles.categoryName, isActive && styles.categoryTextActive]}
                   numberOfLines={1}
                 >
                   {cat.name}
                 </Text>
               </View>
 
-              <Text
-                style={[
-                  styles.categoryRange,
-                  isActive && styles.categoryTextActive,
-                ]}
-              >
+              <Text style={[styles.categoryRange, isActive && styles.categoryTextActive]}>
                 {cat.rangeLabel}
               </Text>
             </View>

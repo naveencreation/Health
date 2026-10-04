@@ -2,16 +2,17 @@ export type MealType = 'breakfast' | 'lunch' | 'snacks' | 'dinner';
 
 export interface MacroNutrients {
   calories: number;
-  carbs: number;   // grams
+  carbs: number; // grams
   protein: number; // grams
-  fat: number;     // grams
-  fiber: number;   // grams
+  fat: number; // grams
+  fiber: number; // grams
 }
 
 export interface FoodItem extends MacroNutrients {
   id: string;
   name: string;
-  category: 'breads' | 'curries' | 'south_indian' | 'rice' | 'snacks' | 'beverages' | 'fruits' | 'dairy';
+  category:
+    'breads' | 'curries' | 'south_indian' | 'rice' | 'snacks' | 'beverages' | 'fruits' | 'dairy';
   categoryLabel: string;
   servingUnit: string; // e.g., 'piece', 'katori', 'plate', 'cup', '100g'
   defaultServingSize: number;
@@ -87,10 +88,10 @@ export interface DailyLog {
 export interface UserGoals {
   name: string;
   dailyCalorieBudget: number;
-  targetCarbs: number;    // grams
-  targetProtein: number;  // grams
-  targetFat: number;      // grams
-  targetFiber: number;    // grams
+  targetCarbs: number; // grams
+  targetProtein: number; // grams
+  targetFat: number; // grams
+  targetFiber: number; // grams
   waterGoalMl: number;
   stepGoal: number;
   currentWeightKg: number;
@@ -141,5 +142,3 @@ export interface RegisterData {
   gender?: string;
   heightCm?: number;
 }
-
-

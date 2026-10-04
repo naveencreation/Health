@@ -9,10 +9,7 @@ export interface ProBadgeProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-export const ProBadge: React.FC<ProBadgeProps> = ({
-  onPress,
-  size = 'small',
-}) => {
+export const ProBadge: React.FC<ProBadgeProps> = ({ onPress, size = 'small' }) => {
   const handlePress = async () => {
     await haptics.selection();
     if (onPress) onPress();
@@ -22,25 +19,9 @@ export const ProBadge: React.FC<ProBadgeProps> = ({
   const isLarge = size === 'large';
 
   const badgeContent = (
-    <View
-      style={[
-        styles.badge,
-        isSmall && styles.badgeSmall,
-        isLarge && styles.badgeLarge,
-      ]}
-    >
-      <Ionicons
-        name="star"
-        size={isSmall ? 10 : isLarge ? 16 : 12}
-        color="#FFFFFF"
-      />
-      <Text
-        style={[
-          styles.text,
-          isSmall && styles.textSmall,
-          isLarge && styles.textLarge,
-        ]}
-      >
+    <View style={[styles.badge, isSmall && styles.badgeSmall, isLarge && styles.badgeLarge]}>
+      <Ionicons name="star" size={isSmall ? 10 : isLarge ? 16 : 12} color="#FFFFFF" />
+      <Text style={[styles.text, isSmall && styles.textSmall, isLarge && styles.textLarge]}>
         PRO
       </Text>
     </View>

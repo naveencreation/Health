@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -31,13 +24,33 @@ export interface WaterReportScreenProps {
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const FULL_MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) => {
@@ -94,7 +107,8 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         const dateStr = `${yyyy}-${mm}-${dd}`;
         const log = dailyLogs[dateStr];
         const intakeMl = log?.waterMl ?? 0;
-        const completionPct = dailyWaterGoal > 0 ? Math.round((intakeMl / dailyWaterGoal) * 100) : 0;
+        const completionPct =
+          dailyWaterGoal > 0 ? Math.round((intakeMl / dailyWaterGoal) * 100) : 0;
         return {
           dateStr,
           dayNum: d.getDate(),
@@ -108,7 +122,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
       return {
         label,
         chartItems: days,
-        allDates: days.map((d) => d.dateStr),
+        allDates: days.map(d => d.dateStr),
         canGoForward: periodOffset < 0,
       };
     }
@@ -147,7 +161,8 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
           bucketTotalMl += log?.waterMl ?? 0;
         }
         const avgDailyMl = Math.round(bucketTotalMl / count);
-        const completionPct = dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
+        const completionPct =
+          dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
         return {
           dateStr: `w_${idx + 1}`,
           dayNum: `W${idx + 1}`,
@@ -183,7 +198,8 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         monthTotalMl += log?.waterMl ?? 0;
       }
       const avgDailyMl = Math.round(monthTotalMl / daysInM);
-      const completionPct = dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
+      const completionPct =
+        dailyWaterGoal > 0 ? Math.round((avgDailyMl / dailyWaterGoal) * 100) : 0;
       return {
         dateStr: `m_${m + 1}`,
         dayNum: MONTH_NAMES[m],
@@ -202,10 +218,10 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
     };
   }, [timeframe, periodOffset, dailyLogs, dailyWaterGoal]);
 
-  const handlePrevPeriod = () => setPeriodOffset((prev) => prev - 1);
+  const handlePrevPeriod = () => setPeriodOffset(prev => prev - 1);
   const handleNextPeriod = () => {
     if (dateRangeInfo.canGoForward) {
-      setPeriodOffset((prev) => prev + 1);
+      setPeriodOffset(prev => prev + 1);
     }
   };
 
@@ -219,12 +235,18 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
   };
 
   // Safe selected indices within bounds of current timeframe's items
-  const safeCompIndex = Math.min(selectedDayIndex, Math.max(0, dateRangeInfo.chartItems.length - 1));
-  const safeHydrateIndex = Math.min(selectedHydrateDayIndex, Math.max(0, dateRangeInfo.chartItems.length - 1));
+  const safeCompIndex = Math.min(
+    selectedDayIndex,
+    Math.max(0, dateRangeInfo.chartItems.length - 1)
+  );
+  const safeHydrateIndex = Math.min(
+    selectedHydrateDayIndex,
+    Math.max(0, dateRangeInfo.chartItems.length - 1)
+  );
 
   // Volume data for HydrateVolumeCard
   const volumeData: DayHydrateData[] = useMemo(() => {
-    return dateRangeInfo.chartItems.map((item) => ({
+    return dateRangeInfo.chartItems.map(item => ({
       dateStr: item.dateStr,
       dayNum: item.dayNum,
       dayName: item.dayName,
@@ -235,7 +257,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
   // Average completion % across the period for the donut cutout center
   const periodAvgCompletion = useMemo(() => {
     if (dateRangeInfo.chartItems.length === 0) return 100;
-    const activeItems = dateRangeInfo.chartItems.filter((i) => i.intakeMl > 0);
+    const activeItems = dateRangeInfo.chartItems.filter(i => i.intakeMl > 0);
     if (activeItems.length === 0) return 100;
     const sum = activeItems.reduce((acc, curr) => acc + curr.completionPct, 0);
     return Math.round(sum / activeItems.length);
@@ -246,13 +268,13 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
     const intakeByBev: Record<string, number> = {};
     let totalMl = 0;
 
-    dateRangeInfo.allDates.forEach((dateStr) => {
+    dateRangeInfo.allDates.forEach(dateStr => {
       const log = dailyLogs[dateStr];
       if (!log) return;
 
       const entries = log.waterEntries ?? [];
       if (entries.length > 0) {
-        entries.forEach((entry) => {
+        entries.forEach(entry => {
           const bevId = entry.beverageType || 'water';
           intakeByBev[bevId] = (intakeByBev[bevId] || 0) + (entry.amountMl || 0);
           totalMl += entry.amountMl || 0;
@@ -329,26 +351,18 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
       >
         {/* 2. Timeframe Segmented Tabs (Weekly | Monthly | Yearly) */}
         <View style={styles.timeframeSegmentContainer}>
-          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
+          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
             const isActive = timeframe === tab;
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
                 key={tab}
-                style={[
-                  styles.timeframeTab,
-                  isActive && styles.timeframeTabActive,
-                ]}
+                style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
                 accessibilityLabel={`${displayLabel} timeframe`}
               >
-                <Text
-                  style={[
-                    styles.timeframeTabText,
-                    isActive && styles.timeframeTabTextActive,
-                  ]}
-                >
+                <Text style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}>
                   {displayLabel}
                 </Text>
               </Pressable>
@@ -359,10 +373,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         {/* 3. Date Range Navigator (< Dec 16 - Dec 22, 2024 >) */}
         <View style={styles.dateNavRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.dateNavArrowBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.dateNavArrowBtn, pressed && styles.btnPressed]}
             onPress={handlePrevPeriod}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"

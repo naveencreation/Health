@@ -1,20 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
@@ -71,7 +58,7 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
 
   // Dynamic adaptive Y-axis bounds & ticks
   const { maxY, yTicks } = useMemo(() => {
-    const maxVal = Math.max(0, ...days.map((d) => d.calories));
+    const maxVal = Math.max(0, ...days.map(d => d.calories));
     let ceiling = 400;
     if (maxVal <= 250) ceiling = 300;
     else if (maxVal <= 500) ceiling = 600;
@@ -79,9 +66,14 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
     else ceiling = Math.ceil(maxVal / 200) * 200;
 
     const step = ceiling / 5;
-    const ticks = [ceiling, ceiling - step, ceiling - step * 2, ceiling - step * 3, ceiling - step * 4, 0].map(
-      (v) => Math.round(v)
-    );
+    const ticks = [
+      ceiling,
+      ceiling - step,
+      ceiling - step * 2,
+      ceiling - step * 3,
+      ceiling - step * 4,
+      0,
+    ].map(v => Math.round(v));
     return { maxY: ceiling, yTicks: ticks };
   }, [days]);
 
@@ -108,16 +100,15 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
     return { x, y, val: d.calories };
   });
 
-  const linePath = points.length > 0
-    ? points.reduce(
-        (acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`),
-        ''
-      )
-    : '';
+  const linePath =
+    points.length > 0
+      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+      : '';
 
-  const areaPath = points.length > 0
-    ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
-    : '';
+  const areaPath =
+    points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+      : '';
 
   const selectedPoint = points[selectedIndex];
 
@@ -126,11 +117,7 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
       {/* 1. Header: Title and Chart Type Toggle */}
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Active Calorie Burn</Text>
-        <ChartTypeToggle
-          chartType={chartType}
-          onChange={setChartType}
-          activeColor={activeColor}
-        />
+        <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
 
       {/* 2. Subheader Legend Row: [● Selected]  [--- Daily Avg (X kcal)] */}
@@ -151,9 +138,7 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
               strokeDasharray="4, 3"
             />
           </Svg>
-          <Text style={styles.legendText}>
-            Daily Avg ({avgValue} kcal)
-          </Text>
+          <Text style={styles.legendText}>Daily Avg ({avgValue} kcal)</Text>
         </View>
       </View>
 
@@ -195,9 +180,10 @@ export const StepCalorieBurnCard: React.FC<StepCalorieBurnCardProps> = ({
             <Animated.View entering={FadeIn.duration(180)} style={styles.barColumnsRow}>
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
-                const barHeight = day.calories <= 0
-                  ? 8
-                  : Math.max(12, (Math.min(day.calories, maxY) / maxY) * USABLE_HEIGHT);
+                const barHeight =
+                  day.calories <= 0
+                    ? 8
+                    : Math.max(12, (Math.min(day.calories, maxY) / maxY) * USABLE_HEIGHT);
 
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD + 2);
 

@@ -1,13 +1,5 @@
 import React, { useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, StyleProp, ViewStyle } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { DropletVisualizer, DropletVisualizerRef } from './DropletVisualizer';
 import { useHydration } from '../hooks/useHydration';
@@ -35,15 +27,9 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
 }) => {
   const { currentWaterMl, targetWaterMl, addWater } = useHydration();
 
-  const currentWater =
-    typeof initialWater === 'number'
-      ? initialWater
-      : currentWaterMl;
+  const currentWater = typeof initialWater === 'number' ? initialWater : currentWaterMl;
 
-  const maxWater =
-    typeof propMaxWater === 'number'
-      ? propMaxWater
-      : targetWaterMl;
+  const maxWater = typeof propMaxWater === 'number' ? propMaxWater : targetWaterMl;
 
   const step = propStep ?? DEFAULT_STEP;
   const dropletRef = useRef<DropletVisualizerRef>(null);
@@ -102,11 +88,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Decrease water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather
-            name="minus"
-            size={20}
-            color={currentWater <= 0 ? '#CBD5E1' : '#0EA5E9'}
-          />
+          <Feather name="minus" size={20} color={currentWater <= 0 ? '#CBD5E1' : '#0EA5E9'} />
         </Pressable>
 
         {/* Center Droplet with Outer 3D Halo Contour & Dual Wave Simulation */}
@@ -139,11 +121,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Increase water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather
-            name="plus"
-            size={20}
-            color={currentWater >= maxWater ? '#CBD5E1' : '#0EA5E9'}
-          />
+          <Feather name="plus" size={20} color={currentWater >= maxWater ? '#CBD5E1' : '#0EA5E9'} />
         </Pressable>
       </View>
     </View>
@@ -255,4 +233,3 @@ const styles = StyleSheet.create({
 });
 
 export const WaterTracker = React.memo(WaterTrackerComponent);
-

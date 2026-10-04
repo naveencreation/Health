@@ -130,16 +130,12 @@ const WaterGlassIcon: React.FC<{ size?: number }> = ({ size = 26 }) => {
   );
 };
 
-
 export interface WaterHistoryCardProps {
   onViewAll?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
-export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
-  onViewAll,
-  style,
-}) => {
+export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, style }) => {
   const {
     date,
     currentWaterMl: totalWaterMl,
@@ -222,11 +218,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
     } else if (editingEntry.id === 'legacy_balance') {
       addWater(editVolume - editingEntry.amountMl, editBeverage);
     } else {
-      updateWaterEntry(
-        editingEntry.id,
-        { amountMl: editVolume, beverageType: editBeverage },
-        date
-      );
+      updateWaterEntry(editingEntry.id, { amountMl: editVolume, beverageType: editBeverage }, date);
     }
     setEditingEntry(null);
   };
@@ -314,12 +306,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
 
                 {/* Beverage Name & Timestamp */}
                 <View style={styles.beverageInfo}>
-                  <Text style={styles.beverageName}>
-                    {getBeverageName(entry.beverageType)}
-                  </Text>
-                  <Text style={styles.beverageTime}>
-                    {formatLogTime(entry.loggedAt)}
-                  </Text>
+                  <Text style={styles.beverageName}>{getBeverageName(entry.beverageType)}</Text>
+                  <Text style={styles.beverageTime}>{formatLogTime(entry.loggedAt)}</Text>
                 </View>
 
                 {/* Logged Volume Readout */}
@@ -327,11 +315,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
 
                 {/* 3-Dots Action Trigger */}
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.menuTriggerBtn,
-                    pressed && styles.btnPressed,
-                  ]}
-                  onPress={(e) => handleOpenActionMenu(entry, e)}
+                  style={({ pressed }) => [styles.menuTriggerBtn, pressed && styles.btnPressed]}
+                  onPress={e => handleOpenActionMenu(entry, e)}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
@@ -345,17 +330,15 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
           {/* Footer indicator for remaining records if > 3 */}
           {displayEntries.length > 3 && (
             <Pressable
-              style={({ pressed }) => [
-                styles.moreFooterBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.moreFooterBtn, pressed && styles.btnPressed]}
               onPress={handleViewAllPress}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={`View all ${displayEntries.length} water logs`}
             >
               <Text style={styles.moreFooterText}>
-                +{displayEntries.length - 3} more {displayEntries.length - 3 === 1 ? 'record' : 'records'}
+                +{displayEntries.length - 3} more{' '}
+                {displayEntries.length - 3 === 1 ? 'record' : 'records'}
               </Text>
             </Pressable>
           )}
@@ -380,10 +363,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
         onRequestClose={() => setEditingEntry(null)}
       >
         <View style={styles.editModalOverlay}>
-          <Pressable
-            style={styles.editModalBackdrop}
-            onPress={() => setEditingEntry(null)}
-          />
+          <Pressable style={styles.editModalBackdrop} onPress={() => setEditingEntry(null)} />
           <View style={styles.editModalSheet}>
             <View style={styles.sheetHandle} />
 
@@ -395,10 +375,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                 </Text>
               </View>
               <Pressable
-                style={({ pressed }) => [
-                  styles.editCloseBtn,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.editCloseBtn, pressed && styles.btnPressed]}
                 onPress={() => setEditingEntry(null)}
                 hitSlop={8}
                 accessibilityRole="button"
@@ -411,11 +388,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
             {/* Stepper Volume Editor */}
             <View style={styles.stepperContainer}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.stepperBtn,
-                  pressed && styles.btnPressed,
-                ]}
-                onPress={() => setEditVolume((v) => Math.max(50, v - 50))}
+                style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
+                onPress={() => setEditVolume(v => Math.max(50, v - 50))}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease 50 mL"
               >
@@ -426,11 +400,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                 <Text style={styles.stepperUnitText}>mL</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [
-                  styles.stepperBtn,
-                  pressed && styles.btnPressed,
-                ]}
-                onPress={() => setEditVolume((v) => Math.min(3000, v + 50))}
+                style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
+                onPress={() => setEditVolume(v => Math.min(3000, v + 50))}
                 accessibilityRole="button"
                 accessibilityLabel="Increase 50 mL"
               >
@@ -440,7 +411,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
 
             {/* Quick Presets */}
             <View style={styles.presetChipsRow}>
-              {[150, 250, 300, 400, 500].map((preset) => {
+              {[150, 250, 300, 400, 500].map(preset => {
                 const isActive = editVolume === preset;
                 return (
                   <Pressable
@@ -454,12 +425,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Set to ${preset} mL`}
                   >
-                    <Text
-                      style={[
-                        styles.presetChipText,
-                        isActive && styles.presetChipTextActive,
-                      ]}
-                    >
+                    <Text style={[styles.presetChipText, isActive && styles.presetChipTextActive]}>
                       {preset} mL
                     </Text>
                   </Pressable>
@@ -476,7 +442,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.editBeverageChipsRow}
             >
-              {BEVERAGE_DEFINITIONS.map((bev) => {
+              {BEVERAGE_DEFINITIONS.map(bev => {
                 const isSelected = editBeverage === bev.id;
                 return (
                   <Pressable
@@ -509,10 +475,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
 
             {/* Save Button */}
             <Pressable
-              style={({ pressed }) => [
-                styles.saveEditBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.saveEditBtn, pressed && styles.btnPressed]}
               onPress={handleSaveEdit}
               accessibilityRole="button"
               accessibilityLabel="Save Changes"
@@ -530,14 +493,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
         animationType="fade"
         onRequestClose={() => setEntryToDelete(null)}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setEntryToDelete(null)}
-        >
-          <Pressable
-            style={styles.actionSheetContent}
-            onPress={(e) => e.stopPropagation()}
-          >
+        <Pressable style={styles.modalOverlay} onPress={() => setEntryToDelete(null)}>
+          <Pressable style={styles.actionSheetContent} onPress={e => e.stopPropagation()}>
             <View style={styles.deleteConfirmHeader}>
               <View style={styles.deleteConfirmIconBox}>
                 <Ionicons name="trash-outline" size={24} color="#EF4444" />
@@ -550,10 +507,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
 
             <View style={styles.actionButtonsCol}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.deleteConfirmBtn,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.deleteConfirmBtn, pressed && styles.btnPressed]}
                 onPress={handleConfirmDelete}
                 accessibilityRole="button"
                 accessibilityLabel="Confirm delete entry"
@@ -562,10 +516,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [
-                  styles.cancelBtn,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.cancelBtn, pressed && styles.btnPressed]}
                 onPress={() => setEntryToDelete(null)}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel delete"
@@ -585,10 +536,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
         onRequestClose={() => setIsViewAllModalOpen(false)}
       >
         <View style={styles.viewAllOverlay}>
-          <Pressable
-            style={styles.viewAllBackdrop}
-            onPress={() => setIsViewAllModalOpen(false)}
-          />
+          <Pressable style={styles.viewAllBackdrop} onPress={() => setIsViewAllModalOpen(false)} />
           <View style={styles.viewAllSheet}>
             {/* Sheet Handle */}
             <View style={styles.sheetHandle} />
@@ -633,20 +581,13 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({
                       {renderBeverageIconElement(entry.beverageType, 18)}
                     </View>
                     <View style={styles.beverageInfo}>
-                      <Text style={styles.beverageName}>
-                        {getBeverageName(entry.beverageType)}
-                      </Text>
-                      <Text style={styles.beverageTime}>
-                        {formatLogTime(entry.loggedAt)}
-                      </Text>
+                      <Text style={styles.beverageName}>{getBeverageName(entry.beverageType)}</Text>
+                      <Text style={styles.beverageTime}>{formatLogTime(entry.loggedAt)}</Text>
                     </View>
                     <Text style={styles.beverageAmount}>{entry.amountMl} mL</Text>
                     <Pressable
-                      style={({ pressed }) => [
-                        styles.menuTriggerBtn,
-                        pressed && styles.btnPressed,
-                      ]}
-                      onPress={(e) => handleOpenActionMenu(entry, e)}
+                      style={({ pressed }) => [styles.menuTriggerBtn, pressed && styles.btnPressed]}
+                      onPress={e => handleOpenActionMenu(entry, e)}
                       hitSlop={8}
                     >
                       <Ionicons name="ellipsis-vertical" size={16} color="#64748B" />

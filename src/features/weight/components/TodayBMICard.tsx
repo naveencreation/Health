@@ -23,11 +23,7 @@ import {
   getTodayBMICategory,
 } from '../utils/bmiCalculator';
 
-export {
-  BMICategoryItem,
-  BMI_SPECTRUM_CATEGORIES,
-  getTodayBMICategory,
-};
+export { BMICategoryItem, BMI_SPECTRUM_CATEGORIES, getTodayBMICategory };
 
 const TOTAL_SPAN = 27.0; // 15.0 to 42.0
 const MIN_BMI = 15.0;
@@ -39,10 +35,7 @@ export interface TodayBMICardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
-  onOpenLogModal,
-  style,
-}) => {
+const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({ onOpenLogModal, style }) => {
   const { bmi, bmiCategory: activeCategory } = useWeight();
   const [internalModalVisible, setInternalModalVisible] = useState(false);
   const [barWidth, setBarWidth] = useState<number>(0);
@@ -56,7 +49,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
       isReducedMotion.current = enabled;
     });
   }, []);
@@ -81,12 +74,15 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
     }).start();
   }, [progressRatio, barWidth, pointerAnim]);
 
-  const handleBarLayout = useCallback((e: LayoutChangeEvent) => {
-    const width = e.nativeEvent.layout.width;
-    if (width > 0 && width !== barWidth) {
-      setBarWidth(width);
-    }
-  }, [barWidth]);
+  const handleBarLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const width = e.nativeEvent.layout.width;
+      if (width > 0 && width !== barWidth) {
+        setBarWidth(width);
+      }
+    },
+    [barWidth]
+  );
 
   const handleEditPress = useCallback(() => {
     if (onOpenLogModal) {
@@ -148,10 +144,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({
         <View style={styles.pointerTrack}>
           {barWidth > 0 && (
             <Animated.View
-              style={[
-                styles.pointerWrapper,
-                { transform: [{ translateX: pointerAnim }] },
-              ]}
+              style={[styles.pointerWrapper, { transform: [{ translateX: pointerAnim }] }]}
             >
               <Svg width={14} height={10} viewBox="0 0 14 10">
                 <Path
@@ -290,4 +283,3 @@ const styles = StyleSheet.create({
 });
 
 export const TodayBMICard = React.memo(TodayBMICardComponent);
-

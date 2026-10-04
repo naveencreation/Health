@@ -163,7 +163,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         else setMealSlot('dinner');
       }
 
-      AIService.isKeyConfigured().then((configured) => {
+      AIService.isKeyConfigured().then(configured => {
         setHasKey(configured);
       });
     }
@@ -219,12 +219,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={styles.backdropPressable} onPress={onClose} />
 
@@ -258,7 +253,9 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               </View>
               <Text style={styles.unconfiguredTitle}>Google Gemini Key Required</Text>
               <Text style={styles.unconfiguredDesc}>
-                Calorify uses Google Gemini's advanced multimodal vision to analyze food photos, estimate portion sizes, and calculate calories instantly. Connect your free personal API key to unlock AI features.
+                {
+                  "Calorify uses Google Gemini's advanced multimodal vision to analyze food photos, estimate portion sizes, and calculate calories instantly. Connect your free personal API key to unlock AI features."
+                }
               </Text>
 
               <Pressable
@@ -283,12 +280,17 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               {!selectedImageUri ? (
                 <View style={styles.pickerSection}>
                   <Text style={styles.pickerIntro}>
-                    Snap a new photo of your meal or select a picture you already took from your phone. Ria will identify the ingredients, calculate calories, and prepare it for logging.
+                    Snap a new photo of your meal or select a picture you already took from your
+                    phone. Ria will identify the ingredients, calculate calories, and prepare it for
+                    logging.
                   </Text>
 
                   <View style={styles.pickerActionsRow}>
                     <Pressable
-                      style={({ pressed }) => [styles.pickerCard, pressed ? styles.pickerCardPressed : null]}
+                      style={({ pressed }) => [
+                        styles.pickerCard,
+                        pressed ? styles.pickerCardPressed : null,
+                      ]}
                       onPress={handleLaunchCamera}
                       accessibilityRole="button"
                       accessibilityLabel="Take a photo with camera"
@@ -301,7 +303,10 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     </Pressable>
 
                     <Pressable
-                      style={({ pressed }) => [styles.pickerCard, pressed ? styles.pickerCardPressed : null]}
+                      style={({ pressed }) => [
+                        styles.pickerCard,
+                        pressed ? styles.pickerCardPressed : null,
+                      ]}
                       onPress={handleLaunchGallery}
                       accessibilityRole="button"
                       accessibilityLabel="Choose photo already taken from library"
@@ -319,13 +324,19 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               {/* STEP 2: Selected Image + Analysis Radar */}
               {selectedImageUri ? (
                 <View style={styles.imagePreviewContainer}>
-                  <Image source={{ uri: selectedImageUri }} style={styles.foodImagePreview} contentFit="cover" />
+                  <Image
+                    source={{ uri: selectedImageUri }}
+                    style={styles.foodImagePreview}
+                    contentFit="cover"
+                  />
 
                   {isAnalyzing ? (
                     <View style={styles.analyzingOverlay}>
                       <ActivityIndicator size="large" color="#F47551" />
                       <Text style={styles.analyzingTitle}>Ria is analyzing your food...</Text>
-                      <Text style={styles.analyzingSubtitle}>Calculating calories, protein & macros</Text>
+                      <Text style={styles.analyzingSubtitle}>
+                        Calculating calories, protein & macros
+                      </Text>
                     </View>
                   ) : null}
 
@@ -339,131 +350,134 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               ) : null}
 
               {/* ERROR STATE */}
-              {analysisError ? (() => {
-                const isKeyError =
-                  analysisError.type === 'INVALID_KEY' ||
-                  analysisError.type === 'EXPIRED_OR_REVOKED_KEY' ||
-                  analysisError.type === 'NO_KEY_CONFIGURED';
-                const isQuotaError = analysisError.type === 'QUOTA_EXCEEDED';
-                const isRateLimit = analysisError.type === 'RATE_LIMIT';
-                const isNetworkOrTimeout =
-                  analysisError.type === 'NETWORK_ERROR' ||
-                  analysisError.type === 'TIMEOUT' ||
-                  analysisError.type === 'MODEL_UNAVAILABLE' ||
-                  analysisError.type === 'SERVER_ERROR' ||
-                  isRateLimit;
-                const isImageOrNotFood =
-                  analysisError.type === 'INVALID_STRUCTURED_OUTPUT' ||
-                  analysisError.type === 'INPUT_TOO_LARGE' ||
-                  analysisError.type === 'INVALID_REQUEST';
+              {analysisError
+                ? (() => {
+                    const isKeyError =
+                      analysisError.type === 'INVALID_KEY' ||
+                      analysisError.type === 'EXPIRED_OR_REVOKED_KEY' ||
+                      analysisError.type === 'NO_KEY_CONFIGURED';
+                    const isQuotaError = analysisError.type === 'QUOTA_EXCEEDED';
+                    const isRateLimit = analysisError.type === 'RATE_LIMIT';
+                    const isNetworkOrTimeout =
+                      analysisError.type === 'NETWORK_ERROR' ||
+                      analysisError.type === 'TIMEOUT' ||
+                      analysisError.type === 'MODEL_UNAVAILABLE' ||
+                      analysisError.type === 'SERVER_ERROR' ||
+                      isRateLimit;
+                    const isImageOrNotFood =
+                      analysisError.type === 'INVALID_STRUCTURED_OUTPUT' ||
+                      analysisError.type === 'INPUT_TOO_LARGE' ||
+                      analysisError.type === 'INVALID_REQUEST';
 
-                return (
-                  <View
-                    style={[
-                      styles.errorCardContainer,
-                      isKeyError ? styles.keyErrorCardBorder : styles.generalErrorCardBorder,
-                    ]}
-                  >
-                    {/* Top Header Badge */}
-                    <View style={styles.errorIconHeaderRow}>
+                    return (
                       <View
                         style={[
-                          styles.errorIconBadge,
-                          isKeyError ? styles.keyErrorIconBg : styles.generalErrorIconBg,
+                          styles.errorCardContainer,
+                          isKeyError ? styles.keyErrorCardBorder : styles.generalErrorCardBorder,
                         ]}
                       >
-                        {isKeyError ? (
-                          <GeminiIcon size={20} />
-                        ) : isNetworkOrTimeout ? (
-                          <Ionicons name="cloud-offline-outline" size={20} color="#DC2626" />
-                        ) : isImageOrNotFood ? (
-                          <Ionicons name="fast-food-outline" size={20} color="#EA580C" />
-                        ) : (
-                          <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
-                        )}
-                      </View>
-
-                      <View style={styles.errorTitleBox}>
-                        <View style={styles.errorCategoryRow}>
-                          <Text
+                        {/* Top Header Badge */}
+                        <View style={styles.errorIconHeaderRow}>
+                          <View
                             style={[
-                              styles.errorCategoryText,
-                              isKeyError ? { color: '#4E82EE' } : { color: '#DC2626' },
+                              styles.errorIconBadge,
+                              isKeyError ? styles.keyErrorIconBg : styles.generalErrorIconBg,
                             ]}
                           >
-                            {isKeyError
-                              ? 'GEMINI API KEY'
-                              : isQuotaError
-                              ? 'USAGE LIMIT'
-                              : isNetworkOrTimeout
-                              ? 'CONNECTION'
-                              : 'FOOD VISION'}
-                          </Text>
+                            {isKeyError ? (
+                              <GeminiIcon size={20} />
+                            ) : isNetworkOrTimeout ? (
+                              <Ionicons name="cloud-offline-outline" size={20} color="#DC2626" />
+                            ) : isImageOrNotFood ? (
+                              <Ionicons name="fast-food-outline" size={20} color="#EA580C" />
+                            ) : (
+                              <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
+                            )}
+                          </View>
+
+                          <View style={styles.errorTitleBox}>
+                            <View style={styles.errorCategoryRow}>
+                              <Text
+                                style={[
+                                  styles.errorCategoryText,
+                                  isKeyError ? { color: '#4E82EE' } : { color: '#DC2626' },
+                                ]}
+                              >
+                                {isKeyError
+                                  ? 'GEMINI API KEY'
+                                  : isQuotaError
+                                    ? 'USAGE LIMIT'
+                                    : isNetworkOrTimeout
+                                      ? 'CONNECTION'
+                                      : 'FOOD VISION'}
+                              </Text>
+                            </View>
+                            <Text style={styles.errorTitleText}>
+                              {analysisError.userTitle || 'AI Analysis Notice'}
+                            </Text>
+                          </View>
                         </View>
-                        <Text style={styles.errorTitleText}>
-                          {analysisError.userTitle || 'AI Analysis Notice'}
+
+                        {/* Friendly Empathic Message */}
+                        <Text style={styles.errorBodyText}>
+                          {analysisError.userMessage ||
+                            'An unexpected issue occurred while analyzing this food photo.'}
                         </Text>
+
+                        {/* Contextual Action Buttons */}
+                        <View style={styles.errorActionsRow}>
+                          {isKeyError || isQuotaError ? (
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.primaryErrorActionBtn,
+                                styles.keyActionBtnBg,
+                                pressed ? styles.btnPressed : null,
+                              ]}
+                              onPress={() => {
+                                onClose();
+                                onOpenBYOKSetup();
+                              }}
+                            >
+                              <GeminiIcon size={16} />
+                              <Text style={styles.primaryErrorActionText}>
+                                {analysisError.actionLabel || 'Update Gemini Key'}
+                              </Text>
+                            </Pressable>
+                          ) : null}
+
+                          {selectedAsset && (isNetworkOrTimeout || analysisError.retryable) ? (
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.primaryErrorActionBtn,
+                                styles.retryActionBtnBg,
+                                pressed ? styles.btnPressed : null,
+                              ]}
+                              onPress={handleRetryAnalysis}
+                            >
+                              <Ionicons name="refresh" size={16} color="#FFFFFF" />
+                              <Text style={styles.primaryErrorActionText}>
+                                {analysisError.actionLabel || 'Retry Analysis'}
+                              </Text>
+                            </Pressable>
+                          ) : null}
+
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.secondaryErrorActionBtn,
+                              pressed ? styles.pickerCardPressed : null,
+                            ]}
+                            onPress={resetFlow}
+                          >
+                            <Ionicons name="images-outline" size={15} color="#475569" />
+                            <Text style={styles.secondaryErrorActionText}>
+                              {selectedAsset ? 'Choose Different Photo' : 'Dismiss'}
+                            </Text>
+                          </Pressable>
+                        </View>
                       </View>
-                    </View>
-
-                    {/* Friendly Empathic Message */}
-                    <Text style={styles.errorBodyText}>
-                      {analysisError.userMessage || 'An unexpected issue occurred while analyzing this food photo.'}
-                    </Text>
-
-                    {/* Contextual Action Buttons */}
-                    <View style={styles.errorActionsRow}>
-                      {isKeyError || isQuotaError ? (
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.primaryErrorActionBtn,
-                            styles.keyActionBtnBg,
-                            pressed ? styles.btnPressed : null,
-                          ]}
-                          onPress={() => {
-                            onClose();
-                            onOpenBYOKSetup();
-                          }}
-                        >
-                          <GeminiIcon size={16} />
-                          <Text style={styles.primaryErrorActionText}>
-                            {analysisError.actionLabel || 'Update Gemini Key'}
-                          </Text>
-                        </Pressable>
-                      ) : null}
-
-                      {selectedAsset && (isNetworkOrTimeout || analysisError.retryable) ? (
-                        <Pressable
-                          style={({ pressed }) => [
-                            styles.primaryErrorActionBtn,
-                            styles.retryActionBtnBg,
-                            pressed ? styles.btnPressed : null,
-                          ]}
-                          onPress={handleRetryAnalysis}
-                        >
-                          <Ionicons name="refresh" size={16} color="#FFFFFF" />
-                          <Text style={styles.primaryErrorActionText}>
-                            {analysisError.actionLabel || 'Retry Analysis'}
-                          </Text>
-                        </Pressable>
-                      ) : null}
-
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.secondaryErrorActionBtn,
-                          pressed ? styles.pickerCardPressed : null,
-                        ]}
-                        onPress={resetFlow}
-                      >
-                        <Ionicons name="images-outline" size={15} color="#475569" />
-                        <Text style={styles.secondaryErrorActionText}>
-                          {selectedAsset ? 'Choose Different Photo' : 'Dismiss'}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                );
-              })() : null}
+                    );
+                  })()
+                : null}
 
               {/* STEP 3: Successful Analysis Result & Confirmation */}
               {analysisResult && !isLoggedSuccess ? (
@@ -471,9 +485,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                   <View style={styles.dishTitleRow}>
                     <View style={styles.dishTitleCol}>
                       <Text style={styles.dishName}>{analysisResult.name}</Text>
-                      <Text style={styles.dishServing}>
-                        Serving: {analysisResult.servingUnit}
-                      </Text>
+                      <Text style={styles.dishServing}>Serving: {analysisResult.servingUnit}</Text>
                     </View>
                     <View style={styles.confidencePill}>
                       <Ionicons name="checkmark-circle" size={12} color="#16A34A" />
@@ -488,7 +500,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                         <GeminiIcon size={16} />
                       </View>
                       <View style={styles.riaCoachTextCol}>
-                        <Text style={styles.riaCoachLabel}>Ria's Gemini Vision Breakdown</Text>
+                        <Text style={styles.riaCoachLabel}>{"Ria's Gemini Vision Breakdown"}</Text>
                         <Text style={styles.riaCoachNote}>{analysisResult.notes}</Text>
                       </View>
                     </View>
@@ -531,7 +543,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     <View style={styles.stepperContainer}>
                       <Pressable
                         style={styles.stepBtn}
-                        onPress={() => setPortionMultiplier((p) => Math.max(0.5, p - 0.5))}
+                        onPress={() => setPortionMultiplier(p => Math.max(0.5, p - 0.5))}
                         hitSlop={4}
                       >
                         <Ionicons name="remove" size={16} color="#334155" />
@@ -539,7 +551,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Text style={styles.stepVal}>{portionMultiplier}x</Text>
                       <Pressable
                         style={styles.stepBtn}
-                        onPress={() => setPortionMultiplier((p) => p + 0.5)}
+                        onPress={() => setPortionMultiplier(p => p + 0.5)}
                         hitSlop={4}
                       >
                         <Ionicons name="add" size={16} color="#334155" />
@@ -553,7 +565,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     <Text style={styles.slotHeaderHint}>Tap to change</Text>
                   </View>
                   <View style={styles.slotRow}>
-                    {(['breakfast', 'lunch', 'snacks', 'dinner'] as MealType[]).map((slot) => {
+                    {(['breakfast', 'lunch', 'snacks', 'dinner'] as MealType[]).map(slot => {
                       const isSelected = mealSlot === slot;
                       return (
                         <Pressable
@@ -566,7 +578,9 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                           onPress={() => setMealSlot(slot)}
                           hitSlop={4}
                         >
-                          <Text style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}>
+                          <Text
+                            style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}
+                          >
                             {slot.charAt(0).toUpperCase() + slot.slice(1)}
                           </Text>
                         </Pressable>
@@ -599,7 +613,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                   >
                     <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
                     <Text style={styles.confirmBtnText}>
-                      Log to {mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)} ({Math.round(analysisResult.calories * portionMultiplier)} kcal)
+                      Log to {mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)} (
+                      {Math.round(analysisResult.calories * portionMultiplier)} kcal)
                     </Text>
                   </Pressable>
                 </View>
@@ -613,7 +628,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                   </View>
                   <Text style={styles.successTitle}>Meal Logged Successfully!</Text>
                   <Text style={styles.successDesc}>
-                    {analysisResult?.name} has been added to your {mealSlot} and saved to your Custom Foods.
+                    {analysisResult?.name} has been added to your {mealSlot} and saved to your
+                    Custom Foods.
                   </Text>
                 </View>
               ) : null}

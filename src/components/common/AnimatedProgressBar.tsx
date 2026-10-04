@@ -32,7 +32,7 @@ export const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
       isReducedMotion.current = enabled;
     });
   }, []);
@@ -54,7 +54,13 @@ export const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
   }));
 
   return (
-    <View style={[styles.track, { height, backgroundColor: trackColor, borderRadius: height / 2 }, style]}>
+    <View
+      style={[
+        styles.track,
+        { height, backgroundColor: trackColor, borderRadius: height / 2 },
+        style,
+      ]}
+    >
       <Animated.View
         style={[
           styles.fill,

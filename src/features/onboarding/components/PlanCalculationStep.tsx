@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -32,8 +26,7 @@ export const PlanCalculationStep: React.FC<PlanCalculationStepProps> = ({
     await onConfirm();
   };
 
-  const totalMacroCalories =
-    plan.targetProteinG * 4 + plan.targetCarbsG * 4 + plan.targetFatG * 9;
+  const totalMacroCalories = plan.targetProteinG * 4 + plan.targetCarbsG * 4 + plan.targetFatG * 9;
   const safeTotal = totalMacroCalories > 0 ? totalMacroCalories : 1;
 
   const proteinPct = Math.round(((plan.targetProteinG * 4) / safeTotal) * 100);
@@ -44,10 +37,7 @@ export const PlanCalculationStep: React.FC<PlanCalculationStepProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <OnboardingHeader onBack={onBack} stepText={stepIndicator} />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Header Badge */}
         <View style={styles.badgeWrap}>
           <View style={styles.badge}>
@@ -59,7 +49,8 @@ export const PlanCalculationStep: React.FC<PlanCalculationStepProps> = ({
         {/* Title & Subtitle */}
         <Text style={styles.title}>Your Custom Plan</Text>
         <Text style={styles.subtitle}>
-          Scientifically calibrated with the Mifflin-St Jeor formula for sustainable, long-term results.
+          Scientifically calibrated with the Mifflin-St Jeor formula for sustainable, long-term
+          results.
         </Text>
 
         {/* Hero Calorie Card */}
@@ -72,9 +63,7 @@ export const PlanCalculationStep: React.FC<PlanCalculationStepProps> = ({
           </View>
 
           <View style={styles.calorieValueRow}>
-            <Text style={styles.calorieNumber}>
-              {plan.dailyCalorieBudget.toLocaleString()}
-            </Text>
+            <Text style={styles.calorieNumber}>{plan.dailyCalorieBudget.toLocaleString()}</Text>
             <Text style={styles.calorieUnit}>kcal / day</Text>
           </View>
 
@@ -150,10 +139,8 @@ export const PlanCalculationStep: React.FC<PlanCalculationStepProps> = ({
             <Ionicons name="time-outline" size={20} color={Colors.primary} />
             <Text style={styles.timelineText}>
               Projected timeframe:{' '}
-              <Text style={styles.timelineHighlight}>
-                ~{plan.estimatedWeeksToGoal} weeks
-              </Text>{' '}
-              to reach your target weight safely.
+              <Text style={styles.timelineHighlight}>~{plan.estimatedWeeksToGoal} weeks</Text> to
+              reach your target weight safely.
             </Text>
           </View>
         )}

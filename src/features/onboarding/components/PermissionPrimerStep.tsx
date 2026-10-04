@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -44,7 +39,8 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
         {/* Title & Subtitle */}
         <Text style={styles.title}>Unlock Full Precision</Text>
         <Text style={styles.subtitle}>
-          Calorify uses your device capabilities to give you instant food recognition and effortless step tracking.
+          Calorify uses your device capabilities to give you instant food recognition and effortless
+          step tracking.
         </Text>
 
         {/* Permission Feature Cards */}
@@ -57,7 +53,8 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>Instant Meal Scanning</Text>
               <Text style={styles.cardDescription}>
-                Snap a quick photo of your plate to let Ria AI identify foods, portion sizes, and calculate macros in seconds.
+                Snap a quick photo of your plate to let Ria AI identify foods, portion sizes, and
+                calculate macros in seconds.
               </Text>
             </View>
           </View>
@@ -70,7 +67,8 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>Automatic Step Tracking</Text>
               <Text style={styles.cardDescription}>
-                Sync steps, active workout duration, and calorie burn automatically via Google Health Connect.
+                Sync steps, active workout duration, and calorie burn automatically via Google
+                Health Connect.
               </Text>
             </View>
           </View>
@@ -83,7 +81,8 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>Smart Streak Protection</Text>
               <Text style={styles.cardDescription}>
-                Gentle reminders for hydration and meal logging so you never lose your progress streak.
+                Gentle reminders for hydration and meal logging so you never lose your progress
+                streak.
               </Text>
             </View>
           </View>
@@ -110,7 +109,7 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Skip for now"
           >
-            <Text style={styles.skipBtnText}>I'll configure this later</Text>
+            <Text style={styles.skipBtnText}>{"I'll configure this later"}</Text>
           </Pressable>
         </View>
       </View>

@@ -16,7 +16,10 @@ class AIRateLimiterService {
 
     // 1. Enforce minimum send cooldown between user clicks (e.g. 3s)
     const timeSinceLast = now - this.lastRequestTimestamp;
-    if (this.lastRequestTimestamp > 0 && timeSinceLast < AI_CONFIG.RATE_LIMIT.MIN_SEND_COOLDOWN_MS) {
+    if (
+      this.lastRequestTimestamp > 0 &&
+      timeSinceLast < AI_CONFIG.RATE_LIMIT.MIN_SEND_COOLDOWN_MS
+    ) {
       const waitMs = AI_CONFIG.RATE_LIMIT.MIN_SEND_COOLDOWN_MS - timeSinceLast;
       return {
         allowed: false,
@@ -28,7 +31,7 @@ class AIRateLimiterService {
     }
 
     // 2. Sliding 60-second window rate limit (Max 10 requests / minute)
-    this.recentRequestTimestamps = this.recentRequestTimestamps.filter((t) => now - t < 60000);
+    this.recentRequestTimestamps = this.recentRequestTimestamps.filter(t => now - t < 60000);
     if (this.recentRequestTimestamps.length >= AI_CONFIG.RATE_LIMIT.MAX_REQUESTS_PER_MINUTE) {
       const oldestInWindow = this.recentRequestTimestamps[0];
       const waitMs = Math.max(1000, 60000 - (now - oldestInWindow));
@@ -49,12 +52,14 @@ class AIRateLimiterService {
       this.cachedDailyCount = stored ? parseInt(stored, 10) || 0 : 0;
     }
 
-    const isDailyWarning = this.cachedDailyCount >= AI_CONFIG.RATE_LIMIT.DAILY_QUOTA_WARNING_THRESHOLD;
+    const isDailyWarning =
+      this.cachedDailyCount >= AI_CONFIG.RATE_LIMIT.DAILY_QUOTA_WARNING_THRESHOLD;
 
     if (this.cachedDailyCount >= AI_CONFIG.RATE_LIMIT.DAILY_QUOTA_SAFETY_LIMIT) {
       return {
         allowed: false,
-        reason: 'Daily BYOK request limit reached (1,200 calls). Quota resets at midnight Pacific Time.',
+        reason:
+          'Daily BYOK request limit reached (1,200 calls). Quota resets at midnight Pacific Time.',
         waitMs: 60000,
         dailyUsageCount: this.cachedDailyCount,
         isDailyWarning: true,
@@ -80,7 +85,10 @@ class AIRateLimiterService {
     const today = new Date().toISOString().slice(0, 10);
     this.cachedDailyCount += 1;
     try {
-      await AsyncStorage.setItem(`@calori_ai_daily_usage_${today}`, this.cachedDailyCount.toString());
+      await AsyncStorage.setItem(
+        `@calori_ai_daily_usage_${today}`,
+        this.cachedDailyCount.toString()
+      );
     } catch {
       // Ignore storage error
     }

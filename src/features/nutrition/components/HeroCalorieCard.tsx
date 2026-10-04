@@ -175,16 +175,24 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
       const hasMeals = log && Array.isArray(log.meals) && log.meals.length > 0;
       const cals = hasMeals
         ? log.meals.reduce((sum, m) => sum + m.calories, 0)
-        : (fallback ? fallback.cals : 0);
+        : fallback
+          ? fallback.cals
+          : 0;
       const carbs = hasMeals
         ? Math.round(log.meals.reduce((sum, m) => sum + m.carbs, 0))
-        : (fallback ? fallback.carbs : 0);
+        : fallback
+          ? fallback.carbs
+          : 0;
       const protein = hasMeals
         ? Math.round(log.meals.reduce((sum, m) => sum + m.protein, 0))
-        : (fallback ? fallback.protein : 0);
+        : fallback
+          ? fallback.protein
+          : 0;
       const fat = hasMeals
         ? Math.round(log.meals.reduce((sum, m) => sum + m.fat, 0))
-        : (fallback ? fallback.fat : 0);
+        : fallback
+          ? fallback.fat
+          : 0;
 
       days.push({
         idx: i,
@@ -206,7 +214,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
   // Derived selected day index (Single Source of Truth: selectedDate, adheres to react-state-minimize)
   const selectedDayIdx = useMemo(() => {
-    const matchIdx = trendDays.findIndex((d) => d.dateStr === selectedDate);
+    const matchIdx = trendDays.findIndex(d => d.dateStr === selectedDate);
     return matchIdx !== -1 ? matchIdx : parseDateStr(selectedDate).getDay();
   }, [trendDays, selectedDate]);
 
@@ -214,7 +222,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
   // Average weekly calories & status
   const avgCals = useMemo(() => {
-    const activeDays = trendDays.filter((d) => d.cals > 0);
+    const activeDays = trendDays.filter(d => d.cals > 0);
     if (activeDays.length === 0) return eaten;
     const sum = activeDays.reduce((acc, d) => acc + d.cals, 0);
     return Math.round(sum / activeDays.length);
@@ -231,7 +239,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const usableWidth = chartWidth - horizontalPadding * 2;
 
   // Dynamic Y-axis scale based on target budget and maximum logged calories
-  const maxLoggedCals = Math.max(...trendDays.map((d) => d.cals), 0);
+  const maxLoggedCals = Math.max(...trendDays.map(d => d.cals), 0);
   const yMax = Math.max(budget * 1.2, maxLoggedCals * 1.15, 1800);
 
   // Calculate coordinates for the 7 points
@@ -288,7 +296,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   return (
     <View
       style={styles.card}
-      onLayout={(e) => {
+      onLayout={e => {
         const w = Math.round(e.nativeEvent.layout.width);
         if (w > 0 && Math.abs(w - cardWidth) > 3) {
           setCardWidth(w);
@@ -324,7 +332,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
             ]}
             onPress={() => handleSlideChange(0)}
             accessibilityRole="tab"
-            accessibilityLabel={isToday ? "Show today's budget" : "Show day view budget"}
+            accessibilityLabel={isToday ? "Show today's budget" : 'Show day view budget'}
             accessibilityState={{ selected: activeSlide === 0 }}
           >
             <Text
@@ -383,7 +391,12 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <View style={styles.metricBlock}>
                 <View style={styles.metricLabelRow}>
                   <Text style={styles.metricLabel}>Eaten</Text>
-                  <Ionicons name="restaurant-outline" size={13} color="#0284C7" style={styles.metricIcon} />
+                  <Ionicons
+                    name="restaurant-outline"
+                    size={13}
+                    color="#0284C7"
+                    style={styles.metricIcon}
+                  />
                 </View>
                 <Text style={styles.metricValueText}>
                   {eaten} <Text style={styles.metricUnit}>Cal</Text>
@@ -413,12 +426,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               />
 
               <View style={styles.dialCenterContent}>
-                <Text style={styles.calLeftNumber}>
-                  {Math.abs(calLeft).toLocaleString()}
-                </Text>
-                <Text style={styles.calLeftLabel}>
-                  {calLeft < 0 ? 'Cal over' : 'Cal left'}
-                </Text>
+                <Text style={styles.calLeftNumber}>{Math.abs(calLeft).toLocaleString()}</Text>
+                <Text style={styles.calLeftLabel}>{calLeft < 0 ? 'Cal over' : 'Cal left'}</Text>
               </View>
             </View>
           </View>
@@ -480,7 +489,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <Text style={styles.daySelectedLabel}>
                 {currentDay.isToday
                   ? 'Today'
-                  : `${currentDay.fullDayName}, ${currentDay.monthName} ${currentDay.dayNum}`}: {currentDay.cals.toLocaleString()} kcal
+                  : `${currentDay.fullDayName}, ${currentDay.monthName} ${currentDay.dayNum}`}
+                : {currentDay.cals.toLocaleString()} kcal
               </Text>
             </View>
 
@@ -586,12 +596,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               })}
 
               {/* Active Day Glowing Node */}
-              <Circle
-                cx={activePt.x}
-                cy={activePt.y}
-                r={8}
-                fill="rgba(244, 117, 81, 0.25)"
-              />
+              <Circle cx={activePt.x} cy={activePt.y} r={8} fill="rgba(244, 117, 81, 0.25)" />
               <Circle
                 cx={activePt.x}
                 cy={activePt.y}

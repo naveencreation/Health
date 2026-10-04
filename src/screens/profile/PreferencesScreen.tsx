@@ -39,7 +39,9 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const { userGoals, updateGoals } = useGoals();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(userGoals.riaTone || 'supportive');
+  const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(
+    userGoals.riaTone || 'supportive'
+  );
   const [waterReminder, setWaterReminder] = useState(userGoals.waterReminder !== false);
   const [mealReminder, setMealReminder] = useState(userGoals.mealReminder !== false);
   const [stepReminder, setStepReminder] = useState(userGoals.stepReminder || false);
@@ -81,7 +83,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     setWaterReminder(val);
     updateGoals({ waterReminder: val });
     NotificationService.updateSettings({ waterReminder: val })
-      .then((settings) =>
+      .then(settings =>
         NotificationScheduler.syncSchedules({
           settings,
           streakDays: userGoals.streakDays || 0,
@@ -95,7 +97,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     setMealReminder(val);
     updateGoals({ mealReminder: val });
     NotificationService.updateSettings({ mealReminder: val })
-      .then((settings) =>
+      .then(settings =>
         NotificationScheduler.syncSchedules({
           settings,
           streakDays: userGoals.streakDays || 0,
@@ -109,7 +111,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     setStepReminder(val);
     updateGoals({ stepReminder: val });
     NotificationService.updateSettings({ stepReminder: val })
-      .then((settings) =>
+      .then(settings =>
         NotificationScheduler.syncSchedules({
           settings,
           streakDays: userGoals.streakDays || 0,
@@ -280,9 +282,24 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <View style={styles.flex1}>
               <View style={styles.byokTitleRow}>
                 <Text style={styles.byokTitle}>Gemini AI</Text>
-                <View style={[styles.statusPill, aiConnected ? styles.statusPillActive : styles.statusPillInactive]}>
-                  <View style={[styles.statusDot, aiConnected ? styles.statusDotActive : styles.statusDotInactive]} />
-                  <Text style={[styles.statusPillText, aiConnected ? styles.statusTextActive : styles.statusTextInactive]}>
+                <View
+                  style={[
+                    styles.statusPill,
+                    aiConnected ? styles.statusPillActive : styles.statusPillInactive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.statusDot,
+                      aiConnected ? styles.statusDotActive : styles.statusDotInactive,
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      aiConnected ? styles.statusTextActive : styles.statusTextInactive,
+                    ]}
+                  >
                     {aiConnected ? 'Active' : 'Not Connected'}
                   </Text>
                 </View>
@@ -350,17 +367,12 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               </Text>
             </View>
             <Pressable
-              style={({ pressed }) => [
-                styles.proManageBtn,
-                pressed ? styles.pressedSubtle : null,
-              ]}
+              style={({ pressed }) => [styles.proManageBtn, pressed ? styles.pressedSubtle : null]}
               onPress={() => setPaywallVisible(true)}
               accessibilityRole="button"
               accessibilityLabel={isPro ? 'Manage Pro Subscription' : 'Upgrade to Calorify Pro'}
             >
-              <Text style={styles.proManageBtnText}>
-                {isPro ? 'Manage' : 'Upgrade'}
-              </Text>
+              <Text style={styles.proManageBtnText}>{isPro ? 'Manage' : 'Upgrade'}</Text>
             </Pressable>
           </View>
         </View>
@@ -434,11 +446,17 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Signed In As</Text>
               <Text style={styles.accountValue} numberOfLines={1}>
-                {currentUser?.email || (currentUser?.isGuest ? 'Guest Explorer' : 'user@calori.fit')}
+                {currentUser?.email ||
+                  (currentUser?.isGuest ? 'Guest Explorer' : 'user@calori.fit')}
               </Text>
             </View>
             <View style={[styles.statusTag, currentUser?.isGuest ? styles.statusTagGuest : null]}>
-              <Text style={[styles.statusTagText, currentUser?.isGuest ? styles.statusTagTextGuest : null]}>
+              <Text
+                style={[
+                  styles.statusTagText,
+                  currentUser?.isGuest ? styles.statusTagTextGuest : null,
+                ]}
+              >
                 {currentUser?.isGuest ? 'GUEST' : 'ACTIVE'}
               </Text>
             </View>
@@ -520,10 +538,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         }}
       />
 
-      <ProPaywallModal
-        visible={paywallVisible}
-        onClose={() => setPaywallVisible(false)}
-      />
+      <ProPaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
 
       <ConfirmationModal
         visible={confirmAction === 'logout'}

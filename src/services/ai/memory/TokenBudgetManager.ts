@@ -27,7 +27,7 @@ export class TokenBudgetManager {
     const maxAllowedHistoryTokens = Math.max(0, maxBudgetCap - fixedOverhead);
 
     // Filter valid history messages
-    const eligibleMessages = history.filter((m) => !m.isError);
+    const eligibleMessages = history.filter(m => !m.isError);
     let trimmedHistory = [...eligibleMessages];
 
     let historyTokens = GeminiTokenEstimator.estimateMessagesTokens(trimmedHistory);

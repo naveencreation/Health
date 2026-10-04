@@ -94,7 +94,9 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
         setSuccessMessage('Connected successfully! AI features are active.');
         if (onKeyConfigured) onKeyConfigured();
       } else {
-        setValidationError(result.error?.message || 'Could not validate key. Please check and try again.');
+        setValidationError(
+          result.error?.message || 'Could not validate key. Please check and try again.'
+        );
       }
     } catch (err: any) {
       setValidationError(err?.message || 'An unexpected error occurred during validation.');
@@ -120,7 +122,9 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
       if (result.isValid) {
         setSuccessMessage(`Connection healthy! Responded in ${result.latencyMs ?? 120}ms.`);
       } else {
-        setValidationError(result.error?.message || 'Key verification failed. Please enter a new key.');
+        setValidationError(
+          result.error?.message || 'Key verification failed. Please enter a new key.'
+        );
       }
     } catch (err: any) {
       setValidationError(err?.message || 'Verification failed.');
@@ -157,12 +161,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable
           style={styles.backdropPressable}
@@ -216,7 +215,12 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
             >
               {/* Privacy Guarantee Card */}
               <View style={styles.privacyCard}>
-                <Ionicons name="shield-checkmark" size={15} color="#059669" style={styles.shieldIcon} />
+                <Ionicons
+                  name="shield-checkmark"
+                  size={15}
+                  color="#059669"
+                  style={styles.shieldIcon}
+                />
                 <View style={styles.privacyTextContainer}>
                   <Text style={styles.privacyTitle}>100% Device-Encrypted Privacy</Text>
                 </View>
@@ -240,7 +244,10 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 
                   <View style={styles.connectedActionRow}>
                     <Pressable
-                      style={({ pressed }) => [styles.testBtn, pressed ? styles.pressedSubtle : null]}
+                      style={({ pressed }) => [
+                        styles.testBtn,
+                        pressed ? styles.pressedSubtle : null,
+                      ]}
                       onPress={handleTestExistingConnection}
                       disabled={isValidating}
                     >
@@ -255,7 +262,10 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     </Pressable>
 
                     <Pressable
-                      style={({ pressed }) => [styles.disconnectBtn, pressed ? styles.pressedSubtle : null]}
+                      style={({ pressed }) => [
+                        styles.disconnectBtn,
+                        pressed ? styles.pressedSubtle : null,
+                      ]}
                       onPress={handleDisconnect}
                     >
                       <Ionicons name="trash-outline" size={14} color="#DC2626" />
@@ -278,7 +288,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     placeholder="Paste AIzaSy... key"
                     placeholderTextColor="#94A3B8"
                     value={apiKeyInput}
-                    onChangeText={(text) => {
+                    onChangeText={text => {
                       setApiKeyInput(text);
                       setValidationError(null);
                     }}

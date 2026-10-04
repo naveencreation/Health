@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
@@ -73,12 +67,7 @@ export const ReportPickerModal: React.FC<ReportPickerModalProps> = ({
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <View style={styles.overlay}>
         {/* Backdrop Scrim */}
         <Pressable
@@ -89,12 +78,7 @@ export const ReportPickerModal: React.FC<ReportPickerModalProps> = ({
         />
 
         {/* Bottom Sheet */}
-        <View
-          style={[
-            styles.sheetContainer,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-          ]}
-        >
+        <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           {/* Mobile Drag Indicator Handle */}
           <View style={styles.handleBarWrap}>
             <View style={styles.handleBar} />
@@ -120,7 +104,7 @@ export const ReportPickerModal: React.FC<ReportPickerModalProps> = ({
 
           {/* Report Options List */}
           <View style={styles.optionsList}>
-            {REPORT_CATEGORIES.map((item) => {
+            {REPORT_CATEGORIES.map(item => {
               const isSelected = activeReport === item.id;
               return (
                 <Pressable

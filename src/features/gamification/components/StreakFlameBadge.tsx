@@ -43,11 +43,7 @@ export const StreakFlameBadge: React.FC<StreakFlameBadgeProps> = ({
           isLarge && styles.flameCircleLarge,
         ]}
       >
-        <Ionicons
-          name="flame"
-          size={isSmall ? 14 : isLarge ? 20 : 16}
-          color="#FF5722"
-        />
+        <Ionicons name="flame" size={isSmall ? 14 : isLarge ? 20 : 16} color="#FF5722" />
       </View>
 
       <View style={styles.textWrap}>
@@ -60,11 +56,7 @@ export const StreakFlameBadge: React.FC<StreakFlameBadgeProps> = ({
         >
           {streakDays}
         </Text>
-        {!isSmall && (
-          <Text style={styles.labelSubText}>
-            {streakDays === 1 ? 'DAY' : 'DAYS'}
-          </Text>
-        )}
+        {!isSmall && <Text style={styles.labelSubText}>{streakDays === 1 ? 'DAY' : 'DAYS'}</Text>}
       </View>
     </Pressable>
   );

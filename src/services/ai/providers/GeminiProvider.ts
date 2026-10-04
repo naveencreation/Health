@@ -27,7 +27,10 @@ export class GeminiProvider {
     if (!raw) return '';
     let cleaned = raw.trim();
     cleaned = cleaned.replace(/^["'`]+|["'`]+$/g, '');
-    cleaned = cleaned.replace(/^(?:export\s+)?(?:GEMINI_API_KEY|GOOGLE_API_KEY|API_KEY)\s*=\s*/i, '');
+    cleaned = cleaned.replace(
+      /^(?:export\s+)?(?:GEMINI_API_KEY|GOOGLE_API_KEY|API_KEY)\s*=\s*/i,
+      ''
+    );
     cleaned = cleaned.replace(/^Bearer\s+/i, '');
     cleaned = cleaned.replace(/^["'`]+|["'`]+$/g, '');
     cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim();
@@ -49,7 +52,10 @@ export class GeminiProvider {
         const response = await fetch(url, options);
 
         // If not a retryable status code (429 rate limit or 500/503 server error), return directly
-        if (response.ok || (response.status !== 429 && response.status !== 500 && response.status !== 503)) {
+        if (
+          response.ok ||
+          (response.status !== 429 && response.status !== 500 && response.status !== 503)
+        ) {
           return response;
         }
 
@@ -65,10 +71,14 @@ export class GeminiProvider {
       attempt++;
       // Exponential backoff + randomized jitter
       const jitter =
-        Math.floor(Math.random() * (AI_CONFIG.RETRY.JITTER_MAX_MS - AI_CONFIG.RETRY.JITTER_MIN_MS)) +
-        AI_CONFIG.RETRY.JITTER_MIN_MS;
-      const delay = Math.min(AI_CONFIG.RETRY.BASE_DELAY_MS * Math.pow(2, attempt) + jitter, AI_CONFIG.RETRY.MAX_DELAY_MS);
-      await new Promise((res) => setTimeout(res, delay));
+        Math.floor(
+          Math.random() * (AI_CONFIG.RETRY.JITTER_MAX_MS - AI_CONFIG.RETRY.JITTER_MIN_MS)
+        ) + AI_CONFIG.RETRY.JITTER_MIN_MS;
+      const delay = Math.min(
+        AI_CONFIG.RETRY.BASE_DELAY_MS * Math.pow(2, attempt) + jitter,
+        AI_CONFIG.RETRY.MAX_DELAY_MS
+      );
+      await new Promise(res => setTimeout(res, delay));
     }
   }
 
@@ -81,7 +91,10 @@ export class GeminiProvider {
     if (!sanitized) {
       return {
         isValid: false,
-        error: AIErrorMapper.createError('EMPTY_INPUT', 'API key cannot be empty. Please paste your Google Gemini key.'),
+        error: AIErrorMapper.createError(
+          'EMPTY_INPUT',
+          'API key cannot be empty. Please paste your Google Gemini key.'
+        ),
       };
     }
 
@@ -108,7 +121,10 @@ export class GeminiProvider {
     const startTime = Date.now();
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), AI_CONFIG.TIMEOUT.CONNECTION_TIMEOUT_MS);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        AI_CONFIG.TIMEOUT.CONNECTION_TIMEOUT_MS
+      );
 
       const response = await fetch(`${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`, {
         method: 'POST',
@@ -146,7 +162,8 @@ export class GeminiProvider {
       const err = AIErrorMapper.fromRawError({ statusCode: response.status, message: errorText });
 
       if (err.type === 'INVALID_KEY' && !sanitized.startsWith('AIza')) {
-        err.message = 'Key rejected by Google. Google Gemini API keys start with "AIza...". Please get your free key from Google AI Studio.';
+        err.message =
+          'Key rejected by Google. Google Gemini API keys start with "AIza...". Please get your free key from Google AI Studio.';
         err.userMessage = 'Please enter a valid Google Gemini API key starting with "AIza...".';
       }
 
@@ -181,14 +198,19 @@ export class GeminiProvider {
     // 1. Rate Limit Check
     const rateStatus = await AIRateLimiter.checkRateLimit();
     if (!rateStatus.allowed) {
-      const err = AIErrorMapper.createError('RATE_LIMIT', rateStatus.reason || 'Please wait a moment before sending.');
+      const err = AIErrorMapper.createError(
+        'RATE_LIMIT',
+        rateStatus.reason || 'Please wait a moment before sending.'
+      );
       throw err;
     }
 
     // 2. Input Validation & Clinical Safety Interceptor
     const validation = AIInputValidator.validateUserText(prompt);
     if (!validation.isValid) {
-      throw validation.error || AIErrorMapper.createError('INVALID_REQUEST', 'Invalid input message.');
+      throw (
+        validation.error || AIErrorMapper.createError('INVALID_REQUEST', 'Invalid input message.')
+      );
     }
 
     const safeUserText = validation.sanitizedText;
@@ -336,7 +358,8 @@ export class GeminiProvider {
 
       // Output Validation
       const outputResult = AIOutputValidator.validateChatResponse(accumulatedText);
-      const finalText = outputResult.isValid && outputResult.data ? outputResult.data : accumulatedText;
+      const finalText =
+        outputResult.isValid && outputResult.data ? outputResult.data : accumulatedText;
 
       onChunk(finalText);
 
@@ -373,13 +396,19 @@ export class GeminiProvider {
     // 1. Edge Image Preprocessor & Bounds Validation
     const processed = EdgeImagePreprocessor.processBase64(rawBase64Data, mimeType);
     if (!processed.isValid) {
-      throw processed.error || AIErrorMapper.createError('INVALID_REQUEST', 'Image could not be processed.');
+      throw (
+        processed.error ||
+        AIErrorMapper.createError('INVALID_REQUEST', 'Image could not be processed.')
+      );
     }
 
     // 2. Rate Limit Check
     const rateStatus = await AIRateLimiter.checkRateLimit();
     if (!rateStatus.allowed) {
-      throw AIErrorMapper.createError('RATE_LIMIT', rateStatus.reason || 'Please wait a moment before sending.');
+      throw AIErrorMapper.createError(
+        'RATE_LIMIT',
+        rateStatus.reason || 'Please wait a moment before sending.'
+      );
     }
 
     const prompt = `Analyze this food image accurately for a calorie tracking mobile app.
@@ -470,7 +499,10 @@ If the image clearly does not contain any food, meal, or beverage (e.g. an objec
       if (!outputValidation.isValid || !outputValidation.data) {
         throw (
           outputValidation.error ||
-          AIErrorMapper.createError('INVALID_STRUCTURED_OUTPUT', 'Failed to calculate macros from image.')
+          AIErrorMapper.createError(
+            'INVALID_STRUCTURED_OUTPUT',
+            'Failed to calculate macros from image.'
+          )
         );
       }
 
@@ -497,7 +529,10 @@ If the image clearly does not contain any food, meal, or beverage (e.g. an objec
   /**
    * Generates dynamic 2-sentence micro-insight for the Ria dashboard coach card.
    */
-  static async generateDailyInsight(apiKey: string, context: UserNutritionContext): Promise<string> {
+  static async generateDailyInsight(
+    apiKey: string,
+    context: UserNutritionContext
+  ): Promise<string> {
     const startTime = Date.now();
     const prompt = `You are Ria. Based on today's telemetry:
 Consumed: ${context.consumedCalories} kcal / Budget: ${context.dailyCalorieBudget} kcal (Remaining: ${context.remainingCalories} kcal).
@@ -562,8 +597,8 @@ Give exactly 2 sentences of actionable nutrition coaching advice for this exact 
     existingSummary?: string
   ): Promise<string> {
     const textToSummarize = messages
-      .filter((m) => !m.isError)
-      .map((m) => `${m.sender.toUpperCase()}: ${m.text}`)
+      .filter(m => !m.isError)
+      .map(m => `${m.sender.toUpperCase()}: ${m.text}`)
       .join('\n');
 
     const prompt = `Condense these diet coaching chat messages into a crisp 3-sentence summary highlighting the user's specific food preferences, dietary goals, dislikes, or allergies mentioned.

@@ -8,10 +8,7 @@ import {
   getTodayDateIsoString,
 } from './healthConnect';
 
-import {
-  hasStepsPermission,
-  requestStepsPermission,
-} from './healthPermissions';
+import { hasStepsPermission, requestStepsPermission } from './healthPermissions';
 
 export const BACKFILL_STORAGE_KEY = '@calori_hc_backfill_completed_v1';
 
@@ -83,7 +80,12 @@ export async function getStepsForDate(dateStr: string): Promise<{ steps: number;
     // Fallback to summing raw records if aggregate returns 0
     if (Array.isArray(records) && records.length > 0) {
       const sum = records.reduce((acc, r: any) => acc + (r.count || 0), 0);
-      console.log(`[healthService] Got sum from raw records for ${dateStr}:`, sum, 'from records:', records.length);
+      console.log(
+        `[healthService] Got sum from raw records for ${dateStr}:`,
+        sum,
+        'from records:',
+        records.length
+      );
       return {
         steps: Math.round(sum),
         records,
@@ -147,19 +149,21 @@ export async function backfillPastSevenDays(): Promise<
   }
 
   const results = await Promise.all(
-    dates.map(async (dateStr) => {
+    dates.map(async dateStr => {
       const data = await getStepsForDate(dateStr);
       return { dateStr, ...data };
     })
   );
 
   await markBackfillCompleted();
-  return results.filter((r) => r.steps > 0);
+  return results.filter(r => r.steps > 0);
 }
 
 /**
  * Tier 3: On-Demand Single-Day Fetch (Lazy Fetch)
  */
-export async function fetchSingleDaySteps(dateStr: string): Promise<{ steps: number; records: any[] }> {
+export async function fetchSingleDaySteps(
+  dateStr: string
+): Promise<{ steps: number; records: any[] }> {
   return getStepsForDate(dateStr);
 }

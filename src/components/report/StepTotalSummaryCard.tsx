@@ -24,17 +24,16 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
   subtitle = 'Total steps all the time',
 }) => {
   // Derive metrics if not explicitly passed
-  const duration = typeof totalDurationMinutes === 'number'
-    ? totalDurationMinutes
-    : Math.round(totalSteps / 100);
+  const duration =
+    typeof totalDurationMinutes === 'number' ? totalDurationMinutes : Math.round(totalSteps / 100);
 
-  const calories = typeof totalCalories === 'number'
-    ? totalCalories
-    : Math.round(totalSteps * 0.04);
+  const calories =
+    typeof totalCalories === 'number' ? totalCalories : Math.round(totalSteps * 0.04);
 
-  const distance = typeof totalDistanceKm === 'number'
-    ? totalDistanceKm
-    : Math.round(totalSteps * 0.000762 * 100) / 100;
+  const distance =
+    typeof totalDistanceKm === 'number'
+      ? totalDistanceKm
+      : Math.round(totalSteps * 0.000762 * 100) / 100;
 
   const formatDuration = (mins: number) => {
     if (mins <= 0) return '0m';

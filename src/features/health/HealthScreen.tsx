@@ -9,10 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  connectHealth,
-  getTodaySteps,
-} from './healthService';
+import { connectHealth, getTodaySteps } from './healthService';
 
 export interface HealthScreenProps {
   onBack?: () => void;
@@ -74,14 +71,12 @@ export function HealthScreen({ onBack }: HealthScreenProps) {
         </Pressable>
       )}
 
-      <Text style={styles.title}>Today's Steps</Text>
+      <Text style={styles.title}>{"Today's Steps"}</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#EA580C" style={styles.loader} />
       ) : (
-        <Text style={styles.steps}>
-          {steps !== null ? steps.toLocaleString() : '--'}
-        </Text>
+        <Text style={styles.steps}>{steps !== null ? steps.toLocaleString() : '--'}</Text>
       )}
 
       <Text style={styles.message}>{message}</Text>

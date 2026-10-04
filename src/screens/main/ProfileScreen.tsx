@@ -27,15 +27,10 @@ import { ProfileQuickNavGrid } from '@/components/profile/ProfileQuickNavGrid';
 import { ProfileMetricInspector } from '@/components/profile/ProfileMetricInspector';
 import { AvatarPickerModal } from '@/components/modals/AvatarPickerModal';
 
-import {
-  MetabolicSummaryScreen,
-  PreferencesScreen,
-  GoalsScreen,
-} from '@/screens/profile';
+import { MetabolicSummaryScreen, PreferencesScreen, GoalsScreen } from '@/screens/profile';
 import { AchievementCenterScreen } from '@/features/gamification';
 import { usePro, ProMembershipCard, ProPaywallModal } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
-
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
@@ -81,7 +76,7 @@ const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
           duration: 220,
           easing: Easing.in(Easing.cubic),
         },
-        (finished) => {
+        finished => {
           if (finished) {
             runOnJS(onClosed)();
           }
@@ -120,13 +115,16 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
 
-  const handleOpenSubView = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
-    if (closingView) return;
-    setNavStack((prev) => {
-      if (prev[prev.length - 1] === view) return prev;
-      return [...prev, view];
-    });
-  }, [closingView]);
+  const handleOpenSubView = useCallback(
+    (view: Exclude<ProfileSubView, 'main'>) => {
+      if (closingView) return;
+      setNavStack(prev => {
+        if (prev[prev.length - 1] === view) return prev;
+        return [...prev, view];
+      });
+    },
+    [closingView]
+  );
 
   const handleBack = useCallback(() => {
     if (navStack.length === 0 || closingView) return;
@@ -135,8 +133,8 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   }, [navStack, closingView]);
 
   const handleClosed = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
-    setNavStack((prev) => prev.filter((item) => item !== view));
-    setClosingView((prev) => (prev === view ? null : prev));
+    setNavStack(prev => prev.filter(item => item !== view));
+    setClosingView(prev => (prev === view ? null : prev));
   }, []);
 
   useEffect(() => {
@@ -148,9 +146,12 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
     return () => cancelAnimationFrame(frame);
   }, [initialScrollOffset, scrollRef]);
 
-  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
-  }, [onScrollPositionChange]);
+  const handleScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+    },
+    [onScrollPositionChange]
+  );
 
   // Hardware Back Handler on Android
   useEffect(() => {
@@ -177,13 +178,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           />
         );
       case 'preferences':
-        return (
-          <PreferencesScreen
-            onBack={handleBack}
-            onSignIn={onSignIn}
-            onSignOut={onSignOut}
-          />
-        );
+        return <PreferencesScreen onBack={handleBack} onSignIn={onSignIn} onSignOut={onSignOut} />;
       case 'goals':
         return <GoalsScreen onBack={handleBack} />;
       default:
@@ -217,10 +212,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         <View style={styles.headerMainRow}>
           {/* Title: Clean static header title */}
           <View style={styles.headerTitleContainer}>
-            <Text
-              style={styles.headerTitle}
-              numberOfLines={1}
-            >
+            <Text style={styles.headerTitle} numberOfLines={1}>
               Profile & Account
             </Text>
           </View>
@@ -301,14 +293,11 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         visible={avatarPickerVisible}
         currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
         onClose={() => setAvatarPickerVisible(false)}
-        onSelectAvatar={(newUrl) => updateGoals({ avatarUrl: newUrl })}
+        onSelectAvatar={newUrl => updateGoals({ avatarUrl: newUrl })}
       />
 
       {/* Pro Paywall Modal */}
-      <ProPaywallModal
-        visible={paywallVisible}
-        onClose={() => setPaywallVisible(false)}
-      />
+      <ProPaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
 
       {/* Full-Page Native Stack Sub-Screens (Awards, Summary, Preferences, Goals) */}
       {navStack.map((view, index) => (

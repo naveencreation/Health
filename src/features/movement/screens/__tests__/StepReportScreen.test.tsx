@@ -78,9 +78,7 @@ describe('StepReportScreen', () => {
   });
 
   test('switches timeframe to Monthly and Yearly when tabs are clicked', async () => {
-    const { getByLabelText, getAllByText } = await render(
-      <StepReportScreen onBack={jest.fn()} />
-    );
+    const { getByLabelText, getAllByText } = await render(<StepReportScreen onBack={jest.fn()} />);
 
     // Click Monthly
     await fireEvent.press(getByLabelText('Monthly timeframe'));
@@ -97,18 +95,14 @@ describe('StepReportScreen', () => {
 
   test('calls onBack when back chevron is pressed', async () => {
     const handleBack = jest.fn();
-    const { getByLabelText } = await render(
-      <StepReportScreen onBack={handleBack} />
-    );
+    const { getByLabelText } = await render(<StepReportScreen onBack={handleBack} />);
 
     await fireEvent.press(getByLabelText('Back to Step History'));
     expect(handleBack).toHaveBeenCalledTimes(1);
   });
 
   test('maintains independent selection states across charts', async () => {
-    const { getAllByRole } = await render(
-      <StepReportScreen onBack={jest.fn()} />
-    );
+    const { getAllByRole } = await render(<StepReportScreen onBack={jest.fn()} />);
 
     // Verify buttons can be tapped independently
     const buttons = getAllByRole('button');

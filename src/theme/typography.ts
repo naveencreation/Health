@@ -4,9 +4,7 @@ const isWeb = Platform.OS === 'web';
 
 export const Fonts = {
   // Brand Serif font (Restricted exclusively to solitary logo mark per DESIGN.md)
-  kurale: isWeb
-    ? 'Kurale_400Regular, Kurale, Georgia, serif'
-    : 'Kurale_400Regular',
+  kurale: isWeb ? 'Kurale_400Regular, Kurale, Georgia, serif' : 'Kurale_400Regular',
 
   // Modernist Geometric Sans font (100% Core brand typography for all screens, telemetry, headings, body)
   urbanist: {
@@ -194,5 +192,3 @@ export const ArchitecturalSurfaces = {
     elevation: 0,
   } as ViewStyle,
 };
-
-

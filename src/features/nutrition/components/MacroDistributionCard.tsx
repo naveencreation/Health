@@ -8,14 +8,7 @@ import {
   LayoutAnimation,
   LayoutChangeEvent,
 } from 'react-native';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from '@/components/report/ChartTypeToggle';
 
@@ -139,12 +132,7 @@ function buildBarPath(
  * SVG path for the teardrop tail below the circular pin head.
  * cx/cy = centre of circular head in local SVG space.
  */
-function buildTearTailPath(
-  cx: number,
-  cy: number,
-  r: number,
-  tailLen: number
-): string {
+function buildTearTailPath(cx: number, cy: number, r: number, tailLen: number): string {
   const spread = r * 0.38;
   const cp1y = cy + r + tailLen * 0.4;
   const cp2y = cy + r + tailLen * 0.82;
@@ -222,9 +210,8 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
 
   // Adaptive Y-Axis Scale based on goal and max logged grams
   const { maxY, yTicks } = useMemo<{ maxY: number; yTicks: number[] }>(() => {
-    const maxLogged = days.length > 0
-      ? Math.max(...days.map((d) => getDayMacroGrams(d, selectedMacro)))
-      : 0;
+    const maxLogged =
+      days.length > 0 ? Math.max(...days.map(d => getDayMacroGrams(d, selectedMacro))) : 0;
     const highest = Math.max(currentGoal, maxLogged);
 
     let ceiling = 200;
@@ -267,7 +254,7 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
 
   // Check if entire period has no logged grams for this macro
   const hasAnyGrams = useMemo(() => {
-    return days.some((d) => getDayMacroGrams(d, selectedMacro) > 0);
+    return days.some(d => getDayMacroGrams(d, selectedMacro) > 0);
   }, [days, selectedMacro]);
 
   // Coordinates for each day
@@ -358,10 +345,7 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
           {/* Macronutrient Dropdown Trigger & Floating Anchored Menu */}
           <View style={styles.dropdownAnchorWrap}>
             <Pressable
-              style={[
-                styles.dropdownTrigger,
-                dropdownOpen && styles.dropdownTriggerActive,
-              ]}
+              style={[styles.dropdownTrigger, dropdownOpen && styles.dropdownTriggerActive]}
               onPress={() => {
                 triggerLayoutAnim();
                 setDropdownOpen(!dropdownOpen);
@@ -385,17 +369,14 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
             {/* Anchored Floating Dropdown Menu (Drops down directly below the pill) */}
             {dropdownOpen && (
               <View style={styles.anchoredDropdownMenu}>
-                {(['protein', 'carbs', 'fat', 'fiber'] as MacroType[]).map((macroKey) => {
+                {(['protein', 'carbs', 'fat', 'fiber'] as MacroType[]).map(macroKey => {
                   const item = MACRO_CONFIGS[macroKey];
                   const isCurrent = macroKey === selectedMacro;
                   const targetVal = targets[item.targetKey] ?? item.defaultTarget;
                   return (
                     <Pressable
                       key={macroKey}
-                      style={[
-                        styles.dropdownItemRow,
-                        isCurrent && styles.dropdownItemRowActive,
-                      ]}
+                      style={[styles.dropdownItemRow, isCurrent && styles.dropdownItemRowActive]}
                       onPress={() => handleSelectMacro(macroKey)}
                       accessibilityRole="button"
                       accessibilityLabel={`Select ${item.label}`}
@@ -467,7 +448,7 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
       <View style={styles.chartWrapper}>
         {/* Y-Axis Column */}
         <View style={styles.yAxisColumn}>
-          {yTicks.map((tick) => {
+          {yTicks.map(tick => {
             const ratio = tick / maxY;
             const topPos = TOP_PAD + (1 - ratio) * USABLE_HEIGHT - 8;
             return (
@@ -584,69 +565,73 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
               )}
 
               {/* SVG VECTOR TEARDROP PIN */}
-              {selectedCoord && (() => {
-                const PIN_R = 19;
-                const PIN_TAIL = 9;
-                const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
-                const PIN_SVG_W = PIN_R * 2 + 6;
-                const PIN_CX = PIN_SVG_W / 2;
-                const PIN_CY = PIN_R + 2;
-                const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
-                const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
-                const tearPath = buildTearTailPath(PIN_CX, PIN_CY, PIN_R, PIN_TAIL);
-                return (
-                  <Svg
-                    x={selectedCoord.x - PIN_SVG_W / 2}
-                    y={pinSvgTop}
-                    width={PIN_SVG_W}
-                    height={PIN_TOTAL_H + 6}
-                  >
-                    {/* Drop shadow */}
-                    <Path
-                      d={buildTearTailPath(PIN_CX, PIN_CY, PIN_R + 0.5, PIN_TAIL)}
-                      fill="rgba(15,23,42,0.08)"
-                      transform="translate(0,1.5)"
-                    />
-                    {/* Tail */}
-                    <Path d={tearPath} fill={activeColor} />
-                    {/* Head circle */}
-                    <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R} fill={activeColor} />
-                    {/* Inner white disc */}
-                    <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R - 5} fill="#FFFFFF" />
-                  </Svg>
-                );
-              })()}
+              {selectedCoord &&
+                (() => {
+                  const PIN_R = 19;
+                  const PIN_TAIL = 9;
+                  const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
+                  const PIN_SVG_W = PIN_R * 2 + 6;
+                  const PIN_CX = PIN_SVG_W / 2;
+                  const PIN_CY = PIN_R + 2;
+                  const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
+                  const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
+                  const tearPath = buildTearTailPath(PIN_CX, PIN_CY, PIN_R, PIN_TAIL);
+                  return (
+                    <Svg
+                      x={selectedCoord.x - PIN_SVG_W / 2}
+                      y={pinSvgTop}
+                      width={PIN_SVG_W}
+                      height={PIN_TOTAL_H + 6}
+                    >
+                      {/* Drop shadow */}
+                      <Path
+                        d={buildTearTailPath(PIN_CX, PIN_CY, PIN_R + 0.5, PIN_TAIL)}
+                        fill="rgba(15,23,42,0.08)"
+                        transform="translate(0,1.5)"
+                      />
+                      {/* Tail */}
+                      <Path d={tearPath} fill={activeColor} />
+                      {/* Head circle */}
+                      <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R} fill={activeColor} />
+                      {/* Inner white disc */}
+                      <Circle cx={PIN_CX} cy={PIN_CY} r={PIN_R - 5} fill="#FFFFFF" />
+                    </Svg>
+                  );
+                })()}
             </Svg>
           )}
 
           {/* Native text overlay on top of inner white disc */}
-          {selectedCoord && (() => {
-            const PIN_R = 19;
-            const PIN_TAIL = 9;
-            const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
-            const PIN_SVG_W = PIN_R * 2 + 6;
-            const PIN_CY = PIN_R + 2;
-            const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
-            const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
-            return (
-              <View
-                pointerEvents="none"
-                style={[
-                  styles.pinLabelContainer,
-                  {
-                    left: selectedCoord.x - PIN_SVG_W / 2,
-                    top: pinSvgTop + PIN_CY - 12,
-                    width: PIN_SVG_W,
-                  },
-                ]}
-              >
-                <Text style={styles.tooltipValueText}>
-                  {selectedCoord.isFuture && selectedCoord.isZero ? '--' : formatMacroValue(selectedCoord.grams)}
-                </Text>
-                <Text style={styles.tooltipUnitText}>{activeConfig.unit}</Text>
-              </View>
-            );
-          })()}
+          {selectedCoord &&
+            (() => {
+              const PIN_R = 19;
+              const PIN_TAIL = 9;
+              const PIN_TOTAL_H = PIN_R * 2 + PIN_TAIL;
+              const PIN_SVG_W = PIN_R * 2 + 6;
+              const PIN_CY = PIN_R + 2;
+              const apexY = chartType === 'bar' ? selectedCoord.topY : selectedCoord.y;
+              const pinSvgTop = Math.max(0, apexY - PIN_TOTAL_H - 3);
+              return (
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.pinLabelContainer,
+                    {
+                      left: selectedCoord.x - PIN_SVG_W / 2,
+                      top: pinSvgTop + PIN_CY - 12,
+                      width: PIN_SVG_W,
+                    },
+                  ]}
+                >
+                  <Text style={styles.tooltipValueText}>
+                    {selectedCoord.isFuture && selectedCoord.isZero
+                      ? '--'
+                      : formatMacroValue(selectedCoord.grams)}
+                  </Text>
+                  <Text style={styles.tooltipUnitText}>{activeConfig.unit}</Text>
+                </View>
+              );
+            })()}
 
           {/* Transparent Tap Hotspots spanning full chart height */}
           <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -716,8 +701,6 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
           </Text>
         </View>
       )}
-
-
     </View>
   );
 };

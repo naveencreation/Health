@@ -27,10 +27,7 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
       <View style={styles.leftContainer}>
         {onBack ? (
           <Pressable
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed ? styles.btnPressedSubtle : null,
-            ]}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
             onPress={onBack}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
@@ -58,7 +55,7 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
             <Text style={styles.stepIndicatorText}>{stepText}</Text>
           </View>
         ) : (
-          rightElement ?? null
+          (rightElement ?? null)
         )}
       </View>
     </View>

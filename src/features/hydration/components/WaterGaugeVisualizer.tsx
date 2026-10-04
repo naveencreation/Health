@@ -56,21 +56,12 @@ const DROPLET_WIDTH = 98;
 const DROPLET_HEIGHT = 122;
 
 export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGaugeVisualizerProps>(
-  (
-    {
-      currentWater,
-      maxWater,
-      activeColor = '#2196F3',
-      onPressGoal,
-      style,
-    },
-    ref
-  ) => {
+  ({ currentWater, maxWater, activeColor = '#2196F3', onPressGoal, style }, ref) => {
     const dropletRef = useRef<DropletVisualizerRef>(null);
 
     // Expose triggerSlosh to parent
     useImperativeHandle(ref, () => ({
-      triggerSlosh: (dir) => dropletRef.current?.triggerSlosh(dir),
+      triggerSlosh: dir => dropletRef.current?.triggerSlosh(dir),
     }));
 
     // Interactive Tap Slosh physics with squish spring
@@ -97,7 +88,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
     const isReducedMotion = useRef(false);
 
     useEffect(() => {
-      AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
         isReducedMotion.current = enabled;
       });
     }, []);
@@ -186,7 +177,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
           />
 
           {/* C. 15 Precision Radial Instrument Ticks */}
-          {ticks.map((t) => (
+          {ticks.map(t => (
             <Line
               key={t.id}
               x1={t.x1}
@@ -240,10 +231,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
           </Text>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.goalSubtitleRow,
-              pressed && styles.goalSubtitlePressed,
-            ]}
+            style={({ pressed }) => [styles.goalSubtitleRow, pressed && styles.goalSubtitlePressed]}
             onPress={onPressGoal}
             hitSlop={{ top: 8, bottom: 8, left: 14, right: 14 }}
             accessibilityRole="button"
@@ -251,12 +239,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
           >
             <Text style={styles.goalSubtitle}>/{maxWater} mL</Text>
             {onPressGoal && (
-              <Ionicons
-                name="pencil-outline"
-                size={13}
-                color="#94A3B8"
-                style={styles.pencilIcon}
-              />
+              <Ionicons name="pencil-outline" size={13} color="#94A3B8" style={styles.pencilIcon} />
             )}
           </Pressable>
         </View>
@@ -264,6 +247,7 @@ export const WaterGaugeVisualizer = forwardRef<WaterGaugeVisualizerRef, WaterGau
     );
   }
 );
+WaterGaugeVisualizer.displayName = 'WaterGaugeVisualizer';
 
 const styles = StyleSheet.create({
   rootContainer: {

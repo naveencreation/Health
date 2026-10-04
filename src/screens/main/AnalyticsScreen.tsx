@@ -49,7 +49,6 @@ import {
   BMIGaugeCard,
 } from '@/components/report';
 
-
 export interface AnalyticsScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
@@ -59,13 +58,33 @@ export interface AnalyticsScreenProps {
 export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const FULL_MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -75,9 +94,13 @@ const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
  */
 function getLogNutrition(log?: DailyLog) {
   if (!log) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, burnedCalories: 0 };
-  let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
+  let calories = 0,
+    protein = 0,
+    carbs = 0,
+    fat = 0,
+    fiber = 0;
   if (Array.isArray(log.meals)) {
-    log.meals.forEach((m) => {
+    log.meals.forEach(m => {
       calories += m.calories || 0;
       protein += m.protein || 0;
       carbs += m.carbs || 0;
@@ -87,7 +110,7 @@ function getLogNutrition(log?: DailyLog) {
   }
   let burnedCalories = 0;
   if (Array.isArray(log.activities)) {
-    log.activities.forEach((a) => {
+    log.activities.forEach(a => {
       burnedCalories += a.caloriesBurned || 0;
     });
   }
@@ -134,7 +157,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   // 3. Hydration Intake (Completion & Volume)
   const [selectedWaterIndex, setSelectedWaterIndex] = useState<number>(defaultDayIndex);
-  const [selectedHydrateVolumeIndex, setSelectedHydrateVolumeIndex] = useState<number>(defaultDayIndex);
+  const [selectedHydrateVolumeIndex, setSelectedHydrateVolumeIndex] =
+    useState<number>(defaultDayIndex);
 
   // 4. Weight & Body Trend
   const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(defaultDayIndex);
@@ -165,7 +189,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   // Active Report Meta configuration
   const activeReportMeta = useMemo(() => {
-    return REPORT_CATEGORIES.find((c) => c.id === activeReport) || REPORT_CATEGORIES[0];
+    return REPORT_CATEGORIES.find(c => c.id === activeReport) || REPORT_CATEGORIES[0];
   }, [activeReport]);
 
   // Compute Active Period Date Range & Days
@@ -214,7 +238,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       return {
         label,
         days,
-        allDates: days.map((d) => d.dateStr),
+        allDates: days.map(d => d.dateStr),
         canGoForward: periodOffset < 0,
       };
     }
@@ -313,7 +337,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // 1. NUTRITION REPORT DATA
   // =========================================================================
   const calorieDays: DayCalorieIntakeData[] = useMemo(() => {
-    return dateRangeInfo.days.map((item) => {
+    return dateRangeInfo.days.map(item => {
       if ('log' in item) {
         const nutrition = getLogNutrition(item.log);
         return {
@@ -357,11 +381,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     const targetProteinKcal = (userGoals?.targetProtein || 100) * 4;
     const targetFatKcal = (userGoals?.targetFat || 78) * 9;
     const targetTotalKcal = targetCarbsKcal + targetProteinKcal + targetFatKcal;
-    const defaultCarbsPct = targetTotalKcal > 0 ? Math.round((targetCarbsKcal / targetTotalKcal) * 100) : 45;
-    const defaultProteinPct = targetTotalKcal > 0 ? Math.round((targetProteinKcal / targetTotalKcal) * 100) : 20;
+    const defaultCarbsPct =
+      targetTotalKcal > 0 ? Math.round((targetCarbsKcal / targetTotalKcal) * 100) : 45;
+    const defaultProteinPct =
+      targetTotalKcal > 0 ? Math.round((targetProteinKcal / targetTotalKcal) * 100) : 20;
     const defaultFatPct = Math.max(0, 100 - defaultCarbsPct - defaultProteinPct);
 
-    return dateRangeInfo.days.map((item) => {
+    return dateRangeInfo.days.map(item => {
       let proteinG = 0;
       let carbsG = 0;
       let fatG = 0;
@@ -375,7 +401,11 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         fiberG = Math.round(nutrition.fiber * 10) / 10;
       } else {
         const dates = (item as any).bucketDates || (item as any).monthDates || [];
-        let pSum = 0, cSum = 0, fSum = 0, fibSum = 0, count = 0;
+        let pSum = 0,
+          cSum = 0,
+          fSum = 0,
+          fibSum = 0,
+          count = 0;
         dates.forEach((d: string) => {
           const nutrition = getLogNutrition(dailyLogs[d]);
           if (nutrition.calories > 0) {
@@ -428,7 +458,6 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     });
   }, [dateRangeInfo.days, dailyLogs, userGoals]);
 
-
   // =========================================================================
   // 2. STEP REPORT DATA
   // =========================================================================
@@ -442,7 +471,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     const cDays: DayCalorieData[] = [];
     const tDays: DayTimeData[] = [];
 
-    dateRangeInfo.days.forEach((item) => {
+    dateRangeInfo.days.forEach(item => {
       let steps = 0;
 
       if ('log' in item) {
@@ -508,79 +537,80 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // =========================================================================
   // 3. WATER REPORT DATA
   // =========================================================================
-  const { waterCompletionDays, hydrateDays, drinkTypesBreakdown, totalDrinkVolume } = useMemo(() => {
-    const cDays: DayCompletionData[] = [];
-    const hDays: DayHydrateData[] = [];
-    const beverageMap: Record<string, number> = {};
-    let grandVolumeMl = 0;
+  const { waterCompletionDays, hydrateDays, drinkTypesBreakdown, totalDrinkVolume } =
+    useMemo(() => {
+      const cDays: DayCompletionData[] = [];
+      const hDays: DayHydrateData[] = [];
+      const beverageMap: Record<string, number> = {};
+      let grandVolumeMl = 0;
 
-    dateRangeInfo.days.forEach((item) => {
-      let ml = 0;
+      dateRangeInfo.days.forEach(item => {
+        let ml = 0;
 
-      if ('log' in item) {
-        ml = item.log?.waterMl || 0;
-        item.log?.waterEntries?.forEach((wl) => {
-          const bevId = wl.beverageType || 'water';
-          beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
-          grandVolumeMl += wl.amountMl || 0;
-        });
-      } else {
-        const dates = (item as any).bucketDates || (item as any).monthDates || [];
-        let bucketSum = 0;
-        let count = 0;
-        dates.forEach((d: string) => {
-          const w = dailyLogs[d]?.waterMl;
-          if (w && w > 0) {
-            bucketSum += w;
-            count++;
-          }
-          dailyLogs[d]?.waterEntries?.forEach((wl) => {
+        if ('log' in item) {
+          ml = item.log?.waterMl || 0;
+          item.log?.waterEntries?.forEach(wl => {
             const bevId = wl.beverageType || 'water';
             beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
             grandVolumeMl += wl.amountMl || 0;
           });
+        } else {
+          const dates = (item as any).bucketDates || (item as any).monthDates || [];
+          let bucketSum = 0;
+          let count = 0;
+          dates.forEach((d: string) => {
+            const w = dailyLogs[d]?.waterMl;
+            if (w && w > 0) {
+              bucketSum += w;
+              count++;
+            }
+            dailyLogs[d]?.waterEntries?.forEach(wl => {
+              const bevId = wl.beverageType || 'water';
+              beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
+              grandVolumeMl += wl.amountMl || 0;
+            });
+          });
+          ml = count > 0 ? Math.round(bucketSum / count) : 0;
+        }
+
+        cDays.push({
+          dateStr: item.dateStr,
+          dayNum: item.dayNum,
+          dayName: item.dayName,
+          intakeMl: ml,
+          goalMl: dailyWaterGoal,
+          completionPct: dailyWaterGoal > 0 ? Math.round((ml / dailyWaterGoal) * 100) : 0,
         });
-        ml = count > 0 ? Math.round(bucketSum / count) : 0;
-      }
 
-      cDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        intakeMl: ml,
-        goalMl: dailyWaterGoal,
-        completionPct: dailyWaterGoal > 0 ? Math.round((ml / dailyWaterGoal) * 100) : 0,
+        hDays.push({
+          dateStr: item.dateStr,
+          dayNum: item.dayNum,
+          dayName: item.dayName,
+          intakeMl: ml,
+        });
       });
 
-      hDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        intakeMl: ml,
+      const breakdown: DrinkTypeBreakdown[] = Object.keys(beverageMap).map(bevId => {
+        const cfg = getBeverageConfig(bevId);
+        const volumeMl = beverageMap[bevId];
+        return {
+          id: bevId,
+          name: cfg.name,
+          color: cfg.color,
+          amountMl: volumeMl,
+          pct: grandVolumeMl > 0 ? Math.round((volumeMl / grandVolumeMl) * 100) : 0,
+        };
       });
-    });
 
-    const breakdown: DrinkTypeBreakdown[] = Object.keys(beverageMap).map((bevId) => {
-      const cfg = getBeverageConfig(bevId);
-      const volumeMl = beverageMap[bevId];
+      breakdown.sort((a, b) => b.amountMl - a.amountMl);
+
       return {
-        id: bevId,
-        name: cfg.name,
-        color: cfg.color,
-        amountMl: volumeMl,
-        pct: grandVolumeMl > 0 ? Math.round((volumeMl / grandVolumeMl) * 100) : 0,
+        waterCompletionDays: cDays,
+        hydrateDays: hDays,
+        drinkTypesBreakdown: breakdown,
+        totalDrinkVolume: grandVolumeMl,
       };
-    });
-
-    breakdown.sort((a, b) => b.amountMl - a.amountMl);
-
-    return {
-      waterCompletionDays: cDays,
-      hydrateDays: hDays,
-      drinkTypesBreakdown: breakdown,
-      totalDrinkVolume: grandVolumeMl,
-    };
-  }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
+    }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
 
   // =========================================================================
   // 4. WEIGHT REPORT DATA
@@ -589,7 +619,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     const tDays: DayWeightTrendData[] = [];
     let latestWeight = userWeightKg;
 
-    dateRangeInfo.days.forEach((item) => {
+    dateRangeInfo.days.forEach(item => {
       let w = userWeightKg;
 
       if ('log' in item && item.log?.weightKg) {
@@ -628,10 +658,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   }, [dateRangeInfo.days, userWeightKg, unitFactor, weightUnit, userGoals]);
 
   // Date Navigation Handlers
-  const handlePrevPeriod = () => setPeriodOffset((prev) => prev - 1);
+  const handlePrevPeriod = () => setPeriodOffset(prev => prev - 1);
   const handleNextPeriod = () => {
     if (dateRangeInfo.canGoForward) {
-      setPeriodOffset((prev) => Math.min(0, prev + 1));
+      setPeriodOffset(prev => Math.min(0, prev + 1));
     }
   };
 
@@ -671,7 +701,11 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             accessibilityLabel={`Active report: ${activeReportMeta.title}. Tap to change report.`}
           >
             <View style={[styles.capsuleIconWrap, { backgroundColor: activeReportMeta.iconBg }]}>
-              <Ionicons name={activeReportMeta.iconName} size={15} color={activeReportMeta.iconColor} />
+              <Ionicons
+                name={activeReportMeta.iconName}
+                size={15}
+                color={activeReportMeta.iconColor}
+              />
             </View>
             <Text style={styles.capsuleTitle} numberOfLines={1}>
               {activeReportMeta.title}
@@ -685,27 +719,25 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       <View style={styles.controlsBar}>
         {/* Timeframe Switcher Tabs */}
         <View style={styles.timeframeSegmentContainer}>
-          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map((tab) => {
+          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
             const isActive = timeframe === tab;
             const isLocked = !isPro && tab !== 'weekly';
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
                 key={tab}
-                style={[
-                  styles.timeframeTab,
-                  isActive && styles.timeframeTabActive,
-                ]}
+                style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
-                accessibilityLabel={isLocked ? `${displayLabel} timeframe (Calorify Pro required)` : `${displayLabel} timeframe`}
+                accessibilityLabel={
+                  isLocked
+                    ? `${displayLabel} timeframe (Calorify Pro required)`
+                    : `${displayLabel} timeframe`
+                }
               >
                 <View style={styles.tabContentRow}>
                   <Text
-                    style={[
-                      styles.timeframeTabText,
-                      isActive && styles.timeframeTabTextActive,
-                    ]}
+                    style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}
                   >
                     {displayLabel}
                   </Text>
@@ -842,10 +874,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               onSelectDay={setSelectedHydrateVolumeIndex}
             />
 
-            <DrinkTypesCard
-              breakdown={drinkTypesBreakdown}
-              totalIntakeMl={totalDrinkVolume}
-            />
+            <DrinkTypesCard breakdown={drinkTypesBreakdown} totalIntakeMl={totalDrinkVolume} />
           </>
         )}
 
@@ -862,11 +891,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               targetWeightKg={userGoals.targetWeightKg}
             />
 
-            <BMIGaugeCard
-              weightKg={userWeightKg}
-              heightCm={userHeightCm}
-              unit={weightUnit}
-            />
+            <BMIGaugeCard weightKg={userWeightKg} heightCm={userHeightCm} unit={weightUnit} />
           </>
         )}
       </ScrollView>

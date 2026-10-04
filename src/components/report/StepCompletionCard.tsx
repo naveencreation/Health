@@ -1,21 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
@@ -65,7 +51,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
   // Adaptive Y-Axis calculation (matching 7000 down to 1000 or custom)
   const { maxY, yTicks, stepGoalDisplay } = useMemo(() => {
     const goal = stepGoal && stepGoal > 0 ? stepGoal : 6000;
-    const maxLogged = days.length > 0 ? Math.max(...days.map((d) => d.steps || 0)) : 0;
+    const maxLogged = days.length > 0 ? Math.max(...days.map(d => d.steps || 0)) : 0;
     const highest = Math.max(goal, maxLogged);
 
     let ceiling = 7000;
@@ -118,16 +104,15 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
     return { x, y, steps: d.steps };
   });
 
-  const linePath = points.length > 0
-    ? points.reduce(
-        (acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`),
-        ''
-      )
-    : '';
+  const linePath =
+    points.length > 0
+      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+      : '';
 
-  const areaPath = points.length > 0
-    ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
-    : '';
+  const areaPath =
+    points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+      : '';
 
   const selectedPoint = points[selectedIndex];
 
@@ -136,11 +121,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
       {/* 1. Card Header Row: Title & View Mode Toggle */}
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Step</Text>
-        <ChartTypeToggle
-          chartType={chartType}
-          onChange={setChartType}
-          activeColor={activeColor}
-        />
+        <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
 
       {/* 2. Subheader Legend Row: [● Selected]  [--- Step Goal] */}
@@ -169,7 +150,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
       <View style={styles.chartWrapper}>
         {/* Y-Axis Column */}
         <View style={styles.yAxisColumn}>
-          {yTicks.map((tick) => (
+          {yTicks.map(tick => (
             <Text key={`tick_${tick}`} style={styles.yTickText}>
               {tick}
             </Text>
@@ -203,9 +184,10 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
             <Animated.View entering={FadeIn.duration(180)} style={styles.barColumnsRow}>
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
-                const barHeight = day.steps <= 0
-                  ? 8
-                  : Math.max(12, (Math.min(day.steps, maxY) / maxY) * USABLE_HEIGHT);
+                const barHeight =
+                  day.steps <= 0
+                    ? 8
+                    : Math.max(12, (Math.min(day.steps, maxY) / maxY) * USABLE_HEIGHT);
 
                 // Tooltip position directly above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD + 2);

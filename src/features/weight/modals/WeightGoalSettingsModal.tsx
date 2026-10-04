@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
@@ -17,7 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export interface WeightGoalSettingsModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave?: (updated: { startWeightKg: number; targetWeightKg: number; weightUnit: 'kg' | 'lbs' }) => void;
+  onSave?: (updated: {
+    startWeightKg: number;
+    targetWeightKg: number;
+    weightUnit: 'kg' | 'lbs';
+  }) => void;
 }
 
 export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = ({
@@ -29,7 +25,9 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
   const { userGoals, updateGoals } = useGoals();
 
   const [unit, setUnit] = useState<'kg' | 'lbs'>(userGoals.weightUnit || 'kg');
-  const [startKg, setStartKg] = useState<number>(userGoals.startWeightKg ?? userGoals.currentWeightKg ?? 68.0);
+  const [startKg, setStartKg] = useState<number>(
+    userGoals.startWeightKg ?? userGoals.currentWeightKg ?? 68.0
+  );
   const [goalKg, setGoalKg] = useState<number>(userGoals.targetWeightKg ?? 65.0);
 
   useEffect(() => {
@@ -38,13 +36,22 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
       setStartKg(userGoals.startWeightKg ?? userGoals.currentWeightKg ?? 68.0);
       setGoalKg(userGoals.targetWeightKg ?? 65.0);
     }
-  }, [visible, userGoals.weightUnit, userGoals.startWeightKg, userGoals.currentWeightKg, userGoals.targetWeightKg]);
+  }, [
+    visible,
+    userGoals.weightUnit,
+    userGoals.startWeightKg,
+    userGoals.currentWeightKg,
+    userGoals.targetWeightKg,
+  ]);
 
-  const toDisplay = (valKg: number) => (unit === 'kg' ? valKg : Math.round(valKg * 2.20462 * 10) / 10);
+  const toDisplay = (valKg: number) =>
+    unit === 'kg' ? valKg : Math.round(valKg * 2.20462 * 10) / 10;
 
   const handleStepStart = (deltaCurrentUnit: number) => {
     if (unit === 'kg') {
-      setStartKg((prev) => Math.max(30, Math.min(300, Math.round((prev + deltaCurrentUnit) * 10) / 10)));
+      setStartKg(prev =>
+        Math.max(30, Math.min(300, Math.round((prev + deltaCurrentUnit) * 10) / 10))
+      );
     } else {
       const currentLbs = startKg * 2.20462;
       const nextLbs = Math.max(66, Math.min(660, currentLbs + deltaCurrentUnit));
@@ -55,7 +62,9 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
 
   const handleStepGoal = (deltaCurrentUnit: number) => {
     if (unit === 'kg') {
-      setGoalKg((prev) => Math.max(30, Math.min(300, Math.round((prev + deltaCurrentUnit) * 10) / 10)));
+      setGoalKg(prev =>
+        Math.max(30, Math.min(300, Math.round((prev + deltaCurrentUnit) * 10) / 10))
+      );
     } else {
       const currentLbs = goalKg * 2.20462;
       const nextLbs = Math.max(66, Math.min(660, currentLbs + deltaCurrentUnit));
@@ -66,8 +75,10 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
 
   const handleSave = () => {
     const payload = {
-      startWeightKg: unit === 'lbs' ? Math.round(startKg * 100) / 100 : Math.round(startKg * 10) / 10,
-      targetWeightKg: unit === 'lbs' ? Math.round(goalKg * 100) / 100 : Math.round(goalKg * 10) / 10,
+      startWeightKg:
+        unit === 'lbs' ? Math.round(startKg * 100) / 100 : Math.round(startKg * 10) / 10,
+      targetWeightKg:
+        unit === 'lbs' ? Math.round(goalKg * 100) / 100 : Math.round(goalKg * 10) / 10,
       weightUnit: unit,
     };
     updateGoals(payload);
@@ -79,12 +90,7 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
   const isLoss = totalDeltaKg < 0;
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
@@ -106,7 +112,10 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollBody}
+          >
             {/* Preferred Unit Toggle */}
             <Text style={styles.fieldLabel}>Preferred Unit</Text>
             <View style={styles.unitPillContainer}>

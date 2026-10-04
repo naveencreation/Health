@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -141,7 +134,8 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
       id: 'n_ria',
       type: 'ria',
       title: '✨ Ria AI Insight',
-      description: 'Adding 10g more dietary fiber at dinner slows glucose spikes and improves sleep quality.',
+      description:
+        'Adding 10g more dietary fiber at dinner slows glucose spikes and improves sleep quality.',
       timeAgo: 'Yesterday',
       isUnread: false,
       accentColor: '#8B5CF6',
@@ -151,10 +145,12 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
     return notifs;
   }, [firstName, userGoals, currentLog, remainingCalories]);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>(() => dynamicNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    () => dynamicNotifications
+  );
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isUnread: false })));
+    setNotifications(prev => prev.map(n => ({ ...n, isUnread: false })));
   };
 
   const clearAll = () => {
@@ -179,12 +175,7 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <Pressable
           style={styles.backdropDismiss}
@@ -216,7 +207,10 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
             {notifications.length > 0 ? (
               <Pressable
                 onPress={markAllAsRead}
-                style={({ pressed }) => [styles.actionBtn, pressed ? styles.pressedActionBtn : null]}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  pressed ? styles.pressedActionBtn : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Mark all notifications as read"
               >
@@ -234,10 +228,12 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
                   <Ionicons name="notifications-off-outline" size={32} color="#94A3B8" />
                 </View>
                 <Text style={styles.emptyTitle}>All Caught Up!</Text>
-                <Text style={styles.emptyDesc}>No new alerts or reminders. Keep up the great health habits!</Text>
+                <Text style={styles.emptyDesc}>
+                  No new alerts or reminders. Keep up the great health habits!
+                </Text>
               </View>
             ) : (
-              notifications.map((item) => (
+              notifications.map(item => (
                 <View
                   key={item.id}
                   style={[styles.notifCard, item.isUnread ? styles.notifCardUnread : null]}

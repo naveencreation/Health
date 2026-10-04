@@ -73,12 +73,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const pushMode = (nextMode: AuthScreenMode) => {
     setTransitionDirection('forward');
-    setHistory((prev) => (prev[prev.length - 1] === nextMode ? prev : [...prev, nextMode]));
+    setHistory(prev => (prev[prev.length - 1] === nextMode ? prev : [...prev, nextMode]));
   };
 
   const popMode = () => {
     setTransitionDirection('backward');
-    setHistory((prev) => {
+    setHistory(prev => {
       if (prev.length > 1) {
         return prev.slice(0, -1);
       }
@@ -186,12 +186,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     // 3. Forgot Password Screen
     if (mode === 'forgot_password') {
-      return (
-        <ForgotPasswordScreen
-          onBack={popMode}
-          onSuccess={popMode}
-        />
-      );
+      return <ForgotPasswordScreen onBack={popMode} onSuccess={popMode} />;
     }
 
     // 4. Onboarding Step 1: Age
@@ -200,8 +195,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <AgeSelectionScreen
           initialAge={biometrics.age}
           onBack={popMode}
-          onContinue={(age) => {
-            setBiometrics((prev) => ({ ...prev, age }));
+          onContinue={age => {
+            setBiometrics(prev => ({ ...prev, age }));
             pushMode('weight');
           }}
           onSkip={() => pushMode('signup')}
@@ -217,7 +212,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           initialWeightKg={biometrics.weight}
           onBack={popMode}
           onContinue={(weight, weightUnit) => {
-            setBiometrics((prev) => ({ ...prev, weight, weightUnit }));
+            setBiometrics(prev => ({ ...prev, weight, weightUnit }));
             pushMode('height');
           }}
           onSkip={() => pushMode('signup')}
@@ -233,7 +228,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           initialHeightCm={biometrics.height}
           onBack={popMode}
           onContinue={(height, heightUnit) => {
-            setBiometrics((prev) => ({ ...prev, height, heightUnit }));
+            setBiometrics(prev => ({ ...prev, height, heightUnit }));
             pushMode('goal');
           }}
           onSkip={() => pushMode('signup')}
@@ -248,8 +243,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <GoalSelectionScreen
           initialGoal={biometrics.goal}
           onBack={popMode}
-          onContinue={(goal) => {
-            setBiometrics((prev) => ({ ...prev, goal }));
+          onContinue={goal => {
+            setBiometrics(prev => ({ ...prev, goal }));
             pushMode('gender');
           }}
           onSkip={() => pushMode('signup')}
@@ -264,8 +259,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         <GenderSelectionScreen
           initialGender={biometrics.gender}
           onBack={popMode}
-          onContinue={(gender) => {
-            setBiometrics((prev) => ({ ...prev, gender }));
+          onContinue={gender => {
+            setBiometrics(prev => ({ ...prev, gender }));
             pushMode('plan');
           }}
           onSkip={() => pushMode('signup')}
@@ -280,8 +275,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         age: biometrics.age,
         weightKg: biometrics.weight,
         heightCm: biometrics.height,
-        gender: biometrics.gender === 'female' ? 'female' : biometrics.gender === 'male' ? 'male' : 'other',
-        goal: biometrics.goal === 'lose' ? 'lose_weight' : biometrics.goal === 'gain' ? 'gain_muscle' : 'maintain',
+        gender:
+          biometrics.gender === 'female'
+            ? 'female'
+            : biometrics.gender === 'male'
+              ? 'male'
+              : 'other',
+        goal:
+          biometrics.goal === 'lose'
+            ? 'lose_weight'
+            : biometrics.goal === 'gain'
+              ? 'gain_muscle'
+              : 'maintain',
       });
 
       return (
@@ -329,7 +334,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <View style={styles.topHeader}>
               {onClose ? (
                 <Pressable
-                  style={({ pressed }) => [styles.headerCloseBtn, pressed ? styles.pressedSubtle : null]}
+                  style={({ pressed }) => [
+                    styles.headerCloseBtn,
+                    pressed ? styles.pressedSubtle : null,
+                  ]}
                   onPress={onClose}
                   hitSlop={10}
                   accessibilityRole="button"
@@ -367,7 +375,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <Text style={styles.mainHeading}>Your Personal Nutrition Coach</Text>
               <Text style={styles.headlineTagline}>Built around the food you actually eat.</Text>
               <Text style={styles.subHeading}>
-                Track Indian meals, understand your nutrition, and get simple daily guidance that fits your lifestyle.
+                Track Indian meals, understand your nutrition, and get simple daily guidance that
+                fits your lifestyle.
               </Text>
             </View>
 
@@ -382,7 +391,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
               {/* Primary CTA */}
               <Pressable
-                style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressedButton : null]}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  pressed ? styles.pressedButton : null,
+                ]}
                 onPress={() => pushMode('age')}
                 testID="btn-welcome-get-started"
                 accessibilityRole="button"
@@ -393,7 +405,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
               {/* Secondary CTA */}
               <Pressable
-                style={({ pressed }) => [styles.demoButton, pressed ? styles.pressedSecondary : null]}
+                style={({ pressed }) => [
+                  styles.demoButton,
+                  pressed ? styles.pressedSecondary : null,
+                ]}
                 onPress={handleDemoSignIn}
                 disabled={isDemoLoading}
                 testID="btn-welcome-demo"

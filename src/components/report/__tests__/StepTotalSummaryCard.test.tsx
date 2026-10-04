@@ -4,9 +4,7 @@ import { StepTotalSummaryCard } from '../StepTotalSummaryCard';
 
 describe('StepTotalSummaryCard', () => {
   test('renders step count, subtitle, and calculated metrics when only totalSteps is provided', async () => {
-    const { getByText } = await render(
-      <StepTotalSummaryCard totalSteps={256480} />
-    );
+    const { getByText } = await render(<StepTotalSummaryCard totalSteps={256480} />);
 
     // Step count formatted with comma
     expect(getByText('256,480')).toBeTruthy();

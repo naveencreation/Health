@@ -1,21 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
@@ -68,7 +54,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
   // Extract all valid weights in current range to compute Y-Axis bounds
   const validWeights = useMemo(() => {
     const list: number[] = [];
-    days.forEach((d) => {
+    days.forEach(d => {
       if (d.displayWeight !== null && !isNaN(d.displayWeight) && d.displayWeight > 0) {
         list.push(d.displayWeight);
       }
@@ -139,7 +125,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
 
     const validIndices = days
       .map((d, i) => (d.displayWeight !== null ? i : -1))
-      .filter((i) => i !== -1);
+      .filter(i => i !== -1);
 
     if (validIndices.length === 0) return [];
 
@@ -148,8 +134,8 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
       let effectiveWeight = d.displayWeight;
 
       if (effectiveWeight === null) {
-        const prevIdx = [...validIndices].reverse().find((idx) => idx < i);
-        const nextIdx = validIndices.find((idx) => idx > i);
+        const prevIdx = [...validIndices].reverse().find(idx => idx < i);
+        const nextIdx = validIndices.find(idx => idx > i);
 
         if (prevIdx !== undefined && nextIdx !== undefined) {
           const prevVal = days[prevIdx].displayWeight!;
@@ -163,7 +149,8 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
         }
       }
 
-      const y = effectiveWeight !== null ? getYCoordinate(effectiveWeight) : CHART_HEIGHT - BOTTOM_PAD;
+      const y =
+        effectiveWeight !== null ? getYCoordinate(effectiveWeight) : CHART_HEIGHT - BOTTOM_PAD;
       return {
         x,
         y,
@@ -177,9 +164,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
   const { linePath, areaPath } = useMemo(() => {
     if (linePoints.length === 0) return { linePath: '', areaPath: '' };
 
-    const validIndices = linePoints
-      .map((p, i) => (p.hasLog ? i : -1))
-      .filter((i) => i !== -1);
+    const validIndices = linePoints.map((p, i) => (p.hasLog ? i : -1)).filter(i => i !== -1);
 
     if (validIndices.length <= 1) {
       return { linePath: '', areaPath: '' };
@@ -208,11 +193,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Weight ({unit})</Text>
 
-        <ChartTypeToggle
-          chartType={chartType}
-          onChange={setChartType}
-          activeColor={activeColor}
-        />
+        <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
 
       {/* 2. Legend Row: "● Selected" and "--- Weight Goal" */}
@@ -260,13 +241,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
 
           {/* Goal Reference Dashed Line (Overlaid at target) */}
           {goalY !== null && canvasWidth > 0 && (
-            <View
-              style={[
-                styles.goalDashedLineOverlay,
-                { top: goalY },
-              ]}
-              pointerEvents="none"
-            >
+            <View style={[styles.goalDashedLineOverlay, { top: goalY }]} pointerEvents="none">
               <Svg width={canvasWidth} height={2}>
                 <Line
                   x1={0}
@@ -303,12 +278,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                   >
                     {/* Floating Pin directly above selected bar */}
                     {isSelected && (
-                      <View
-                        style={[
-                          styles.floatingPinContainer,
-                          { bottom: pinBottom },
-                        ]}
-                      >
+                      <View style={[styles.floatingPinContainer, { bottom: pinBottom }]}>
                         <ChartTooltipPin
                           valueText={hasLog ? `${day.displayWeight!.toFixed(1)}` : 'No entry'}
                           unitText={hasLog ? unit : undefined}
@@ -374,13 +344,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                     const isSelected = i === selectedIndex;
                     return isSelected ? (
                       /* Selected: Solid vibrant orange circle */
-                      <Circle
-                        key={`line_pt_${i}`}
-                        cx={p.x}
-                        cy={p.y}
-                        r={7}
-                        fill={activeColor}
-                      />
+                      <Circle key={`line_pt_${i}`} cx={p.x} cy={p.y} r={7} fill={activeColor} />
                     ) : (
                       /* Unselected: White center with thick orange border */
                       <Circle
@@ -447,12 +411,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
               >
-                <Text
-                  style={[
-                    styles.dayNumText,
-                    isSelected && styles.dayNumTextSelected,
-                  ]}
-                >
+                <Text style={[styles.dayNumText, isSelected && styles.dayNumTextSelected]}>
                   {day.dayNum}
                 </Text>
               </Pressable>

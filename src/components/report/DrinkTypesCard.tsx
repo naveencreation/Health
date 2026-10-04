@@ -52,7 +52,7 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
   // Compute SVG stroke-dasharray and rotation angle for each arc segment
   const arcSegments = useMemo(() => {
     let accumulatedAngle = 0;
-    return activeBreakdown.map((item) => {
+    return activeBreakdown.map(item => {
       // Add slight 0.2px overlap to prevent any sub-pixel rendering gaps
       const segmentLength = Math.max(0.5, (item.pct / 100) * CIRCUMFERENCE + 0.2);
       const rotationAngle = accumulatedAngle - 90;
@@ -80,11 +80,7 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
       <View style={styles.contentRow}>
         {/* Left: Donut Chart */}
         <View style={styles.donutContainer}>
-          <Svg
-            width={DONUT_SIZE}
-            height={DONUT_SIZE}
-            viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
-          >
+          <Svg width={DONUT_SIZE} height={DONUT_SIZE} viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}>
             {/* Background Track Circle */}
             <Circle
               cx={DONUT_SIZE / 2}
@@ -96,7 +92,7 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
             />
 
             {/* Multi-Segment Colored Arcs (Direct Circle children with per-arc rotation) */}
-            {arcSegments.map((segment) => (
+            {arcSegments.map(segment => (
               <Circle
                 key={`arc_${segment.id}`}
                 cx={DONUT_SIZE / 2}
@@ -124,14 +120,11 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
         <View style={styles.legendContainer}>
           {/* Column 1 */}
           <View style={styles.legendColumn}>
-            {leftColItems.map((item) => (
+            {leftColItems.map(item => (
               <View key={`legend_left_${item.id}`} style={styles.legendItemRow}>
-                <View
-                  style={[styles.colorSwatch, { backgroundColor: item.color }]}
-                />
+                <View style={[styles.colorSwatch, { backgroundColor: item.color }]} />
                 <Text style={styles.legendItemText} numberOfLines={1}>
-                  {item.name}{' '}
-                  <Text style={styles.legendItemPct}>({item.pct}%)</Text>
+                  {item.name} <Text style={styles.legendItemPct}>({item.pct}%)</Text>
                 </Text>
               </View>
             ))}
@@ -139,14 +132,11 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
 
           {/* Column 2 */}
           <View style={styles.legendColumn}>
-            {rightColItems.map((item) => (
+            {rightColItems.map(item => (
               <View key={`legend_right_${item.id}`} style={styles.legendItemRow}>
-                <View
-                  style={[styles.colorSwatch, { backgroundColor: item.color }]}
-                />
+                <View style={[styles.colorSwatch, { backgroundColor: item.color }]} />
                 <Text style={styles.legendItemText} numberOfLines={1}>
-                  {item.name}{' '}
-                  <Text style={styles.legendItemPct}>({item.pct}%)</Text>
+                  {item.name} <Text style={styles.legendItemPct}>({item.pct}%)</Text>
                 </Text>
               </View>
             ))}

@@ -19,10 +19,7 @@ describe('HealthConnectSyncCard', () => {
   test('renders 1-tap setup card when disconnected', async () => {
     const mockConnect = jest.fn();
     const { getByText, getByLabelText } = await render(
-      <HealthConnectSyncCard
-        isConnected={false}
-        onConnect={mockConnect}
-      />
+      <HealthConnectSyncCard isConnected={false} onConnect={mockConnect} />
     );
 
     expect(getByText('Auto-Sync Steps')).toBeTruthy();

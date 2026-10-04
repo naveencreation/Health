@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,10 +16,7 @@ export interface HeroWeightCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
-  onOpenUpdateModal,
-  style,
-}) => {
+export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({ onOpenUpdateModal, style }) => {
   const { currentLog, dailyLogs, selectedDate } = useDailyLog();
   const { userGoals } = useGoals();
 
@@ -37,7 +27,9 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
   const currentWeight = Math.round(currentWeightRaw * 10) / 10;
 
   // 2. Starting weight and goal weight resolution (unified with user goals)
-  const startWeightRaw = userGoals.startWeightKg ? userGoals.startWeightKg : (userGoals.currentWeightKg || 68.0);
+  const startWeightRaw = userGoals.startWeightKg
+    ? userGoals.startWeightKg
+    : userGoals.currentWeightKg || 68.0;
   const goalWeightRaw = userGoals.targetWeightKg ? userGoals.targetWeightKg : 65.0;
 
   const startWeight = Math.round(startWeightRaw * 10) / 10;
@@ -60,7 +52,12 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
 
     // Look for most recent prior day with logged weight
     const sortedDates = Object.keys(dailyLogs)
-      .filter((d) => d < selectedDate && typeof dailyLogs[d]?.weightKg === 'number' && dailyLogs[d]!.weightKg! > 0)
+      .filter(
+        d =>
+          d < selectedDate &&
+          typeof dailyLogs[d]?.weightKg === 'number' &&
+          dailyLogs[d]!.weightKg! > 0
+      )
       .sort((a, b) => b.localeCompare(a));
 
     if (sortedDates.length > 0) {
@@ -137,11 +134,7 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
               isGain && styles.deltaIconCircleGain,
             ]}
           >
-            <Ionicons
-              name={isGain ? 'chevron-up' : 'chevron-down'}
-              size={12}
-              color="#FFFFFF"
-            />
+            <Ionicons name={isGain ? 'chevron-up' : 'chevron-down'} size={12} color="#FFFFFF" />
           </View>
           <Text
             style={[
@@ -150,7 +143,11 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
               isGain && styles.deltaTextGain,
             ]}
           >
-            {isLoss ? `- ${displayDelta} ${unit}` : isGain ? `+ ${displayDelta} ${unit}` : `- 0.0 ${unit}`}
+            {isLoss
+              ? `- ${displayDelta} ${unit}`
+              : isGain
+                ? `+ ${displayDelta} ${unit}`
+                : `- 0.0 ${unit}`}
           </Text>
         </View>
       </View>
@@ -163,19 +160,22 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({
       {/* 4. Goal Range Footer */}
       <View style={styles.footerRow}>
         <Text style={styles.footerLabel}>
-          Starting: <Text style={styles.footerValue}>{displayStart} {unit}</Text>
+          Starting:{' '}
+          <Text style={styles.footerValue}>
+            {displayStart} {unit}
+          </Text>
         </Text>
         <Text style={styles.footerLabel}>
-          Goal: <Text style={styles.footerValue}>{displayGoal} {unit}</Text>
+          Goal:{' '}
+          <Text style={styles.footerValue}>
+            {displayGoal} {unit}
+          </Text>
         </Text>
       </View>
 
       {/* 5. Full-Width "Update" Pill Action Button */}
       <Pressable
-        style={({ pressed }) => [
-          styles.updateButton,
-          pressed && styles.updateButtonPressed,
-        ]}
+        style={({ pressed }) => [styles.updateButton, pressed && styles.updateButtonPressed]}
         onPress={onOpenUpdateModal}
         accessibilityRole="button"
         accessibilityLabel="Update weight"

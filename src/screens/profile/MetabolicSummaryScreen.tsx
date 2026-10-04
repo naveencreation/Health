@@ -22,7 +22,8 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
   const targetWeightNum = userGoals.targetWeightKg || 68.0;
   const heightNum = userGoals.heightCm || 178;
   const userAge = userGoals.age || 24;
-  const genderConstant = userGoals.gender === 'female' ? -161 : userGoals.gender === 'other' ? -78 : 5;
+  const genderConstant =
+    userGoals.gender === 'female' ? -161 : userGoals.gender === 'other' ? -78 : 5;
 
   // Mifflin-St Jeor formula
   const bmrEst = Math.round(10 * weightNum + 6.25 * heightNum - 5 * userAge + genderConstant);
@@ -118,7 +119,9 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             </View>
             <View style={styles.flex1}>
               <Text style={styles.engineTitle}>Energy Balance & Deficit</Text>
-              <Text style={styles.engineSubtitle}>Calculated from diet target vs total daily expenditure</Text>
+              <Text style={styles.engineSubtitle}>
+                Calculated from diet target vs total daily expenditure
+              </Text>
             </View>
           </View>
 
@@ -134,7 +137,9 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             </View>
             <Text style={styles.formulaSign}>=</Text>
             <View style={styles.formulaCol}>
-              <Text style={[styles.formulaNumber, styles.formulaNumberDeficit]}>{dailyDeficit}</Text>
+              <Text style={[styles.formulaNumber, styles.formulaNumberDeficit]}>
+                {dailyDeficit}
+              </Text>
               <Text style={styles.formulaKey}>Daily Deficit</Text>
             </View>
           </View>
@@ -196,7 +201,9 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             <Ionicons name="information-circle-outline" size={20} color="#3B82F6" />
           </View>
           <Text style={styles.explainerText}>
-            Basal Metabolic Rate (BMR) represents the calories your body requires at complete rest to sustain vital organ functions. Total Daily Energy Expenditure (TDEE) accounts for lifestyle and light physical activity.
+            Basal Metabolic Rate (BMR) represents the calories your body requires at complete rest
+            to sustain vital organ functions. Total Daily Energy Expenditure (TDEE) accounts for
+            lifestyle and light physical activity.
           </Text>
         </View>
       </ScrollView>

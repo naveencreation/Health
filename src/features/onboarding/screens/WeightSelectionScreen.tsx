@@ -1,17 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-  PanResponder,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import { StyleSheet, View, Text, Pressable, Platform, PanResponder } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -232,13 +221,8 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           </View>
 
           {/* Horizontally Slidable Ticks Tape */}
-          <Animated.View
-            style={[
-              styles.ticksTape,
-              dragStyle,
-            ]}
-          >
-            {ticks.map((tickVal) => {
+          <Animated.View style={[styles.ticksTape, dragStyle]}>
+            {ticks.map(tickVal => {
               const isMajor = tickVal % 5 === 0;
               const isCenter = tickVal === activeWeight;
 
@@ -246,7 +230,10 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
                 <Pressable
                   key={tickVal}
                   onPress={() => updateWeight(tickVal)}
-                  style={({ pressed }) => [styles.tickSlot, pressed ? styles.tickSlotPressed : null]}
+                  style={({ pressed }) => [
+                    styles.tickSlot,
+                    pressed ? styles.tickSlotPressed : null,
+                  ]}
                   accessibilityRole="button"
                   accessibilityLabel={`Select weight ${tickVal} ${unit}`}
                   accessibilityState={{ selected: isCenter }}
@@ -286,7 +273,10 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
         {/* Frame 9: Accessible Continue CTA & Skip */}
         <View style={styles.footerContainer}>
           <Pressable
-            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed ? styles.continueButtonPressed : null,
+            ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected weight"
@@ -298,7 +288,10 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
             <Pressable
-              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
+              style={({ pressed }) => [
+                styles.skipContainer,
+                pressed ? styles.btnPressedSubtle : null,
+              ]}
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
@@ -310,7 +303,10 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
               <Pressable
                 onPress={onSignIn}
                 hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.signInBottomBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >

@@ -34,7 +34,9 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
   };
 
   return (
-    <View style={[styles.barContainer, { paddingBottom: bottomPadding, height: 56 + bottomPadding }]}>
+    <View
+      style={[styles.barContainer, { paddingBottom: bottomPadding, height: 56 + bottomPadding }]}
+    >
       {/* Tab 1: Today */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
@@ -188,4 +190,3 @@ const styles = StyleSheet.create({
 });
 
 export const BottomNavBar = React.memo(BottomNavBarComponent);
-

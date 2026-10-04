@@ -72,9 +72,7 @@ const CategoryPill = React.memo(function CategoryPill({
     transform: [{ translateX: translateX.value }],
   }));
 
-  const iconColor = isSelected
-    ? (cat.activeColor || '#FFFFFF')
-    : (cat.inactiveColor || '#64748B');
+  const iconColor = isSelected ? cat.activeColor || '#FFFFFF' : cat.inactiveColor || '#64748B';
 
   return (
     <Animated.View style={pillStyle}>
@@ -104,39 +102,228 @@ const CategoryPill = React.memo(function CategoryPill({
 // Meal-Contextual Categories to eliminate decision fatigue
 const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
   breakfast: [
-    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
-    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
-    { id: 'south_indian', label: 'South Indian', iconFamily: 'mci', iconName: 'pot-steam-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
-    { id: 'breads', label: 'Breads & Toast', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
-    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
-    { id: 'fruits', label: 'Fruits & Nuts', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
-    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
+    {
+      id: 'popular',
+      label: 'Popular',
+      iconFamily: 'ion',
+      iconName: 'star',
+      activeColor: '#FACC15',
+      inactiveColor: '#EAB308',
+    },
+    {
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#8B5CF6',
+    },
+    {
+      id: 'south_indian',
+      label: 'South Indian',
+      iconFamily: 'mci',
+      iconName: 'pot-steam-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#F97316',
+    },
+    {
+      id: 'breads',
+      label: 'Breads & Toast',
+      iconFamily: 'mci',
+      iconName: 'bread-slice-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#D97706',
+    },
+    {
+      id: 'high_protein',
+      label: 'High Protein',
+      iconFamily: 'ion',
+      iconName: 'flash',
+      activeColor: '#FACC15',
+      inactiveColor: '#F59E0B',
+    },
+    {
+      id: 'fruits',
+      label: 'Fruits & Nuts',
+      iconFamily: 'ion',
+      iconName: 'nutrition-outline',
+      activeColor: '#34D399',
+      inactiveColor: '#10B981',
+    },
+    {
+      id: 'all',
+      label: 'All Foods',
+      iconFamily: 'ion',
+      iconName: 'grid-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
   ],
   lunch: [
-    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
-    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
-    { id: 'curries', label: 'Dals & Curries', iconFamily: 'mci', iconName: 'bowl-mix-outline', activeColor: '#FFFFFF', inactiveColor: '#EA580C' },
-    { id: 'rice', label: 'Rice & Grains', iconFamily: 'mci', iconName: 'rice', activeColor: '#FFFFFF', inactiveColor: '#0D9488' },
-    { id: 'breads', label: 'Breads & Rotis', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
-    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
-    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
+    {
+      id: 'popular',
+      label: 'Popular',
+      iconFamily: 'ion',
+      iconName: 'star',
+      activeColor: '#FACC15',
+      inactiveColor: '#EAB308',
+    },
+    {
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#8B5CF6',
+    },
+    {
+      id: 'curries',
+      label: 'Dals & Curries',
+      iconFamily: 'mci',
+      iconName: 'bowl-mix-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#EA580C',
+    },
+    {
+      id: 'rice',
+      label: 'Rice & Grains',
+      iconFamily: 'mci',
+      iconName: 'rice',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#0D9488',
+    },
+    {
+      id: 'breads',
+      label: 'Breads & Rotis',
+      iconFamily: 'mci',
+      iconName: 'bread-slice-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#D97706',
+    },
+    {
+      id: 'high_protein',
+      label: 'High Protein',
+      iconFamily: 'ion',
+      iconName: 'flash',
+      activeColor: '#FACC15',
+      inactiveColor: '#F59E0B',
+    },
+    {
+      id: 'all',
+      label: 'All Foods',
+      iconFamily: 'ion',
+      iconName: 'grid-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
   ],
   dinner: [
-    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
-    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
-    { id: 'curries', label: 'Dals & Curries', iconFamily: 'mci', iconName: 'bowl-mix-outline', activeColor: '#FFFFFF', inactiveColor: '#EA580C' },
-    { id: 'breads', label: 'Breads', iconFamily: 'mci', iconName: 'bread-slice-outline', activeColor: '#FFFFFF', inactiveColor: '#D97706' },
-    { id: 'south_indian', label: 'South Indian', iconFamily: 'mci', iconName: 'pot-steam-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
-    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
-    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
+    {
+      id: 'popular',
+      label: 'Popular',
+      iconFamily: 'ion',
+      iconName: 'star',
+      activeColor: '#FACC15',
+      inactiveColor: '#EAB308',
+    },
+    {
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#8B5CF6',
+    },
+    {
+      id: 'curries',
+      label: 'Dals & Curries',
+      iconFamily: 'mci',
+      iconName: 'bowl-mix-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#EA580C',
+    },
+    {
+      id: 'breads',
+      label: 'Breads',
+      iconFamily: 'mci',
+      iconName: 'bread-slice-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#D97706',
+    },
+    {
+      id: 'south_indian',
+      label: 'South Indian',
+      iconFamily: 'mci',
+      iconName: 'pot-steam-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#F97316',
+    },
+    {
+      id: 'high_protein',
+      label: 'High Protein',
+      iconFamily: 'ion',
+      iconName: 'flash',
+      activeColor: '#FACC15',
+      inactiveColor: '#F59E0B',
+    },
+    {
+      id: 'all',
+      label: 'All Foods',
+      iconFamily: 'ion',
+      iconName: 'grid-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
   ],
   snacks: [
-    { id: 'popular', label: 'Popular', iconFamily: 'ion', iconName: 'star', activeColor: '#FACC15', inactiveColor: '#EAB308' },
-    { id: 'custom', label: 'My Custom', iconFamily: 'mci', iconName: 'chef-hat', activeColor: '#FFFFFF', inactiveColor: '#8B5CF6' },
-    { id: 'snacks', label: 'Snacks', iconFamily: 'mci', iconName: 'cookie-outline', activeColor: '#FFFFFF', inactiveColor: '#F97316' },
-    { id: 'fruits', label: 'Fruits & Nuts', iconFamily: 'ion', iconName: 'nutrition-outline', activeColor: '#34D399', inactiveColor: '#10B981' },
-    { id: 'high_protein', label: 'High Protein', iconFamily: 'ion', iconName: 'flash', activeColor: '#FACC15', inactiveColor: '#F59E0B' },
-    { id: 'all', label: 'All Foods', iconFamily: 'ion', iconName: 'grid-outline', activeColor: '#FFFFFF', inactiveColor: '#64748B' },
+    {
+      id: 'popular',
+      label: 'Popular',
+      iconFamily: 'ion',
+      iconName: 'star',
+      activeColor: '#FACC15',
+      inactiveColor: '#EAB308',
+    },
+    {
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#8B5CF6',
+    },
+    {
+      id: 'snacks',
+      label: 'Snacks',
+      iconFamily: 'mci',
+      iconName: 'cookie-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#F97316',
+    },
+    {
+      id: 'fruits',
+      label: 'Fruits & Nuts',
+      iconFamily: 'ion',
+      iconName: 'nutrition-outline',
+      activeColor: '#34D399',
+      inactiveColor: '#10B981',
+    },
+    {
+      id: 'high_protein',
+      label: 'High Protein',
+      iconFamily: 'ion',
+      iconName: 'flash',
+      activeColor: '#FACC15',
+      inactiveColor: '#F59E0B',
+    },
+    {
+      id: 'all',
+      label: 'All Foods',
+      iconFamily: 'ion',
+      iconName: 'grid-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
   ],
 };
 
@@ -161,7 +348,7 @@ const formatServingUnit = (unit?: string): string => {
   if (!unit) return '1 serving';
   const trimmed = unit.trim();
   if (/^\d/.test(trimmed)) return trimmed; // '100g' -> '100g', '250ml' -> '250ml'
-  return `1 ${trimmed}`;                  // 'egg' -> '1 egg', 'piece' -> '1 piece'
+  return `1 ${trimmed}`; // 'egg' -> '1 egg', 'piece' -> '1 piece'
 };
 
 const formatStepperUnit = (unit?: string): string => {
@@ -193,21 +380,17 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
   }, [pressScale]);
 
   return (
-    <Pressable
-      onPress={() => onSelect(item)}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-    >
-      <Animated.View
-        style={[styles.foodItemCard, pressStyle]}
-      >
+    <Pressable onPress={() => onSelect(item)} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.foodItemCard, pressStyle]}>
         {/* Food Vector / Photo Badge */}
         <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
 
         {/* Clean Food Details (Name + Serving Unit) */}
         <View style={styles.foodItemMain}>
           <View style={styles.foodItemNameRow}>
-            <Text style={styles.foodItemName} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.foodItemName} numberOfLines={1}>
+              {item.name}
+            </Text>
             {(loggedCount ?? 0) > 0 ? (
               <View style={styles.loggedCountBadge}>
                 <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
@@ -233,8 +416,11 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
 
           {/* 44×44 Touch Target Button — stopPropagation prevents card select */}
           <Pressable
-            style={({ pressed }) => [styles.quickAddButton, pressed ? styles.quickAddButtonPressed : null]}
-            onPress={(e) => {
+            style={({ pressed }) => [
+              styles.quickAddButton,
+              pressed ? styles.quickAddButtonPressed : null,
+            ]}
+            onPress={e => {
               e.stopPropagation && e.stopPropagation();
               onQuickAdd(item);
             }}
@@ -250,8 +436,14 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
     </Pressable>
   );
 });
+FoodItemRow.displayName = 'FoodItemRow';
 
-const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType, onClose, onOpenFoodVision }) => {
+const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
+  visible,
+  mealType,
+  onClose,
+  onOpenFoodVision,
+}) => {
   const insets = useSafeAreaInsets();
   const { foodDatabase, addCustomFood } = useFoodData();
   const { addMealItem, removeMealItem, mealCalories, mealsByType } = useDailyLog();
@@ -266,7 +458,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   const [favoriteFoodIds, setFavoriteFoodIds] = useState<Record<string, boolean>>({});
 
   const toggleFavorite = useCallback((id: string) => {
-    setFavoriteFoodIds((prev) => ({ ...prev, [id]: !prev[id] }));
+    setFavoriteFoodIds(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   useEffect(() => {
@@ -288,7 +480,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
   const isReducedMotion = useRef(false);
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
       isReducedMotion.current = enabled;
     });
   }, []);
@@ -335,12 +527,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
   // Live Meal Target Budget Anchor
   const budget = userGoals.dailyCalorieBudget || 2350;
-  const mealRatio = {
-    breakfast: 0.25,
-    lunch: 0.35,
-    snacks: 0.12,
-    dinner: 0.28,
-  }[selectedMealType] || 0.25;
+  const mealRatio =
+    {
+      breakfast: 0.25,
+      lunch: 0.35,
+      snacks: 0.12,
+      dinner: 0.28,
+    }[selectedMealType] || 0.25;
 
   const mealTarget = Math.round(budget * mealRatio);
   const currentMealLogged = mealCalories[selectedMealType] || 0;
@@ -360,7 +553,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission required', 'Please grant photo library access to add a custom food photo.');
+        Alert.alert(
+          'Permission required',
+          'Please grant photo library access to add a custom food photo.'
+        );
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -384,9 +580,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       return list.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          item.categoryLabel.toLowerCase().includes(q)
+        item => item.name.toLowerCase().includes(q) || item.categoryLabel.toLowerCase().includes(q)
       );
     }
 
@@ -406,7 +600,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           'raw_almonds',
         ];
         return list
-          .filter((item) => priorityIds.includes(item.id))
+          .filter(item => priorityIds.includes(item.id))
           .sort((a, b) => {
             const aIdx = priorityIds.indexOf(a.id);
             const bIdx = priorityIds.indexOf(b.id);
@@ -430,7 +624,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           'lemon_rice',
         ];
         return list.filter(
-          (item) => priorityIds.includes(item.id) || item.category === 'curries' || item.category === 'rice'
+          item =>
+            priorityIds.includes(item.id) || item.category === 'curries' || item.category === 'rice'
         );
       }
 
@@ -446,22 +641,21 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
           'curd_rice',
         ];
         return list.filter(
-          (item) => priorityIds.includes(item.id) || item.category === 'curries' || item.category === 'breads'
+          item =>
+            priorityIds.includes(item.id) ||
+            item.category === 'curries' ||
+            item.category === 'breads'
         );
       }
 
       // Snacks
-      return list.filter(
-        (item) =>
-          item.category === 'snacks' ||
-          item.category === 'fruits'
-      );
+      return list.filter(item => item.category === 'snacks' || item.category === 'fruits');
     }
 
     if (selectedCategory === 'all') return list;
-    if (selectedCategory === 'custom') return list.filter((item) => item.isCustom);
-    if (selectedCategory === 'high_protein') return list.filter((item) => item.protein >= 8);
-    return list.filter((item) => item.category === selectedCategory);
+    if (selectedCategory === 'custom') return list.filter(item => item.isCustom);
+    if (selectedCategory === 'high_protein') return list.filter(item => item.protein >= 8);
+    return list.filter(item => item.category === selectedCategory);
   }, [foodDatabase, searchQuery, selectedCategory, selectedMealType]);
 
   const handleSelectFood = useCallback((food: FoodItem) => {
@@ -482,7 +676,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
     const cals = Math.round(selectedFood.calories * quantity);
     const addedItem = addMealItem(selectedMealType, selectedFood, quantity);
     setLastAddedMeal(addedItem);
-    setToastMessage(`Added ${quantity > 1 ? `${quantity}x ` : ''}${selectedFood.name} (${cals} kcal)`);
+    setToastMessage(
+      `Added ${quantity > 1 ? `${quantity}x ` : ''}${selectedFood.name} (${cals} kcal)`
+    );
     setSelectedFood(null);
 
     const timer = setTimeout(() => {
@@ -493,23 +689,26 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
   };
 
   // Speed 1 (Fast Path): 1-Tap Quick Add logs immediately without drawer friction
-  const handleQuickAdd = useCallback((food: FoodItem) => {
-    if (toastTimer) clearTimeout(toastTimer);
-    const addedItem = addMealItem(selectedMealType, food, 1);
-    setLastAddedMeal(addedItem);
-    setToastMessage(`Added ${food.name} (${food.calories} kcal)`);
+  const handleQuickAdd = useCallback(
+    (food: FoodItem) => {
+      if (toastTimer) clearTimeout(toastTimer);
+      const addedItem = addMealItem(selectedMealType, food, 1);
+      setLastAddedMeal(addedItem);
+      setToastMessage(`Added ${food.name} (${food.calories} kcal)`);
 
-    const timer = setTimeout(() => {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-    }, 4500);
-    setToastTimer(timer);
-  }, [addMealItem, selectedMealType, toastTimer]);
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+        setLastAddedMeal(null);
+      }, 4500);
+      setToastTimer(timer);
+    },
+    [addMealItem, selectedMealType, toastTimer]
+  );
 
   const currentMealItems = mealsByType[selectedMealType] || [];
   const loggedMap = useMemo(() => {
     const map = new Map<string, number>();
-    currentMealItems.forEach((m) => {
+    currentMealItems.forEach(m => {
       map.set(m.foodId, (map.get(m.foodId) || 0) + m.quantity);
     });
     return map;
@@ -594,7 +793,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
             {/* Top Bar: Floating Back & Favorite Buttons */}
             <View style={styles.productTopNavRow}>
               <Pressable
-                style={({ pressed }) => [styles.productNavCircleBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.productNavCircleBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 onPress={handleDismissDrawer}
                 hitSlop={HIT_SLOP_10}
                 accessibilityRole="button"
@@ -604,13 +806,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
               </Pressable>
 
               <Pressable
-                style={({ pressed }) => [styles.productNavCircleBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.productNavCircleBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 onPress={() => toggleFavorite(selectedFood.id)}
                 hitSlop={HIT_SLOP_10}
                 accessibilityRole="button"
-                accessibilityLabel={isFav ? "Remove from favorites" : "Add to favorites"}
+                accessibilityLabel={isFav ? 'Remove from favorites' : 'Add to favorites'}
               >
-                <Ionicons name={isFav ? "heart" : "heart-outline"} size={22} color={isFav ? "#EF4444" : "#64748B"} />
+                <Ionicons
+                  name={isFav ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={isFav ? '#EF4444' : '#64748B'}
+                />
               </Pressable>
             </View>
 
@@ -641,10 +850,16 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 {/* Category Pill + Health Tag */}
                 <View style={styles.productHeaderMetaRow}>
                   <Text style={styles.productCategoryLabel}>
-                    {(selectedFood.categoryLabel || selectedFood.category || 'WHOLESOME').toUpperCase()}
+                    {(
+                      selectedFood.categoryLabel ||
+                      selectedFood.category ||
+                      'WHOLESOME'
+                    ).toUpperCase()}
                   </Text>
                   <View style={styles.productHealthBadgePill}>
-                    <Text style={styles.productHealthBadgeText}>{selectedFood.badge || 'Clean Energy'}</Text>
+                    <Text style={styles.productHealthBadgeText}>
+                      {selectedFood.badge || 'Clean Energy'}
+                    </Text>
                   </View>
                 </View>
 
@@ -659,9 +874,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 </Text>
 
                 {/* Description */}
-                <Text style={styles.productDescriptionText}>
-                  {foodDescription}
-                </Text>
+                <Text style={styles.productDescriptionText}>{foodDescription}</Text>
 
                 {/* Nutrition Breakdown */}
                 <View style={styles.sectionHeaderRow}>
@@ -696,9 +909,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                       <View style={[styles.drawerMacroDot, { backgroundColor: Colors.fat }]} />
                       <Text style={styles.nutriKey}>FAT</Text>
                     </View>
-                    <Text style={styles.nutriVal}>
-                      {(selectedFood.fat * quantity).toFixed(1)}g
-                    </Text>
+                    <Text style={styles.nutriVal}>{(selectedFood.fat * quantity).toFixed(1)}g</Text>
                   </View>
                 </View>
 
@@ -709,7 +920,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 </View>
 
                 <View style={styles.distributionChipsRow}>
-                  {[1, 2, 3, 5].map((val) => (
+                  {[1, 2, 3, 5].map(val => (
                     <Pressable
                       key={val}
                       style={({ pressed }) => [
@@ -732,26 +943,45 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                     </Pressable>
                   ))}
                 </View>
-
               </View>
             </ScrollView>
 
             {/* Sticky Bottom Stepper & CTA Footer with Integrated Live Budget Impact */}
-            <View style={[styles.productStickyFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            <View
+              style={[styles.productStickyFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}
+            >
               {/* Live Budget Impact Ticker Strip */}
               <View style={styles.footerImpactStrip}>
                 <View style={styles.footerImpactMetaRow}>
                   <View style={styles.footerImpactLeft}>
                     <Ionicons name="pie-chart-outline" size={13} color="#64748B" />
                     <Text style={styles.footerImpactLabel} numberOfLines={1}>
-                      {mealTitle} Target: <Text style={styles.footerImpactBold}>{mealTarget} kcal</Text>
+                      {mealTitle} Target:{' '}
+                      <Text style={styles.footerImpactBold}>{mealTarget} kcal</Text>
                       <Text style={styles.footerImpactSub}> • {projectedTotal} total</Text>
                     </Text>
                   </View>
 
-                  <View style={[styles.footerImpactBadge, isProjectedOver ? styles.footerImpactBadgeOver : styles.footerImpactBadgeOk]}>
-                    <View style={[styles.footerImpactDot, isProjectedOver ? styles.footerImpactDotOver : styles.footerImpactDotOk]} />
-                    <Text style={[styles.footerImpactBadgeText, isProjectedOver ? styles.footerImpactBadgeTextOver : styles.footerImpactBadgeTextOk]}>
+                  <View
+                    style={[
+                      styles.footerImpactBadge,
+                      isProjectedOver ? styles.footerImpactBadgeOver : styles.footerImpactBadgeOk,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.footerImpactDot,
+                        isProjectedOver ? styles.footerImpactDotOver : styles.footerImpactDotOk,
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.footerImpactBadgeText,
+                        isProjectedOver
+                          ? styles.footerImpactBadgeTextOver
+                          : styles.footerImpactBadgeTextOk,
+                      ]}
+                    >
                       {projectedRemaining >= 0
                         ? `${projectedRemaining} kcal left`
                         : `${Math.abs(projectedRemaining)} kcal over`}
@@ -776,9 +1006,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 {/* Left: Quantity Stepper Pill */}
                 <View style={styles.footerStepperPill}>
                   <Pressable
-                    style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                    style={({ pressed }) => [
+                      styles.footerStepBtn,
+                      pressed ? styles.btnPressedSubtle : null,
+                    ]}
                     hitSlop={HIT_SLOP_8}
-                    onPress={() => setQuantity((prev) => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))}
+                    onPress={() =>
+                      setQuantity(prev => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))
+                    }
                     accessibilityRole="button"
                     accessibilityLabel="Decrease portion by 0.5"
                   >
@@ -788,14 +1023,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                   <View style={styles.footerStepperValueWrap}>
                     <Text style={styles.footerStepperValue} numberOfLines={1}>
                       <Text style={styles.footerStepperNumber}>{quantity}</Text>
-                      <Text style={styles.footerStepperUnit}> {formatStepperUnit(selectedFood.servingUnit)}</Text>
+                      <Text style={styles.footerStepperUnit}>
+                        {' '}
+                        {formatStepperUnit(selectedFood.servingUnit)}
+                      </Text>
                     </Text>
                   </View>
 
                   <Pressable
-                    style={({ pressed }) => [styles.footerStepBtn, pressed ? styles.btnPressedSubtle : null]}
+                    style={({ pressed }) => [
+                      styles.footerStepBtn,
+                      pressed ? styles.btnPressedSubtle : null,
+                    ]}
                     hitSlop={HIT_SLOP_8}
-                    onPress={() => setQuantity((prev) => Math.round((prev + 0.5) * 10) / 10)}
+                    onPress={() => setQuantity(prev => Math.round((prev + 0.5) * 10) / 10)}
                     accessibilityRole="button"
                     accessibilityLabel="Increase portion by 0.5"
                   >
@@ -805,7 +1046,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
 
                 {/* Right: Add to Meal Action Button */}
                 <Pressable
-                  style={({ pressed }) => [styles.confirmAddBtn, pressed ? styles.btnPressedPrimary : null]}
+                  style={({ pressed }) => [
+                    styles.confirmAddBtn,
+                    pressed ? styles.btnPressedPrimary : null,
+                  ]}
                   onPress={handleConfirmLog}
                   accessibilityRole="button"
                   accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
@@ -823,284 +1067,298 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
              2. CATALOG / SEARCH PAGE
              ======================================================= */
           <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
-        {/* 1. Header — Back button | Title | Create button */}
-        <View style={styles.header}>
-          {/* Left: Context-aware back button */}
-          <Pressable
-            onPress={isCustomMode ? () => setIsCustomMode(false) : onClose}
-            style={({ pressed }) => [styles.closeBtn, pressed ? styles.btnPressedSubtle : null]}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
-          >
-            <Ionicons name="arrow-back" size={22} color="#0F172A" />
-          </Pressable>
-
-          {/* Center: Clean title only — no budget clutter */}
-          <View style={styles.headerTitleCenter}>
-            <Text style={styles.headerTitle}>
-              {isCustomMode ? 'Create Dish' : `Log ${mealTitle}`}
-            </Text>
-          </View>
-
-          {/* Right: Create (opens custom form) — hidden when already in create mode */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.customToggleBtn,
-              isCustomMode ? styles.customToggleBtnHidden : null,
-              pressed ? styles.btnPressedSubtle : null,
-            ]}
-            onPress={() => setIsCustomMode(true)}
-            hitSlop={HIT_SLOP_8}
-            accessibilityRole="button"
-            accessibilityLabel="Create custom food"
-            disabled={isCustomMode}
-          >
-            <Text style={styles.customToggleText}>+ Create</Text>
-          </Pressable>
-        </View>
-
-        {/* Meal Switcher Strip (Breakfast | Lunch | Snacks | Dinner) */}
-        <View style={styles.mealSwitcherRow}>
-          {MEAL_TABS.map((slot) => {
-            const isSelected = selectedMealType === slot.id;
-            return (
+            {/* 1. Header — Back button | Title | Create button */}
+            <View style={styles.header}>
+              {/* Left: Context-aware back button */}
               <Pressable
-                key={slot.id}
-                style={({ pressed }) => [
-                  styles.mealTabPill,
-                  isSelected ? styles.mealTabPillActive : null,
-                  pressed ? styles.btnPressedPill : null,
-                ]}
-                onPress={() => {
-                  setSelectedMealType(slot.id);
-                  setSelectedCategory('popular');
-                }}
+                onPress={isCustomMode ? () => setIsCustomMode(false) : onClose}
+                style={({ pressed }) => [styles.closeBtn, pressed ? styles.btnPressedSubtle : null]}
+                hitSlop={HIT_SLOP_10}
                 accessibilityRole="button"
-                accessibilityLabel={`Select ${slot.label}`}
+                accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
               >
-                <Ionicons
-                  name={isSelected ? slot.iconActive : slot.iconInactive}
-                  size={13}
-                  color={isSelected ? '#FFFFFF' : Colors.primary}
-                />
-                <Text
-                  style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                >
-                  {slot.label}
+                <Ionicons name="arrow-back" size={22} color="#0F172A" />
+              </Pressable>
+
+              {/* Center: Clean title only — no budget clutter */}
+              <View style={styles.headerTitleCenter}>
+                <Text style={styles.headerTitle}>
+                  {isCustomMode ? 'Create Dish' : `Log ${mealTitle}`}
                 </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
-        >
-          {isCustomMode ? (
-            /* Custom Food Form */
-            <ScrollView
-              style={styles.customForm}
-              contentContainerStyle={{ paddingBottom: 140 }}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              showsVerticalScrollIndicator={false}
-            >
-              <Text style={styles.customFormDesc}>
-                Add homemade recipes or items not in the database.
-              </Text>
-
-              {/* Photo Picker */}
-              <View style={styles.customPhotoRow}>
-                {customPhotoUri ? (
-                  <View style={styles.customPhotoPreviewContainer}>
-                    <Image source={{ uri: customPhotoUri }} style={styles.customPhotoPreviewImg} contentFit="cover" />
-                    <Pressable
-                      style={styles.customPhotoRemoveBtn}
-                      onPress={() => setCustomPhotoUri(null)}
-                      hitSlop={HIT_SLOP_8}
-                      accessibilityLabel="Remove photo"
-                    >
-                      <Ionicons name="close" size={14} color="#FFFFFF" />
-                    </Pressable>
-                  </View>
-                ) : (
-                  <Pressable
-                    style={({ pressed }) => [styles.customAddPhotoBtn, pressed ? styles.btnPressedSubtle : null]}
-                    onPress={handlePickCustomPhoto}
-                    accessibilityLabel="Pick photo for custom food"
-                  >
-                    <Ionicons name="camera-outline" size={20} color="#EA580C" />
-                    <Text style={styles.customAddPhotoText}>Add Dish Photo (Optional)</Text>
-                  </Pressable>
-                )}
               </View>
 
-              <Text style={styles.inputLabel}>Food / Dish Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Mom's Besan Chilla"
-                value={customName}
-                onChangeText={setCustomName}
-                placeholderTextColor={Colors.textMuted}
-              />
-
-              <Text style={styles.inputLabel}>Serving Unit (e.g. piece, katori, bowl)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="piece"
-                value={customUnit}
-                onChangeText={setCustomUnit}
-                placeholderTextColor={Colors.textMuted}
-              />
-
-              <View style={styles.grid2}>
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Calories (kcal) *</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="150"
-                    value={customCals}
-                    onChangeText={setCustomCals}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-                </View>
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Protein (g)</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="6.5"
-                    value={customProtein}
-                    onChangeText={setCustomProtein}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.grid3}>
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Carbs (g)</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="20"
-                    value={customCarbs}
-                    onChangeText={setCustomCarbs}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-                </View>
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Fat (g)</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="4"
-                    value={customFat}
-                    onChangeText={setCustomFat}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-                </View>
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Fiber (g)</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="2"
-                    value={customFiber}
-                    onChangeText={setCustomFiber}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-                </View>
-              </View>
-
+              {/* Right: Create (opens custom form) — hidden when already in create mode */}
               <Pressable
-                style={({ pressed }) => [styles.saveCustomBtn, pressed ? styles.btnPressedPrimary : null]}
-                onPress={handleCreateCustomFood}
+                style={({ pressed }) => [
+                  styles.customToggleBtn,
+                  isCustomMode ? styles.customToggleBtnHidden : null,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
+                onPress={() => setIsCustomMode(true)}
+                hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"
+                accessibilityLabel="Create custom food"
+                disabled={isCustomMode}
               >
-                <Text style={styles.saveCustomBtnText}>Save & Log Dish</Text>
+                <Text style={styles.customToggleText}>+ Create</Text>
               </Pressable>
-            </ScrollView>
-          ) : (
-            <>
-              {/* 2. Search Input Bar */}
-              <View style={styles.searchBarContainer}>
-                <Ionicons name="search-outline" size={19} color="#64748B" style={{ marginRight: 8 }} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={`Search ${selectedMealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor="#94A3B8"
-                  clearButtonMode="while-editing"
-                />
-                {searchQuery.length > 0 ? (
-                  <Pressable
-                    onPress={() => setSearchQuery('')}
-                    hitSlop={HIT_SLOP_8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Clear search input"
-                  >
-                    <Ionicons name="close-circle" size={18} color="#94A3B8" />
-                  </Pressable>
-                ) : onOpenFoodVision ? (
-                  <Pressable
-                    onPress={onOpenFoodVision}
-                    style={styles.cameraScanBtn}
-                    hitSlop={HIT_SLOP_8}
-                    accessibilityRole="button"
-                    accessibilityLabel="Scan food with AI camera"
-                  >
-                    <Ionicons name="camera" size={20} color="#F47551" />
-                  </Pressable>
-                ) : null}
-              </View>
+            </View>
 
-              {/* 3. Non-Clipped Category Filter Tabs */}
-              <View style={styles.categoryWrapper}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.categoryScroll}
-                >
-                  {categoriesList.map((cat, index) => (
-                    <CategoryPill
-                      key={cat.id}
-                      index={index}
-                      cat={cat}
-                      isSelected={selectedCategory === cat.id}
-                      onPress={() => setSelectedCategory(cat.id)}
+            {/* Meal Switcher Strip (Breakfast | Lunch | Snacks | Dinner) */}
+            <View style={styles.mealSwitcherRow}>
+              {MEAL_TABS.map(slot => {
+                const isSelected = selectedMealType === slot.id;
+                return (
+                  <Pressable
+                    key={slot.id}
+                    style={({ pressed }) => [
+                      styles.mealTabPill,
+                      isSelected ? styles.mealTabPillActive : null,
+                      pressed ? styles.btnPressedPill : null,
+                    ]}
+                    onPress={() => {
+                      setSelectedMealType(slot.id);
+                      setSelectedCategory('popular');
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${slot.label}`}
+                  >
+                    <Ionicons
+                      name={isSelected ? slot.iconActive : slot.iconInactive}
+                      size={13}
+                      color={isSelected ? '#FFFFFF' : Colors.primary}
                     />
-                  ))}
+                    <Text
+                      style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                    >
+                      {slot.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+            >
+              {isCustomMode ? (
+                /* Custom Food Form */
+                <ScrollView
+                  style={styles.customForm}
+                  contentContainerStyle={{ paddingBottom: 140 }}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="on-drag"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <Text style={styles.customFormDesc}>
+                    Add homemade recipes or items not in the database.
+                  </Text>
+
+                  {/* Photo Picker */}
+                  <View style={styles.customPhotoRow}>
+                    {customPhotoUri ? (
+                      <View style={styles.customPhotoPreviewContainer}>
+                        <Image
+                          source={{ uri: customPhotoUri }}
+                          style={styles.customPhotoPreviewImg}
+                          contentFit="cover"
+                        />
+                        <Pressable
+                          style={styles.customPhotoRemoveBtn}
+                          onPress={() => setCustomPhotoUri(null)}
+                          hitSlop={HIT_SLOP_8}
+                          accessibilityLabel="Remove photo"
+                        >
+                          <Ionicons name="close" size={14} color="#FFFFFF" />
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.customAddPhotoBtn,
+                          pressed ? styles.btnPressedSubtle : null,
+                        ]}
+                        onPress={handlePickCustomPhoto}
+                        accessibilityLabel="Pick photo for custom food"
+                      >
+                        <Ionicons name="camera-outline" size={20} color="#EA580C" />
+                        <Text style={styles.customAddPhotoText}>Add Dish Photo (Optional)</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  <Text style={styles.inputLabel}>Food / Dish Name *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Mom's Besan Chilla"
+                    value={customName}
+                    onChangeText={setCustomName}
+                    placeholderTextColor={Colors.textMuted}
+                  />
+
+                  <Text style={styles.inputLabel}>Serving Unit (e.g. piece, katori, bowl)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="piece"
+                    value={customUnit}
+                    onChangeText={setCustomUnit}
+                    placeholderTextColor={Colors.textMuted}
+                  />
+
+                  <View style={styles.grid2}>
+                    <View style={styles.flex1}>
+                      <Text style={styles.inputLabel}>Calories (kcal) *</Text>
+                      <TextInput
+                        style={styles.input}
+                        keyboardType="numeric"
+                        placeholder="150"
+                        value={customCals}
+                        onChangeText={setCustomCals}
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+                    <View style={styles.flex1}>
+                      <Text style={styles.inputLabel}>Protein (g)</Text>
+                      <TextInput
+                        style={styles.input}
+                        keyboardType="numeric"
+                        placeholder="6.5"
+                        value={customProtein}
+                        onChangeText={setCustomProtein}
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.grid3}>
+                    <View style={styles.flex1}>
+                      <Text style={styles.inputLabel}>Carbs (g)</Text>
+                      <TextInput
+                        style={styles.input}
+                        keyboardType="numeric"
+                        placeholder="20"
+                        value={customCarbs}
+                        onChangeText={setCustomCarbs}
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+                    <View style={styles.flex1}>
+                      <Text style={styles.inputLabel}>Fat (g)</Text>
+                      <TextInput
+                        style={styles.input}
+                        keyboardType="numeric"
+                        placeholder="4"
+                        value={customFat}
+                        onChangeText={setCustomFat}
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+                    <View style={styles.flex1}>
+                      <Text style={styles.inputLabel}>Fiber (g)</Text>
+                      <TextInput
+                        style={styles.input}
+                        keyboardType="numeric"
+                        placeholder="2"
+                        value={customFiber}
+                        onChangeText={setCustomFiber}
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+                  </View>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.saveCustomBtn,
+                      pressed ? styles.btnPressedPrimary : null,
+                    ]}
+                    onPress={handleCreateCustomFood}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.saveCustomBtnText}>Save & Log Dish</Text>
+                  </Pressable>
                 </ScrollView>
-              </View>
+              ) : (
+                <>
+                  {/* 2. Search Input Bar */}
+                  <View style={styles.searchBarContainer}>
+                    <Ionicons
+                      name="search-outline"
+                      size={19}
+                      color="#64748B"
+                      style={{ marginRight: 8 }}
+                    />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder={`Search ${selectedMealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      placeholderTextColor="#94A3B8"
+                      clearButtonMode="while-editing"
+                    />
+                    {searchQuery.length > 0 ? (
+                      <Pressable
+                        onPress={() => setSearchQuery('')}
+                        hitSlop={HIT_SLOP_8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Clear search input"
+                      >
+                        <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                      </Pressable>
+                    ) : onOpenFoodVision ? (
+                      <Pressable
+                        onPress={onOpenFoodVision}
+                        style={styles.cameraScanBtn}
+                        hitSlop={HIT_SLOP_8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Scan food with AI camera"
+                      >
+                        <Ionicons name="camera" size={20} color="#F47551" />
+                      </Pressable>
+                    ) : null}
+                  </View>
 
-              {/* 4. Food List */}
-              <FlatList
-                data={filteredFoods}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-                renderItem={renderFoodItem}
-                initialNumToRender={10}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-                getItemLayout={(_data, index) => ({
-                  length: 64,
-                  offset: 64 * index,
-                  index,
-                })}
-              />
-            </>
-          )}
+                  {/* 3. Non-Clipped Category Filter Tabs */}
+                  <View style={styles.categoryWrapper}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.categoryScroll}
+                    >
+                      {categoriesList.map((cat, index) => (
+                        <CategoryPill
+                          key={cat.id}
+                          index={index}
+                          cat={cat}
+                          isSelected={selectedCategory === cat.id}
+                          onPress={() => setSelectedCategory(cat.id)}
+                        />
+                      ))}
+                    </ScrollView>
+                  </View>
 
+                  {/* 4. Food List */}
+                  <FlatList
+                    data={filteredFoods}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={renderFoodItem}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={5}
+                    getItemLayout={(_data, index) => ({
+                      length: 64,
+                      offset: 64 * index,
+                      index,
+                    })}
+                  />
+                </>
+              )}
             </KeyboardAvoidingView>
           </SafeAreaView>
         )}
@@ -1115,7 +1373,12 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
             ]}
           >
             <View style={styles.toastContent}>
-              <Ionicons name="checkmark-circle" size={18} color="#22C55E" style={{ marginRight: 8 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color="#22C55E"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.toastText} numberOfLines={1}>
                 {toastMessage}
               </Text>
@@ -1123,7 +1386,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
             <View style={styles.toastActions}>
               {lastAddedMeal ? (
                 <Pressable
-                  style={({ pressed }) => [styles.toastUndoBtn, pressed ? styles.btnPressedSubtle : null]}
+                  style={({ pressed }) => [
+                    styles.toastUndoBtn,
+                    pressed ? styles.btnPressedSubtle : null,
+                  ]}
                   onPress={handleUndo}
                   hitSlop={HIT_SLOP_8}
                   accessibilityRole="button"
@@ -1133,7 +1399,10 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({ visible, mealType,
                 </Pressable>
               ) : null}
               <Pressable
-                style={({ pressed }) => [styles.toastCloseBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.toastCloseBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 onPress={handleDismissToast}
                 hitSlop={HIT_SLOP_8}
                 accessibilityRole="button"

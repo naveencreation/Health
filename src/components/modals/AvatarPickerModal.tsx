@@ -1,13 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -29,7 +21,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 }) => {
   const sanitizeUrl = (url?: string) => {
     if (!url) return DEFAULT_AVATAR_URL;
-    const exists = AVATAR_PRESETS.some((a) => a.url === url);
+    const exists = AVATAR_PRESETS.some(a => a.url === url);
     return exists ? url : DEFAULT_AVATAR_URL;
   };
 
@@ -44,10 +36,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
   // Find currently selected preset details for hero preview
   const activePreset = useMemo(() => {
-    return (
-      AVATAR_PRESETS.find((a) => a.url === selectedAvatarUrl) ||
-      AVATAR_PRESETS[0]
-    );
+    return AVATAR_PRESETS.find(a => a.url === selectedAvatarUrl) || AVATAR_PRESETS[0];
   }, [selectedAvatarUrl]);
 
   const handleConfirm = () => {
@@ -57,35 +46,44 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
   const getPresetBorder = (id?: string) => {
     switch (id) {
-      case 'avatar_men': return styles.borderMen;
-      case 'avatar_women': return styles.borderWomen;
-      case 'avatar_boy': return styles.borderBoy;
-      case 'avatar_girl': return styles.borderGirl;
-      case 'avatar_grandpa': return styles.borderGrandpa;
-      case 'avatar_grandma': return styles.borderGrandma;
-      default: return styles.borderDefault;
+      case 'avatar_men':
+        return styles.borderMen;
+      case 'avatar_women':
+        return styles.borderWomen;
+      case 'avatar_boy':
+        return styles.borderBoy;
+      case 'avatar_girl':
+        return styles.borderGirl;
+      case 'avatar_grandpa':
+        return styles.borderGrandpa;
+      case 'avatar_grandma':
+        return styles.borderGrandma;
+      default:
+        return styles.borderDefault;
     }
   };
 
   const getPresetBg = (id?: string) => {
     switch (id) {
-      case 'avatar_men': return styles.bgMen;
-      case 'avatar_women': return styles.bgWomen;
-      case 'avatar_boy': return styles.bgBoy;
-      case 'avatar_girl': return styles.bgGirl;
-      case 'avatar_grandpa': return styles.bgGrandpa;
-      case 'avatar_grandma': return styles.bgGrandma;
-      default: return styles.bgDefault;
+      case 'avatar_men':
+        return styles.bgMen;
+      case 'avatar_women':
+        return styles.bgWomen;
+      case 'avatar_boy':
+        return styles.bgBoy;
+      case 'avatar_girl':
+        return styles.bgGirl;
+      case 'avatar_grandpa':
+        return styles.bgGrandpa;
+      case 'avatar_grandma':
+        return styles.bgGrandma;
+      default:
+        return styles.bgDefault;
     }
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         {/* Click outside to dismiss backdrop */}
         <Pressable
@@ -140,7 +138,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
             {/* 3-Column Compact Avatar Grid (Curated Avatars) */}
             <View style={styles.gridContainer}>
-              {AVATAR_PRESETS.map((item) => {
+              {AVATAR_PRESETS.map(item => {
                 const isSelected = selectedAvatarUrl === item.url;
                 return (
                   <Pressable
@@ -182,12 +180,20 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           {/* Sticky Bottom Confirmation Bar */}
           <View style={styles.bottomBar}>
             <Pressable
-              style={({ pressed }) => [styles.confirmBtn, pressed ? styles.pressedConfirmBtn : null]}
+              style={({ pressed }) => [
+                styles.confirmBtn,
+                pressed ? styles.pressedConfirmBtn : null,
+              ]}
               onPress={handleConfirm}
               accessibilityRole="button"
               accessibilityLabel="Use this avatar"
             >
-              <Ionicons name="checkmark-sharp" size={18} color="#FFFFFF" style={styles.confirmIcon} />
+              <Ionicons
+                name="checkmark-sharp"
+                size={18}
+                color="#FFFFFF"
+                style={styles.confirmIcon}
+              />
               <Text style={styles.confirmBtnText}>Use This Avatar</Text>
             </Pressable>
           </View>

@@ -101,7 +101,11 @@ export class NotificationScheduler {
   /**
    * Calculates seconds remaining until target hour:minute today (or tomorrow if past).
    */
-  public static calculateSecondsUntil(targetHour: number, targetMinute: number, now = new Date()): number {
+  public static calculateSecondsUntil(
+    targetHour: number,
+    targetMinute: number,
+    now = new Date()
+  ): number {
     const target = new Date(now);
     target.setHours(targetHour, targetMinute, 0, 0);
 

@@ -34,7 +34,4 @@ export {
   WeightReportScreen,
 } from '@/features/weight';
 // Movement Screens (modularized in features/movement)
-export {
-  StepTrackerScreen,
-  StepReportScreen,
-} from '@/features/movement';
+export { StepTrackerScreen, StepReportScreen } from '@/features/movement';

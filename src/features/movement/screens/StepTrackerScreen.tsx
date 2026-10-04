@@ -45,12 +45,10 @@ export interface StepTrackerScreenProps {
   onOpenSettings?: () => void;
 }
 
-export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
-  onBack,
-  onOpenSettings,
-}) => {
+export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, onOpenSettings }) => {
   const insets = useSafeAreaInsets();
-  const { currentLog, dailyLogs, selectedDate, addSteps, removeStepEntry, batchUpdateDailySteps } = useDailyLog();
+  const { currentLog, dailyLogs, selectedDate, addSteps, removeStepEntry, batchUpdateDailySteps } =
+    useDailyLog();
   const { userGoals } = useGoals();
 
   const [steps, setSteps] = useState<number | null>(null);
@@ -72,9 +70,9 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
   const historicalSteps = dailyLogs[selectedDate]?.steps ?? 0;
 
   const displaySteps = isViewingToday
-    ? ((steps !== null && steps > 0)
-        ? steps
-        : (currentLog?.steps || (steps !== null ? steps : 0)))
+    ? steps !== null && steps > 0
+      ? steps
+      : currentLog?.steps || (steps !== null ? steps : 0)
     : historicalSteps;
 
   // Tier 2: Check initial permission status on Android mount & run rolling 48h sync
@@ -156,7 +154,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
       fetchedDatesRef.current.add(selectedDate);
 
       fetchSingleDaySteps(selectedDate)
-        .then((result) => {
+        .then(result => {
           if (result && result.steps > 0 && batchUpdateDailySteps) {
             batchUpdateDailySteps([
               {
@@ -167,7 +165,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
             ]);
           }
         })
-        .catch((err) => {
+        .catch(err => {
           console.warn(`[StepTrackerScreen] Tier 3 lazy fetch failed for ${selectedDate}:`, err);
         });
     }
@@ -258,7 +256,9 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
           addSteps(todayCount - (currentLog?.steps || 0));
         }
         if (backfilledCount > 0) {
-          setMessage(`✓ Connected! Backfilled past ${backfilledCount} days & synced ${todayCount.toLocaleString()} steps`);
+          setMessage(
+            `✓ Connected! Backfilled past ${backfilledCount} days & synced ${todayCount.toLocaleString()} steps`
+          );
         } else {
           setMessage(`✓ Synced ${todayCount.toLocaleString()} steps from Health Connect`);
         }
@@ -281,69 +281,69 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({
     <View style={styles.container}>
       <View style={styles.mobileContainer}>
         {/* 1. Header with Back Button & Screen Title */}
-      <View style={[styles.header, { paddingTop: 6 }]}>
-        <Pressable
-          style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
-          onPress={onBack}
-          hitSlop={HIT_SLOP_10}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
+        <View style={[styles.header, { paddingTop: 6 }]}>
+          <Pressable
+            style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
+            onPress={onBack}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+          </Pressable>
+
+          <Text style={styles.headerTitle}>Step Tracker</Text>
+
+          <Pressable
+            style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
+            onPress={onOpenSettings || openHealthSettings}
+            hitSlop={HIT_SLOP_10}
+            accessibilityRole="button"
+            accessibilityLabel="Step settings"
+          >
+            <Ionicons name="settings-outline" size={20} color="#0F172A" />
+          </Pressable>
+        </View>
+
+        {/* 2. Scrollable Body with Date Picker, Circular Hero Gauge & Health Connect Card */}
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: Math.max(insets.bottom + 16, 90) },
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="chevron-back" size={22} color="#0F172A" />
-        </Pressable>
+          {/* Top Date Strip in Steps Mode */}
+          <TopDateStrip metric="steps" />
 
-        <Text style={styles.headerTitle}>Step Tracker</Text>
+          {/* 270° Instrument Hero Step Card with Vector Running Shoe & 4 Micro-Metrics */}
+          <HeroStepCard
+            currentSteps={displaySteps}
+            goalSteps={stepGoal}
+            onOpenGoalModal={onOpenSettings}
+          />
 
-        <Pressable
-          style={({ pressed }) => [styles.iconBtn, pressed ? styles.btnPressed : null]}
-          onPress={onOpenSettings || openHealthSettings}
-          hitSlop={HIT_SLOP_10}
-          accessibilityRole="button"
-          accessibilityLabel="Step settings"
-        >
-          <Ionicons name="settings-outline" size={20} color="#0F172A" />
-        </Pressable>
-      </View>
+          {/* Step History Card with Outline Vector Icons */}
+          <StepHistoryCard
+            dateStr={selectedDate}
+            totalSteps={displaySteps}
+            rawHealthRecords={isViewingToday ? healthRecords : []}
+            customEntries={dailyLogs[selectedDate]?.stepEntries}
+            dailyLogs={dailyLogs}
+            onDeleteEntry={(entry: StepLogEntry) => removeStepEntry(entry.id, selectedDate)}
+          />
 
-      {/* 2. Scrollable Body with Date Picker, Circular Hero Gauge & Health Connect Card */}
-      <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingBottom: Math.max(insets.bottom + 16, 90) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Top Date Strip in Steps Mode */}
-        <TopDateStrip metric="steps" />
-
-        {/* 270° Instrument Hero Step Card with Vector Running Shoe & 4 Micro-Metrics */}
-        <HeroStepCard
-          currentSteps={displaySteps}
-          goalSteps={stepGoal}
-          onOpenGoalModal={onOpenSettings}
-        />
-
-        {/* Step History Card with Outline Vector Icons */}
-        <StepHistoryCard
-          dateStr={selectedDate}
-          totalSteps={displaySteps}
-          rawHealthRecords={isViewingToday ? healthRecords : []}
-          customEntries={dailyLogs[selectedDate]?.stepEntries}
-          dailyLogs={dailyLogs}
-          onDeleteEntry={(entry: StepLogEntry) => removeStepEntry(entry.id, selectedDate)}
-        />
-
-        {/* Minimalist Health Connect Setup & Sync Component with Official Logo */}
-        <HealthConnectSyncCard
-          isConnected={isConnected}
-          loading={loading}
-          syncedCount={displaySteps}
-          feedbackMessage={message}
-          onConnect={handleConnectHealth}
-          onOpenSettings={openHealthSettings}
-        />
-      </ScrollView>
+          {/* Minimalist Health Connect Setup & Sync Component with Official Logo */}
+          <HealthConnectSyncCard
+            isConnected={isConnected}
+            loading={loading}
+            syncedCount={displaySteps}
+            feedbackMessage={message}
+            onConnect={handleConnectHealth}
+            onOpenSettings={openHealthSettings}
+          />
+        </ScrollView>
       </View>
     </View>
   );

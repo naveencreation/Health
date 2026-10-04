@@ -66,11 +66,7 @@ describe('StepCalorieBurnCard', () => {
 
   test('toggles to line chart view when line icon is pressed', async () => {
     const { getByLabelText } = await render(
-      <StepCalorieBurnCard
-        days={sampleDays}
-        selectedIndex={1}
-        onSelectDay={jest.fn()}
-      />
+      <StepCalorieBurnCard days={sampleDays} selectedIndex={1} onSelectDay={jest.fn()} />
     );
 
     const lineToggleBtn = getByLabelText('Show Line Chart view');
@@ -81,11 +77,7 @@ describe('StepCalorieBurnCard', () => {
   test('invokes onSelectDay when day bar is tapped', async () => {
     const handleSelectDay = jest.fn();
     const { getByLabelText } = await render(
-      <StepCalorieBurnCard
-        days={sampleDays}
-        selectedIndex={1}
-        onSelectDay={handleSelectDay}
-      />
+      <StepCalorieBurnCard days={sampleDays} selectedIndex={1} onSelectDay={handleSelectDay} />
     );
 
     fireEvent.press(getByLabelText('Day 19: 272 kcal'));

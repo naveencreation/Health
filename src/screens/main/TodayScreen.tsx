@@ -12,12 +12,7 @@ import Animated, {
   useAnimatedScrollHandler,
   runOnJS,
 } from 'react-native-reanimated';
-import {
-  Header,
-  TopDateStrip,
-  HeroCalorieCard,
-  MealSection,
-} from '@/components';
+import { Header, TopDateStrip, HeroCalorieCard, MealSection } from '@/components';
 import { MealType } from '@/types';
 
 interface TodayScreenProps {
@@ -68,13 +63,16 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
     return () => cancelAnimationFrame(frame);
   }, [initialScrollOffset, scrollRef]);
 
-  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
-  }, [onScrollPositionChange]);
+  const handleScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+    },
+    [onScrollPositionChange]
+  );
 
   // 60fps UI-thread scroll handler; JS state only flips on threshold crossing
   const handleScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
+    onScroll: event => {
       scrollY.value = event.contentOffset.y;
       const y = event.contentOffset.y;
       if (y > 35 && !isScrolledSV.value) {

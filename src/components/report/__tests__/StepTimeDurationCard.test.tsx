@@ -80,11 +80,7 @@ describe('StepTimeDurationCard', () => {
   test('triggers onSelectDay callback when a day bar is pressed', async () => {
     const handleSelectDay = jest.fn();
     const { getByLabelText } = await render(
-      <StepTimeDurationCard
-        days={sampleDays}
-        selectedIndex={0}
-        onSelectDay={handleSelectDay}
-      />
+      <StepTimeDurationCard days={sampleDays} selectedIndex={0} onSelectDay={handleSelectDay} />
     );
 
     const targetBar = getByLabelText('Day 19: 1h 8m');
@@ -94,11 +90,7 @@ describe('StepTimeDurationCard', () => {
 
   test('switches chart type when toggle is pressed', async () => {
     const { getByLabelText } = await render(
-      <StepTimeDurationCard
-        days={sampleDays}
-        selectedIndex={0}
-        onSelectDay={jest.fn()}
-      />
+      <StepTimeDurationCard days={sampleDays} selectedIndex={0} onSelectDay={jest.fn()} />
     );
 
     const lineToggleBtn = getByLabelText('Show Line Chart view');

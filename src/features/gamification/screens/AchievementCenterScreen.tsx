@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -37,17 +30,16 @@ const CATEGORY_TABS: Array<{ id: FilterCategory; label: string }> = [
   { id: 'movement', label: 'Movement' },
 ];
 
-export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = ({
-  onBack,
-}) => {
+export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = ({ onBack }) => {
   const { dailyLogs, currentLog } = useDailyLog();
   const { userGoals } = useGoals();
 
   const [loading, setLoading] = useState(true);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
-  const [celebrationAchievement, setCelebrationAchievement] =
-    useState<EvaluatedAchievement | null>(null);
+  const [celebrationAchievement, setCelebrationAchievement] = useState<EvaluatedAchievement | null>(
+    null
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -85,9 +77,7 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
   const filteredAchievements = useMemo(() => {
     if (!evaluation) return [];
     if (selectedCategory === 'all') return evaluation.allAchievements;
-    return evaluation.allAchievements.filter(
-      (a) => a.definition.category === selectedCategory
-    );
+    return evaluation.allAchievements.filter(a => a.definition.category === selectedCategory);
   }, [evaluation, selectedCategory]);
 
   const handleSelectTab = async (cat: FilterCategory) => {
@@ -148,12 +138,7 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
 
               {/* Progress Bar */}
               <View style={styles.heroProgressTrack}>
-                <View
-                  style={[
-                    styles.heroProgressFill,
-                    { width: `${overallPercent}%` },
-                  ]}
-                />
+                <View style={[styles.heroProgressFill, { width: `${overallPercent}%` }]} />
               </View>
               <Text style={styles.heroPercentText}>{overallPercent}% Mastered</Text>
             </View>
@@ -169,25 +154,17 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabsRow}
           >
-            {CATEGORY_TABS.map((tab) => {
+            {CATEGORY_TABS.map(tab => {
               const isActive = selectedCategory === tab.id;
               return (
                 <Pressable
                   key={tab.id}
-                  style={[
-                    styles.tabPill,
-                    isActive && styles.activeTabPill,
-                  ]}
+                  style={[styles.tabPill, isActive && styles.activeTabPill]}
                   onPress={() => handleSelectTab(tab.id)}
                   accessibilityRole="button"
                   accessibilityLabel={`Filter by ${tab.label}`}
                 >
-                  <Text
-                    style={[
-                      styles.tabPillText,
-                      isActive && styles.activeTabPillText,
-                    ]}
-                  >
+                  <Text style={[styles.tabPillText, isActive && styles.activeTabPillText]}>
                     {tab.label}
                   </Text>
                 </Pressable>
@@ -197,11 +174,11 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
 
           {/* Badge List */}
           <View style={styles.badgeList}>
-            {filteredAchievements.map((item) => (
+            {filteredAchievements.map(item => (
               <AchievementBadge
                 key={item.definition.id}
                 achievement={item}
-                onPress={(a) => {
+                onPress={a => {
                   if (a.isUnlocked) {
                     setCelebrationAchievement(a);
                   }

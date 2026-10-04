@@ -132,10 +132,7 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
   }));
 
   return (
-    <Animated.View
-      style={[styles.container, containerAnimatedStyle]}
-      pointerEvents={pointerEvents}
-    >
+    <Animated.View style={[styles.container, containerAnimatedStyle]} pointerEvents={pointerEvents}>
       {/* Anchored Brand Centerpiece: Exact 0px match with native splash, glides left */}
       <View style={styles.centerLockupAnchor} pointerEvents="none">
         <Animated.View style={[styles.flameContainer, flameAnimatedStyle]}>

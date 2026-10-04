@@ -70,9 +70,17 @@ const CoffeeCupIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
     {/* Cup Lid */}
     <Rect x="3" y="2" width="18" height="4" rx="2" fill="#78350F" />
     {/* Cup Body */}
-    <Path d="M 4 6 L 6 27 C 6.2 28.5 7.5 29 12 29 C 16.5 29 17.8 28.5 18 27 L 20 6 Z" fill="#F5F5F4" stroke="#D6D3D1" strokeWidth={1.2} />
+    <Path
+      d="M 4 6 L 6 27 C 6.2 28.5 7.5 29 12 29 C 16.5 29 17.8 28.5 18 27 L 20 6 Z"
+      fill="#F5F5F4"
+      stroke="#D6D3D1"
+      strokeWidth={1.2}
+    />
     {/* Brown Kraft Sleeve */}
-    <Path d="M 4.9 12 L 5.5 21 C 7 21.5 12 21.5 12 21.5 C 12 21.5 17 21.5 18.5 21 L 19.1 12 Z" fill="#A16207" />
+    <Path
+      d="M 4.9 12 L 5.5 21 C 7 21.5 12 21.5 12 21.5 C 12 21.5 17 21.5 18.5 21 L 19.1 12 Z"
+      fill="#A16207"
+    />
     <Circle cx="12" cy="16.5" r="2.5" fill="#FFFFFF" opacity={0.9} />
   </Svg>
 );
@@ -80,9 +88,17 @@ const CoffeeCupIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
 const JuiceGlassIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
   <Svg width={size} height={Math.round(size * 1.25)} viewBox="0 0 24 30">
     {/* Glass Body */}
-    <Path d="M 4 6 L 6 26 C 6.2 27.5 7.5 28 12 28 C 16.5 28 17.8 27.5 18 26 L 20 6 Z" fill="#FFEDD5" stroke="#FDBA74" strokeWidth={1.2} />
+    <Path
+      d="M 4 6 L 6 26 C 6.2 27.5 7.5 28 12 28 C 16.5 28 17.8 27.5 18 26 L 20 6 Z"
+      fill="#FFEDD5"
+      stroke="#FDBA74"
+      strokeWidth={1.2}
+    />
     {/* Orange Juice Liquid */}
-    <Path d="M 4.8 12 L 6 25.8 C 6.2 27 7.5 27.5 12 27.5 C 16.5 27.5 17.8 27 18 25.8 L 19.2 12 Z" fill="#F97316" />
+    <Path
+      d="M 4.8 12 L 6 25.8 C 6.2 27 7.5 27.5 12 27.5 C 16.5 27.5 17.8 27 18 25.8 L 19.2 12 Z"
+      fill="#F97316"
+    />
     {/* Citrus Wedge on Rim */}
     <Circle cx="18" cy="6" r="4.5" fill="#FBBF24" stroke="#F59E0B" strokeWidth={1} />
     <Path d="M 18 6 L 15.5 9" stroke="#FFFFFF" strokeWidth={1} />
@@ -94,13 +110,40 @@ const JuiceGlassIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
 const TeaCupIcon: React.FC<{ size?: number }> = ({ size = 28 }) => (
   <Svg width={size} height={Math.round(size * 1.05)} viewBox="0 0 28 28">
     {/* Steam Waves */}
-    <Path d="M 9 2 Q 8 4 9 6 Q 10 8 9 10" stroke="#EF4444" strokeWidth={1.4} strokeLinecap="round" fill="none" />
-    <Path d="M 14 1 Q 13 3 14 5 Q 15 7 14 9" stroke="#EF4444" strokeWidth={1.4} strokeLinecap="round" fill="none" />
-    <Path d="M 19 2 Q 18 4 19 6 Q 20 8 19 10" stroke="#EF4444" strokeWidth={1.4} strokeLinecap="round" fill="none" />
+    <Path
+      d="M 9 2 Q 8 4 9 6 Q 10 8 9 10"
+      stroke="#EF4444"
+      strokeWidth={1.4}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <Path
+      d="M 14 1 Q 13 3 14 5 Q 15 7 14 9"
+      stroke="#EF4444"
+      strokeWidth={1.4}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <Path
+      d="M 19 2 Q 18 4 19 6 Q 20 8 19 10"
+      stroke="#EF4444"
+      strokeWidth={1.4}
+      strokeLinecap="round"
+      fill="none"
+    />
     {/* Cup Body */}
-    <Path d="M 5 12 L 6 21 C 6.2 23 8.5 24 14 24 C 19.5 24 21.8 23 22 21 L 23 12 Z" fill="#EF4444" />
+    <Path
+      d="M 5 12 L 6 21 C 6.2 23 8.5 24 14 24 C 19.5 24 21.8 23 22 21 L 23 12 Z"
+      fill="#EF4444"
+    />
     {/* Handle */}
-    <Path d="M 23 14 C 26 14 26 19 23 19" stroke="#EF4444" strokeWidth={2.4} fill="none" strokeLinecap="round" />
+    <Path
+      d="M 23 14 C 26 14 26 19 23 19"
+      stroke="#EF4444"
+      strokeWidth={2.4}
+      fill="none"
+      strokeLinecap="round"
+    />
     {/* Saucer */}
     <Path d="M 3 25 L 25 25" stroke="#EF4444" strokeWidth={2.2} strokeLinecap="round" />
   </Svg>
@@ -118,16 +161,40 @@ const EmptyClipboardIllustration: React.FC = () => (
   <View style={styles.emptyContainer}>
     <Svg width={90} height={75} viewBox="0 0 100 85" fill="none">
       <G transform="rotate(-9 35 42)">
-        <Rect x="12" y="14" width="46" height="58" rx="6" fill="#FFFFFF" stroke="#E2E8F0" strokeWidth="1.5" />
+        <Rect
+          x="12"
+          y="14"
+          width="46"
+          height="58"
+          rx="6"
+          fill="#FFFFFF"
+          stroke="#E2E8F0"
+          strokeWidth="1.5"
+        />
         <Rect x="25" y="8" width="20" height="9" rx="2" fill="#0284C7" />
       </G>
       <G>
-        <Rect x="38" y="16" width="48" height="62" rx="6" fill="#FFFFFF" stroke="#E2E8F0" strokeWidth="1.5" />
+        <Rect
+          x="38"
+          y="16"
+          width="48"
+          height="62"
+          rx="6"
+          fill="#FFFFFF"
+          stroke="#E2E8F0"
+          strokeWidth="1.5"
+        />
         <Rect x="48" y="36" width="28" height="3" rx="1.5" fill="#E2E8F0" />
         <Rect x="48" y="45" width="22" height="3" rx="1.5" fill="#E2E8F0" />
         <Rect x="48" y="54" width="16" height="3" rx="1.5" fill="#E2E8F0" />
         <Rect x="52" y="10" width="20" height="9" rx="2.5" fill="#0284C7" />
-        <Path d="M 57 10 L 57 6 C 57 4.8 58.5 3.8 62 3.8 C 65.5 3.8 67 4.8 67 6 L 67 10" stroke="#38BDF8" strokeWidth={1.6} fill="none" strokeLinecap="round" />
+        <Path
+          d="M 57 10 L 57 6 C 57 4.8 58.5 3.8 62 3.8 C 65.5 3.8 67 4.8 67 6 L 67 10"
+          stroke="#38BDF8"
+          strokeWidth={1.6}
+          fill="none"
+          strokeLinecap="round"
+        />
       </G>
     </Svg>
     <Text style={styles.emptyTitle}>No records logged</Text>
@@ -185,14 +252,8 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   onOpenReport,
 }) => {
   const insets = useSafeAreaInsets();
-  const {
-    dailyLogs,
-    selectedDate,
-    setSelectedDate,
-    removeWaterEntry,
-    updateWaterEntry,
-    addWater,
-  } = useDailyLog();
+  const { dailyLogs, selectedDate, setSelectedDate, removeWaterEntry, updateWaterEntry, addWater } =
+    useDailyLog();
 
   // Floating Popover state for Edit / Delete
   const [activeMenu, setActiveMenu] = useState<{
@@ -225,22 +286,24 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
   const [editVolume, setEditVolume] = useState<number>(300);
   const [editBeverage, setEditBeverage] = useState<string>('water');
 
-
   // Group dates chronologically descending
   const dateGroups = useMemo(() => {
     const dates = new Set<string>(Object.keys(dailyLogs));
     dates.add(selectedDate);
 
     // Filter to dates that have entries or waterMl > 0 (or selectedDate)
-    const validDates = Array.from(dates).filter((d) => {
+    const validDates = Array.from(dates).filter(d => {
       const log = dailyLogs[d];
-      return d === selectedDate || (log && (log.waterMl > 0 || (log.waterEntries && log.waterEntries.length > 0)));
+      return (
+        d === selectedDate ||
+        (log && (log.waterMl > 0 || (log.waterEntries && log.waterEntries.length > 0)))
+      );
     });
 
     // Sort descending
     validDates.sort((a, b) => b.localeCompare(a));
 
-    return validDates.map((dateStr) => {
+    return validDates.map(dateStr => {
       const log = dailyLogs[dateStr];
       let entries = log?.waterEntries ?? [];
       const totalMl = log?.waterMl ?? 0;
@@ -326,10 +389,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.navCircleBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
             onPress={onBack}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -347,10 +407,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
           {/* Report Button */}
           {onOpenReport ? (
             <Pressable
-              style={({ pressed }) => [
-                styles.navCircleBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
               onPress={onOpenReport}
               hitSlop={HIT_SLOP_10}
               accessibilityRole="button"
@@ -367,13 +424,10 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
       {/* 2. Scrollable Grouped History Feed */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 20 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        {dateGroups.map((group) => (
+        {dateGroups.map(group => (
           <View key={`group_${group.dateStr}`} style={styles.groupSection}>
             {/* Date Group Header */}
             <Text style={styles.groupHeaderTitle}>{group.headerTitle}</Text>
@@ -405,9 +459,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
                         <Text style={styles.beverageName}>
                           {getBeverageName(entry.beverageType)}
                         </Text>
-                        <Text style={styles.beverageTime}>
-                          {formatTime(entry.loggedAt)}
-                        </Text>
+                        <Text style={styles.beverageTime}>{formatTime(entry.loggedAt)}</Text>
                       </View>
 
                       {/* Logged Volume Readout */}
@@ -419,7 +471,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
                           styles.menuTriggerBtn,
                           pressed && styles.btnPressed,
                         ]}
-                        onPress={(e) => handleOpenMenu(entry, group.dateStr, e)}
+                        onPress={e => handleOpenMenu(entry, group.dateStr, e)}
                         hitSlop={HIT_SLOP_10}
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
@@ -453,19 +505,13 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
         onRequestClose={() => setEditingEntry(null)}
       >
         <View style={styles.editModalOverlay}>
-          <Pressable
-            style={styles.editModalBackdrop}
-            onPress={() => setEditingEntry(null)}
-          />
+          <Pressable style={styles.editModalBackdrop} onPress={() => setEditingEntry(null)} />
           <View style={styles.editModalSheet}>
             <View style={styles.sheetHandle} />
 
             <View style={styles.editHeaderRow}>
               <Text style={styles.editModalTitle}>Edit Water Entry</Text>
-              <Pressable
-                style={styles.editCloseBtn}
-                onPress={() => setEditingEntry(null)}
-              >
+              <Pressable style={styles.editCloseBtn} onPress={() => setEditingEntry(null)}>
                 <Ionicons name="close" size={20} color="#64748B" />
               </Pressable>
             </View>
@@ -474,7 +520,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             <View style={styles.stepperContainer}>
               <Pressable
                 style={styles.stepperBtn}
-                onPress={() => setEditVolume((v) => Math.max(50, v - 50))}
+                onPress={() => setEditVolume(v => Math.max(50, v - 50))}
               >
                 <Ionicons name="remove" size={20} color={Colors.water} />
               </Pressable>
@@ -484,7 +530,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               </View>
               <Pressable
                 style={styles.stepperBtn}
-                onPress={() => setEditVolume((v) => Math.min(3000, v + 50))}
+                onPress={() => setEditVolume(v => Math.min(3000, v + 50))}
               >
                 <Ionicons name="add" size={20} color={Colors.water} />
               </Pressable>
@@ -492,13 +538,10 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
 
             {/* Quick Presets */}
             <View style={styles.presetChipsRow}>
-              {[150, 250, 300, 400, 500].map((preset) => (
+              {[150, 250, 300, 400, 500].map(preset => (
                 <Pressable
                   key={`edit_preset_${preset}`}
-                  style={[
-                    styles.presetChip,
-                    editVolume === preset && styles.presetChipActive,
-                  ]}
+                  style={[styles.presetChip, editVolume === preset && styles.presetChipActive]}
                   onPress={() => setEditVolume(preset)}
                 >
                   <Text
@@ -522,7 +565,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.editBeverageChipsRow}
             >
-              {BEVERAGE_DEFINITIONS.map((bev) => {
+              {BEVERAGE_DEFINITIONS.map(bev => {
                 const isSelected = editBeverage === bev.id;
                 return (
                   <Pressable
@@ -555,10 +598,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
 
             {/* Save Button */}
             <Pressable
-              style={({ pressed }) => [
-                styles.saveEditBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.saveEditBtn, pressed && styles.btnPressed]}
               onPress={handleSaveEdit}
             >
               <Text style={styles.saveEditBtnText}>Save Changes</Text>
@@ -566,7 +606,6 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
           </View>
         </View>
       </Modal>
-
 
       {/* 5. Floating Undo Toast (Industry Standard) */}
       {undoToast && (
@@ -579,7 +618,8 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             <View style={styles.undoToastInfo}>
               <Ionicons name="trash-outline" size={16} color="#EF4444" />
               <Text style={styles.undoToastText} numberOfLines={1}>
-                Deleted {undoToast.entry.amountMl} mL {getBeverageName(undoToast.entry.beverageType)}
+                Deleted {undoToast.entry.amountMl} mL{' '}
+                {getBeverageName(undoToast.entry.beverageType)}
               </Text>
             </View>
             <Pressable

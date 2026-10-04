@@ -8,13 +8,69 @@ import {
 
 describe('MacroDistributionCard', () => {
   const sampleDays: DayMacroRatioData[] = [
-    { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', proteinGrams: 130, carbsGrams: 210, fatGrams: 60, fiberGrams: 28 },
-    { dateStr: '2026-09-17', dayNum: 17, dayName: 'T', proteinGrams: 145, carbsGrams: 190, fatGrams: 55, fiberGrams: 32 },
-    { dateStr: '2026-09-18', dayNum: 18, dayName: 'W', proteinGrams: 120, carbsGrams: 240, fatGrams: 70, fiberGrams: 25 },
-    { dateStr: '2026-09-19', dayNum: 19, dayName: 'T', proteinGrams: 150, carbsGrams: 220, fatGrams: 62, fiberGrams: 30 },
-    { dateStr: '2026-09-20', dayNum: 20, dayName: 'F', proteinGrams: 160, carbsGrams: 200, fatGrams: 68, fiberGrams: 35 },
-    { dateStr: '2026-09-21', dayNum: 21, dayName: 'S', proteinGrams: 135, carbsGrams: 230, fatGrams: 58, fiberGrams: 26 },
-    { dateStr: '2026-09-22', dayNum: 22, dayName: 'S', proteinGrams: 140, carbsGrams: 215, fatGrams: 64, fiberGrams: 29 },
+    {
+      dateStr: '2026-09-16',
+      dayNum: 16,
+      dayName: 'M',
+      proteinGrams: 130,
+      carbsGrams: 210,
+      fatGrams: 60,
+      fiberGrams: 28,
+    },
+    {
+      dateStr: '2026-09-17',
+      dayNum: 17,
+      dayName: 'T',
+      proteinGrams: 145,
+      carbsGrams: 190,
+      fatGrams: 55,
+      fiberGrams: 32,
+    },
+    {
+      dateStr: '2026-09-18',
+      dayNum: 18,
+      dayName: 'W',
+      proteinGrams: 120,
+      carbsGrams: 240,
+      fatGrams: 70,
+      fiberGrams: 25,
+    },
+    {
+      dateStr: '2026-09-19',
+      dayNum: 19,
+      dayName: 'T',
+      proteinGrams: 150,
+      carbsGrams: 220,
+      fatGrams: 62,
+      fiberGrams: 30,
+    },
+    {
+      dateStr: '2026-09-20',
+      dayNum: 20,
+      dayName: 'F',
+      proteinGrams: 160,
+      carbsGrams: 200,
+      fatGrams: 68,
+      fiberGrams: 35,
+    },
+    {
+      dateStr: '2026-09-21',
+      dayNum: 21,
+      dayName: 'S',
+      proteinGrams: 135,
+      carbsGrams: 230,
+      fatGrams: 58,
+      fiberGrams: 26,
+    },
+    {
+      dateStr: '2026-09-22',
+      dayNum: 22,
+      dayName: 'S',
+      proteinGrams: 140,
+      carbsGrams: 215,
+      fatGrams: 64,
+      fiberGrams: 29,
+    },
   ];
 
   test('renders title, legend items, and day numbers 16-22', async () => {
@@ -116,8 +172,24 @@ describe('MacroDistributionCard', () => {
 
   test('displays empty banner when all days have 0g for selected macro', async () => {
     const emptyDays: DayMacroRatioData[] = [
-      { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', proteinGrams: 0, carbsGrams: 0, fatGrams: 0, fiberGrams: 0 },
-      { dateStr: '2026-09-17', dayNum: 17, dayName: 'T', proteinGrams: 0, carbsGrams: 0, fatGrams: 0, fiberGrams: 0 },
+      {
+        dateStr: '2026-09-16',
+        dayNum: 16,
+        dayName: 'M',
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        fiberGrams: 0,
+      },
+      {
+        dateStr: '2026-09-17',
+        dayNum: 17,
+        dayName: 'T',
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        fiberGrams: 0,
+      },
     ];
 
     const { getByText } = await render(
@@ -155,7 +227,15 @@ describe('MacroDistributionCard', () => {
 
   test('renders decimal macro values accurately in the teardrop pin tooltip', async () => {
     const decimalDays: DayMacroRatioData[] = [
-      { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', proteinGrams: 28.74, carbsGrams: 110.36, fatGrams: 42.19, fiberGrams: 15.62 },
+      {
+        dateStr: '2026-09-16',
+        dayNum: 16,
+        dayName: 'M',
+        proteinGrams: 28.74,
+        carbsGrams: 110.36,
+        fatGrams: 42.19,
+        fiberGrams: 15.62,
+      },
     ];
 
     const { getByText } = await render(

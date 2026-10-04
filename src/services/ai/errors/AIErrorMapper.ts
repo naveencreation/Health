@@ -14,12 +14,17 @@ export class AIErrorMapper {
       return this.enrichUserFacingMetadata(error);
     }
 
-    const rawMessage = error.message || (typeof error === 'string' ? error : '') || String(error || '');
-    let status = error.statusCode || error.status || (typeof error.code === 'number' ? error.code : undefined);
+    const rawMessage =
+      error.message || (typeof error === 'string' ? error : '') || String(error || '');
+    let status =
+      error.statusCode || error.status || (typeof error.code === 'number' ? error.code : undefined);
     let extractedDetail = '';
 
     // If message is a JSON string or contains {"error": ...}, extract clean message and status code
-    if (typeof rawMessage === 'string' && (rawMessage.trim().startsWith('{') || rawMessage.includes('"error"'))) {
+    if (
+      typeof rawMessage === 'string' &&
+      (rawMessage.trim().startsWith('{') || rawMessage.includes('"error"'))
+    ) {
       try {
         const jsonMatch = rawMessage.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -61,10 +66,15 @@ export class AIErrorMapper {
 
     // 2. Rate Limits & Quotas
     if (status === 429 || searchStr.includes('RESOURCE_EXHAUSTED') || searchStr.includes('QUOTA')) {
-      if (searchStr.includes('QUOTA') || searchStr.includes('RESOURCE_EXHAUSTED') || searchStr.includes('DAILY')) {
+      if (
+        searchStr.includes('QUOTA') ||
+        searchStr.includes('RESOURCE_EXHAUSTED') ||
+        searchStr.includes('DAILY')
+      ) {
         return this.createError(
           'QUOTA_EXCEEDED',
-          extractedDetail || 'Gemini API daily quota limit reached. Free keys reset daily at midnight Pacific Time.',
+          extractedDetail ||
+            'Gemini API daily quota limit reached. Free keys reset daily at midnight Pacific Time.',
           429,
           false
         );
@@ -106,11 +116,26 @@ export class AIErrorMapper {
     }
 
     // 4. Abort & Network conditions
-    if (error.name === 'AbortError' || searchStr.includes('ABORTED') || searchStr.includes('TIMED OUT') || searchStr.includes('TIMEOUT')) {
+    if (
+      error.name === 'AbortError' ||
+      searchStr.includes('ABORTED') ||
+      searchStr.includes('TIMED OUT') ||
+      searchStr.includes('TIMEOUT')
+    ) {
       if (searchStr.includes('BACKGROUND')) {
-        return this.createError('APP_BACKGROUNDED', 'Generation paused because Calorify went to the background.', undefined, false);
+        return this.createError(
+          'APP_BACKGROUNDED',
+          'Generation paused because Calorify went to the background.',
+          undefined,
+          false
+        );
       }
-      return this.createError('TIMEOUT', 'Connection timed out while waiting for Gemini. Please check your network.', undefined, true);
+      return this.createError(
+        'TIMEOUT',
+        'Connection timed out while waiting for Gemini. Please check your network.',
+        undefined,
+        true
+      );
     }
 
     if (
@@ -121,18 +146,30 @@ export class AIErrorMapper {
       searchStr.includes('ENOTFOUND') ||
       searchStr.includes('CONNECTION REFUSED')
     ) {
-      return this.createError('NETWORK_ERROR', 'Could not reach Google Gemini. Please check your WiFi or mobile data connection.', undefined, true);
+      return this.createError(
+        'NETWORK_ERROR',
+        'Could not reach Google Gemini. Please check your WiFi or mobile data connection.',
+        undefined,
+        true
+      );
     }
 
     // 5. Malformed Request
     if (status === 400) {
-      return this.createError('INVALID_REQUEST', extractedDetail || 'The request to Gemini was malformed. Please try again.', 400, false);
+      return this.createError(
+        'INVALID_REQUEST',
+        extractedDetail || 'The request to Gemini was malformed. Please try again.',
+        400,
+        false
+      );
     }
 
     const cleanFallback =
       extractedDetail && !extractedDetail.startsWith('{')
         ? extractedDetail
-        : typeof rawMessage === 'string' && !rawMessage.startsWith('{') && !rawMessage.includes('"error"')
+        : typeof rawMessage === 'string' &&
+            !rawMessage.startsWith('{') &&
+            !rawMessage.includes('"error"')
           ? rawMessage
           : 'An unexpected AI error occurred.';
 
@@ -166,20 +203,23 @@ export class AIErrorMapper {
     switch (error.type) {
       case 'NO_KEY_CONFIGURED':
         error.userTitle = 'Gemini Key Needed';
-        error.userMessage = 'Connect your free Google Gemini API key to unlock Ria AI coaching and instant food photo scanning.';
+        error.userMessage =
+          'Connect your free Google Gemini API key to unlock Ria AI coaching and instant food photo scanning.';
         error.actionLabel = 'Connect Key';
         break;
 
       case 'INVALID_KEY':
       case 'EXPIRED_OR_REVOKED_KEY':
         error.userTitle = 'Invalid Gemini Key';
-        error.userMessage = 'Google rejected this API key. Please check your key at Google AI Studio or connect a valid key.';
+        error.userMessage =
+          'Google rejected this API key. Please check your key at Google AI Studio or connect a valid key.';
         error.actionLabel = 'Update Key';
         break;
 
       case 'QUOTA_EXCEEDED':
         error.userTitle = 'Daily Quota Limit';
-        error.userMessage = 'Your free Google AI Studio key has hit its daily limit (1,500 requests). Free quotas refresh every 24 hours.';
+        error.userMessage =
+          'Your free Google AI Studio key has hit its daily limit (1,500 requests). Free quotas refresh every 24 hours.';
         error.actionLabel = 'Update Key';
         break;
 
@@ -191,26 +231,30 @@ export class AIErrorMapper {
 
       case 'NETWORK_ERROR':
         error.userTitle = 'No Internet Connection';
-        error.userMessage = 'Calorify could not reach Google Gemini. Please check your WiFi or mobile data connection and retry.';
+        error.userMessage =
+          'Calorify could not reach Google Gemini. Please check your WiFi or mobile data connection and retry.';
         error.actionLabel = 'Retry Analysis';
         break;
 
       case 'TIMEOUT':
         error.userTitle = 'Request Timed Out';
-        error.userMessage = 'Google Gemini took longer than expected to respond. Please check your connection and retry.';
+        error.userMessage =
+          'Google Gemini took longer than expected to respond. Please check your connection and retry.';
         error.actionLabel = 'Retry Analysis';
         break;
 
       case 'MODEL_UNAVAILABLE':
       case 'SERVER_ERROR':
         error.userTitle = 'Gemini Unavailable';
-        error.userMessage = 'Google Gemini servers are temporarily overloaded or undergoing maintenance. Please try again in a few moments.';
+        error.userMessage =
+          'Google Gemini servers are temporarily overloaded or undergoing maintenance. Please try again in a few moments.';
         error.actionLabel = 'Retry Analysis';
         break;
 
       case 'CLINICAL_SAFETY_INTERCEPT':
         error.userTitle = 'Nourishment Safety Guidance';
-        error.userMessage = 'Calorify encourages safe, sustainable nourishment. We cannot provide extreme starvation or deficit guidance. Please consult a healthcare professional.';
+        error.userMessage =
+          'Calorify encourages safe, sustainable nourishment. We cannot provide extreme starvation or deficit guidance. Please consult a healthcare professional.';
         error.actionLabel = 'Learn More';
         break;
 

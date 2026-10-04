@@ -18,13 +18,7 @@ import {
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 
 export type OnboardingStep =
-  | 'age'
-  | 'weight'
-  | 'height'
-  | 'goal'
-  | 'gender'
-  | 'plan'
-  | 'permissions';
+  'age' | 'weight' | 'height' | 'goal' | 'gender' | 'plan' | 'permissions';
 
 export interface OnboardingCompleteData {
   biometrics: UserBiometricsInput & {
@@ -62,12 +56,12 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [gender, setGender] = useState<GenderType>(initialBiometrics?.gender ?? 'male');
 
   const pushStep = (next: OnboardingStep) => {
-    setStepHistory((prev) => [...prev, next]);
+    setStepHistory(prev => [...prev, next]);
   };
 
   const popStep = () => {
     if (stepHistory.length > 1) {
-      setStepHistory((prev) => prev.slice(0, -1));
+      setStepHistory(prev => prev.slice(0, -1));
     } else if (onBackToWelcome) {
       onBackToWelcome();
     }
@@ -141,7 +135,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         <AgeSelectionScreen
           initialAge={age}
           onBack={popStep}
-          onContinue={(val) => {
+          onContinue={val => {
             setAge(val);
             pushStep('weight');
           }}
@@ -197,7 +191,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         <GoalSelectionScreen
           initialGoal={mapToFitnessGoal(goal)}
           onBack={popStep}
-          onContinue={(selectedGoal) => {
+          onContinue={selectedGoal => {
             setGoal(mapFitnessGoal(selectedGoal));
             pushStep('gender');
           }}
@@ -215,7 +209,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         <GenderSelectionScreen
           initialGender={gender}
           onBack={popStep}
-          onContinue={(val) => {
+          onContinue={val => {
             const mappedGender: GenderType =
               val === 'female' ? 'female' : val === 'male' ? 'male' : 'other';
             setGender(mappedGender);
@@ -246,10 +240,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   if (currentStep === 'permissions') {
     return (
       <View style={styles.container}>
-        <PermissionPrimerStep
-          onEnablePermissions={handleEnablePermissions}
-          onSkip={handleFinish}
-        />
+        <PermissionPrimerStep onEnablePermissions={handleEnablePermissions} onSkip={handleFinish} />
       </View>
     );
   }

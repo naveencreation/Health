@@ -51,8 +51,18 @@ export interface StepHistoryModalProps {
 }
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -120,30 +130,27 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
 
   const toggleDateExpanded = useCallback((date: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedDates((prev) => ({
+    setExpandedDates(prev => ({
       ...prev,
       [date]: !prev[date],
     }));
   }, []);
 
   // Open action menu popover
-  const handleOpenPopover = useCallback(
-    (entry: StepLogEntry, date: string, event: any) => {
-      const pageY = event.nativeEvent.pageY || 200;
-      const pageX = event.nativeEvent.pageX || 300;
-      setPopoverState({
-        visible: true,
-        entry,
-        dateStr: date,
-        positionY: pageY,
-        positionX: pageX,
-      });
-    },
-    []
-  );
+  const handleOpenPopover = useCallback((entry: StepLogEntry, date: string, event: any) => {
+    const pageY = event.nativeEvent.pageY || 200;
+    const pageX = event.nativeEvent.pageX || 300;
+    setPopoverState({
+      visible: true,
+      entry,
+      dateStr: date,
+      positionY: pageY,
+      positionX: pageX,
+    });
+  }, []);
 
   const handleClosePopover = useCallback(() => {
-    setPopoverState((prev) => ({ ...prev, visible: false }));
+    setPopoverState(prev => ({ ...prev, visible: false }));
   }, []);
 
   // Delete entry action
@@ -152,7 +159,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
       const targetDate = popoverState.dateStr || anchorDate;
 
       // Mark locally deleted for instant UI update
-      setDeletedEntryIds((prev) => {
+      setDeletedEntryIds(prev => {
         const setForDate = new Set(prev[targetDate] || []);
         setForDate.add(entry.id);
         return {
@@ -180,7 +187,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
 
     // Add all dates from dailyLogs that have steps or stepEntries
     if (dailyLogs) {
-      Object.keys(dailyLogs).forEach((d) => {
+      Object.keys(dailyLogs).forEach(d => {
         const log = dailyLogs[d];
         if (log && ((log.steps || 0) > 0 || (log.stepEntries && log.stepEntries.length > 0))) {
           datesSet.add(d);
@@ -191,22 +198,22 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
     // Sort descending (newest first)
     const sortedDates = Array.from(datesSet).sort((a, b) => b.localeCompare(a));
 
-    return sortedDates.map((d) => {
+    return sortedDates.map(d => {
       const isAnchor = d === anchorDate;
       const deletedSet = deletedEntryIds[d] || new Set();
 
       let entries: StepLogEntry[] = [];
 
       if (isAnchor && propEntries && propEntries.length > 0) {
-        entries = propEntries.filter((e) => !deletedSet.has(e.id));
+        entries = propEntries.filter(e => !deletedSet.has(e.id));
       } else if (dailyLogs[d]?.stepEntries && dailyLogs[d].stepEntries!.length > 0) {
-        entries = dailyLogs[d].stepEntries!.filter((e) => !deletedSet.has(e.id));
+        entries = dailyLogs[d].stepEntries!.filter(e => !deletedSet.has(e.id));
       } else if (dailyLogs[d]?.steps && dailyLogs[d].steps > 0) {
         const synthesized = synthesizeSessionsFromTotal(dailyLogs[d].steps, d);
-        entries = synthesized.filter((e) => !deletedSet.has(e.id));
+        entries = synthesized.filter(e => !deletedSet.has(e.id));
       } else if (isAnchor && (propTotalSteps || 0) > 0) {
         const synthesized = synthesizeSessionsFromTotal(propTotalSteps!, d);
-        entries = synthesized.filter((e) => !deletedSet.has(e.id));
+        entries = synthesized.filter(e => !deletedSet.has(e.id));
       }
 
       // Calculate totals
@@ -248,7 +255,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
   // Filter out completely empty dates unless explicitly picked in calendar
   const activeDays = useMemo(() => {
     return daysData.filter(
-      (day) => day.entries.length > 0 || day.totalSteps > 0 || day.dateStr === selectedCalendarDate
+      day => day.entries.length > 0 || day.totalSteps > 0 || day.dateStr === selectedCalendarDate
     );
   }, [daysData, selectedCalendarDate]);
 
@@ -266,8 +273,8 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
       const dStr = `${calendarYear}-${pad2(calendarMonth + 1)}-${pad2(d)}`;
       const hasSteps = Boolean(
         dailyLogs[dStr]?.steps ||
-          (dailyLogs[dStr]?.stepEntries && dailyLogs[dStr].stepEntries!.length > 0) ||
-          dStr === anchorDate
+        (dailyLogs[dStr]?.stepEntries && dailyLogs[dStr].stepEntries!.length > 0) ||
+        dStr === anchorDate
       );
       cells.push({ dayNum: d, dateStr: dStr, hasSteps });
     }
@@ -318,342 +325,342 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
             </View>
           </View>
 
-        {/* Scrollable multi-day feed */}
-        <ScrollView
-          style={styles.scrollArea}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 36 }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {activeDays.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <EmptyShoesOutlineSvg size={90} color="#CBD5E1" />
-              <Text style={styles.emptyTitle}>No step records recorded</Text>
-              <Text style={styles.emptySub}>
-                Walking sessions logged through Health Connect or manually will appear here.
-              </Text>
-            </View>
-          ) : (
-            activeDays.map((dayGroup) => {
-              const {
-                dateStr,
-                entries,
-                totalSteps: dayTotalSteps,
-                totalTime: dayTotalTime,
-                totalCalories: dayTotalCalories,
-                totalDistance: dayTotalDistance,
-              } = dayGroup;
-
-              const hasMoreThan5 = entries.length > 5;
-              const isExpanded = expandedDates[dateStr] === true;
-              const visibleEntries = hasMoreThan5 && !isExpanded ? entries.slice(0, 5) : entries;
-
-              return (
-                <View key={dateStr} style={styles.daySection}>
-                  {/* Date Header: "Today, Dec 22, 2024 ─────────" */}
-                  <View style={styles.dateHeaderRow}>
-                    <Text style={styles.dateHeaderText}>{formatHistoryDateHeader(dateStr)}</Text>
-                    <View style={styles.dateHeaderHairline} />
-                  </View>
-
-                  {/* Day Card Container */}
-                  <View style={styles.dayCard}>
-                    {entries.length === 0 ? (
-                      <View style={styles.dayEmptyRow}>
-                        <Text style={styles.dayEmptyText}>No step sessions for this date</Text>
-                      </View>
-                    ) : (
-                      <>
-                        {/* Session Rows */}
-                        {visibleEntries.map((entry, index) => {
-                          const isLastInList = index === visibleEntries.length - 1;
-
-                          return (
-                            <View
-                              key={entry.id || `session_${index}`}
-                              style={[
-                                styles.sessionRow,
-                                (!isLastInList || hasMoreThan5) && styles.rowBorderBottom,
-                              ]}
-                            >
-                              {/* 1. Footsteps (Orange) */}
-                              <View style={[styles.col, styles.colSteps]}>
-                                <View style={styles.iconCell}>
-                                  <FootstepsOutlineSvg size={20} color="#F97316" />
-                                </View>
-                                <Text style={styles.valueText} numberOfLines={1}>
-                                  {entry.steps.toLocaleString()}
-                                </Text>
-                              </View>
-
-                              {/* 2. Time Duration (Green) */}
-                              <View style={[styles.col, styles.colTime]}>
-                                <View style={styles.iconCell}>
-                                  <ClockOutlineSvg size={20} color="#22C55E" />
-                                </View>
-                                <Text style={styles.valueText} numberOfLines={1}>
-                                  {entry.durationMinutes}m
-                                </Text>
-                              </View>
-
-                              {/* 3. Calories (Red) */}
-                              <View style={[styles.col, styles.colCalories]}>
-                                <View style={styles.iconCell}>
-                                  <FlameOutlineSvg size={20} color="#EF4444" />
-                                </View>
-                                <Text style={styles.valueText} numberOfLines={1}>
-                                  {entry.caloriesBurned}
-                                </Text>
-                              </View>
-
-                              {/* 4. Distance (Blue) */}
-                              <View style={[styles.col, styles.colDistance]}>
-                                <View style={styles.iconCell}>
-                                  <LocationPinOutlineSvg size={20} color="#0EA5E9" />
-                                </View>
-                                <Text style={styles.valueText} numberOfLines={1}>
-                                  {entry.distanceKm}
-                                </Text>
-                              </View>
-
-                              {/* 5. 3-Dots Kebab Action Menu */}
-                              <Pressable
-                                style={({ pressed }) => [
-                                  styles.kebabBtn,
-                                  pressed && styles.btnPressed,
-                                ]}
-                                onPress={(e) => handleOpenPopover(entry, dateStr, e)}
-                                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                                accessibilityRole="button"
-                                accessibilityLabel="More options"
-                              >
-                                <Ionicons name="ellipsis-vertical" size={17} color="#0F172A" />
-                              </Pressable>
-                            </View>
-                          );
-                        })}
-
-                        {/* Expand / Collapse Toggle if > 5 entries */}
-                        {hasMoreThan5 && (
-                          <Pressable
-                            style={({ pressed }) => [
-                              styles.expandToggleBtn,
-                              pressed && styles.btnPressed,
-                            ]}
-                            onPress={() => toggleDateExpanded(dateStr)}
-                            accessibilityRole="button"
-                            accessibilityLabel={
-                              isExpanded
-                                ? 'Show less sessions'
-                                : `Show ${entries.length - 5} more sessions`
-                            }
-                          >
-                            <Text style={styles.expandToggleText}>
-                              {isExpanded
-                                ? 'Show less'
-                                : `+ Show ${entries.length - 5} more sessions`}
-                            </Text>
-                            <Ionicons
-                              name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                              size={14}
-                              color="#64748B"
-                            />
-                          </Pressable>
-                        )}
-                      </>
-                    )}
-
-                    {/* Labeled Total Divider: "Total ────────────────────────" */}
-                    <View style={styles.totalDividerRow}>
-                      <Text style={styles.totalLabel}>Total</Text>
-                      <View style={styles.totalHairline} />
-                    </View>
-
-                    {/* Total Row matching reference: 👣 4,205   ⏱️ 41m   🔥 205   📍 3.3 */}
-                    <View style={styles.totalRow}>
-                      {/* Total Steps */}
-                      <View style={[styles.col, styles.colSteps]}>
-                        <View style={styles.iconCell}>
-                          <FootstepsOutlineSvg size={20} color="#F97316" />
-                        </View>
-                        <Text style={styles.valueText} numberOfLines={1}>
-                          {dayTotalSteps.toLocaleString()}
-                        </Text>
-                      </View>
-
-                      {/* Total Duration */}
-                      <View style={[styles.col, styles.colTime]}>
-                        <View style={styles.iconCell}>
-                          <ClockOutlineSvg size={20} color="#22C55E" />
-                        </View>
-                        <Text style={styles.valueText} numberOfLines={1}>
-                          {dayTotalTime}m
-                        </Text>
-                      </View>
-
-                      {/* Total Calories */}
-                      <View style={[styles.col, styles.colCalories]}>
-                        <View style={styles.iconCell}>
-                          <FlameOutlineSvg size={20} color="#EF4444" />
-                        </View>
-                        <Text style={styles.valueText} numberOfLines={1}>
-                          {dayTotalCalories}
-                        </Text>
-                      </View>
-
-                      {/* Total Distance */}
-                      <View style={[styles.col, styles.colDistance]}>
-                        <View style={styles.iconCell}>
-                          <LocationPinOutlineSvg size={20} color="#0EA5E9" />
-                        </View>
-                        <Text style={styles.valueText} numberOfLines={1}>
-                          {dayTotalDistance.toFixed(1)}
-                        </Text>
-                      </View>
-
-                      {/* Kebab Placeholder to guarantee exact 5-column grid alignment */}
-                      <View style={styles.kebabPlaceholder} />
-                    </View>
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </ScrollView>
-
-        {/* Floating Action Menu Popover (Screenshot 2) */}
-        <StepEntryActionPopover
-          visible={popoverState.visible}
-          positionY={popoverState.positionY}
-          positionX={popoverState.positionX}
-          entry={popoverState.entry}
-          onDelete={handleDeleteEntry}
-          onClose={handleClosePopover}
-        />
-
-        {/* Interactive Month Calendar Picker Modal */}
-        <Modal
-          visible={isCalendarOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setIsCalendarOpen(false)}
-        >
-          <Pressable style={styles.modalOverlay} onPress={() => setIsCalendarOpen(false)}>
-            <Pressable style={styles.calendarModalCard} onPress={(e) => e.stopPropagation()}>
-              {/* Calendar Month Header */}
-              <View style={styles.calendarHeaderRow}>
-                <View style={styles.calendarNavRow}>
-                  <Pressable
-                    style={styles.calNavArrow}
-                    onPress={() => {
-                      if (calendarMonth === 0) {
-                        setCalendarMonth(11);
-                        setCalendarYear((y) => y - 1);
-                      } else {
-                        setCalendarMonth((m) => m - 1);
-                      }
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons name="chevron-back" size={20} color="#0F172A" />
-                  </Pressable>
-
-                  <Text style={styles.calendarMonthTitle}>
-                    {MONTH_NAMES[calendarMonth]} {calendarYear}
-                  </Text>
-
-                  <Pressable
-                    style={styles.calNavArrow}
-                    onPress={() => {
-                      if (calendarMonth === 11) {
-                        setCalendarMonth(0);
-                        setCalendarYear((y) => y + 1);
-                      } else {
-                        setCalendarMonth((m) => m + 1);
-                      }
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons name="chevron-forward" size={20} color="#0F172A" />
-                  </Pressable>
-                </View>
-
-                <Pressable
-                  style={styles.calCloseBtn}
-                  onPress={() => setIsCalendarOpen(false)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="close" size={20} color="#64748B" />
-                </Pressable>
-              </View>
-
-              {/* Weekday Initials */}
-              <View style={styles.calendarWeekdaysRow}>
-                {WEEKDAY_INITIALS.map((initial, idx) => (
-                  <Text key={idx} style={styles.calendarWeekdayText}>
-                    {initial}
-                  </Text>
-                ))}
-              </View>
-
-              {/* Days Grid */}
-              <View style={styles.calendarGrid}>
-                {monthGrid.map((cell, idx) => {
-                  if (!cell.dayNum || !cell.dateStr) {
-                    return <View key={`empty_${idx}`} style={styles.calendarEmptyCell} />;
-                  }
-
-                  const isSelected = cell.dateStr === selectedCalendarDate;
-
-                  return (
-                    <Pressable
-                      key={cell.dateStr}
-                      style={[
-                        styles.calendarDayCell,
-                        isSelected && styles.calendarDayCellSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedCalendarDate(cell.dateStr!);
-                        setIsCalendarOpen(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.calendarDayText,
-                          isSelected && styles.calendarDayTextSelected,
-                        ]}
-                      >
-                        {cell.dayNum}
-                      </Text>
-                      {cell.hasSteps && !isSelected && <View style={styles.calendarStepDot} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
-
-        {/* Dedicated Full-Screen Step Report Sub-Screen */}
-        {isReportVisible && (
-          <SlideInSubScreen
-            isClosing={isClosingReport}
-            onClosed={() => {
-              setIsReportVisible(false);
-              setIsClosingReport(false);
-            }}
-            screenWidth={Math.min(screenWidth, 480)}
-            zIndex={300}
+          {/* Scrollable multi-day feed */}
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 36 }]}
+            showsVerticalScrollIndicator={false}
           >
-            <StepReportScreen onBack={() => setIsClosingReport(true)} />
-          </SlideInSubScreen>
-        )}
+            {activeDays.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <EmptyShoesOutlineSvg size={90} color="#CBD5E1" />
+                <Text style={styles.emptyTitle}>No step records recorded</Text>
+                <Text style={styles.emptySub}>
+                  Walking sessions logged through Health Connect or manually will appear here.
+                </Text>
+              </View>
+            ) : (
+              activeDays.map(dayGroup => {
+                const {
+                  dateStr,
+                  entries,
+                  totalSteps: dayTotalSteps,
+                  totalTime: dayTotalTime,
+                  totalCalories: dayTotalCalories,
+                  totalDistance: dayTotalDistance,
+                } = dayGroup;
+
+                const hasMoreThan5 = entries.length > 5;
+                const isExpanded = expandedDates[dateStr] === true;
+                const visibleEntries = hasMoreThan5 && !isExpanded ? entries.slice(0, 5) : entries;
+
+                return (
+                  <View key={dateStr} style={styles.daySection}>
+                    {/* Date Header: "Today, Dec 22, 2024 ─────────" */}
+                    <View style={styles.dateHeaderRow}>
+                      <Text style={styles.dateHeaderText}>{formatHistoryDateHeader(dateStr)}</Text>
+                      <View style={styles.dateHeaderHairline} />
+                    </View>
+
+                    {/* Day Card Container */}
+                    <View style={styles.dayCard}>
+                      {entries.length === 0 ? (
+                        <View style={styles.dayEmptyRow}>
+                          <Text style={styles.dayEmptyText}>No step sessions for this date</Text>
+                        </View>
+                      ) : (
+                        <>
+                          {/* Session Rows */}
+                          {visibleEntries.map((entry, index) => {
+                            const isLastInList = index === visibleEntries.length - 1;
+
+                            return (
+                              <View
+                                key={entry.id || `session_${index}`}
+                                style={[
+                                  styles.sessionRow,
+                                  (!isLastInList || hasMoreThan5) && styles.rowBorderBottom,
+                                ]}
+                              >
+                                {/* 1. Footsteps (Orange) */}
+                                <View style={[styles.col, styles.colSteps]}>
+                                  <View style={styles.iconCell}>
+                                    <FootstepsOutlineSvg size={20} color="#F97316" />
+                                  </View>
+                                  <Text style={styles.valueText} numberOfLines={1}>
+                                    {entry.steps.toLocaleString()}
+                                  </Text>
+                                </View>
+
+                                {/* 2. Time Duration (Green) */}
+                                <View style={[styles.col, styles.colTime]}>
+                                  <View style={styles.iconCell}>
+                                    <ClockOutlineSvg size={20} color="#22C55E" />
+                                  </View>
+                                  <Text style={styles.valueText} numberOfLines={1}>
+                                    {entry.durationMinutes}m
+                                  </Text>
+                                </View>
+
+                                {/* 3. Calories (Red) */}
+                                <View style={[styles.col, styles.colCalories]}>
+                                  <View style={styles.iconCell}>
+                                    <FlameOutlineSvg size={20} color="#EF4444" />
+                                  </View>
+                                  <Text style={styles.valueText} numberOfLines={1}>
+                                    {entry.caloriesBurned}
+                                  </Text>
+                                </View>
+
+                                {/* 4. Distance (Blue) */}
+                                <View style={[styles.col, styles.colDistance]}>
+                                  <View style={styles.iconCell}>
+                                    <LocationPinOutlineSvg size={20} color="#0EA5E9" />
+                                  </View>
+                                  <Text style={styles.valueText} numberOfLines={1}>
+                                    {entry.distanceKm}
+                                  </Text>
+                                </View>
+
+                                {/* 5. 3-Dots Kebab Action Menu */}
+                                <Pressable
+                                  style={({ pressed }) => [
+                                    styles.kebabBtn,
+                                    pressed && styles.btnPressed,
+                                  ]}
+                                  onPress={e => handleOpenPopover(entry, dateStr, e)}
+                                  hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="More options"
+                                >
+                                  <Ionicons name="ellipsis-vertical" size={17} color="#0F172A" />
+                                </Pressable>
+                              </View>
+                            );
+                          })}
+
+                          {/* Expand / Collapse Toggle if > 5 entries */}
+                          {hasMoreThan5 && (
+                            <Pressable
+                              style={({ pressed }) => [
+                                styles.expandToggleBtn,
+                                pressed && styles.btnPressed,
+                              ]}
+                              onPress={() => toggleDateExpanded(dateStr)}
+                              accessibilityRole="button"
+                              accessibilityLabel={
+                                isExpanded
+                                  ? 'Show less sessions'
+                                  : `Show ${entries.length - 5} more sessions`
+                              }
+                            >
+                              <Text style={styles.expandToggleText}>
+                                {isExpanded
+                                  ? 'Show less'
+                                  : `+ Show ${entries.length - 5} more sessions`}
+                              </Text>
+                              <Ionicons
+                                name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                                size={14}
+                                color="#64748B"
+                              />
+                            </Pressable>
+                          )}
+                        </>
+                      )}
+
+                      {/* Labeled Total Divider: "Total ────────────────────────" */}
+                      <View style={styles.totalDividerRow}>
+                        <Text style={styles.totalLabel}>Total</Text>
+                        <View style={styles.totalHairline} />
+                      </View>
+
+                      {/* Total Row matching reference: 👣 4,205   ⏱️ 41m   🔥 205   📍 3.3 */}
+                      <View style={styles.totalRow}>
+                        {/* Total Steps */}
+                        <View style={[styles.col, styles.colSteps]}>
+                          <View style={styles.iconCell}>
+                            <FootstepsOutlineSvg size={20} color="#F97316" />
+                          </View>
+                          <Text style={styles.valueText} numberOfLines={1}>
+                            {dayTotalSteps.toLocaleString()}
+                          </Text>
+                        </View>
+
+                        {/* Total Duration */}
+                        <View style={[styles.col, styles.colTime]}>
+                          <View style={styles.iconCell}>
+                            <ClockOutlineSvg size={20} color="#22C55E" />
+                          </View>
+                          <Text style={styles.valueText} numberOfLines={1}>
+                            {dayTotalTime}m
+                          </Text>
+                        </View>
+
+                        {/* Total Calories */}
+                        <View style={[styles.col, styles.colCalories]}>
+                          <View style={styles.iconCell}>
+                            <FlameOutlineSvg size={20} color="#EF4444" />
+                          </View>
+                          <Text style={styles.valueText} numberOfLines={1}>
+                            {dayTotalCalories}
+                          </Text>
+                        </View>
+
+                        {/* Total Distance */}
+                        <View style={[styles.col, styles.colDistance]}>
+                          <View style={styles.iconCell}>
+                            <LocationPinOutlineSvg size={20} color="#0EA5E9" />
+                          </View>
+                          <Text style={styles.valueText} numberOfLines={1}>
+                            {dayTotalDistance.toFixed(1)}
+                          </Text>
+                        </View>
+
+                        {/* Kebab Placeholder to guarantee exact 5-column grid alignment */}
+                        <View style={styles.kebabPlaceholder} />
+                      </View>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </ScrollView>
+
+          {/* Floating Action Menu Popover (Screenshot 2) */}
+          <StepEntryActionPopover
+            visible={popoverState.visible}
+            positionY={popoverState.positionY}
+            positionX={popoverState.positionX}
+            entry={popoverState.entry}
+            onDelete={handleDeleteEntry}
+            onClose={handleClosePopover}
+          />
+
+          {/* Interactive Month Calendar Picker Modal */}
+          <Modal
+            visible={isCalendarOpen}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setIsCalendarOpen(false)}
+          >
+            <Pressable style={styles.modalOverlay} onPress={() => setIsCalendarOpen(false)}>
+              <Pressable style={styles.calendarModalCard} onPress={e => e.stopPropagation()}>
+                {/* Calendar Month Header */}
+                <View style={styles.calendarHeaderRow}>
+                  <View style={styles.calendarNavRow}>
+                    <Pressable
+                      style={styles.calNavArrow}
+                      onPress={() => {
+                        if (calendarMonth === 0) {
+                          setCalendarMonth(11);
+                          setCalendarYear(y => y - 1);
+                        } else {
+                          setCalendarMonth(m => m - 1);
+                        }
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="chevron-back" size={20} color="#0F172A" />
+                    </Pressable>
+
+                    <Text style={styles.calendarMonthTitle}>
+                      {MONTH_NAMES[calendarMonth]} {calendarYear}
+                    </Text>
+
+                    <Pressable
+                      style={styles.calNavArrow}
+                      onPress={() => {
+                        if (calendarMonth === 11) {
+                          setCalendarMonth(0);
+                          setCalendarYear(y => y + 1);
+                        } else {
+                          setCalendarMonth(m => m + 1);
+                        }
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons name="chevron-forward" size={20} color="#0F172A" />
+                    </Pressable>
+                  </View>
+
+                  <Pressable
+                    style={styles.calCloseBtn}
+                    onPress={() => setIsCalendarOpen(false)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="close" size={20} color="#64748B" />
+                  </Pressable>
+                </View>
+
+                {/* Weekday Initials */}
+                <View style={styles.calendarWeekdaysRow}>
+                  {WEEKDAY_INITIALS.map((initial, idx) => (
+                    <Text key={idx} style={styles.calendarWeekdayText}>
+                      {initial}
+                    </Text>
+                  ))}
+                </View>
+
+                {/* Days Grid */}
+                <View style={styles.calendarGrid}>
+                  {monthGrid.map((cell, idx) => {
+                    if (!cell.dayNum || !cell.dateStr) {
+                      return <View key={`empty_${idx}`} style={styles.calendarEmptyCell} />;
+                    }
+
+                    const isSelected = cell.dateStr === selectedCalendarDate;
+
+                    return (
+                      <Pressable
+                        key={cell.dateStr}
+                        style={[
+                          styles.calendarDayCell,
+                          isSelected && styles.calendarDayCellSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedCalendarDate(cell.dateStr!);
+                          setIsCalendarOpen(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.calendarDayText,
+                            isSelected && styles.calendarDayTextSelected,
+                          ]}
+                        >
+                          {cell.dayNum}
+                        </Text>
+                        {cell.hasSteps && !isSelected && <View style={styles.calendarStepDot} />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
+
+          {/* Dedicated Full-Screen Step Report Sub-Screen */}
+          {isReportVisible && (
+            <SlideInSubScreen
+              isClosing={isClosingReport}
+              onClosed={() => {
+                setIsReportVisible(false);
+                setIsClosingReport(false);
+              }}
+              screenWidth={Math.min(screenWidth, 480)}
+              zIndex={300}
+            >
+              <StepReportScreen onBack={() => setIsClosingReport(true)} />
+            </SlideInSubScreen>
+          )}
         </View>
       </View>
     </Modal>
   );
 };
 
-export const StepHistoryModal: React.FC<StepHistoryModalProps> = (props) => {
+export const StepHistoryModal: React.FC<StepHistoryModalProps> = props => {
   if (!props.visible) return null;
   return <StepHistoryModalContent {...props} />;
 };

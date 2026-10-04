@@ -52,11 +52,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
         return (
           <Text
             key={key}
-            style={[
-              styles.boldText,
-              styles.italicText,
-              isUser ? styles.boldUser : styles.boldRia,
-            ]}
+            style={[styles.boldText, styles.italicText, isUser ? styles.boldUser : styles.boldRia]}
           >
             {token.slice(3, -3)}
           </Text>
@@ -69,10 +65,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
         (token.startsWith('__') && token.endsWith('__') && token.length >= 4)
       ) {
         return (
-          <Text
-            key={key}
-            style={[styles.boldText, isUser ? styles.boldUser : styles.boldRia]}
-          >
+          <Text key={key} style={[styles.boldText, isUser ? styles.boldUser : styles.boldRia]}>
             {token.slice(2, -2)}
           </Text>
         );
@@ -93,10 +86,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
       // Inline Code: `text`
       if (token.startsWith('`') && token.endsWith('`') && token.length >= 2) {
         return (
-          <Text
-            key={key}
-            style={[styles.codeText, isUser ? styles.codeUser : styles.codeRia]}
-          >
+          <Text key={key} style={[styles.codeText, isUser ? styles.codeUser : styles.codeRia]}>
             {token.slice(1, -1)}
           </Text>
         );
@@ -181,14 +171,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
           const bulletContent = bulletMatch[2];
           return (
             <View key={`bullet_${lineIdx}`} style={styles.bulletRow}>
-              <Text
-                style={[
-                  styles.bulletDot,
-                  { color: isUser ? '#FFFFFF' : '#F47551' },
-                ]}
-              >
-                •
-              </Text>
+              <Text style={[styles.bulletDot, { color: isUser ? '#FFFFFF' : '#F47551' }]}>•</Text>
               <Text style={[styles.baseText, baseStyle, styles.bulletContentText]}>
                 {renderInlineTokens(bulletContent, lineIdx)}
               </Text>
@@ -203,12 +186,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
           const numberedContent = numberedMatch[2];
           return (
             <View key={`numbered_${lineIdx}`} style={styles.numberedRow}>
-              <Text
-                style={[
-                  styles.numberPrefixText,
-                  { color: isUser ? '#FFFFFF' : '#F47551' },
-                ]}
-              >
+              <Text style={[styles.numberPrefixText, { color: isUser ? '#FFFFFF' : '#F47551' }]}>
                 {numberPrefix}.
               </Text>
               <Text style={[styles.baseText, baseStyle, styles.bulletContentText]}>
@@ -223,10 +201,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
           return (
             <View
               key={`quote_${lineIdx}`}
-              style={[
-                styles.blockquoteRow,
-                isUser ? styles.blockquoteUser : styles.blockquoteRia,
-              ]}
+              style={[styles.blockquoteRow, isUser ? styles.blockquoteUser : styles.blockquoteRia]}
             >
               <Text
                 style={[
@@ -249,9 +224,7 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
             style={[
               styles.baseText,
               baseStyle,
-              lineIdx > 0 && lines[lineIdx - 1].trim() === ''
-                ? styles.paragraphStart
-                : null,
+              lineIdx > 0 && lines[lineIdx - 1].trim() === '' ? styles.paragraphStart : null,
             ]}
           >
             {renderInlineTokens(line, lineIdx)}

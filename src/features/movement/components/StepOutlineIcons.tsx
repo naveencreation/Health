@@ -62,13 +62,7 @@ export const ClockOutlineSvg: React.FC<StepIconProps> = ({
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     {/* Outer Dial Circle */}
-    <Circle
-      cx="12"
-      cy="12"
-      r="9"
-      stroke={color}
-      strokeWidth={strokeWidth}
-    />
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={strokeWidth} />
     {/* Clock Hands pointing to 9 o'clock / 12 o'clock */}
     <Path
       d="M12 7.5V12H7.8"
@@ -128,13 +122,7 @@ export const LocationPinOutlineSvg: React.FC<StepIconProps> = ({
       strokeLinejoin="round"
     />
     {/* Central Target Circle */}
-    <Circle
-      cx="12"
-      cy="9.5"
-      r="2.6"
-      stroke={color}
-      strokeWidth={strokeWidth}
-    />
+    <Circle cx="12" cy="9.5" r="2.6" stroke={color} strokeWidth={strokeWidth} />
   </Svg>
 );
 
@@ -161,18 +149,8 @@ export const EmptyShoesOutlineSvg: React.FC<{ size?: number; color?: string }> =
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <Path
-      d="M26 25L30 30"
-      stroke={color}
-      strokeWidth="1.4"
-      strokeLinecap="round"
-    />
-    <Path
-      d="M29 23L33 28"
-      stroke={color}
-      strokeWidth="1.4"
-      strokeLinecap="round"
-    />
+    <Path d="M26 25L30 30" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+    <Path d="M29 23L33 28" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
 
     {/* Right Sneaker Outline (Offset) */}
     <Path

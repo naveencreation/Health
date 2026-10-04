@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -100,7 +93,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
   };
 
   const handleClosePopover = () => {
-    setPopoverState((prev) => ({ ...prev, visible: false }));
+    setPopoverState(prev => ({ ...prev, visible: false }));
   };
 
   const handleDelete = (entry: StepLogEntry) => {
@@ -193,7 +186,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
                   {/* Column 5: 3-Dots Kebab Menu */}
                   <Pressable
                     style={({ pressed }) => [styles.kebabBtn, pressed && styles.btnPressed]}
-                    onPress={(e) => handleOpenMenu(entry, e)}
+                    onPress={e => handleOpenMenu(entry, e)}
                     hitSlop={10}
                     accessibilityRole="button"
                     accessibilityLabel="Options for step entry"
@@ -225,7 +218,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
         totalSteps={totalSteps}
         dailyLogs={dailyLogs}
         onClose={() => setIsModalOpen(false)}
-        onDeleteEntry={onDeleteEntry ? (entry) => onDeleteEntry(entry) : undefined}
+        onDeleteEntry={onDeleteEntry ? entry => onDeleteEntry(entry) : undefined}
         onOpenReport={onOpenReport}
       />
     </View>

@@ -18,7 +18,9 @@ export interface UseMovementReturn {
   stepEntries: StepLogEntry[];
   addSteps: (stepsCount: number) => void;
   removeStepEntry: (id: string, date?: string) => void;
-  batchUpdateDailySteps: (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => void;
+  batchUpdateDailySteps: (
+    updates: Array<{ dateStr: string; steps: number; records?: any[] }>
+  ) => void;
   addWorkout: (name: string, durationMinutes: number, caloriesBurned: number) => void;
   removeWorkout: (id: string) => void;
   setStepGoal: (targetSteps: number) => void;

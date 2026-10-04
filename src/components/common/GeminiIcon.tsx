@@ -9,7 +9,9 @@ interface GeminiIconProps {
 
 export const GeminiIcon: React.FC<GeminiIconProps> = ({ size = 24, style }) => {
   return (
-    <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
+    <View
+      style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}
+    >
       <Svg width={size} height={size} viewBox="0 0 296 298" fill="none">
         <Defs>
           <LinearGradient id="geminiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">

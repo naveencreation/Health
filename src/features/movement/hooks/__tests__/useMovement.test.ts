@@ -11,11 +11,30 @@ const mockUpdateGoals = jest.fn();
 let mockDailyLogData: any = {
   steps: 5000,
   activities: [
-    { id: 'act_1', name: 'Brisk Walk', durationMinutes: 30, caloriesBurned: 130, loggedAt: '2026-10-04T08:00:00Z' },
-    { id: 'act_2', name: 'Running', durationMinutes: 20, caloriesBurned: 200, loggedAt: '2026-10-04T18:00:00Z' },
+    {
+      id: 'act_1',
+      name: 'Brisk Walk',
+      durationMinutes: 30,
+      caloriesBurned: 130,
+      loggedAt: '2026-10-04T08:00:00Z',
+    },
+    {
+      id: 'act_2',
+      name: 'Running',
+      durationMinutes: 20,
+      caloriesBurned: 200,
+      loggedAt: '2026-10-04T18:00:00Z',
+    },
   ],
   stepEntries: [
-    { id: 'se_1', steps: 5000, durationMinutes: 45, caloriesBurned: 200, distanceKm: 3.8, loggedAt: '2026-10-04T08:00:00Z' },
+    {
+      id: 'se_1',
+      steps: 5000,
+      durationMinutes: 45,
+      caloriesBurned: 200,
+      distanceKm: 3.8,
+      loggedAt: '2026-10-04T08:00:00Z',
+    },
   ],
 };
 
@@ -48,11 +67,30 @@ describe('useMovement Hook', () => {
     mockDailyLogData = {
       steps: 5000,
       activities: [
-        { id: 'act_1', name: 'Brisk Walk', durationMinutes: 30, caloriesBurned: 130, loggedAt: '2026-10-04T08:00:00Z' },
-        { id: 'act_2', name: 'Running', durationMinutes: 20, caloriesBurned: 200, loggedAt: '2026-10-04T18:00:00Z' },
+        {
+          id: 'act_1',
+          name: 'Brisk Walk',
+          durationMinutes: 30,
+          caloriesBurned: 130,
+          loggedAt: '2026-10-04T08:00:00Z',
+        },
+        {
+          id: 'act_2',
+          name: 'Running',
+          durationMinutes: 20,
+          caloriesBurned: 200,
+          loggedAt: '2026-10-04T18:00:00Z',
+        },
       ],
       stepEntries: [
-        { id: 'se_1', steps: 5000, durationMinutes: 45, caloriesBurned: 200, distanceKm: 3.8, loggedAt: '2026-10-04T08:00:00Z' },
+        {
+          id: 'se_1',
+          steps: 5000,
+          durationMinutes: 45,
+          caloriesBurned: 200,
+          distanceKm: 3.8,
+          loggedAt: '2026-10-04T08:00:00Z',
+        },
       ],
     };
     mockGoalsData = {

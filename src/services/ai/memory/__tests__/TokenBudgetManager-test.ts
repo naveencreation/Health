@@ -30,9 +30,7 @@ describe('TokenBudgetManager.fitWithinBudget', () => {
   });
 
   test('trims oldest messages when history exceeds the budget', () => {
-    const history = Array.from({ length: 50 }, (_, i) =>
-      message(`${i}`, 'x'.repeat(1000))
-    );
+    const history = Array.from({ length: 50 }, (_, i) => message(`${i}`, 'x'.repeat(1000)));
     const result = TokenBudgetManager.fitWithinBudget('system', '', history, 'input');
 
     expect(result.trimmedHistory.length).toBeLessThan(50);

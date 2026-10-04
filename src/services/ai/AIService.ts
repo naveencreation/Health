@@ -8,7 +8,6 @@ import {
   ValidationResult,
   UserNutritionContext,
   FoodVisionResult,
-  AIError,
 } from './types/ai.types';
 
 class AIServiceFacade {
@@ -76,7 +75,10 @@ class AIServiceFacade {
   ): Promise<string> {
     const apiKey = await SecureKeyStorage.getApiKey();
     if (!apiKey) {
-      throw AIErrorMapper.createError('NO_KEY_CONFIGURED', 'Please connect your Gemini API key in Settings to chat with Ria.');
+      throw AIErrorMapper.createError(
+        'NO_KEY_CONFIGURED',
+        'Please connect your Gemini API key in Settings to chat with Ria.'
+      );
     }
 
     // Load active summary if available
@@ -104,10 +106,16 @@ class AIServiceFacade {
   /**
    * Analyzes food from a base64 image string with Atwater consistency check.
    */
-  async analyzeFoodImage(rawBase64Data: string, mimeType: string = 'image/jpeg'): Promise<FoodVisionResult> {
+  async analyzeFoodImage(
+    rawBase64Data: string,
+    mimeType: string = 'image/jpeg'
+  ): Promise<FoodVisionResult> {
     const apiKey = await SecureKeyStorage.getApiKey();
     if (!apiKey) {
-      throw AIErrorMapper.createError('NO_KEY_CONFIGURED', 'Please connect your Gemini API key to use the AI Food Camera.');
+      throw AIErrorMapper.createError(
+        'NO_KEY_CONFIGURED',
+        'Please connect your Gemini API key to use the AI Food Camera.'
+      );
     }
 
     return GeminiProvider.analyzeFoodImage(apiKey, rawBase64Data, mimeType);
@@ -116,7 +124,10 @@ class AIServiceFacade {
   /**
    * Generates or returns cached daily insight for RiaCoachCard.
    */
-  async getDailyInsight(context: UserNutritionContext, cacheKey = 'default'): Promise<string | null> {
+  async getDailyInsight(
+    context: UserNutritionContext,
+    cacheKey = 'default'
+  ): Promise<string | null> {
     const apiKey = await SecureKeyStorage.getApiKey();
     if (!apiKey) return null;
 
@@ -171,7 +182,11 @@ class AIServiceFacade {
   ): Promise<void> {
     try {
       const oldestTurns = history.slice(0, 6);
-      const newSummary = await GeminiProvider.generateConversationSummary(apiKey, oldestTurns, existingSummary);
+      const newSummary = await GeminiProvider.generateConversationSummary(
+        apiKey,
+        oldestTurns,
+        existingSummary
+      );
       if (newSummary) {
         await ConversationMemoryManager.saveSummary(
           {
@@ -189,9 +204,3 @@ class AIServiceFacade {
 }
 
 export const AIService = new AIServiceFacade();
-export * from './types/ai.types';
-export { SecureKeyStorage } from './storage/SecureKeyStorage';
-export { AI_CONFIG } from './config/AIConfig';
-export { AIErrorMapper } from './errors/AIErrorMapper';
-export { AIInputValidator } from './validation/AIInputValidator';
-export { AIOutputValidator } from './validation/AIOutputValidator';

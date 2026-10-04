@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  StyleProp,
-  ViewStyle,
-  ImageSourcePropType,
-} from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, ImageSourcePropType } from 'react-native';
 import { Image } from 'expo-image';
 
 export interface FoodImageProps {
@@ -56,55 +50,54 @@ export interface FoodImageProps {
  *   // Square thumbnail (use cover for tight grid cards)
  *   <FoodImage source={src} aspectRatio={1} contentFit="cover" width={48} borderRadius={12} />
  */
-export const FoodImage: React.FC<FoodImageProps> = React.memo(({
-  source,
-  aspectRatio = 4 / 3,
-  contentFit = 'contain',
-  width = '100%',
-  borderRadius = 0,
-  backgroundColor = '#FFFFFF',
-  style,
-  fallback,
-  recyclingKey,
-}) => {
-  const [imgError, setImgError] = useState(false);
+export const FoodImage: React.FC<FoodImageProps> = React.memo(
+  ({
+    source,
+    aspectRatio = 4 / 3,
+    contentFit = 'contain',
+    width = '100%',
+    borderRadius = 0,
+    backgroundColor = '#FFFFFF',
+    style,
+    fallback,
+    recyclingKey,
+  }) => {
+    const [imgError, setImgError] = useState(false);
 
-  const containerStyle: ViewStyle = {
-    width: width as any,
-    aspectRatio,
-    borderRadius,
-    backgroundColor,
-    overflow: 'hidden',
-  };
+    const containerStyle: ViewStyle = {
+      width: width as any,
+      aspectRatio,
+      borderRadius,
+      backgroundColor,
+      overflow: 'hidden',
+    };
 
-  // Show fallback when: no source provided, or image failed to load
-  if (!source || imgError) {
-    if (fallback) {
-      return (
-        <View style={[containerStyle, styles.fallbackWrapper, style]}>
-          {fallback}
-        </View>
-      );
+    // Show fallback when: no source provided, or image failed to load
+    if (!source || imgError) {
+      if (fallback) {
+        return <View style={[containerStyle, styles.fallbackWrapper, style]}>{fallback}</View>;
+      }
+      // Default placeholder: empty colored box with same shape
+      return <View style={[containerStyle, style]} />;
     }
-    // Default placeholder: empty colored box with same shape
-    return <View style={[containerStyle, style]} />;
-  }
 
-  return (
-    <View style={[containerStyle, style]}>
-      <Image
-        source={source}
-        style={StyleSheet.absoluteFill}
-        contentFit={contentFit}
-        cachePolicy="memory-disk"
-        transition={180}
-        recyclingKey={recyclingKey}
-        priority="normal"
-        onError={() => setImgError(true)}
-      />
-    </View>
-  );
-});
+    return (
+      <View style={[containerStyle, style]}>
+        <Image
+          source={source}
+          style={StyleSheet.absoluteFill}
+          contentFit={contentFit}
+          cachePolicy="memory-disk"
+          transition={180}
+          recyclingKey={recyclingKey}
+          priority="normal"
+          onError={() => setImgError(true)}
+        />
+      </View>
+    );
+  }
+);
+FoodImage.displayName = 'FoodImage';
 
 const styles = StyleSheet.create({
   fallbackWrapper: {

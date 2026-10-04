@@ -11,12 +11,8 @@ export interface AchievementBadgeProps {
   onPress?: (achievement: EvaluatedAchievement) => void;
 }
 
-export const AchievementBadge: React.FC<AchievementBadgeProps> = ({
-  achievement,
-  onPress,
-}) => {
-  const { definition, isUnlocked, progressPercent, currentProgress, maxProgress } =
-    achievement;
+export const AchievementBadge: React.FC<AchievementBadgeProps> = ({ achievement, onPress }) => {
+  const { definition, isUnlocked, progressPercent, currentProgress, maxProgress } = achievement;
   const tierColor = TIER_COLORS[definition.tier] || TIER_COLORS.bronze;
 
   const handlePress = async () => {
@@ -64,10 +60,7 @@ export const AchievementBadge: React.FC<AchievementBadgeProps> = ({
       <View style={styles.contentWrap}>
         <View style={styles.topRow}>
           <Text
-            style={[
-              styles.title,
-              { color: isUnlocked ? '#0F172A' : '#64748B' },
-            ]}
+            style={[styles.title, { color: isUnlocked ? '#0F172A' : '#64748B' }]}
             numberOfLines={1}
           >
             {definition.title}
@@ -83,12 +76,7 @@ export const AchievementBadge: React.FC<AchievementBadgeProps> = ({
               },
             ]}
           >
-            <Text
-              style={[
-                styles.tierText,
-                { color: isUnlocked ? tierColor.primary : '#94A3B8' },
-              ]}
-            >
+            <Text style={[styles.tierText, { color: isUnlocked ? tierColor.primary : '#94A3B8' }]}>
               {definition.tier.toUpperCase()}
             </Text>
           </View>
@@ -112,9 +100,7 @@ export const AchievementBadge: React.FC<AchievementBadgeProps> = ({
             />
           </View>
           <Text style={styles.progressLabel}>
-            {isUnlocked
-              ? 'Completed'
-              : `${currentProgress} / ${maxProgress}`}
+            {isUnlocked ? 'Completed' : `${currentProgress} / ${maxProgress}`}
           </Text>
         </View>
       </View>

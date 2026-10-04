@@ -48,12 +48,17 @@ class ConversationMemoryManagerService {
             const data = snap.data();
             if (Array.isArray(data?.messages) && data.messages.length > 0) {
               const msgs = data.messages.slice(-AI_CONFIG.MEMORY.MAX_PERSISTED_MESSAGES);
-              await AsyncStorage.setItem(this.getChatKey(syncUid), JSON.stringify(msgs)).catch(() => {});
+              await AsyncStorage.setItem(this.getChatKey(syncUid), JSON.stringify(msgs)).catch(
+                () => {}
+              );
               return msgs;
             }
           }
         } catch (fsErr) {
-          console.warn('ConversationMemoryManager: Firestore history restore failed (non-fatal)', fsErr);
+          console.warn(
+            'ConversationMemoryManager: Firestore history restore failed (non-fatal)',
+            fsErr
+          );
         }
       }
 
@@ -82,7 +87,7 @@ class ConversationMemoryManagerService {
             updatedAt: new Date().toISOString(),
           },
           { merge: true }
-        ).catch((fsErr) => {
+        ).catch(fsErr => {
           console.warn('ConversationMemoryManager: Firestore backup failed (non-fatal)', fsErr);
         });
       }
@@ -106,7 +111,9 @@ class ConversationMemoryManagerService {
         if (snap.exists()) {
           const data = snap.data() as ConversationSummary;
           if (data?.text) {
-            await AsyncStorage.setItem(this.getSummaryKey(syncUid), JSON.stringify(data)).catch(() => {});
+            await AsyncStorage.setItem(this.getSummaryKey(syncUid), JSON.stringify(data)).catch(
+              () => {}
+            );
             return data;
           }
         }
@@ -127,7 +134,9 @@ class ConversationMemoryManagerService {
       // Backup to Firestore
       const syncUid = this.getAuthenticatedUid(userId);
       if (syncUid) {
-        setDoc(doc(db, 'users', syncUid, 'chatHistory', 'summary'), summary, { merge: true }).catch(() => {});
+        setDoc(doc(db, 'users', syncUid, 'chatHistory', 'summary'), summary, { merge: true }).catch(
+          () => {}
+        );
       }
     } catch (err) {
       console.warn('ConversationMemoryManager: Failed to save summary', err);
@@ -138,9 +147,7 @@ class ConversationMemoryManagerService {
    * Returns recent sliding-window turns for active prompt assembly.
    */
   getActiveSlidingWindow(history: ChatMessage[]): ChatMessage[] {
-    return history
-      .filter((m) => !m.isError)
-      .slice(-AI_CONFIG.MEMORY.MAX_ACTIVE_HISTORY_TURNS);
+    return history.filter(m => !m.isError).slice(-AI_CONFIG.MEMORY.MAX_ACTIVE_HISTORY_TURNS);
   }
 
   /**

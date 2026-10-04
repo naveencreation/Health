@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -85,7 +79,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
 
         {/* Gender Selection Cards */}
         <View style={styles.cardsContainer}>
-          {GENDER_OPTIONS.map((option) => {
+          {GENDER_OPTIONS.map(option => {
             const isSelected = selectedGender === option.id;
 
             return (
@@ -109,10 +103,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
                 {/* Option Content: Title & Benefit Subtitle */}
                 <View style={styles.cardTextContent}>
                   <Text
-                    style={[
-                      styles.genderTitle,
-                      isSelected ? styles.genderTitleSelected : null,
-                    ]}
+                    style={[styles.genderTitle, isSelected ? styles.genderTitleSelected : null]}
                   >
                     {option.title}
                   </Text>
@@ -126,9 +117,7 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
                     isSelected ? styles.radioSelected : styles.radioUnselected,
                   ]}
                 >
-                  {isSelected ? (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  ) : null}
+                  {isSelected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
                 </View>
               </Pressable>
             );
@@ -138,7 +127,10 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
         {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
           <Pressable
-            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed ? styles.continueButtonPressed : null,
+            ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected gender"
@@ -150,7 +142,10 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
             <Pressable
-              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
+              style={({ pressed }) => [
+                styles.skipContainer,
+                pressed ? styles.btnPressedSubtle : null,
+              ]}
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
@@ -163,7 +158,10 @@ export const GenderSelectionScreen: React.FC<GenderSelectionScreenProps> = ({
               <Pressable
                 onPress={onSignIn}
                 hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.signInBottomBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >

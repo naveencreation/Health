@@ -35,35 +35,42 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
 }) => {
   // Normalize: if avatarUrl was removed (like svg:accountant) or is undefined, fallback to DEFAULT_AVATAR_URL
   const effectiveUrl =
-    !avatarUrl || avatarUrl === 'svg:accountant'
-      ? DEFAULT_AVATAR_URL
-      : avatarUrl;
+    !avatarUrl || avatarUrl === 'svg:accountant' ? DEFAULT_AVATAR_URL : avatarUrl;
 
   const isSvg = isSvgAvatar(effectiveUrl);
   const svgData = isSvg ? getSvgAvatar(effectiveUrl) : undefined;
   const isLocal = isLocalAssetAvatar(effectiveUrl);
   const localSource = isLocal ? getLocalAssetSource(effectiveUrl) : null;
 
-  const containerStyle = useMemo((): ViewStyle => ({
-    width: size,
-    height: size,
-    borderRadius: size / 2,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(borderColor ? { borderColor, borderWidth: borderWidth ?? 2 } : {}),
-  }), [size, borderColor, borderWidth]);
+  const containerStyle = useMemo(
+    (): ViewStyle => ({
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...(borderColor ? { borderColor, borderWidth: borderWidth ?? 2 } : {}),
+    }),
+    [size, borderColor, borderWidth]
+  );
 
-  const imageDimensions = useMemo((): ImageStyle => ({
-    width: size,
-    height: size,
-    borderRadius: size / 2,
-  }), [size]);
+  const imageDimensions = useMemo(
+    (): ImageStyle => ({
+      width: size,
+      height: size,
+      borderRadius: size / 2,
+    }),
+    [size]
+  );
 
-  const iconDimensions = useMemo((): ImageStyle => ({
-    width: Math.round(size * 0.7),
-    height: Math.round(size * 0.7),
-  }), [size]);
+  const iconDimensions = useMemo(
+    (): ImageStyle => ({
+      width: Math.round(size * 0.7),
+      height: Math.round(size * 0.7),
+    }),
+    [size]
+  );
 
   // 1. Vector SVG avatar
   if (isSvg && svgData?.svgXml) {
@@ -107,12 +114,7 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
         accessibilityRole="image"
         accessibilityLabel={accessibilityLabel}
       >
-        <SvgXml
-          xml={processedXml}
-          width={iconSize}
-          height={iconSize}
-          color={color}
-        />
+        <SvgXml xml={processedXml} width={iconSize} height={iconSize} color={color} />
       </View>
     );
   }
@@ -143,9 +145,10 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
     ? getLocalAssetSource(DEFAULT_AVATAR_URL)
     : null;
 
-  const remoteSource = effectiveUrl && !effectiveUrl.startsWith('asset:') && !effectiveUrl.startsWith('svg:')
-    ? { uri: effectiveUrl }
-    : defaultLocal || FALLBACK_REMOTE_SOURCE;
+  const remoteSource =
+    effectiveUrl && !effectiveUrl.startsWith('asset:') && !effectiveUrl.startsWith('svg:')
+      ? { uri: effectiveUrl }
+      : defaultLocal || FALLBACK_REMOTE_SOURCE;
 
   return (
     <View

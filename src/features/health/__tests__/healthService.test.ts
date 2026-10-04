@@ -124,10 +124,12 @@ describe('healthService', () => {
 
   describe('3-Tier Sync Architecture', () => {
     test('Tier 2: syncRolling48Hours fetches both today and yesterday', async () => {
-      jest.spyOn(healthConnect, 'getStepsAggregateForDate').mockImplementation(async (dateStr: string) => {
-        if (dateStr.endsWith('02')) return { COUNT_TOTAL: 5000 } as any;
-        return { COUNT_TOTAL: 7500 } as any;
-      });
+      jest
+        .spyOn(healthConnect, 'getStepsAggregateForDate')
+        .mockImplementation(async (dateStr: string) => {
+          if (dateStr.endsWith('02')) return { COUNT_TOTAL: 5000 } as any;
+          return { COUNT_TOTAL: 7500 } as any;
+        });
       jest.spyOn(healthConnect, 'getStepsRecordsForDate').mockResolvedValue([]);
 
       const result = await syncRolling48Hours();

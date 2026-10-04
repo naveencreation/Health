@@ -26,7 +26,7 @@ export const AI_CONFIG = {
   // Context & Memory Constraints
   MEMORY: {
     MAX_ACTIVE_HISTORY_TURNS: 6, // 3 user + 3 ria turns in sliding window
-    SUMMARIZATION_THRESHOLD: 10,  // When history hits 10 messages, trigger background summary
+    SUMMARIZATION_THRESHOLD: 10, // When history hits 10 messages, trigger background summary
     MAX_PERSISTED_MESSAGES: 30,
     SUMMARY_MAX_WORDS: 60,
   },

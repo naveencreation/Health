@@ -16,7 +16,9 @@ jest.mock('react-native-reanimated', () => {
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-jest.mock('@/components/common/AnimatedProgressBar', () => ({ AnimatedProgressBar: 'AnimatedProgressBar' }));
+jest.mock('@/components/common/AnimatedProgressBar', () => ({
+  AnimatedProgressBar: 'AnimatedProgressBar',
+}));
 
 import { MealCard } from '../MealCard';
 
@@ -35,7 +37,14 @@ const items: LoggedMealItem[] = Array.from({ length: 100 }, (_, index) => ({
   id: `benchmark-meal-${index}`,
   foodId: `food-${index}`,
   name: `Benchmark meal item ${index}`,
-  mealType: index % 4 === 0 ? 'breakfast' : index % 4 === 1 ? 'lunch' : index % 4 === 2 ? 'snacks' : 'dinner',
+  mealType:
+    index % 4 === 0
+      ? 'breakfast'
+      : index % 4 === 1
+        ? 'lunch'
+        : index % 4 === 2
+          ? 'snacks'
+          : 'dinner',
   servingUnit: '1 serving',
   quantity: 1,
   calories: 100 + index,
@@ -51,15 +60,20 @@ describe('MealCard large dataset benchmark harness', () => {
     let commitDuration = -1;
     const mealTypes = ['breakfast', 'lunch', 'snacks', 'dinner'] as const;
     await render(
-      <Profiler id="MealCard-100-items" onRender={(_id, _phase, actualDuration) => { commitDuration = actualDuration; }}>
-        {mealTypes.map((mealType) => (
+      <Profiler
+        id="MealCard-100-items"
+        onRender={(_id, _phase, actualDuration) => {
+          commitDuration = actualDuration;
+        }}
+      >
+        {mealTypes.map(mealType => (
           <MealCard
             key={mealType}
             mealType={mealType}
             title={mealType}
             recommendedCals={800}
             iconFallback="🍳"
-            items={items.filter((item) => item.mealType === mealType)}
+            items={items.filter(item => item.mealType === mealType)}
             onAddPress={() => {}}
           />
         ))}

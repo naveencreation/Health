@@ -25,9 +25,7 @@
         "foregroundImage": "./assets/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.health.READ_STEPS"
-      ]
+      "permissions": ["android.permission.health.READ_STEPS"]
     },
     "web": {
       "favicon": "./assets/favicon.png"

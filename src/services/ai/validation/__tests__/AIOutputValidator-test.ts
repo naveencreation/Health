@@ -38,9 +38,7 @@ describe('AIOutputValidator.validateFoodVisionResult', () => {
   });
 
   test('clamps out-of-range macros', () => {
-    const result = AIOutputValidator.validateFoodVisionResult(
-      '{"carbs":1000,"calories":2000}'
-    );
+    const result = AIOutputValidator.validateFoodVisionResult('{"carbs":1000,"calories":2000}');
     expect(result.data?.carbs).toBe(500);
     expect(result.data?.calories).toBe(2000);
     expect(result.data?.atwaterCorrected).toBe(false);
@@ -92,9 +90,7 @@ describe('AIOutputValidator.validateChatResponse', () => {
   });
 
   test('appends a clinical disclaimer when medication terms appear', () => {
-    const result = AIOutputValidator.validateChatResponse(
-      'You may need insulin adjustments.'
-    );
+    const result = AIOutputValidator.validateChatResponse('You may need insulin adjustments.');
     expect(result.isValid).toBe(true);
     expect(result.disclaimerAppended).toBe(true);
     expect(result.data).toContain('Medical Notice');

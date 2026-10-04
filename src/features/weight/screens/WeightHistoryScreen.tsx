@@ -97,14 +97,8 @@ const EmptyWeightHistoryIllustration: React.FC<{ onAdd?: () => void }> = ({ onAd
       <Rect x="42" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
       <Circle cx="49" cy="28" r="0.8" fill="#38BDF8" />
       <Rect x="52" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
-      <Path
-        d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z"
-        fill="#FFF1EE"
-      />
-      <Path
-        d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z"
-        fill="#FFF1EE"
-      />
+      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill="#FFF1EE" />
+      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill="#FFF1EE" />
       <Circle cx="50" cy="18" r="1.5" fill={Colors.weight} />
     </Svg>
     <Text style={styles.emptyTitle}>No weight logs found</Text>
@@ -129,13 +123,8 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const {
-    dailyLogs,
-    selectedDate,
-    logWeight,
-    deleteWeightEntry,
-    updateWeightEntry,
-  } = useDailyLog();
+  const { dailyLogs, selectedDate, logWeight, deleteWeightEntry, updateWeightEntry } =
+    useDailyLog();
   const { userGoals } = useGoals();
   const unit = userGoals.weightUnit || 'kg';
 
@@ -334,10 +323,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
         <View style={styles.headerMainRow}>
           <View style={styles.headerLeftWrapper}>
             <Pressable
-              style={({ pressed }) => [
-                styles.navCircleBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
               onPress={onBack}
               hitSlop={HIT_SLOP_10}
               accessibilityRole="button"
@@ -355,10 +341,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
 
           <View style={styles.headerRightActions}>
             <Pressable
-              style={({ pressed }) => [
-                styles.navCircleBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.navCircleBtn, pressed && styles.btnPressed]}
               onPress={() => {
                 if (onOpenReport) {
                   onOpenReport();
@@ -374,10 +357,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => [
-                styles.navAddBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.navAddBtn, pressed && styles.btnPressed]}
               onPress={() => setIsAddModalVisible(true)}
               hitSlop={HIT_SLOP_10}
               accessibilityRole="button"
@@ -392,16 +372,13 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
       {/* 2. Scrollable Grouped History Feed */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {dateGroups.length === 0 ? (
           <EmptyWeightHistoryIllustration onAdd={() => setIsAddModalVisible(true)} />
         ) : (
-          dateGroups.map((group) => (
+          dateGroups.map(group => (
             <View key={`group_${group.dateStr}`} style={styles.groupSection}>
               {/* Date Group Header */}
               <Text style={styles.groupHeaderTitle}>{group.headerTitle}</Text>
@@ -424,7 +401,11 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                     >
                       {/* Left Scale Icon */}
                       <View style={styles.scaleIconBox}>
-                        <MaterialCommunityIcons name="scale-bathroom" size={22} color={Colors.weight} />
+                        <MaterialCommunityIcons
+                          name="scale-bathroom"
+                          size={22}
+                          color={Colors.weight}
+                        />
                       </View>
 
                       {/* Weight, Time & Note */}
@@ -466,7 +447,11 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                             isZero && styles.deltaTextZero,
                           ]}
                         >
-                          {isZero ? `0.0 ${unit}` : isLoss ? `- ${displayDelta} ${unit}` : `+ ${displayDelta} ${unit}`}
+                          {isZero
+                            ? `0.0 ${unit}`
+                            : isLoss
+                              ? `- ${displayDelta} ${unit}`
+                              : `+ ${displayDelta} ${unit}`}
                         </Text>
                       </View>
 
@@ -476,7 +461,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                           styles.menuTriggerBtn,
                           pressed && styles.btnPressed,
                         ]}
-                        onPress={(e) => handleOpenMenu(entry, e)}
+                        onPress={e => handleOpenMenu(entry, e)}
                         hitSlop={HIT_SLOP_10}
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${entry.weightKg} ${unit} entry`}
@@ -516,15 +501,17 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
 
       {/* 5. Add New Weigh-In Modal */}
       {isAddModalVisible && (
-        <LogWeightModal
-          visible={true}
-          onClose={() => setIsAddModalVisible(false)}
-        />
+        <LogWeightModal visible={true} onClose={() => setIsAddModalVisible(false)} />
       )}
 
       {/* 5. Floating Undo Toast */}
       {undoToast && (
-        <View style={[styles.undoToastWrapper, { bottom: insets.bottom + 16, pointerEvents: 'box-none' as any }]}>
+        <View
+          style={[
+            styles.undoToastWrapper,
+            { bottom: insets.bottom + 16, pointerEvents: 'box-none' as any },
+          ]}
+        >
           <Animated.View
             entering={FadeInDown.duration(200)}
             exiting={FadeOutDown.duration(180)}
@@ -560,9 +547,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
           screenWidth={Math.min(screenWidth, 480)}
           zIndex={300}
         >
-          <WeightReportScreen
-            onBack={() => setIsClosingInternalReport(true)}
-          />
+          <WeightReportScreen onBack={() => setIsClosingInternalReport(true)} />
         </SlideInSubScreen>
       )}
     </View>

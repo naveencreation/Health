@@ -99,8 +99,34 @@ describe('cleanDailyLog', () => {
       waterMl: 1250,
       steps: 4620,
       meals: [
-        { id: 'sample_1', name: 'Idli', mealType: 'breakfast', foodId: 'f', servingUnit: 's', quantity: 1, calories: 1, carbs: 1, protein: 1, fat: 1, fiber: 1, loggedAt: '' },
-        { id: 'meal_keep', name: 'Real', mealType: 'lunch', foodId: 'f', servingUnit: 's', quantity: 1, calories: 1, carbs: 1, protein: 1, fat: 1, fiber: 1, loggedAt: '' },
+        {
+          id: 'sample_1',
+          name: 'Idli',
+          mealType: 'breakfast',
+          foodId: 'f',
+          servingUnit: 's',
+          quantity: 1,
+          calories: 1,
+          carbs: 1,
+          protein: 1,
+          fat: 1,
+          fiber: 1,
+          loggedAt: '',
+        },
+        {
+          id: 'meal_keep',
+          name: 'Real',
+          mealType: 'lunch',
+          foodId: 'f',
+          servingUnit: 's',
+          quantity: 1,
+          calories: 1,
+          carbs: 1,
+          protein: 1,
+          fat: 1,
+          fiber: 1,
+          loggedAt: '',
+        },
       ],
       activities: [
         { id: 'act_1', name: 'Walk', durationMinutes: 25, caloriesBurned: 120, loggedAt: '' },
@@ -108,14 +134,20 @@ describe('cleanDailyLog', () => {
       ],
     };
     const cleaned = cleanDailyLog(log);
-    expect(cleaned.meals.map((m) => m.id)).toEqual(['meal_keep']);
-    expect(cleaned.activities.map((a) => a.id)).toEqual(['act_keep']);
+    expect(cleaned.meals.map(m => m.id)).toEqual(['meal_keep']);
+    expect(cleaned.activities.map(a => a.id)).toEqual(['act_keep']);
     expect(cleaned.waterMl).toBe(0);
     expect(cleaned.steps).toBe(0);
   });
 
   test('preserves legitimate water and step values', () => {
-    const cleaned = cleanDailyLog({ date: 'x', meals: [], waterMl: 750, steps: 8000, activities: [] });
+    const cleaned = cleanDailyLog({
+      date: 'x',
+      meals: [],
+      waterMl: 750,
+      steps: 8000,
+      activities: [],
+    });
     expect(cleaned.waterMl).toBe(750);
     expect(cleaned.steps).toBe(8000);
   });
@@ -145,7 +177,22 @@ describe('sanitizeForFirestore', () => {
 describe('computeStreak', () => {
   const activeLog = (date: string): DailyLog => ({
     date,
-    meals: [{ id: 'm', foodId: 'f', name: 'n', mealType: 'lunch', servingUnit: 's', quantity: 1, calories: 100, carbs: 1, protein: 1, fat: 1, fiber: 1, loggedAt: '' }],
+    meals: [
+      {
+        id: 'm',
+        foodId: 'f',
+        name: 'n',
+        mealType: 'lunch',
+        servingUnit: 's',
+        quantity: 1,
+        calories: 100,
+        carbs: 1,
+        protein: 1,
+        fat: 1,
+        fiber: 1,
+        loggedAt: '',
+      },
+    ],
     waterMl: 0,
     steps: 0,
     activities: [],
@@ -335,7 +382,7 @@ describe('HealthProvider state reducers', () => {
       });
     });
     expect(result.foodDatabase.length).toBe(before + 1);
-    expect(result.foodDatabase.some((f) => f.name === 'Test Dish')).toBe(true);
+    expect(result.foodDatabase.some(f => f.name === 'Test Dish')).toBe(true);
   });
 });
 
@@ -349,7 +396,9 @@ describe('HealthProvider auth restore', () => {
   test('optimistically restores the cached user before auth resolves', async () => {
     (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
       if (key === STORAGE_KEYS.AUTH) {
-        return Promise.resolve(JSON.stringify({ id: 'cached-uid', email: 'a@b.c', name: 'Cached' }));
+        return Promise.resolve(
+          JSON.stringify({ id: 'cached-uid', email: 'a@b.c', name: 'Cached' })
+        );
       }
       return Promise.resolve(null);
     });
@@ -370,7 +419,9 @@ describe('HealthProvider auth restore', () => {
   test('onAuthStateChanged is authoritative and corrects the cached user', async () => {
     (AsyncStorage.getItem as jest.Mock).mockImplementation((key: string) => {
       if (key === STORAGE_KEYS.AUTH) {
-        return Promise.resolve(JSON.stringify({ id: 'cached-uid', email: 'a@b.c', name: 'Cached' }));
+        return Promise.resolve(
+          JSON.stringify({ id: 'cached-uid', email: 'a@b.c', name: 'Cached' })
+        );
       }
       return Promise.resolve(null);
     });
@@ -418,7 +469,7 @@ describe('HealthProvider auth restore', () => {
 
     expect(result.currentUser).toBeNull();
     expect(result.userGoals.dailyCalorieBudget).toBe(2213);
-    expect(result.foodDatabase.some((f) => f.name === 'Temp Food')).toBe(false);
+    expect(result.foodDatabase.some(f => f.name === 'Temp Food')).toBe(false);
     expect(result.currentLog.meals).toHaveLength(0);
     expect(result.currentLog.waterMl).toBe(0);
   });

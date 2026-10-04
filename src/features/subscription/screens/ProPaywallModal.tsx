@@ -12,10 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import {
-  SubscriptionPlanId,
-  SUBSCRIPTION_PACKAGES,
-} from '@/services/payments/paymentService';
+import { SubscriptionPlanId, SUBSCRIPTION_PACKAGES } from '@/services/payments/paymentService';
 import { usePro } from '../hooks/usePro';
 import { haptics } from '@/utils/haptics';
 
@@ -54,8 +51,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   highlightFeature,
 }) => {
   const { purchasePlan, restorePurchases } = usePro();
-  const [selectedPlanId, setSelectedPlanId] =
-    useState<SubscriptionPlanId>('pro_annual');
+  const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>('pro_annual');
   const [purchasing, setPurchasing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -100,8 +96,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   };
 
   const selectedPlan =
-    SUBSCRIPTION_PACKAGES.find((p) => p.id === selectedPlanId) ||
-    SUBSCRIPTION_PACKAGES[0];
+    SUBSCRIPTION_PACKAGES.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PACKAGES[0];
 
   return (
     <Modal
@@ -138,7 +133,8 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
           {/* Headline & Subtitle */}
           <Text style={styles.headline}>Unlock Calorify Pro</Text>
           <Text style={styles.subtitle}>
-            Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.
+            Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak
+            protection.
           </Text>
 
           {highlightFeature && (
@@ -166,15 +162,12 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
           {/* Subscription Plans */}
           <Text style={styles.choosePlanTitle}>Choose Your Plan</Text>
           <View style={styles.planList}>
-            {SUBSCRIPTION_PACKAGES.map((plan) => {
+            {SUBSCRIPTION_PACKAGES.map(plan => {
               const isSelected = selectedPlanId === plan.id;
               return (
                 <Pressable
                   key={plan.id}
-                  style={[
-                    styles.planCard,
-                    isSelected && styles.planCardSelected,
-                  ]}
+                  style={[styles.planCard, isSelected && styles.planCardSelected]}
                   onPress={() => handleSelectPlan(plan.id)}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
@@ -196,9 +189,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={styles.planPrice}>{plan.priceFormatted}</Text>
                       {plan.pricePerMonthFormatted && (
-                        <Text style={styles.planPerMonth}>
-                          {plan.pricePerMonthFormatted}
-                        </Text>
+                        <Text style={styles.planPerMonth}>{plan.pricePerMonthFormatted}</Text>
                       )}
                     </View>
                   </View>
@@ -252,7 +243,9 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
           {/* Terms and Privacy Footnote */}
           <Text style={styles.termsNote}>
-            Cancel anytime in your Google Play Store or App Store settings. Subscription automatically renews unless canceled at least 24 hours before the end of the current period.
+            Cancel anytime in your Google Play Store or App Store settings. Subscription
+            automatically renews unless canceled at least 24 hours before the end of the current
+            period.
           </Text>
         </ScrollView>
       </SafeAreaView>

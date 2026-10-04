@@ -39,7 +39,6 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
-
 jest.mock('@/utils/haptics', () => ({
   haptics: {
     selection: jest.fn().mockResolvedValue(undefined),
@@ -68,7 +67,6 @@ jest.mock('@/features/subscription/hooks/usePro', () => ({
   usePro: jest.fn(),
 }));
 
-
 // Mock Reanimated
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
@@ -93,8 +91,6 @@ jest.mock('react-native-reanimated', () => {
     createAnimatedComponent: (Comp: any) => Comp,
   };
 });
-
-
 
 describe('ProfileScreen Integration', () => {
   const mockUserGoals = {
@@ -178,9 +174,9 @@ describe('ProfileScreen Integration', () => {
     const upgradeBtn = getByRole('button', { name: 'Upgrade to Calorify Pro' });
     fireEvent.press(upgradeBtn);
 
-    const paywallHeadline = await findByText('Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.');
+    const paywallHeadline = await findByText(
+      'Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.'
+    );
     expect(paywallHeadline).toBeTruthy();
   });
-
-
 });

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -81,9 +75,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
 
         {/* Header Title & Cognitive Context */}
         <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>
-            What goal do you{'\n'}have in mind?
-          </Text>
+          <Text style={styles.screenTitle}>What goal do you{'\n'}have in mind?</Text>
           <Text style={styles.screenSubtitle}>
             Calibrates your daily calorie target and macronutrient ratio
           </Text>
@@ -91,7 +83,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
 
         {/* Goal Selection Cards */}
         <View style={styles.cardsContainer}>
-          {GOAL_OPTIONS.map((option) => {
+          {GOAL_OPTIONS.map(option => {
             const isSelected = selectedGoal === option.id;
 
             return (
@@ -112,18 +104,17 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                   {option.iconFamily === 'ionicons' ? (
                     <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
                   ) : (
-                    <MaterialCommunityIcons name={option.iconName as any} size={22} color={option.iconColor} />
+                    <MaterialCommunityIcons
+                      name={option.iconName as any}
+                      size={22}
+                      color={option.iconColor}
+                    />
                   )}
                 </View>
 
                 {/* Option Content: Title & Benefit Subtitle */}
                 <View style={styles.cardTextContent}>
-                  <Text
-                    style={[
-                      styles.goalTitle,
-                      isSelected ? styles.goalTitleSelected : null,
-                    ]}
-                  >
+                  <Text style={[styles.goalTitle, isSelected ? styles.goalTitleSelected : null]}>
                     {option.title}
                   </Text>
                   <Text style={styles.goalSubtitle}>{option.subtitle}</Text>
@@ -136,9 +127,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                     isSelected ? styles.radioSelected : styles.radioUnselected,
                   ]}
                 >
-                  {isSelected ? (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                  ) : null}
+                  {isSelected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
                 </View>
               </Pressable>
             );
@@ -148,7 +137,10 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
         {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
           <Pressable
-            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed ? styles.continueButtonPressed : null,
+            ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected goal"
@@ -160,7 +152,10 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
             <Pressable
-              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
+              style={({ pressed }) => [
+                styles.skipContainer,
+                pressed ? styles.btnPressedSubtle : null,
+              ]}
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
@@ -173,7 +168,10 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
               <Pressable
                 onPress={onSignIn}
                 hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.signInBottomBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >

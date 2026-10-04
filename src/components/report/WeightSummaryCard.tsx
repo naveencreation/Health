@@ -16,9 +16,7 @@ interface WeightSummaryCardProps {
   activeColor?: string;
 }
 
-export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({
-  data,
-}) => {
+export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({ data }) => {
   const { currentWeightKg, targetWeightKg, startWeightKg, netChangeKg, unit } = data;
   const isLbs = unit === 'lbs';
   const unitFactor = isLbs ? 2.20462 : 1;
@@ -47,66 +45,42 @@ export const WeightSummaryCard: React.FC<WeightSummaryCardProps> = ({
   const lostOrGainedDisplay = (lostOrGainedKg * unitFactor).toFixed(1);
   const lostOrGainedLabel = isGain ? 'Weight Gained' : 'Weight Lost';
 
-  const currentWeightDisplay = currentWeightKg !== null
-    ? (currentWeightKg * unitFactor).toFixed(1)
-    : '--';
+  const currentWeightDisplay =
+    currentWeightKg !== null ? (currentWeightKg * unitFactor).toFixed(1) : '--';
 
-  const goalWeightDisplay = targetWeightKg !== undefined && targetWeightKg !== null
-    ? (targetWeightKg * unitFactor).toFixed(1)
-    : '--';
+  const goalWeightDisplay =
+    targetWeightKg !== undefined && targetWeightKg !== null
+      ? (targetWeightKg * unitFactor).toFixed(1)
+      : '--';
 
   return (
     <View style={styles.container}>
       {/* 1. Weight Lost / Gained */}
       <View style={styles.metricCard}>
-        <Text
-          style={styles.metricValue}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
           {lostOrGainedDisplay} {unit}
         </Text>
-        <Text
-          style={styles.metricLabel}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricLabel} numberOfLines={1} adjustsFontSizeToFit>
           {lostOrGainedLabel}
         </Text>
       </View>
 
       {/* 2. Current Weight */}
       <View style={styles.metricCard}>
-        <Text
-          style={styles.metricValue}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
           {currentWeightDisplay} {unit}
         </Text>
-        <Text
-          style={styles.metricLabel}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricLabel} numberOfLines={1} adjustsFontSizeToFit>
           Current Weight
         </Text>
       </View>
 
       {/* 3. Goal Weight */}
       <View style={styles.metricCard}>
-        <Text
-          style={styles.metricValue}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>
           {goalWeightDisplay} {unit}
         </Text>
-        <Text
-          style={styles.metricLabel}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
+        <Text style={styles.metricLabel} numberOfLines={1} adjustsFontSizeToFit>
           Goal Weight
         </Text>
       </View>

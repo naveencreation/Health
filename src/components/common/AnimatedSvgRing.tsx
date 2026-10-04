@@ -36,7 +36,7 @@ export const AnimatedSvgRing: React.FC<AnimatedSvgRingProps> = ({
   const isReducedMotion = useRef(false);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
       isReducedMotion.current = enabled;
     });
   }, []);

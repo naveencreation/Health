@@ -33,7 +33,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   const [currentWeight, setCurrentWeight] = useState(String(userGoals.currentWeightKg || 74.2));
   const [targetWeight, setTargetWeight] = useState(String(userGoals.targetWeightKg || 68.0));
   const [userHeightCm, setUserHeightCm] = useState(String(userGoals.heightCm || 175));
-  const [activePreset, setActivePreset] = useState<'fat_loss' | 'muscle_gain' | 'maintenance'>('maintenance');
+  const [activePreset, setActivePreset] = useState<'fat_loss' | 'muscle_gain' | 'maintenance'>(
+    'maintenance'
+  );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Sync state when userGoals changes
@@ -235,8 +237,16 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
           </View>
 
           <View style={styles.macroBar}>
-            <View style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, proteinPct) }]} />
-            <View style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, carbsPct) }]} />
+            <View
+              style={[
+                styles.macroBarSeg,
+                styles.macroBarProtein,
+                { flex: Math.max(1, proteinPct) },
+              ]}
+            />
+            <View
+              style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, carbsPct) }]}
+            />
             <View style={[styles.macroBarSeg, styles.macroBarFat, { flex: Math.max(1, fatPct) }]} />
           </View>
 
@@ -259,7 +269,8 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <View style={styles.diffWarning}>
               <Ionicons name="information-circle-outline" size={14} color="#D97706" />
               <Text style={styles.diffWarningText}>
-                Macros sum to {computedMacroCals} kcal ({macroDiff > 0 ? `+${macroDiff}` : macroDiff} vs budget)
+                Macros sum to {computedMacroCals} kcal (
+                {macroDiff > 0 ? `+${macroDiff}` : macroDiff} vs budget)
               </Text>
             </View>
           ) : null}

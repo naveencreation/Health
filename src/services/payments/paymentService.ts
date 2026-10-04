@@ -4,10 +4,7 @@ import { haptics } from '@/utils/haptics';
 export type SubscriptionPlanId = 'pro_monthly' | 'pro_annual' | 'pro_lifetime';
 
 export type ProFeature =
-  | 'ai_vision_unlimited'
-  | 'ria_coach_advanced'
-  | 'advanced_analytics'
-  | 'cloud_backup_priority';
+  'ai_vision_unlimited' | 'ria_coach_advanced' | 'advanced_analytics' | 'cloud_backup_priority';
 
 export interface SubscriptionPackage {
   id: SubscriptionPlanId;
@@ -108,7 +105,9 @@ export class PaymentService {
   /**
    * Simulates or executes subscription purchase.
    */
-  public static async purchase(planId: SubscriptionPlanId): Promise<{ success: boolean; error?: string }> {
+  public static async purchase(
+    planId: SubscriptionPlanId
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       await haptics.impactMedium();
 

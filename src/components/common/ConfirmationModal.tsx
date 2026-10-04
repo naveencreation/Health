@@ -99,10 +99,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => [
-                styles.cancelBtn,
-                pressed ? styles.cancelBtnPressed : null,
-              ]}
+              style={({ pressed }) => [styles.cancelBtn, pressed ? styles.cancelBtnPressed : null]}
               onPress={onCancel}
               disabled={isLoading}
               accessibilityRole="button"

@@ -45,12 +45,9 @@ export function usePro() {
     return result;
   }, [refreshEntitlement]);
 
-  const canAccess = useCallback(
-    async (feature: ProFeature) => {
-      return EntitlementManager.canAccess(feature);
-    },
-    []
-  );
+  const canAccess = useCallback(async (feature: ProFeature) => {
+    return EntitlementManager.canAccess(feature);
+  }, []);
 
   return {
     isPro: entitlement.isPro,

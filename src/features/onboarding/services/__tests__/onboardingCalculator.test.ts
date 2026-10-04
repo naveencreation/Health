@@ -1,7 +1,4 @@
-import {
-  calculateHealthPlan,
-  UserBiometricsInput,
-} from '../onboardingCalculator';
+import { calculateHealthPlan, UserBiometricsInput } from '../onboardingCalculator';
 
 describe('onboardingCalculator (Mifflin-St Jeor formula)', () => {
   test('calculates correct plan for male weight loss goal', () => {

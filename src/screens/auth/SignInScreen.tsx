@@ -61,7 +61,6 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     }
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
@@ -117,7 +116,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   placeholder="name@example.com"
                   placeholderTextColor="#94A3B8"
                   value={email}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setEmail(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -187,7 +186,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   placeholderTextColor="#94A3B8"
                   secureTextEntry={!showPassword}
                   value={password}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setPassword(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -243,7 +242,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             {/* Switch to Register */}
             {onSwitchToRegister ? (
               <View style={styles.footerRow}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Text style={styles.footerText}>{"Don't have an account? "}</Text>
                 <Pressable
                   onPress={onSwitchToRegister}
                   hitSlop={8}

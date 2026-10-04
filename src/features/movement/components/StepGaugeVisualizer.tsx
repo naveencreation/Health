@@ -55,16 +55,7 @@ const SHOE_WIDTH = 100;
 const SHOE_HEIGHT = 60;
 
 export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeVisualizerProps>(
-  (
-    {
-      currentSteps,
-      maxSteps,
-      activeColor = '#EA580C',
-      onPressGoal,
-      style,
-    },
-    ref
-  ) => {
+  ({ currentSteps, maxSteps, activeColor = '#EA580C', onPressGoal, style }, ref) => {
     // Interactive Tap spring squish physics
     const shoeScale = useSharedValue(1);
 
@@ -92,7 +83,7 @@ export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeV
     const isReducedMotion = useRef(false);
 
     useEffect(() => {
-      AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
         isReducedMotion.current = enabled;
       });
     }, []);
@@ -181,7 +172,7 @@ export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeV
           />
 
           {/* C. 15 Precision Radial Instrument Ticks */}
-          {ticks.map((t) => (
+          {ticks.map(t => (
             <Line
               key={t.id}
               x1={t.x1}
@@ -219,11 +210,7 @@ export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeV
           <Animated.View style={[styles.shoeContainer, animatedShoeStyle]}>
             {/* Soft Ambient Radial Halo */}
             <View style={styles.haloRing} />
-            <RunningShoeSvg
-              width={SHOE_WIDTH}
-              height={SHOE_HEIGHT}
-              primaryColor={activeColor}
-            />
+            <RunningShoeSvg width={SHOE_WIDTH} height={SHOE_HEIGHT} primaryColor={activeColor} />
           </Animated.View>
         </Pressable>
 
@@ -234,25 +221,15 @@ export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeV
           </Text>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.goalSubtitleRow,
-              pressed && styles.goalSubtitlePressed,
-            ]}
+            style={({ pressed }) => [styles.goalSubtitleRow, pressed && styles.goalSubtitlePressed]}
             onPress={onPressGoal}
             hitSlop={{ top: 8, bottom: 8, left: 14, right: 14 }}
             accessibilityRole="button"
             accessibilityLabel={`Daily step goal ${maxSteps.toLocaleString()} steps, tap to edit`}
           >
-            <Text style={styles.goalSubtitle}>
-              /{maxSteps.toLocaleString()} steps
-            </Text>
+            <Text style={styles.goalSubtitle}>/{maxSteps.toLocaleString()} steps</Text>
             {onPressGoal && (
-              <Ionicons
-                name="pencil-outline"
-                size={13}
-                color="#94A3B8"
-                style={styles.pencilIcon}
-              />
+              <Ionicons name="pencil-outline" size={13} color="#94A3B8" style={styles.pencilIcon} />
             )}
           </Pressable>
         </View>
@@ -260,6 +237,7 @@ export const StepGaugeVisualizer = forwardRef<StepGaugeVisualizerRef, StepGaugeV
     );
   }
 );
+StepGaugeVisualizer.displayName = 'StepGaugeVisualizer';
 
 const styles = StyleSheet.create({
   rootContainer: {

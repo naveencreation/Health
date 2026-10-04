@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Modal,
-  useWindowDimensions,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, Modal, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
@@ -77,10 +70,7 @@ export const WaterEntryActionPopover: React.FC<WaterEntryActionPopoverProps> = (
         >
           {/* 1. ✎ Edit Action */}
           <Pressable
-            style={({ pressed }) => [
-              styles.menuRow,
-              pressed && styles.rowPressed,
-            ]}
+            style={({ pressed }) => [styles.menuRow, pressed && styles.rowPressed]}
             onPress={() => {
               onClose();
               onEdit();
@@ -97,10 +87,7 @@ export const WaterEntryActionPopover: React.FC<WaterEntryActionPopoverProps> = (
 
           {/* 2. 🗑 Delete Action */}
           <Pressable
-            style={({ pressed }) => [
-              styles.menuRow,
-              pressed && styles.deleteRowPressed,
-            ]}
+            style={({ pressed }) => [styles.menuRow, pressed && styles.deleteRowPressed]}
             onPress={() => {
               onClose();
               onDelete();

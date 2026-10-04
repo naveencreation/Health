@@ -72,11 +72,7 @@ export function useHydration(): UseHydrationReturn {
   );
 
   const updateWaterEntry = useCallback(
-    (
-      entryId: string,
-      updates: Partial<WaterLogEntry> | number,
-      date?: string
-    ) => {
+    (entryId: string, updates: Partial<WaterLogEntry> | number, date?: string) => {
       const payload: Partial<WaterLogEntry> =
         typeof updates === 'number' ? { amountMl: updates } : updates;
       contextUpdateWaterEntry(entryId, payload, date ?? selectedDate);

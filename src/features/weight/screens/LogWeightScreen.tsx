@@ -30,13 +30,33 @@ export interface LogWeightScreenProps {
 const QUICK_TAGS = ['Morning fasted', 'Post workout', 'Pre meal', 'Evening'];
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const SHORT_MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -94,38 +114,44 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     };
   }, []);
 
-  const handleDateSelect = useCallback((newDate: string) => {
-    setActiveDate(newDate);
-    if (!targetEntryId) {
-      const existingLog = dailyLogs[newDate];
-      if (existingLog && typeof existingLog.weightKg === 'number' && existingLog.weightKg > 0) {
-        setWeightKg(existingLog.weightKg);
-        const latestEntry = existingLog.weightEntries?.[0];
-        const existingNote = latestEntry?.note || '';
-        if (existingNote) {
-          const matchingTag = QUICK_TAGS.find((tag) => existingNote.startsWith(tag));
-          if (matchingTag) {
-            setSelectedTag(matchingTag);
-            const rest = existingNote.replace(matchingTag, '').replace(/^[ •\-]+/, '').trim();
-            setCustomNote(rest);
+  const handleDateSelect = useCallback(
+    (newDate: string) => {
+      setActiveDate(newDate);
+      if (!targetEntryId) {
+        const existingLog = dailyLogs[newDate];
+        if (existingLog && typeof existingLog.weightKg === 'number' && existingLog.weightKg > 0) {
+          setWeightKg(existingLog.weightKg);
+          const latestEntry = existingLog.weightEntries?.[0];
+          const existingNote = latestEntry?.note || '';
+          if (existingNote) {
+            const matchingTag = QUICK_TAGS.find(tag => existingNote.startsWith(tag));
+            if (matchingTag) {
+              setSelectedTag(matchingTag);
+              const rest = existingNote
+                .replace(matchingTag, '')
+                .replace(/^[ •\-]+/, '')
+                .trim();
+              setCustomNote(rest);
+            } else {
+              setSelectedTag('');
+              setCustomNote(existingNote);
+            }
           } else {
             setSelectedTag('');
-            setCustomNote(existingNote);
+            setCustomNote('');
           }
         } else {
+          const fallbackKg = currentLog?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
+          setWeightKg(fallbackKg);
           setSelectedTag('');
           setCustomNote('');
         }
-      } else {
-        const fallbackKg = currentLog?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
-        setWeightKg(fallbackKg);
-        setSelectedTag('');
-        setCustomNote('');
+        setIsManualInput(false);
+        setManualText('');
       }
-      setIsManualInput(false);
-      setManualText('');
-    }
-  }, [targetEntryId, dailyLogs, currentLog?.weightKg, userGoals.currentWeightKg]);
+    },
+    [targetEntryId, dailyLogs, currentLog?.weightKg, userGoals.currentWeightKg]
+  );
 
   // Initialize and synchronize state when screen mounts
   useEffect(() => {
@@ -143,10 +169,13 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     }
 
     if (initialNote) {
-      const matchingTag = QUICK_TAGS.find((tag) => initialNote.startsWith(tag));
+      const matchingTag = QUICK_TAGS.find(tag => initialNote.startsWith(tag));
       if (matchingTag) {
         setSelectedTag(matchingTag);
-        const rest = initialNote.replace(matchingTag, '').replace(/^[ •\-]+/, '').trim();
+        const rest = initialNote
+          .replace(matchingTag, '')
+          .replace(/^[ •\-]+/, '')
+          .trim();
         setCustomNote(rest);
       } else {
         setSelectedTag('');
@@ -159,15 +188,22 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
 
     setIsManualInput(false);
     setManualText('');
-  }, [initialWeight, initialNote, targetDate, currentLog?.weightKg, userGoals.currentWeightKg, userGoals.weightUnit]);
+  }, [
+    initialWeight,
+    initialNote,
+    targetDate,
+    currentLog?.weightKg,
+    userGoals.currentWeightKg,
+    userGoals.weightUnit,
+  ]);
 
   // Calendar month navigation
   const prevMonth = () => {
     if (calendarMonth === 0) {
       setCalendarMonth(11);
-      setCalendarYear((y) => y - 1);
+      setCalendarYear(y => y - 1);
     } else {
-      setCalendarMonth((m) => m - 1);
+      setCalendarMonth(m => m - 1);
     }
   };
 
@@ -183,9 +219,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     if (isCurrentOrFutureMonth) return;
     if (calendarMonth === 11) {
       setCalendarMonth(0);
-      setCalendarYear((y) => y + 1);
+      setCalendarYear(y => y + 1);
     } else {
-      setCalendarMonth((m) => m + 1);
+      setCalendarMonth(m => m + 1);
     }
   };
 
@@ -255,23 +291,29 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
   const displayWeight = unit === 'kg' ? weightKg : weightKg * 2.20462;
   const formattedDisplay = displayWeight.toFixed(1);
 
-  const handleStep = useCallback((deltaInCurrentUnit: number) => {
-    setIsManualInput(false);
-    if (unit === 'kg') {
-      setWeightKg((prev) => {
-        const next = Math.max(20, Math.min(300, Math.round((prev + deltaInCurrentUnit) * 10) / 10));
-        return next;
-      });
-    } else {
-      setWeightKg((prev) => {
-        const currentLbs = prev * 2.20462;
-        const nextLbs = Math.max(44, Math.min(660, currentLbs + deltaInCurrentUnit));
-        // Use 2-decimal kg precision so that +/- 0.1 lbs (~0.045 kg) increments cleanly without quantization lock
-        const nextKg = Math.round((nextLbs / 2.20462) * 100) / 100;
-        return nextKg;
-      });
-    }
-  }, [unit]);
+  const handleStep = useCallback(
+    (deltaInCurrentUnit: number) => {
+      setIsManualInput(false);
+      if (unit === 'kg') {
+        setWeightKg(prev => {
+          const next = Math.max(
+            20,
+            Math.min(300, Math.round((prev + deltaInCurrentUnit) * 10) / 10)
+          );
+          return next;
+        });
+      } else {
+        setWeightKg(prev => {
+          const currentLbs = prev * 2.20462;
+          const nextLbs = Math.max(44, Math.min(660, currentLbs + deltaInCurrentUnit));
+          // Use 2-decimal kg precision so that +/- 0.1 lbs (~0.045 kg) increments cleanly without quantization lock
+          const nextKg = Math.round((nextLbs / 2.20462) * 100) / 100;
+          return nextKg;
+        });
+      }
+    },
+    [unit]
+  );
 
   const handleToggleUnit = (newUnit: 'kg' | 'lbs') => {
     if (newUnit === unit) return;
@@ -301,13 +343,14 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
   const handleSave = () => {
     Keyboard.dismiss();
     const finalNote = selectedTag
-      ? customNote ? `${selectedTag} • ${customNote}` : selectedTag
+      ? customNote
+        ? `${selectedTag} • ${customNote}`
+        : selectedTag
       : customNote;
 
     // Retain 2-decimal precision for lbs so displaying in lbs never drifts or loses 0.1 increments
-    const roundedKg = unit === 'lbs'
-      ? Math.round(weightKg * 100) / 100
-      : Math.round(weightKg * 10) / 10;
+    const roundedKg =
+      unit === 'lbs' ? Math.round(weightKg * 100) / 100 : Math.round(weightKg * 10) / 10;
 
     if (targetEntryId) {
       updateWeightEntry(
@@ -391,7 +434,12 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={[styles.rootContainer, { paddingTop: Math.max(insets.top, 12), paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View
+        style={[
+          styles.rootContainer,
+          { paddingTop: Math.max(insets.top, 12), paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
+      >
         <KeyboardAvoidingView
           style={styles.keyboardContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -413,9 +461,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Text style={styles.headerTitleText}>
                 {targetEntryId ? 'Edit Weigh-In' : 'Log Weigh-In'}
               </Text>
-              <Text style={styles.headerSubtitleText}>
-                {dateLabel}
-              </Text>
+              <Text style={styles.headerSubtitleText}>{dateLabel}</Text>
             </View>
 
             {targetEntryId ? (
@@ -437,36 +483,34 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
           <View style={[styles.dateRibbonRow, isKeyboardOpen && styles.dateRibbonRowCompact]}>
             {/* Today Chip */}
             <Pressable
-              style={[
-                styles.dateChip,
-                activeDate === todayStr && styles.dateChipActive,
-              ]}
+              style={[styles.dateChip, activeDate === todayStr && styles.dateChipActive]}
               onPress={() => handleDateSelect(todayStr)}
             >
-              <Text style={[styles.dateChipText, activeDate === todayStr && styles.dateChipTextActive]}>
+              <Text
+                style={[styles.dateChipText, activeDate === todayStr && styles.dateChipTextActive]}
+              >
                 Today
               </Text>
             </Pressable>
 
             {/* Yesterday Chip */}
             <Pressable
-              style={[
-                styles.dateChip,
-                activeDate === yesterdayStr && styles.dateChipActive,
-              ]}
+              style={[styles.dateChip, activeDate === yesterdayStr && styles.dateChipActive]}
               onPress={() => handleDateSelect(yesterdayStr)}
             >
-              <Text style={[styles.dateChipText, activeDate === yesterdayStr && styles.dateChipTextActive]}>
+              <Text
+                style={[
+                  styles.dateChipText,
+                  activeDate === yesterdayStr && styles.dateChipTextActive,
+                ]}
+              >
                 Yesterday
               </Text>
             </Pressable>
 
             {/* Other Date / Calendar Trigger */}
             <Pressable
-              style={[
-                styles.dateChip,
-                isCustomDate && styles.dateChipActive,
-              ]}
+              style={[styles.dateChip, isCustomDate && styles.dateChipActive]}
               onPress={() => setIsDatePickerOpen(true)}
             >
               <Ionicons
@@ -484,7 +528,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
           {/* 3. Central Hero Display Card (Non-Scroll, Perfectly Centered) */}
           <View style={[styles.heroCard, isKeyboardOpen && styles.heroCardCompact]}>
             {/* Unit Toggle Pill */}
-            <View style={[styles.unitPillContainer, isKeyboardOpen && styles.unitPillContainerCompact]}>
+            <View
+              style={[styles.unitPillContainer, isKeyboardOpen && styles.unitPillContainerCompact]}
+            >
               <Pressable
                 style={[styles.unitTab, unit === 'kg' && styles.unitTabActive]}
                 onPress={() => handleToggleUnit('kg')}
@@ -516,7 +562,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   placeholderTextColor="#94A3B8"
                   selectTextOnFocus
                 />
-                <Text style={[styles.heroUnitLabel, isKeyboardOpen && styles.heroUnitLabelCompact]}>{unit}</Text>
+                <Text style={[styles.heroUnitLabel, isKeyboardOpen && styles.heroUnitLabelCompact]}>
+                  {unit}
+                </Text>
                 <Pressable
                   style={styles.manualDoneBtn}
                   onPress={() => {
@@ -537,8 +585,14 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Tap to type weight numerically"
               >
-                <Text style={[styles.heroNumberText, isKeyboardOpen && styles.heroNumberTextCompact]}>{formattedDisplay}</Text>
-                <Text style={[styles.heroUnitLabel, isKeyboardOpen && styles.heroUnitLabelCompact]}>{unit}</Text>
+                <Text
+                  style={[styles.heroNumberText, isKeyboardOpen && styles.heroNumberTextCompact]}
+                >
+                  {formattedDisplay}
+                </Text>
+                <Text style={[styles.heroUnitLabel, isKeyboardOpen && styles.heroUnitLabelCompact]}>
+                  {unit}
+                </Text>
                 <View style={styles.editPencilBadge}>
                   <Feather name="edit-2" size={14} color="#94A3B8" />
                 </View>
@@ -548,7 +602,12 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             {/* Goal Diff Hint */}
             {goalDiffHint && (
               <View style={styles.goalHintContainer}>
-                <Ionicons name="flag-outline" size={13} color="#9F1239" style={{ marginRight: 4 }} />
+                <Ionicons
+                  name="flag-outline"
+                  size={13}
+                  color="#9F1239"
+                  style={{ marginRight: 4 }}
+                />
                 <Text style={styles.goalHintText}>{goalDiffHint}</Text>
               </View>
             )}
@@ -595,7 +654,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
           <View style={[styles.contextCard, isKeyboardOpen && styles.contextCardCompact]}>
             <Text style={styles.contextLabel}>CONTEXT (OPTIONAL)</Text>
             <View style={[styles.tagsGrid, isKeyboardOpen && styles.tagsGridCompact]}>
-              {QUICK_TAGS.map((tag) => {
+              {QUICK_TAGS.map(tag => {
                 const isSelected = selectedTag === tag;
                 return (
                   <Pressable
@@ -613,7 +672,12 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
 
             {/* Note Input */}
             <View style={styles.noteInputRow}>
-              <Ionicons name="create-outline" size={17} color="#94A3B8" style={{ marginRight: 8 }} />
+              <Ionicons
+                name="create-outline"
+                size={17}
+                color="#94A3B8"
+                style={{ marginRight: 8 }}
+              />
               <TextInput
                 style={styles.noteTextInput}
                 placeholder="Add personal note (e.g. after morning run)..."
@@ -631,12 +695,14 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
           <View style={styles.flexSpacer} />
 
           {/* 5. Fixed Pinned Bottom CTA (Always visible, zero scroll) */}
-          <View style={[styles.bottomCtaContainer, isKeyboardOpen && styles.bottomCtaContainerCompact]}>
+          <View
+            style={[styles.bottomCtaContainer, isKeyboardOpen && styles.bottomCtaContainerCompact]}
+          >
             <Pressable
               style={({ pressed }) => [
                 styles.saveCtaBtn,
                 isKeyboardOpen && styles.saveCtaBtnCompact,
-                pressed && styles.saveCtaBtnPressed
+                pressed && styles.saveCtaBtnPressed,
               ]}
               onPress={handleSave}
               accessibilityRole="button"
@@ -657,7 +723,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
           onRequestClose={() => setIsDatePickerOpen(false)}
         >
           <Pressable style={styles.pickerOverlay} onPress={() => setIsDatePickerOpen(false)}>
-            <Pressable style={styles.pickerCard} onPress={(e) => e.stopPropagation()}>
+            <Pressable style={styles.pickerCard} onPress={e => e.stopPropagation()}>
               {/* Picker Header */}
               <View style={styles.pickerHeader}>
                 <Pressable
@@ -740,10 +806,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               </View>
 
               {/* Cancel Button */}
-              <Pressable
-                style={styles.pickerCloseBtn}
-                onPress={() => setIsDatePickerOpen(false)}
-              >
+              <Pressable style={styles.pickerCloseBtn} onPress={() => setIsDatePickerOpen(false)}>
                 <Text style={styles.pickerCloseBtnText}>Close</Text>
               </Pressable>
             </Pressable>

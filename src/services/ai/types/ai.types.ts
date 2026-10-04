@@ -139,7 +139,8 @@ export interface UserNutritionContext {
 
 export interface FoodVisionResult {
   name: string;
-  category: 'breads' | 'curries' | 'south_indian' | 'rice' | 'snacks' | 'beverages' | 'fruits' | 'dairy';
+  category:
+    'breads' | 'curries' | 'south_indian' | 'rice' | 'snacks' | 'beverages' | 'fruits' | 'dairy';
   categoryLabel: string;
   servingUnit: string;
   defaultServingSize: number;

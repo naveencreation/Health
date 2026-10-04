@@ -55,9 +55,7 @@ describe('ProPaywallModal', () => {
     mockPurchasePlan.mockResolvedValue({ success: true });
     const onClose = jest.fn();
 
-    const { getByRole } = await render(
-      <ProPaywallModal visible={true} onClose={onClose} />
-    );
+    const { getByRole } = await render(<ProPaywallModal visible={true} onClose={onClose} />);
 
     const purchaseBtn = getByRole('button', { name: 'Unlock Calorify Pro' });
     fireEvent.press(purchaseBtn);
@@ -71,9 +69,7 @@ describe('ProPaywallModal', () => {
   it('calls onClose when close button is tapped', async () => {
     const onClose = jest.fn();
 
-    const { getByRole } = await render(
-      <ProPaywallModal visible={true} onClose={onClose} />
-    );
+    const { getByRole } = await render(<ProPaywallModal visible={true} onClose={onClose} />);
 
     const closeBtn = getByRole('button', { name: 'Close Paywall' });
     fireEvent.press(closeBtn);

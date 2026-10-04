@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Modal,
-  useWindowDimensions,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, Modal, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
@@ -84,10 +77,7 @@ export const StepEntryActionPopover: React.FC<StepEntryActionPopoverProps> = ({
           {hasDetails && (
             <>
               <Pressable
-                style={({ pressed }) => [
-                  styles.menuRow,
-                  pressed && styles.rowPressed,
-                ]}
+                style={({ pressed }) => [styles.menuRow, pressed && styles.rowPressed]}
                 onPress={() => {
                   onClose();
                   if (onViewDetails) onViewDetails(entry);
@@ -104,10 +94,7 @@ export const StepEntryActionPopover: React.FC<StepEntryActionPopoverProps> = ({
 
           {/* 2. 🗑 Delete / Dismiss Action */}
           <Pressable
-            style={({ pressed }) => [
-              styles.menuRow,
-              pressed && styles.rowPressed,
-            ]}
+            style={({ pressed }) => [styles.menuRow, pressed && styles.rowPressed]}
             onPress={() => {
               onClose();
               if (onDelete) onDelete(entry);

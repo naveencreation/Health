@@ -71,9 +71,7 @@ export const HealthConnectSyncCard: React.FC<HealthConnectSyncCardProps> = ({
           <View style={styles.connectedRight}>
             {syncedCount > 0 ? (
               <View style={styles.stepsBadge}>
-                <Text style={styles.stepsBadgeText}>
-                  ✓ {syncedCount.toLocaleString()} steps
-                </Text>
+                <Text style={styles.stepsBadgeText}>✓ {syncedCount.toLocaleString()} steps</Text>
               </View>
             ) : null}
 
@@ -143,9 +141,7 @@ export const HealthConnectSyncCard: React.FC<HealthConnectSyncCardProps> = ({
         </Pressable>
       </View>
 
-      {feedbackMessage ? (
-        <Text style={styles.feedbackNoticeText}>{feedbackMessage}</Text>
-      ) : null}
+      {feedbackMessage ? <Text style={styles.feedbackNoticeText}>{feedbackMessage}</Text> : null}
     </View>
   );
 };

@@ -82,7 +82,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   const targetFatG = Math.round(fatKcal / 9);
 
   // Carbs: Remaining calories (4 kcal/g)
-  const remainingKcal = Math.max(0, dailyCalorieBudget - proteinKcal - (targetFatG * 9));
+  const remainingKcal = Math.max(0, dailyCalorieBudget - proteinKcal - targetFatG * 9);
   const targetCarbsG = Math.round(remainingKcal / 4);
 
   // Fiber: 14g per 1000 kcal

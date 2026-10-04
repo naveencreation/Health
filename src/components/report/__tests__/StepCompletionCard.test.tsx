@@ -20,13 +20,62 @@ jest.mock('react-native-reanimated', () => {
 
 describe('StepCompletionCard', () => {
   const sampleDays: DayStepData[] = [
-    { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', steps: 5200, goalSteps: 6000, completionPct: 87 },
-    { dateStr: '2026-09-17', dayNum: 17, dayName: 'T', steps: 5024, goalSteps: 6000, completionPct: 84 },
-    { dateStr: '2026-09-18', dayNum: 18, dayName: 'W', steps: 5600, goalSteps: 6000, completionPct: 93 },
-    { dateStr: '2026-09-19', dayNum: 19, dayName: 'T', steps: 6800, goalSteps: 6000, completionPct: 113 },
-    { dateStr: '2026-09-20', dayNum: 20, dayName: 'F', steps: 5400, goalSteps: 6000, completionPct: 90 },
-    { dateStr: '2026-09-21', dayNum: 21, dayName: 'S', steps: 5800, goalSteps: 6000, completionPct: 97 },
-    { dateStr: '2026-09-22', dayNum: 22, dayName: 'S', steps: 4600, goalSteps: 6000, completionPct: 77 },
+    {
+      dateStr: '2026-09-16',
+      dayNum: 16,
+      dayName: 'M',
+      steps: 5200,
+      goalSteps: 6000,
+      completionPct: 87,
+    },
+    {
+      dateStr: '2026-09-17',
+      dayNum: 17,
+      dayName: 'T',
+      steps: 5024,
+      goalSteps: 6000,
+      completionPct: 84,
+    },
+    {
+      dateStr: '2026-09-18',
+      dayNum: 18,
+      dayName: 'W',
+      steps: 5600,
+      goalSteps: 6000,
+      completionPct: 93,
+    },
+    {
+      dateStr: '2026-09-19',
+      dayNum: 19,
+      dayName: 'T',
+      steps: 6800,
+      goalSteps: 6000,
+      completionPct: 113,
+    },
+    {
+      dateStr: '2026-09-20',
+      dayNum: 20,
+      dayName: 'F',
+      steps: 5400,
+      goalSteps: 6000,
+      completionPct: 90,
+    },
+    {
+      dateStr: '2026-09-21',
+      dayNum: 21,
+      dayName: 'S',
+      steps: 5800,
+      goalSteps: 6000,
+      completionPct: 97,
+    },
+    {
+      dateStr: '2026-09-22',
+      dayNum: 22,
+      dayName: 'S',
+      steps: 4600,
+      goalSteps: 6000,
+      completionPct: 77,
+    },
   ];
 
   test('renders title, legend items, and day numbers 16-22', async () => {

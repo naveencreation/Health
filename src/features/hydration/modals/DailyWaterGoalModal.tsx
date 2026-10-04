@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
@@ -38,7 +32,7 @@ export const DailyWaterGoalModal: React.FC<DailyWaterGoalModalProps> = ({
   }, [visible, initialGoal, userGoals.waterGoalMl]);
 
   const handleStepGoal = (delta: number) => {
-    setEditingGoal((prev) => Math.min(6000, Math.max(500, prev + delta)));
+    setEditingGoal(prev => Math.min(6000, Math.max(500, prev + delta)));
   };
 
   const handleSave = () => {
@@ -48,14 +42,9 @@ export const DailyWaterGoalModal: React.FC<DailyWaterGoalModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
           {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Daily Water Goal</Text>
@@ -121,25 +110,17 @@ export const DailyWaterGoalModal: React.FC<DailyWaterGoalModalProps> = ({
           {/* Quick Preset Pills */}
           <Text style={styles.presetsLabel}>Quick Presets</Text>
           <View style={styles.presetsRow}>
-            {GOAL_PRESETS.map((preset) => {
+            {GOAL_PRESETS.map(preset => {
               const isSelected = editingGoal === preset;
               return (
                 <Pressable
                   key={preset}
-                  style={[
-                    styles.presetChip,
-                    isSelected && styles.presetChipActive,
-                  ]}
+                  style={[styles.presetChip, isSelected && styles.presetChipActive]}
                   onPress={() => setEditingGoal(preset)}
                   accessibilityRole="button"
                   accessibilityLabel={`Set goal to ${preset} mL`}
                 >
-                  <Text
-                    style={[
-                      styles.presetChipText,
-                      isSelected && styles.presetChipTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.presetChipText, isSelected && styles.presetChipTextActive]}>
                     {preset} mL
                   </Text>
                 </Pressable>
@@ -149,10 +130,7 @@ export const DailyWaterGoalModal: React.FC<DailyWaterGoalModalProps> = ({
 
           {/* Save Button */}
           <Pressable
-            style={({ pressed }) => [
-              styles.saveGoalBtn,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.saveGoalBtn, pressed && styles.btnPressed]}
             onPress={handleSave}
             accessibilityRole="button"
             accessibilityLabel="Save daily water goal"

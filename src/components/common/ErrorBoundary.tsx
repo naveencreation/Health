@@ -47,7 +47,10 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || 'An unexpected rendering error occurred.'}
             </Text>
             <Pressable
-              style={({ pressed }) => [styles.retryButton, pressed ? styles.retryButtonPressed : null]}
+              style={({ pressed }) => [
+                styles.retryButton,
+                pressed ? styles.retryButtonPressed : null,
+              ]}
               onPress={this.handleReload}
               accessibilityRole="button"
               accessibilityLabel="Reload App"

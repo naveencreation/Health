@@ -17,7 +17,7 @@ import { Colors } from '@/theme/colors';
 interface DayItem {
   dateStr: string;
   dayName: string; // 'SUN', 'MON', etc.
-  dayNum: number;  // 20, 21, etc.
+  dayNum: number; // 20, 21, etc.
   isToday: boolean;
   isSelected: boolean;
   isFuture: boolean;
@@ -26,13 +26,33 @@ interface DayItem {
 }
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const SHORT_MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const SHORT_DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -70,8 +90,12 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Calendar Modal State
-  const [calendarYear, setCalendarYear] = useState(() => parseDateString(selectedDate).getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(() => parseDateString(selectedDate).getMonth());
+  const [calendarYear, setCalendarYear] = useState(() =>
+    parseDateString(selectedDate).getFullYear()
+  );
+  const [calendarMonth, setCalendarMonth] = useState(() =>
+    parseDateString(selectedDate).getMonth()
+  );
 
   const isWater = metric === 'water';
   const isWeight = metric === 'weight';
@@ -82,17 +106,17 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   const progressColor = isWater
     ? Colors.water
     : isWeight
-    ? Colors.weight
-    : isSteps
-    ? Colors.steps
-    : Colors.primary;
+      ? Colors.weight
+      : isSteps
+        ? Colors.steps
+        : Colors.primary;
   const trackColor = isWater
     ? Colors.waterTrack
     : isWeight
-    ? Colors.weightTrack
-    : isSteps
-    ? '#F1F5F9'
-    : '#E2E8F0';
+      ? Colors.weightTrack
+      : isSteps
+        ? '#F1F5F9'
+        : '#E2E8F0';
 
   // Real-world today reference
   const todayStr = useMemo(() => toDateString(new Date()), []);
@@ -105,16 +129,19 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     touchStartX.current = e.nativeEvent.pageX;
   }, []);
 
-  const onTouchEnd = useCallback((e: GestureResponderEvent) => {
-    const dx = e.nativeEvent.pageX - touchStartX.current;
-    if (dx > 48) {
-      // Swiped right -> go to previous week
-      shiftDate(-7);
-    } else if (dx < -48) {
-      // Swiped left -> go to next week
-      shiftDate(7);
-    }
-  }, [shiftDate]);
+  const onTouchEnd = useCallback(
+    (e: GestureResponderEvent) => {
+      const dx = e.nativeEvent.pageX - touchStartX.current;
+      if (dx > 48) {
+        // Swiped right -> go to previous week
+        shiftDate(-7);
+      } else if (dx < -48) {
+        // Swiped left -> go to next week
+        shiftDate(7);
+      }
+    },
+    [shiftDate]
+  );
 
   // 7 Days of the currently selected week (SUN to SAT)
   const { weekDays, monthHeaderTitle } = useMemo(() => {
@@ -143,9 +170,10 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
         const steps = log && typeof log.steps === 'number' ? log.steps : 0;
         progress = Math.min(1, Math.max(0, steps / stepGoal));
       } else {
-        const cals = log && Array.isArray(log.meals)
-          ? log.meals.reduce((sum, item) => sum + item.calories, 0)
-          : 0;
+        const cals =
+          log && Array.isArray(log.meals)
+            ? log.meals.reduce((sum, item) => sum + item.calories, 0)
+            : 0;
         progress = Math.min(1, Math.max(0, cals / budget));
       }
 
@@ -194,9 +222,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
 
   // Calendar Modal Navigation
   const prevMonth = useCallback(() => {
-    setCalendarMonth((m) => {
+    setCalendarMonth(m => {
       if (m === 0) {
-        setCalendarYear((y) => y - 1);
+        setCalendarYear(y => y - 1);
         return 11;
       }
       return m - 1;
@@ -204,9 +232,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   }, []);
 
   const nextMonth = useCallback(() => {
-    setCalendarMonth((m) => {
+    setCalendarMonth(m => {
       if (m === 11) {
-        setCalendarYear((y) => y + 1);
+        setCalendarYear(y => y + 1);
         return 0;
       }
       return m + 1;
@@ -246,8 +274,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       const hasMeals = isWater
         ? Boolean(log && typeof log.waterMl === 'number' && log.waterMl > 0)
         : isWeight
-        ? Boolean(log && typeof log.weightKg === 'number' && log.weightKg > 0)
-        : Boolean(log && Array.isArray(log.meals) && log.meals.length > 0);
+          ? Boolean(log && typeof log.weightKg === 'number' && log.weightKg > 0)
+          : Boolean(log && Array.isArray(log.meals) && log.meals.length > 0);
 
       cells.push({
         dayNum: d,
@@ -291,7 +319,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
               <Ionicons
                 name="arrow-undo-outline"
                 size={12}
-                color={isWater ? Colors.waterDark : isWeight ? Colors.weightDark : Colors.primaryDark}
+                color={
+                  isWater ? Colors.waterDark : isWeight ? Colors.weightDark : Colors.primaryDark
+                }
               />
               <Text
                 style={[
@@ -331,12 +361,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       </View>
 
       {/* 2. Seven Day Pill Strip with Touch Swipe Responder */}
-      <View
-        style={styles.stripRow}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        {weekDays.map((item) => {
+      <View style={styles.stripRow} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        {weekDays.map(item => {
           if (item.isSelected) {
             // High-Contrast Active Capsule (Black/Obsidian with circular progress)
             const size = 32;
@@ -439,27 +465,15 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                   <View style={styles.futureCircleBg} />
                 )}
 
-                <Text
-                  style={[
-                    styles.dayNumText,
-                    item.isFuture ? styles.futureDayNumText : null,
-                  ]}
-                >
+                <Text style={[styles.dayNumText, item.isFuture ? styles.futureDayNumText : null]}>
                   {item.dayNum}
                 </Text>
 
                 {/* Real-world Today indicator dot when unselected */}
-                {item.isToday && (
-                  <View style={styles.todayIndicatorDot} />
-                )}
+                {item.isToday && <View style={styles.todayIndicatorDot} />}
               </View>
 
-              <Text
-                style={[
-                  styles.dayNameText,
-                  item.isFuture ? styles.futureDayNameText : null,
-                ]}
-              >
+              <Text style={[styles.dayNameText, item.isFuture ? styles.futureDayNameText : null]}>
                 {item.dayName}
               </Text>
             </Pressable>
@@ -474,11 +488,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
         animationType="fade"
         onRequestClose={() => setIsCalendarOpen(false)}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setIsCalendarOpen(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.modalOverlay} onPress={() => setIsCalendarOpen(false)}>
+          <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalNavRow}>
@@ -554,9 +565,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                     </Text>
 
                     {/* Meal activity dot */}
-                    {cell.hasMeals && !cell.isSelected && (
-                      <View style={styles.modalMealDot} />
-                    )}
+                    {cell.hasMeals && !cell.isSelected && <View style={styles.modalMealDot} />}
                   </Pressable>
                 );
               })}
@@ -572,7 +581,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                 }}
               >
                 <Ionicons name="today-outline" size={16} color={progressColor} />
-                <Text style={[styles.modalTodayBtnText, { color: progressColor }]}>Jump to Today</Text>
+                <Text style={[styles.modalTodayBtnText, { color: progressColor }]}>
+                  Jump to Today
+                </Text>
               </Pressable>
             </View>
           </Pressable>

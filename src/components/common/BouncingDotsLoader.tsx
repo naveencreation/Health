@@ -31,9 +31,12 @@ export const BouncingDotsLoader: React.FC<BouncingDotsLoaderProps> = ({
     const bounce = (toValue: number, delay: number, rest: number, restTarget: number) => {
       return withRepeat(
         withSequence(
-          withDelay(delay, withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })),
+          withDelay(
+            delay,
+            withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })
+          ),
           withTiming(0, { duration: 320, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
-          withDelay(rest, withTiming(restTarget, { duration: 0 })),
+          withDelay(rest, withTiming(restTarget, { duration: 0 }))
         ),
         -1,
         false

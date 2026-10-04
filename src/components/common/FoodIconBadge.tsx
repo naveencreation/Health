@@ -224,67 +224,62 @@ export const getFoodIconTheme = (
   }
 };
 
-export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(({
-  item,
-  category,
-  foodName,
-  size = 42,
-  iconSize,
-  style,
-}) => {
+export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(
+  ({ item, category, foodName, size = 42, iconSize, style }) => {
+    const imageSource = getFoodImageSource(
+      item
+        ? { id: item.id, name: item.name, imageUrl: item.imageUrl }
+        : foodName
+          ? { name: foodName }
+          : null
+    );
 
-  const imageSource = getFoodImageSource(
-    item
-      ? { id: item.id, name: item.name, imageUrl: item.imageUrl }
-      : foodName
-      ? { name: foodName }
-      : null
-  );
+    const radius = Math.round(size * 0.28);
 
-  const radius = Math.round(size * 0.28);
+    // 1. Primary: Real Food Photography Thumbnail via FoodImage
+    if (imageSource) {
+      return (
+        <FoodImage
+          source={imageSource}
+          aspectRatio={1}
+          contentFit="cover"
+          width={size}
+          borderRadius={radius}
+          backgroundColor="#FFFFFF"
+          style={[{ borderWidth: 1, borderColor: '#E2E8F0' }, style]}
+          recyclingKey={item?.id}
+        />
+      );
+    }
 
-  // 1. Primary: Real Food Photography Thumbnail via FoodImage
-  if (imageSource) {
+    // 2. Graceful Fallback: Themed Vector Badge
+    const theme = getFoodIconTheme(item, category, foodName);
+    const calculatedIconSize = iconSize || Math.round(size * 0.52);
+
     return (
-      <FoodImage
-        source={imageSource}
-        aspectRatio={1}
-        contentFit="cover"
-        width={size}
-        borderRadius={radius}
-        backgroundColor="#FFFFFF"
-        style={[{ borderWidth: 1, borderColor: '#E2E8F0' }, style]}
-        recyclingKey={item?.id}
-      />
+      <View
+        style={[
+          styles.fallbackContainer,
+          {
+            width: size,
+            height: size,
+            borderRadius: radius,
+            backgroundColor: theme.bgColor,
+            borderColor: theme.borderColor,
+          },
+          style,
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={theme.iconName}
+          size={calculatedIconSize}
+          color={theme.iconColor}
+        />
+      </View>
     );
   }
-
-  // 2. Graceful Fallback: Themed Vector Badge
-  const theme = getFoodIconTheme(item, category, foodName);
-  const calculatedIconSize = iconSize || Math.round(size * 0.52);
-
-  return (
-    <View
-      style={[
-        styles.fallbackContainer,
-        {
-          width: size,
-          height: size,
-          borderRadius: radius,
-          backgroundColor: theme.bgColor,
-          borderColor: theme.borderColor,
-        },
-        style,
-      ]}
-    >
-      <MaterialCommunityIcons
-        name={theme.iconName}
-        size={calculatedIconSize}
-        color={theme.iconColor}
-      />
-    </View>
-  );
-});
+);
+FoodIconBadge.displayName = 'FoodIconBadge';
 
 const styles = StyleSheet.create({
   fallbackContainer: {

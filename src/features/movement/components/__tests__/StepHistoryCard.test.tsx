@@ -73,11 +73,7 @@ describe('StepHistoryCard', () => {
 
   test('renders header, date subtitle, and 4 session rows matching sample', async () => {
     const { getByText, getAllByRole } = await render(
-      <StepHistoryCard
-        dateStr="2026-10-02"
-        totalSteps={3800}
-        customEntries={mockEntries}
-      />
+      <StepHistoryCard dateStr="2026-10-02" totalSteps={3800} customEntries={mockEntries} />
     );
 
     // Header & Subtitle
@@ -112,35 +108,21 @@ describe('StepHistoryCard', () => {
   });
 
   test('synthesizes sessions cleanly when only totalSteps is provided', async () => {
-    const { getByText } = await render(
-      <StepHistoryCard
-        dateStr="2026-10-02"
-        totalSteps={1269}
-      />
-    );
+    const { getByText } = await render(<StepHistoryCard dateStr="2026-10-02" totalSteps={1269} />);
 
     expect(getByText('History')).toBeTruthy();
     expect(getByText('View All')).toBeTruthy();
   });
 
   test('renders empty state when totalSteps is 0 and no entries', async () => {
-    const { getByText } = await render(
-      <StepHistoryCard
-        dateStr="2026-10-02"
-        totalSteps={0}
-      />
-    );
+    const { getByText } = await render(<StepHistoryCard dateStr="2026-10-02" totalSteps={0} />);
 
     expect(getByText('No step records yet')).toBeTruthy();
   });
 
   test('opens View All modal when View All button is pressed', async () => {
     const { getByText } = await render(
-      <StepHistoryCard
-        dateStr="2026-10-02"
-        totalSteps={3800}
-        customEntries={mockEntries}
-      />
+      <StepHistoryCard dateStr="2026-10-02" totalSteps={3800} customEntries={mockEntries} />
     );
 
     fireEvent.press(getByText('View All'));

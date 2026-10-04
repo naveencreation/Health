@@ -1,6 +1,26 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyLog, FoodItem, LoggedMealItem, MealType, UserGoals, WorkoutActivity, WeeklyTrendItem, AuthUser, RegisterData, WaterLogEntry, WeightLogEntry } from '@/types';
+import {
+  DailyLog,
+  FoodItem,
+  LoggedMealItem,
+  MealType,
+  UserGoals,
+  WorkoutActivity,
+  WeeklyTrendItem,
+  AuthUser,
+  RegisterData,
+  WaterLogEntry,
+  WeightLogEntry,
+} from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { auth, db } from '@/services/firebase';
@@ -12,7 +32,18 @@ import {
   updateProfile,
   deleteUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, query, orderBy, limit } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  deleteDoc,
+  writeBatch,
+  query,
+  orderBy,
+  limit,
+} from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
 import {
   mapHealthConnectRecordsToStepEntries,
@@ -40,7 +71,7 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
     return { date: '', meals: [], waterMl: 0, steps: 0, activities: [] };
   }
   const cleanMeals = (log.meals || []).filter(
-    (m) =>
+    m =>
       !m.id.startsWith('sample_') &&
       m.id !== 'sample_1' &&
       m.id !== 'sample_2' &&
@@ -49,12 +80,12 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
       m.id !== 'sample_5' &&
       m.id !== 'sample_6'
   );
-  const cleanActivities = (log.activities || []).filter((a) => a.id !== 'act_1');
+  const cleanActivities = (log.activities || []).filter(a => a.id !== 'act_1');
   const isMockLog =
-    (log.activities || []).some((a) => a.id === 'act_1') ||
-    (log.meals || []).some((m) => m.id.startsWith('sample_'));
-  const cleanWater = isMockLog && log.waterMl === 1250 ? 0 : (log.waterMl || 0);
-  const cleanSteps = isMockLog && log.steps === 4620 ? 0 : (log.steps || 0);
+    (log.activities || []).some(a => a.id === 'act_1') ||
+    (log.meals || []).some(m => m.id.startsWith('sample_'));
+  const cleanWater = isMockLog && log.waterMl === 1250 ? 0 : log.waterMl || 0;
+  const cleanSteps = isMockLog && log.steps === 4620 ? 0 : log.steps || 0;
   return {
     ...log,
     meals: cleanMeals,
@@ -75,7 +106,7 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
 export function sanitizeForFirestore<T>(data: T): T {
   if (data === null || data === undefined) return data;
   if (Array.isArray(data)) {
-    return data.map((item) => sanitizeForFirestore(item)) as unknown as T;
+    return data.map(item => sanitizeForFirestore(item)) as unknown as T;
   }
   if (typeof data === 'object' && !(data instanceof Date)) {
     const cleaned: Record<string, any> = {};
@@ -148,7 +179,6 @@ export const computeStreak = (logs: Record<string, DailyLog>): number => {
   }
   return Math.max(streak, 1); // minimum streak of 1
 };
-
 
 // Generate realistic starter log for immediate rich Healthify experience
 const createInitialSampleLog = (dateStr: string): DailyLog => {
@@ -283,9 +313,22 @@ export interface HealthContextType {
   removeWorkout: (id: string) => void;
   addSteps: (stepsCount: number) => void;
   removeStepEntry: (id: string, date?: string) => void;
-  batchUpdateDailySteps: (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => void;
-  logWeight: (weightKg: number, date?: string, note?: string, customLoggedAt?: string, customId?: string) => void;
-  updateWeightEntry: (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => void;
+  batchUpdateDailySteps: (
+    updates: Array<{ dateStr: string; steps: number; records?: any[] }>
+  ) => void;
+  logWeight: (
+    weightKg: number,
+    date?: string,
+    note?: string,
+    customLoggedAt?: string,
+    customId?: string
+  ) => void;
+  updateWeightEntry: (
+    id: string,
+    updates: Partial<WeightLogEntry>,
+    date?: string,
+    newDate?: string
+  ) => void;
   deleteWeightEntry: (id: string, date?: string) => void;
   addCustomFood: (food: Omit<FoodItem, 'id'>) => FoodItem;
   deleteCustomFood: (foodId: string) => void;
@@ -304,7 +347,14 @@ export const HealthContext = createContext<HealthContextType | undefined>(undefi
 
 export type AuthContextValue = Pick<
   HealthContextType,
-  'currentUser' | 'isAuthenticated' | 'isAuthLoading' | 'login' | 'register' | 'logout' | 'deleteAccount' | 'loginDemo'
+  | 'currentUser'
+  | 'isAuthenticated'
+  | 'isAuthLoading'
+  | 'login'
+  | 'register'
+  | 'logout'
+  | 'deleteAccount'
+  | 'loginDemo'
 >;
 
 export type GoalsContextValue = Pick<HealthContextType, 'userGoals' | 'updateGoals'>;
@@ -344,7 +394,10 @@ export type DailyLogContextValue = Pick<
 
 export type AnalyticsContextValue = Pick<HealthContextType, 'weeklyLogs' | 'dailyLogs'>;
 
-export type FoodContextValue = Pick<HealthContextType, 'foodDatabase' | 'addCustomFood' | 'deleteCustomFood'>;
+export type FoodContextValue = Pick<
+  HealthContextType,
+  'foodDatabase' | 'addCustomFood' | 'deleteCustomFood'
+>;
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const GoalsContext = createContext<GoalsContextValue | undefined>(undefined);
@@ -388,7 +441,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         if (cachedGoalsStr) {
           const parsedCachedGoals = JSON.parse(cachedGoalsStr);
-          setUserGoals((prev) => ({ ...prev, ...parsedCachedGoals }));
+          setUserGoals(prev => ({ ...prev, ...parsedCachedGoals }));
         }
 
         if (cachedLogsStr) {
@@ -423,7 +476,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             };
             setUserGoals(mergedGoals);
             AsyncStorage.setItem(userGoalsKey, JSON.stringify(mergedGoals)).catch(() => {});
-            AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals)).catch(() => {});
+            AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals)).catch(
+              () => {}
+            );
           }
         }
       } catch (userDocErr) {
@@ -444,8 +499,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           // If legacy document in cloud had mock data, sanitize and overwrite it
           const isMock =
-            (rawLog.activities || []).some((a) => a.id === 'act_1') ||
-            (rawLog.meals || []).some((m) => m.id.startsWith('sample_'));
+            (rawLog.activities || []).some(a => a.id === 'act_1') ||
+            (rawLog.meals || []).some(m => m.id.startsWith('sample_'));
           if (isMock) {
             const cleanPayload = sanitizeForFirestore({
               date: d.id,
@@ -453,12 +508,18 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               steps: typeof cleansed.steps === 'number' ? Math.max(0, cleansed.steps) : 0,
               meals: Array.isArray(cleansed.meals) ? cleansed.meals : [],
               activities: Array.isArray(cleansed.activities) ? cleansed.activities : [],
-              ...(Array.isArray(cleansed.waterEntries) ? { waterEntries: cleansed.waterEntries } : {}),
+              ...(Array.isArray(cleansed.waterEntries)
+                ? { waterEntries: cleansed.waterEntries }
+                : {}),
               ...(typeof cleansed.weightKg === 'number' ? { weightKg: cleansed.weightKg } : {}),
-              ...(Array.isArray(cleansed.weightEntries) ? { weightEntries: cleansed.weightEntries } : {}),
+              ...(Array.isArray(cleansed.weightEntries)
+                ? { weightEntries: cleansed.weightEntries }
+                : {}),
               ...(Array.isArray(cleansed.stepEntries) ? { stepEntries: cleansed.stepEntries } : {}),
             });
-            setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), cleanPayload, { merge: true }).catch(() => {});
+            setDoc(doc(db, 'users', uid, 'dailyLogs', d.id), cleanPayload, { merge: true }).catch(
+              () => {}
+            );
           }
         }
       } catch (colErr) {
@@ -491,11 +552,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           merged[dateKey] = {
             ...cloudLog,
-            meals: cloudLog.meals && cloudLog.meals.length > 0 ? cloudLog.meals : (localLog.meals || []),
+            meals:
+              cloudLog.meals && cloudLog.meals.length > 0 ? cloudLog.meals : localLog.meals || [],
             waterMl: Math.max(cloudWater, localWater),
             waterEntries: cloudEntries.length >= localEntries.length ? cloudEntries : localEntries,
             steps: Math.max(cloudLog.steps || 0, localLog.steps || 0),
-            activities: cloudLog.activities && cloudLog.activities.length > 0 ? cloudLog.activities : (localLog.activities || []),
+            activities:
+              cloudLog.activities && cloudLog.activities.length > 0
+                ? cloudLog.activities
+                : localLog.activities || [],
           };
         }
       }
@@ -531,15 +596,21 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const customColRef = collection(db, 'users', uid, 'customFoods');
         const customSnap = await getDocs(customColRef);
         if (!customSnap.empty) {
-          const fetchedCustom: FoodItem[] = customSnap.docs.map((d) => {
+          const fetchedCustom: FoodItem[] = customSnap.docs.map(d => {
             const raw = d.data();
             return {
               id: typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : d.id,
-              name: typeof raw.name === 'string' && raw.name.trim().length > 0 ? raw.name.trim() : 'Unnamed Food',
+              name:
+                typeof raw.name === 'string' && raw.name.trim().length > 0
+                  ? raw.name.trim()
+                  : 'Unnamed Food',
               category: raw.category || 'snacks',
               categoryLabel: raw.categoryLabel || 'Custom Food',
               servingUnit: typeof raw.servingUnit === 'string' ? raw.servingUnit : 'serving',
-              defaultServingSize: typeof raw.defaultServingSize === 'number' ? Math.max(1, raw.defaultServingSize) : 1,
+              defaultServingSize:
+                typeof raw.defaultServingSize === 'number'
+                  ? Math.max(1, raw.defaultServingSize)
+                  : 1,
               calories: Math.max(0, Math.round(Number(raw.calories) || 0)),
               carbs: Math.max(0, Math.round((Number(raw.carbs) || 0) * 10) / 10),
               protein: Math.max(0, Math.round((Number(raw.protein) || 0) * 10) / 10),
@@ -564,12 +635,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ]);
 
       // 6. Restore Gemini API key from Firestore backup (BYOK persistence across logout/login)
-      SecureKeyStorage.restoreFromFirestore(uid).catch((err) => {
+      SecureKeyStorage.restoreFromFirestore(uid).catch(err => {
         console.warn('fetchAndHydrateUserData: Gemini key restore failed (non-fatal)', err);
       });
 
       hydratedUidRef.current = uid;
-
     } catch (err) {
       console.error('fetchAndHydrateUserData error:', err);
     } finally {
@@ -593,16 +663,24 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setIsAuthLoading(false);
         }
 
-        const userScopedGoals = parsedAuth?.id && !isGuest
-          ? await AsyncStorage.getItem(getUserGoalsKey(parsedAuth.id))
-          : null;
+        const userScopedGoals =
+          parsedAuth?.id && !isGuest
+            ? await AsyncStorage.getItem(getUserGoalsKey(parsedAuth.id))
+            : null;
         const savedGoals = userScopedGoals || (await AsyncStorage.getItem(STORAGE_KEYS.USER_GOALS));
         const savedCustomFoods = await AsyncStorage.getItem(STORAGE_KEYS.CUSTOM_FOODS);
 
         if (savedGoals) {
           try {
             const parsed = JSON.parse(savedGoals);
-            const validUrls = ['asset:men', 'asset:women', 'asset:boy', 'asset:girl', 'asset:grandpa', 'asset:grandma'];
+            const validUrls = [
+              'asset:men',
+              'asset:women',
+              'asset:boy',
+              'asset:girl',
+              'asset:grandpa',
+              'asset:grandma',
+            ];
             if (!parsed.avatarUrl || !validUrls.includes(parsed.avatarUrl)) {
               parsed.avatarUrl = DEFAULT_AVATAR_URL;
             }
@@ -674,7 +752,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Firebase Auth State Listener & Cloud Sync (Single Source of Truth)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async fbUser => {
       authResolvedRef.current = true;
       if (fbUser) {
         const userObj: AuthUser = {
@@ -709,9 +787,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Save changes & sync dailyLogs to Firestore (1000ms Debounced Cloud Sync)
   useEffect(() => {
     if (!isLoaded) return;
-    const targetKey = auth.currentUser && !currentUser?.isGuest
-      ? getUserLogsKey(auth.currentUser.uid)
-      : STORAGE_KEYS.DAILY_LOGS;
+    const targetKey =
+      auth.currentUser && !currentUser?.isGuest
+        ? getUserLogsKey(auth.currentUser.uid)
+        : STORAGE_KEYS.DAILY_LOGS;
 
     AsyncStorage.setItem(targetKey, JSON.stringify(dailyLogs)).catch(() => {});
 
@@ -736,7 +815,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }
 
-        datesToSync.forEach((dKey) => {
+        datesToSync.forEach(dKey => {
           const log = dailyLogs[dKey];
           if (log) {
             try {
@@ -751,11 +830,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 ...(Array.isArray(log.weightEntries) ? { weightEntries: log.weightEntries } : {}),
                 ...(Array.isArray(log.stepEntries) ? { stepEntries: log.stepEntries } : {}),
               });
-              setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, { merge: true })
+              setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, {
+                merge: true,
+              })
                 .then(() => {
                   lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
                 })
-                .catch((err) => {
+                .catch(err => {
                   if (__DEV__) console.warn('dailyLogs setDoc async error:', err);
                 });
             } catch (err) {
@@ -770,9 +851,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Save changes & sync userGoals to Firestore (1000ms Debounced Cloud Sync)
   useEffect(() => {
     if (!isLoaded) return;
-    const targetKey = auth.currentUser && !currentUser?.isGuest
-      ? getUserGoalsKey(auth.currentUser.uid)
-      : STORAGE_KEYS.USER_GOALS;
+    const targetKey =
+      auth.currentUser && !currentUser?.isGuest
+        ? getUserGoalsKey(auth.currentUser.uid)
+        : STORAGE_KEYS.USER_GOALS;
 
     AsyncStorage.setItem(targetKey, JSON.stringify(userGoals)).catch(() => {});
 
@@ -793,21 +875,33 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             updatedAt: new Date().toISOString(),
             goals: userGoals,
           };
-          if (typeof userGoals.currentWeightKg === 'number' && userGoals.currentWeightKg >= 10 && userGoals.currentWeightKg <= 500) {
+          if (
+            typeof userGoals.currentWeightKg === 'number' &&
+            userGoals.currentWeightKg >= 10 &&
+            userGoals.currentWeightKg <= 500
+          ) {
             profileUpdates.weight = userGoals.currentWeightKg;
           }
           if (userGoals.weightUnit === 'kg' || userGoals.weightUnit === 'lbs') {
             profileUpdates.weightUnit = userGoals.weightUnit;
           }
-          if (typeof userGoals.startWeightKg === 'number' && userGoals.startWeightKg >= 10 && userGoals.startWeightKg <= 500) {
+          if (
+            typeof userGoals.startWeightKg === 'number' &&
+            userGoals.startWeightKg >= 10 &&
+            userGoals.startWeightKg <= 500
+          ) {
             profileUpdates.startWeightKg = userGoals.startWeightKg;
           }
-          if (typeof userGoals.heightCm === 'number' && userGoals.heightCm >= 50 && userGoals.heightCm <= 300) {
+          if (
+            typeof userGoals.heightCm === 'number' &&
+            userGoals.heightCm >= 50 &&
+            userGoals.heightCm <= 300
+          ) {
             profileUpdates.heightCm = userGoals.heightCm;
           }
 
           const payload = sanitizeForFirestore(profileUpdates);
-          setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch((err) => {
+          setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch(err => {
             if (__DEV__) console.warn('userGoals setDoc async error:', err);
           });
         } catch (err) {
@@ -833,10 +927,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!isLoaded) return;
     const newStreak = computeStreak(dailyLogs);
     if (newStreak !== userGoalsRef.current.streakDays) {
-      setUserGoals((prev) => ({ ...prev, streakDays: newStreak }));
+      setUserGoals(prev => ({ ...prev, streakDays: newStreak }));
     }
   }, [dailyLogs, isLoaded]);
-
 
   // Combined food database
   const foodDatabase = useMemo(() => {
@@ -857,9 +950,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Shift date helper
   const shiftDate = useCallback((days: number) => {
-    setSelectedDate((prev) => {
+    setSelectedDate(prev => {
       const parts = prev.split('-');
-      const curr = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const curr = new Date(
+        parseInt(parts[0], 10),
+        parseInt(parts[1], 10) - 1,
+        parseInt(parts[2], 10)
+      );
       curr.setDate(curr.getDate() + days);
       return getTodayDateString(curr);
     });
@@ -873,7 +970,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       snacks: [],
       dinner: [],
     };
-    currentLog.meals.forEach((m) => {
+    currentLog.meals.forEach(m => {
       if (grouped[m.mealType]) {
         grouped[m.mealType].push(m);
       }
@@ -925,249 +1022,264 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [userGoals.dailyCalorieBudget, totalConsumed, totalBurned]);
 
   // Actions
-  const addMealItem = useCallback((mealType: MealType, food: FoodItem, quantity: number) => {
-    const newItem: LoggedMealItem = {
-      id: 'meal_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      foodId: food.id,
-      name: food.name,
-      mealType,
-      servingUnit: food.servingUnit,
-      quantity,
-      calories: Math.round(food.calories * quantity),
-      carbs: Math.round(food.carbs * quantity * 10) / 10,
-      protein: Math.round(food.protein * quantity * 10) / 10,
-      fat: Math.round(food.fat * quantity * 10) / 10,
-      fiber: Math.round(food.fiber * quantity * 10) / 10,
-      imageUrl: food.imageUrl,
-      loggedAt: new Date().toISOString(),
-    };
-
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate] || {
-        date: selectedDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
+  const addMealItem = useCallback(
+    (mealType: MealType, food: FoodItem, quantity: number) => {
+      const newItem: LoggedMealItem = {
+        id: 'meal_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        foodId: food.id,
+        name: food.name,
+        mealType,
+        servingUnit: food.servingUnit,
+        quantity,
+        calories: Math.round(food.calories * quantity),
+        carbs: Math.round(food.carbs * quantity * 10) / 10,
+        protein: Math.round(food.protein * quantity * 10) / 10,
+        fat: Math.round(food.fat * quantity * 10) / 10,
+        fiber: Math.round(food.fiber * quantity * 10) / 10,
+        imageUrl: food.imageUrl,
+        loggedAt: new Date().toISOString(),
       };
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          meals: [...existing.meals, newItem],
-        },
-      };
-    });
-    return newItem;
-  }, [selectedDate]);
 
-  const removeMealItem = useCallback((mealId: string) => {
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate];
-      if (!existing) return prev;
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          meals: existing.meals.filter((m) => m.id !== mealId),
-        },
-      };
-    });
-  }, [selectedDate]);
-
-  const updateMealQuantity = useCallback((mealId: string, quantity: number) => {
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate];
-      if (!existing) return prev;
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          meals: existing.meals.map((item) => {
-            if (item.id !== mealId) return item;
-            const originalFood = foodDatabase.find((f) => f.id === item.foodId);
-            const baseCals = originalFood ? originalFood.calories : item.calories / item.quantity;
-            const baseCarbs = originalFood ? originalFood.carbs : item.carbs / item.quantity;
-            const baseProt = originalFood ? originalFood.protein : item.protein / item.quantity;
-            const baseFat = originalFood ? originalFood.fat : item.fat / item.quantity;
-            const baseFib = originalFood ? originalFood.fiber : item.fiber / item.quantity;
-
-            return {
-              ...item,
-              quantity,
-              calories: Math.round(baseCals * quantity),
-              carbs: Math.round(baseCarbs * quantity * 10) / 10,
-              protein: Math.round(baseProt * quantity * 10) / 10,
-              fat: Math.round(baseFat * quantity * 10) / 10,
-              fiber: Math.round(baseFib * quantity * 10) / 10,
-            };
-          }),
-        },
-      };
-    });
-  }, [selectedDate, foodDatabase]);
-
-  const addWater = useCallback((ml: number, beverageType: string = 'water') => {
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate] || {
-        date: selectedDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
-        waterEntries: [],
-      };
-      const updated = Math.max(0, existing.waterMl + ml);
-      let updatedEntries = existing.waterEntries ? [...existing.waterEntries] : [];
-
-      if (ml > 0) {
-        const now = new Date();
-        const timePart = now.toTimeString().split(' ')[0];
-        const todayStr = getTodayDateString();
-        const loggedAt = selectedDate === todayStr
-          ? now.toISOString()
-          : `${selectedDate}T${timePart}.000Z`;
-
-        const newEntry: WaterLogEntry = {
-          id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-          amountMl: ml,
-          beverageType,
-          loggedAt,
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate] || {
+          date: selectedDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
         };
-        updatedEntries = [newEntry, ...updatedEntries];
-      } else if (ml < 0 && updatedEntries.length > 0) {
-        let remainingToDeduct = Math.abs(ml);
-        const targetType = (beverageType || 'water').toLowerCase();
-        const hasMatching = updatedEntries.some(
-          (e) => (e.beverageType || 'water').toLowerCase() === targetType
-        );
-
-        const nextEntries: WaterLogEntry[] = [];
-        let actualDeducted = 0;
-
-        for (const entry of updatedEntries) {
-          const entryType = (entry.beverageType || 'water').toLowerCase();
-          const isTarget = hasMatching ? entryType === targetType : true;
-
-          if (!isTarget || remainingToDeduct <= 0) {
-            nextEntries.push(entry);
-          } else if (entry.amountMl <= remainingToDeduct) {
-            remainingToDeduct -= entry.amountMl;
-            actualDeducted += entry.amountMl;
-          } else {
-            nextEntries.push({
-              ...entry,
-              amountMl: entry.amountMl - remainingToDeduct,
-            });
-            actualDeducted += remainingToDeduct;
-            remainingToDeduct = 0;
-          }
-        }
-        updatedEntries = nextEntries;
-        const effectiveDeducted = actualDeducted > 0 ? actualDeducted : Math.abs(ml);
-        const recalculated = Math.max(0, existing.waterMl - effectiveDeducted);
         return {
           ...prev,
           [selectedDate]: {
             ...existing,
-            waterMl: recalculated,
-            waterEntries: recalculated === 0 ? [] : updatedEntries,
+            meals: [...existing.meals, newItem],
           },
         };
-      }
+      });
+      return newItem;
+    },
+    [selectedDate]
+  );
 
-      if (updated === 0) {
-        updatedEntries = [];
-      }
+  const removeMealItem = useCallback(
+    (mealId: string) => {
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            meals: existing.meals.filter(m => m.id !== mealId),
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
 
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          waterMl: updated,
-          waterEntries: updatedEntries,
-        },
-      };
-    });
-  }, [selectedDate]);
+  const updateMealQuantity = useCallback(
+    (mealId: string, quantity: number) => {
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            meals: existing.meals.map(item => {
+              if (item.id !== mealId) return item;
+              const originalFood = foodDatabase.find(f => f.id === item.foodId);
+              const baseCals = originalFood ? originalFood.calories : item.calories / item.quantity;
+              const baseCarbs = originalFood ? originalFood.carbs : item.carbs / item.quantity;
+              const baseProt = originalFood ? originalFood.protein : item.protein / item.quantity;
+              const baseFat = originalFood ? originalFood.fat : item.fat / item.quantity;
+              const baseFib = originalFood ? originalFood.fiber : item.fiber / item.quantity;
 
-  const removeWaterEntry = useCallback((id: string, date?: string) => {
-    const targetDate = date || selectedDate;
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate];
-      if (!existing) return prev;
+              return {
+                ...item,
+                quantity,
+                calories: Math.round(baseCals * quantity),
+                carbs: Math.round(baseCarbs * quantity * 10) / 10,
+                protein: Math.round(baseProt * quantity * 10) / 10,
+                fat: Math.round(baseFat * quantity * 10) / 10,
+                fiber: Math.round(baseFib * quantity * 10) / 10,
+              };
+            }),
+          },
+        };
+      });
+    },
+    [selectedDate, foodDatabase]
+  );
 
-      // Handle synthetic/legacy unitemized entries
-      if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
+  const addWater = useCallback(
+    (ml: number, beverageType: string = 'water') => {
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate] || {
+          date: selectedDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+          waterEntries: [],
+        };
+        const updated = Math.max(0, existing.waterMl + ml);
+        let updatedEntries = existing.waterEntries ? [...existing.waterEntries] : [];
+
+        if (ml > 0) {
+          const now = new Date();
+          const timePart = now.toTimeString().split(' ')[0];
+          const todayStr = getTodayDateString();
+          const loggedAt =
+            selectedDate === todayStr ? now.toISOString() : `${selectedDate}T${timePart}.000Z`;
+
+          const newEntry: WaterLogEntry = {
+            id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+            amountMl: ml,
+            beverageType,
+            loggedAt,
+          };
+          updatedEntries = [newEntry, ...updatedEntries];
+        } else if (ml < 0 && updatedEntries.length > 0) {
+          let remainingToDeduct = Math.abs(ml);
+          const targetType = (beverageType || 'water').toLowerCase();
+          const hasMatching = updatedEntries.some(
+            e => (e.beverageType || 'water').toLowerCase() === targetType
+          );
+
+          const nextEntries: WaterLogEntry[] = [];
+          let actualDeducted = 0;
+
+          for (const entry of updatedEntries) {
+            const entryType = (entry.beverageType || 'water').toLowerCase();
+            const isTarget = hasMatching ? entryType === targetType : true;
+
+            if (!isTarget || remainingToDeduct <= 0) {
+              nextEntries.push(entry);
+            } else if (entry.amountMl <= remainingToDeduct) {
+              remainingToDeduct -= entry.amountMl;
+              actualDeducted += entry.amountMl;
+            } else {
+              nextEntries.push({
+                ...entry,
+                amountMl: entry.amountMl - remainingToDeduct,
+              });
+              actualDeducted += remainingToDeduct;
+              remainingToDeduct = 0;
+            }
+          }
+          updatedEntries = nextEntries;
+          const effectiveDeducted = actualDeducted > 0 ? actualDeducted : Math.abs(ml);
+          const recalculated = Math.max(0, existing.waterMl - effectiveDeducted);
+          return {
+            ...prev,
+            [selectedDate]: {
+              ...existing,
+              waterMl: recalculated,
+              waterEntries: recalculated === 0 ? [] : updatedEntries,
+            },
+          };
+        }
+
+        if (updated === 0) {
+          updatedEntries = [];
+        }
+
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            waterMl: updated,
+            waterEntries: updatedEntries,
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
+
+  const removeWaterEntry = useCallback(
+    (id: string, date?: string) => {
+      const targetDate = date || selectedDate;
+      setDailyLogs(prev => {
+        const existing = prev[targetDate];
+        if (!existing) return prev;
+
+        // Handle synthetic/legacy unitemized entries
+        if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
+          return {
+            ...prev,
+            [targetDate]: {
+              ...existing,
+              waterMl: 0,
+              waterEntries: [],
+            },
+          };
+        }
+
+        if (!existing.waterEntries) return prev;
+        const target = existing.waterEntries.find(e => e.id === id);
+        const amountDeducted = target ? target.amountMl : 0;
         return {
           ...prev,
           [targetDate]: {
             ...existing,
-            waterMl: 0,
-            waterEntries: [],
+            waterMl: Math.max(0, existing.waterMl - amountDeducted),
+            waterEntries: existing.waterEntries.filter(e => e.id !== id),
           },
         };
-      }
+      });
+    },
+    [selectedDate]
+  );
 
-      if (!existing.waterEntries) return prev;
-      const target = existing.waterEntries.find((e) => e.id === id);
-      const amountDeducted = target ? target.amountMl : 0;
-      return {
-        ...prev,
-        [targetDate]: {
-          ...existing,
-          waterMl: Math.max(0, existing.waterMl - amountDeducted),
-          waterEntries: existing.waterEntries.filter((e) => e.id !== id),
-        },
-      };
-    });
-  }, [selectedDate]);
+  const updateWaterEntry = useCallback(
+    (id: string, updates: Partial<WaterLogEntry>, date?: string) => {
+      const targetDate = date || selectedDate;
+      setDailyLogs(prev => {
+        const existing = prev[targetDate];
+        if (!existing) return prev;
+        let entries = existing.waterEntries ? [...existing.waterEntries] : [];
 
-  const updateWaterEntry = useCallback((id: string, updates: Partial<WaterLogEntry>, date?: string) => {
-    const targetDate = date || selectedDate;
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate];
-      if (!existing) return prev;
-      let entries = existing.waterEntries ? [...existing.waterEntries] : [];
+        // Handle synthetic/legacy unitemized entries
+        if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
+          const newAmount = updates.amountMl !== undefined ? updates.amountMl : existing.waterMl;
+          const newType = updates.beverageType || 'water';
+          return {
+            ...prev,
+            [targetDate]: {
+              ...existing,
+              waterMl: newAmount,
+              waterEntries: [
+                {
+                  id: 'water_' + Date.now(),
+                  amountMl: newAmount,
+                  beverageType: newType,
+                  loggedAt: `${targetDate}T08:00:00.000Z`,
+                },
+              ],
+            },
+          };
+        }
 
-      // Handle synthetic/legacy unitemized entries
-      if (id.startsWith('synth') || id.startsWith('synthetic') || id === 'legacy_balance') {
-        const newAmount = updates.amountMl !== undefined ? updates.amountMl : existing.waterMl;
-        const newType = updates.beverageType || 'water';
+        const updatedEntries = entries.map(e => (e.id === id ? { ...e, ...updates } : e));
+        const recalculatedWater = updatedEntries.reduce((sum, e) => sum + (e.amountMl || 0), 0);
         return {
           ...prev,
           [targetDate]: {
             ...existing,
-            waterMl: newAmount,
-            waterEntries: [
-              {
-                id: 'water_' + Date.now(),
-                amountMl: newAmount,
-                beverageType: newType,
-                loggedAt: `${targetDate}T08:00:00.000Z`,
-              },
-            ],
+            waterMl: recalculatedWater,
+            waterEntries: updatedEntries,
           },
         };
-      }
-
-      const updatedEntries = entries.map((e) =>
-        e.id === id ? { ...e, ...updates } : e
-      );
-      const recalculatedWater = updatedEntries.reduce((sum, e) => sum + (e.amountMl || 0), 0);
-      return {
-        ...prev,
-        [targetDate]: {
-          ...existing,
-          waterMl: recalculatedWater,
-          waterEntries: updatedEntries,
-        },
-      };
-    });
-  }, [selectedDate]);
+      });
+    },
+    [selectedDate]
+  );
 
   const resetWater = useCallback(() => {
-    setDailyLogs((prev) => {
+    setDailyLogs(prev => {
       const existing = prev[selectedDate];
       if (!existing) return prev;
       return {
@@ -1181,94 +1293,106 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, [selectedDate]);
 
-  const addWorkout = useCallback((name: string, durationMinutes: number, caloriesBurned: number) => {
-    const workout: WorkoutActivity = {
-      id: 'work_' + Date.now(),
-      name,
-      durationMinutes,
-      caloriesBurned,
-      loggedAt: new Date().toISOString(),
-    };
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate] || {
-        date: selectedDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
+  const addWorkout = useCallback(
+    (name: string, durationMinutes: number, caloriesBurned: number) => {
+      const workout: WorkoutActivity = {
+        id: 'work_' + Date.now(),
+        name,
+        durationMinutes,
+        caloriesBurned,
+        loggedAt: new Date().toISOString(),
       };
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          activities: [...existing.activities, workout],
-        },
-      };
-    });
-  }, [selectedDate]);
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate] || {
+          date: selectedDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+        };
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            activities: [...existing.activities, workout],
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
 
-  const removeWorkout = useCallback((id: string) => {
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate];
-      if (!existing) return prev;
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          activities: existing.activities.filter((a) => a.id !== id),
-        },
-      };
-    });
-  }, [selectedDate]);
+  const removeWorkout = useCallback(
+    (id: string) => {
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            activities: existing.activities.filter(a => a.id !== id),
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
 
-  const addSteps = useCallback((count: number) => {
-    setDailyLogs((prev) => {
-      const existing = prev[selectedDate] || {
-        date: selectedDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
-      };
-      return {
-        ...prev,
-        [selectedDate]: {
-          ...existing,
-          steps: Math.max(0, existing.steps + count),
-        },
-      };
-    });
-  }, [selectedDate]);
+  const addSteps = useCallback(
+    (count: number) => {
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate] || {
+          date: selectedDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+        };
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            steps: Math.max(0, existing.steps + count),
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
 
-  const removeStepEntry = useCallback((id: string, date?: string) => {
-    const targetDate = date || selectedDate;
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate];
-      if (!existing) return prev;
+  const removeStepEntry = useCallback(
+    (id: string, date?: string) => {
+      const targetDate = date || selectedDate;
+      setDailyLogs(prev => {
+        const existing = prev[targetDate];
+        if (!existing) return prev;
 
-      const currentEntries = existing.stepEntries || [];
-      const entryToRemove = currentEntries.find((e) => e.id === id);
-      const stepsToDeduct = entryToRemove ? entryToRemove.steps : 0;
+        const currentEntries = existing.stepEntries || [];
+        const entryToRemove = currentEntries.find(e => e.id === id);
+        const stepsToDeduct = entryToRemove ? entryToRemove.steps : 0;
 
-      const updatedEntries = currentEntries.filter((e) => e.id !== id);
-      const updatedSteps = Math.max(0, existing.steps - stepsToDeduct);
+        const updatedEntries = currentEntries.filter(e => e.id !== id);
+        const updatedSteps = Math.max(0, existing.steps - stepsToDeduct);
 
-      return {
-        ...prev,
-        [targetDate]: {
-          ...existing,
-          steps: updatedSteps,
-          stepEntries: updatedEntries,
-        },
-      };
-    });
-  }, [selectedDate]);
+        return {
+          ...prev,
+          [targetDate]: {
+            ...existing,
+            steps: updatedSteps,
+            stepEntries: updatedEntries,
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
 
   const batchUpdateDailySteps = useCallback(
     (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => {
       if (!updates || updates.length === 0) return;
 
-      setDailyLogs((prev) => {
+      setDailyLogs(prev => {
         const nextLogs = { ...prev };
 
         updates.forEach(({ dateStr, steps, records }) => {
@@ -1301,270 +1425,323 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     []
   );
 
-  const logWeight = useCallback((
-    weightKg: number,
-    date?: string,
-    note?: string,
-    customLoggedAt?: string,
-    customId?: string
-  ) => {
-    const targetDate = date || selectedDate;
-    const now = new Date();
-    const todayStr = getTodayDateString(now);
-    const isToday = targetDate === todayStr;
-    const rounded = Math.round(weightKg * 10) / 10;
+  const logWeight = useCallback(
+    (
+      weightKg: number,
+      date?: string,
+      note?: string,
+      customLoggedAt?: string,
+      customId?: string
+    ) => {
+      const targetDate = date || selectedDate;
+      const now = new Date();
+      const todayStr = getTodayDateString(now);
+      const isToday = targetDate === todayStr;
+      const rounded = Math.round(weightKg * 10) / 10;
 
-    let defaultLoggedAt: string;
-    let defaultTimestampNum: number;
+      let defaultLoggedAt: string;
+      let defaultTimestampNum: number;
 
-    if (isToday) {
-      defaultLoggedAt = now.toISOString();
-      defaultTimestampNum = Date.now();
-    } else {
-      const [y, m, d] = targetDate.split('-').map(Number);
-      const localMorning = new Date(y, m - 1, d, 8, 0, 0);
-      defaultLoggedAt = localMorning.toISOString();
-      defaultTimestampNum = localMorning.getTime();
-    }
-
-    const loggedAt = customLoggedAt || defaultLoggedAt;
-    const timestampNum = customLoggedAt ? new Date(customLoggedAt).getTime() : defaultTimestampNum;
-    const entryId = customId || ('weight_' + timestampNum + '_' + Math.random().toString(36).substring(2, 6));
-
-    const newEntry: WeightLogEntry = {
-      id: entryId,
-      weightKg: rounded,
-      loggedAt,
-      note,
-    };
-
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate] || {
-        date: targetDate,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
-      };
-      const prevEntries = existing.weightEntries ? existing.weightEntries.filter((e) => e.id !== entryId) : [];
-      const mergedEntries = [newEntry, ...prevEntries].sort((a, b) => {
-        const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
-        const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
-        return timeB - timeA;
-      });
-
-      const primaryWeight = mergedEntries[0].weightKg;
-
-      const updatedLogs = {
-        ...prev,
-        [targetDate]: {
-          ...existing,
-          weightKg: primaryWeight,
-          weightEntries: mergedEntries,
-        },
-      };
-
-      // Determine if targetDate is the chronologically latest weigh-in
-      const sortedDates = Object.keys(updatedLogs)
-        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
-        .sort((a, b) => b.localeCompare(a));
-
-      if (sortedDates.length > 0 && sortedDates[0] === targetDate) {
-        setUserGoals((g) => ({
-          ...g,
-          currentWeightKg: primaryWeight,
-          startWeightKg: g.startWeightKg ? g.startWeightKg : primaryWeight,
-        }));
-      }
-
-      return updatedLogs;
-    });
-  }, [selectedDate]);
-
-  const deleteWeightEntry = useCallback((id: string, date?: string) => {
-    const targetDate = date || selectedDate;
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate];
-      if (!existing || !existing.weightEntries) return prev;
-      const remaining = existing.weightEntries.filter((e) => e.id !== id);
-      const nextWeight = remaining.length > 0 ? remaining[0].weightKg : undefined;
-      const updatedLogs = {
-        ...prev,
-        [targetDate]: {
-          ...existing,
-          weightKg: nextWeight,
-          weightEntries: remaining,
-        },
-      };
-
-      // Recalculate latest weight so currentWeightKg never gets stuck on deleted entry
-      const sortedDates = Object.keys(updatedLogs)
-        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
-        .sort((a, b) => b.localeCompare(a));
-
-      if (sortedDates.length > 0) {
-        const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
-        setUserGoals((g) => ({
-          ...g,
-          currentWeightKg: newestWeight,
-        }));
+      if (isToday) {
+        defaultLoggedAt = now.toISOString();
+        defaultTimestampNum = Date.now();
       } else {
-        setUserGoals((g) => ({
-          ...g,
-          currentWeightKg: g.startWeightKg || 68.0,
-        }));
+        const [y, m, d] = targetDate.split('-').map(Number);
+        const localMorning = new Date(y, m - 1, d, 8, 0, 0);
+        defaultLoggedAt = localMorning.toISOString();
+        defaultTimestampNum = localMorning.getTime();
       }
 
-      return updatedLogs;
-    });
-  }, [selectedDate]);
+      const loggedAt = customLoggedAt || defaultLoggedAt;
+      const timestampNum = customLoggedAt
+        ? new Date(customLoggedAt).getTime()
+        : defaultTimestampNum;
+      const entryId =
+        customId || 'weight_' + timestampNum + '_' + Math.random().toString(36).substring(2, 6);
 
-  const updateWeightEntry = useCallback((id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => {
-    const targetDate = date || selectedDate;
-    const destDate = newDate || targetDate;
+      const newEntry: WeightLogEntry = {
+        id: entryId,
+        weightKg: rounded,
+        loggedAt,
+        note,
+      };
 
-    setDailyLogs((prev) => {
-      const existing = prev[targetDate];
-      if (!existing || !existing.weightEntries) return prev;
-
-      const foundEntry = existing.weightEntries.find((e) => e.id === id);
-      if (!foundEntry) return prev;
-
-      const updatedEntry: WeightLogEntry = { ...foundEntry, ...updates };
-      let updatedLogs = { ...prev };
-
-      if (destDate !== targetDate) {
-        // Remove from targetDate
-        const remainingTarget = existing.weightEntries.filter((e) => e.id !== id);
-        const nextTargetWeight = remainingTarget.length > 0 ? remainingTarget[0].weightKg : undefined;
-        updatedLogs[targetDate] = {
-          ...existing,
-          weightKg: nextTargetWeight,
-          weightEntries: remainingTarget,
-        };
-
-        // Add to destDate and sort chronologically
-        const destLog = prev[destDate] || {
-          date: destDate,
+      setDailyLogs(prev => {
+        const existing = prev[targetDate] || {
+          date: targetDate,
           meals: [],
           waterMl: 0,
           steps: 0,
           activities: [],
         };
-        const destEntries = destLog.weightEntries ? destLog.weightEntries.filter((e) => e.id !== id) : [];
-        const mergedDest = [updatedEntry, ...destEntries].sort((a, b) => {
+        const prevEntries = existing.weightEntries
+          ? existing.weightEntries.filter(e => e.id !== entryId)
+          : [];
+        const mergedEntries = [newEntry, ...prevEntries].sort((a, b) => {
           const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
           const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
           return timeB - timeA;
         });
 
-        updatedLogs[destDate] = {
-          ...destLog,
-          weightKg: mergedDest.length > 0 ? mergedDest[0].weightKg : undefined,
-          weightEntries: mergedDest,
-        };
-      } else {
-        const updatedEntries = existing.weightEntries.map((e) =>
-          e.id === id ? updatedEntry : e
-        ).sort((a, b) => {
-          const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
-          const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
-          return timeB - timeA;
-        });
-        const latestWeight = updatedEntries.length > 0 ? updatedEntries[0].weightKg : existing.weightKg;
-        updatedLogs[targetDate] = {
-          ...existing,
-          weightKg: latestWeight,
-          weightEntries: updatedEntries,
-        };
-      }
+        const primaryWeight = mergedEntries[0].weightKg;
 
-      // If needed, keep currentWeightKg in sync with the chronologically newest date
-      const sortedDates = Object.keys(updatedLogs)
-        .filter((d) => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0)
-        .sort((a, b) => b.localeCompare(a));
-
-      if (sortedDates.length > 0) {
-        const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
-        setUserGoals((g) => ({
-          ...g,
-          currentWeightKg: newestWeight,
-        }));
-      }
-
-      return updatedLogs;
-    });
-  }, [selectedDate]);
-
-  const addCustomFood = useCallback((foodData: Omit<FoodItem, 'id'>): FoodItem => {
-    const newFood: FoodItem = {
-      ...foodData,
-      id: 'custom_' + Date.now(),
-      name: (foodData.name || 'Custom Food').trim().slice(0, 150),
-      calories: Math.max(0, Math.min(15000, Math.round(Number(foodData.calories) || 0))),
-      carbs: Math.max(0, Math.min(1000, Math.round((Number(foodData.carbs) || 0) * 10) / 10)),
-      protein: Math.max(0, Math.min(1000, Math.round((Number(foodData.protein) || 0) * 10) / 10)),
-      fat: Math.max(0, Math.min(1000, Math.round((Number(foodData.fat) || 0) * 10) / 10)),
-      fiber: Math.max(0, Math.min(500, Math.round((Number(foodData.fiber) || 0) * 10) / 10)),
-      isCustom: true,
-    };
-    setCustomFoods((prev) => {
-      const updated = [newFood, ...prev];
-      const uid = currentUser?.id || 'guest';
-      AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
-
-      const authUid = auth.currentUser?.uid;
-      if (authUid && currentUser && !currentUser.isGuest && !currentUser.id.startsWith('demo_') && authUid === currentUser.id) {
-        // Construct clean payload strictly adhering to firestore.rules
-        const firestorePayload: Record<string, any> = {
-          id: newFood.id,
-          name: newFood.name,
-          calories: newFood.calories,
-          carbs: newFood.carbs,
-          protein: newFood.protein,
-          fat: newFood.fat,
-          fiber: newFood.fiber,
-          isCustom: true,
-          category: newFood.category || 'snacks',
-          categoryLabel: newFood.categoryLabel || 'Custom',
-          defaultServingSize: newFood.defaultServingSize || 1,
-          servingUnit: newFood.servingUnit || 'serving',
+        const updatedLogs = {
+          ...prev,
+          [targetDate]: {
+            ...existing,
+            weightKg: primaryWeight,
+            weightEntries: mergedEntries,
+          },
         };
 
-        if (newFood.icon && typeof newFood.icon === 'string') {
-          firestorePayload.icon = newFood.icon.slice(0, 30);
-        }
-        if (newFood.imageUrl && typeof newFood.imageUrl === 'string' && newFood.imageUrl.length <= 2000) {
-          firestorePayload.imageUrl = newFood.imageUrl;
+        // Determine if targetDate is the chronologically latest weigh-in
+        const sortedDates = Object.keys(updatedLogs)
+          .filter(
+            d => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0
+          )
+          .sort((a, b) => b.localeCompare(a));
+
+        if (sortedDates.length > 0 && sortedDates[0] === targetDate) {
+          setUserGoals(g => ({
+            ...g,
+            currentWeightKg: primaryWeight,
+            startWeightKg: g.startWeightKg ? g.startWeightKg : primaryWeight,
+          }));
         }
 
-        setDoc(doc(db, 'users', currentUser.id, 'customFoods', newFood.id), firestorePayload).catch((err) => {
-          console.warn('Firestore customFoods setDoc error:', err);
-        });
-      }
-      return updated;
-    });
-    return newFood;
-  }, [currentUser]);
+        return updatedLogs;
+      });
+    },
+    [selectedDate]
+  );
 
-  const deleteCustomFood = useCallback((foodId: string) => {
-    setCustomFoods((prev) => {
-      const updated = prev.filter((f) => f.id !== foodId);
-      const uid = currentUser?.id || 'guest';
-      AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(console.error);
+  const deleteWeightEntry = useCallback(
+    (id: string, date?: string) => {
+      const targetDate = date || selectedDate;
+      setDailyLogs(prev => {
+        const existing = prev[targetDate];
+        if (!existing || !existing.weightEntries) return prev;
+        const remaining = existing.weightEntries.filter(e => e.id !== id);
+        const nextWeight = remaining.length > 0 ? remaining[0].weightKg : undefined;
+        const updatedLogs = {
+          ...prev,
+          [targetDate]: {
+            ...existing,
+            weightKg: nextWeight,
+            weightEntries: remaining,
+          },
+        };
 
-      const authUid = auth.currentUser?.uid;
-      if (authUid && currentUser && !currentUser.isGuest && !currentUser.id.startsWith('demo_') && authUid === currentUser.id) {
-        deleteDoc(doc(db, 'users', currentUser.id, 'customFoods', foodId)).catch((err) => {
-          console.warn('Firestore customFoods deleteDoc error:', err);
-        });
-      }
-      return updated;
-    });
-  }, [currentUser]);
+        // Recalculate latest weight so currentWeightKg never gets stuck on deleted entry
+        const sortedDates = Object.keys(updatedLogs)
+          .filter(
+            d => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0
+          )
+          .sort((a, b) => b.localeCompare(a));
+
+        if (sortedDates.length > 0) {
+          const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
+          setUserGoals(g => ({
+            ...g,
+            currentWeightKg: newestWeight,
+          }));
+        } else {
+          setUserGoals(g => ({
+            ...g,
+            currentWeightKg: g.startWeightKg || 68.0,
+          }));
+        }
+
+        return updatedLogs;
+      });
+    },
+    [selectedDate]
+  );
+
+  const updateWeightEntry = useCallback(
+    (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => {
+      const targetDate = date || selectedDate;
+      const destDate = newDate || targetDate;
+
+      setDailyLogs(prev => {
+        const existing = prev[targetDate];
+        if (!existing || !existing.weightEntries) return prev;
+
+        const foundEntry = existing.weightEntries.find(e => e.id === id);
+        if (!foundEntry) return prev;
+
+        const updatedEntry: WeightLogEntry = { ...foundEntry, ...updates };
+        let updatedLogs = { ...prev };
+
+        if (destDate !== targetDate) {
+          // Remove from targetDate
+          const remainingTarget = existing.weightEntries.filter(e => e.id !== id);
+          const nextTargetWeight =
+            remainingTarget.length > 0 ? remainingTarget[0].weightKg : undefined;
+          updatedLogs[targetDate] = {
+            ...existing,
+            weightKg: nextTargetWeight,
+            weightEntries: remainingTarget,
+          };
+
+          // Add to destDate and sort chronologically
+          const destLog = prev[destDate] || {
+            date: destDate,
+            meals: [],
+            waterMl: 0,
+            steps: 0,
+            activities: [],
+          };
+          const destEntries = destLog.weightEntries
+            ? destLog.weightEntries.filter(e => e.id !== id)
+            : [];
+          const mergedDest = [updatedEntry, ...destEntries].sort((a, b) => {
+            const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+            const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+            return timeB - timeA;
+          });
+
+          updatedLogs[destDate] = {
+            ...destLog,
+            weightKg: mergedDest.length > 0 ? mergedDest[0].weightKg : undefined,
+            weightEntries: mergedDest,
+          };
+        } else {
+          const updatedEntries = existing.weightEntries
+            .map(e => (e.id === id ? updatedEntry : e))
+            .sort((a, b) => {
+              const timeA = a.loggedAt ? new Date(a.loggedAt).getTime() : 0;
+              const timeB = b.loggedAt ? new Date(b.loggedAt).getTime() : 0;
+              return timeB - timeA;
+            });
+          const latestWeight =
+            updatedEntries.length > 0 ? updatedEntries[0].weightKg : existing.weightKg;
+          updatedLogs[targetDate] = {
+            ...existing,
+            weightKg: latestWeight,
+            weightEntries: updatedEntries,
+          };
+        }
+
+        // If needed, keep currentWeightKg in sync with the chronologically newest date
+        const sortedDates = Object.keys(updatedLogs)
+          .filter(
+            d => typeof updatedLogs[d]?.weightKg === 'number' && updatedLogs[d]!.weightKg! > 0
+          )
+          .sort((a, b) => b.localeCompare(a));
+
+        if (sortedDates.length > 0) {
+          const newestWeight = updatedLogs[sortedDates[0]].weightKg!;
+          setUserGoals(g => ({
+            ...g,
+            currentWeightKg: newestWeight,
+          }));
+        }
+
+        return updatedLogs;
+      });
+    },
+    [selectedDate]
+  );
+
+  const addCustomFood = useCallback(
+    (foodData: Omit<FoodItem, 'id'>): FoodItem => {
+      const newFood: FoodItem = {
+        ...foodData,
+        id: 'custom_' + Date.now(),
+        name: (foodData.name || 'Custom Food').trim().slice(0, 150),
+        calories: Math.max(0, Math.min(15000, Math.round(Number(foodData.calories) || 0))),
+        carbs: Math.max(0, Math.min(1000, Math.round((Number(foodData.carbs) || 0) * 10) / 10)),
+        protein: Math.max(0, Math.min(1000, Math.round((Number(foodData.protein) || 0) * 10) / 10)),
+        fat: Math.max(0, Math.min(1000, Math.round((Number(foodData.fat) || 0) * 10) / 10)),
+        fiber: Math.max(0, Math.min(500, Math.round((Number(foodData.fiber) || 0) * 10) / 10)),
+        isCustom: true,
+      };
+      setCustomFoods(prev => {
+        const updated = [newFood, ...prev];
+        const uid = currentUser?.id || 'guest';
+        AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(
+          console.error
+        );
+
+        const authUid = auth.currentUser?.uid;
+        if (
+          authUid &&
+          currentUser &&
+          !currentUser.isGuest &&
+          !currentUser.id.startsWith('demo_') &&
+          authUid === currentUser.id
+        ) {
+          // Construct clean payload strictly adhering to firestore.rules
+          const firestorePayload: Record<string, any> = {
+            id: newFood.id,
+            name: newFood.name,
+            calories: newFood.calories,
+            carbs: newFood.carbs,
+            protein: newFood.protein,
+            fat: newFood.fat,
+            fiber: newFood.fiber,
+            isCustom: true,
+            category: newFood.category || 'snacks',
+            categoryLabel: newFood.categoryLabel || 'Custom',
+            defaultServingSize: newFood.defaultServingSize || 1,
+            servingUnit: newFood.servingUnit || 'serving',
+          };
+
+          if (newFood.icon && typeof newFood.icon === 'string') {
+            firestorePayload.icon = newFood.icon.slice(0, 30);
+          }
+          if (
+            newFood.imageUrl &&
+            typeof newFood.imageUrl === 'string' &&
+            newFood.imageUrl.length <= 2000
+          ) {
+            firestorePayload.imageUrl = newFood.imageUrl;
+          }
+
+          setDoc(
+            doc(db, 'users', currentUser.id, 'customFoods', newFood.id),
+            firestorePayload
+          ).catch(err => {
+            console.warn('Firestore customFoods setDoc error:', err);
+          });
+        }
+        return updated;
+      });
+      return newFood;
+    },
+    [currentUser]
+  );
+
+  const deleteCustomFood = useCallback(
+    (foodId: string) => {
+      setCustomFoods(prev => {
+        const updated = prev.filter(f => f.id !== foodId);
+        const uid = currentUser?.id || 'guest';
+        AsyncStorage.setItem(getUserCustomFoodsKey(uid), JSON.stringify(updated)).catch(
+          console.error
+        );
+
+        const authUid = auth.currentUser?.uid;
+        if (
+          authUid &&
+          currentUser &&
+          !currentUser.isGuest &&
+          !currentUser.id.startsWith('demo_') &&
+          authUid === currentUser.id
+        ) {
+          deleteDoc(doc(db, 'users', currentUser.id, 'customFoods', foodId)).catch(err => {
+            console.warn('Firestore customFoods deleteDoc error:', err);
+          });
+        }
+        return updated;
+      });
+    },
+    [currentUser]
+  );
 
   const updateGoals = useCallback((newGoals: Partial<UserGoals>) => {
-    setUserGoals((prev) => ({
+    setUserGoals(prev => ({
       ...prev,
       ...newGoals,
     }));
@@ -1575,18 +1752,85 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const results: WeeklyTrendItem[] = [];
     const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const parts = selectedDate.split('-');
-    const curr = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    const curr = new Date(
+      parseInt(parts[0], 10),
+      parseInt(parts[1], 10) - 1,
+      parseInt(parts[2], 10)
+    );
 
     // Only in Demo Guest mode do we use baseline preview days
     const isGuest = currentUser?.isGuest;
     const baselineDays = [
-      { cals: 1840, carbs: 195, protein: 72, fat: 46, fiber: 26, water: 2250, steps: 9400, burn: 376 },
-      { cals: 1720, carbs: 180, protein: 68, fat: 42, fiber: 24, water: 1750, steps: 8100, burn: 324 },
-      { cals: 1950, carbs: 210, protein: 78, fat: 50, fiber: 28, water: 2500, steps: 11200, burn: 448 },
-      { cals: 1680, carbs: 175, protein: 65, fat: 40, fiber: 22, water: 1500, steps: 7600, burn: 304 },
-      { cals: 1890, carbs: 200, protein: 74, fat: 48, fiber: 27, water: 2000, steps: 10400, burn: 416 },
-      { cals: 1780, carbs: 190, protein: 70, fat: 44, fiber: 25, water: 2250, steps: 8900, burn: 356 },
-      { cals: 1820, carbs: 195, protein: 72, fat: 45, fiber: 26, water: 2000, steps: 9200, burn: 368 },
+      {
+        cals: 1840,
+        carbs: 195,
+        protein: 72,
+        fat: 46,
+        fiber: 26,
+        water: 2250,
+        steps: 9400,
+        burn: 376,
+      },
+      {
+        cals: 1720,
+        carbs: 180,
+        protein: 68,
+        fat: 42,
+        fiber: 24,
+        water: 1750,
+        steps: 8100,
+        burn: 324,
+      },
+      {
+        cals: 1950,
+        carbs: 210,
+        protein: 78,
+        fat: 50,
+        fiber: 28,
+        water: 2500,
+        steps: 11200,
+        burn: 448,
+      },
+      {
+        cals: 1680,
+        carbs: 175,
+        protein: 65,
+        fat: 40,
+        fiber: 22,
+        water: 1500,
+        steps: 7600,
+        burn: 304,
+      },
+      {
+        cals: 1890,
+        carbs: 200,
+        protein: 74,
+        fat: 48,
+        fiber: 27,
+        water: 2000,
+        steps: 10400,
+        burn: 416,
+      },
+      {
+        cals: 1780,
+        carbs: 190,
+        protein: 70,
+        fat: 44,
+        fiber: 25,
+        water: 2250,
+        steps: 8900,
+        burn: 356,
+      },
+      {
+        cals: 1820,
+        carbs: 195,
+        protein: 72,
+        fat: 45,
+        fiber: 26,
+        water: 2000,
+        steps: 9200,
+        burn: 368,
+      },
     ];
 
     const realToday = getTodayDateString();
@@ -1599,15 +1843,48 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const fallback = isGuest ? baselineDays[i % baselineDays.length] : null;
 
       const hasMeals = log && Array.isArray(log.meals) && log.meals.length > 0;
-      const cals = hasMeals ? log.meals.reduce((sum, m) => sum + m.calories, 0) : (fallback ? fallback.cals : 0);
-      const carbs = hasMeals ? log.meals.reduce((sum, m) => sum + m.carbs, 0) : (fallback ? fallback.carbs : 0);
-      const protein = hasMeals ? log.meals.reduce((sum, m) => sum + m.protein, 0) : (fallback ? fallback.protein : 0);
-      const fat = hasMeals ? log.meals.reduce((sum, m) => sum + m.fat, 0) : (fallback ? fallback.fat : 0);
-      const fiber = hasMeals ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0) : (fallback ? fallback.fiber : 0);
-      const waterMl = log && typeof log.waterMl === 'number' && log.waterMl > 0 ? log.waterMl : (fallback ? fallback.water : 0);
-      const steps = log && typeof log.steps === 'number' && log.steps > 0 ? log.steps : (fallback ? fallback.steps : 0);
-      const workoutBurn = log && Array.isArray(log.activities) ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0) : 0;
-      const stepBurn = steps > 0 ? Math.round(steps * 0.04) : (fallback ? fallback.burn : 0);
+      const cals = hasMeals
+        ? log.meals.reduce((sum, m) => sum + m.calories, 0)
+        : fallback
+          ? fallback.cals
+          : 0;
+      const carbs = hasMeals
+        ? log.meals.reduce((sum, m) => sum + m.carbs, 0)
+        : fallback
+          ? fallback.carbs
+          : 0;
+      const protein = hasMeals
+        ? log.meals.reduce((sum, m) => sum + m.protein, 0)
+        : fallback
+          ? fallback.protein
+          : 0;
+      const fat = hasMeals
+        ? log.meals.reduce((sum, m) => sum + m.fat, 0)
+        : fallback
+          ? fallback.fat
+          : 0;
+      const fiber = hasMeals
+        ? log.meals.reduce((sum, m) => sum + (m.fiber || 0), 0)
+        : fallback
+          ? fallback.fiber
+          : 0;
+      const waterMl =
+        log && typeof log.waterMl === 'number' && log.waterMl > 0
+          ? log.waterMl
+          : fallback
+            ? fallback.water
+            : 0;
+      const steps =
+        log && typeof log.steps === 'number' && log.steps > 0
+          ? log.steps
+          : fallback
+            ? fallback.steps
+            : 0;
+      const workoutBurn =
+        log && Array.isArray(log.activities)
+          ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0)
+          : 0;
+      const stepBurn = steps > 0 ? Math.round(steps * 0.04) : fallback ? fallback.burn : 0;
       const burned = stepBurn + workoutBurn;
 
       results.push({
@@ -1627,52 +1904,61 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return results;
   }, [selectedDate, dailyLogs, userGoals.dailyCalorieBudget, currentUser]);
 
-  const login = useCallback(async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      isLoggingOutRef.current = false;
-      const normalizedEmail = email.toLowerCase().trim();
+  const login = useCallback(
+    async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, pass);
-        const fbUser = userCredential.user;
-        const userObj: AuthUser = {
-          id: fbUser.uid,
-          email: fbUser.email || normalizedEmail,
-          name: fbUser.displayName || normalizedEmail.split('@')[0],
-        };
-        setCurrentUser(userObj);
-        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
+        isLoggingOutRef.current = false;
+        const normalizedEmail = email.toLowerCase().trim();
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, pass);
+          const fbUser = userCredential.user;
+          const userObj: AuthUser = {
+            id: fbUser.uid,
+            email: fbUser.email || normalizedEmail,
+            name: fbUser.displayName || normalizedEmail.split('@')[0],
+          };
+          setCurrentUser(userObj);
+          await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
-        // Await full hydration of profile, goals, and all historical dailyLogs from Firestore
-        await fetchAndHydrateUserData(fbUser.uid, userObj);
+          // Await full hydration of profile, goals, and all historical dailyLogs from Firestore
+          await fetchAndHydrateUserData(fbUser.uid, userObj);
 
-        return { success: true };
-      } catch (fbErr: any) {
-        console.log('Firebase login error:', fbErr.code, fbErr.message);
-        if (
-          fbErr.code === 'auth/invalid-credential' ||
-          fbErr.code === 'auth/wrong-password' ||
-          fbErr.code === 'auth/user-not-found'
-        ) {
-          return { success: false, error: 'Invalid email or password' };
+          return { success: true };
+        } catch (fbErr: any) {
+          console.log('Firebase login error:', fbErr.code, fbErr.message);
+          if (
+            fbErr.code === 'auth/invalid-credential' ||
+            fbErr.code === 'auth/wrong-password' ||
+            fbErr.code === 'auth/user-not-found'
+          ) {
+            return { success: false, error: 'Invalid email or password' };
+          }
+          if (fbErr.code === 'auth/invalid-email') {
+            return { success: false, error: 'Please enter a valid email address' };
+          }
+          if (fbErr.code === 'auth/too-many-requests') {
+            return { success: false, error: 'Too many attempts. Please try again later.' };
+          }
+          if (fbErr.code === 'auth/user-disabled') {
+            return {
+              success: false,
+              error: 'This account has been disabled. Please contact support.',
+            };
+          }
+          if (fbErr.code === 'auth/network-request-failed') {
+            return {
+              success: false,
+              error: 'Network error. Please check your internet connection and try again.',
+            };
+          }
+          return { success: false, error: fbErr.message || 'Login failed. Please try again.' };
         }
-        if (fbErr.code === 'auth/invalid-email') {
-          return { success: false, error: 'Please enter a valid email address' };
-        }
-        if (fbErr.code === 'auth/too-many-requests') {
-          return { success: false, error: 'Too many attempts. Please try again later.' };
-        }
-        if (fbErr.code === 'auth/user-disabled') {
-          return { success: false, error: 'This account has been disabled. Please contact support.' };
-        }
-        if (fbErr.code === 'auth/network-request-failed') {
-          return { success: false, error: 'Network error. Please check your internet connection and try again.' };
-        }
-        return { success: false, error: fbErr.message || 'Login failed. Please try again.' };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Login failed' };
       }
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Login failed' };
-    }
-  }, []);
+    },
+    []
+  );
 
   /**
    * Scientific Calorie & Macro Target Calibration based on Mifflin-St Jeor Equation
@@ -1689,14 +1975,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     },
     baseGoals: UserGoals = userGoals
   ): UserGoals => {
-    const userAge = data.age && data.age > 0 ? data.age : (baseGoals.age || 24);
-    const rawWeight = data.weight && data.weight > 0 ? data.weight : (baseGoals.currentWeightKg || 68);
+    const userAge = data.age && data.age > 0 ? data.age : baseGoals.age || 24;
+    const rawWeight =
+      data.weight && data.weight > 0 ? data.weight : baseGoals.currentWeightKg || 68;
     const weightUnit = data.weightUnit || baseGoals.weightUnit || 'kg';
 
     // Normalize weight to kilograms
-    const weightKg = weightUnit === 'lbs'
-      ? Math.round((rawWeight / 2.20462) * 10) / 10
-      : rawWeight;
+    const weightKg = weightUnit === 'lbs' ? Math.round((rawWeight / 2.20462) * 10) / 10 : rawWeight;
 
     const gender = data.gender || baseGoals.gender || 'male';
     const goal = data.goal || baseGoals.goal || 'maintain';
@@ -1770,89 +2055,114 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   };
 
-  const register = useCallback(async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const normalizedEmail = data.email.toLowerCase().trim();
+  const register = useCallback(
+    async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, data.password);
-        const fbUser = userCredential.user;
-
-        await updateProfile(fbUser, { displayName: data.name }).catch(() => {});
-
-        const userObj: AuthUser = {
-          id: fbUser.uid,
-          email: normalizedEmail,
-          name: data.name,
-        };
-        setCurrentUser(userObj);
-        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
-
-        // Scientifically calibrate personalized calorie budget and macro ratios
-        const newGoals: UserGoals = calculateCalibratedGoals(data, userGoals);
-        updateGoals(newGoals);
-
-        // Save profile and goals to Cloud Firestore
+        const normalizedEmail = data.email.toLowerCase().trim();
         try {
-          const profilePayload = sanitizeForFirestore({
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            normalizedEmail,
+            data.password
+          );
+          const fbUser = userCredential.user;
+
+          await updateProfile(fbUser, { displayName: data.name }).catch(() => {});
+
+          const userObj: AuthUser = {
             id: fbUser.uid,
-            name: data.name,
             email: normalizedEmail,
-            age: data.age || newGoals.age || 24,
-            weight: data.weight || newGoals.currentWeightKg || 68,
-            weightUnit: data.weightUnit || newGoals.weightUnit || 'kg',
-            goal: data.goal || newGoals.goal || 'maintain',
-            gender: data.gender || newGoals.gender || 'male',
-            heightCm: newGoals.heightCm || 175,
-            startWeightKg: newGoals.startWeightKg || (data.weight || newGoals.currentWeightKg || 68),
-            goals: sanitizeForFirestore(newGoals),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-          await setDoc(doc(db, 'users', fbUser.uid), profilePayload, { merge: true });
-          hydratedUidRef.current = fbUser.uid;
-
-          // Initialize a fresh clean 0-kcal day for the new user
-          const todayStr = getTodayDateString();
-          const cleanLog: DailyLog = {
-            date: todayStr,
-            meals: [],
-            waterMl: 0,
-            steps: 0,
-            activities: [],
+            name: data.name,
           };
-          setDailyLogs({ [todayStr]: cleanLog });
-          await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify({ [todayStr]: cleanLog }));
-          await AsyncStorage.setItem(getUserLogsKey(fbUser.uid), JSON.stringify({ [todayStr]: cleanLog }));
-          await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, { merge: true });
-          hydratedUidRef.current = fbUser.uid;
-        } catch (fsErr) {
-          console.warn('Firestore register doc write error:', fsErr);
-        }
+          setCurrentUser(userObj);
+          await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
-        return { success: true };
-      } catch (fbErr: any) {
-        console.log('Firebase register error:', fbErr.code, fbErr.message);
-        if (fbErr.code === 'auth/email-already-in-use') {
-          return { success: false, error: 'This email is already registered. Please sign in.' };
+          // Scientifically calibrate personalized calorie budget and macro ratios
+          const newGoals: UserGoals = calculateCalibratedGoals(data, userGoals);
+          updateGoals(newGoals);
+
+          // Save profile and goals to Cloud Firestore
+          try {
+            const profilePayload = sanitizeForFirestore({
+              id: fbUser.uid,
+              name: data.name,
+              email: normalizedEmail,
+              age: data.age || newGoals.age || 24,
+              weight: data.weight || newGoals.currentWeightKg || 68,
+              weightUnit: data.weightUnit || newGoals.weightUnit || 'kg',
+              goal: data.goal || newGoals.goal || 'maintain',
+              gender: data.gender || newGoals.gender || 'male',
+              heightCm: newGoals.heightCm || 175,
+              startWeightKg:
+                newGoals.startWeightKg || data.weight || newGoals.currentWeightKg || 68,
+              goals: sanitizeForFirestore(newGoals),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+            await setDoc(doc(db, 'users', fbUser.uid), profilePayload, { merge: true });
+            hydratedUidRef.current = fbUser.uid;
+
+            // Initialize a fresh clean 0-kcal day for the new user
+            const todayStr = getTodayDateString();
+            const cleanLog: DailyLog = {
+              date: todayStr,
+              meals: [],
+              waterMl: 0,
+              steps: 0,
+              activities: [],
+            };
+            setDailyLogs({ [todayStr]: cleanLog });
+            await AsyncStorage.setItem(
+              STORAGE_KEYS.DAILY_LOGS,
+              JSON.stringify({ [todayStr]: cleanLog })
+            );
+            await AsyncStorage.setItem(
+              getUserLogsKey(fbUser.uid),
+              JSON.stringify({ [todayStr]: cleanLog })
+            );
+            await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, {
+              merge: true,
+            });
+            hydratedUidRef.current = fbUser.uid;
+          } catch (fsErr) {
+            console.warn('Firestore register doc write error:', fsErr);
+          }
+
+          return { success: true };
+        } catch (fbErr: any) {
+          console.log('Firebase register error:', fbErr.code, fbErr.message);
+          if (fbErr.code === 'auth/email-already-in-use') {
+            return { success: false, error: 'This email is already registered. Please sign in.' };
+          }
+          if (fbErr.code === 'auth/weak-password') {
+            return { success: false, error: 'Password must be at least 6 characters.' };
+          }
+          if (fbErr.code === 'auth/invalid-email') {
+            return { success: false, error: 'Please enter a valid email address.' };
+          }
+          if (fbErr.code === 'auth/operation-not-allowed') {
+            return {
+              success: false,
+              error: 'Email/password registration is not enabled. Please contact support.',
+            };
+          }
+          if (fbErr.code === 'auth/network-request-failed') {
+            return {
+              success: false,
+              error: 'Network error. Please check your internet connection and try again.',
+            };
+          }
+          return {
+            success: false,
+            error: fbErr.message || 'Registration failed. Please try again.',
+          };
         }
-        if (fbErr.code === 'auth/weak-password') {
-          return { success: false, error: 'Password must be at least 6 characters.' };
-        }
-        if (fbErr.code === 'auth/invalid-email') {
-          return { success: false, error: 'Please enter a valid email address.' };
-        }
-        if (fbErr.code === 'auth/operation-not-allowed') {
-          return { success: false, error: 'Email/password registration is not enabled. Please contact support.' };
-        }
-        if (fbErr.code === 'auth/network-request-failed') {
-          return { success: false, error: 'Network error. Please check your internet connection and try again.' };
-        }
-        return { success: false, error: fbErr.message || 'Registration failed. Please try again.' };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Registration failed' };
       }
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Registration failed' };
-    }
-  }, [userGoals, updateGoals]);
+    },
+    [userGoals, updateGoals]
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     isLoggingOutRef.current = true;
@@ -1882,17 +2192,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCustomFoods([]);
       setSelectedDate(todayStr);
       try {
-        const keysToRemove = [
-          STORAGE_KEYS.AUTH,
-          STORAGE_KEYS.DAILY_LOGS,
-          STORAGE_KEYS.USER_GOALS,
-        ];
+        const keysToRemove = [STORAGE_KEYS.AUTH, STORAGE_KEYS.DAILY_LOGS, STORAGE_KEYS.USER_GOALS];
         if (uid) {
-          keysToRemove.push(
-            getUserLogsKey(uid),
-            getUserGoalsKey(uid),
-            getUserCustomFoodsKey(uid)
-          );
+          keysToRemove.push(getUserLogsKey(uid), getUserGoalsKey(uid), getUserCustomFoodsKey(uid));
         }
         await AsyncStorage.multiRemove(keysToRemove);
       } catch (storageErr) {
@@ -1924,7 +2226,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
                 const batch = writeBatch(db);
                 const chunk = snap.docs.slice(i, i + BATCH_SIZE);
-                chunk.forEach((d) => batch.delete(d.ref));
+                chunk.forEach(d => batch.delete(d.ref));
                 await batch.commit();
               }
             }
@@ -1949,7 +2251,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (authErr.code === 'auth/requires-recent-login') {
             return {
               success: false,
-              error: 'For your security, please sign out and sign back in before deleting your account.',
+              error:
+                'For your security, please sign out and sign back in before deleting your account.',
             };
           }
           return {
@@ -2104,93 +2407,108 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ]
   );
 
-  const authValue = useMemo<AuthContextValue>(() => ({
-    currentUser,
-    isAuthenticated: !!currentUser,
-    isAuthLoading,
-    login,
-    register,
-    logout,
-    deleteAccount,
-    loginDemo,
-  }), [currentUser, isAuthLoading, login, register, logout, deleteAccount, loginDemo]);
+  const authValue = useMemo<AuthContextValue>(
+    () => ({
+      currentUser,
+      isAuthenticated: !!currentUser,
+      isAuthLoading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      loginDemo,
+    }),
+    [currentUser, isAuthLoading, login, register, logout, deleteAccount, loginDemo]
+  );
 
-  const goalsValue = useMemo<GoalsContextValue>(() => ({
-    userGoals,
-    updateGoals,
-  }), [userGoals, updateGoals]);
+  const goalsValue = useMemo<GoalsContextValue>(
+    () => ({
+      userGoals,
+      updateGoals,
+    }),
+    [userGoals, updateGoals]
+  );
 
-  const dailyLogValue = useMemo<DailyLogContextValue>(() => ({
-    selectedDate,
-    setSelectedDate,
-    shiftDate,
-    dailyLogs,
-    currentLog,
-    totalConsumed,
-    totalBurned,
-    remainingCalories,
-    totalCarbs,
-    totalProtein,
-    totalFat,
-    totalFiber,
-    mealsByType,
-    mealCalories,
-    addMealItem,
-    removeMealItem,
-    updateMealQuantity,
-    addWater,
-    removeWaterEntry,
-    updateWaterEntry,
-    resetWater,
-    addWorkout,
-    removeWorkout,
-    addSteps,
-    removeStepEntry,
-    batchUpdateDailySteps,
-    logWeight,
-    updateWeightEntry,
-    deleteWeightEntry,
-  }), [
-    selectedDate,
-    shiftDate,
-    dailyLogs,
-    currentLog,
-    totalConsumed,
-    totalBurned,
-    remainingCalories,
-    totalCarbs,
-    totalProtein,
-    totalFat,
-    totalFiber,
-    mealsByType,
-    mealCalories,
-    addMealItem,
-    removeMealItem,
-    updateMealQuantity,
-    addWater,
-    removeWaterEntry,
-    updateWaterEntry,
-    resetWater,
-    addWorkout,
-    removeWorkout,
-    addSteps,
-    removeStepEntry,
-    batchUpdateDailySteps,
-    logWeight,
-    updateWeightEntry,
-    deleteWeightEntry,
-  ]);
+  const dailyLogValue = useMemo<DailyLogContextValue>(
+    () => ({
+      selectedDate,
+      setSelectedDate,
+      shiftDate,
+      dailyLogs,
+      currentLog,
+      totalConsumed,
+      totalBurned,
+      remainingCalories,
+      totalCarbs,
+      totalProtein,
+      totalFat,
+      totalFiber,
+      mealsByType,
+      mealCalories,
+      addMealItem,
+      removeMealItem,
+      updateMealQuantity,
+      addWater,
+      removeWaterEntry,
+      updateWaterEntry,
+      resetWater,
+      addWorkout,
+      removeWorkout,
+      addSteps,
+      removeStepEntry,
+      batchUpdateDailySteps,
+      logWeight,
+      updateWeightEntry,
+      deleteWeightEntry,
+    }),
+    [
+      selectedDate,
+      shiftDate,
+      dailyLogs,
+      currentLog,
+      totalConsumed,
+      totalBurned,
+      remainingCalories,
+      totalCarbs,
+      totalProtein,
+      totalFat,
+      totalFiber,
+      mealsByType,
+      mealCalories,
+      addMealItem,
+      removeMealItem,
+      updateMealQuantity,
+      addWater,
+      removeWaterEntry,
+      updateWaterEntry,
+      resetWater,
+      addWorkout,
+      removeWorkout,
+      addSteps,
+      removeStepEntry,
+      batchUpdateDailySteps,
+      logWeight,
+      updateWeightEntry,
+      deleteWeightEntry,
+    ]
+  );
 
-  const analyticsValue = useMemo<AnalyticsContextValue>(() => ({
-    weeklyLogs,
-    dailyLogs,
-  }), [weeklyLogs, dailyLogs]);
+  const analyticsValue = useMemo<AnalyticsContextValue>(
+    () => ({
+      weeklyLogs,
+      dailyLogs,
+    }),
+    [weeklyLogs, dailyLogs]
+  );
 
-  const foodValue = useMemo<FoodContextValue>(() => ({
-    foodDatabase,
-    addCustomFood,
-    deleteCustomFood,
-  }), [foodDatabase, addCustomFood, deleteCustomFood]);
+  const foodValue = useMemo<FoodContextValue>(
+    () => ({
+      foodDatabase,
+      addCustomFood,
+      deleteCustomFood,
+    }),
+    [foodDatabase, addCustomFood, deleteCustomFood]
+  );
 
   return (
     <HealthContext.Provider value={contextValue}>
@@ -2198,16 +2516,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         <GoalsContext.Provider value={goalsValue}>
           <DailyLogContext.Provider value={dailyLogValue}>
             <AnalyticsContext.Provider value={analyticsValue}>
-              <FoodContext.Provider value={foodValue}>
-                {children}
-              </FoodContext.Provider>
+              <FoodContext.Provider value={foodValue}>{children}</FoodContext.Provider>
             </AnalyticsContext.Provider>
           </DailyLogContext.Provider>
         </GoalsContext.Provider>
       </AuthContext.Provider>
     </HealthContext.Provider>
   );
-
 };
 
 export const useHealth = () => {

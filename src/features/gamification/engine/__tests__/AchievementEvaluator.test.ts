@@ -73,11 +73,11 @@ describe('AchievementEvaluator', () => {
 
     const res = await AchievementEvaluator.evaluate(input);
 
-    const firstMeal = res.allAchievements.find((a) => a.definition.id === 'first_meal_log');
+    const firstMeal = res.allAchievements.find(a => a.definition.id === 'first_meal_log');
     expect(firstMeal?.isUnlocked).toBe(true);
     expect(firstMeal?.progressPercent).toBe(100);
 
-    const newlyUnlockedIds = res.newlyUnlocked.map((a) => a.definition.id);
+    const newlyUnlockedIds = res.newlyUnlocked.map(a => a.definition.id);
     expect(newlyUnlockedIds).toContain('first_meal_log');
 
     // Subsequent evaluation does not report it as newly unlocked
@@ -95,9 +95,9 @@ describe('AchievementEvaluator', () => {
 
     const res = await AchievementEvaluator.evaluate(input);
 
-    const streak3 = res.allAchievements.find((a) => a.definition.id === 'streak_3_days');
-    const streak7 = res.allAchievements.find((a) => a.definition.id === 'streak_7_days');
-    const streak30 = res.allAchievements.find((a) => a.definition.id === 'streak_30_days');
+    const streak3 = res.allAchievements.find(a => a.definition.id === 'streak_3_days');
+    const streak7 = res.allAchievements.find(a => a.definition.id === 'streak_7_days');
+    const streak30 = res.allAchievements.find(a => a.definition.id === 'streak_30_days');
 
     expect(streak3?.isUnlocked).toBe(true);
     expect(streak7?.isUnlocked).toBe(true);
@@ -122,8 +122,8 @@ describe('AchievementEvaluator', () => {
 
     const res = await AchievementEvaluator.evaluate(input);
 
-    const waterBadge = res.allAchievements.find((a) => a.definition.id === 'water_target_reached');
-    const stepBadge = res.allAchievements.find((a) => a.definition.id === 'steps_10k_daily');
+    const waterBadge = res.allAchievements.find(a => a.definition.id === 'water_target_reached');
+    const stepBadge = res.allAchievements.find(a => a.definition.id === 'steps_10k_daily');
 
     expect(waterBadge?.isUnlocked).toBe(true);
     expect(stepBadge?.isUnlocked).toBe(true);

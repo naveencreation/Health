@@ -95,9 +95,7 @@ describe('AchievementCenterScreen', () => {
   it('renders header, overall completion banner, and category tabs', async () => {
     const onBack = jest.fn();
 
-    const { getByText, findByText } = await render(
-      <AchievementCenterScreen onBack={onBack} />
-    );
+    const { getByText, findByText } = await render(<AchievementCenterScreen onBack={onBack} />);
 
     expect(getByText('Achievements')).toBeTruthy();
 
@@ -112,9 +110,7 @@ describe('AchievementCenterScreen', () => {
   });
 
   it('filters achievements when category tabs are pressed', async () => {
-    const { findByText, getByText } = await render(
-      <AchievementCenterScreen />
-    );
+    const { findByText, getByText } = await render(<AchievementCenterScreen />);
 
     await findByText('OVERALL COMPLETION');
 
@@ -129,9 +125,7 @@ describe('AchievementCenterScreen', () => {
   it('calls onBack when back button is tapped', async () => {
     const onBack = jest.fn();
 
-    const { getByRole, findByText } = await render(
-      <AchievementCenterScreen onBack={onBack} />
-    );
+    const { getByRole, findByText } = await render(<AchievementCenterScreen onBack={onBack} />);
 
     await findByText('OVERALL COMPLETION');
 

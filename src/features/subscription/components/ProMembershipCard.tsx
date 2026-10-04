@@ -60,7 +60,9 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
 
         <View style={styles.bottomRow}>
           <Text style={styles.expiryText}>
-            {expiresAt ? `Renews on ${new Date(expiresAt).toLocaleDateString()}` : 'Unlimited Access'}
+            {expiresAt
+              ? `Renews on ${new Date(expiresAt).toLocaleDateString()}`
+              : 'Unlimited Access'}
           </Text>
           <Pressable
             style={({ pressed }) => [styles.manageBtn, pressed && styles.btnPressed]}

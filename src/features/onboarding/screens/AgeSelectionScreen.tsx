@@ -79,6 +79,7 @@ const AgeItem = React.memo<AgeItemProps>(
     return prevRank === nextRank;
   }
 );
+AgeItem.displayName = 'AgeItem';
 
 export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
   onBack,
@@ -269,13 +270,8 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
             onScrollEndDrag={handleScrollEndDrag}
             onLayout={handleLayout}
           >
-            {AGES.map((age) => (
-              <AgeItem
-                key={age}
-                age={age}
-                selectedAge={selectedAge}
-                onSelect={handleSelectAge}
-              />
+            {AGES.map(age => (
+              <AgeItem key={age} age={age} selectedAge={selectedAge} onSelect={handleSelectAge} />
             ))}
           </ScrollView>
         </View>
@@ -283,7 +279,10 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
         {/* Frame 9: High-Contrast Accessible Continue CTA Button */}
         <View style={styles.footerContainer}>
           <Pressable
-            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed ? styles.continueButtonPressed : null,
+            ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected age"
@@ -295,7 +294,10 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
             <Pressable
-              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
+              style={({ pressed }) => [
+                styles.skipContainer,
+                pressed ? styles.btnPressedSubtle : null,
+              ]}
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
@@ -307,7 +309,10 @@ export const AgeSelectionScreen: React.FC<AgeSelectionScreenProps> = ({
               <Pressable
                 onPress={onSignIn}
                 hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.signInBottomBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >

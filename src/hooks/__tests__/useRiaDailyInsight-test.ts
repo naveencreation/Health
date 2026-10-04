@@ -52,7 +52,14 @@ const log: DailyLog = {
   activities: [],
 };
 
-const params = (overrides: Partial<{ userGoals: UserGoals; currentLog: DailyLog; totalProtein: number; remainingCalories: number }> = {}) => ({
+const params = (
+  overrides: Partial<{
+    userGoals: UserGoals;
+    currentLog: DailyLog;
+    totalProtein: number;
+    remainingCalories: number;
+  }> = {}
+) => ({
   userId: 'user-1',
   selectedDate: '2026-09-23',
   userGoals: overrides.userGoals || goals,
@@ -112,22 +119,24 @@ describe('useRiaDailyInsight', () => {
   });
 
   test('reuses a matching user/date/fingerprint cache entry', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(JSON.stringify({
-      fingerprint: JSON.stringify({
-        userId: 'user-1',
-        selectedDate: '2026-09-23',
-        name: 'Naveen User',
-        riaTone: 'supportive',
-        dailyCalorieBudget: 2200,
-        targetProtein: 90,
-        targetCarbs: 110,
-        targetFat: 70,
-        targetWaterMl: 2000,
-        stepGoal: 10000,
-        meals: [],
-      }),
-      insight: 'Persisted insight',
-    }));
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValue(
+      JSON.stringify({
+        fingerprint: JSON.stringify({
+          userId: 'user-1',
+          selectedDate: '2026-09-23',
+          name: 'Naveen User',
+          riaTone: 'supportive',
+          dailyCalorieBudget: 2200,
+          targetProtein: 90,
+          targetCarbs: 110,
+          targetFat: 70,
+          targetWaterMl: 2000,
+          stepGoal: 10000,
+          meals: [],
+        }),
+        insight: 'Persisted insight',
+      })
+    );
 
     const { result } = await renderHook(() => useRiaDailyInsight(params()));
     await act(async () => {

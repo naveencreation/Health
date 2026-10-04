@@ -42,12 +42,12 @@ class AIObservabilityService {
     }
 
     const total = this.recentMetrics.length;
-    const successes = this.recentMetrics.filter((m) => m.success).length;
+    const successes = this.recentMetrics.filter(m => m.success).length;
     const totalLatency = this.recentMetrics.reduce((acc, m) => acc + m.latencyMs, 0);
 
-    const ttftItems = this.recentMetrics.filter((m) => typeof m.timeToFirstTokenMs === 'number');
+    const ttftItems = this.recentMetrics.filter(m => typeof m.timeToFirstTokenMs === 'number');
     const totalTtft = ttftItems.reduce((acc, m) => acc + (m.timeToFirstTokenMs || 0), 0);
-    const atwaterCount = this.recentMetrics.filter((m) => m.atwaterAdjusted).length;
+    const atwaterCount = this.recentMetrics.filter(m => m.atwaterAdjusted).length;
 
     return {
       totalRequests: total,

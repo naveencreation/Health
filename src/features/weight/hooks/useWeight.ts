@@ -63,7 +63,9 @@ export function useWeight(): UseWeightReturn {
   const currentWeightRaw = logForDate?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
   const currentWeightKg = Math.round(currentWeightRaw * 10) / 10;
 
-  const startWeightRaw = userGoals.startWeightKg ? userGoals.startWeightKg : (userGoals.currentWeightKg || 68.0);
+  const startWeightRaw = userGoals.startWeightKg
+    ? userGoals.startWeightKg
+    : userGoals.currentWeightKg || 68.0;
   const targetWeightRaw = userGoals.targetWeightKg ? userGoals.targetWeightKg : 65.0;
 
   const startWeightKg = Math.round(startWeightRaw * 10) / 10;
@@ -85,7 +87,12 @@ export function useWeight(): UseWeightReturn {
     }
 
     const sortedDates = Object.keys(dailyLogs || {})
-      .filter((d) => d < selectedDate && typeof dailyLogs[d]?.weightKg === 'number' && dailyLogs[d]!.weightKg! > 0)
+      .filter(
+        d =>
+          d < selectedDate &&
+          typeof dailyLogs[d]?.weightKg === 'number' &&
+          dailyLogs[d]!.weightKg! > 0
+      )
       .sort((a, b) => b.localeCompare(a));
 
     if (sortedDates.length > 0) {
@@ -144,12 +151,7 @@ export function useWeight(): UseWeightReturn {
   );
 
   const updateWeightEntry = useCallback(
-    (
-      id: string,
-      updates: Partial<WeightLogEntry>,
-      date?: string,
-      newDate?: string
-    ) => {
+    (id: string, updates: Partial<WeightLogEntry>, date?: string, newDate?: string) => {
       contextUpdateWeightEntry(id, updates, date ?? selectedDate, newDate);
     },
     [contextUpdateWeightEntry, selectedDate]

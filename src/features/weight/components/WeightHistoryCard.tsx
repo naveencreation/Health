@@ -31,8 +31,18 @@ export interface WeightHistoryCardProps {
 }
 
 const MONTH_NAMES = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 const formatLogTime = (isoString?: string): string => {
@@ -69,28 +79,15 @@ const EmptyWeightIllustration: React.FC = () => (
         strokeWidth="1.8"
       />
       {/* Scale LCD Display Screen */}
-      <Rect
-        x="36"
-        y="22"
-        width="28"
-        height="12"
-        rx="3"
-        fill="#0F172A"
-      />
+      <Rect x="36" y="22" width="28" height="12" rx="3" fill="#0F172A" />
       {/* Glowing 0.0 display reading */}
       <Rect x="42" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
       <Circle cx="49" cy="28" r="0.8" fill="#38BDF8" />
       <Rect x="52" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
 
       {/* Decorative Footprint/Tread lines */}
-      <Path
-        d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z"
-        fill="#FFF1EE"
-      />
-      <Path
-        d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z"
-        fill="#FFF1EE"
-      />
+      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill="#FFF1EE" />
+      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill="#FFF1EE" />
       {/* Accent dot on top center */}
       <Circle cx="50" cy="18" r="1.5" fill="#FF5722" />
     </Svg>
@@ -241,7 +238,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
     if (onViewAll) {
       onViewAll();
     } else {
-      setIsExpanded((prev) => !prev);
+      setIsExpanded(prev => !prev);
     }
   };
 
@@ -344,14 +341,18 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                             isZero && styles.deltaTextZero,
                           ]}
                         >
-                          {isZero ? `0.0 ${unit}` : isLoss ? `- ${displayDelta} ${unit}` : `+ ${displayDelta} ${unit}`}
+                          {isZero
+                            ? `0.0 ${unit}`
+                            : isLoss
+                              ? `- ${displayDelta} ${unit}`
+                              : `+ ${displayDelta} ${unit}`}
                         </Text>
                       </View>
 
                       {/* Three-dots menu button */}
                       <Pressable
                         style={({ pressed }) => [styles.optionsBtn, pressed && styles.btnPressed]}
-                        onPress={(e) => handleOpenOptions(item, e)}
+                        onPress={e => handleOpenOptions(item, e)}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${item.date}`}
@@ -376,9 +377,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={`View all ${historyItems.length} records`}
               >
-                <Text style={styles.moreFooterText}>
-                  +{historyItems.length - 4} more records
-                </Text>
+                <Text style={styles.moreFooterText}>+{historyItems.length - 4} more records</Text>
                 <Feather name="arrow-right" size={13} color="#F43F5E" />
               </Pressable>
             )}

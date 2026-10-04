@@ -62,7 +62,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   // Load saved container preferences (cupSize & beverageType)
   useEffect(() => {
     AsyncStorage.getItem('@calori_water_cup_pref')
-      .then((val) => {
+      .then(val => {
         if (val) {
           try {
             const parsed = JSON.parse(val);
@@ -121,10 +121,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       return true;
     };
 
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      handleHardwareBack
-    );
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
     return () => subscription.remove();
   }, [onBack, isHistoryScreenVisible, isReportScreenVisible]);
 
@@ -180,10 +177,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
           <Pressable
-            style={({ pressed }) => [
-              styles.circleNavBtn,
-              pressed && styles.circleNavBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.circleNavBtn, pressed && styles.circleNavBtnPressed]}
             onPress={onBack}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -199,10 +193,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
           </View>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.circleNavBtn,
-              pressed && styles.circleNavBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.circleNavBtn, pressed && styles.circleNavBtnPressed]}
             onPress={handlePressSettings}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -216,10 +207,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       {/* 2. Main Scrollable Dashboard Content */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
@@ -239,9 +227,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
         />
 
         {/* Compact History Card Preview (3 items + View All) */}
-        <WaterHistoryCard
-          onViewAll={() => setIsHistoryScreenVisible(true)}
-        />
+        <WaterHistoryCard onViewAll={() => setIsHistoryScreenVisible(true)} />
       </ScrollView>
 
       {/* 5. Daily Goal Editor Modal Sheet */}

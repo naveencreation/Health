@@ -1,17 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-  PanResponder,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import { StyleSheet, View, Text, Pressable, Platform, PanResponder } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -80,10 +69,7 @@ const TickItem = React.memo<TickItemProps>(({ tickVal, unit, isCenter, onSelect 
       />
       {isMajor ? (
         <Text
-          style={[
-            styles.tickLabel,
-            isCenter ? styles.tickLabelCenter : styles.tickLabelDefault,
-          ]}
+          style={[styles.tickLabel, isCenter ? styles.tickLabelCenter : styles.tickLabelDefault]}
         >
           {labelText}
         </Text>
@@ -93,6 +79,7 @@ const TickItem = React.memo<TickItemProps>(({ tickVal, unit, isCenter, onSelect 
     </Pressable>
   );
 });
+TickItem.displayName = 'TickItem';
 
 export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
   onBack,
@@ -306,13 +293,8 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             </View>
 
             {/* Vertically Slidable Ticks Tape */}
-            <Animated.View
-              style={[
-                styles.ticksTape,
-                dragStyle,
-              ]}
-            >
-              {ticks.map((tickVal) => (
+            <Animated.View style={[styles.ticksTape, dragStyle]}>
+              {ticks.map(tickVal => (
                 <TickItem
                   key={tickVal}
                   tickVal={tickVal}
@@ -332,7 +314,10 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
         {/* Frame 9: Accessible Continue CTA & Footer Links */}
         <View style={styles.footerContainer}>
           <Pressable
-            style={({ pressed }) => [styles.continueButton, pressed ? styles.continueButtonPressed : null]}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed ? styles.continueButtonPressed : null,
+            ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
             accessibilityLabel="Continue with selected height"
@@ -345,7 +330,10 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
           {/* Skip & Sign In Actions */}
           <View style={styles.footerLinksRow}>
             <Pressable
-              style={({ pressed }) => [styles.skipContainer, pressed ? styles.btnPressedSubtle : null]}
+              style={({ pressed }) => [
+                styles.skipContainer,
+                pressed ? styles.btnPressedSubtle : null,
+              ]}
               onPress={onSkip}
               hitSlop={HIT_SLOP_12}
               accessibilityRole="button"
@@ -357,7 +345,10 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
               <Pressable
                 onPress={onSignIn}
                 hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [styles.signInBottomBtn, pressed ? styles.btnPressedSubtle : null]}
+                style={({ pressed }) => [
+                  styles.signInBottomBtn,
+                  pressed ? styles.btnPressedSubtle : null,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign in to existing account"
               >

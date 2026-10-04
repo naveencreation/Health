@@ -49,8 +49,7 @@ jest.mock('../../modals/LogWeightModal', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    LogWeightModal: (props: any) =>
-      props.visible ? <View testID="log-weight-modal" /> : null,
+    LogWeightModal: (props: any) => (props.visible ? <View testID="log-weight-modal" /> : null),
   };
 });
 

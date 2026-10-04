@@ -100,12 +100,23 @@ describe('useWeight Hook', () => {
     await act(async () => {
       result.current.logWeight(69.8, '2026-10-04', 'Morning weigh-in');
     });
-    expect(mockLogWeight).toHaveBeenCalledWith(69.8, '2026-10-04', 'Morning weigh-in', undefined, undefined);
+    expect(mockLogWeight).toHaveBeenCalledWith(
+      69.8,
+      '2026-10-04',
+      'Morning weigh-in',
+      undefined,
+      undefined
+    );
 
     await act(async () => {
       result.current.updateWeightEntry('w_1', { weightKg: 69.9 });
     });
-    expect(mockUpdateWeightEntry).toHaveBeenCalledWith('w_1', { weightKg: 69.9 }, '2026-10-04', undefined);
+    expect(mockUpdateWeightEntry).toHaveBeenCalledWith(
+      'w_1',
+      { weightKg: 69.9 },
+      '2026-10-04',
+      undefined
+    );
 
     await act(async () => {
       result.current.deleteWeightEntry('w_1');

@@ -83,7 +83,13 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
     return () => subscription.remove();
-  }, [onBack, isReportScreenVisible, isHistoryScreenVisible, isLogModalVisible, isSettingsModalVisible]);
+  }, [
+    onBack,
+    isReportScreenVisible,
+    isHistoryScreenVisible,
+    isLogModalVisible,
+    isSettingsModalVisible,
+  ]);
 
   // Clean up undo timer on unmount
   useEffect(() => {
@@ -99,21 +105,24 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
     setIsLogModalVisible(true);
   }, []);
 
-  const handleDeleteEntry = useCallback((item: WeightHistoryItem) => {
-    // 1. Delete from state/context
-    deleteWeightEntry(item.id, item.date);
+  const handleDeleteEntry = useCallback(
+    (item: WeightHistoryItem) => {
+      // 1. Delete from state/context
+      deleteWeightEntry(item.id, item.date);
 
-    // 2. Clear prior undo timer
-    if (undoTimeoutRef.current) {
-      clearTimeout(undoTimeoutRef.current);
-    }
+      // 2. Clear prior undo timer
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+      }
 
-    // 3. Show undo toast for 4.5 seconds
-    setUndoToast({ entry: item });
-    undoTimeoutRef.current = setTimeout(() => {
-      setUndoToast(null);
-    }, 4500);
-  }, [deleteWeightEntry]);
+      // 3. Show undo toast for 4.5 seconds
+      setUndoToast({ entry: item });
+      undoTimeoutRef.current = setTimeout(() => {
+        setUndoToast(null);
+      }, 4500);
+    },
+    [deleteWeightEntry]
+  );
 
   const handleUndoDelete = useCallback(() => {
     if (!undoToast) return;
@@ -139,10 +148,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
       <View style={styles.navBar}>
         <View style={styles.navSideWrapper}>
           <Pressable
-            style={({ pressed }) => [
-              styles.circleNavBtn,
-              pressed && styles.circleNavBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.circleNavBtn, pressed && styles.circleNavBtnPressed]}
             onPress={onBack}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -158,10 +164,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
 
         <View style={styles.navSideWrapperRight}>
           <Pressable
-            style={({ pressed }) => [
-              styles.circleNavBtn,
-              pressed && styles.circleNavBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.circleNavBtn, pressed && styles.circleNavBtnPressed]}
             onPress={() => setIsReportScreenVisible(true)}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -171,10 +174,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [
-              styles.circleNavBtn,
-              pressed && styles.circleNavBtnPressed,
-            ]}
+            style={({ pressed }) => [styles.circleNavBtn, pressed && styles.circleNavBtnPressed]}
             onPress={handlePressSettings}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -188,10 +188,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
       {/* 2. Main Scrollable Dashboard Content */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 32 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
@@ -240,9 +237,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
           screenWidth={Math.min(screenWidth, 480)}
           zIndex={300}
         >
-          <WeightReportScreen
-            onBack={() => setIsClosingReport(true)}
-          />
+          <WeightReportScreen onBack={() => setIsClosingReport(true)} />
         </SlideInSubScreen>
       )}
 

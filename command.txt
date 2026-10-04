@@ -1,2 +1,7 @@
 npx eas-cli build -p android --profile preview
 npx eas-cli build -p android --profile preview --local
+
+
+tsc --noEmit
+npx expo lint
+npm run format:check

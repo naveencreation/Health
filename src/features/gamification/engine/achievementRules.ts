@@ -49,8 +49,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     evaluate: ({ dailyLogs, currentLog }) => {
       const allLogs = Object.values(dailyLogs);
       const hasAnyMeal =
-        allLogs.some((l) => (l.meals || []).length > 0) ||
-        ((currentLog?.meals || []).length > 0);
+        allLogs.some(l => (l.meals || []).length > 0) || (currentLog?.meals || []).length > 0;
       return {
         isUnlocked: hasAnyMeal,
         currentProgress: hasAnyMeal ? 1 : 0,
@@ -125,7 +124,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
       const target = userGoals.waterGoalMl || 2000;
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
-      const metGoal = allLogs.some((l) => (l.waterMl || 0) >= target);
+      const metGoal = allLogs.some(l => (l.waterMl || 0) >= target);
       return {
         isUnlocked: metGoal,
         currentProgress: metGoal ? 1 : 0,
@@ -146,7 +145,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
       const target = userGoals.waterGoalMl || 2000;
       const allLogs = Object.values(dailyLogs);
       if (currentLog && !dailyLogs[currentLog.date]) allLogs.push(currentLog);
-      const daysMet = allLogs.filter((l) => (l.waterMl || 0) >= target).length;
+      const daysMet = allLogs.filter(l => (l.waterMl || 0) >= target).length;
       return {
         isUnlocked: daysMet >= 3,
         currentProgress: Math.min(3, daysMet),
@@ -189,7 +188,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     evaluate: ({ dailyLogs, currentLog }) => {
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
-      const hasWorkout = allLogs.some((l) => (l.activities || []).length > 0);
+      const hasWorkout = allLogs.some(l => (l.activities || []).length > 0);
       return {
         isUnlocked: hasWorkout,
         currentProgress: hasWorkout ? 1 : 0,
@@ -214,7 +213,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
 
-      const hitTarget = allLogs.some((l) => {
+      const hitTarget = allLogs.some(l => {
         const cals = (l.meals || []).reduce((acc, m) => acc + (m.calories || 0), 0);
         return cals >= lower && cals <= upper;
       });
@@ -240,7 +239,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
 
-      const hitProtein = allLogs.some((l) => {
+      const hitProtein = allLogs.some(l => {
         const protein = (l.meals || []).reduce((acc, m) => acc + (m.protein || 0), 0);
         return protein >= targetProtein;
       });

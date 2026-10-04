@@ -22,8 +22,18 @@ export function formatHistoryDateHeader(dateStr: string): string {
     targetZero.setHours(0, 0, 0, 0);
 
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     const monthName = monthNames[month] || 'Jan';
 
@@ -79,7 +89,7 @@ export function formatIntervalRange(startTime?: string, endTime?: string): strin
  */
 export function calculateStepMetrics(steps: number, durationMinutes?: number) {
   const calories = Math.round(steps * 0.04);
-  const distanceKm = Math.round((steps * 0.00076) * 10) / 10;
+  const distanceKm = Math.round(steps * 0.00076 * 10) / 10;
   // Estimate ~100 steps per minute if duration not provided
   const duration = durationMinutes ?? Math.max(1, Math.round(steps / 100));
 
@@ -97,7 +107,7 @@ export function mapHealthConnectRecordsToStepEntries(records: any[]): StepLogEnt
   if (!records || records.length === 0) return [];
 
   return records
-    .filter((r) => r && typeof r.count === 'number' && r.count > 0)
+    .filter(r => r && typeof r.count === 'number' && r.count > 0)
     .map((record, index) => {
       const steps = record.count;
       const startTime = record.startTime;
@@ -138,10 +148,7 @@ export function mapHealthConnectRecordsToStepEntries(records: any[]): StepLogEnt
  * intelligently segments the day's steps into realistic chronological sessions so
  * the user always sees their steps reflected cleanly in the History table!
  */
-export function synthesizeSessionsFromTotal(
-  totalSteps: number,
-  dateStr: string
-): StepLogEntry[] {
+export function synthesizeSessionsFromTotal(totalSteps: number, dateStr: string): StepLogEntry[] {
   if (!totalSteps || totalSteps <= 0) return [];
 
   // If small step count (< 200), keep as 1 single session
@@ -168,12 +175,12 @@ export function synthesizeSessionsFromTotal(
     chunks.push(part1, part2);
   } else if (totalSteps <= 2500) {
     const part1 = Math.round(totalSteps * 0.35);
-    const part2 = Math.round(totalSteps * 0.40);
+    const part2 = Math.round(totalSteps * 0.4);
     const part3 = totalSteps - (part1 + part2);
     chunks.push(part1, part2, part3);
   } else {
     const part1 = Math.round(totalSteps * 0.25);
-    const part2 = Math.round(totalSteps * 0.30);
+    const part2 = Math.round(totalSteps * 0.3);
     const part3 = Math.round(totalSteps * 0.25);
     const part4 = totalSteps - (part1 + part2 + part3);
     chunks.push(part1, part2, part3, part4);

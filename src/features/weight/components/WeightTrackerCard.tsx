@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,8 +40,6 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
   const isZero = deltaKg === 0;
   const progressPct = progressPercent > 0 ? Math.max(4, progressPercent) : 0;
 
-
-
   // Smooth Reanimated fill
   const progressSV = useSharedValue(0);
 
@@ -64,9 +54,12 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
     width: `${progressSV.value}%`,
   }));
 
-  const handleSaveModal = useCallback((savedKg: number) => {
-    onWeightLogged?.(savedKg);
-  }, [onWeightLogged]);
+  const handleSaveModal = useCallback(
+    (savedKg: number) => {
+      onWeightLogged?.(savedKg);
+    },
+    [onWeightLogged]
+  );
 
   return (
     <>
@@ -86,7 +79,12 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
                 <Ionicons name="scale-outline" size={14} color={Colors.weight} />
               </View>
               <Text style={styles.title}>Weight</Text>
-              <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
+              <Ionicons
+                name="chevron-forward"
+                size={14}
+                color="#94A3B8"
+                style={styles.titleChevron}
+              />
             </View>
 
             <View style={styles.metricRow}>
@@ -124,7 +122,11 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
                     isZero && styles.deltaTextZero,
                   ]}
                 >
-                  {isLoss ? `- ${displayDelta} ${unit}` : isGain ? `+ ${displayDelta} ${unit}` : `0.0 ${unit}`}
+                  {isLoss
+                    ? `- ${displayDelta} ${unit}`
+                    : isGain
+                      ? `+ ${displayDelta} ${unit}`
+                      : `0.0 ${unit}`}
                 </Text>
               </View>
             </View>
@@ -132,10 +134,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
 
           {/* Right Action: Refined Pastel Rose Update Button */}
           <Pressable
-            style={({ pressed }) => [
-              styles.updateButton,
-              pressed && styles.updateButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.updateButton, pressed && styles.updateButtonPressed]}
             onPress={() => setModalVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Update weight"
@@ -154,10 +153,16 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
         {/* 3. Range Footer: Starting Weight (Left) & Goal Weight (Right) */}
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>
-            Starting: <Text style={styles.footerValue}>{displayStart} {unit}</Text>
+            Starting:{' '}
+            <Text style={styles.footerValue}>
+              {displayStart} {unit}
+            </Text>
           </Text>
           <Text style={styles.footerText}>
-            Goal: <Text style={styles.footerValue}>{displayGoal} {unit}</Text>
+            Goal:{' '}
+            <Text style={styles.footerValue}>
+              {displayGoal} {unit}
+            </Text>
           </Text>
         </View>
       </View>
@@ -335,4 +340,3 @@ const styles = StyleSheet.create({
 });
 
 export const WeightTrackerCard = React.memo(WeightTrackerCardComponent);
-

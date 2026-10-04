@@ -46,18 +46,54 @@ const CUP_PRESETS: CupSizeOption[] = [
 
 const BEVERAGE_TYPES: BeverageOption[] = [
   { id: 'water', name: 'Water', iconName: 'water', iconFamily: 'svg', color: '#0284C7' },
-  { id: 'coffee', name: 'Coffee', iconName: 'cafe-outline', iconFamily: 'ionicons', color: '#854D0E' },
+  {
+    id: 'coffee',
+    name: 'Coffee',
+    iconName: 'cafe-outline',
+    iconFamily: 'ionicons',
+    color: '#854D0E',
+  },
   { id: 'tea', name: 'Tea', iconName: 'tea', iconFamily: 'mci', color: '#15803D' },
   { id: 'juice', name: 'Juice', iconName: 'cup-water', iconFamily: 'mci', color: '#EA580C' },
-  { id: 'sport', name: 'Sport Drink', iconName: 'bottle-tonic-outline', iconFamily: 'mci', color: '#0284C7' },
-  { id: 'coconut', name: 'Coconut Water', iconName: 'leaf-outline', iconFamily: 'ionicons', color: '#16A34A' },
-  { id: 'smoothie', name: 'Smoothie', iconName: 'blender-outline', iconFamily: 'mci', color: '#9333EA' },
+  {
+    id: 'sport',
+    name: 'Sport Drink',
+    iconName: 'bottle-tonic-outline',
+    iconFamily: 'mci',
+    color: '#0284C7',
+  },
+  {
+    id: 'coconut',
+    name: 'Coconut Water',
+    iconName: 'leaf-outline',
+    iconFamily: 'ionicons',
+    color: '#16A34A',
+  },
+  {
+    id: 'smoothie',
+    name: 'Smoothie',
+    iconName: 'blender-outline',
+    iconFamily: 'mci',
+    color: '#9333EA',
+  },
   { id: 'chocolate', name: 'Chocolate', iconName: 'coffee', iconFamily: 'mci', color: '#78350F' },
-  { id: 'carbonated', name: 'Carbonated', iconName: 'glass-cocktail', iconFamily: 'mci', color: '#F97316' },
+  {
+    id: 'carbonated',
+    name: 'Carbonated',
+    iconName: 'glass-cocktail',
+    iconFamily: 'mci',
+    color: '#F97316',
+  },
   { id: 'soda', name: 'Soda', iconName: 'glass-flute', iconFamily: 'mci', color: '#E11D48' },
   { id: 'wine', name: 'Wine', iconName: 'wine-outline', iconFamily: 'ionicons', color: '#9F1239' },
   { id: 'beer', name: 'Beer', iconName: 'beer-outline', iconFamily: 'ionicons', color: '#D97706' },
-  { id: 'liquor', name: 'Liquor', iconName: 'bottle-tonic-plus-outline', iconFamily: 'mci', color: '#475569' },
+  {
+    id: 'liquor',
+    name: 'Liquor',
+    iconName: 'bottle-tonic-plus-outline',
+    iconFamily: 'mci',
+    color: '#475569',
+  },
 ];
 
 // Mini SVG glass vector for presets & water option
@@ -104,12 +140,14 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
   // Load persistent custom cup presets
   useEffect(() => {
     AsyncStorage.getItem('@calori_custom_cup_presets')
-      .then((val) => {
+      .then(val => {
         if (val) {
           try {
             const parsed = JSON.parse(val);
             if (Array.isArray(parsed)) {
-              setCustomPresets(parsed.filter((n: any) => typeof n === 'number' && n >= 50 && n <= 3000));
+              setCustomPresets(
+                parsed.filter((n: any) => typeof n === 'number' && n >= 50 && n <= 3000)
+              );
             }
           } catch (e) {}
         }
@@ -131,8 +169,8 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
   // Combine default presets with user custom presets
   const allPresets = useMemo(() => {
     const customList: CupSizeOption[] = customPresets
-      .filter((ml) => !CUP_PRESETS.some((p) => p.ml === ml))
-      .map((ml) => ({
+      .filter(ml => !CUP_PRESETS.some(p => p.ml === ml))
+      .map(ml => ({
         ml,
         label: `${ml} mL`,
         isCustom: true,
@@ -164,7 +202,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
     setCustomMlInput('');
 
     // Save as persistent preset if not already present
-    const isBase = CUP_PRESETS.some((p) => p.ml === parsed);
+    const isBase = CUP_PRESETS.some(p => p.ml === parsed);
     if (!isBase && !customPresets.includes(parsed)) {
       const updated = [...customPresets, parsed].sort((a, b) => a - b);
       setCustomPresets(updated);
@@ -177,15 +215,10 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
     onClose();
   };
 
-  const activeBeverage = BEVERAGE_TYPES.find((b) => b.id === selectedBeverage) || BEVERAGE_TYPES[0];
+  const activeBeverage = BEVERAGE_TYPES.find(b => b.id === selectedBeverage) || BEVERAGE_TYPES[0];
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -223,25 +256,17 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
             </View>
 
             <View style={styles.gridContainer}>
-              {allPresets.map((preset) => {
+              {allPresets.map(preset => {
                 const isSelected = selectedSize === preset.ml && !isCustomMode;
                 return (
                   <Pressable
                     key={`preset_${preset.ml}`}
-                    style={({ pressed }) => [
-                      styles.gridItem,
-                      pressed && styles.btnPressed,
-                    ]}
+                    style={({ pressed }) => [styles.gridItem, pressed && styles.btnPressed]}
                     onPress={() => handleSelectCup(preset.ml)}
                     accessibilityRole="button"
                     accessibilityLabel={`${preset.label} container size`}
                   >
-                    <View
-                      style={[
-                        styles.iconCircle,
-                        isSelected && styles.iconCircleSelected,
-                      ]}
-                    >
+                    <View style={[styles.iconCircle, isSelected && styles.iconCircleSelected]}>
                       {preset.ml <= 150 ? (
                         <Ionicons
                           name="cafe"
@@ -263,12 +288,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                         </View>
                       )}
                     </View>
-                    <Text
-                      style={[
-                        styles.itemLabel,
-                        isSelected && styles.itemLabelSelected,
-                      ]}
-                    >
+                    <Text style={[styles.itemLabel, isSelected && styles.itemLabelSelected]}>
                       {preset.label}
                     </Text>
                   </Pressable>
@@ -277,10 +297,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
 
               {/* Add Custom New Volume Button */}
               <Pressable
-                style={({ pressed }) => [
-                  styles.gridItem,
-                  pressed && styles.btnPressed,
-                ]}
+                style={({ pressed }) => [styles.gridItem, pressed && styles.btnPressed]}
                 onPress={() => {
                   setIsCustomMode(!isCustomMode);
                   setCustomError(null);
@@ -295,18 +312,9 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                     isCustomMode && styles.iconCircleSelected,
                   ]}
                 >
-                  <Ionicons
-                    name={isCustomMode ? 'remove' : 'add'}
-                    size={26}
-                    color={Colors.water}
-                  />
+                  <Ionicons name={isCustomMode ? 'remove' : 'add'} size={26} color={Colors.water} />
                 </View>
-                <Text
-                  style={[
-                    styles.itemLabel,
-                    isCustomMode && styles.itemLabelSelected,
-                  ]}
-                >
+                <Text style={[styles.itemLabel, isCustomMode && styles.itemLabelSelected]}>
                   {isCustomMode ? 'Cancel' : 'Add New'}
                 </Text>
               </Pressable>
@@ -330,15 +338,12 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
 
                 <View style={styles.customInputRow}>
                   <TextInput
-                    style={[
-                      styles.customInput,
-                      customError ? styles.customInputError : null,
-                    ]}
+                    style={[styles.customInput, customError ? styles.customInputError : null]}
                     placeholder="e.g. 750"
                     placeholderTextColor="#94A3B8"
                     keyboardType="number-pad"
                     value={customMlInput}
-                    onChangeText={(t) => {
+                    onChangeText={t => {
                       setCustomMlInput(t.replace(/[^0-9]/g, ''));
                       if (customError) setCustomError(null);
                     }}
@@ -346,37 +351,29 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                     autoFocus={true}
                   />
                   <Pressable
-                    style={({ pressed }) => [
-                      styles.applyBtn,
-                      pressed && styles.btnPressed,
-                    ]}
+                    style={({ pressed }) => [styles.applyBtn, pressed && styles.btnPressed]}
                     onPress={handleApplyCustomMl}
                   >
                     <Text style={styles.applyBtnText}>Apply</Text>
                   </Pressable>
                 </View>
-                {customError && (
-                  <Text style={styles.errorText}>{customError}</Text>
-                )}
+                {customError && <Text style={styles.errorText}>{customError}</Text>}
               </View>
             )}
 
             {/* 2. Section: Beverage Type */}
             <View style={[styles.sectionHeaderRow, { marginTop: 20 }]}>
               <Text style={styles.sectionTitle}>Beverage Type</Text>
-              <Text style={styles.sectionSubtitle}>Select what you're drinking</Text>
+              <Text style={styles.sectionSubtitle}>{"Select what you're drinking"}</Text>
             </View>
 
             <View style={styles.gridContainer}>
-              {BEVERAGE_TYPES.map((bev) => {
+              {BEVERAGE_TYPES.map(bev => {
                 const isSelected = selectedBeverage === bev.id;
                 return (
                   <Pressable
                     key={`bev_${bev.id}`}
-                    style={({ pressed }) => [
-                      styles.gridItem,
-                      pressed && styles.btnPressed,
-                    ]}
+                    style={({ pressed }) => [styles.gridItem, pressed && styles.btnPressed]}
                     onPress={() => handleSelectBeverage(bev.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`${bev.name} beverage`}
@@ -395,11 +392,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                       ) : bev.iconFamily === 'ionicons' ? (
                         <Ionicons name={bev.iconName} size={22} color={bev.color} />
                       ) : (
-                        <MaterialCommunityIcons
-                          name={bev.iconName}
-                          size={22}
-                          color={bev.color}
-                        />
+                        <MaterialCommunityIcons name={bev.iconName} size={22} color={bev.color} />
                       )}
                       {isSelected && (
                         <View style={[styles.selectedBadge, { backgroundColor: bev.color }]}>
@@ -425,10 +418,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
           {/* Sticky Bottom Confirmation Button */}
           <View style={styles.footerContainer}>
             <Pressable
-              style={({ pressed }) => [
-                styles.confirmBtn,
-                pressed && styles.btnPressed,
-              ]}
+              style={({ pressed }) => [styles.confirmBtn, pressed && styles.btnPressed]}
               onPress={handleConfirm}
               accessibilityRole="button"
               accessibilityLabel={`Set container to ${selectedSize} mL ${activeBeverage.name}`}

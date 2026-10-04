@@ -45,11 +45,13 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const [imgError, setImgError] = useState(false);
   const expandAnim = useSharedValue(1);
 
-  const resolvedImageSource = imageSource ?? (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
+  const resolvedImageSource =
+    imageSource ??
+    (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
   const handleToggleExpand = () => {
     const toValue = isExpanded ? 0 : 1;
-    setIsExpanded((prev) => !prev);
+    setIsExpanded(prev => !prev);
     expandAnim.value = withTiming(toValue, { duration: 220 });
   };
 
@@ -68,7 +70,8 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const hasItems = items.length > 0;
 
   // Aggregate macros for the entire meal (Meal-level macro summary)
-  const totalProtein = Math.round(items.reduce((sum, item) => sum + (item.protein || 0), 0) * 10) / 10;
+  const totalProtein =
+    Math.round(items.reduce((sum, item) => sum + (item.protein || 0), 0) * 10) / 10;
   const totalCarbs = Math.round(items.reduce((sum, item) => sum + (item.carbs || 0), 0) * 10) / 10;
   const totalFat = Math.round(items.reduce((sum, item) => sum + (item.fat || 0), 0) * 10) / 10;
 
@@ -88,10 +91,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
       {/* 1. Header Row */}
       <View style={styles.headerRow}>
         <Pressable
-          style={({ pressed }) => [
-            styles.headerLeft,
-            pressed ? styles.pressedSubtle : null,
-          ]}
+          style={({ pressed }) => [styles.headerLeft, pressed ? styles.pressedSubtle : null]}
           onPress={() => {
             if (hasItems) {
               handleToggleExpand();
@@ -121,9 +121,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
           {/* Title, Target Subtitle & Clean Progress Bar */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
-              <Text style={styles.mealTitle}>
-                {hasItems ? title.replace('Add ', '') : title}
-              </Text>
+              <Text style={styles.mealTitle}>{hasItems ? title.replace('Add ', '') : title}</Text>
               {hasItems ? (
                 <View style={styles.chevronPill}>
                   <Ionicons
@@ -181,23 +179,11 @@ const MealCardComponent: React.FC<MealCardProps> = ({
 
       {/* 2. Expanded Items List: Flat Rows (No Nested Cards) */}
       {hasItems ? (
-        <Animated.View
-          style={[
-            styles.itemsContainer,
-            { overflow: 'hidden' },
-            collapseStyle,
-          ]}
-        >
+        <Animated.View style={[styles.itemsContainer, { overflow: 'hidden' }, collapseStyle]}>
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
             return (
-              <View
-                key={item.id}
-                style={[
-                  styles.foodRow,
-                  !isLast ? styles.foodRowBorder : null,
-                ]}
-              >
+              <View key={item.id} style={[styles.foodRow, !isLast ? styles.foodRowBorder : null]}>
                 {/* Left: Food Name & Serving */}
                 <View style={styles.foodInfo}>
                   <Text style={styles.foodName} numberOfLines={1}>
@@ -213,7 +199,10 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                   {/* Capsule Stepper */}
                   <View style={styles.stepperCapsule}>
                     <Pressable
-                      style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
+                      style={({ pressed }) => [
+                        styles.stepperBtn,
+                        pressed ? styles.pressedSubtle : null,
+                      ]}
                       hitSlop={HIT_SLOP_8}
                       onPress={() => {
                         if (item.quantity > 1) {
@@ -233,7 +222,10 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                     <Text style={styles.stepperQty}>{item.quantity}</Text>
 
                     <Pressable
-                      style={({ pressed }) => [styles.stepperBtn, pressed ? styles.pressedSubtle : null]}
+                      style={({ pressed }) => [
+                        styles.stepperBtn,
+                        pressed ? styles.pressedSubtle : null,
+                      ]}
                       hitSlop={HIT_SLOP_8}
                       onPress={() => {
                         if (item.quantity === 0.5) {
@@ -256,7 +248,10 @@ const MealCardComponent: React.FC<MealCardProps> = ({
 
                   {/* Delete Button */}
                   <Pressable
-                    style={({ pressed }) => [styles.deleteBtn, pressed ? styles.pressedSubtle : null]}
+                    style={({ pressed }) => [
+                      styles.deleteBtn,
+                      pressed ? styles.pressedSubtle : null,
+                    ]}
                     hitSlop={HIT_SLOP_10}
                     onPress={() => removeMealItem(item.id)}
                     accessibilityRole="button"

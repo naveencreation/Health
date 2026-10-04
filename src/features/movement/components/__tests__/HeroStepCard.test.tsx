@@ -62,9 +62,7 @@ describe('HeroStepCard', () => {
   });
 
   test('renders goal celebration badge when goal is reached or exceeded', async () => {
-    const { getByText } = await render(
-      <HeroStepCard currentSteps={11500} goalSteps={10000} />
-    );
+    const { getByText } = await render(<HeroStepCard currentSteps={11500} goalSteps={10000} />);
 
     expect(getByText('Goal Smashed! (115%)')).toBeTruthy();
   });
@@ -72,11 +70,7 @@ describe('HeroStepCard', () => {
   test('calls onOpenGoalModal when goal subtitle is tapped', async () => {
     const mockGoalModal = jest.fn();
     const { getByLabelText } = await render(
-      <HeroStepCard
-        currentSteps={4000}
-        goalSteps={10000}
-        onOpenGoalModal={mockGoalModal}
-      />
+      <HeroStepCard currentSteps={4000} goalSteps={10000} onOpenGoalModal={mockGoalModal} />
     );
 
     fireEvent.press(getByLabelText('Daily step goal 10,000 steps, tap to edit'));
@@ -84,9 +78,7 @@ describe('HeroStepCard', () => {
   });
 
   test('tapping the athletic shoe triggers interactive feedback', async () => {
-    const { getByLabelText } = await render(
-      <HeroStepCard currentSteps={5000} goalSteps={10000} />
-    );
+    const { getByLabelText } = await render(<HeroStepCard currentSteps={5000} goalSteps={10000} />);
 
     const shoeButton = getByLabelText('Athletic shoe. Tap for motion feedback');
     expect(shoeButton).toBeTruthy();

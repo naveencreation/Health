@@ -1,12 +1,5 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMovement } from '../hooks/useMovement';
 import { Fonts } from '@/theme/typography';
@@ -25,15 +18,7 @@ export interface HeroStepCardProps {
 }
 
 export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
-  (
-    {
-      currentSteps: propSteps,
-      goalSteps: propGoal,
-      onOpenGoalModal,
-      style,
-    },
-    ref
-  ) => {
+  ({ currentSteps: propSteps, goalSteps: propGoal, onOpenGoalModal, style }, ref) => {
     const {
       steps: hookSteps,
       stepGoal: hookStepGoal,
@@ -56,9 +41,12 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
     const percentOfGoal = goalSteps > 0 ? Math.round((currentSteps / goalSteps) * 100) : 0;
 
     // Derived micro-metrics
-    const distanceKm = typeof propSteps === 'number' ? (currentSteps * 0.00076).toFixed(1) : hookDistanceKm;
-    const stepBurnKcal = typeof propSteps === 'number' ? Math.round(currentSteps * 0.04) : hookStepBurnKcal;
-    const activeMinutes = typeof propSteps === 'number' ? Math.round(currentSteps / 100) : hookActiveMinutes;
+    const distanceKm =
+      typeof propSteps === 'number' ? (currentSteps * 0.00076).toFixed(1) : hookDistanceKm;
+    const stepBurnKcal =
+      typeof propSteps === 'number' ? Math.round(currentSteps * 0.04) : hookStepBurnKcal;
+    const activeMinutes =
+      typeof propSteps === 'number' ? Math.round(currentSteps / 100) : hookActiveMinutes;
 
     return (
       <View style={[styles.card, style]}>
@@ -145,6 +133,7 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
     );
   }
 );
+HeroStepCard.displayName = 'HeroStepCard';
 
 const styles = StyleSheet.create({
   card: {

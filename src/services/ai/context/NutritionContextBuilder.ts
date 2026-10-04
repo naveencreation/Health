@@ -22,16 +22,17 @@ export class NutritionContextBuilder {
     const toneGuidelines = this.getToneInstructions(context.riaTone);
     const cleanName = this.sanitizeText(context.name, 40) || 'Friend';
 
-    const loggedMealsSummary = context.loggedMealsToday.length > 0
-      ? context.loggedMealsToday
-          .slice(0, 30) // Cap to prevent token flood
-          .map((m) => {
-            const safeName = this.sanitizeText(m.name, 50);
-            const safeSlot = this.sanitizeText(m.mealType, 20);
-            return `• ${safeName} (${safeSlot}, ~${Math.round(m.calories)} kcal, ${Math.round(m.protein)}g protein)`;
-          })
-          .join('\n')
-      : 'No meals logged yet today.';
+    const loggedMealsSummary =
+      context.loggedMealsToday.length > 0
+        ? context.loggedMealsToday
+            .slice(0, 30) // Cap to prevent token flood
+            .map(m => {
+              const safeName = this.sanitizeText(m.name, 50);
+              const safeSlot = this.sanitizeText(m.mealType, 20);
+              return `• ${safeName} (${safeSlot}, ~${Math.round(m.calories)} kcal, ${Math.round(m.protein)}g protein)`;
+            })
+            .join('\n')
+        : 'No meals logged yet today.';
 
     return `You are Ria, the intelligent personal AI nutrition and wellness coach in the "Calorify" mobile app.
 Your communication style must strictly embody: ${context.riaTone.toUpperCase()} coaching tone.

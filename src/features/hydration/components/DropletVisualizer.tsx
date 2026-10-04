@@ -200,12 +200,7 @@ export const DropletVisualizer = forwardRef(function DropletVisualizer(
         )}
 
         {/* 2. Static Droplet Shell with Soft Border */}
-        <Path
-          d={DROPLET_PATH}
-          fill="#FAFAFC"
-          stroke="#ECEEF2"
-          strokeWidth={2.5}
-        />
+        <Path d={DROPLET_PATH} fill="#FAFAFC" stroke="#ECEEF2" strokeWidth={2.5} />
 
         {/* 3. Clipped Liquid Layers (Calm, buttery-smooth GPU animated) */}
         <G clipPath={`url(#dropletClip_${width})`}>
@@ -224,12 +219,7 @@ export const DropletVisualizer = forwardRef(function DropletVisualizer(
         </G>
 
         {/* 4. Static Droplet Inner Rim Highlight */}
-        <Path
-          d={DROPLET_PATH}
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.65)"
-          strokeWidth={1.5}
-        />
+        <Path d={DROPLET_PATH} fill="none" stroke="rgba(255, 255, 255, 0.65)" strokeWidth={1.5} />
       </Svg>
     </View>
   );

@@ -80,10 +80,14 @@ export class AIOutputValidator {
     const corrections: string[] = [];
     let wasCorrected = false;
 
-    const name = String(parsed.name || 'Recognized Dish').trim().slice(0, 80);
+    const name = String(parsed.name || 'Recognized Dish')
+      .trim()
+      .slice(0, 80);
     const category = parsed.category || 'curries';
     const categoryLabel = parsed.categoryLabel || 'Meals & Dishes';
-    const servingUnit = String(parsed.servingUnit || 'portion').trim().slice(0, 40);
+    const servingUnit = String(parsed.servingUnit || 'portion')
+      .trim()
+      .slice(0, 40);
     const defaultServingSize = Math.max(1, Number(parsed.defaultServingSize) || 1);
 
     // Sanitize Macro Quantities

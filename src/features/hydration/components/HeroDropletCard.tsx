@@ -1,12 +1,5 @@
 import React, { useState, useRef, useMemo, useImperativeHandle, forwardRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useHydration } from '../hooks/useHydration';
@@ -50,15 +43,9 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
   ) => {
     const { currentWaterMl, targetWaterMl, waterEntries } = useHydration();
 
-    const currentWater =
-      typeof propWater === 'number'
-        ? propWater
-        : currentWaterMl;
+    const currentWater = typeof propWater === 'number' ? propWater : currentWaterMl;
 
-    const goalWater =
-      typeof propGoal === 'number'
-        ? propGoal
-        : targetWaterMl;
+    const goalWater = typeof propGoal === 'number' ? propGoal : targetWaterMl;
 
     const isGoalMet = currentWater >= goalWater;
 
@@ -67,7 +54,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
 
     // Expose triggerSlosh to parent
     useImperativeHandle(ref, () => ({
-      triggerSlosh: (dir) => gaugeRef.current?.triggerSlosh(dir),
+      triggerSlosh: dir => gaugeRef.current?.triggerSlosh(dir),
     }));
 
     // Check if today contains logged entries matching the active beverage
@@ -77,7 +64,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
       }
       const targetType = (beverageType || 'water').toLowerCase();
       return waterEntries.some(
-        (e) => (e.beverageType || 'water').toLowerCase() === targetType && e.amountMl > 0
+        e => (e.beverageType || 'water').toLowerCase() === targetType && e.amountMl > 0
       );
     }, [waterEntries, beverageType, currentWater]);
 
@@ -135,19 +122,12 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
                 : 'Deduct water button disabled'
             }
           >
-            <Ionicons
-              name="remove"
-              size={22}
-              color={canDeduct ? '#0284C7' : '#94A3B8'}
-            />
+            <Ionicons name="remove" size={22} color={canDeduct ? '#0284C7' : '#94A3B8'} />
           </Pressable>
 
           {/* Center: Container Size & Beverage Type Pill Selector */}
           <Pressable
-            style={({ pressed }) => [
-              styles.cupSelectorPill,
-              pressed && styles.btnPressed,
-            ]}
+            style={({ pressed }) => [styles.cupSelectorPill, pressed && styles.btnPressed]}
             onPress={onOpenCupSelector}
             accessibilityRole="button"
             accessibilityLabel={`Container size ${cupSize} mL, beverage ${getBeverageName(beverageType)}. Tap to change.`}
@@ -158,12 +138,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
             <Text style={styles.cupSizeText} numberOfLines={1}>
               {cupSize} mL
             </Text>
-            <Ionicons
-              name="chevron-down"
-              size={13}
-              color="#0284C7"
-              style={styles.cupChevron}
-            />
+            <Ionicons name="chevron-down" size={13} color="#0284C7" style={styles.cupChevron} />
           </Pressable>
 
           {/* Right: Quick Plus Button */}
@@ -185,6 +160,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
     );
   }
 );
+HeroDropletCard.displayName = 'HeroDropletCard';
 
 const styles = StyleSheet.create({
   card: {

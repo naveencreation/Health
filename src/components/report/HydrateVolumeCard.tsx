@@ -1,20 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
@@ -63,18 +50,21 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
   const barWidth = Math.min(32, Math.max(22, Math.round(colWidth * 0.62)));
 
   // Calculate dynamic max tick based on peak intake in the period (min 2500 mL)
-  const maxIntake = Math.max(0, ...days.map((d) => d.intakeMl));
+  const maxIntake = Math.max(0, ...days.map(d => d.intakeMl));
   const maxTickMl = Math.max(2500, Math.ceil(maxIntake / 500) * 500);
   const stepMl = maxTickMl / 5;
 
-  const yTicks = useMemo(() => [
-    maxTickMl,
-    maxTickMl - stepMl,
-    maxTickMl - stepMl * 2,
-    maxTickMl - stepMl * 3,
-    maxTickMl - stepMl * 4,
-    0,
-  ], [maxTickMl, stepMl]);
+  const yTicks = useMemo(
+    () => [
+      maxTickMl,
+      maxTickMl - stepMl,
+      maxTickMl - stepMl * 2,
+      maxTickMl - stepMl * 3,
+      maxTickMl - stepMl * 4,
+      0,
+    ],
+    [maxTickMl, stepMl]
+  );
 
   // Selected Day data
   const selectedDay = days[selectedIndex] ?? days[0];
@@ -88,16 +78,15 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
     return { x, y, ml: clampedMl };
   });
 
-  const linePath = points.length > 0
-    ? points.reduce(
-        (acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`),
-        ''
-      )
-    : '';
+  const linePath =
+    points.length > 0
+      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+      : '';
 
-  const areaPath = points.length > 0
-    ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
-    : '';
+  const areaPath =
+    points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+      : '';
 
   const selectedPoint = points[selectedIndex];
 
@@ -112,11 +101,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
       {/* 1. Card Header Row */}
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Hydrate</Text>
-        <ChartTypeToggle
-          chartType={chartType}
-          onChange={setChartType}
-          activeColor={activeColor}
-        />
+        <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
       <View style={styles.headerDivider} />
 
@@ -215,9 +200,8 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
                 const clampedMl = Math.max(0, Math.min(maxTickMl, day.intakeMl));
-                const barHeight = clampedMl === 0
-                  ? 10
-                  : Math.max(14, (clampedMl / maxTickMl) * USABLE_HEIGHT);
+                const barHeight =
+                  clampedMl === 0 ? 10 : Math.max(14, (clampedMl / maxTickMl) * USABLE_HEIGHT);
 
                 // Position the floating pin above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD - 2);

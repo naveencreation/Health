@@ -1,15 +1,6 @@
 import React from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import Svg, {
-  Path,
-  Rect,
-  Circle,
-  Ellipse,
-  Defs,
-  LinearGradient,
-  Stop,
-  G,
-} from 'react-native-svg';
+import Svg, { Path, Rect, Circle, Ellipse, Defs, LinearGradient, Stop, G } from 'react-native-svg';
 
 export interface RunningShoeSvgProps {
   width?: number;
@@ -28,17 +19,11 @@ export const RunningShoeSvg: React.FC<RunningShoeSvgProps> = ({
   width = 110,
   height = 68,
   primaryColor = '#EA580C', // Calorify flame orange
-  accentColor = '#0F172A',  // Deep slate navy
+  accentColor = '#0F172A', // Deep slate navy
   style,
 }) => {
   return (
-    <Svg
-      width={width}
-      height={height}
-      viewBox="0 0 120 72"
-      fill="none"
-      style={style}
-    >
+    <Svg width={width} height={height} viewBox="0 0 120 72" fill="none" style={style}>
       <Defs>
         {/* Sole & Midsole Shadow Gradient */}
         <LinearGradient id="soleGrad" x1="0" y1="0" x2="1" y2="0">
@@ -111,15 +96,7 @@ export const RunningShoeSvg: React.FC<RunningShoeSvgProps> = ({
         fill={accentColor}
       />
       {/* Reflective Heel Tab */}
-      <Rect
-        x="21"
-        y="30"
-        width="3"
-        height="8"
-        rx="1.5"
-        fill="#FFFFFF"
-        opacity={0.7}
-      />
+      <Rect x="21" y="30" width="3" height="8" rx="1.5" fill="#FFFFFF" opacity={0.7} />
 
       {/* 6. Padded Ankle Collar Opening & Lining */}
       <Path

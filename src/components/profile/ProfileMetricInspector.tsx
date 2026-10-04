@@ -44,9 +44,9 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
   const isGainGoal = targetWeightNum > startWeight;
   const totalJourney = Math.max(0.1, Math.abs(startWeight - targetWeightNum));
   const progressSoFar = isGainGoal
-    ? Math.max(0, weightNum - startWeight)       // gaining
-    : Math.max(0, startWeight - weightNum);      // losing
-  const lostSoFar = Math.max(0, startWeight - weightNum);   // kept for display text
+    ? Math.max(0, weightNum - startWeight) // gaining
+    : Math.max(0, startWeight - weightNum); // losing
+  const lostSoFar = Math.max(0, startWeight - weightNum); // kept for display text
   const gainedSoFar = Math.max(0, weightNum - startWeight);
   const remainingWeight = isGainGoal
     ? Math.max(0, targetWeightNum - weightNum)
@@ -120,7 +120,9 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           accessibilityState={{ selected: activeMetric === 'calories' }}
           accessibilityLabel="View Calorie Intake metric"
         >
-          <Text style={[styles.pillText, activeMetric === 'calories' ? styles.pillTextActive : null]}>
+          <Text
+            style={[styles.pillText, activeMetric === 'calories' ? styles.pillTextActive : null]}
+          >
             Calorie Intake
           </Text>
         </Pressable>
@@ -160,11 +162,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
 
       {/* Dynamic Active Hero Card */}
       {activeMetric === 'bmi' ? (
-        <ClinicalBmiGauge
-          bmi={bmi}
-          bmiStatus={bmiStatus}
-          heightCm={heightCm}
-        />
+        <ClinicalBmiGauge bmi={bmi} bmiStatus={bmiStatus} heightCm={heightCm} />
       ) : null}
 
       {activeMetric === 'weight' ? (
@@ -195,9 +193,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
                 style={[
                   styles.weightTrackFill,
                   {
-                    width: weightProgressPct > 0
-                      ? `${weightProgressPct}%`
-                      : 3, // min-fill stub so bar never looks broken
+                    width: weightProgressPct > 0 ? `${weightProgressPct}%` : 3, // min-fill stub so bar never looks broken
                   },
                 ]}
               />
@@ -227,7 +223,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
               <>
                 <Ionicons name="scale-outline" size={16} color="#94A3B8" />
                 <Text style={styles.contextSummaryText}>
-                  You're at your starting weight. Log your weight daily to track progress.
+                  {"You're at your starting weight. Log your weight daily to track progress."}
                 </Text>
               </>
             ) : (
@@ -236,13 +232,16 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
                 <Text style={styles.contextSummaryText}>
                   {isGainGoal ? (
                     <>
-                      Gained <Text style={styles.boldText}>{gainedSoFar.toFixed(1)} kg</Text> so far {'\u2022'}{' '}
+                      Gained <Text style={styles.boldText}>{gainedSoFar.toFixed(1)} kg</Text> so far{' '}
+                      {'\u2022'}{' '}
                       <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> to target
                     </>
                   ) : (
                     <>
-                      Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far {'\u2022'}{' '}
-                      <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> remaining to target
+                      Lost <Text style={styles.boldText}>{lostSoFar.toFixed(1)} kg</Text> so far{' '}
+                      {'\u2022'}{' '}
+                      <Text style={styles.boldText}>{remainingWeight.toFixed(1)} kg</Text> remaining
+                      to target
                     </>
                   )}
                 </Text>
@@ -273,7 +272,9 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           </View>
 
           <View style={styles.macroSplitBar}>
-            <View style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, pPct) }]} />
+            <View
+              style={[styles.macroBarSeg, styles.macroBarProtein, { flex: Math.max(1, pPct) }]}
+            />
             <View style={[styles.macroBarSeg, styles.macroBarCarbs, { flex: Math.max(1, cPct) }]} />
             <View style={[styles.macroBarSeg, styles.macroBarFat, { flex: Math.max(1, fPct) }]} />
           </View>
@@ -282,17 +283,23 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             <View style={styles.legendCol}>
               <View style={[styles.legendDot, styles.legendDotProtein]} />
               <Text style={styles.legendLabel}>Protein</Text>
-              <Text style={styles.legendVal}>{p}g ({pPct}%)</Text>
+              <Text style={styles.legendVal}>
+                {p}g ({pPct}%)
+              </Text>
             </View>
             <View style={styles.legendCol}>
               <View style={[styles.legendDot, styles.legendDotCarbs]} />
               <Text style={styles.legendLabel}>Carbs</Text>
-              <Text style={styles.legendVal}>{c}g ({cPct}%)</Text>
+              <Text style={styles.legendVal}>
+                {c}g ({cPct}%)
+              </Text>
             </View>
             <View style={styles.legendCol}>
               <View style={[styles.legendDot, styles.legendDotFat]} />
               <Text style={styles.legendLabel}>Fat</Text>
-              <Text style={styles.legendVal}>{f}g ({fPct}%)</Text>
+              <Text style={styles.legendVal}>
+                {f}g ({fPct}%)
+              </Text>
             </View>
           </View>
         </View>
@@ -321,7 +328,8 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           <View style={styles.contextSummaryRow}>
             <Ionicons name="flame-outline" size={16} color="#F47551" />
             <Text style={styles.contextSummaryText}>
-              Estimated daily movement burn: <Text style={styles.boldText}>~{Math.round(Number(stepGoal) * 0.04)} kcal</Text>
+              Estimated daily movement burn:{' '}
+              <Text style={styles.boldText}>~{Math.round(Number(stepGoal) * 0.04)} kcal</Text>
             </Text>
           </View>
         </View>
@@ -355,7 +363,6 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
           </View>
         </View>
       ) : null}
-
     </View>
   );
 };

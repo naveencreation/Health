@@ -83,7 +83,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
   const activeMessage = useMemo(() => {
     if (activePromptId) {
-      const match = RIA_PROMPTS.find((p) => p.id === activePromptId);
+      const match = RIA_PROMPTS.find(p => p.id === activePromptId);
       if (match) return match.response;
     }
     return dynamicAiInsight || liveDefaultAdvice;
@@ -121,20 +121,13 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
         {/* Action button: Open full conversation */}
         <Pressable
-          style={({ pressed }) => [
-            styles.chatActionBtn,
-            pressed ? styles.pressedChatBtn : null,
-          ]}
+          style={({ pressed }) => [styles.chatActionBtn, pressed ? styles.pressedChatBtn : null]}
           onPress={() => (onOpenChat ? onOpenChat() : setActivePromptId(null))}
           hitSlop={HIT_SLOP_8}
           accessibilityRole="button"
           accessibilityLabel="Open chat with Ria"
         >
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={18}
-            color="#F47551"
-          />
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color="#F47551" />
         </Pressable>
       </View>
 
@@ -144,10 +137,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
         <View style={styles.bubbleTail} />
 
         <Pressable
-          style={({ pressed }) => [
-            styles.bubbleCard,
-            pressed ? styles.bubbleCardPressed : null,
-          ]}
+          style={({ pressed }) => [styles.bubbleCard, pressed ? styles.bubbleCardPressed : null]}
           onPress={() => (onOpenChat ? onOpenChat(activeMessage) : null)}
           accessibilityRole="button"
           accessibilityLabel="Ask Ria about this insight"
@@ -155,7 +145,11 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           {/* Subtle Insight Tag */}
           <View style={styles.insightTagRow}>
             <Text style={styles.insightTag}>
-              {activePromptId ? '💡 RIA SUGGESTS' : dynamicAiInsight ? '✨ LIVE AI INSIGHT' : '✨ DAILY NUTRITION INSIGHT'}
+              {activePromptId
+                ? '💡 RIA SUGGESTS'
+                : dynamicAiInsight
+                  ? '✨ LIVE AI INSIGHT'
+                  : '✨ DAILY NUTRITION INSIGHT'}
             </Text>
             <View style={styles.askRiaPill}>
               <Text style={styles.askRiaPillText}>Tap to chat 💬</Text>
@@ -175,7 +169,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsScroll}
         >
-          {RIA_PROMPTS.map((prompt) => {
+          {RIA_PROMPTS.map(prompt => {
             const isSelected = activePromptId === prompt.id;
             return (
               <Pressable

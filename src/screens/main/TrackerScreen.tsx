@@ -41,7 +41,20 @@ export interface TrackerScreenProps {
 }
 
 const SHORT_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SHORT_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const toDateString = (date: Date): string => {
   const y = date.getFullYear();
@@ -80,12 +93,15 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
     return () => cancelAnimationFrame(frame);
   }, [initialScrollOffset, scrollRef]);
 
-  const handleScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
-  }, [onScrollPositionChange]);
+  const handleScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScrollPositionChange?.(event.nativeEvent.contentOffset.y);
+    },
+    [onScrollPositionChange]
+  );
 
   const handleScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
+    onScroll: event => {
       scrollY.value = event.contentOffset.y;
     },
   });
@@ -112,11 +128,17 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
     if (!selectedDate) return 'Today';
     const parts = selectedDate.split('-');
     if (parts.length === 3) {
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const d = new Date(
+        parseInt(parts[0], 10),
+        parseInt(parts[1], 10) - 1,
+        parseInt(parts[2], 10)
+      );
       const dayName = SHORT_DAY_NAMES[d.getDay()];
       const monthName = SHORT_MONTHS[d.getMonth()];
       const dayNum = d.getDate();
-      return isViewingToday ? `Today, ${dayNum} ${monthName}` : `${dayName}, ${dayNum} ${monthName}`;
+      return isViewingToday
+        ? `Today, ${dayNum} ${monthName}`
+        : `${dayName}, ${dayNum} ${monthName}`;
     }
     return selectedDate;
   }, [selectedDate, isViewingToday]);

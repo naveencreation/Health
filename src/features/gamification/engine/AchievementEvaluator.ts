@@ -57,7 +57,9 @@ export class AchievementEvaluator {
   /**
    * Saves unlocked achievement records.
    */
-  public static async saveUnlockedRecords(records: Record<string, UnlockedAchievementRecord>): Promise<void> {
+  public static async saveUnlockedRecords(
+    records: Record<string, UnlockedAchievementRecord>
+  ): Promise<void> {
     try {
       await AsyncStorage.setItem(this.storageKey, JSON.stringify(records));
     } catch (e) {
@@ -118,7 +120,7 @@ export class AchievementEvaluator {
       await this.saveUnlockedRecords(unlockedMap);
     }
 
-    const totalUnlockedCount = evaluatedList.filter((a) => a.isUnlocked).length;
+    const totalUnlockedCount = evaluatedList.filter(a => a.isUnlocked).length;
 
     return {
       allAchievements: evaluatedList,

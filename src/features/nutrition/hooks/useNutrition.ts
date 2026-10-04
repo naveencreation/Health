@@ -69,7 +69,8 @@ export function useNutrition(): UseNutritionReturn {
   const calorieBudget = userGoals?.dailyCalorieBudget || 2000;
   const caloriesConsumed = totalConsumed ?? 0;
   const caloriesBurned = totalBurned ?? 0;
-  const remainingCalories = contextRemainingCalories ?? (calorieBudget - caloriesConsumed + caloriesBurned);
+  const remainingCalories =
+    contextRemainingCalories ?? calorieBudget - caloriesConsumed + caloriesBurned;
   const netCalories = caloriesConsumed - caloriesBurned;
 
   const caloriePercentage = useMemo(() => {

@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -41,12 +35,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.dialogCard}>
           {/* Top Confetti / Sparkle Pill */}
@@ -64,11 +53,7 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
               { backgroundColor: tierColor.bg, borderColor: tierColor.border },
             ]}
           >
-            <Ionicons
-              name={definition.iconName as any}
-              size={48}
-              color={tierColor.primary}
-            />
+            <Ionicons name={definition.iconName as any} size={48} color={tierColor.primary} />
           </View>
 
           {/* Tier Label */}

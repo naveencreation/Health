@@ -45,7 +45,9 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [focusedField, setFocusedField] = useState<'name' | 'email' | 'password' | 'confirm' | null>(null);
+  const [focusedField, setFocusedField] = useState<
+    'name' | 'email' | 'password' | 'confirm' | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -66,7 +68,8 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         scrollViewRef.current?.scrollTo({ y: scrollY, animated: true });
       }, 120);
     } else {
-      const fallbackY = field === 'name' ? 0 : field === 'email' ? 80 : field === 'password' ? 160 : 360;
+      const fallbackY =
+        field === 'name' ? 0 : field === 'email' ? 80 : field === 'password' ? 160 : 360;
       scrollViewRef.current?.scrollTo({ y: fallbackY, animated: true });
     }
   };
@@ -178,7 +181,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             {/* Full Name Field */}
             <View
               style={styles.inputGroup}
-              onLayout={(e) => {
+              onLayout={e => {
                 fieldOffsets.current['name'] = e.nativeEvent.layout.y;
               }}
             >
@@ -200,7 +203,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   placeholder="John Doe"
                   placeholderTextColor="#94A3B8"
                   value={name}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setName(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -222,7 +225,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             {/* Email Field */}
             <View
               style={styles.inputGroup}
-              onLayout={(e) => {
+              onLayout={e => {
                 fieldOffsets.current['email'] = e.nativeEvent.layout.y;
               }}
             >
@@ -245,7 +248,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   placeholder="name@example.com"
                   placeholderTextColor="#94A3B8"
                   value={email}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setEmail(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -280,7 +283,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             {/* Password Field */}
             <View
               style={styles.inputGroup}
-              onLayout={(e) => {
+              onLayout={e => {
                 fieldOffsets.current['password'] = e.nativeEvent.layout.y;
               }}
             >
@@ -307,7 +310,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   placeholderTextColor="#94A3B8"
                   secureTextEntry={!showPassword}
                   value={password}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setPassword(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -390,7 +393,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             {/* Confirm Password Field */}
             <View
               style={styles.inputGroup}
-              onLayout={(e) => {
+              onLayout={e => {
                 fieldOffsets.current['confirm'] = e.nativeEvent.layout.y;
               }}
             >
@@ -405,20 +408,24 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="shield-checkmark-outline"
                   size={20}
-                  color={passwordsMatch ? '#10B981' : focusedField === 'confirm' ? '#0F172A' : '#94A3B8'}
+                  color={
+                    passwordsMatch ? '#10B981' : focusedField === 'confirm' ? '#0F172A' : '#94A3B8'
+                  }
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={confirmRef}
                   style={[
                     styles.textInput,
-                    Platform.OS === 'android' && !showConfirmPassword ? styles.androidPasswordInput : null,
+                    Platform.OS === 'android' && !showConfirmPassword
+                      ? styles.androidPasswordInput
+                      : null,
                   ]}
                   placeholder="Repeat password"
                   placeholderTextColor="#94A3B8"
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     setConfirmPassword(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
@@ -441,7 +448,9 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signup-toggle-confirm-password"
                   accessibilityRole="button"
-                  accessibilityLabel={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  accessibilityLabel={
+                    showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                  }
                 >
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}

@@ -18,7 +18,6 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
-
 jest.mock('@/utils/haptics', () => ({
   haptics: {
     selection: jest.fn().mockResolvedValue(undefined),
@@ -115,15 +114,18 @@ describe('AnalyticsScreen Integration', () => {
   it('triggers Pro paywall modal when tapping Monthly on Free tier', async () => {
     const { getByRole, findByText } = await render(<AnalyticsScreen />);
 
-    const monthlyTab = getByRole('button', { name: /Monthly timeframe \(Calorify Pro required\)/i });
+    const monthlyTab = getByRole('button', {
+      name: /Monthly timeframe \(Calorify Pro required\)/i,
+    });
     await act(async () => {
       fireEvent.press(monthlyTab);
     });
 
-    const paywallNotice = await findByText('Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.');
+    const paywallNotice = await findByText(
+      'Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.'
+    );
     expect(paywallNotice).toBeTruthy();
   });
-
 
   it('switches timeframe to Monthly when user is Pro subscriber', async () => {
     (usePro as jest.Mock).mockReturnValue({

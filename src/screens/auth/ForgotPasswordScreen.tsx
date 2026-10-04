@@ -100,7 +100,9 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                   </View>
                   <Text style={styles.titleText}>Forgot Password</Text>
                   <Text style={styles.subtitleText}>
-                    Enter your registered email address and we'll send you a secure link to reset your password.
+                    {
+                      "Enter your registered email address and we'll send you a secure link to reset your password."
+                    }
                   </Text>
                 </View>
 
@@ -116,13 +118,18 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="mail-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                    <Ionicons
+                      name="mail-outline"
+                      size={20}
+                      color="#94A3B8"
+                      style={styles.inputIcon}
+                    />
                     <TextInput
                       style={styles.textInput}
                       placeholder="name@example.com"
                       placeholderTextColor="#94A3B8"
                       value={email}
-                      onChangeText={(t) => {
+                      onChangeText={t => {
                         setEmail(t);
                         if (errorMessage) setErrorMessage(null);
                       }}
@@ -181,13 +188,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 
                 <Text style={styles.titleText}>Check Your Email</Text>
                 <Text style={styles.confirmationDescription}>
-                  We've sent a password reset link to:
+                  {"We've sent a password reset link to:"}
                 </Text>
                 <View style={styles.emailHighlightBox}>
                   <Text style={styles.emailHighlightText}>{email.trim().toLowerCase()}</Text>
                 </View>
                 <Text style={styles.subtitleTextCenter}>
-                  Click the link inside the email to securely choose a new password, then return here to log in.
+                  Click the link inside the email to securely choose a new password, then return
+                  here to log in.
                 </Text>
 
                 {/* Error Alert on Resend */}

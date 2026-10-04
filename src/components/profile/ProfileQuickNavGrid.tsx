@@ -27,8 +27,8 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
     riaTone === 'focused'
       ? 'Disciplined & Direct'
       : riaTone === 'scientific'
-      ? 'Nutritional Scientist'
-      : 'Supportive & Warm';
+        ? 'Nutritional Scientist'
+        : 'Supportive & Warm';
 
   return (
     <View style={styles.gridContainer}>
@@ -83,7 +83,9 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Preferences</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>{toneLabel}</Text>
+              <Text style={styles.cardSubtitle} numberOfLines={1}>
+                {toneLabel}
+              </Text>
             </View>
           </View>
         </Pressable>

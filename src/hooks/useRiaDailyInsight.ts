@@ -35,37 +35,41 @@ export const useRiaDailyInsight = ({
 
   // Water and step edits intentionally do not participate in this key. The local
   // fallback remains live, while AI generation is reserved for meaningful changes.
-  const fingerprint = useMemo(() => JSON.stringify({
-    userId,
-    selectedDate,
-    name: userGoals.name || '',
-    riaTone: userGoals.riaTone || 'supportive',
-    dailyCalorieBudget: userGoals.dailyCalorieBudget,
-    targetProtein: userGoals.targetProtein,
-    targetCarbs: userGoals.targetCarbs,
-    targetFat: userGoals.targetFat,
-    targetWaterMl: userGoals.waterGoalMl,
-    stepGoal: userGoals.stepGoal,
-    meals: currentLog.meals.map((meal) => ({
-      id: meal.id,
-      name: meal.name,
-      mealType: meal.mealType,
-      calories: meal.calories,
-      protein: meal.protein,
-    })),
-  }), [
-    userId,
-    selectedDate,
-    userGoals.name,
-    userGoals.riaTone,
-    userGoals.dailyCalorieBudget,
-    userGoals.targetProtein,
-    userGoals.targetCarbs,
-    userGoals.targetFat,
-    userGoals.waterGoalMl,
-    userGoals.stepGoal,
-    currentLog.meals,
-  ]);
+  const fingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        userId,
+        selectedDate,
+        name: userGoals.name || '',
+        riaTone: userGoals.riaTone || 'supportive',
+        dailyCalorieBudget: userGoals.dailyCalorieBudget,
+        targetProtein: userGoals.targetProtein,
+        targetCarbs: userGoals.targetCarbs,
+        targetFat: userGoals.targetFat,
+        targetWaterMl: userGoals.waterGoalMl,
+        stepGoal: userGoals.stepGoal,
+        meals: currentLog.meals.map(meal => ({
+          id: meal.id,
+          name: meal.name,
+          mealType: meal.mealType,
+          calories: meal.calories,
+          protein: meal.protein,
+        })),
+      }),
+    [
+      userId,
+      selectedDate,
+      userGoals.name,
+      userGoals.riaTone,
+      userGoals.dailyCalorieBudget,
+      userGoals.targetProtein,
+      userGoals.targetCarbs,
+      userGoals.targetFat,
+      userGoals.waterGoalMl,
+      userGoals.stepGoal,
+      currentLog.meals,
+    ]
+  );
 
   useEffect(() => {
     let disposed = false;
@@ -102,7 +106,7 @@ export const useRiaDailyInsight = ({
           consumedWaterMl: currentLog.waterMl,
           stepGoal: userGoals.stepGoal,
           currentSteps: currentLog.steps,
-          loggedMealsToday: currentLog.meals.map((meal) => ({
+          loggedMealsToday: currentLog.meals.map(meal => ({
             name: meal.name,
             mealType: meal.mealType,
             calories: meal.calories,
@@ -110,10 +114,16 @@ export const useRiaDailyInsight = ({
           })),
         };
 
-        const nextInsight = await AIService.getDailyInsight(context, `${userId}:${selectedDate}:${fingerprint}`);
+        const nextInsight = await AIService.getDailyInsight(
+          context,
+          `${userId}:${selectedDate}:${fingerprint}`
+        );
         if (nextInsight && !disposed && version === requestVersionRef.current) {
           setInsight(nextInsight);
-          await AsyncStorage.setItem(storageKey, JSON.stringify({ fingerprint, insight: nextInsight } satisfies CachedInsight));
+          await AsyncStorage.setItem(
+            storageKey,
+            JSON.stringify({ fingerprint, insight: nextInsight } satisfies CachedInsight)
+          );
         }
       } catch {
         // Local fallback remains active when storage, configuration, or AI fails.

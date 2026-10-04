@@ -31,7 +31,8 @@ describe('AIErrorMapper.fromRawError', () => {
   test('maps 401 raw Google JSON error payload to INVALID_KEY', () => {
     const error = AIErrorMapper.fromRawError({
       statusCode: 401,
-      message: '{"error": {"code": 401, "message": "API key not valid. Please pass a valid API key.", "status": "UNAUTHENTICATED"}}',
+      message:
+        '{"error": {"code": 401, "message": "API key not valid. Please pass a valid API key.", "status": "UNAUTHENTICATED"}}',
     });
     expect(error.type).toBe('INVALID_KEY');
     expect(error.retryable).toBe(false);

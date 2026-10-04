@@ -1,20 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, {
-  Path,
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
@@ -77,16 +64,15 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
     return { x, y, pct: clampedPct };
   });
 
-  const linePath = points.length > 0
-    ? points.reduce(
-        (acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`),
-        ''
-      )
-    : '';
+  const linePath =
+    points.length > 0
+      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+      : '';
 
-  const areaPath = points.length > 0
-    ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
-    : '';
+  const areaPath =
+    points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+      : '';
 
   const selectedPoint = points[selectedIndex];
 
@@ -95,11 +81,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
       {/* 1. Card Header Row */}
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>Drink Completion</Text>
-        <ChartTypeToggle
-          chartType={chartType}
-          onChange={setChartType}
-          activeColor={activeColor}
-        />
+        <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
       <View style={styles.headerDivider} />
 
@@ -107,7 +89,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
       <View style={styles.chartWrapper}>
         {/* Y-Axis Column */}
         <View style={styles.yAxisColumn}>
-          {Y_TICKS.map((tick) => (
+          {Y_TICKS.map(tick => (
             <Text key={`tick_${tick}`} style={styles.yTickText}>
               {tick}%
             </Text>
@@ -125,9 +107,8 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
               {days.map((day, idx) => {
                 const isSelected = idx === selectedIndex;
                 const clampedPct = Math.max(0, Math.min(100, day.completionPct));
-                const barHeight = clampedPct === 0
-                  ? 10
-                  : Math.max(14, (clampedPct / 100) * USABLE_HEIGHT);
+                const barHeight =
+                  clampedPct === 0 ? 10 : Math.max(14, (clampedPct / 100) * USABLE_HEIGHT);
 
                 // Position the floating pin above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD - 2);
@@ -143,10 +124,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                     {/* Floating Pin for Selected Bar */}
                     {isSelected && (
                       <View style={[styles.barPinContainer, { bottom: pinBottom }]}>
-                        <ChartTooltipPin
-                          valueText={`${selectedPct}%`}
-                          activeColor={activeColor}
-                        />
+                        <ChartTooltipPin valueText={`${selectedPct}%`} activeColor={activeColor} />
                       </View>
                     )}
 
@@ -217,10 +195,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                     },
                   ]}
                 >
-                  <ChartTooltipPin
-                    valueText={`${selectedPct}%`}
-                    activeColor={activeColor}
-                  />
+                  <ChartTooltipPin valueText={`${selectedPct}%`} activeColor={activeColor} />
                 </View>
               )}
 

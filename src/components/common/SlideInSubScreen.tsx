@@ -43,7 +43,7 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
           duration: 220,
           easing: Easing.in(Easing.cubic),
         },
-        (finished) => {
+        finished => {
           if (finished) {
             runOnJS(onClosed)();
           }

@@ -30,9 +30,13 @@ jest.mock('../DropletVisualizer', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    DropletVisualizer: React.forwardRef((_props: any, _ref: any) => (
-      <View testID="droplet-visualizer" />
-    )),
+    DropletVisualizer: (() => {
+      const Mock = React.forwardRef(function MockDroplet(_props: any, _ref: any) {
+        return <View testID="droplet-visualizer" />;
+      });
+      Mock.displayName = 'DropletVisualizer';
+      return Mock;
+    })(),
   };
 });
 

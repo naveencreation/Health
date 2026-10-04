@@ -42,14 +42,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   initialPrompt,
   onOpenBYOKSetup,
 }) => {
-  const {
-    totalConsumed,
-    remainingCalories,
-    totalProtein,
-    totalCarbs,
-    totalFat,
-    currentLog,
-  } = useDailyLog();
+  const { totalConsumed, remainingCalories, totalProtein, totalCarbs, totalFat, currentLog } =
+    useDailyLog();
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
 
@@ -70,12 +64,15 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const showSub = Keyboard.addListener(showEvent, (e) => {
+    const showSub = Keyboard.addListener(showEvent, e => {
       const height = e?.endCoordinates?.height || 0;
       setKeyboardHeight(height);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, Platform.OS === 'ios' ? 50 : 100);
+      setTimeout(
+        () => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        },
+        Platform.OS === 'ios' ? 50 : 100
+      );
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
@@ -100,7 +97,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       setStreamingText('');
     }
 
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState.match(/inactive|background/) && abortControllerRef.current) {
         abortControllerRef.current.abort();
         setIsStreaming(false);
@@ -157,7 +154,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         text: streamingText + ' [stopped]',
         timestamp: 'Just now',
       };
-      setMessages((prev) => {
+      setMessages(prev => {
         const next = [...prev, partialMsg];
         AIService.saveChatHistory(next, currentUser?.id);
         return next;
@@ -229,7 +226,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         heightCm: userGoals.heightCm,
         age: userGoals.age,
         gender: userGoals.gender,
-        loggedMealsToday: currentLog.meals.map((m) => ({
+        loggedMealsToday: currentLog.meals.map(m => ({
           name: m.name,
           mealType: m.mealType,
           calories: m.calories,
@@ -242,7 +239,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           text,
           messages,
           telemetryContext,
-          (chunk) => {
+          chunk => {
             setStreamingText(chunk);
             scrollToBottom();
           },
@@ -257,7 +254,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           timestamp: 'Just now',
         };
 
-        setMessages((prev) => {
+        setMessages(prev => {
           const updated = [...prev, riaMsg];
           AIService.saveChatHistory(updated, currentUser?.id);
           return updated;
@@ -271,12 +268,15 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         const errorMsg: ChatMessage = {
           id: `ria_err_${Date.now()}`,
           sender: 'ria',
-          text: err?.userMessage || err?.message || 'Sorry, I had trouble generating a response. Please check your Gemini connection.',
+          text:
+            err?.userMessage ||
+            err?.message ||
+            'Sorry, I had trouble generating a response. Please check your Gemini connection.',
           timestamp: 'Just now',
           isError: true,
         };
 
-        setMessages((prev) => [...prev, errorMsg]);
+        setMessages(prev => [...prev, errorMsg]);
       } finally {
         setIsStreaming(false);
         setStreamingText('');
@@ -309,7 +309,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           timestamp: 'Just now',
         };
 
-        setMessages((prev) => {
+        setMessages(prev => {
           const updated = [...prev, riaMsg];
           AIService.saveChatHistory(updated, currentUser?.id);
           return updated;
@@ -337,10 +337,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           accessibilityLabel="Dismiss Ria chat modal backdrop"
         />
         <View
-          style={[
-            styles.sheetContainer,
-            keyboardHeight > 0 ? styles.sheetContainerKeyboard : null,
-          ]}
+          style={[styles.sheetContainer, keyboardHeight > 0 ? styles.sheetContainerKeyboard : null]}
         >
           <View style={styles.handleContainer}>
             <View style={styles.dragHandle} />
@@ -376,7 +373,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
 
               <Pressable
                 onPress={handleClearChat}
-                style={({ pressed }) => [styles.clearChatBtn, pressed ? styles.pressedCloseBtn : null]}
+                style={({ pressed }) => [
+                  styles.clearChatBtn,
+                  pressed ? styles.pressedCloseBtn : null,
+                ]}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Clear chat history"
@@ -421,7 +421,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                 }
               }}
             >
-              {messages.map((msg) => {
+              {messages.map(msg => {
                 const isRia = msg.sender === 'ria';
                 return (
                   <View
@@ -446,9 +446,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                       ]}
                     >
                       {msg.isError ? (
-                        <Text style={[styles.bubbleText, styles.errorMsgText]}>
-                          {msg.text}
-                        </Text>
+                        <Text style={[styles.bubbleText, styles.errorMsgText]}>{msg.text}</Text>
                       ) : (
                         <MarkdownText
                           content={msg.text}
@@ -459,7 +457,12 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                           ]}
                         />
                       )}
-                      <Text style={[styles.timestamp, isRia ? styles.timestampRia : styles.timestampUser]}>
+                      <Text
+                        style={[
+                          styles.timestamp,
+                          isRia ? styles.timestampRia : styles.timestampUser,
+                        ]}
+                      >
                         {msg.timestamp}
                       </Text>
                     </View>
@@ -483,9 +486,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                         baseStyle={[styles.bubbleText, styles.bubbleTextRia]}
                       />
                     ) : (
-                      <Text style={[styles.bubbleText, styles.bubbleTextRia]}>
-                        Thinking...
-                      </Text>
+                      <Text style={[styles.bubbleText, styles.bubbleTextRia]}>Thinking...</Text>
                     )}
                     <View style={styles.streamingIndicatorRow}>
                       <ActivityIndicator size="small" color="#F47551" />
@@ -509,11 +510,18 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
             {/* Quick Suggestion Chips */}
             {!isStreaming && inputQuery.length === 0 ? (
               <View style={styles.quickChipsWrapper}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickChipsScroll}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.quickChipsScroll}
+                >
                   {QUICK_QUESTIONS.map((chip, idx) => (
                     <Pressable
                       key={idx}
-                      style={({ pressed }) => [styles.quickChip, pressed ? styles.pressedQuickChip : null]}
+                      style={({ pressed }) => [
+                        styles.quickChip,
+                        pressed ? styles.pressedQuickChip : null,
+                      ]}
                       onPress={() => handleSendMessage(chip)}
                       accessibilityRole="button"
                       accessibilityLabel={`Ask Ria: ${chip}`}
@@ -530,11 +538,12 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               style={[
                 styles.inputBar,
                 {
-                  paddingBottom: keyboardHeight > 0
-                    ? 10
-                    : Platform.OS === 'ios'
-                    ? Math.max(insets.bottom, 14)
-                    : 12,
+                  paddingBottom:
+                    keyboardHeight > 0
+                      ? 10
+                      : Platform.OS === 'ios'
+                        ? Math.max(insets.bottom, 14)
+                        : 12,
                 },
               ]}
             >
