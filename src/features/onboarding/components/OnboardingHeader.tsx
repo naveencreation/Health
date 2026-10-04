@@ -20,6 +20,7 @@ export const ONBOARDING_SECTIONS: OnboardingSectionInfo[] = [
 
 export interface OnboardingHeaderProps {
   onBack?: () => void;
+  onSkip?: () => void;
   stepText?: string;
   rightElement?: React.ReactNode;
   backAccessibilityLabel?: string;
@@ -46,6 +47,7 @@ const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
   onBack,
+  onSkip,
   stepText,
   rightElement,
   backAccessibilityLabel = 'Go back',
@@ -89,10 +91,21 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Custom Right Element or Legacy Step Indicator */}
+        {/* Right: Custom Right Element, onSkip CTA, or Legacy Step Indicator */}
         <View style={styles.rightContainer}>
           {rightElement ? (
             rightElement
+          ) : onSkip ? (
+            <Pressable
+              onPress={onSkip}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel="Skip this step"
+              testID={`${testID}-skip`}
+              style={({ pressed }) => [styles.skipButton, pressed ? styles.btnPressedSubtle : null]}
+            >
+              <Text style={styles.skipButtonText}>Skip</Text>
+            </Pressable>
           ) : stepText && !showProgressBar ? (
             <View style={styles.stepBadge}>
               <Text style={styles.stepIndicatorText}>{stepText}</Text>
@@ -229,6 +242,16 @@ const styles = StyleSheet.create({
   stepIndicatorText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
+    color: '#64748B',
+  },
+  skipButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  skipButtonText: {
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 14,
     color: '#64748B',
   },
   progressContainer: {

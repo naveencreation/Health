@@ -1,409 +1,415 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Pressable, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, View, Text, Pressable, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
+import { GoalType } from '../services/onboardingCalculator';
+import { GoalIntent } from '../services/onboardingDraft';
 
-export type FitnessGoal = 'lose' | 'maintain' | 'gain';
+export type FitnessGoal = 'lose' | 'maintain' | 'gain' | 'lose_weight' | 'gain_muscle';
 
 interface GoalSelectionScreenProps {
   onBack?: () => void;
-  onContinue?: (goal: FitnessGoal) => void;
+  onContinue?: (goal: GoalType, intent: GoalIntent) => void;
   onSkip?: () => void;
   onSignIn?: () => void;
-  initialGoal?: FitnessGoal;
+  initialGoal?: GoalType | 'lose' | 'gain';
+  initialIntent?: GoalIntent;
+  name?: string;
+  sectionIndex?: number;
+  totalSections?: number;
+  sectionProgress?: number;
 }
 
-interface GoalOption {
-  id: FitnessGoal;
+interface GoalCardItem {
+  id: GoalIntent;
+  goal: GoalType;
   title: string;
   subtitle: string;
+  reassurance: string;
   iconName: string;
   iconFamily: 'ionicons' | 'mci';
   iconColor: string;
 }
 
-const GOAL_OPTIONS: GoalOption[] = [
+const GOAL_OPTIONS: GoalCardItem[] = [
   {
     id: 'lose',
+    goal: 'lose_weight',
     title: 'Lose weight',
     subtitle: 'Caloric deficit for sustainable fat loss',
+    reassurance: "We'll set a gentle calorie budget you can actually stick to.",
     iconName: 'flame',
     iconFamily: 'ionicons',
     iconColor: '#F47551',
   },
   {
     id: 'maintain',
-    title: 'Maintain weight',
+    goal: 'maintain',
+    title: 'Maintain my weight',
     subtitle: 'Equilibrium to optimize daily energy & health',
+    reassurance: "We'll help you balance what you eat without restricting.",
     iconName: 'scale-balance',
     iconFamily: 'mci',
     iconColor: '#16A34A',
   },
   {
-    id: 'gain',
-    title: 'Gain weight',
-    subtitle: 'Caloric surplus to build strength & lean mass',
+    id: 'build',
+    goal: 'gain_muscle',
+    title: 'Build muscle',
+    subtitle: 'Caloric surplus and protein to build strength',
+    reassurance: "We'll set a high-protein target and surplus to fuel gains.",
     iconName: 'barbell',
     iconFamily: 'ionicons',
     iconColor: '#4F46E5',
   },
+  {
+    id: 'understand',
+    goal: 'maintain',
+    title: 'Just understand what I eat',
+    subtitle: 'Discover daily nutrition patterns without pressure',
+    reassurance: 'No pressure, just clear insights on what goes on your plate.',
+    iconName: 'eye-outline',
+    iconFamily: 'ionicons',
+    iconColor: '#0EA5E9',
+  },
 ];
-
-const HIT_SLOP_12 = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   onBack,
   onContinue,
   onSkip,
-  onSignIn,
   initialGoal = 'maintain',
+  initialIntent,
+  name,
+  sectionIndex = 0,
+  totalSections = 4,
+  sectionProgress = 0.4,
 }) => {
-  const [selectedGoal, setSelectedGoal] = useState<FitnessGoal>(initialGoal);
-
-  const handleContinuePress = () => {
-    if (onContinue) onContinue(selectedGoal);
+  // Normalize initialGoal into GoalIntent
+  const defaultIntent = (): GoalIntent => {
+    if (initialIntent) return initialIntent;
+    if (initialGoal === 'lose' || initialGoal === 'lose_weight') return 'lose';
+    if (initialGoal === 'gain' || initialGoal === 'gain_muscle') return 'build';
+    return 'maintain';
   };
+
+  const [selectedIntent, setSelectedIntent] = useState<GoalIntent>(defaultIntent);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleSelectOption = (option: GoalCardItem) => {
+    haptics.selection();
+    setSelectedIntent(option.id);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (onContinue) {
+        onContinue(option.goal, option.id);
+      }
+    }, 450);
+  };
+
+  const handleManualContinue = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const selectedOption = GOAL_OPTIONS.find(o => o.id === selectedIntent) ?? GOAL_OPTIONS[0];
+    if (onContinue) {
+      onContinue(selectedOption.goal, selectedOption.id);
+    }
+  };
+
+  const displayName = name?.trim() ? name.trim() : '';
+  const screenTitle = displayName
+    ? `What brings you here, ${displayName}?`
+    : 'What brings you here?';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Top Navigation Bar */}
-        <OnboardingHeader onBack={onBack} stepText="Step 4 of 5" />
+        <OnboardingHeader
+          onBack={onBack}
+          onSkip={onSkip}
+          sectionIndex={sectionIndex}
+          totalSections={totalSections}
+          sectionProgress={sectionProgress}
+        />
 
-        {/* Header Title & Cognitive Context */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>What goal do you{'\n'}have in mind?</Text>
-          <Text style={styles.screenSubtitle}>
-            Calibrates your daily calorie target and macronutrient ratio
-          </Text>
-        </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.titleContainer}>
+            <Text style={styles.screenTitle}>{screenTitle}</Text>
+            <Text style={styles.screenSubtitle}>
+              Calibrates your daily calorie target and macro targets.
+            </Text>
+          </View>
 
-        {/* Goal Selection Cards */}
-        <View style={styles.cardsContainer}>
-          {GOAL_OPTIONS.map(option => {
-            const isSelected = selectedGoal === option.id;
+          <View style={styles.cardsContainer}>
+            {GOAL_OPTIONS.map(option => {
+              const isSelected = selectedIntent === option.id;
 
-            return (
-              <Pressable
-                key={option.id}
-                onPress={() => setSelectedGoal(option.id)}
-                style={({ pressed }) => [
-                  styles.goalCard,
-                  isSelected ? styles.goalCardSelected : styles.goalCardUnselected,
-                  pressed ? styles.goalCardPressed : null,
-                ]}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`${option.title}: ${option.subtitle}`}
-              >
-                {/* Left Visual Icon Badge */}
-                <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
-                  {option.iconFamily === 'ionicons' ? (
-                    <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
-                  ) : (
-                    <MaterialCommunityIcons
-                      name={option.iconName as any}
-                      size={22}
-                      color={option.iconColor}
-                    />
+              return (
+                <View key={option.id} style={styles.cardWrapper}>
+                  <Pressable
+                    onPress={() => handleSelectOption(option)}
+                    style={({ pressed }) => [
+                      styles.goalCard,
+                      isSelected ? styles.goalCardSelected : styles.goalCardUnselected,
+                      pressed ? styles.goalCardPressed : null,
+                    ]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`${option.title}: ${option.subtitle}`}
+                    testID={`goal-card-${option.id}`}
+                  >
+                    <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
+                      {option.iconFamily === 'ionicons' ? (
+                        <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name={option.iconName as any}
+                          size={22}
+                          color={option.iconColor}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.cardTextContent}>
+                      <Text
+                        style={[
+                          styles.goalTitle,
+                          isSelected ? styles.goalTitleSelected : null,
+                        ]}
+                      >
+                        {option.title}
+                      </Text>
+                      <Text style={styles.goalSubtitle}>{option.subtitle}</Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.radioCircle,
+                        isSelected ? styles.radioSelected : styles.radioUnselected,
+                      ]}
+                    >
+                      {isSelected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
+                    </View>
+                  </Pressable>
+
+                  {/* Reassurance Line appears when selected */}
+                  {isSelected && (
+                    <Animated.View
+                      entering={FadeIn.duration(250)}
+                      exiting={FadeOut.duration(150)}
+                      style={styles.reassuranceBanner}
+                      testID={`reassurance-${option.id}`}
+                    >
+                      <Ionicons name="sparkles" size={14} color="#F47551" style={styles.reassuranceIcon} />
+                      <Text style={styles.reassuranceText}>{option.reassurance}</Text>
+                    </Animated.View>
                   )}
                 </View>
+              );
+            })}
+          </View>
+        </ScrollView>
 
-                {/* Option Content: Title & Benefit Subtitle */}
-                <View style={styles.cardTextContent}>
-                  <Text style={[styles.goalTitle, isSelected ? styles.goalTitleSelected : null]}>
-                    {option.title}
-                  </Text>
-                  <Text style={styles.goalSubtitle}>{option.subtitle}</Text>
-                </View>
-
-                {/* Accessible Radio Indicator */}
-                <View
-                  style={[
-                    styles.radioCircle,
-                    isSelected ? styles.radioSelected : styles.radioUnselected,
-                  ]}
-                >
-                  {isSelected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Frame 9: Standardized Continue CTA */}
         <View style={styles.footerContainer}>
           <Pressable
             style={({ pressed }) => [
               styles.continueButton,
               pressed ? styles.continueButtonPressed : null,
             ]}
-            onPress={handleContinuePress}
+            onPress={handleManualContinue}
             accessibilityRole="button"
-            accessibilityLabel="Continue with selected goal"
+            accessibilityLabel="Continue to next step"
+            testID="goal-continue-button"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
-
-          {/* Skip & Sign In Actions */}
-          <View style={styles.footerLinksRow}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.skipContainer,
-                pressed ? styles.btnPressedSubtle : null,
-              ]}
-              onPress={onSkip}
-              hitSlop={HIT_SLOP_12}
-              accessibilityRole="button"
-              accessibilityLabel="Skip goal selection"
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
-
-            {onSignIn ? (
-              <Pressable
-                onPress={onSignIn}
-                hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [
-                  styles.signInBottomBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Sign in to existing account"
-              >
-                <Text style={styles.signInLinkText}>
-                  Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
         </View>
       </View>
     </SafeAreaView>
   );
 };
 
-const getGoalIconBgStyle = (id: FitnessGoal) => {
-  switch (id) {
+const getGoalIconBgStyle = (intent: GoalIntent) => {
+  switch (intent) {
     case 'lose':
-      return styles.iconBadgeLose;
+      return { backgroundColor: '#FEE2E2' };
     case 'maintain':
-      return styles.iconBadgeMaintain;
-    case 'gain':
-      return styles.iconBadgeGain;
+      return { backgroundColor: '#DCFCE7' };
+    case 'build':
+      return { backgroundColor: '#EEF2FF' };
+    case 'understand':
+      return { backgroundColor: '#E0F2FE' };
     default:
-      return null;
+      return { backgroundColor: '#F1F5F9' };
   }
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FAF9F6',
   },
   phoneFrame: {
-    width: '100%',
-    maxWidth: 440,
     flex: 1,
+    width: '100%',
+    maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
     justifyContent: 'space-between',
-    borderWidth: Platform.OS === 'web' ? 1 : 0,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
-
-  // Title & Context
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
   titleContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingHorizontal: 16,
+    marginBottom: 24,
   },
   screenTitle: {
-    fontFamily: Fonts.urbanist.bold,
+    fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    color: Colors.textPrimary ?? '#1E293B',
+    marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 8,
-    maxWidth: 290,
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.textSecondary ?? '#64748B',
   },
-
-  // Cards Container
   cardsContainer: {
-    width: '100%',
-    maxWidth: 335,
-    alignSelf: 'center',
     gap: 14,
-    marginVertical: 12,
+  },
+  cardWrapper: {
+    gap: 8,
   },
   goalCard: {
-    width: '100%',
-    height: 76,
-    borderRadius: 10,
-    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-    ...(Platform.OS === 'web'
-      ? ({
-          cursor: 'pointer',
-          transition: 'all 0.15s ease',
-        } as any)
-      : {}),
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   goalCardSelected: {
-    backgroundColor: '#FFFBF9',
-    borderWidth: 1.5,
     borderColor: '#F47551',
-    elevation: 0,
-    shadowOpacity: 0,
+    backgroundColor: '#FFFBF9',
+    shadowColor: '#F47551',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
   },
   goalCardUnselected: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  iconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconBadgeLose: {
-    backgroundColor: '#FFF1EE',
-  },
-  iconBadgeMaintain: {
-    backgroundColor: '#F0FDF4',
-  },
-  iconBadgeGain: {
-    backgroundColor: '#EEF2FF',
-  },
-  btnPressedSubtle: {
-    opacity: 0.65,
-    transform: [{ scale: 0.96 }],
+    borderColor: '#E2E8F0',
   },
   goalCardPressed: {
-    opacity: 0.88,
+    opacity: 0.95,
     transform: [{ scale: 0.99 }],
+  },
+  iconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   cardTextContent: {
     flex: 1,
-    marginLeft: 14,
     marginRight: 10,
-    justifyContent: 'center',
   },
   goalTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 16,
-    lineHeight: 22,
-    color: '#334155',
+    color: Colors.textPrimary ?? '#1E293B',
+    marginBottom: 2,
   },
   goalTitleSelected: {
-    color: '#0F172A',
+    color: '#1E293B',
   },
   goalSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#64748B',
-    marginTop: 2,
+    fontFamily: Fonts.poppins.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSecondary ?? '#64748B',
   },
   radioCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  radioSelected: {
+    borderColor: '#F47551',
+    backgroundColor: '#F47551',
+  },
   radioUnselected: {
-    borderWidth: 1.5,
     borderColor: '#CBD5E1',
     backgroundColor: 'transparent',
   },
-  radioSelected: {
-    backgroundColor: '#F47551',
-    borderWidth: 0,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-
-  // Footer & Continue CTA
-  footerContainer: {
+  reassuranceBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingBottom: 4,
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  reassuranceIcon: {
+    marginRight: 8,
+  },
+  reassuranceText: {
+    flex: 1,
+    fontFamily: Fonts.poppins.medium,
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: '#9A3412',
+  },
+  footerContainer: {
+    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+    paddingTop: 12,
   },
   continueButton: {
-    width: 220,
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    flexDirection: 'row',
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    elevation: 0,
-    shadowOpacity: 0,
   },
   continueButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.poppins.semiBold,
     fontSize: 16,
     color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  skipContainer: {
-    paddingVertical: 6,
-  },
-  skipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 15,
-    color: '#64748B',
-  },
-  footerLinksRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
-    marginTop: 4,
-  },
-  signInBottomBtn: {
-    paddingVertical: 6,
-  },
-  signInLinkText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    color: '#64748B',
-  },
-  signInLinkBold: {
-    fontFamily: Fonts.urbanist.semiBold,
-    color: '#F47551',
   },
 });

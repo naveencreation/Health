@@ -15,6 +15,9 @@ interface HeightSelectionScreenProps {
   onSkip?: () => void;
   onSignIn?: () => void;
   initialHeightCm?: number;
+  sectionIndex?: number;
+  totalSections?: number;
+  sectionProgress?: number;
 }
 
 const MIN_CM = 100;
@@ -87,6 +90,9 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
   onSkip,
   onSignIn,
   initialHeightCm = 170,
+  sectionIndex = 1,
+  totalSections = 4,
+  sectionProgress = 0.25,
 }) => {
   const [unit, setUnit] = useState<HeightUnit>('cm');
   const [heightCm, setHeightCm] = useState<number>(initialHeightCm);
@@ -199,15 +205,20 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Frame 12: Header Bar */}
         {/* Header Bar */}
-        <OnboardingHeader onBack={onBack} stepText="Step 3 of 5" />
+        <OnboardingHeader
+          onBack={onBack}
+          onSkip={onSkip}
+          sectionIndex={sectionIndex}
+          totalSections={totalSections}
+          sectionProgress={sectionProgress}
+        />
 
         {/* Title & Cognitive Context */}
         <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>What is your height?</Text>
+          <Text style={styles.screenTitle}>Your starting point.</Text>
           <Text style={styles.screenSubtitle}>
-            Calibrates your daily energy burn and body mass index
+            This only sets your starting numbers. You can change it anytime.
           </Text>
         </View>
 

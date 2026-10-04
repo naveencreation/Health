@@ -7,6 +7,7 @@ export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active'
 export interface UserBiometricsInput {
   age: number;
   gender: GenderType;
+  sex?: Sex;
   heightCm: number;
   weightKg: number;
   targetWeightKg?: number;

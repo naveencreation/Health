@@ -13,6 +13,9 @@ interface WeightSelectionScreenProps {
   onSkip?: () => void;
   onSignIn?: () => void;
   initialWeightKg?: number;
+  sectionIndex?: number;
+  totalSections?: number;
+  sectionProgress?: number;
 }
 
 const MIN_KG = 30;
@@ -29,6 +32,9 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   onSkip,
   onSignIn,
   initialWeightKg = 68,
+  sectionIndex = 1,
+  totalSections = 4,
+  sectionProgress = 0.5,
 }) => {
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [weightKg, setWeightKg] = useState<number>(initialWeightKg);
@@ -144,14 +150,20 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Frame 12: Top Bar */}
-        <OnboardingHeader onBack={onBack} stepText="Step 2 of 5" />
+        {/* Top Bar */}
+        <OnboardingHeader
+          onBack={onBack}
+          onSkip={onSkip}
+          sectionIndex={sectionIndex}
+          totalSections={totalSections}
+          sectionProgress={sectionProgress}
+        />
 
         {/* Title & Cognitive Context */}
         <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>What is your weight?</Text>
+          <Text style={styles.screenTitle}>Your starting point.</Text>
           <Text style={styles.screenSubtitle}>
-            Calibrates your daily energy burn and calorie baseline
+            This only sets your starting numbers. You can change it anytime.
           </Text>
         </View>
 

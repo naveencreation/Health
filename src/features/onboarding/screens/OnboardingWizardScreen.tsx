@@ -1,29 +1,62 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Platform, BackHandler } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { AgeSelectionScreen } from './AgeSelectionScreen';
-import { GenderSelectionScreen } from './GenderSelectionScreen';
-import { GoalSelectionScreen, FitnessGoal } from './GoalSelectionScreen';
-import { HeightSelectionScreen } from './HeightSelectionScreen';
+import { NameInputScreen } from './NameInputScreen';
+import { GoalSelectionScreen } from './GoalSelectionScreen';
+import { StrugglesScreen } from './StrugglesScreen';
+import { AboutYouScreen } from './AboutYouScreen';
+import { HeightSelectionScreen, HeightUnit } from './HeightSelectionScreen';
 import { WeightSelectionScreen } from './WeightSelectionScreen';
+import { TargetWeightScreen } from './TargetWeightScreen';
+import { ActivityLevelScreen } from './ActivityLevelScreen';
+import { PaceSelectionScreen } from './PaceSelectionScreen';
+import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
 import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
   calculateHealthPlan,
   CalculatedHealthPlan,
   GoalType,
-  GenderType,
+  Sex,
+  Pace,
+  ActivityLevel,
   UserBiometricsInput,
 } from '../services/onboardingCalculator';
+import {
+  loadOnboardingDraft,
+  saveOnboardingDraft,
+  clearOnboardingDraft,
+  GoalIntent,
+  Struggle,
+  FoodStyle,
+} from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 
 export type OnboardingStep =
-  'age' | 'weight' | 'height' | 'goal' | 'gender' | 'plan' | 'permissions';
+  | 'name'
+  | 'goal'
+  | 'struggles'
+  | 'about_you'
+  | 'height'
+  | 'weight'
+  | 'target_weight'
+  | 'activity'
+  | 'pace'
+  | 'food_style'
+  | 'plan'
+  | 'permissions';
 
 export interface OnboardingCompleteData {
   biometrics: UserBiometricsInput & {
     weightUnit?: 'kg' | 'lbs';
     heightUnit?: 'cm' | 'ft';
+    name?: string;
+    goalIntent?: GoalIntent;
+    struggles?: Struggle[];
+    foodStyle?: FoodStyle;
+    mealTimes?: { breakfast: string; lunch: string; dinner: string };
+    skipsBreakfast?: boolean;
+    snacks?: boolean;
   };
   plan: CalculatedHealthPlan;
 }
@@ -33,7 +66,15 @@ export interface OnboardingWizardScreenProps {
   onBackToWelcome?: () => void;
   onSignIn?: () => void;
   onSkip?: () => void;
-  initialBiometrics?: Partial<UserBiometricsInput & { weightUnit?: 'kg' | 'lbs'; heightUnit?: 'cm' | 'ft' }>;
+  initialBiometrics?: Partial<
+    UserBiometricsInput & {
+      weightUnit?: 'kg' | 'lbs';
+      heightUnit?: 'cm' | 'ft';
+      name?: string;
+      sex?: Sex;
+    }
+  >;
+  initialStep?: OnboardingStep;
 }
 
 export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
@@ -42,22 +83,116 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   onSignIn,
   onSkip,
   initialBiometrics,
+  initialStep = 'name',
 }) => {
-  const [stepHistory, setStepHistory] = useState<OnboardingStep[]>(['age']);
-
+  const [stepHistory, setStepHistory] = useState<OnboardingStep[]>([initialStep]);
   const currentStep = stepHistory[stepHistory.length - 1];
 
+  // User responses
+  const [name, setName] = useState<string>(initialBiometrics?.name ?? '');
+  const [goal, setGoal] = useState<GoalType>(initialBiometrics?.goal ?? 'lose_weight');
+  const [goalIntent, setGoalIntent] = useState<GoalIntent>('lose');
+  const [struggles, setStruggles] = useState<Struggle[]>([]);
+  const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
+  const [heightCm, setHeightCm] = useState<number>(initialBiometrics?.heightCm ?? 170);
+  const [heightUnit, setHeightUnit] = useState<HeightUnit>(
+    (initialBiometrics?.heightUnit as HeightUnit) ?? 'cm'
+  );
   const [weightKg, setWeightKg] = useState<number>(initialBiometrics?.weightKg ?? 70);
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(initialBiometrics?.weightUnit ?? 'kg');
-  const [heightCm, setHeightCm] = useState<number>(initialBiometrics?.heightCm ?? 175);
-  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>(initialBiometrics?.heightUnit ?? 'cm');
-  const [goal, setGoal] = useState<GoalType>(initialBiometrics?.goal ?? 'maintain');
-  const [gender, setGender] = useState<GenderType>(initialBiometrics?.gender ?? 'male');
+  const [targetWeightKg, setTargetWeightKg] = useState<number | undefined>(
+    initialBiometrics?.targetWeightKg
+  );
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
+    initialBiometrics?.activityLevel ?? 'moderately_active'
+  );
+  const [pace, setPace] = useState<Pace>(initialBiometrics?.pace ?? 'steady');
+  const [foodStyle, setFoodStyle] = useState<FoodStyle>('no_preference');
+  const [mealTimes, setMealTimes] = useState<{ breakfast: string; lunch: string; dinner: string }>({
+    breakfast: '08:30',
+    lunch: '13:00',
+    dinner: '20:00',
+  });
+  const [skipsBreakfast, setSkipsBreakfast] = useState<boolean>(false);
+  const [snacks, setSnacks] = useState<boolean>(true);
 
-  const pushStep = (next: OnboardingStep) => {
-    setStepHistory(prev => [...prev, next]);
-  };
+  // Resume draft from AsyncStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+    loadOnboardingDraft().then(draft => {
+      if (!isMounted || !draft) return;
+      if (draft.name) setName(draft.name);
+      if (draft.goal) setGoal(draft.goal);
+      if (draft.goalIntent) setGoalIntent(draft.goalIntent);
+      if (draft.struggles) setStruggles(draft.struggles);
+      if (draft.sex) setSex(draft.sex);
+      if (draft.age) setAge(draft.age);
+      if (draft.heightCm) setHeightCm(draft.heightCm);
+      if (draft.units?.height) setHeightUnit(draft.units.height);
+      if (draft.weightKg) setWeightKg(draft.weightKg);
+      if (draft.units?.weight) setWeightUnit(draft.units.weight);
+      if (draft.targetWeightKg) setTargetWeightKg(draft.targetWeightKg);
+      if (draft.activityLevel) setActivityLevel(draft.activityLevel);
+      if (draft.pace) setPace(draft.pace);
+      if (draft.foodStyle) setFoodStyle(draft.foodStyle);
+      if (draft.mealTimes) setMealTimes(draft.mealTimes);
+      if (typeof draft.skipsBreakfast === 'boolean') setSkipsBreakfast(draft.skipsBreakfast);
+      if (typeof draft.snacks === 'boolean') setSnacks(draft.snacks);
+
+      if (draft.step && draft.step !== 'name' && isMounted) {
+        setStepHistory([draft.step as OnboardingStep]);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const pushStep = useCallback(
+    (next: OnboardingStep) => {
+      setStepHistory(prev => [...prev, next]);
+      saveOnboardingDraft({
+        step: next,
+        name,
+        goal,
+        goalIntent,
+        struggles,
+        sex,
+        age,
+        heightCm,
+        weightKg,
+        units: { height: heightUnit, weight: weightUnit },
+        targetWeightKg,
+        activityLevel,
+        pace,
+        foodStyle,
+        mealTimes,
+        skipsBreakfast,
+        snacks,
+      });
+    },
+    [
+      name,
+      goal,
+      goalIntent,
+      struggles,
+      sex,
+      age,
+      heightCm,
+      weightKg,
+      heightUnit,
+      weightUnit,
+      targetWeightKg,
+      activityLevel,
+      pace,
+      foodStyle,
+      mealTimes,
+      skipsBreakfast,
+      snacks,
+    ]
+  );
 
   const popStep = useCallback(() => {
     if (stepHistory.length > 1) {
@@ -76,29 +211,19 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return () => sub.remove();
   }, [popStep]);
 
-  // Convert UI FitnessGoal ('lose' | 'maintain' | 'gain') to GoalType ('lose_weight' | 'maintain' | 'gain_muscle')
-  const mapFitnessGoal = (g: FitnessGoal): GoalType => {
-    if (g === 'lose') return 'lose_weight';
-    if (g === 'gain') return 'gain_muscle';
-    return 'maintain';
-  };
-
-  // Convert GoalType back to FitnessGoal for screen initial state
-  const mapToFitnessGoal = (g: GoalType): FitnessGoal => {
-    if (g === 'lose_weight') return 'lose';
-    if (g === 'gain_muscle') return 'gain';
-    return 'maintain';
-  };
-
   const biometricsInput: UserBiometricsInput = useMemo(
     () => ({
       age,
-      gender,
+      sex,
+      gender: sex === 'female' ? 'female' : sex === 'male' ? 'male' : 'other',
       heightCm,
       weightKg,
+      targetWeightKg,
       goal,
+      activityLevel,
+      pace,
     }),
-    [age, gender, heightCm, weightKg, goal]
+    [age, sex, heightCm, weightKg, targetWeightKg, goal, activityLevel, pace]
   );
 
   const calculatedPlan: CalculatedHealthPlan = useMemo(
@@ -107,11 +232,19 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   );
 
   const handleFinish = async () => {
+    await clearOnboardingDraft();
     await onComplete({
       biometrics: {
         ...biometricsInput,
         weightUnit,
         heightUnit,
+        name,
+        goalIntent,
+        struggles,
+        foodStyle,
+        mealTimes,
+        skipsBreakfast,
+        snacks,
       },
       plan: calculatedPlan,
     });
@@ -119,14 +252,12 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 
   const handleEnablePermissions = async () => {
     try {
-      // 1. Request camera permission for meal scanning
       await ImagePicker.requestCameraPermissionsAsync();
     } catch {
-      // Gracefully continue even if user denies or platform issues
+      // Gracefully continue
     }
 
     try {
-      // 2. Request step permission if on Android with Health Connect
       if (Platform.OS === 'android') {
         await requestStepsPermission();
       }
@@ -137,44 +268,99 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     await handleFinish();
   };
 
-  // Render Step 1: Age
-  if (currentStep === 'age') {
+  // Branching helper: determines if target weight & pace should be asked
+  const shouldAskTargetAndPace =
+    (goal === 'lose_weight' || goal === 'gain_muscle') &&
+    goalIntent !== 'maintain' &&
+    goalIntent !== 'understand' &&
+    age >= 18;
+
+  // S2: Name
+  if (currentStep === 'name') {
     return (
       <View style={styles.container}>
-        <AgeSelectionScreen
-          initialAge={age}
+        <NameInputScreen
+          initialName={name}
           onBack={popStep}
           onContinue={val => {
-            setAge(val);
-            pushStep('weight');
+            setName(val);
+            pushStep('goal');
           }}
           onSkip={onSkip}
-          onSignIn={onSignIn}
+          sectionIndex={0}
+          totalSections={4}
+          sectionProgress={0.2}
         />
       </View>
     );
   }
 
-  // Render Step 2: Weight
-  if (currentStep === 'weight') {
+  // S3: Goal
+  if (currentStep === 'goal') {
     return (
       <View style={styles.container}>
-        <WeightSelectionScreen
-          initialWeightKg={weightKg}
+        <GoalSelectionScreen
+          name={name}
+          initialGoal={goal}
+          initialIntent={goalIntent}
           onBack={popStep}
-          onContinue={(val, unit) => {
-            setWeightKg(val);
-            if (unit) setWeightUnit(unit);
+          onContinue={(chosenGoal, chosenIntent) => {
+            setGoal(chosenGoal);
+            setGoalIntent(chosenIntent);
+            pushStep('struggles');
+          }}
+          onSkip={onSkip}
+          sectionIndex={0}
+          totalSections={4}
+          sectionProgress={0.4}
+        />
+      </View>
+    );
+  }
+
+  // S4: Struggles
+  if (currentStep === 'struggles') {
+    return (
+      <View style={styles.container}>
+        <StrugglesScreen
+          initialStruggles={struggles}
+          onBack={popStep}
+          onContinue={chosenStruggles => {
+            setStruggles(chosenStruggles);
+            pushStep('about_you');
+          }}
+          onSkip={onSkip}
+          sectionIndex={0}
+          totalSections={4}
+          sectionProgress={0.6}
+        />
+      </View>
+    );
+  }
+
+  // S5: About You (Sex + Age)
+  if (currentStep === 'about_you') {
+    return (
+      <View style={styles.container}>
+        <AboutYouScreen
+          initialSex={sex}
+          initialAge={age}
+          onBack={popStep}
+          onContinue={(chosenSex, chosenAge) => {
+            setSex(chosenSex);
+            setAge(chosenAge);
             pushStep('height');
           }}
           onSkip={onSkip}
-          onSignIn={onSignIn}
+          sectionIndex={0}
+          totalSections={4}
+          sectionProgress={0.8}
         />
       </View>
     );
   }
 
-  // Render Step 3: Height
+  // S6 Part 1: Height
   if (currentStep === 'height') {
     return (
       <View style={styles.container}>
@@ -184,68 +370,152 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           onContinue={(val, unit) => {
             setHeightCm(val);
             if (unit) setHeightUnit(unit);
-            pushStep('goal');
+            pushStep('weight');
           }}
           onSkip={onSkip}
-          onSignIn={onSignIn}
+          sectionIndex={1}
+          totalSections={4}
+          sectionProgress={0.25}
         />
       </View>
     );
   }
 
-  // Render Step 4: Goal
-  if (currentStep === 'goal') {
+  // S6 Part 2: Weight
+  if (currentStep === 'weight') {
     return (
       <View style={styles.container}>
-        <GoalSelectionScreen
-          initialGoal={mapToFitnessGoal(goal)}
+        <WeightSelectionScreen
+          initialWeightKg={weightKg}
           onBack={popStep}
-          onContinue={selectedGoal => {
-            setGoal(mapFitnessGoal(selectedGoal));
-            pushStep('gender');
+          onContinue={(val, unit) => {
+            setWeightKg(val);
+            if (unit) setWeightUnit(unit);
+            if (shouldAskTargetAndPace) {
+              pushStep('target_weight');
+            } else {
+              pushStep('activity');
+            }
           }}
           onSkip={onSkip}
-          onSignIn={onSignIn}
+          sectionIndex={1}
+          totalSections={4}
+          sectionProgress={0.5}
         />
       </View>
     );
   }
 
-  // Render Step 5: Gender
-  if (currentStep === 'gender') {
+  // S7: Target Weight (Lose / Build only)
+  if (currentStep === 'target_weight') {
     return (
       <View style={styles.container}>
-        <GenderSelectionScreen
-          initialGender={gender}
+        <TargetWeightScreen
+          currentWeightKg={weightKg}
+          heightCm={heightCm}
+          goal={goal}
+          initialTargetWeightKg={targetWeightKg}
+          weightUnit={weightUnit}
           onBack={popStep}
           onContinue={val => {
-            const mappedGender: GenderType =
-              val === 'female' ? 'female' : val === 'male' ? 'male' : 'other';
-            setGender(mappedGender);
+            setTargetWeightKg(val);
+            pushStep('activity');
+          }}
+          onSkip={onSkip}
+          sectionIndex={1}
+          totalSections={4}
+          sectionProgress={0.75}
+        />
+      </View>
+    );
+  }
+
+  // S8: Activity Level
+  if (currentStep === 'activity') {
+    return (
+      <View style={styles.container}>
+        <ActivityLevelScreen
+          initialActivityLevel={activityLevel}
+          onBack={popStep}
+          onContinue={val => {
+            setActivityLevel(val);
+            if (shouldAskTargetAndPace) {
+              pushStep('pace');
+            } else {
+              pushStep('food_style');
+            }
+          }}
+          onSkip={onSkip}
+          sectionIndex={1}
+          totalSections={4}
+          sectionProgress={1.0}
+        />
+      </View>
+    );
+  }
+
+  // S9: Pace (Lose / Build only)
+  if (currentStep === 'pace') {
+    return (
+      <View style={styles.container}>
+        <PaceSelectionScreen
+          biometrics={biometricsInput}
+          initialPace={pace}
+          onBack={popStep}
+          onContinue={val => {
+            setPace(val);
+            pushStep('food_style');
+          }}
+          onSkip={onSkip}
+          sectionIndex={2}
+          totalSections={4}
+          sectionProgress={0.5}
+        />
+      </View>
+    );
+  }
+
+  // S10: Food Style & Meal Rhythm
+  if (currentStep === 'food_style') {
+    return (
+      <View style={styles.container}>
+        <FoodStyleScreen
+          initialFoodStyle={foodStyle}
+          initialMealTimes={mealTimes}
+          initialSkipsBreakfast={skipsBreakfast}
+          initialSnacks={snacks}
+          onBack={popStep}
+          onContinue={(data: FoodStyleData) => {
+            setFoodStyle(data.foodStyle);
+            setMealTimes(data.mealTimes);
+            setSkipsBreakfast(data.skipsBreakfast);
+            setSnacks(data.snacks);
             pushStep('plan');
           }}
           onSkip={onSkip}
-          onSignIn={onSignIn}
+          sectionIndex={2}
+          totalSections={4}
+          sectionProgress={1.0}
         />
       </View>
     );
   }
 
-  // Render Step 6: Plan Calculation Blueprint
+  // Step 11/12: Plan Calculation Blueprint
   if (currentStep === 'plan') {
     return (
       <View style={styles.container}>
         <PlanCalculationStep
           plan={calculatedPlan}
           onBack={popStep}
-          stepIndicator="Step 6 of 7"
+          stepIndicator="Review Plan"
           onConfirm={() => pushStep('permissions')}
         />
       </View>
     );
   }
 
-  // Render Step 7: Permission Primer
+  // Step 16: Permission Primer
   if (currentStep === 'permissions') {
     return (
       <View style={styles.container}>

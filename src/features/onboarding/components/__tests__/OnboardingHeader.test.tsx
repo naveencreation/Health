@@ -50,4 +50,16 @@ describe('OnboardingHeader', () => {
 
     expect(getByText('Step 2 of 7')).toBeTruthy();
   });
+
+  it('renders Skip button when onSkip is provided and triggers callback', async () => {
+    const onSkip = jest.fn();
+    const { getByText, getByTestId } = await render(
+      <OnboardingHeader onSkip={onSkip} testID="header" />
+    );
+
+    expect(getByText('Skip')).toBeTruthy();
+    const skipBtn = getByTestId('header-skip');
+    fireEvent.press(skipBtn);
+    expect(onSkip).toHaveBeenCalledTimes(1);
+  });
 });
