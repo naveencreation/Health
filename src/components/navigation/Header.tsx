@@ -141,9 +141,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 ) : null}
               </View>
               <Text style={styles.userNameText} numberOfLines={1}>
-                {currentUser?.isGuest
-                  ? 'Guest Explorer'
-                  : currentUser?.name || userGoals.name || 'User'}
+                {currentUser?.name || userGoals.name || (currentUser?.isGuest ? 'Guest Explorer' : 'User')}
               </Text>
             </Animated.View>
 
