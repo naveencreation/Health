@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Fonts.kurale,
     fontSize: 28,
-    lineHeight: 34,
+    lineHeight: 36,
     color: '#1E293B',
     textAlign: 'center',
     marginBottom: 8,

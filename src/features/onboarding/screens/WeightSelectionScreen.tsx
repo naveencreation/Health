@@ -322,8 +322,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   titleContainer: {
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 16,
+    marginBottom: 16,
   },
   screenTitle: {
     fontFamily: Fonts.kurale,

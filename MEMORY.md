@@ -894,6 +894,19 @@
         - Added unit tests in `OnboardingHeader.test.tsx`.
       - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 52/52 test suites (297/297 tests) passing 100% green.
 
+    24. **Onboarding Redesign — Phase 2 & 3: Interactive Instruments & Plan Presentation**
+      - **Target Weight Screen (`TargetWeightScreen.tsx`)**: Upgraded to tactile horizontal ruler with live delta calculation, target date projection, and BMI 18.5 safety floor banner.
+      - **Building Plan Screen (`BuildingPlanScreen.tsx`)**: Created 4-step sequential animated loading screen with spinning ring and timed transitions.
+      - **Plan Reveal Screen (`PlanRevealScreen.tsx`)**: Built segmented SVG macro ring, personalized struggle insight, and dynamic calorie/macro calculation breakdown.
+
+    25. **Onboarding Cross-Screen Uniformity & Spacing Audit**
+      - **Vertical Title Alignment**: Standardized distance from `OnboardingHeader` to screen title to exactly `16px` across all screens, eliminating screen-to-screen vertical title jumping.
+      - **Title-to-Content Margins**: Standardized `titleContainer.marginBottom` to `20px` across card/content screens (`NameInput`, `GoalSelection`, `Struggles`, `AboutYou`, `ActivityLevel`, `PaceSelection`, `FoodStyle`, `PlanReveal`) and `16px` on instrument ruler screens (`HeightSelection`, `WeightSelection`, `TargetWeight`).
+      - **Typography Standardization**: Standardized all screen titles to `Fonts.kurale` (`fontSize: 28`, `lineHeight: 36`, `marginBottom: 8`) and subtitles to `Fonts.urbanist.medium` (`fontSize: 15`, `lineHeight: 22`).
+      - **Font Cleanup**: Purged all residual `Poppins` references in `AboutYouScreen.tsx` and `OnboardingHeader.tsx`, replacing them with `Fonts.urbanist` (`bold`, `semiBold`, `medium`, `regular`).
+      - **Footer / CTA Consistency**: Verified and aligned all 11 screens to `paddingBottom: Platform.OS === 'ios' ? 16 : 24, paddingTop: 12`, with `Fonts.urbanist.bold` 16px white text on `#1E293B` container (`borderRadius: 16, paddingVertical: 18`).
+      - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); 62/62 test suites (327/327 tests) passing 100% green.
+
 
 
 ## Important decisions & gotchas (do NOT re-litigate without reason)

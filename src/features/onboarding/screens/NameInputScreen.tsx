@@ -186,10 +186,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 24,
+    paddingTop: 16,
   },
   titleContainer: {
-    marginBottom: 32,
+    marginBottom: 20,
   },
   screenTitle: {
     fontFamily: Fonts.kurale,

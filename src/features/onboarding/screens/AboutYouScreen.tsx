@@ -284,17 +284,17 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   titleContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   screenTitle: {
     fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
     color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionLabel: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: Colors.textPrimary ?? '#1E293B',
     marginBottom: 10,
@@ -338,18 +338,18 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   sexText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
   },
   sexTextSelected: {
     color: '#1E293B',
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
   },
   sexTextUnselected: {
     color: '#64748B',
   },
   privacyNote: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
     color: '#94A3B8',
@@ -388,12 +388,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   wheelItemText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 18,
   },
   wheelItemTextSelected: {
     fontSize: 22,
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#F47551',
   },
   wheelItemTextDim: {
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   },
   policyText: {
     flex: 1,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },

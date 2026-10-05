@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   skipButtonText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#64748B',
   },

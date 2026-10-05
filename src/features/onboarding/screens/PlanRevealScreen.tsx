@@ -376,18 +376,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: 20,
   },
   titleContainer: {
-    marginBottom: 18,
+    marginBottom: 20,
   },
   screenTitle: {
     fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
     color: '#1E293B',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   screenSubtitle: {
     fontFamily: Fonts.urbanist.medium,

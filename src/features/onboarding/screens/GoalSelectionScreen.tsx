@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   titleContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   screenTitle: {
     fontFamily: Fonts.kurale,
