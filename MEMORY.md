@@ -1036,6 +1036,19 @@
         - Removed all redundant `fontWeight` declarations from styles using `Fonts.urbanist.*` and `Fonts.kurale` across the entire codebase (`TodayScreen`, `Header`, `TopDateStrip`, `HeroCalorieCard`, `MealCard`, `MealSection`, `FoodLogModal`, `FoodVisionModal`, `PreferencesScreen`, `MetabolicSummaryScreen`, `GoalsScreen`, `WaterTrackerScreen`, `WeightTrackerScreen`, `AnalyticsScreen`, etc.).
         - Added missing `Fonts.urbanist` font families to `ErrorBoundary.tsx` and `HealthScreen.tsx`.
       - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green; snapshot updated.
+    40. **App Name Branding, Sub-Report Pro Gating & Chart Ring Alignment Fixes**
+      - **App Launcher Name (`Calorify`)**:
+        - Updated `app.json`: changed `"name": "calori"` to `"name": "Calorify"`.
+        - Updated `android/app/src/main/res/values/strings.xml`: changed `<string name="app_name">calori</string>` to `<string name="app_name">Calorify</string>` so Android OS launcher icon displays "Calorify".
+      - **Sub-Screen Report Pro Gating (`StepReportScreen`, `WaterReportScreen`, `WeightReportScreen`)**:
+        - Previously, free users navigating to sub-screen reports from Water Tracker or Step Tracker could switch freely to "Monthly" and "Yearly" timeframes without restriction, unlike the main `AnalyticsScreen` which locked them.
+        - Integrated `usePro` and `ProPaywallModal` across `StepReportScreen.tsx`, `WaterReportScreen.tsx`, and `WeightReportScreen.tsx`.
+        - Displayed `<Ionicons name="lock-closed" size={10} color="#94A3B8" />` on Monthly and Yearly tabs when `!isPro`.
+        - Added haptic feedback (`haptics.impactLight()`) and triggered `ProPaywallModal` when tapping locked tabs as a free user.
+      - **Chart Ring / Teardrop Pin Floating Alignment (`CalorieCompletionCard`, `MacroDistributionCard`)**:
+        - Root Cause: In `CalorieCompletionCard.tsx` and `MacroDistributionCard.tsx`, the circular teardrop ring was rendered via a nested `<Svg x={...} y={pinSvgTop}>` inside the root `<Svg>`. In `react-native-svg` on native Android, nested `<Svg>` with `y` ignored vertical offset and rendered at `y=0` (top of the canvas, floating above 2500), while the text label was placed in a separate absolute `<View>` down by the bar.
+        - Replaced the disconnected nested `<Svg>` with the standardized `<ChartTooltipPin>` inside an absolute container `<View style={[styles.floatingPinContainer, { left: pinLeft, top: pinTop }]}>`, unifying the circular bubble, downward needle pointer, and text value into a single component anchored directly above the bar/data node.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (365/365 tests) passing 100% green.
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
 - **`MealCard` kept `maxHeight`** (moved to UI thread) rather than `scaleY` + measured height — the lower-risk fix. Could upgrade to `scaleY` later if desired.

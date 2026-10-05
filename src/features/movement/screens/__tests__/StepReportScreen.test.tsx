@@ -1,3 +1,6 @@
+import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+
 import React from 'react';
 import { render, fireEvent, waitFor, cleanup } from '@testing-library/react-native';
 import { StepReportScreen } from '../StepReportScreen';
@@ -24,6 +27,8 @@ jest.mock('@expo/vector-icons', () => ({
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: any) => children,
+  SafeAreaView: ({ children }: any) => children,
 }));
 
 jest.mock('@/context/HealthContext', () => ({
@@ -38,7 +43,16 @@ jest.mock('@/context/HealthContext', () => ({
   }),
 }));
 
+const mockUsePro = jest.fn();
+jest.mock('@/features/subscription/hooks/usePro', () => ({
+  usePro: () => mockUsePro(),
+}));
+
 describe('StepReportScreen', () => {
+  beforeEach(() => {
+    mockUsePro.mockReturnValue({ isPro: true });
+  });
+
   afterEach(() => {
     cleanup();
   });
@@ -77,7 +91,8 @@ describe('StepReportScreen', () => {
     expect(getByText('Active Walking Time')).toBeTruthy();
   });
 
-  test('switches timeframe to Monthly and Yearly when tabs are clicked', async () => {
+  test('switches timeframe to Monthly and Yearly when tabs are clicked for Pro user', async () => {
+    mockUsePro.mockReturnValue({ isPro: true });
     const { getByLabelText, getAllByText } = await render(<StepReportScreen onBack={jest.fn()} />);
 
     // Click Monthly
@@ -91,6 +106,17 @@ describe('StepReportScreen', () => {
     await waitFor(() => {
       expect(getAllByText(/2026/).length).toBeGreaterThan(0);
     });
+  });
+
+  test('triggers Pro paywall modal when tapping Monthly on Free tier', async () => {
+    mockUsePro.mockReturnValue({ isPro: false });
+    const { getByRole, findByText } = await render(<StepReportScreen onBack={jest.fn()} />);
+
+    const monthlyTab = getByRole('button', {
+      name: /Monthly timeframe \(Calorify Pro required\)/i,
+    });
+    await fireEvent.press(monthlyTab);
+    expect(await findByText(/Unlock Calorify Pro/i)).toBeTruthy();
   });
 
   test('calls onBack when back chevron is pressed', async () => {

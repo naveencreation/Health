@@ -12,6 +12,8 @@ import {
   DayWeightTrendData,
   BMIGaugeCard,
 } from '@/components/report';
+import { usePro, ProPaywallModal } from '@/features/subscription';
+import { haptics } from '@/utils/haptics';
 
 export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
 
@@ -58,6 +60,10 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
 
   const unit = userGoals.weightUnit || 'kg';
   const unitFactor = unit === 'lbs' ? 2.20462 : 1;
+
+  // Pro Subscription State
+  const { isPro } = usePro();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
@@ -253,10 +259,18 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
     Math.max(0, dateRangeInfo.trendItems.length - 1)
   );
 
-  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
-    setTimeframe(newTimeframe);
-    setPeriodOffset(0);
-    setSelectedTrendIndex(0);
+  const handleChangeTimeframe = async (newTimeframe: ReportTimeframe) => {
+    if (newTimeframe !== 'weekly' && !isPro) {
+      await haptics.impactLight();
+      setPaywallVisible(true);
+      return;
+    }
+    await haptics.selection();
+    if (newTimeframe !== timeframe) {
+      setTimeframe(newTimeframe);
+      setPeriodOffset(0);
+      setSelectedTrendIndex(0);
+    }
   };
 
   const handlePrevPeriod = () => {
@@ -338,6 +352,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
         <View style={styles.timeframeSegmentContainer}>
           {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
             const isActive = timeframe === tab;
+            const isLocked = !isPro && tab !== 'weekly';
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
@@ -345,11 +360,27 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
                 style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
-                accessibilityLabel={`${displayLabel} timeframe`}
+                accessibilityLabel={
+                  isLocked
+                    ? `${displayLabel} timeframe (Calorify Pro required)`
+                    : `${displayLabel} timeframe`
+                }
               >
-                <Text style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}>
-                  {displayLabel}
-                </Text>
+                <View style={styles.tabContentRow}>
+                  <Text
+                    style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}
+                  >
+                    {displayLabel}
+                  </Text>
+                  {isLocked && (
+                    <Ionicons
+                      name="lock-closed"
+                      size={10}
+                      color="#94A3B8"
+                      style={{ marginLeft: 3 }}
+                    />
+                  )}
+                </View>
               </Pressable>
             );
           })}
@@ -410,6 +441,12 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
           unit={unit}
         />
       </ScrollView>
+
+      {/* Pro Paywall Modal for Monthly/Yearly Trends */}
+      <ProPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
     </View>
   );
 };
@@ -469,6 +506,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 10,
     borderCurve: 'continuous',
+  },
+  tabContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',

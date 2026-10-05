@@ -14,6 +14,8 @@ import {
   DrinkTypeBreakdown,
 } from '@/components/report';
 import { getBeverageConfig } from '@/utils/beverageUtils';
+import { usePro, ProPaywallModal } from '@/features/subscription';
+import { haptics } from '@/utils/haptics';
 
 export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
 
@@ -58,6 +60,10 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
   const { dailyLogs } = useDailyLog();
   const { userGoals } = useGoals();
   const dailyWaterGoal = userGoals.waterGoalMl ?? 2500;
+
+  // Pro Subscription State
+  const { isPro } = usePro();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
@@ -225,7 +231,13 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
     }
   };
 
-  const handleChangeTimeframe = (newTimeframe: ReportTimeframe) => {
+  const handleChangeTimeframe = async (newTimeframe: ReportTimeframe) => {
+    if (newTimeframe !== 'weekly' && !isPro) {
+      await haptics.impactLight();
+      setPaywallVisible(true);
+      return;
+    }
+    await haptics.selection();
     if (newTimeframe !== timeframe) {
       setTimeframe(newTimeframe);
       setPeriodOffset(0); // Reset to current period
@@ -353,6 +365,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         <View style={styles.timeframeSegmentContainer}>
           {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
             const isActive = timeframe === tab;
+            const isLocked = !isPro && tab !== 'weekly';
             const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
             return (
               <Pressable
@@ -360,11 +373,27 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
                 style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
                 accessibilityRole="button"
-                accessibilityLabel={`${displayLabel} timeframe`}
+                accessibilityLabel={
+                  isLocked
+                    ? `${displayLabel} timeframe (Calorify Pro required)`
+                    : `${displayLabel} timeframe`
+                }
               >
-                <Text style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}>
-                  {displayLabel}
-                </Text>
+                <View style={styles.tabContentRow}>
+                  <Text
+                    style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}
+                  >
+                    {displayLabel}
+                  </Text>
+                  {isLocked && (
+                    <Ionicons
+                      name="lock-closed"
+                      size={10}
+                      color="#94A3B8"
+                      style={{ marginLeft: 3 }}
+                    />
+                  )}
+                </View>
               </Pressable>
             );
           })}
@@ -429,6 +458,12 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
           centerPct={periodAvgCompletion}
         />
       </ScrollView>
+
+      {/* Pro Paywall Modal for Monthly/Yearly Trends */}
+      <ProPaywallModal
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
     </View>
   );
 };
@@ -487,6 +522,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabContentRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
