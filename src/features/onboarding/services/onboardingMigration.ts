@@ -162,6 +162,7 @@ export async function migrateOnboardingData(
 
     await AsyncStorage.setItem(`@calori_user_goals_${uid}`, JSON.stringify(goalsPayload));
     await AsyncStorage.setItem('@calori_user_goals', JSON.stringify(goalsPayload));
+    await AsyncStorage.setItem('@calori_user_goals_v1', JSON.stringify(goalsPayload));
 
     // 3. Migrate First Meal if logged
     let migratedMeal: LoggedMealItem | undefined;
@@ -198,6 +199,7 @@ export async function migrateOnboardingData(
 
       await AsyncStorage.setItem(`@calori_daily_logs_${uid}`, JSON.stringify(dailyLogs));
       await AsyncStorage.setItem('@calori_daily_logs', JSON.stringify(dailyLogs));
+      await AsyncStorage.setItem('@calori_daily_logs_v1', JSON.stringify(dailyLogs));
 
       // Sync meal to Firestore
       try {

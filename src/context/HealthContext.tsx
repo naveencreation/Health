@@ -343,6 +343,7 @@ export interface HealthContextType {
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => Promise<void>;
+  applyOnboardingPlan: (data: any) => Promise<void>;
 }
 
 export const HealthContext = createContext<HealthContextType | undefined>(undefined);
@@ -358,6 +359,7 @@ export type AuthContextValue = Pick<
   | 'logout'
   | 'deleteAccount'
   | 'loginDemo'
+  | 'applyOnboardingPlan'
 >;
 
 export type GoalsContextValue = Pick<HealthContextType, 'userGoals' | 'updateGoals'>;
@@ -2346,6 +2348,138 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     []
   );
 
+  const applyOnboardingPlan = useCallback(
+    async (data: {
+      biometrics: {
+        name?: string;
+        age: number;
+        sex?: 'female' | 'male' | 'prefer_not_to_say';
+        heightCm: number;
+        weightKg: number;
+        targetWeightKg?: number;
+        goal: string;
+        weightUnit?: 'kg' | 'lbs';
+        heightUnit?: 'cm' | 'ft';
+        firstMeal?: {
+          foodName: string;
+          calories: number;
+          proteinG: number;
+          carbsG: number;
+          fatG: number;
+          portionMultiplier: number;
+          mealSlot?: string;
+          loggedAt?: number;
+          photoUri?: string;
+        };
+      };
+      plan: {
+        dailyCalorieBudget: number;
+        targetProteinG: number;
+        targetCarbsG: number;
+        targetFatG: number;
+        targetFiberG?: number;
+        targetWaterMl: number;
+        stepGoal: number;
+        goalDate?: string;
+      };
+    }) => {
+      try {
+        const todayStr = getTodayDateString();
+        const uid = auth.currentUser?.uid || currentUser?.id || 'guest';
+
+        // 1. Construct and set user goals immediately in state
+        const newGoals: UserGoals = {
+          ...userGoals,
+          name: data.biometrics.name?.trim() || userGoals.name || 'Friend',
+          dailyCalorieBudget: data.plan.dailyCalorieBudget,
+          targetProtein: data.plan.targetProteinG,
+          targetCarbs: data.plan.targetCarbsG,
+          targetFat: data.plan.targetFatG,
+          targetFiber: data.plan.targetFiberG || 30,
+          waterGoalMl: data.plan.targetWaterMl,
+          stepGoal: data.plan.stepGoal,
+          currentWeightKg: data.biometrics.weightKg,
+          startWeightKg: data.biometrics.weightKg,
+          targetWeightKg: data.biometrics.targetWeightKg || data.biometrics.weightKg,
+          heightCm: data.biometrics.heightCm,
+          age: data.biometrics.age,
+          gender: data.biometrics.sex || 'male',
+          goal: data.biometrics.goal || 'maintain',
+          weightUnit: data.biometrics.weightUnit || 'kg',
+          streakDays: 1,
+        };
+
+        setUserGoals(newGoals);
+
+        // Save to AsyncStorage
+        const userGoalsKey = getUserGoalsKey(uid);
+        await Promise.all([
+          AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(newGoals)).catch(() => {}),
+          AsyncStorage.setItem(userGoalsKey, JSON.stringify(newGoals)).catch(() => {}),
+          AsyncStorage.setItem('@calori_user_goals', JSON.stringify(newGoals)).catch(() => {}),
+        ]);
+
+        // If user profile has default name, update it
+        if (
+          data.biometrics.name?.trim() &&
+          currentUser &&
+          (currentUser.name === 'User' || currentUser.name === 'Friend' || !currentUser.name)
+        ) {
+          const updatedUser = { ...currentUser, name: data.biometrics.name.trim() };
+          setCurrentUser(updatedUser);
+          AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(updatedUser)).catch(() => {});
+        }
+
+        // 2. Inject First Meal if logged during onboarding
+        if (data.biometrics.firstMeal) {
+          const fm = data.biometrics.firstMeal;
+          const newMealItem: LoggedMealItem = {
+            id: `meal_onboarding_${fm.loggedAt || Date.now()}`,
+            foodId: 'onboarding_first_meal',
+            name: fm.foodName,
+            mealType: (fm.mealSlot || 'lunch') as MealType,
+            servingUnit: `${fm.portionMultiplier}x serving`,
+            quantity: 1,
+            calories: Math.round(fm.calories),
+            protein: Math.round(fm.proteinG),
+            carbs: Math.round(fm.carbsG),
+            fat: Math.round(fm.fatG),
+            fiber: 0,
+            loggedAt: new Date(fm.loggedAt || Date.now()).toISOString(),
+            imageUrl: fm.photoUri,
+          };
+
+          setDailyLogs(prev => {
+            const existing = prev[todayStr] || {
+              date: todayStr,
+              meals: [],
+              waterMl: 0,
+              steps: 0,
+              activities: [],
+            };
+            const alreadyHas = (existing.meals || []).some(
+              m => m.id === newMealItem.id || m.name === newMealItem.name
+            );
+            if (alreadyHas) return prev;
+            const updatedMeals = [...(existing.meals || []), newMealItem];
+            const updatedDayLog = { ...existing, meals: updatedMeals };
+            const newLogs = { ...prev, [todayStr]: updatedDayLog };
+
+            const userLogsKey = getUserLogsKey(uid);
+            AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(newLogs)).catch(() => {});
+            AsyncStorage.setItem(userLogsKey, JSON.stringify(newLogs)).catch(() => {});
+            AsyncStorage.setItem('@calori_daily_logs', JSON.stringify(newLogs)).catch(() => {});
+
+            return newLogs;
+          });
+        }
+      } catch (err) {
+        console.warn('[HealthContext] applyOnboardingPlan error:', err);
+      }
+    },
+    [currentUser, userGoals]
+  );
+
   const contextValue = useMemo<HealthContextType>(
     () => ({
       selectedDate,
@@ -2392,6 +2526,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteAccount,
       loginDemo,
       loginAnonymous,
+      applyOnboardingPlan,
     }),
     [
       selectedDate,
@@ -2436,6 +2571,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteAccount,
       loginDemo,
       loginAnonymous,
+      applyOnboardingPlan,
     ]
   );
 
@@ -2450,8 +2586,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       logout,
       deleteAccount,
       loginDemo,
+      applyOnboardingPlan,
     }),
-    [currentUser, isAuthLoading, login, register, loginAnonymous, logout, deleteAccount, loginDemo]
+    [
+      currentUser,
+      isAuthLoading,
+      login,
+      register,
+      loginAnonymous,
+      logout,
+      deleteAccount,
+      loginDemo,
+      applyOnboardingPlan,
+    ]
   );
 
   const goalsValue = useMemo<GoalsContextValue>(

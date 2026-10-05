@@ -53,7 +53,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOnboardingStart,
   onOnboardingEnd,
 }) => {
-  const { loginDemo } = useAuth();
+  const { loginDemo, applyOnboardingPlan } = useAuth();
   const normalizeMode = (m: AuthScreenMode): AuthScreenMode => (m === 'age' ? 'onboarding' : m);
   const [history, setHistory] = useState<AuthScreenMode[]>([normalizeMode(initialMode)]);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
@@ -222,7 +222,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     if (mode === 'onboarding') {
       return (
         <OnboardingWizardScreen
-          onComplete={data => {
+          onComplete={async data => {
             setBiometrics({
               age: data.biometrics.age,
               weight: data.biometrics.weightKg,
@@ -242,6 +242,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     ? 'male'
                     : 'other',
             });
+            if (applyOnboardingPlan) {
+              await applyOnboardingPlan(data);
+            }
             onOnboardingEnd?.();
             if (onLoginSuccess) {
               onLoginSuccess();

@@ -960,6 +960,12 @@
       - **Full Wizard Integration**: Wired as `'paywall'` step in [OnboardingWizardScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/OnboardingWizardScreen.tsx) between S14 `save_plan` and S16 `permissions`.
       - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (363/363 tests) passing 100% green.
 
+    30. **Onboarding-to-Dashboard Seamless Data Handoff Bridge (`HealthContext.tsx`, `onboardingMigration.ts`, `WelcomeScreen.tsx`)**
+      - **Storage Key Harmonization**: Aligned `onboardingMigration.ts` AsyncStorage keys to write to `STORAGE_KEYS.USER_GOALS` (`@calori_user_goals_v1`) and `STORAGE_KEYS.DAILY_LOGS` (`@calori_daily_logs_v1`) alongside user-scoped and legacy keys.
+      - **`applyOnboardingPlan` Engine**: Added `applyOnboardingPlan(data)` to `HealthContextType`, `AuthContextValue`, and `HealthContext.tsx`. Immediately updates in-memory React state for `userGoals`, persists to storage, updates `currentUser.name`, and injects the first logged meal into `dailyLogs[todayStr]`.
+      - **Live Dashboard Connection (`WelcomeScreen.tsx`)**: In `onComplete(data)`, `WelcomeScreen` awaits `applyOnboardingPlan(data)` before calling `onLoginSuccess()`. Guarantees that when `TodayScreen` mounts, the Calorie Ring, consumed macros, user name, and the S13 first logged meal appear instantly with 0ms delay.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
+
 
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

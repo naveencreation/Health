@@ -13,6 +13,7 @@ jest.mock('expo-image', () => ({
 jest.mock('@/context/HealthContext', () => ({
   useAuth: () => ({
     loginDemo: jest.fn(),
+    applyOnboardingPlan: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 

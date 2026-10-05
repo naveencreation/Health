@@ -473,4 +473,53 @@ describe('HealthProvider auth restore', () => {
     expect(result.currentLog.meals).toHaveLength(0);
     expect(result.currentLog.waterMl).toBe(0);
   });
+
+  test('applyOnboardingPlan updates user goals and injects first meal immediately into day log', async () => {
+    await renderHarness();
+
+    const onboardingData = {
+      biometrics: {
+        name: 'Dev',
+        age: 27,
+        sex: 'female' as const,
+        heightCm: 168,
+        weightKg: 64,
+        targetWeightKg: 58,
+        goal: 'lose_weight',
+        weightUnit: 'kg' as const,
+        firstMeal: {
+          foodName: 'Oatmeal with Berries',
+          calories: 280,
+          proteinG: 10,
+          carbsG: 45,
+          fatG: 5,
+          portionMultiplier: 1,
+          mealSlot: 'breakfast',
+        },
+      },
+      plan: {
+        dailyCalorieBudget: 1650,
+        targetProteinG: 110,
+        targetCarbsG: 180,
+        targetFatG: 45,
+        targetFiberG: 28,
+        targetWaterMl: 2400,
+        stepGoal: 8500,
+      },
+    };
+
+    await act(async () => {
+      await result.applyOnboardingPlan(onboardingData);
+    });
+
+    expect(result.userGoals.name).toBe('Dev');
+    expect(result.userGoals.dailyCalorieBudget).toBe(1650);
+    expect(result.userGoals.targetProtein).toBe(110);
+    expect(result.userGoals.waterGoalMl).toBe(2400);
+    expect(result.currentLog.meals).toHaveLength(1);
+    expect(result.currentLog.meals[0].name).toBe('Oatmeal with Berries');
+    expect(result.currentLog.meals[0].calories).toBe(280);
+    expect(result.totalConsumed).toBe(280);
+    expect(result.remainingCalories).toBe(1650 - 280);
+  });
 });
