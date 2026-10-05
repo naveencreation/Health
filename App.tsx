@@ -92,6 +92,7 @@ function MainApp() {
   const [riaChatVisible, setRiaChatVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
+  const [isOnboardingActive, setIsOnboardingActive] = useState(false);
   const { width: screenWidth } = useWindowDimensions();
   const [waterTrackerVisible, setWaterTrackerVisible] = useState(false);
   const [isClosingWaterTracker, setIsClosingWaterTracker] = useState(false);
@@ -557,14 +558,21 @@ function MainApp() {
   }, [isAppReady]);
 
   const renderContent = () => {
-    if (!isAuthenticated || authModalVisible) {
+    if (!isAuthenticated || authModalVisible || isOnboardingActive) {
       return (
-        <WelcomeScreen
-          key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
-          initialMode={authModalVisible ? authInitialMode : 'welcome'}
-          onLoginSuccess={handleCloseAuthModal}
-          onClose={isAuthenticated ? handleCloseAuthModal : undefined}
-        />
+        <View style={styles.phoneContainer}>
+          <WelcomeScreen
+            key={authModalVisible ? `auth_modal_${authInitialMode}` : 'welcome_landing'}
+            initialMode={authModalVisible ? authInitialMode : 'welcome'}
+            onLoginSuccess={() => {
+              setIsOnboardingActive(false);
+              handleCloseAuthModal();
+            }}
+            onOnboardingStart={() => setIsOnboardingActive(true)}
+            onOnboardingEnd={() => setIsOnboardingActive(false)}
+            onClose={isAuthenticated ? handleCloseAuthModal : undefined}
+          />
+        </View>
       );
     }
 

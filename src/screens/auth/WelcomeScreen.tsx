@@ -42,12 +42,16 @@ interface WelcomeScreenProps {
   onLoginSuccess?: () => void;
   initialMode?: AuthScreenMode;
   onClose?: () => void;
+  onOnboardingStart?: () => void;
+  onOnboardingEnd?: () => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onLoginSuccess,
   initialMode = 'welcome',
   onClose,
+  onOnboardingStart,
+  onOnboardingEnd,
 }) => {
   const { loginDemo } = useAuth();
   const normalizeMode = (m: AuthScreenMode): AuthScreenMode => (m === 'age' ? 'onboarding' : m);
@@ -77,11 +81,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   useEffect(() => {
-    setHistory([normalizeMode(initialMode)]);
-  }, [initialMode]);
+    const resolved = normalizeMode(initialMode);
+    if (resolved === 'onboarding') {
+      onOnboardingStart?.();
+    }
+    setHistory([resolved]);
+  }, [initialMode, onOnboardingStart]);
 
   const pushMode = (nextMode: AuthScreenMode) => {
     const resolvedMode = normalizeMode(nextMode);
+    if (resolvedMode === 'onboarding') {
+      onOnboardingStart?.();
+    }
     setTransitionDirection('forward');
     setHistory(prev => (prev[prev.length - 1] === resolvedMode ? prev : [...prev, resolvedMode]));
   };
@@ -89,6 +100,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const popMode = () => {
     setTransitionDirection('backward');
     setHistory(prev => {
+      const current = prev[prev.length - 1];
+      if (current === 'onboarding') {
+        onOnboardingEnd?.();
+      }
       if (prev.length > 1) {
         return prev.slice(0, -1);
       }
@@ -227,11 +242,29 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     ? 'male'
                     : 'other',
             });
-            pushMode('signup');
+            onOnboardingEnd?.();
+            if (onLoginSuccess) {
+              onLoginSuccess();
+            } else {
+              pushMode('signup');
+            }
           }}
-          onBackToWelcome={popMode}
-          onSignIn={() => pushMode('signin')}
-          onSkip={() => pushMode('signup')}
+          onBackToWelcome={() => {
+            onOnboardingEnd?.();
+            popMode();
+          }}
+          onSignIn={() => {
+            onOnboardingEnd?.();
+            pushMode('signin');
+          }}
+          onSkip={() => {
+            onOnboardingEnd?.();
+            if (onLoginSuccess) {
+              onLoginSuccess();
+            } else {
+              pushMode('signup');
+            }
+          }}
           initialBiometrics={{
             age: biometrics.age,
             weightKg: biometrics.weight,

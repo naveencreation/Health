@@ -27,6 +27,7 @@ import { auth, db } from '@/services/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
@@ -338,6 +339,7 @@ export interface HealthContextType {
   isAuthLoading: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  loginAnonymous: (guestName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => Promise<void>;
@@ -352,6 +354,7 @@ export type AuthContextValue = Pick<
   | 'isAuthLoading'
   | 'login'
   | 'register'
+  | 'loginAnonymous'
   | 'logout'
   | 'deleteAccount'
   | 'loginDemo'
@@ -2316,6 +2319,33 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(demoUser));
   }, []);
 
+  const loginAnonymous = useCallback(
+    async (guestName?: string): Promise<{ success: boolean; error?: string }> => {
+      try {
+        let uid = 'guest_' + Date.now();
+        try {
+          const cred = await signInAnonymously(auth);
+          uid = cred.user.uid;
+        } catch (fbErr) {
+          console.warn('Firebase anonymous auth fallback to local guest ID:', fbErr);
+        }
+        const guestUser: AuthUser = {
+          id: uid,
+          email: '',
+          name: guestName || 'Friend',
+          isGuest: true,
+        };
+        setCurrentUser(guestUser);
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(guestUser));
+        hydratedUidRef.current = uid;
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Guest login failed' };
+      }
+    },
+    []
+  );
+
   const contextValue = useMemo<HealthContextType>(
     () => ({
       selectedDate,
@@ -2361,6 +2391,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       logout,
       deleteAccount,
       loginDemo,
+      loginAnonymous,
     }),
     [
       selectedDate,
@@ -2404,6 +2435,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       logout,
       deleteAccount,
       loginDemo,
+      loginAnonymous,
     ]
   );
 
@@ -2414,11 +2446,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isAuthLoading,
       login,
       register,
+      loginAnonymous,
       logout,
       deleteAccount,
       loginDemo,
     }),
-    [currentUser, isAuthLoading, login, register, logout, deleteAccount, loginDemo]
+    [currentUser, isAuthLoading, login, register, loginAnonymous, logout, deleteAccount, loginDemo]
   );
 
   const goalsValue = useMemo<GoalsContextValue>(

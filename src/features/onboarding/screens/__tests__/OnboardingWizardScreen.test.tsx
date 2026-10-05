@@ -227,6 +227,72 @@ jest.mock('../PlanRevealScreen', () => {
   };
 });
 
+jest.mock('../FirstMealWinScreen', () => {
+  const React = require('react');
+  const { View, Pressable } = require('react-native');
+  return {
+    FirstMealWinScreen: ({ onContinue, onSkip }: any) => (
+      <View testID="step-first_meal">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Save my plan & continue"
+          testID="btn-first-meal-continue"
+          onPress={() =>
+            onContinue({
+              foodName: '2 Rotis with Dal',
+              calories: 340,
+              proteinG: 13,
+              carbsG: 52,
+              fatG: 8,
+              portionMultiplier: 1,
+              mealSlot: 'lunch',
+              loggedAt: Date.now(),
+            })
+          }
+        />
+        <Pressable testID="btn-first-meal-skip" onPress={onSkip} />
+      </View>
+    ),
+  };
+});
+
+jest.mock('../SavePlanScreen', () => {
+  const React = require('react');
+  const { View, Pressable } = require('react-native');
+  return {
+    SavePlanScreen: ({ onSuccess, onBack }: any) => (
+      <View testID="step-save_plan">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Save Plan Continue"
+          testID="btn-save-plan-continue"
+          onPress={onSuccess}
+        />
+        <Pressable testID="btn-save-plan-back" onPress={onBack} />
+      </View>
+    ),
+  };
+});
+
+jest.mock('../SoftPaywallScreen', () => {
+  const React = require('react');
+  const { View, Pressable } = require('react-native');
+  return {
+    SoftPaywallScreen: ({ onContinue, onSkip, onBack }: any) => (
+      <View testID="step-paywall">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start 7-Day Free Trial"
+          testID="btn-paywall-continue"
+          onPress={onContinue}
+        />
+        <Pressable testID="btn-paywall-skip" onPress={onSkip} />
+        <Pressable testID="btn-paywall-back" onPress={onBack} />
+      </View>
+    ),
+  };
+});
+
 describe('OnboardingWizardScreen', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -315,6 +381,21 @@ describe('OnboardingWizardScreen', () => {
     expect(planCta).toBeTruthy();
     fireEvent.press(planCta);
 
+    // First Meal Win
+    const firstMealCta = await findByRole('button', { name: 'Save my plan & continue' });
+    expect(firstMealCta).toBeTruthy();
+    fireEvent.press(firstMealCta);
+
+    // S14 Save Plan
+    const savePlanCta = await findByRole('button', { name: 'Save Plan Continue' });
+    expect(savePlanCta).toBeTruthy();
+    fireEvent.press(savePlanCta);
+
+    // S15 Soft Paywall
+    const paywallCta = await findByRole('button', { name: 'Start 7-Day Free Trial' });
+    expect(paywallCta).toBeTruthy();
+    fireEvent.press(paywallCta);
+
     // Permission Primer
     const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
     expect(enableBtn).toBeTruthy();
@@ -335,7 +416,40 @@ describe('OnboardingWizardScreen', () => {
       expect(callData.biometrics.activityLevel).toBe('moderately_active');
       expect(callData.biometrics.pace).toBe('steady');
       expect(callData.biometrics.foodStyle).toBe('vegetarian');
+      expect(callData.biometrics.firstMeal?.foodName).toBe('2 Rotis with Dal');
       expect(callData.plan.dailyCalorieBudget).toBeGreaterThan(1200);
     });
+  });
+
+  it('supports skipping paywall and back navigation between paywall and save_plan', async () => {
+    const onComplete = jest.fn();
+    const { getByTestId, findByRole } = await render(
+      <OnboardingWizardScreen onComplete={onComplete} initialStep="save_plan" />
+    );
+
+    // Save Plan -> Paywall
+    const savePlanCta = await findByRole('button', { name: 'Save Plan Continue' });
+    fireEvent.press(savePlanCta);
+
+    await waitFor(() => {
+      expect(getByTestId('step-paywall')).toBeTruthy();
+    });
+
+    // Paywall back -> Save Plan
+    fireEvent.press(getByTestId('btn-paywall-back'));
+    await waitFor(() => {
+      expect(getByTestId('step-save_plan')).toBeTruthy();
+    });
+
+    // Save Plan -> Paywall again
+    fireEvent.press(getByTestId('btn-save-plan-continue'));
+    await waitFor(() => {
+      expect(getByTestId('step-paywall')).toBeTruthy();
+    });
+
+    // Skip paywall -> Permission Primer
+    fireEvent.press(getByTestId('btn-paywall-skip'));
+    const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
+    expect(enableBtn).toBeTruthy();
   });
 });

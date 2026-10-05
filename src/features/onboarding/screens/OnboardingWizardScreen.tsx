@@ -13,6 +13,9 @@ import { PaceSelectionScreen } from './PaceSelectionScreen';
 import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
 import { BuildingPlanScreen } from './BuildingPlanScreen';
 import { PlanRevealScreen } from './PlanRevealScreen';
+import { FirstMealWinScreen } from './FirstMealWinScreen';
+import { SavePlanScreen } from './SavePlanScreen';
+import { SoftPaywallScreen } from './SoftPaywallScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
 import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
@@ -31,6 +34,7 @@ import {
   GoalIntent,
   Struggle,
   FoodStyle,
+  PendingMeal,
 } from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 
@@ -47,6 +51,9 @@ export type OnboardingStep =
   | 'food_style'
   | 'building_plan'
   | 'plan'
+  | 'first_meal'
+  | 'save_plan'
+  | 'paywall'
   | 'permissions';
 
 export interface OnboardingCompleteData {
@@ -60,6 +67,7 @@ export interface OnboardingCompleteData {
     mealTimes?: { breakfast: string; lunch: string; dinner: string };
     skipsBreakfast?: boolean;
     snacks?: boolean;
+    firstMeal?: PendingMeal;
   };
   plan: CalculatedHealthPlan;
 }
@@ -100,8 +108,10 @@ export const buildReconstructedHistory = (
     'activity',
     ...(skipWeightAndPace ? [] : (['pace'] as OnboardingStep[])),
     'food_style',
-    'building_plan',
     'plan',
+    'first_meal',
+    'save_plan',
+    'paywall',
     'permissions',
   ];
 
@@ -149,6 +159,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   });
   const [skipsBreakfast, setSkipsBreakfast] = useState<boolean>(false);
   const [snacks, setSnacks] = useState<boolean>(true);
+  const [firstMeal, setFirstMeal] = useState<PendingMeal | undefined>(undefined);
 
   // Resume draft from AsyncStorage on mount
   useEffect(() => {
@@ -172,6 +183,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       if (draft.mealTimes) setMealTimes(draft.mealTimes);
       if (typeof draft.skipsBreakfast === 'boolean') setSkipsBreakfast(draft.skipsBreakfast);
       if (typeof draft.snacks === 'boolean') setSnacks(draft.snacks);
+      if (draft.firstMeal) setFirstMeal(draft.firstMeal);
 
       if (draft.step && draft.step !== 'name' && isMounted) {
         const reconstructed = buildReconstructedHistory(
@@ -209,6 +221,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         mealTimes,
         skipsBreakfast,
         snacks,
+        firstMeal,
       });
     },
     [
@@ -229,6 +242,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       mealTimes,
       skipsBreakfast,
       snacks,
+      firstMeal,
     ]
   );
 
@@ -283,6 +297,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         mealTimes,
         skipsBreakfast,
         snacks,
+        firstMeal,
       },
       plan: calculatedPlan,
     });
@@ -545,7 +560,29 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       <View style={styles.container}>
         <BuildingPlanScreen
           name={name}
-          onComplete={() => pushStep('plan')}
+          onComplete={() => {
+            setStepHistory(prev => [...prev.filter(s => s !== 'building_plan'), 'plan']);
+            saveOnboardingDraft({
+              step: 'plan',
+              name,
+              goal,
+              goalIntent,
+              struggles,
+              sex,
+              age,
+              heightCm,
+              weightKg,
+              units: { height: heightUnit, weight: weightUnit },
+              targetWeightKg,
+              activityLevel,
+              pace,
+              foodStyle,
+              mealTimes,
+              skipsBreakfast,
+              snacks,
+              firstMeal,
+            });
+          }}
         />
       </View>
     );
@@ -562,7 +599,110 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           targetWeightKg={targetWeightKg}
           weightUnit={weightUnit}
           onBack={popStep}
-          onLogFirstMeal={() => pushStep('permissions')}
+          onLogFirstMeal={() => pushStep('first_meal')}
+        />
+      </View>
+    );
+  }
+
+  // S13: First Meal Win (The Aha Moment)
+  if (currentStep === 'first_meal') {
+    return (
+      <View style={styles.container}>
+        <FirstMealWinScreen
+          name={name}
+          foodStyle={foodStyle}
+          struggles={struggles}
+          dailyCalorieBudget={calculatedPlan.dailyCalorieBudget}
+          onBack={popStep}
+          onContinue={meal => {
+            setFirstMeal(meal);
+            saveOnboardingDraft({
+              step: 'first_meal',
+              name,
+              goal,
+              goalIntent,
+              struggles,
+              sex,
+              age,
+              heightCm,
+              weightKg,
+              units: { height: heightUnit, weight: weightUnit },
+              targetWeightKg,
+              activityLevel,
+              pace,
+              foodStyle,
+              mealTimes,
+              skipsBreakfast,
+              snacks,
+              firstMeal: meal,
+            });
+            pushStep('save_plan');
+          }}
+          onSkip={() => pushStep('save_plan')}
+          sectionIndex={3}
+          totalSections={4}
+          sectionProgress={0.66}
+        />
+      </View>
+    );
+  }
+
+  // S14: Save Your Plan (Account & Auth)
+  if (currentStep === 'save_plan') {
+    return (
+      <View style={styles.container}>
+        <SavePlanScreen
+          name={name}
+          plan={calculatedPlan}
+          draft={{
+            version: 1,
+            step: 'save_plan',
+            startedAt: Date.now(),
+            name,
+            goal,
+            goalIntent,
+            struggles,
+            sex,
+            age,
+            heightCm,
+            weightKg,
+            units: { height: heightUnit, weight: weightUnit },
+            targetWeightKg,
+            activityLevel,
+            pace,
+            foodStyle,
+            mealTimes,
+            skipsBreakfast,
+            snacks,
+            firstMeal,
+          }}
+          firstMeal={firstMeal}
+          targetWeightKg={targetWeightKg}
+          weightUnit={weightUnit}
+          onBack={popStep}
+          onSuccess={() => pushStep('paywall')}
+          sectionIndex={3}
+          totalSections={4}
+          sectionProgress={1.0}
+        />
+      </View>
+    );
+  }
+
+  // S15: Soft Paywall (Zero-Pressure Pro Offer & Free Trial)
+  if (currentStep === 'paywall') {
+    return (
+      <View style={styles.container}>
+        <SoftPaywallScreen
+          name={name}
+          plan={calculatedPlan}
+          onContinue={() => pushStep('permissions')}
+          onSkip={() => pushStep('permissions')}
+          onBack={popStep}
+          sectionIndex={3}
+          totalSections={4}
+          sectionProgress={1.0}
         />
       </View>
     );
@@ -572,7 +712,11 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   if (currentStep === 'permissions') {
     return (
       <View style={styles.container}>
-        <PermissionPrimerStep onEnablePermissions={handleEnablePermissions} onSkip={handleFinish} />
+        <PermissionPrimerStep
+          onEnablePermissions={handleEnablePermissions}
+          onSkip={handleFinish}
+          onBack={popStep}
+        />
       </View>
     );
   }
@@ -583,6 +727,9 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
     backgroundColor: '#FAF9F6',
   },
 });

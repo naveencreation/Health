@@ -9,11 +9,13 @@ import { haptics } from '@/utils/haptics';
 export interface PermissionPrimerStepProps {
   onEnablePermissions: () => void | Promise<void>;
   onSkip: () => void;
+  onBack?: () => void;
 }
 
 export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
   onEnablePermissions,
   onSkip,
+  onBack,
 }) => {
   const handleEnable = async () => {
     await haptics.impactMedium();
@@ -28,8 +30,24 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top Header Badge */}
-        <View style={styles.badgeWrap}>
+        {/* Top Header Row with Back Button and Badge */}
+        <View style={styles.topHeaderRow}>
+          {onBack ? (
+            <Pressable
+              style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
+              onPress={async () => {
+                await haptics.selection();
+                onBack();
+              }}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              testID="btn-permission-back"
+            >
+              <Ionicons name="arrow-back" size={20} color="#0F172A" />
+            </Pressable>
+          ) : null}
+
           <View style={styles.badge}>
             <Ionicons name="sparkles" size={14} color={Colors.primary} />
             <Text style={styles.badgeText}>SMART INTEGRATIONS</Text>
@@ -131,9 +149,21 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
   },
-  badgeWrap: {
-    alignItems: 'flex-start',
+  topHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginBottom: 12,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   badge: {
     flexDirection: 'row',

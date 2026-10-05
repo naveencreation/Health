@@ -907,9 +907,60 @@
       - **Footer / CTA Consistency**: Verified and aligned all 11 screens to `paddingBottom: Platform.OS === 'ios' ? 16 : 24, paddingTop: 12`, with `Fonts.urbanist.bold` 16px white text on `#1E293B` container (`borderRadius: 16, paddingVertical: 18`).
       - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); 62/62 test suites (327/327 tests) passing 100% green.
 
+    26. **Onboarding Redesign — Phase 4: S13 First Meal Win (`FirstMealWinScreen.tsx`)**
+      - **Scan Limit Engine (`scanLimitService.ts`)**:
+        - Implemented 5 free AI scans per day with auto-reset via local date key (`@calori_ai_scans_YYYY-MM-DD_<uid>`).
+        - Pro users bypass limits (`unlimited: true`).
+        - Created unit test suite `scanLimitService.test.ts` (100% pass).
+      - **Starter Foods Catalog (`starterFoods.ts`)**:
+        - Curated tailored starter items categorized by diet style (`vegetarian`, `eggetarian`, `non_veg`, `vegan`) with calories, protein, carbs, fat, and icons.
+        - Implemented smart meal slot guessing based on local clock time (`breakfast`, `lunch`, `dinner`, `snack`).
+      - **First Meal Win Screen (`FirstMealWinScreen.tsx`)**:
+        - Built 3 logging modalities: AI Camera vision (with permission primer modal), live search input across 1,000+ foods, and 1-tap quick pick starter food cards.
+        - Interactive portion review mode with macro trio (protein green `#67BD6E`, carbs yellow `#F8D558`, fat coral `#E07A5F`), portion size multiplier pills (0.5x, 1.0x, 1.5x, 2.0x), and struggle quote insights.
+        - The "Aha moment" celebration mode with Day 1 streak flame ignition, animated SVG calorie progress ring, success haptic feedback, and draft persistence.
+        - Complies strictly with `DESIGN.md`: warm `#FAF9F6` canvas, 10px continuous curvature squircle cards, 1px whisper borders (`rgba(15, 23, 42, 0.06)`), pure Urbanist telemetry, and zero drop shadows.
+      - **Wizard Wiring (`OnboardingWizardScreen.tsx`)**:
+        - Integrated `first_meal` step between `plan` and `permissions` in `OnboardingWizardScreen`.
+    27. **Onboarding Redesign — Phase 5: S14 Save Your Plan (`SavePlanScreen.tsx`) & Data Migration Service**
+      - **Onboarding Migration Service (`onboardingMigration.ts`)**:
+        - Created `migrateOnboardingToUserAccount()` to write user profile to `/users/{uid}` in Firestore, populate goals, save calculated health plan, and migrate the S13 first meal draft into today's log (`/dailyLogs/{date}`) in Firestore + local cache.
+        - Automatically purges `@calori_onboarding_draft` on completion.
+        - Created unit test suite `onboardingMigration.test.ts` (100% pass).
+      - **HealthContext Upgrade**:
+        - Added `signInAnonymously()` and `loginAnonymous()` to `HealthContextType` and `AuthContextValue` to support the anonymous guest flow.
+      - **Save Plan Screen (`SavePlanScreen.tsx`)**:
+        - Summary card with live plan preview (daily calorie budget in Kurale `#1E293B`, target date, and `"1 meal logged"` badge).
+        - Google 1-tap sign-in CTA with crisp official 4-color SVG emblem.
+        - Inline expandable Email + Password form with prefilled name, show/hide eye toggle, live password checklist (8+ chars, 1 number), without redundant confirm-password field.
+        - Account collision detection: inline prompt (`"Account exists. Sign in to link your plan"`) switching to sign-in mode without losing draft state.
+        - Anonymous guest link (`"Continue without an account"`).
+        - Warm founder note modal (`"A quick note from the maker... — Naveen"`) with 3.5s auto-progress or tap-to-continue.
+        - Strict `DESIGN.md` craft floor: `#FAF9F6` background, 10px continuous squircle cards, 1px whisper borders, Urbanist typography, and 0 drop shadows.
+      - **Wizard Wiring (`OnboardingWizardScreen.tsx`)**:
+        - Integrated `save_plan` step between `first_meal` (S13) and `permissions` (S16).
+        - Updated `OnboardingWizardScreen.test.tsx` and unit tests.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 66/66 test suites (352/352 tests) passing 100% green.
+
+    28. **Comprehensive Onboarding Flow & Wiring Rectification**
+      - **Resolved `BuildingPlanScreen` Back Loop**: On 3s timer completion, replaces `building_plan` with `plan` in `stepHistory` (and purged from `buildReconstructedHistory`), allowing Back from `PlanRevealScreen` to cleanly return to `FoodStyleScreen` rather than getting stuck in an infinite calculation loop.
+      - **Prevented Premature Wizard Unmount on Auth**: Added `isOnboardingActive` state to [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx) and [WelcomeScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/auth/WelcomeScreen.tsx), keeping the onboarding wizard mounted across Firebase auth in S14 so the Founder Note modal and S16 Permission Primer execute completely before transitioning to `TodayScreen`.
+      - **Fixed Back Navigation on Permission Primer**: Added `onBack?: () => void` to [PermissionPrimerStep.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/components/PermissionPrimerStep.tsx) with a top header back button, and passed `onBack={popStep}` in [OnboardingWizardScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/OnboardingWizardScreen.tsx).
+      - **Fixed Graduation Routing in WelcomeScreen**: Updated `onComplete` in [WelcomeScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/auth/WelcomeScreen.tsx) to graduate directly to the dashboard via `onLoginSuccess()` rather than redirecting to the obsolete pre-onboarding `SignUpScreen`.
+      - **Mobile Dimensional Framing**: Added `phoneFrame: { maxWidth: 480, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }` to [SavePlanScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/SavePlanScreen.tsx) and wrapped `WelcomeScreen` in `phoneContainer` in [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx).
+      - **Verification**: `npx tsc --noEmit` passed cleanly (0 errors); all 66/66 test suites (352/352 tests) passing 100% green.
+
+    29. **Phase 6: S15 Soft Paywall Architecture (`SoftPaywallScreen.tsx`)**
+      - **Zero-Pressure Value Offer (`DESIGN.md`)**: Built an elegant Pro trial offer screen with Kurale serif titles, Urbanist telemetry, 10px continuous squircle cards, 1px whisper borders (`rgba(15, 23, 42, 0.06)`), `#FAF9F6` canvas, and zero drop shadows.
+      - **Personalized Plan Chip**: Dynamic badge chip (`Calibrated for [Name] · [Budget] kcal/day target`) anchoring the value to user's calculated caloric targets.
+      - **4 Pro Value Pillars**: Unlimited AI Meal Vision (unlimited scans), Dynamic Adaptive Coaching (Ria weekly recalibrations), 30-Day Deep Trend Graphs, and Priority Cloud Backup.
+      - **Trust Trial Timeline**: 3-stage visualizer detailing the 7-day trial transparency: Today ($0.00) -> Day 5 (gentle reminder) -> Day 7 (billed only if you love it).
+      - **Interactive Plan Selection**: Annual Plan ($29.99/year, 7-day free trial, SAVE 50%) vs Monthly Plan ($4.99/month).
+      - **Zero-Pressure Dismiss Flow**: Primary CTA (`"Start 7-Day Free Trial"` / `"Upgrade to Pro"`), plus respectful `"Continue with Free Plan"` bottom link and top header `"Skip"` button.
+      - **Full Wizard Integration**: Wired as `'paywall'` step in [OnboardingWizardScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/OnboardingWizardScreen.tsx) between S14 `save_plan` and S16 `permissions`.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (363/363 tests) passing 100% green.
 
 
-## Important decisions & gotchas (do NOT re-litigate without reason)
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
 - **`MealCard` kept `maxHeight`** (moved to UI thread) rather than `scaleY` + measured height — the lower-risk fix. Could upgrade to `scaleY` later if desired.
