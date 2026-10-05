@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -340,7 +339,6 @@ const styles = StyleSheet.create({
   },
   unitTabTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontWeight: '600',
     color: '#0F172A',
   },
   stepperCard: {
@@ -383,7 +381,6 @@ const styles = StyleSheet.create({
   valueText: {
     fontSize: 26,
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
   },
   unitText: {
@@ -413,7 +410,6 @@ const styles = StyleSheet.create({
   },
   summaryBold: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   saveBtn: {
     backgroundColor: Colors.weight,

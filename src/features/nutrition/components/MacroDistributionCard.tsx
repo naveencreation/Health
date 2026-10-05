@@ -732,7 +732,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.4,
   },
@@ -773,7 +772,6 @@ const styles = StyleSheet.create({
   dropdownTriggerText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: '#0F172A',
   },
   headerDivider: {
@@ -809,7 +807,6 @@ const styles = StyleSheet.create({
   legendText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    fontWeight: '500',
     color: '#64748B',
   },
   chartWrapper: {
@@ -826,7 +823,6 @@ const styles = StyleSheet.create({
   yAxisLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    fontWeight: '500',
     color: '#94A3B8',
     textAlign: 'left',
   },
@@ -844,7 +840,6 @@ const styles = StyleSheet.create({
   tooltipValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    fontWeight: '700',
     color: '#0F172A',
     lineHeight: 14,
     textAlign: 'center',
@@ -852,7 +847,6 @@ const styles = StyleSheet.create({
   tooltipUnitText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 8,
-    fontWeight: '500',
     color: '#64748B',
     lineHeight: 9,
     textAlign: 'center',
@@ -873,12 +867,10 @@ const styles = StyleSheet.create({
   xAxisText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    fontWeight: '500',
     color: '#94A3B8',
   },
   xAxisTextSelected: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
   },
   xAxisTextFuture: {
@@ -898,7 +890,6 @@ const styles = StyleSheet.create({
   emptyPeriodText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    fontWeight: '500',
     color: '#64748B',
   },
 
@@ -949,7 +940,6 @@ const styles = StyleSheet.create({
   dropdownItemLabel: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#0F172A',
   },
   dropdownItemLabelActive: {
@@ -958,7 +948,6 @@ const styles = StyleSheet.create({
   dropdownItemSub: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    fontWeight: '500',
     color: '#64748B',
     marginTop: 1,
   },

@@ -464,14 +464,12 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    fontWeight: '600',
     color: '#64748B',
     letterSpacing: 0.5,
   },
   sheetTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#0F172A',
   },
   closeBtn: {
@@ -540,7 +538,6 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13.5,
-    fontWeight: '600',
     color: '#0F172A',
     flex: 1,
   },
@@ -619,7 +616,6 @@ const styles = StyleSheet.create({
   inputSectionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12.5,
-    fontWeight: '600',
     color: '#475569',
     marginBottom: 10,
   },
@@ -724,7 +720,6 @@ const styles = StyleSheet.create({
   btnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   helperBox: {
@@ -753,7 +748,6 @@ const styles = StyleSheet.create({
   helperTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12.5,
-    fontWeight: '600',
     color: '#1E293B',
     marginBottom: 2,
   },

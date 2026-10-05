@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
   coachName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
   },
   aiTag: {
@@ -275,7 +274,6 @@ const styles = StyleSheet.create({
   aiTagText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9,
-    fontWeight: '700',
     color: '#F47551',
     letterSpacing: 0.4,
   },
@@ -342,7 +340,6 @@ const styles = StyleSheet.create({
   insightTag: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9.5,
-    fontWeight: '700',
     color: '#F47551',
     letterSpacing: 0.3,
   },
@@ -370,7 +367,6 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     lineHeight: 20,
     color: '#1E293B',
-    fontWeight: '500',
   },
   // Suggestions / Quick Prompt Chips
   chipsSection: {
@@ -418,11 +414,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11.5,
     color: '#334155',
-    fontWeight: '500',
   },
   chipTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '600',
   },
 });
 

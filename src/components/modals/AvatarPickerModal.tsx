@@ -282,7 +282,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerSubtitle: {

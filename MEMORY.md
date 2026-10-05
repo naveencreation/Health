@@ -1002,9 +1002,40 @@
       - **Nutritional Targets & Presets (`GoalsScreen.tsx`)**: Verified goal presets (Fat Loss 1,650 kcal, Muscle Gain 2,300 kcal, Maintain 1,950 kcal), macro energy distribution charts, and direct budget editing.
       - **Biometric Inspector Tabs**: Tested live switching between BMI, Weight journey, Calorie Intake, Steps, and Hydration tabs.
       - **Telemetry & Heap Benchmark**: Chrome memory telemetry verified 37.54 MB used JS heap (out of 4,192 MB limit), 0 DOM leaks, 395 active DOM nodes, 0 console errors, and 13 synced offline localStorage keys.
+    36. **Path 7 Audit & Subscription Reactivity Fix (Pro Paywall, Tier Switching & Entitlement Pub/Sub)**
+      - **Pro Paywall Modal (`ProPaywallModal.tsx`)**: Live audited feature highlights (Unlimited AI Vision, Adaptive Macro Coaching, Deep Trends, Priority Backup), plan radio selection (Annual $29.99/yr, Monthly $4.99/mo, Lifetime $79.99), and CTA toggles.
+      - **Subscription Entitlement Pub/Sub Fix (`PaymentService.ts` & `usePro.ts`)**: Discovered that individual `usePro()` hooks relied on unshared local state; saving or purchasing an entitlement in the modal did not propagate to `ProfileScreen` or `PreferencesScreen` without a full remount. Added pub/sub listener registration (`PaymentService.subscribe` / `notifyListeners`) so any entitlement change automatically and reactively updates all mounted UI components with zero lag.
+      - **Live Purchase & UI Transition**: Executed "Start 7-Day Free Trial" for Annual VIP membership. Verified instant dynamic transition on `ProfileScreen` from promotional banner to active gold badge ("Calorify Pro ACTIVE • Annual VIP Membership • Renews on 10/5/2027 • Manage"), and verified `PreferencesScreen` reflects "Calorify Pro (Annual VIP)". Tested "Manage Pro Subscription" and close button dismissal.
+    37. **Path 8 Audit: Analytics & Trends Deep-Dive (4 Health Pillars & Unlocked Pro Trends)**
+      - **Report Picker & Health Pillars (`AnalyticsScreen.tsx`)**: Live audited the 4 core health report pillars via the modal selector:
+        - **Weight & Body**: Verified 67.0 kg current weight (-1.0 kg lost), 63.0 kg goal weight, interactive weight trajectory graph (bar vs line), and 23.2 Normal BMI classification breakdown.
+        - **Nutrition & Calories**: Audited calorie intake bar/line chart displaying 1,375 kcal on Day 5 (matching exact breakfast + lunch/snack logged meals). Tested interactive macronutrient switcher (Protein 65.2g / 122g goal, Carbs 171g / 241g goal, Fat, Fiber), confirming all charts update dynamically.
+        - **Step Activity**: Audited habit telemetry (1,000 steps, 7h 49m duration, 40 kcal burn, 0.80 km distance) and daily active burn average bar chart.
+        - **Hydration Intake**: Audited 44% drink completion and 1,050 mL water intake graph (matching logged water entries).
+      - **Unlocked Pro Access**: Verified that because user is Calorify Pro Active, all advanced trends and historical views render with zero paywall lockouts or overlays.
+      - **Telemetry & Memory**: Evaluated performance via `browser_evaluate`: 38.68 MB JS heap, 238 DOM nodes, and 0 console errors.
       - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
-
-
+    38. **Celebratory Pro Success Card & Gold Header Badge (`[PRO ✦]`) Implementation**
+      - **Header Luxury Badge (`Header.tsx`)**: Replaced plain user name row with dynamic `isPro` check rendering a gold badge `<View style={styles.proTag}><Ionicons name="sparkles" size={10} color="#D97706" /><Text style={styles.proTagText}>PRO ✦</Text></View>` with warm amber `#FEF3C7` background, 1px `#FDE68A` border, and Urbanist Bold 9.5px `#B45309` typography.
+      - **Celebratory Success Card (`ProPaywallModal.tsx`)**: Upgraded purchase completion flow to prevent abrupt modal exit. On payment success (`res.success`), triggers `haptics.success()` and renders an animated golden celebration card featuring:
+        - 84px gold sparkles circle icon (`#FEF3C7` fill with `#FDE68A` border)
+        - `VIP ACCESS ACTIVATED` luxury pill
+        - Kurale 28px headline "Welcome to Calorify Pro!"
+        - Dynamic trial renewal transparency copy ("Your 7-day free trial is now active. Billed on [Date] unless canceled")
+        - 4 unlocked perk checklist rows (Unlimited AI Meal Vision, Dynamic Adaptive Coaching, Deep 30-Day & Yearly Trends, Streak Freeze Protection)
+        - Primary CTA button "Explore Pro Features" with `arrow-forward` icon that smoothly dismisses modal back to the upgraded app shell.
+      - **Jest & E2E Validation (`ProPaywallModal.test.tsx`)**: Enhanced test suite to mock `haptics.success()` / `haptics.error()`, testing plan purchase execution, celebratory card rendering, and graceful dismissal via `Explore Pro Features`.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+    39. **App-Wide Urbanist Font Resolution & Redundant `fontWeight` Elimination**
+      - **Root Cause Analysis**: In React Native Android, specifying `fontWeight: '700'`, `'600'`, `'bold'` alongside custom font families with embedded weight variants (`Urbanist_700Bold`, `Urbanist_600SemiBold`) causes Android's `ReactFontManager` to search for nonexistent sub-files (e.g., `Urbanist_700Bold_bold.ttf`). Failing to find them, Android silently drops the custom font and falls back to system Roboto. On iOS, native `UIFont fontWithName:size:` requires the true PostScript name (`Urbanist-Bold`), which differed from Android's asset filename (`Urbanist_700Bold`).
+      - **Platform-Aware Typography Architecture (`src/theme/typography.ts`)**:
+        - Mapped iOS to exact PostScript names (`Urbanist-Regular`, `Urbanist-Medium`, `Urbanist-SemiBold`, `Urbanist-Bold`, `Urbanist-ExtraBold`, `Kurale-Regular`).
+        - Mapped Android to native asset filenames (`Urbanist_400Regular`, `Urbanist_500Medium`, `Urbanist_600SemiBold`, `Urbanist_700Bold`, `Urbanist_800ExtraBold`, `Kurale_400Regular`).
+        - Preserved Web CSS font-stack fallbacks.
+      - **Global `fontWeight` Elimination (169 instances across 46 UI files)**:
+        - Removed all redundant `fontWeight` declarations from styles using `Fonts.urbanist.*` and `Fonts.kurale` across the entire codebase (`TodayScreen`, `Header`, `TopDateStrip`, `HeroCalorieCard`, `MealCard`, `MealSection`, `FoodLogModal`, `FoodVisionModal`, `PreferencesScreen`, `MetabolicSummaryScreen`, `GoalsScreen`, `WaterTrackerScreen`, `WeightTrackerScreen`, `AnalyticsScreen`, etc.).
+        - Added missing `Fonts.urbanist` font families to `ErrorBoundary.tsx` and `HealthScreen.tsx`.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green; snapshot updated.
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
 - **`MealCard` kept `maxHeight`** (moved to UI thread) rather than `scaleY` + measured height — the lower-risk fix. Could upgrade to `scaleY` later if desired.

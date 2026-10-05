@@ -276,7 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -333,7 +332,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
   },
   statValTdee: {
@@ -379,7 +377,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.3,
   },
   engineSubtitle: {
@@ -406,7 +403,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
     color: '#0F172A',
-    fontWeight: '700',
   },
   formulaNumberDeficit: {
     color: Colors.primaryDark,
@@ -444,13 +440,11 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   sectionHeader: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
-    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },

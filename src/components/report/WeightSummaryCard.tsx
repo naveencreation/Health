@@ -121,7 +121,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     lineHeight: 24,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
     marginBottom: 4,

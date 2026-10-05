@@ -156,7 +156,6 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontWeight: '600',
     color: Colors.iconNavy,
   },
   centerFabAnchor: {

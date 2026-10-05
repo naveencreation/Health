@@ -14,6 +14,8 @@ jest.mock('@/utils/haptics', () => ({
   haptics: {
     selection: jest.fn().mockResolvedValue(undefined),
     impactMedium: jest.fn().mockResolvedValue(undefined),
+    success: jest.fn().mockResolvedValue(undefined),
+    error: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -51,17 +53,24 @@ describe('ProPaywallModal', () => {
     expect(getByRole('button', { name: 'Restore Purchases' })).toBeTruthy();
   });
 
-  it('executes purchasePlan when main action button is pressed', async () => {
+  it('executes purchasePlan and displays celebration card when main action button is pressed', async () => {
     mockPurchasePlan.mockResolvedValue({ success: true });
     const onClose = jest.fn();
 
-    const { getByRole } = await render(<ProPaywallModal visible={true} onClose={onClose} />);
+    const { getByRole, getByText } = await render(<ProPaywallModal visible={true} onClose={onClose} />);
 
     const purchaseBtn = getByRole('button', { name: 'Unlock Calorify Pro' });
     fireEvent.press(purchaseBtn);
 
     await waitFor(() => {
       expect(mockPurchasePlan).toHaveBeenCalledWith('pro_annual');
+      expect(getByText('Welcome to Calorify Pro!')).toBeTruthy();
+    });
+
+    const exploreBtn = getByRole('button', { name: 'Explore Pro Features' });
+    fireEvent.press(exploreBtn);
+
+    await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
     });
   });

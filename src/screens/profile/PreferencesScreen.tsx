@@ -627,7 +627,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -653,7 +652,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
-    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
@@ -712,7 +710,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
-    fontWeight: '600',
   },
   personalityDesc: {
     fontFamily: Fonts.urbanist.regular,
@@ -755,7 +752,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     color: '#0F172A',
-    fontWeight: '700',
   },
   byokDesc: {
     fontFamily: Fonts.urbanist.regular,
@@ -794,7 +790,6 @@ const styles = StyleSheet.create({
   },
   statusTextActive: {
     color: '#15803D',
-    fontWeight: '600',
   },
   statusTextInactive: {
     color: '#64748B',
@@ -934,7 +929,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
     color: '#15803D',
-    fontWeight: '700',
   },
   statusTagTextGuest: {
     color: '#D97706',

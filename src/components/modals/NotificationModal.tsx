@@ -352,7 +352,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerSubtitle: {
@@ -495,7 +494,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 18,
-    fontWeight: '600',
     color: Colors.textPrimary,
   },
   emptyDesc: {

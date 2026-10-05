@@ -1477,7 +1477,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -1494,7 +1493,6 @@ const styles = StyleSheet.create({
   },
   headerBoldVal: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
   },
   headerBudgetBadge: {
@@ -1514,7 +1512,6 @@ const styles = StyleSheet.create({
   headerBudgetBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    fontWeight: '700',
   },
   budgetTextOk: {
     color: '#059669',
@@ -1534,7 +1531,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#EA580C',
-    fontWeight: '600',
   },
   mealSwitcherRow: {
     flexDirection: 'row',
@@ -1577,7 +1573,6 @@ const styles = StyleSheet.create({
   },
   mealTabLabelActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
     fontFamily: Fonts.urbanist.bold,
   },
   searchBarContainer: {
@@ -1632,7 +1627,6 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: '#FFFFFF',
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   listContent: {
     paddingHorizontal: 16,
@@ -1667,7 +1661,6 @@ const styles = StyleSheet.create({
   foodItemName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14.5,
-    fontWeight: '600',
     color: '#0F172A',
     flexShrink: 1,
   },
@@ -1697,7 +1690,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9.5,
     color: '#059669',
-    fontWeight: '700',
   },
   cameraScanBtn: {
     padding: 6,
@@ -1756,7 +1748,6 @@ const styles = StyleSheet.create({
   foodItemCals: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
     lineHeight: 20,
   },
@@ -1907,7 +1898,6 @@ const styles = StyleSheet.create({
   footerStepperNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
   },
   footerStepperUnit: {
@@ -1944,7 +1934,6 @@ const styles = StyleSheet.create({
   productMainTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
     marginTop: 4,
@@ -2240,7 +2229,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     fontSize: 14.5,
-    fontWeight: '700',
   },
   toastContainer: {
     position: 'absolute',

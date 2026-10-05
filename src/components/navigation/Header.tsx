@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
+import { usePro } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { UserAvatar } from '@/components/common/UserAvatar';
 
@@ -55,6 +56,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 }) => {
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
+  const { isPro } = usePro();
   const { selectedDate, remainingCalories } = useDailyLog();
   const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
 
@@ -134,7 +136,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             >
               <View style={styles.welcomeRow}>
                 <Text style={styles.welcomeText}>Welcome</Text>
-                {currentUser?.isGuest ? (
+                {isPro ? (
+                  <View style={styles.proTag} accessibilityLabel="Calorify Pro Member">
+                    <Ionicons name="sparkles" size={10} color="#D97706" style={styles.proTagIcon} />
+                    <Text style={styles.proTagText}>PRO ✦</Text>
+                  </View>
+                ) : currentUser?.isGuest ? (
                   <View style={styles.guestTag}>
                     <Text style={styles.guestTagText}>Guest</Text>
                   </View>
@@ -319,12 +326,32 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#D97706',
   },
+  proTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    gap: 3,
+  },
+  proTagIcon: {
+    marginTop: 0.5,
+  },
+  proTagText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 9.5,
+    color: '#B45309',
+    letterSpacing: 0.3,
+  },
   userNameText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
     lineHeight: 25,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.3,
   },
   collapsedHudStack: {
@@ -341,7 +368,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12.5,
     color: '#0F172A',
-    fontWeight: '700',
     flexShrink: 1,
   },
   caloriePill: {

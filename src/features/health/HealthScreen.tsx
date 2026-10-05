@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Fonts } from '@/theme/typography';
 import { connectHealth, getTodaySteps } from './healthService';
 
 export interface HealthScreenProps {
@@ -118,6 +119,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   platformWarning: {
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 16,
     color: '#64748B',
     textAlign: 'center',
@@ -126,18 +128,19 @@ const styles = StyleSheet.create({
     marginVertical: 18,
   },
   title: {
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 24,
-    fontWeight: '600',
     marginBottom: 16,
     color: '#0F172A',
   },
   steps: {
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 48,
-    fontWeight: '700',
     marginBottom: 16,
     color: '#0F172A',
   },
   message: {
+    fontFamily: Fonts.urbanist.regular,
     textAlign: 'center',
     marginBottom: 24,
     color: '#64748B',

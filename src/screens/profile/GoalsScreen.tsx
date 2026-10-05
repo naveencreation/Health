@@ -600,7 +600,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.primary,
-    fontWeight: '600',
   },
   headerSaveBtnTextSuccess: {
     color: '#15803D',
@@ -620,7 +619,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -646,7 +644,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
-    fontWeight: '600',
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
@@ -691,7 +688,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#0F172A',
-    fontWeight: '600',
   },
   presetMeta: {
     fontFamily: Fonts.urbanist.medium,
@@ -719,13 +715,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#0F172A',
-    fontWeight: '700',
   },
   macroSplitSum: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: Colors.primary,
-    fontWeight: '700',
   },
   macroBar: {
     flexDirection: 'row',
@@ -874,7 +868,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     color: '#FFFFFF',
-    fontWeight: '700',
   },
   pressedSubtle: {
     opacity: 0.8,

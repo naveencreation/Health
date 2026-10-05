@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.4,
     paddingHorizontal: 20,

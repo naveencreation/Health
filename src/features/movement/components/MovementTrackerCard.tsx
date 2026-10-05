@@ -560,7 +560,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: Colors.steps,
-    fontWeight: '600',
   },
   progressTrack: {
     height: 12,
@@ -764,20 +763,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    fontWeight: '700',
     color: '#0F172A',
   },
   modalSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    fontWeight: '500',
     color: '#64748B',
     marginBottom: 8,
   },
   modalSubtitleMt14: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    fontWeight: '500',
     color: '#64748B',
     marginBottom: 8,
     marginTop: 14,
@@ -803,7 +799,6 @@ const styles = StyleSheet.create({
   quickName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    fontWeight: '600',
     color: '#1E293B',
     marginTop: 4,
   },
@@ -855,7 +850,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
   },
 });
 

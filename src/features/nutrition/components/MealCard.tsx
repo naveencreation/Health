@@ -357,7 +357,6 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
   },
   chevronPill: {
@@ -413,7 +412,6 @@ const styles = StyleSheet.create({
   calorieNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    fontWeight: '800',
     color: '#0F172A',
     lineHeight: 22,
   },
@@ -462,7 +460,6 @@ const styles = StyleSheet.create({
   foodName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14.5,
-    fontWeight: '600',
     color: '#0F172A',
   },
   foodServing: {
@@ -498,7 +495,6 @@ const styles = StyleSheet.create({
   stepperQty: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12.5,
-    fontWeight: '700',
     color: '#0F172A',
     minWidth: 16,
     textAlign: 'center',
@@ -506,14 +502,12 @@ const styles = StyleSheet.create({
   foodCalories: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    fontWeight: '700',
     color: '#0F172A',
     minWidth: 54,
     textAlign: 'right',
   },
   foodCaloriesUnit: {
     fontSize: 11,
-    fontWeight: '400',
     color: '#64748B',
   },
   deleteBtn: {
@@ -562,7 +556,6 @@ const styles = StyleSheet.create({
   macroSummaryText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11.5,
-    fontWeight: '600',
     color: '#334155',
   },
   macroSummaryDivider: {

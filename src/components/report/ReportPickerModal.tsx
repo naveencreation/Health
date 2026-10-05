@@ -208,7 +208,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -266,7 +265,6 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
   },

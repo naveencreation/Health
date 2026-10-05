@@ -425,7 +425,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -450,7 +449,6 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontFamily: Fonts.urbanist.semiBold,
-    fontWeight: '600',
     color: '#F43F5E', // Weight rose
   },
   btnPressed: {
@@ -497,7 +495,6 @@ const styles = StyleSheet.create({
   itemWeightText: {
     fontSize: 16,
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -557,7 +554,6 @@ const styles = StyleSheet.create({
   deltaText: {
     fontSize: 13,
     fontFamily: Fonts.urbanist.semiBold,
-    fontWeight: '600',
     color: '#10B981',
   },
   deltaTextGain: {

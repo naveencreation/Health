@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 
 interface Props {
   children: ReactNode;
@@ -98,13 +99,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#0F172A',
     marginBottom: 8,
     textAlign: 'center',
   },
   message: {
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
@@ -129,8 +131,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   retryButtonText: {
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    fontWeight: '600',
     color: '#FFFFFF',
   },
 });

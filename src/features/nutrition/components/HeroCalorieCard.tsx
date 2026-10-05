@@ -683,7 +683,6 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.2,
   },
@@ -722,12 +721,10 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#64748B',
-    fontWeight: '500',
   },
   segmentBtnTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
     color: '#0F172A',
-    fontWeight: '600',
   },
   slide: {
     paddingHorizontal: 20,
@@ -758,19 +755,16 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    fontWeight: '500',
     color: '#475569',
   },
   metricValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    fontWeight: '700',
     color: '#0F172A',
   },
   metricUnit: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13.5,
-    fontWeight: '400',
     color: '#64748B',
   },
   dialContainer: {
@@ -786,7 +780,6 @@ const styles = StyleSheet.create({
   calLeftNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 21,
-    fontWeight: '700',
     color: '#0F172A',
     lineHeight: 25,
   },
@@ -794,7 +787,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#64748B',
-    fontWeight: '500',
     marginTop: 1,
   },
   // Slide 0: Macros Row
@@ -821,7 +813,6 @@ const styles = StyleSheet.create({
   macroBoldVal: {
     fontFamily: Fonts.urbanist.semiBold,
     color: '#0F172A',
-    fontWeight: '600',
   },
   // Slide 1: Option A Subheader
   journeySubheaderRow: {
@@ -838,7 +829,6 @@ const styles = StyleSheet.create({
   avgIntakeBold: {
     fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
-    fontWeight: '700',
   },
   daySelectedLabel: {
     fontFamily: Fonts.urbanist.regular,
@@ -866,7 +856,6 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10.5,
-    fontWeight: '700',
   },
   statusTextGreen: {
     color: '#2E7D32',
@@ -918,25 +907,21 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#A16207',
-    fontWeight: '600',
   },
   macroTitleGreen: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#2E7D32',
-    fontWeight: '600',
   },
   macroTitleOrange: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: Colors.primaryDark,
-    fontWeight: '600',
   },
   macroPillValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13.5,
     color: '#0F172A',
-    fontWeight: '700',
     marginTop: 1,
   },
   // Slide 1: Wave Canvas & Horizon
@@ -961,7 +946,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 9.5,
     color: '#94A3B8',
-    fontWeight: '500',
   },
   // Slide 1: Timeline Row (SUN to SAT)
   timelineRow: {
@@ -992,11 +976,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#64748B',
-    fontWeight: '600',
   },
   timelineDayTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '700',
   },
   // Bottom Micro Pagination Dots
   paginationRow: {

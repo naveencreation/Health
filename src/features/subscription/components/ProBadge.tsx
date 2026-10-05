@@ -74,7 +74,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
     color: '#FFFFFF',
-    fontWeight: '800',
     letterSpacing: 0.6,
   },
   textSmall: {

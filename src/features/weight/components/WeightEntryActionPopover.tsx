@@ -141,13 +141,11 @@ const styles = StyleSheet.create({
   editText: {
     fontSize: 14,
     fontFamily: Fonts.urbanist.medium,
-    fontWeight: '500',
     color: '#0F172A',
   },
   deleteText: {
     fontSize: 14,
     fontFamily: Fonts.urbanist.medium,
-    fontWeight: '500',
     color: '#EF4444',
   },
 });

@@ -623,7 +623,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.2,
   },
   chevronDown: {
@@ -656,7 +655,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: Colors.primaryDark,
-    fontWeight: '600',
   },
   weekArrowsContainer: {
     flexDirection: 'row',
@@ -716,7 +714,6 @@ const styles = StyleSheet.create({
   dayNumText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#334155',
   },
   futureDayNumText: {
@@ -733,7 +730,6 @@ const styles = StyleSheet.create({
   dayNameText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    fontWeight: '600',
     color: '#64748B',
     letterSpacing: 0.3,
   },
@@ -766,13 +762,11 @@ const styles = StyleSheet.create({
   activeDayNumText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   activeDayNameText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.3,
   },
@@ -824,7 +818,6 @@ const styles = StyleSheet.create({
   modalMonthTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
     color: '#0F172A',
   },
   modalCloseBtn: {
@@ -846,7 +839,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     color: '#94A3B8',
-    fontWeight: '600',
   },
   modalGrid: {
     flexDirection: 'row',
@@ -883,12 +875,10 @@ const styles = StyleSheet.create({
   modalDayTextSelected: {
     color: '#FFFFFF',
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   modalDayTextToday: {
     color: Colors.primaryDark,
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   modalMealDot: {
     position: 'absolute',
@@ -919,6 +909,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.primaryDark,
-    fontWeight: '600',
   },
 });

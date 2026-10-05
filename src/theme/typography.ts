@@ -1,47 +1,72 @@
 import { Platform, TextStyle, ViewStyle } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
+const isIOS = Platform.OS === 'ios';
 
 export const Fonts = {
   // Brand Serif font (Restricted exclusively to solitary logo mark per DESIGN.md)
-  kurale: isWeb ? 'Kurale_400Regular, Kurale, Georgia, serif' : 'Kurale_400Regular',
+  kurale: isWeb
+    ? 'Kurale_400Regular, Kurale, Georgia, serif'
+    : isIOS
+      ? 'Kurale-Regular'
+      : 'Kurale_400Regular',
 
   // Modernist Geometric Sans font (100% Core brand typography for all screens, telemetry, headings, body)
   urbanist: {
     regular: isWeb
       ? 'Urbanist_400Regular, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_400Regular',
+      : isIOS
+        ? 'Urbanist-Regular'
+        : 'Urbanist_400Regular',
     medium: isWeb
       ? 'Urbanist_500Medium, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_500Medium',
+      : isIOS
+        ? 'Urbanist-Medium'
+        : 'Urbanist_500Medium',
     semiBold: isWeb
       ? 'Urbanist_600SemiBold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_600SemiBold',
+      : isIOS
+        ? 'Urbanist-SemiBold'
+        : 'Urbanist_600SemiBold',
     bold: isWeb
       ? 'Urbanist_700Bold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_700Bold',
+      : isIOS
+        ? 'Urbanist-Bold'
+        : 'Urbanist_700Bold',
     extraBold: isWeb
       ? 'Urbanist_800ExtraBold, Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_800ExtraBold',
+      : isIOS
+        ? 'Urbanist-ExtraBold'
+        : 'Urbanist_800ExtraBold',
   },
 
   // Backward-compatible mapping so all existing components seamlessly adopt Urbanist
   poppins: {
     regular: isWeb
       ? 'Urbanist_400Regular, Urbanist, Poppins_400Regular, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_400Regular',
+      : isIOS
+        ? 'Urbanist-Regular'
+        : 'Urbanist_400Regular',
     medium: isWeb
       ? 'Urbanist_500Medium, Urbanist, Poppins_500Medium, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_500Medium',
+      : isIOS
+        ? 'Urbanist-Medium'
+        : 'Urbanist_500Medium',
     semiBold: isWeb
       ? 'Urbanist_600SemiBold, Urbanist, Poppins_600SemiBold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_600SemiBold',
+      : isIOS
+        ? 'Urbanist-SemiBold'
+        : 'Urbanist_600SemiBold',
     bold: isWeb
       ? 'Urbanist_700Bold, Urbanist, Poppins_700Bold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_700Bold',
+      : isIOS
+        ? 'Urbanist-Bold'
+        : 'Urbanist_700Bold',
     extraBold: isWeb
       ? 'Urbanist_800ExtraBold, Urbanist, Poppins_700Bold, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : 'Urbanist_800ExtraBold',
+      : isIOS
+        ? 'Urbanist-ExtraBold'
+        : 'Urbanist_800ExtraBold',
   },
 };
 

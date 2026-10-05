@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -53,7 +53,15 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   const { purchasePlan, restorePurchases } = usePro();
   const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>('pro_annual');
   const [purchasing, setPurchasing] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      setPurchaseSuccess(false);
+      setStatusMessage(null);
+    }
+  }, [visible]);
 
   const handleSelectPlan = async (id: SubscriptionPlanId) => {
     await haptics.selection();
@@ -66,7 +74,8 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     try {
       const res = await purchasePlan(selectedPlanId);
       if (res.success) {
-        onClose();
+        await haptics.success();
+        setPurchaseSuccess(true);
       } else {
         setStatusMessage(res.error || 'Purchase failed');
       }
@@ -106,23 +115,116 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.safeArea}>
-        {/* Top Bar with Close Button */}
-        <View style={styles.topBar}>
-          <Pressable
-            style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
-            onPress={onClose}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Close Paywall"
-          >
-            <Ionicons name="close" size={22} color="#0F172A" />
-          </Pressable>
-        </View>
+        {purchaseSuccess ? (
+          <View style={styles.celebrationWrapper} testID="pro-celebration-card">
+            {/* Top Bar with Close Button */}
+            <View style={styles.topBar}>
+              <Pressable
+                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
+                onPress={onClose}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Close Paywall"
+              >
+                <Ionicons name="close" size={22} color="#0F172A" />
+              </Pressable>
+            </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+            <ScrollView
+              contentContainerStyle={styles.celebrationScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.celebrationBadgeCircle}>
+                <Ionicons name="sparkles" size={42} color="#D97706" />
+              </View>
+
+              <View style={styles.celebrationPill}>
+                <Text style={styles.celebrationPillText}>VIP ACCESS ACTIVATED</Text>
+              </View>
+
+              <Text style={styles.celebrationHeadline}>Welcome to Calorify Pro!</Text>
+              <Text style={styles.celebrationTagline}>
+                {selectedPlan.trialDays
+                  ? `Your ${selectedPlan.trialDays}-day free trial is now active. Billed on ${new Date(Date.now() + 7 * 86400000).toLocaleDateString()} unless canceled.`
+                  : 'Your unlimited VIP membership is now fully active.'}
+              </Text>
+
+              {/* Unlocked Perks List */}
+              <View style={styles.unlockedBox}>
+                <View style={styles.unlockedRow}>
+                  <View style={styles.checkCircle}>
+                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                  </View>
+                  <View style={styles.unlockedTextWrap}>
+                    <Text style={styles.unlockedTitle}>Unlimited AI Meal Vision</Text>
+                    <Text style={styles.unlockedDesc}>No daily scan limits. Snap photos of every dish and snack.</Text>
+                  </View>
+                </View>
+
+                <View style={styles.unlockedRow}>
+                  <View style={styles.checkCircle}>
+                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                  </View>
+                  <View style={styles.unlockedTextWrap}>
+                    <Text style={styles.unlockedTitle}>Dynamic Adaptive Coaching</Text>
+                    <Text style={styles.unlockedDesc}>Weekly calorie & macro recalculation with Ria AI.</Text>
+                  </View>
+                </View>
+
+                <View style={styles.unlockedRow}>
+                  <View style={styles.checkCircle}>
+                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                  </View>
+                  <View style={styles.unlockedTextWrap}>
+                    <Text style={styles.unlockedTitle}>Deep 30-Day & Yearly Trends</Text>
+                    <Text style={styles.unlockedDesc}>Full historical analytics, expenditure curves & projections.</Text>
+                  </View>
+                </View>
+
+                <View style={styles.unlockedRow}>
+                  <View style={styles.checkCircle}>
+                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                  </View>
+                  <View style={styles.unlockedTextWrap}>
+                    <Text style={styles.unlockedTitle}>Streak Freeze Protection</Text>
+                    <Text style={styles.unlockedDesc}>Automatic streak recovery keeps your consistency intact.</Text>
+                  </View>
+                </View>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.exploreBtn, pressed && styles.btnPressed]}
+                onPress={async () => {
+                  await haptics.selection();
+                  onClose();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Explore Pro Features"
+              >
+                <Text style={styles.exploreBtnText}>Explore Pro Features</Text>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </Pressable>
+            </ScrollView>
+          </View>
+        ) : (
+          <>
+            {/* Top Bar with Close Button */}
+            <View style={styles.topBar}>
+              <Pressable
+                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
+                onPress={onClose}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Close Paywall"
+              >
+                <Ionicons name="close" size={22} color="#0F172A" />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
           {/* Hero Crown Badge */}
           <View style={styles.crownWrap}>
             <View style={styles.crownCircle}>
@@ -247,7 +349,9 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
             automatically renews unless canceled at least 24 hours before the end of the current
             period.
           </Text>
-        </ScrollView>
+          </ScrollView>
+        </>
+      )}
       </SafeAreaView>
     </Modal>
   );
@@ -483,7 +587,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
-    fontWeight: '700',
   },
   restoreBtn: {
     paddingVertical: 8,
@@ -501,6 +604,123 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     textAlign: 'center',
     paddingHorizontal: 8,
+  },
+  celebrationWrapper: {
+    flex: 1,
+  },
+  celebrationScroll: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+  celebrationBadgeCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 2,
+    borderColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  celebrationPill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: 12,
+  },
+  celebrationPillText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 11,
+    color: '#B45309',
+    letterSpacing: 0.6,
+  },
+  celebrationHeadline: {
+    fontFamily: Fonts.kurale,
+    fontSize: 28,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  celebrationTagline: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  unlockedBox: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    gap: 16,
+    marginBottom: 28,
+  },
+  unlockedRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  unlockedTextWrap: {
+    flex: 1,
+  },
+  unlockedTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  unlockedDesc: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
+  },
+  exploreBtn: {
+    width: '100%',
+    height: 52,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  exploreBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    color: '#FFFFFF',
   },
 });
 

@@ -562,7 +562,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.4,
   },
@@ -632,7 +631,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12.5,
     lineHeight: 14,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.3,
     textAlign: 'center',
@@ -668,7 +666,6 @@ const styles = StyleSheet.create({
   xAxisTextSelected: {
     fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
-    fontWeight: '700',
   },
   xAxisTextFuture: {
     color: '#94A3B8',

@@ -318,7 +318,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.3,
   },
   circleNavBtn: {

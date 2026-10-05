@@ -24,6 +24,10 @@ export function usePro() {
 
   useEffect(() => {
     refreshEntitlement();
+    const unsubscribe = PaymentService.subscribe((state) => {
+      setEntitlement(state);
+    });
+    return unsubscribe;
   }, [refreshEntitlement]);
 
   const purchasePlan = useCallback(

@@ -410,7 +410,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
-    fontWeight: '700',
   },
 });
 

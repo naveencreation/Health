@@ -16,15 +16,14 @@ exports[`<MarkdownText /> matches snapshot 1`] = `
       [
         {
           "color": "#1E293B",
-          "fontFamily": "Urbanist_400Regular",
+          "fontFamily": "Urbanist-Regular",
           "fontSize": 13.5,
           "lineHeight": 20.5,
         },
         undefined,
         {
-          "fontFamily": "Urbanist_700Bold",
+          "fontFamily": "Urbanist-Bold",
           "fontSize": 17,
-          "fontWeight": "700",
           "lineHeight": 23,
           "marginBottom": 4,
           "marginTop": 8,
@@ -51,7 +50,7 @@ exports[`<MarkdownText /> matches snapshot 1`] = `
       [
         {
           "color": "#1E293B",
-          "fontFamily": "Urbanist_400Regular",
+          "fontFamily": "Urbanist-Regular",
           "fontSize": 13.5,
           "lineHeight": 20.5,
         },
@@ -69,8 +68,7 @@ exports[`<MarkdownText /> matches snapshot 1`] = `
       style={
         [
           {
-            "fontFamily": "Urbanist_700Bold",
-            "fontWeight": "700",
+            "fontFamily": "Urbanist-Bold",
           },
           {
             "color": "#0F172A",

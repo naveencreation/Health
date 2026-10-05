@@ -941,7 +941,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
     textAlignVertical: 'center',
@@ -982,7 +981,6 @@ const styles = StyleSheet.create({
   capsuleTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#0F172A',
     letterSpacing: -0.1,
     flexShrink: 1,
@@ -1036,13 +1034,11 @@ const styles = StyleSheet.create({
   timeframeTabText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: '#64748B',
   },
   timeframeTabTextActive: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#0F172A',
   },
   dateNavigator: {
@@ -1069,7 +1065,6 @@ const styles = StyleSheet.create({
   dateRangeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    fontWeight: '700',
     color: '#0F172A',
     marginHorizontal: 14,
     letterSpacing: -0.2,

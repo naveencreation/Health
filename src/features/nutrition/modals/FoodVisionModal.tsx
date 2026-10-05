@@ -709,14 +709,12 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9.5,
-    fontWeight: '700',
     color: '#F47551',
     letterSpacing: 0.5,
   },
   sheetTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    fontWeight: '700',
     color: '#0F172A',
   },
   closeBtn: {
@@ -762,7 +760,6 @@ const styles = StyleSheet.create({
   unconfiguredTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    fontWeight: '700',
     color: '#0F172A',
     marginBottom: 8,
     textAlign: 'center',
@@ -790,7 +787,6 @@ const styles = StyleSheet.create({
   connectKeyBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   pressedBtn: {
@@ -845,7 +841,6 @@ const styles = StyleSheet.create({
   pickerCardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    fontWeight: '700',
     color: '#0F172A',
     marginBottom: 2,
   },
@@ -883,7 +878,6 @@ const styles = StyleSheet.create({
   analyzingTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
     color: '#FFFFFF',
     marginTop: 12,
     textAlign: 'center',
@@ -963,13 +957,11 @@ const styles = StyleSheet.create({
   errorCategoryText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9.5,
-    fontWeight: '700',
     letterSpacing: 0.6,
   },
   errorTitleText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
     color: '#0F172A',
   },
   errorBodyText: {
@@ -1004,7 +996,6 @@ const styles = StyleSheet.create({
   primaryErrorActionText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   secondaryErrorActionBtn: {
@@ -1047,7 +1038,6 @@ const styles = StyleSheet.create({
   dishName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    fontWeight: '700',
     color: '#0F172A',
   },
   dishServing: {
@@ -1105,7 +1095,6 @@ const styles = StyleSheet.create({
   macroVal: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
   },
   macroLbl: {
     fontFamily: Fonts.urbanist.medium,
@@ -1200,7 +1189,6 @@ const styles = StyleSheet.create({
   slotTextSelected: {
     fontFamily: Fonts.urbanist.semiBold,
     color: '#F47551',
-    fontWeight: '700',
     includeFontPadding: false,
   },
   riaCoachBubble: {
@@ -1281,7 +1269,6 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13.5,
-    fontWeight: '700',
     color: '#FFFFFF',
   },
   btnPressed: {
@@ -1305,7 +1292,6 @@ const styles = StyleSheet.create({
   successTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    fontWeight: '700',
     color: '#166534',
     marginBottom: 6,
   },

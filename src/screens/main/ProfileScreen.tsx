@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
     color: '#0F172A',
-    fontWeight: '700',
     letterSpacing: -0.5,
     includeFontPadding: false,
   },

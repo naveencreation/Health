@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
   },
   boldRia: {
     color: '#0F172A',
@@ -284,7 +283,6 @@ const styles = StyleSheet.create({
   },
   heading1: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     fontSize: 17,
     lineHeight: 23,
     marginTop: 8,
@@ -292,7 +290,6 @@ const styles = StyleSheet.create({
   },
   heading2: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     fontSize: 15.5,
     lineHeight: 21,
     marginTop: 6,
@@ -300,7 +297,6 @@ const styles = StyleSheet.create({
   },
   heading3: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontWeight: '600',
     fontSize: 14,
     lineHeight: 20,
     marginTop: 4,
@@ -322,7 +318,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginRight: 6,
-    fontWeight: '700',
   },
   bulletContentText: {
     flex: 1,
@@ -336,7 +331,6 @@ const styles = StyleSheet.create({
   },
   numberPrefixText: {
     fontFamily: Fonts.urbanist.bold,
-    fontWeight: '700',
     fontSize: 13,
     lineHeight: 20,
     marginRight: 6,

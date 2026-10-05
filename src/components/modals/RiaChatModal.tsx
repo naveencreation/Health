@@ -709,7 +709,6 @@ const styles = StyleSheet.create({
   headerName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    fontWeight: '700',
     color: '#0F172A',
   },
   onlineDot: {

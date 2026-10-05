@@ -53,8 +53,11 @@ export const SUBSCRIPTION_PACKAGES: SubscriptionPackage[] = [
 
 export const PAYMENT_STORAGE_KEY = '@calori_subscription_entitlement_v1';
 
+export type EntitlementListener = (state: EntitlementState) => void;
+
 export class PaymentService {
   private static storageKey = PAYMENT_STORAGE_KEY;
+  private static listeners: Set<EntitlementListener> = new Set();
 
   public static setStorageKey(key: string) {
     this.storageKey = key;
@@ -62,6 +65,26 @@ export class PaymentService {
 
   public static resetStorageKey() {
     this.storageKey = PAYMENT_STORAGE_KEY;
+  }
+
+  /**
+   * Subscribes to entitlement state changes.
+   */
+  public static subscribe(listener: EntitlementListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private static notifyListeners(state: EntitlementState) {
+    this.listeners.forEach((listener) => {
+      try {
+        listener(state);
+      } catch (e) {
+        console.warn('[PaymentService] Error notifying listener', e);
+      }
+    });
   }
 
   /**
@@ -97,6 +120,7 @@ export class PaymentService {
   public static async saveEntitlement(state: EntitlementState): Promise<void> {
     try {
       await AsyncStorage.setItem(this.storageKey, JSON.stringify(state));
+      this.notifyListeners(state);
     } catch (e) {
       console.warn('[PaymentService] Failed to save entitlement', e);
     }
@@ -166,6 +190,7 @@ export class PaymentService {
   public static async revoke(): Promise<void> {
     try {
       await AsyncStorage.removeItem(this.storageKey);
+      this.notifyListeners({ isPro: false });
     } catch {}
   }
 }
