@@ -52,11 +52,18 @@ export interface UserProfilePayload {
  * Converts a PendingMeal captured in S13 into a formal LoggedMealItem
  */
 export function convertPendingMealToLoggedMeal(meal: PendingMeal): LoggedMealItem {
+  const rawSlot = (meal.mealSlot || 'lunch') as string;
+  const normalizedSlot: MealType =
+    rawSlot === 'snack' || rawSlot === 'snacks'
+      ? 'snacks'
+      : rawSlot === 'breakfast' || rawSlot === 'dinner'
+        ? (rawSlot as MealType)
+        : 'lunch';
   return {
     id: `meal_onboarding_${meal.loggedAt || Date.now()}`,
     foodId: 'onboarding_first_meal',
     name: meal.foodName,
-    mealType: (meal.mealSlot || 'lunch') as MealType,
+    mealType: normalizedSlot,
     servingUnit: `${meal.portionMultiplier}x serving`,
     quantity: 1,
     calories: Math.round(meal.calories),

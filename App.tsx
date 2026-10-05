@@ -517,6 +517,8 @@ function MainApp() {
     setFoodVisionVisible(true);
   }, []);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
+  const handleOnboardingStart = React.useCallback(() => setIsOnboardingActive(true), []);
+  const handleOnboardingEnd = React.useCallback(() => setIsOnboardingActive(false), []);
 
   const isDataReady = !isAuthLoading;
 
@@ -568,8 +570,8 @@ function MainApp() {
               setIsOnboardingActive(false);
               handleCloseAuthModal();
             }}
-            onOnboardingStart={() => setIsOnboardingActive(true)}
-            onOnboardingEnd={() => setIsOnboardingActive(false)}
+            onOnboardingStart={handleOnboardingStart}
+            onOnboardingEnd={handleOnboardingEnd}
             onClose={isAuthenticated ? handleCloseAuthModal : undefined}
           />
         </View>

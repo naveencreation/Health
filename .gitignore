@@ -57,3 +57,6 @@ yarn-error.*
 *.tgz
 *.rar
 *.7z
+
+# Playwright MCP artifacts
+.playwright-mcp/

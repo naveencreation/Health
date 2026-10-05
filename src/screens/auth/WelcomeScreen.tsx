@@ -80,18 +80,27 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     pushMode('onboarding');
   };
 
+  const onOnboardingStartRef = useRef(onOnboardingStart);
+  onOnboardingStartRef.current = onOnboardingStart;
+  const onOnboardingEndRef = useRef(onOnboardingEnd);
+  onOnboardingEndRef.current = onOnboardingEnd;
+
+  const prevInitialModeRef = useRef(initialMode);
   useEffect(() => {
-    const resolved = normalizeMode(initialMode);
-    if (resolved === 'onboarding') {
-      onOnboardingStart?.();
+    if (prevInitialModeRef.current !== initialMode) {
+      prevInitialModeRef.current = initialMode;
+      const resolved = normalizeMode(initialMode);
+      if (resolved === 'onboarding') {
+        onOnboardingStartRef.current?.();
+      }
+      setHistory([resolved]);
     }
-    setHistory([resolved]);
-  }, [initialMode, onOnboardingStart]);
+  }, [initialMode]);
 
   const pushMode = (nextMode: AuthScreenMode) => {
     const resolvedMode = normalizeMode(nextMode);
     if (resolvedMode === 'onboarding') {
-      onOnboardingStart?.();
+      onOnboardingStartRef.current?.();
     }
     setTransitionDirection('forward');
     setHistory(prev => (prev[prev.length - 1] === resolvedMode ? prev : [...prev, resolvedMode]));
@@ -102,7 +111,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     setHistory(prev => {
       const current = prev[prev.length - 1];
       if (current === 'onboarding') {
-        onOnboardingEnd?.();
+        onOnboardingEndRef.current?.();
       }
       if (prev.length > 1) {
         return prev.slice(0, -1);

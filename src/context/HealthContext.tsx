@@ -976,8 +976,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       dinner: [],
     };
     currentLog.meals.forEach(m => {
-      if (grouped[m.mealType]) {
-        grouped[m.mealType].push(m);
+      const slot = (m.mealType as string) === 'snack' ? 'snacks' : m.mealType;
+      if (grouped[slot]) {
+        grouped[slot].push(m);
       }
     });
     return grouped;
@@ -2433,11 +2434,18 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // 2. Inject First Meal if logged during onboarding
         if (data.biometrics.firstMeal) {
           const fm = data.biometrics.firstMeal;
+          const rawSlot = fm.mealSlot || 'lunch';
+          const normalizedSlot: MealType =
+            rawSlot === 'snack' || rawSlot === 'snacks'
+              ? 'snacks'
+              : rawSlot === 'breakfast' || rawSlot === 'lunch' || rawSlot === 'dinner'
+                ? (rawSlot as MealType)
+                : 'lunch';
           const newMealItem: LoggedMealItem = {
             id: `meal_onboarding_${fm.loggedAt || Date.now()}`,
             foodId: 'onboarding_first_meal',
             name: fm.foodName,
-            mealType: (fm.mealSlot || 'lunch') as MealType,
+            mealType: normalizedSlot,
             servingUnit: `${fm.portionMultiplier}x serving`,
             quantity: 1,
             calories: Math.round(fm.calories),

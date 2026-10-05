@@ -966,6 +966,12 @@
       - **Live Dashboard Connection (`WelcomeScreen.tsx`)**: In `onComplete(data)`, `WelcomeScreen` awaits `applyOnboardingPlan(data)` before calling `onLoginSuccess()`. Guarantees that when `TodayScreen` mounts, the Calorie Ring, consumed macros, user name, and the S13 first logged meal appear instantly with 0ms delay.
       - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
 
+    31. **Path 1 Audit: Full Onboarding-to-Dashboard End-to-End Walkthrough & Wiring Rectification**
+      - **WelcomeScreen History Reset Fix**: Unmemoized `onOnboardingStart` inline callback in `App.tsx` combined with an unbounded `useEffect([initialMode, onOnboardingStart])` was resetting onboarding history back to landing upon state re-render. Stabilized callbacks via `useCallback` in `App.tsx` and guarded `initialMode` with `useRef` in `WelcomeScreen.tsx`.
+      - **Snack vs Snacks Taxonomy Normalization (`HealthContext.tsx`, `onboardingMigration.ts`)**: Onboarding S13 logged meals with `mealSlot: 'snack'` (singular), while `MealType` and `MealSection` standard is `'snacks'`. Normalizing `snack` to `'snacks'` in `applyOnboardingPlan`, `convertPendingMealToLoggedMeal`, and `mealsByType` resolved the bug where the first logged meal was counted in calories but missing from the Snacks `MealCard`.
+      - **Live Playwright E2E Validation**: Successfully walked through all 16 onboarding steps live on `http://localhost:8081` (Name -> Goal -> Struggles -> Demographics -> Height -> Weight -> Target Weight -> Activity -> Pace -> Food Style -> Calculation -> Plan Reveal -> First Meal -> Save Plan -> Soft Paywall -> Permissions -> Dashboard). Verified instant reflection in `HeroCalorieCard` and `MealCard`, and tested real-time stepper quantity mutations (340 kcal -> 680 kcal, 104g Carbs, 26g Protein, 16g Fat).
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
+
 
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
