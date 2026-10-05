@@ -16,3 +16,5 @@ export * from './screens/TargetWeightScreen';
 export * from './screens/ActivityLevelScreen';
 export * from './screens/PaceSelectionScreen';
 export * from './screens/FoodStyleScreen';
+export * from './screens/BuildingPlanScreen';
+export * from './screens/PlanRevealScreen';

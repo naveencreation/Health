@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     marginBottom: 26,
   },
   sectionLabel: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     color: Colors.textPrimary ?? '#1E293B',
     marginBottom: 12,
@@ -292,12 +292,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dietChipText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
   },
   dietChipTextSelected: {
     color: '#1E293B',
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
   },
   dietChipTextUnselected: {
     color: '#475569',
@@ -326,13 +326,13 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   toggleTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: '#1E293B',
     marginBottom: 2,
   },
   toggleSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 12.5,
     color: '#64748B',
   },
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },

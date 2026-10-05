@@ -11,6 +11,8 @@ import { TargetWeightScreen } from './TargetWeightScreen';
 import { ActivityLevelScreen } from './ActivityLevelScreen';
 import { PaceSelectionScreen } from './PaceSelectionScreen';
 import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
+import { BuildingPlanScreen } from './BuildingPlanScreen';
+import { PlanRevealScreen } from './PlanRevealScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
 import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
@@ -43,6 +45,7 @@ export type OnboardingStep =
   | 'activity'
   | 'pace'
   | 'food_style'
+  | 'building_plan'
   | 'plan'
   | 'permissions';
 
@@ -76,6 +79,36 @@ export interface OnboardingWizardScreenProps {
   >;
   initialStep?: OnboardingStep;
 }
+
+export const buildReconstructedHistory = (
+  targetStep: OnboardingStep,
+  goal?: GoalType,
+  age?: number
+): OnboardingStep[] => {
+  const isMaintain = goal === 'maintain';
+  const isTeen = typeof age === 'number' && age >= 13 && age <= 17;
+  const skipWeightAndPace = isMaintain || isTeen;
+
+  const sequence: OnboardingStep[] = [
+    'name',
+    'goal',
+    'struggles',
+    'about_you',
+    'height',
+    'weight',
+    ...(skipWeightAndPace ? [] : (['target_weight'] as OnboardingStep[])),
+    'activity',
+    ...(skipWeightAndPace ? [] : (['pace'] as OnboardingStep[])),
+    'food_style',
+    'building_plan',
+    'plan',
+    'permissions',
+  ];
+
+  const targetIndex = sequence.indexOf(targetStep);
+  if (targetIndex <= 0) return ['name'];
+  return sequence.slice(0, targetIndex + 1);
+};
 
 export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   onComplete,
@@ -141,7 +174,12 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       if (typeof draft.snacks === 'boolean') setSnacks(draft.snacks);
 
       if (draft.step && draft.step !== 'name' && isMounted) {
-        setStepHistory([draft.step as OnboardingStep]);
+        const reconstructed = buildReconstructedHistory(
+          draft.step as OnboardingStep,
+          draft.goal,
+          draft.age
+        );
+        setStepHistory(reconstructed);
       }
     });
 
@@ -490,7 +528,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
             setMealTimes(data.mealTimes);
             setSkipsBreakfast(data.skipsBreakfast);
             setSnacks(data.snacks);
-            pushStep('plan');
+            pushStep('building_plan');
           }}
           onSkip={onSkip}
           sectionIndex={2}
@@ -501,15 +539,30 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     );
   }
 
-  // Step 11/12: Plan Calculation Blueprint
+  // S11: Building Your Plan (Cinematic animated transition)
+  if (currentStep === 'building_plan') {
+    return (
+      <View style={styles.container}>
+        <BuildingPlanScreen
+          name={name}
+          onComplete={() => pushStep('plan')}
+        />
+      </View>
+    );
+  }
+
+  // S12: Plan Reveal (Segmented ring, insight card, calculation breakdown)
   if (currentStep === 'plan') {
     return (
       <View style={styles.container}>
-        <PlanCalculationStep
+        <PlanRevealScreen
           plan={calculatedPlan}
+          name={name}
+          firstStruggle={struggles[0]}
+          targetWeightKg={targetWeightKg}
+          weightUnit={weightUnit}
           onBack={popStep}
-          stepIndicator="Review Plan"
-          onConfirm={() => pushStep('permissions')}
+          onLogFirstMeal={() => pushStep('permissions')}
         />
       </View>
     );

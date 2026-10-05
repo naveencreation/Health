@@ -8,7 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -37,23 +37,36 @@ export const NameInputScreen: React.FC<NameInputScreenProps> = ({
   const [name, setName] = useState(initialName);
   const [showGreeting, setShowGreeting] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Auto-focus input shortly after mount
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
+
+  const proceedWithFinalName = (finalName: string) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    onContinue(finalName);
+  };
 
   const handleProceed = (chosenName?: string) => {
     const finalName = (chosenName ?? name).trim() || 'friend';
     haptics.selection();
     setShowGreeting(true);
 
-    setTimeout(() => {
-      onContinue(finalName);
-    }, 1000);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      proceedWithFinalName(finalName);
+    }, 1800);
   };
 
   const handleSkip = () => {
@@ -68,15 +81,23 @@ export const NameInputScreen: React.FC<NameInputScreenProps> = ({
     const displayName = name.trim() || 'friend';
     return (
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          exiting={FadeOut.duration(200)}
-          style={styles.greetingContainer}
-          testID="name-greeting-view"
+        <Pressable
+          style={styles.greetingTouchable}
+          onPress={() => proceedWithFinalName(displayName)}
+          accessibilityRole="button"
+          accessibilityLabel="Continue to next step"
+          testID="name-greeting-touchable"
         >
-          <Text style={styles.greetingTitle}>Nice to meet you,</Text>
-          <Text style={styles.greetingName}>{displayName}.</Text>
-        </Animated.View>
+          <Animated.View
+            entering={FadeInDown.duration(350).springify().damping(18)}
+            exiting={FadeOut.duration(300)}
+            style={styles.greetingContainer}
+            testID="name-greeting-view"
+          >
+            <Text style={styles.greetingTitle}>Nice to meet you,</Text>
+            <Text style={styles.greetingName}>{displayName}.</Text>
+          </Animated.View>
+        </Pressable>
       </SafeAreaView>
     );
   }
@@ -178,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -197,7 +218,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   input: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 20,
     color: Colors.textPrimary ?? '#1E293B',
     padding: 0,
@@ -218,18 +239,24 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },
-  greetingContainer: {
+  greetingTouchable: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  greetingContainer: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
   },
   greetingTitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 22,
     color: Colors.textSecondary ?? '#64748B',
     marginBottom: 6,

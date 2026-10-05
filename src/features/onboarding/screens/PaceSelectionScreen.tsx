@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   paceLabel: {
-    fontFamily: Fonts.poppins.bold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     color: '#1E293B',
   },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   recommendedBadgeText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
     color: '#F47551',
     letterSpacing: 0.2,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   tagline: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -328,12 +328,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   metricValue: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 26,
     color: '#1E293B',
+    letterSpacing: -0.5,
   },
   metricUnit: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#64748B',
   },
@@ -341,12 +342,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   dateLabel: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     color: '#94A3B8',
   },
   dateValue: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: '#0F172A',
   },
@@ -360,7 +361,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
   },
   floorNoticeText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     color: '#059669',
   },
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },

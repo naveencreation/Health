@@ -89,6 +89,8 @@ jest.mock('@/features/onboarding', () => {
         <Pressable testID="btn-wizard-signin" onPress={onSignIn} />
       </View>
     ),
+    loadOnboardingDraft: jest.fn().mockResolvedValue(null),
+    clearOnboardingDraft: jest.fn().mockResolvedValue(undefined),
   };
 });
 
@@ -156,6 +158,29 @@ describe('WelcomeScreen (Consolidated Phase 0)', () => {
 
     await waitFor(() => {
       expect(getByTestId('signin-screen')).toBeTruthy();
+    });
+  });
+
+  it('renders Continue setup and Start over button when draft exists', async () => {
+    const { loadOnboardingDraft, clearOnboardingDraft } = require('@/features/onboarding');
+    loadOnboardingDraft.mockResolvedValueOnce({
+      version: 1,
+      step: 'struggles',
+      name: 'Naveen',
+    });
+
+    const { getByText, getByTestId } = await render(<WelcomeScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Continue setup (Naveen)')).toBeTruthy();
+      expect(getByTestId('btn-welcome-start-over')).toBeTruthy();
+    });
+
+    fireEvent.press(getByTestId('btn-welcome-start-over'));
+
+    await waitFor(() => {
+      expect(clearOnboardingDraft).toHaveBeenCalled();
+      expect(getByTestId('onboarding-wizard')).toBeTruthy();
     });
   });
 });

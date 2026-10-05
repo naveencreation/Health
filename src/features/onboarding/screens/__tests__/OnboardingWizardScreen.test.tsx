@@ -4,6 +4,26 @@ import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/asy
 import { OnboardingWizardScreen } from '../OnboardingWizardScreen';
 import * as ImagePicker from 'expo-image-picker';
 
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View: ReactNative.View,
+      ScrollView: ReactNative.ScrollView,
+    },
+    useSharedValue: (value: number) => ({ value }),
+    useAnimatedStyle: (factory: () => unknown) => factory(),
+    withRepeat: (anim: any) => anim,
+    withTiming: (value: number) => value,
+    Easing: {
+      linear: (val: number) => val,
+    },
+    FadeIn: { duration: () => ({}) },
+    FadeOut: { duration: () => ({}) },
+  };
+});
+
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
 jest.mock('@expo/vector-icons', () => ({
@@ -171,6 +191,37 @@ jest.mock('../FoodStyleScreen', () => {
           }
         />
         <Pressable testID="btn-food_style-back" onPress={onBack} />
+      </View>
+    ),
+  };
+});
+
+jest.mock('../BuildingPlanScreen', () => {
+  const React = require('react');
+  const { useEffect } = require('react');
+  return {
+    BuildingPlanScreen: ({ onComplete }: any) => {
+      useEffect(() => {
+        onComplete();
+      }, [onComplete]);
+      return null;
+    },
+  };
+});
+
+jest.mock('../PlanRevealScreen', () => {
+  const React = require('react');
+  const { View, Pressable } = require('react-native');
+  return {
+    PlanRevealScreen: ({ onLogFirstMeal, onBack }: any) => (
+      <View testID="step-plan">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Start My Journey"
+          testID="btn-log-first-meal"
+          onPress={onLogFirstMeal}
+        />
+        <Pressable testID="btn-plan-back" onPress={onBack} />
       </View>
     ),
   };

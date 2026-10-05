@@ -150,139 +150,141 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Top Bar */}
-        <OnboardingHeader
-          onBack={onBack}
-          onSkip={onSkip}
-          sectionIndex={sectionIndex}
-          totalSections={totalSections}
-          sectionProgress={sectionProgress}
-        />
+        {/* Top: Header Bar & Title */}
+        <View style={styles.topSection}>
+          <OnboardingHeader
+            onBack={onBack}
+            onSkip={onSkip}
+            sectionIndex={sectionIndex}
+            totalSections={totalSections}
+            sectionProgress={sectionProgress}
+          />
 
-        {/* Title & Cognitive Context */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>Your starting point.</Text>
-          <Text style={styles.screenSubtitle}>
-            This only sets your starting numbers. You can change it anytime.
-          </Text>
-        </View>
-
-        {/* Frame 13: Segmented Unit Toggle (Kg / Lbs) */}
-        <View style={styles.unitToggleContainer}>
-          {/* Kg Button */}
-          <Pressable
-            onPress={() => handleUnitToggle('kg')}
-            style={({ pressed }) => [
-              styles.unitButton,
-              unit === 'kg' ? styles.unitButtonActive : styles.unitButtonInactive,
-              pressed ? styles.unitButtonPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to kilograms"
-            accessibilityState={{ selected: unit === 'kg' }}
-          >
-            <Text
-              style={[
-                styles.unitButtonText,
-                unit === 'kg' ? styles.unitTextActive : styles.unitTextInactive,
-              ]}
-            >
-              Kg
+          <View style={styles.titleContainer}>
+            <Text style={styles.screenTitle}>What's your current weight?</Text>
+            <Text style={styles.screenSubtitle}>
+              This sets your baseline. You can update it anytime.
             </Text>
-          </Pressable>
+          </View>
+        </View>
 
-          {/* Lbs Button */}
-          <Pressable
-            onPress={() => handleUnitToggle('lbs')}
-            style={({ pressed }) => [
-              styles.unitButton,
-              unit === 'lbs' ? styles.unitButtonActive : styles.unitButtonInactive,
-              pressed ? styles.unitButtonPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to pounds"
-            accessibilityState={{ selected: unit === 'lbs' }}
-          >
-            <Text
-              style={[
-                styles.unitButtonText,
-                unit === 'lbs' ? styles.unitTextActive : styles.unitTextInactive,
+        {/* Center: Interactive Measurement Instrument */}
+        <View style={styles.centerInstrumentContainer}>
+          {/* Segmented Unit Toggle (Kg / Lbs) */}
+          <View style={styles.unitToggleContainer}>
+            <Pressable
+              onPress={() => handleUnitToggle('kg')}
+              style={({ pressed }) => [
+                styles.unitButton,
+                unit === 'kg' ? styles.unitButtonActive : styles.unitButtonInactive,
+                pressed ? styles.unitButtonPressed : null,
               ]}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to kilograms"
+              accessibilityState={{ selected: unit === 'kg' }}
             >
-              Lbs
-            </Text>
-          </Pressable>
-        </View>
+              <Text
+                style={[
+                  styles.unitButtonText,
+                  unit === 'kg' ? styles.unitTextActive : styles.unitTextInactive,
+                ]}
+              >
+                Kg
+              </Text>
+            </Pressable>
 
-        {/* Live Weight Display: e.g. 65 Kg */}
-        <View style={styles.displayValueContainer}>
-          <Text style={styles.displayNumber}>{activeWeight}</Text>
-          <Text style={styles.displayUnit}>{unit === 'kg' ? 'kg' : 'lbs'}</Text>
-        </View>
-
-        {/* Frame 14: Horizontal Slidable Ruler */}
-        <View
-          style={styles.rulerFrame}
-          {...panResponder.panHandlers}
-          // @ts-ignore Web wheel event
-          onWheel={handleWheel}
-        >
-          {/* Stationary Center Needle */}
-          <View style={styles.centerNeedleContainer}>
-            <View style={styles.centerNeedle} />
+            <Pressable
+              onPress={() => handleUnitToggle('lbs')}
+              style={({ pressed }) => [
+                styles.unitButton,
+                unit === 'lbs' ? styles.unitButtonActive : styles.unitButtonInactive,
+                pressed ? styles.unitButtonPressed : null,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to pounds"
+              accessibilityState={{ selected: unit === 'lbs' }}
+            >
+              <Text
+                style={[
+                  styles.unitButtonText,
+                  unit === 'lbs' ? styles.unitTextActive : styles.unitTextInactive,
+                ]}
+              >
+                Lbs
+              </Text>
+            </Pressable>
           </View>
 
-          {/* Horizontally Slidable Ticks Tape */}
-          <Animated.View style={[styles.ticksTape, dragStyle]}>
-            {ticks.map(tickVal => {
-              const isMajor = tickVal % 5 === 0;
-              const isCenter = tickVal === activeWeight;
+          {/* Live Weight Hero Display: e.g. 65 Kg */}
+          <View style={styles.displayValueContainer}>
+            <Text style={styles.displayNumber}>{activeWeight}</Text>
+            <Text style={styles.displayUnit}>{unit === 'kg' ? 'kg' : 'lbs'}</Text>
+          </View>
 
-              return (
-                <Pressable
-                  key={tickVal}
-                  onPress={() => updateWeight(tickVal)}
-                  style={({ pressed }) => [
-                    styles.tickSlot,
-                    pressed ? styles.tickSlotPressed : null,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select weight ${tickVal} ${unit}`}
-                  accessibilityState={{ selected: isCenter }}
-                >
-                  {/* Tick line */}
-                  <View
-                    style={[
-                      styles.tickLineBase,
-                      isMajor ? styles.tickLineMajor : styles.tickLineMinor,
-                      isCenter ? styles.tickLineCenter : null,
+          {/* Frame 14: Horizontal Slidable Ruler */}
+          <View
+            style={styles.rulerFrame}
+            {...panResponder.panHandlers}
+            // @ts-ignore Web wheel event
+            onWheel={handleWheel}
+          >
+            {/* Stationary Center Needle */}
+            <View style={styles.centerNeedleContainer}>
+              <View style={styles.centerNeedle} />
+            </View>
+
+            {/* Horizontally Slidable Ticks Tape */}
+            <Animated.View style={[styles.ticksTape, dragStyle]}>
+              {ticks.map(tickVal => {
+                const isMajor = tickVal % 5 === 0;
+                const isCenter = tickVal === activeWeight;
+
+                return (
+                  <Pressable
+                    key={tickVal}
+                    onPress={() => updateWeight(tickVal)}
+                    style={({ pressed }) => [
+                      styles.tickSlot,
+                      pressed ? styles.tickSlotPressed : null,
                     ]}
-                  />
-
-                  {/* Major number label (every 5 units, e.g. 50, 55, 60, 65...) */}
-                  {isMajor ? (
-                    <Text
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select weight ${tickVal} ${unit}`}
+                    accessibilityState={{ selected: isCenter }}
+                  >
+                    {/* Tick line */}
+                    <View
                       style={[
-                        styles.tickLabel,
-                        isCenter ? styles.tickLabelCenter : styles.tickLabelDefault,
+                        styles.tickLineBase,
+                        isMajor ? styles.tickLineMajor : styles.tickLineMinor,
+                        isCenter ? styles.tickLineCenter : null,
                       ]}
-                    >
-                      {tickVal}
-                    </Text>
-                  ) : (
-                    <View style={styles.tickLabelSpacer} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </Animated.View>
+                    />
 
-          {/* Left and Right Fade Gradients */}
-          <View style={styles.rulerFadeLeft} />
-          <View style={styles.rulerFadeRight} />
+                    {/* Major number label (every 5 units, e.g. 50, 55, 60, 65...) */}
+                    {isMajor ? (
+                      <Text
+                        style={[
+                          styles.tickLabel,
+                          isCenter ? styles.tickLabelCenter : styles.tickLabelDefault,
+                        ]}
+                      >
+                        {tickVal}
+                      </Text>
+                    ) : (
+                      <View style={styles.tickLabelSpacer} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </Animated.View>
+
+            {/* Left and Right Fade Gradients */}
+            <View style={styles.rulerFadeLeft} />
+            <View style={styles.rulerFadeRight} />
+          </View>
         </View>
 
-        {/* Frame 9: Accessible Continue CTA & Skip */}
+        {/* Bottom: Accessible Continue CTA */}
         <View style={styles.footerContainer}>
           <Pressable
             style={({ pressed }) => [
@@ -291,43 +293,11 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
             ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
-            accessibilityLabel="Continue with selected weight"
+            accessibilityLabel="Continue to next step"
+            testID="btn-weight-continue"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
-
-          {/* Skip & Sign In Actions */}
-          <View style={styles.footerLinksRow}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.skipContainer,
-                pressed ? styles.btnPressedSubtle : null,
-              ]}
-              onPress={onSkip}
-              hitSlop={HIT_SLOP_12}
-              accessibilityRole="button"
-              accessibilityLabel="Skip weight selection"
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
-            {onSignIn ? (
-              <Pressable
-                onPress={onSignIn}
-                hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [
-                  styles.signInBottomBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Sign in to existing account"
-              >
-                <Text style={styles.signInLinkText}>
-                  Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -337,46 +307,43 @@ export const WeightSelectionScreen: React.FC<WeightSelectionScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FAF9F6',
   },
   phoneFrame: {
-    width: '100%',
-    maxWidth: 440,
     flex: 1,
+    width: '100%',
+    maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
     justifyContent: 'space-between',
-    borderWidth: Platform.OS === 'web' ? 1 : 0,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
 
-  // Title: What’s your weight?
+  topSection: {
+    width: '100%',
+  },
   titleContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 8,
-    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
   },
   screenTitle: {
-    fontFamily: Fonts.urbanist.bold,
+    fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    color: Colors.textPrimary ?? '#1E293B',
+    marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 6,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.textSecondary ?? '#64748B',
+  },
+
+  centerInstrumentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
   },
 
   // Frame 13: Segmented Unit Toggle (Kg / Lbs)
@@ -384,19 +351,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    width: 200,
-    height: 44,
+    width: 180,
+    height: 40,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    padding: 4,
+    padding: 3,
     alignSelf: 'center',
-    marginTop: 16,
+    marginBottom: 12,
   },
   unitButton: {
     flex: 1,
-    height: 36,
+    height: 32,
     borderRadius: 8,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -433,13 +400,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginTop: 28,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   displayNumber: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 64,
-    lineHeight: 72,
+    fontSize: 60,
+    lineHeight: 68,
     color: '#0F172A',
     letterSpacing: -1,
   },
@@ -574,63 +540,28 @@ const styles = StyleSheet.create({
 
   // Frame 9: Continue Button
   footerContainer: {
-    alignItems: 'center',
-    gap: 16,
-    paddingBottom: 4,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+    paddingTop: 12,
   },
   continueButton: {
-    width: 220,
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    flexDirection: 'row',
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    elevation: 0,
-    shadowOpacity: 0,
+    width: '100%',
   },
   continueButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   btnPressedSubtle: {
     opacity: 0.65,
     transform: [{ scale: 0.96 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  skipContainer: {
-    paddingVertical: 6,
-  },
-  skipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 15,
-    color: '#64748B',
-  },
-  footerLinksRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
-    marginTop: 4,
-  },
-  signInBottomBtn: {
-    paddingVertical: 6,
-  },
-  signInLinkText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    color: '#64748B',
-  },
-  signInLinkBold: {
-    fontFamily: Fonts.urbanist.semiBold,
-    color: '#F47551',
   },
 });

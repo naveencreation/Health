@@ -15,6 +15,13 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedScrollHandler: () => () => {},
     withTiming: (value: number) => value,
     FadeIn: { duration: () => ({}) },
+    FadeInDown: {
+      duration: () => ({
+        springify: () => ({
+          damping: () => ({}),
+        }),
+      }),
+    },
     FadeOut: { duration: () => ({}) },
   };
 });
@@ -93,5 +100,28 @@ describe('NameInputScreen (S2)', () => {
       },
       { timeout: 2000 }
     );
+  });
+
+  it('allows tapping greeting view to advance immediately without waiting', async () => {
+    const onContinue = jest.fn();
+    const { getByTestId } = await render(
+      <NameInputScreen onContinue={onContinue} />
+    );
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId('name-input-field'), 'Naveen');
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('name-continue-button'));
+    });
+
+    expect(getByTestId('name-greeting-touchable')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(getByTestId('name-greeting-touchable'));
+    });
+
+    expect(onContinue).toHaveBeenCalledWith('Naveen');
   });
 });

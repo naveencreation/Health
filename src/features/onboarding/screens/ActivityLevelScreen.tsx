@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   cardTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
     marginBottom: 2,
   },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   cardSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: '#64748B',
@@ -331,12 +331,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   stepChipText: {
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#166534',
   },
   stepChipBold: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#15803D',
   },
   footerContainer: {
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },

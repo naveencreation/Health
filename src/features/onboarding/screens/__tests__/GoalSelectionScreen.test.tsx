@@ -47,7 +47,7 @@ describe('GoalSelectionScreen (S3)', () => {
     expect(getByTestId('goal-card-understand')).toBeTruthy();
   });
 
-  it('shows reassurance banner on selection and auto-advances', async () => {
+  it('shows reassurance banner on selection and advances when Continue is pressed', async () => {
     const onContinue = jest.fn();
     const { getByTestId, getByText } = await render(
       <GoalSelectionScreen name="Aarav" onContinue={onContinue} />
@@ -61,12 +61,11 @@ describe('GoalSelectionScreen (S3)', () => {
       getByText("We'll set a gentle calorie budget you can actually stick to.")
     ).toBeTruthy();
 
-    await waitFor(
-      () => {
-        expect(onContinue).toHaveBeenCalledWith('lose_weight', 'lose');
-      },
-      { timeout: 1500 }
-    );
+    await act(async () => {
+      fireEvent.press(getByTestId('goal-continue-button'));
+    });
+
+    expect(onContinue).toHaveBeenCalledWith('lose_weight', 'lose');
   });
 
   it('supports selecting "Just understand what I eat" and manual Continue', async () => {

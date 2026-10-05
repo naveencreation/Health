@@ -99,28 +99,14 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   };
 
   const [selectedIntent, setSelectedIntent] = useState<GoalIntent>(defaultIntent);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
 
   const handleSelectOption = (option: GoalCardItem) => {
     haptics.selection();
     setSelectedIntent(option.id);
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      if (onContinue) {
-        onContinue(option.goal, option.id);
-      }
-    }, 450);
   };
 
-  const handleManualContinue = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  const handleContinue = () => {
+    haptics.selection();
     const selectedOption = GOAL_OPTIONS.find(o => o.id === selectedIntent) ?? GOAL_OPTIONS[0];
     if (onContinue) {
       onContinue(selectedOption.goal, selectedOption.id);
@@ -231,7 +217,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
               styles.continueButton,
               pressed ? styles.continueButtonPressed : null,
             ]}
-            onPress={handleManualContinue}
+            onPress={handleContinue}
             accessibilityRole="button"
             accessibilityLabel="Continue to next step"
             testID="goal-continue-button"
@@ -290,7 +276,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
     color: Colors.textSecondary ?? '#64748B',
@@ -342,7 +328,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   goalTitle: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: Colors.textPrimary ?? '#1E293B',
     marginBottom: 2,
@@ -351,7 +337,7 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
   goalSubtitle: {
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
     color: Colors.textSecondary ?? '#64748B',
@@ -387,7 +373,7 @@ const styles = StyleSheet.create({
   },
   reassuranceText: {
     flex: 1,
-    fontFamily: Fonts.poppins.medium,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12.5,
     lineHeight: 17,
     color: '#9A3412',
@@ -408,7 +394,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
   },

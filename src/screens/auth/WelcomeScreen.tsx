@@ -25,6 +25,9 @@ import {
   HeightUnit,
   FitnessGoal,
   GenderType,
+  loadOnboardingDraft,
+  clearOnboardingDraft,
+  OnboardingDraft,
 } from '@/features/onboarding';
 
 export type AuthScreenMode =
@@ -53,6 +56,25 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const mode = history[history.length - 1] || 'welcome';
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<OnboardingDraft | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (mode === 'welcome') {
+      loadOnboardingDraft().then(d => {
+        if (isMounted) setDraft(d);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [mode]);
+
+  const handleStartOver = async () => {
+    await clearOnboardingDraft();
+    setDraft(null);
+    pushMode('onboarding');
+  };
 
   useEffect(() => {
     setHistory([normalizeMode(initialMode)]);
@@ -233,6 +255,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       );
     }
 
+    const hasActiveDraft = Boolean(draft?.step && draft.step !== 'name');
+
     // Default: Welcome Landing Screen
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -310,10 +334,34 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onPress={() => pushMode('onboarding')}
                 testID="btn-welcome-get-started"
                 accessibilityRole="button"
-                accessibilityLabel="Get Started with Calorify"
+                accessibilityLabel={
+                  hasActiveDraft ? 'Continue setup' : 'Get Started with Calorify'
+                }
               >
-                <Text style={styles.primaryButtonText}>Get Started</Text>
+                <Text style={styles.primaryButtonText}>
+                  {hasActiveDraft
+                    ? draft?.name?.trim()
+                      ? `Continue setup (${draft.name.trim()})`
+                      : 'Continue setup'
+                    : 'Get Started'}
+                </Text>
               </Pressable>
+
+              {/* Start Over Button if active draft exists */}
+              {hasActiveDraft ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.startOverButton,
+                    pressed ? styles.pressedSubtle : null,
+                  ]}
+                  onPress={handleStartOver}
+                  testID="btn-welcome-start-over"
+                  accessibilityRole="button"
+                  accessibilityLabel="Start over onboarding from the beginning"
+                >
+                  <Text style={styles.startOverButtonText}>Start over</Text>
+                </Pressable>
+              ) : null}
 
               {/* Secondary CTA */}
               <Pressable
@@ -560,6 +608,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     color: Colors.primary,
+  },
+  startOverButton: {
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  startOverButtonText: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    color: '#64748B',
+    textDecorationLine: 'underline',
   },
   pressedSubtle: {
     opacity: 0.7,

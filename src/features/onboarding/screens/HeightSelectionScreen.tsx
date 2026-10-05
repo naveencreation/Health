@@ -41,7 +41,7 @@ const TickItem = React.memo<TickItemProps>(({ tickVal, unit, isCenter, onSelect 
   const isMajor = isCm ? tickVal % 5 === 0 : tickVal % 6 === 0;
 
   let labelText = '';
-  if (isMajor) {
+  if (isMajor || isCenter) {
     if (isCm) {
       labelText = `${tickVal}`;
     } else {
@@ -63,14 +63,16 @@ const TickItem = React.memo<TickItemProps>(({ tickVal, unit, isCenter, onSelect 
       accessibilityLabel={`Select height ${labelText || tickVal}`}
       accessibilityState={{ selected: isCenter }}
     >
-      <View
-        style={[
-          styles.tickLineBase,
-          isMajor ? styles.tickLineMajor : styles.tickLineMinor,
-          isCenter ? styles.tickLineCenter : null,
-        ]}
-      />
-      {isMajor ? (
+      <View style={styles.tickLineSlot}>
+        <View
+          style={[
+            styles.tickLineBase,
+            isMajor ? styles.tickLineMajor : styles.tickLineMinor,
+            isCenter ? styles.tickLineCenter : null,
+          ]}
+        />
+      </View>
+      {isMajor || isCenter ? (
         <Text
           style={[styles.tickLabel, isCenter ? styles.tickLabelCenter : styles.tickLabelDefault]}
         >
@@ -205,124 +207,126 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.phoneFrame}>
-        {/* Header Bar */}
-        <OnboardingHeader
-          onBack={onBack}
-          onSkip={onSkip}
-          sectionIndex={sectionIndex}
-          totalSections={totalSections}
-          sectionProgress={sectionProgress}
-        />
+        {/* Top: Header Bar & Title */}
+        <View style={styles.topSection}>
+          <OnboardingHeader
+            onBack={onBack}
+            onSkip={onSkip}
+            sectionIndex={sectionIndex}
+            totalSections={totalSections}
+            sectionProgress={sectionProgress}
+          />
 
-        {/* Title & Cognitive Context */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.screenTitle}>Your starting point.</Text>
-          <Text style={styles.screenSubtitle}>
-            This only sets your starting numbers. You can change it anytime.
-          </Text>
-        </View>
-
-        {/* Frame 13: Segmented Unit Toggle (Cm / Ft) */}
-        <View style={styles.unitToggleContainer}>
-          {/* Cm Button */}
-          <Pressable
-            onPress={() => handleUnitToggle('cm')}
-            style={({ pressed }) => [
-              styles.unitButton,
-              unit === 'cm' ? styles.unitButtonActive : styles.unitButtonInactive,
-              pressed ? styles.unitButtonPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to centimeters"
-            accessibilityState={{ selected: unit === 'cm' }}
-          >
-            <Text
-              style={[
-                styles.unitButtonText,
-                unit === 'cm' ? styles.unitTextActive : styles.unitTextInactive,
-              ]}
-            >
-              Cm
+          <View style={styles.titleContainer}>
+            <Text style={styles.screenTitle}>How tall are you?</Text>
+            <Text style={styles.screenSubtitle}>
+              Used to calculate your daily energy needs accurately.
             </Text>
-          </Pressable>
-
-          {/* Ft Button */}
-          <Pressable
-            onPress={() => handleUnitToggle('ft')}
-            style={({ pressed }) => [
-              styles.unitButton,
-              unit === 'ft' ? styles.unitButtonActive : styles.unitButtonInactive,
-              pressed ? styles.unitButtonPressed : null,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to feet and inches"
-            accessibilityState={{ selected: unit === 'ft' }}
-          >
-            <Text
-              style={[
-                styles.unitButtonText,
-                unit === 'ft' ? styles.unitTextActive : styles.unitTextInactive,
-              ]}
-            >
-              Ft
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Live Height Display: e.g. 175 cm or 5' 9" */}
-        <View style={styles.displayValueContainer}>
-          {unit === 'cm' ? (
-            <View style={styles.numberWithUnitRow}>
-              <Text style={styles.displayNumber}>{heightCm}</Text>
-              <Text style={styles.displayUnit}>cm</Text>
-            </View>
-          ) : (
-            <View style={styles.imperialDisplayCol}>
-              <View style={styles.numberWithUnitRow}>
-                <Text style={styles.displayNumber}>{feet}</Text>
-                <Text style={styles.displayUnitSmall}>ft</Text>
-                <Text style={[styles.displayNumber, { marginLeft: 12 }]}>{inches}</Text>
-                <Text style={styles.displayUnitSmall}>in</Text>
-              </View>
-              <Text style={styles.secondaryCmHint}>{heightCm} cm</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Frame 14: Polished Vertical Stadiometer Card */}
-        <View style={styles.stadiometerSection}>
-          <View
-            style={styles.rulerFrame}
-            {...panResponder.panHandlers}
-            // @ts-ignore Web wheel event
-            onWheel={handleWheel}
-          >
-            {/* Stationary Center Pointer Needle in Calorify Coral (#F47551) */}
-            <View style={styles.centerNeedleContainer}>
-              <View style={styles.needlePointerTriangle} />
-              <View style={styles.centerNeedleLine} />
-            </View>
-
-            {/* Vertically Slidable Ticks Tape */}
-            <Animated.View style={[styles.ticksTape, dragStyle]}>
-              {ticks.map(tickVal => (
-                <TickItem
-                  key={tickVal}
-                  tickVal={tickVal}
-                  unit={unit}
-                  isCenter={tickVal === activeValue}
-                  onSelect={updateHeight}
-                />
-              ))}
-            </Animated.View>
-
-            {/* Top and Bottom Fade Gradients */}
-            <View style={styles.rulerFadeTop} />
-            <View style={styles.rulerFadeBottom} />
           </View>
         </View>
 
-        {/* Frame 9: Accessible Continue CTA & Footer Links */}
+        {/* Center: Interactive Measurement Instrument */}
+        <View style={styles.centerInstrumentContainer}>
+          {/* Segmented Unit Toggle (Cm / Ft) */}
+          <View style={styles.unitToggleContainer}>
+            <Pressable
+              onPress={() => handleUnitToggle('cm')}
+              style={({ pressed }) => [
+                styles.unitButton,
+                unit === 'cm' ? styles.unitButtonActive : styles.unitButtonInactive,
+                pressed ? styles.unitButtonPressed : null,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to centimeters"
+              accessibilityState={{ selected: unit === 'cm' }}
+            >
+              <Text
+                style={[
+                  styles.unitButtonText,
+                  unit === 'cm' ? styles.unitTextActive : styles.unitTextInactive,
+                ]}
+              >
+                Cm
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handleUnitToggle('ft')}
+              style={({ pressed }) => [
+                styles.unitButton,
+                unit === 'ft' ? styles.unitButtonActive : styles.unitButtonInactive,
+                pressed ? styles.unitButtonPressed : null,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to feet and inches"
+              accessibilityState={{ selected: unit === 'ft' }}
+            >
+              <Text
+                style={[
+                  styles.unitButtonText,
+                  unit === 'ft' ? styles.unitTextActive : styles.unitTextInactive,
+                ]}
+              >
+                Ft
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Live Height Hero Display: e.g. 182 cm or 5' 11" */}
+          <View style={styles.displayValueContainer}>
+            {unit === 'cm' ? (
+              <View style={styles.numberWithUnitRow}>
+                <Text style={styles.displayNumber}>{heightCm}</Text>
+                <Text style={styles.displayUnit}>cm</Text>
+              </View>
+            ) : (
+              <View style={styles.imperialDisplayCol}>
+                <View style={styles.numberWithUnitRow}>
+                  <Text style={styles.displayNumber}>{feet}</Text>
+                  <Text style={styles.displayUnitSmall}>ft</Text>
+                  <Text style={[styles.displayNumber, { marginLeft: 12 }]}>{inches}</Text>
+                  <Text style={styles.displayUnitSmall}>in</Text>
+                </View>
+                <Text style={styles.secondaryCmHint}>{heightCm} cm</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Polished Stadiometer Instrument Card */}
+          <View style={styles.stadiometerSection}>
+            <View
+              style={styles.rulerFrame}
+              {...panResponder.panHandlers}
+              // @ts-ignore Web wheel event
+              onWheel={handleWheel}
+            >
+              {/* Stationary Center Pointer Needle in Calorify Coral (#F47551) */}
+              <View style={styles.centerNeedleContainer}>
+                <View style={styles.needlePointerTriangle} />
+                <View style={styles.centerNeedleLine} />
+              </View>
+
+              {/* Vertically Slidable Ticks Tape */}
+              <Animated.View style={[styles.ticksTape, dragStyle]}>
+                {ticks.map(tickVal => (
+                  <TickItem
+                    key={tickVal}
+                    tickVal={tickVal}
+                    unit={unit}
+                    isCenter={tickVal === activeValue}
+                    onSelect={updateHeight}
+                  />
+                ))}
+              </Animated.View>
+
+              {/* Top and Bottom Fade Gradients */}
+              <View style={styles.rulerFadeTop} />
+              <View style={styles.rulerFadeBottom} />
+            </View>
+          </View>
+        </View>
+
+        {/* Bottom: Accessible Continue CTA */}
         <View style={styles.footerContainer}>
           <Pressable
             style={({ pressed }) => [
@@ -331,44 +335,11 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
             ]}
             onPress={handleContinuePress}
             accessibilityRole="button"
-            accessibilityLabel="Continue with selected height"
+            accessibilityLabel="Continue to next step"
             testID="btn-height-continue"
           >
             <Text style={styles.continueButtonText}>Continue</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </Pressable>
-
-          {/* Skip & Sign In Actions */}
-          <View style={styles.footerLinksRow}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.skipContainer,
-                pressed ? styles.btnPressedSubtle : null,
-              ]}
-              onPress={onSkip}
-              hitSlop={HIT_SLOP_12}
-              accessibilityRole="button"
-              accessibilityLabel="Skip height selection"
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
-            {onSignIn ? (
-              <Pressable
-                onPress={onSignIn}
-                hitSlop={HIT_SLOP_12}
-                style={({ pressed }) => [
-                  styles.signInBottomBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Sign in to existing account"
-              >
-                <Text style={styles.signInLinkText}>
-                  Have an account? <Text style={styles.signInLinkBold}>Sign In</Text>
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -378,50 +349,47 @@ export const HeightSelectionScreen: React.FC<HeightSelectionScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FAF9F6',
   },
   phoneFrame: {
-    width: '100%',
-    maxWidth: 440,
     flex: 1,
+    width: '100%',
+    maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
     justifyContent: 'space-between',
-    borderWidth: Platform.OS === 'web' ? 1 : 0,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressedSubtle: {
     opacity: 0.65,
     transform: [{ scale: 0.96 }],
   },
 
-  // Title: What’s your height? (matches Weight 1:1)
+  topSection: {
+    width: '100%',
+  },
   titleContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 8,
-    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
   },
   screenTitle: {
-    fontFamily: Fonts.urbanist.bold,
+    fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    color: Colors.textPrimary ?? '#1E293B',
+    marginBottom: 8,
   },
   screenSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 6,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.textSecondary ?? '#64748B',
+  },
+
+  centerInstrumentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
   },
 
   // Frame 13: Segmented Unit Toggle (Cm / Ft) (matches Weight 1:1)
@@ -429,19 +397,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
-    width: 200,
-    height: 44,
+    width: 180,
+    height: 40,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    padding: 4,
+    padding: 3,
     alignSelf: 'center',
-    marginTop: 16,
+    marginBottom: 12,
   },
   unitButton: {
     flex: 1,
-    height: 36,
+    height: 32,
     borderRadius: 8,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -473,13 +441,12 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
 
-  // Value Display: 175 cm (matches Weight 1:1)
+  // Value Display: 182 cm (matches Weight 1:1)
   displayValueContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 12,
+    marginBottom: 18,
   },
   numberWithUnitRow: {
     flexDirection: 'row',
@@ -488,8 +455,8 @@ const styles = StyleSheet.create({
   },
   displayNumber: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 64,
-    lineHeight: 72,
+    fontSize: 60,
+    lineHeight: 68,
     color: '#0F172A',
     letterSpacing: -1,
   },
@@ -519,19 +486,19 @@ const styles = StyleSheet.create({
   stadiometerSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 8,
   },
   rulerFrame: {
-    width: 280,
-    height: 200,
+    width: 220,
+    height: 210,
     backgroundColor: '#F8FAFC',
-    borderRadius: 10,
+    borderRadius: 14,
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
+    alignItems: 'center',
     elevation: 0,
     shadowOpacity: 0,
     ...(Platform.OS === 'web'
@@ -542,13 +509,13 @@ const styles = StyleSheet.create({
       : {}),
   },
 
-  // Center Coral Needle (#F47551 - matches Weight needle!)
+  // Center Coral Needle (#F47551)
   centerNeedleContainer: {
     position: 'absolute',
     top: '50%',
     left: 0,
     right: 0,
-    marginTop: -1,
+    marginTop: -1.5,
     flexDirection: 'row',
     alignItems: 'center',
     zIndex: 10,
@@ -563,36 +530,41 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 5,
     borderTopWidth: 5,
-    borderLeftColor: '#F47551', // Calorify Coral!
+    borderLeftColor: '#F47551',
     borderRightColor: 'transparent',
     borderTopColor: 'transparent',
     borderBottomColor: 'transparent',
-    marginLeft: 14,
+    marginLeft: 39,
   },
   centerNeedleLine: {
-    flex: 1,
-    height: 2.5,
-    backgroundColor: '#F47551', // Calorify Coral!
-    borderRadius: 1,
+    width: 50,
+    height: 3,
+    backgroundColor: '#F47551',
+    borderRadius: 1.5,
   },
 
   ticksTape: {
-    alignItems: 'flex-start',
-    paddingLeft: 24,
+    alignItems: 'center',
+    width: '100%',
   },
   tickSlot: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 22,
-    width: '100%',
+    width: 110,
   },
   tickSlotPressed: {
     opacity: 0.6,
   },
+  tickLineSlot: {
+    width: 44,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
   tickLineBase: {
     height: 2,
     borderRadius: 1,
-    marginRight: 16,
   },
   tickLineMinor: {
     width: 20,
@@ -603,9 +575,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#64748B',
   },
   tickLineCenter: {
-    width: 48,
-    backgroundColor: '#F47551', // Calorify Coral!
-    height: 3,
+    opacity: 0, // Covered cleanly by stationary center needle
   },
   tickLabel: {
     fontSize: 13,
@@ -617,12 +587,13 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   tickLabelCenter: {
-    color: '#0F172A',
+    color: '#F47551', // Calorify Coral!
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
   },
   tickLabelSpacer: {
     height: 18,
+    width: 48,
   },
 
   // Ruler Top/Bottom Fade Gradients
@@ -633,9 +604,15 @@ const styles = StyleSheet.create({
     right: 0,
     height: 48,
     zIndex: 5,
-    backgroundColor: '#F8FAFC',
-    opacity: 0.85,
     pointerEvents: 'none',
+    ...(Platform.OS === 'web'
+      ? ({
+          backgroundImage: 'linear-gradient(to bottom, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
+        } as any)
+      : {
+          backgroundColor: '#F8FAFC',
+          opacity: 0.85,
+        }),
   },
   rulerFadeBottom: {
     position: 'absolute',
@@ -644,66 +621,38 @@ const styles = StyleSheet.create({
     right: 0,
     height: 48,
     zIndex: 5,
-    backgroundColor: '#F8FAFC',
-    opacity: 0.85,
     pointerEvents: 'none',
+    ...(Platform.OS === 'web'
+      ? ({
+          backgroundImage: 'linear-gradient(to top, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
+        } as any)
+      : {
+          backgroundColor: '#F8FAFC',
+          opacity: 0.85,
+        }),
   },
 
   // Frame 9: Continue CTA & Footer Links (matches Weight & Age 1:1)
   footerContainer: {
     alignItems: 'center',
-    gap: 16,
-    paddingBottom: 4,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+    paddingTop: 12,
   },
   continueButton: {
-    width: 220,
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    flexDirection: 'row',
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    elevation: 0,
-    shadowOpacity: 0,
+    width: '100%',
   },
   continueButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  skipContainer: {
-    paddingVertical: 6,
-  },
-  skipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 15,
-    color: '#64748B',
-  },
-  footerLinksRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
-    marginTop: 4,
-  },
-  signInBottomBtn: {
-    paddingVertical: 6,
-  },
-  signInLinkText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    color: '#64748B',
-  },
-  signInLinkBold: {
-    fontFamily: Fonts.urbanist.semiBold,
-    color: '#F47551', // Calorify Coral!
   },
 });
