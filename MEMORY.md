@@ -972,6 +972,17 @@
       - **Live Playwright E2E Validation**: Successfully walked through all 16 onboarding steps live on `http://localhost:8081` (Name -> Goal -> Struggles -> Demographics -> Height -> Weight -> Target Weight -> Activity -> Pace -> Food Style -> Calculation -> Plan Reveal -> First Meal -> Save Plan -> Soft Paywall -> Permissions -> Dashboard). Verified instant reflection in `HeroCalorieCard` and `MealCard`, and tested real-time stepper quantity mutations (340 kcal -> 680 kcal, 104g Carbs, 26g Protein, 16g Fat).
       - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
 
+    32. **Path 2 Audit: Today Dashboard Header & Top Actions Deep-Dive & Personalization Fix (`Header.tsx`)**
+      - **Personalized Header Display Fix (`Header.tsx`)**: Resolved a defect where `currentUser?.isGuest ? 'Guest Explorer' : ...` unconditionally eclipsed the user's name entered in Onboarding (`userGoals.name` = "Naveen"). Updated to `currentUser?.name || userGoals.name || (currentUser?.isGuest ? 'Guest Explorer' : 'User')`, so users see their personalized greeting `Welcome [Guest]` + `Naveen`.
+      - **Avatar Button & Persona Picker (`AvatarPickerModal`)**: Live E2E verified opening modal, selecting avatars from catalog (tested switching to Woman avatar), and updating user profile.
+      - **Search Button**: Verified contextual time-of-day meal slot assignment and live launching of `FoodLogModal` with food catalog search, categories, and AI camera scanner.
+      - **Notification Bell**: Verified unread indicator dot, live modal opening with real-time stats (Hydration, Calorie budget, Ria AI advice), and "Mark all read" / "Clear all".
+      - **Guest Banner & Sign-In Screen**: Tested live launch of `SignInScreen` and verified hardware/software back button returns cleanly without state loss.
+      - **TopDateStrip & Dynamic Jump**: Verified past date selection (SUN 4) dynamically triggers `[ ↩ Today ]` quick-jump pill, and tapping it restores MON 5 and live data.
+      - **HeroCalorieCard Mode Switcher**: Verified seamless switching between circular calorie HUD dial and 7-day trend bar graph with calorie and macro breakdowns.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+
+
 
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
