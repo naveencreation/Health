@@ -31,7 +31,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +41,22 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# installers, executables, archives & partial downloads
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.apk
+*.aab
+*.crdownload
+*.download
+*.part
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Playwright MCP artifacts
+.playwright-mcp/

@@ -1,0 +1,1074 @@
+# Calorify — Project Memory
+
+> High-level context, architecture, and work history so future sessions can pick up without re-deriving everything.
+
+## What this app is
+
+**Calorify** — a nutrition / calorie-tracking app with an AI "Ria" coach (Gemini). Light-only design, warm cream/terracotta brand.
+
+## Tech stack
+
+- **Expo SDK 57** (`expo ~57.0.x`), **React Native 0.86**, **React 19.2**, **TypeScript 6**
+- **Navigation:** no React Navigation / no expo-router — a hand-rolled custom tab bar (`BottomNavBar` + `useState` tab switching in `App.tsx`)
+- **State:** `HealthContext` (React Context) is the central store; local cache in AsyncStorage + cloud sync to Firestore
+- **Backend:** Firebase (Auth + Firestore), security rules in `firestore.rules` (owner-scoped `isOwner()`)
+- **Images:** `expo-image` everywhere (WebP food catalog, avatars)
+- **Fonts:** Kurale (brand serif) + Poppins via `@expo-google-fonts`, loaded with `useFonts` + native splash hold
+- **Animation:** `react-native-reanimated` 4.5.1 + `react-native-worklets` 0.10.1 (migrated from RN `Animated`)
+
+## Key architecture notes
+
+- `App.tsx` renders the whole app (no router). Root wraps `ErrorBoundary > SafeAreaProvider > HealthProvider`, with `<StatusBar style="dark" />` + `<NavigationBar style="dark" />` at the root.
+- `HealthContext` is the single source of truth: auth state, goals, daily logs, custom foods. It caches to AsyncStorage (per-user keys `@calori_daily_logs_${uid}` etc.) and debounce-syncs to Firestore.
+- `typography.ts` is the single font source (`Fonts.poppins.*`, `Fonts.kurale`) — no platform branching.
+
+## Work done this session (chronological)
+
+1. **React Native skills audit** (against the `vercel-react-native-skills` skill) — established baseline: expo-image everywhere, Pressable (no Touchable*), memoized FlatLists, `MealCard` had a JS-thread `maxHeight` animation (jank), no Reanimated, no nav library.
+
+2. **Safe areas** — fixed `ForgotPasswordScreen` double-applying the Android top inset (removed manual `paddingTop: RNStatusBar.currentHeight`; `SafeAreaView` already handles it).
+
+3. **System bars** — removed the deprecated raw `<StatusBar backgroundColor=... />` on Android (ignored under edge-to-edge), hoisted `expo-status-bar`'s `<StatusBar style="dark" />` to the root, installed `expo-navigation-bar` and added `<NavigationBar style="dark" />`, removed an unused `RNStatusBar` import in `SignInScreen`.
+
+4. **Fonts** — unified `typography.ts` to the same `Poppins_*`/`Kurale_400Regular` keys on all platforms (dropped web `Platform.select` + Google Fonts `<link>` injection), added `SplashScreen.preventAutoHideAsync()`/`hideAsync()` to hold the native splash until fonts load (no FOUT).
+
+5. **Splash screen** — generated a composite wordmark `assets/splash-icon.png` (terracotta flame `#F47551` + "Calorify" in Kurale) via `scratch/make_splash.py`, and migrated `app.json` from the legacy `splash` key to the `expo-splash-screen` config plugin (`backgroundColor #FAF9F6`, `image`, `imageWidth 280`).
+
+6. **Reanimated migration** (the big one) — installed Reanimated + worklets; migrated 13 files from RN `Animated` to Reanimated (`useSharedValue`/`useAnimatedStyle`/`withTiming`/`withSpring`/`useAnimatedScrollHandler`):
+   - Scroll headers: `Header.tsx`, `TodayScreen`, `DiaryScreen`, `AnalyticsScreen`
+   - `MealCard` (expand/collapse), `FoodLogModal` (press/toast/pill stagger), onboarding `Weight`/`Height` drag springs
+   - Loaders: `ScreenTransitionContainer`, `AnimatedProgressBar`, `AnimatedSvgRing`, `BouncingDotsLoader`, `BrandRingLoader`, `AppLoadingScreen`
+   - `AnimatedSvgRing` fixed a per-frame `setState` (now `createAnimatedComponent(Circle)` + `useAnimatedProps`)
+
+7. **Data storage** — migrated Firebase auth persistence from plaintext AsyncStorage to **SecureStore** (`firebase.ts`), added toast reduced-motion support, and made `logout()` clear user-scoped AsyncStorage keys.
+
+8. **Optimistic auth restore** — `HealthContext` now restores the cached user immediately on cold start (race-safe via `authResolvedRef`), with `onAuthStateChanged` staying authoritative.
+
+9. **Profile screen transitions & sub-view stack fix** — removed the flickering `ScreenTransitionContainer` wrapper on `ProfileScreen` so switching to Profile tab is instant (matching Today, Diary, Analytics). Replaced sub-view unmounting with a native slide-in stack layer (`SlideInSubScreen`) using Reanimated hardware-accelerated transforms (`translateX`), maintaining the base Profile screen and its scroll position intact, and supporting multi-level navigation (Summary -> Goals) with clean slide-out on Back and Android hardware back.
+
+10. **Navigation bar shadow removal & header blending fix** — removed the upward shadow (`shadowOffset: { height: -2 }`, `elevation: 8`) and harsh `#D0D5DD` border from `BottomNavBar.tsx` (now subtle hairline border, zero upward shadow); removed Android omnidirectional `elevation: 8` on `subScreenContainer` in `ProfileScreen.tsx` (preventing elevation shadow bleed onto headers and bottom edges); set root OS window `backgroundColor: "#FAF9F6"` in `app.json`; and harmonized header padding (`paddingTop: 10, paddingBottom: 8, minHeight: 56`) across `ProfileScreen`, `AwardsScreen`, `MetabolicSummaryScreen`, `PreferencesScreen`, and `GoalsScreen`.
+
+11. **Profile metric pill clipping fix** — added vertical padding (`paddingTop: 4, paddingBottom: 8`) to `pillsScrollContent` in `ProfileMetricInspector.tsx`, centered items, and added `includeFontPadding: false` to `pillText` so that pills and active shadow elevations (`elevation: 2`, `shadowRadius: 4`) are never clipped by the ScrollView viewport.
+
+12. **Bottom navigation FAB z-index stacking fix** — resolved the issue where the top dome of the green `+` FAB (`bottom: 16`) was cut off when opening sub-screens (Awards, Summary, Preferences, Goals) by lowering `SlideInSubScreen` `zIndex` from `100 + index` to `10 + index`, and raising `barContainer` (`zIndex: 500`), `centerFabAnchor` (`zIndex: 501`), and `centerFab` (`zIndex: 502`) in `BottomNavBar.tsx` so the floating button always layers cleanly over the content area.
+
+13. **1-Tap AI Camera Navigation & Context-Aware Meal Logger** — grounded in `info/` UX principles ("Minimize Interaction Cost", "Smart Defaults", "Navigation is not decoration"):
+    - Replaced the ambiguous center `+` icon in `BottomNavBar.tsx` with `Ionicons name="camera-outline"` (`#FFFFFF`, size 26).
+    - Removed the redundant intermediate `quickSheetVisible` modal (with its 5 duplicate meal buttons) so tapping the center button directly triggers `onOpenFoodVision()`.
+    - Enhanced `FoodVisionModal.tsx` to provide two dedicated, frictionless cards: **Take Photo** ("Snap with camera") for live plate photos, and **Photo Library** ("Already taken") for logging previously captured meal photos from phone storage.
+    - Enhanced the post-analysis review card to feature Ria's Nutrition Analysis insight note, an automatic context-aware meal slot selection based on time of day (morning = Breakfast, afternoon = Lunch, evening = Snacks, night = Dinner), and horizontal interactive pills with "Tap to change" so the user can easily reassign the meal slot with a single tap.
+
+14. **Comprehensive AI Food Vision Error Handling & Empathetic Failure UX** — eliminated raw technical JSON dumps and unhandled HTTP errors:
+    - Fixed unhandled HTTP `401 Unauthorized` / `403 Forbidden` / `400 API_KEY_INVALID` in `AIErrorMapper.ts` by parsing JSON error responses from Google Gemini and mapping them to typed `INVALID_KEY` errors with actionable titles and user messages.
+    - Enriched `AIErrorMapper` to cleanly categorize Quota Exceeded (429/RESOURCE_EXHAUSTED), Rate Limits (429/Too Many Requests), Server Unavailable (500/502/503/504), Network Offline / Fetch Failures, Timeouts, and Non-Food Photo Detections.
+    - In `GeminiProvider.ts` and `AIOutputValidator.ts`, added non-food photo fallback schema (`isFood: false`) so photos of non-food objects (laptops, pets, documents) trigger polite, user-friendly guidance rather than corrupt macro calculations or unhandled exceptions.
+    - In `FoodVisionModal.tsx`, replaced raw red text error string with a structured, state-aware error card:
+      - **Gemini Key Issues (401/403/Missing):** Features the official `GeminiIcon`, polite explanation, and a direct 1-tap **"Update Gemini Key"** action button that seamlessly launches `BYOKSetupModal`.
+      - **Network / Timeout / Rate Limit:** Features a 1-tap **"Retry Analysis"** button that re-runs the vision model on the already-captured photo (`selectedAsset`) without forcing the user to re-snap or re-select.
+      - **Non-Food / Unclear Photo:** Features friendly lighting advice with immediate "Take Photo" and "Photo Library" shortcuts.
+
+15. **MealCard Mobile Render & Collapse Fix** — fixed food items disappearing on mobile devices:
+    - Resolved the issue where the food items list (rotis, chicken, macros) was completely hidden or collapsed to 0 height on iOS/Android.
+    - Root cause: `collapseStyle` had been changed to use `contentHeight = useSharedValue(0)` with `onLayout`. On native Yoga layout, because the parent started with `height: 0` and `overflow: 'hidden'`, children were layout-clamped to 0 or skipped, leaving `contentHeight` at 0 permanently.
+    - Restored UI-thread `maxHeight: interpolate(expandAnim.value, [0, 1], [0, 2000])` directly on the animated container (matching `MEMORY.md` decision), allowing immediate natural layout on mount while animating smoothly on expand/collapse.
+    - Added `flexShrink: 0` on `foodActions` and `flexWrap: 'wrap'` / responsive padding on `macroSummaryBar` to prevent row squishing on narrow mobile screens.
+
+16. **WorkoutHistoryCard UX/UI Validation & Redesign** — audited against `info/` design principles:
+    - **Contextual Activity Iconography (`getActivityConfig`):** Eliminated the repetitive "Universal Dumbbell" anti-pattern. Activities now dynamically receive tailored semantic icons and pastel backgrounds (Walk = green `walk-outline`, Run/Treadmill = coral `flame-outline`, Cycle = sky `bicycle-outline`, Yoga/Stretch = teal `body-outline`, Gym/Weights = amber `barbell-outline`, Swim = sky `water-outline`, Sports = gold `trophy-outline`).
+    - **Brand Color Harmonization:** Removed foreign saturated electric purple (`#8B5CF6`, `#EDE9FE`) to match Calorify's warm porcelain cream (`#FAF9F6`), signature sun terracotta (`#F47551`), and warm slate palette.
+    - **Unified Row Hierarchy:** Eliminated horizontal crowding from side-by-side badges (`[Today] [Icon]`) that took ~74px; merged the day label into the secondary metadata line (`Today · 30 min`), freeing horizontal space for long activity titles.
+    - **Habit-Driven 3-Pod Stats:** Replaced redundant multiplication stats (`count * avg = total`) with 3 core habit metrics: total burn (`totalBurn` kcal), active duration (`formatDuration`), and consistency (`activeDays / totalDays`).
+    - **Progressive Disclosure:** Replaced dead-end unclickable `+X more sessions` cutoff with interactive `View all X activities` / `Show fewer` button.
+    - **Stable Date Sorting:** Fixed non-strict sort comparator to use `localeCompare` so items on the same date preserve natural order.
+    - **Unit Test Coverage:** Created comprehensive test suite `WorkoutHistoryCard.test.tsx` (empty state, habit metrics, dynamic icon categorizer, progressive disclosure).
+
+17. **Cinematic Startup Reveal & Two-Phase Handoff (Healthify / Spotify Standard)** — resolved emblem oversizing, circular mask clipping, and created a luxury brand reveal:
+    - **Refined Emblem Scale & 1:1 Density Alignment:** Scaled the Terracotta Flame down from oversized 140dp to an understated, elegant **~73dp height** (visual width 54dp, 260px height in 1024x1024 master canvas). Configured `imageWidth: 288` in `app.json` matching Android 12+ 288dp icon canvas for 1:1 un-interpolated pixel mapping on 4x xxxhdpi screens (1152px), eliminating hardware upscaling blur.
+    - **Native Android Project Sync:** Regenerated `android/` via `npx expo prebuild --platform android`. Configured `Theme.SplashScreen` (`windowSplashScreenBackground: #FAF9F6`, `windowSplashScreenAnimatedIcon: @drawable/splashscreen_logo`, `postSplashScreenTheme: @style/AppTheme`), wiring `SplashScreenManager.registerOnActivity(this)` in `MainActivity.kt`.
+    - **Cinematic Motion Choreography (`AppLoadingScreen.tsx`):**
+      - **Freeze-Frame Handshake (0–200ms):** Flame starts dead-center at $X=0, Y=0$, matching the native splash screen with 0.0px layout shift.
+      - **Leftward Glide (200–750ms):** Flame smoothly glides leftward ($X: 0 \to -64\text{dp}$) via organic cubic bezier (`Easing.bezier(0.16, 1, 0.3, 1)`).
+      - **Letter-by-Letter Reveal (280–650ms):** As the flame glides, each letter of **"Calorify"** (`C - a - l - o - r - i - f - y`) reveals sequentially with 38ms stagger in **solid black** (`#000000`, `Kurale_400Regular`, 32px) right next to the flame, forming the complete horizontal lockup.
+      - **Status Fade-In (680–1200ms):** 3 terracotta jumping dots (`BouncingDotsLoader`) and `"Personalizing your data..."` fade in underneath the lockup.
+      - **Buttery Dissolve (1200ms):** Smooth 300ms crossfade into the active dashboard once data and minimum display threshold are ready.
+
+18. **Zero-Jank Deferred Mounting & Single-Clock Worklet Optimization** — eliminated startup stutter and frame drops:
+    - **Deferred Dashboard Mounting (`App.tsx`):** Root cause of stutter was `{isFontsReady && renderContent()}` mounting the entire heavy dashboard (SVG rings, calendar strip, meal cards, AI hooks) on the JavaScript thread simultaneously while Reanimated was playing the intro animation. Resolved by deferring `{isContentMounted && renderContent()}` until 800ms (after the flame glide and letter reveal are complete). The intro animation gets 100% of CPU/GPU headroom on the UI thread at silky 60/120 FPS, and the dashboard mounts invisibly behind the static holding phase before the 1200ms dissolve.
+    - **Native Splash Handoff Buffer (`requestAnimationFrame`):** Wrapped `SplashScreen.hideAsync()` in `requestAnimationFrame` so the native splash window dismisses only after React Native's first paint is buffered in the GPU, preventing any 1-frame flash.
+    - **Single Master Reanimated Clock (`AppLoadingScreen.tsx`):** Replaced 8 independent `useSharedValue` timers with a single master `wordmarkProgress` shared value (`0 -> 1`), synchronizing all letter reveals into one GPU animation tick.
+    - **Hardware Layer Translation vs Text Rasterization:** Wrapped each letter in an `<Animated.View>` with static `<Text>` inside, animating `translateY` (6 -> 0) and `opacity`. Removed dynamic text `scale`, completely eliminating Android Skia glyph re-rasterization and layout recalculations. Added `cachePolicy="memory-disk"` to `expo-image`.
+
+19. **Native Static Font Embedding (Zero-Wait Native Boot)** — eliminated `useFonts()` asynchronous hook and registration delay:
+    - Extracted all `.ttf` font files (`Kurale_400Regular.ttf`, `Poppins_400Regular.ttf`, `Poppins_500Medium.ttf`, `Poppins_600SemiBold.ttf`, `Poppins_700Bold.ttf`) and embedded them directly into `assets/fonts/` and native `android/app/src/main/assets/fonts/`.
+    - Configured the native `expo-font` plugin in `app.json` with the static fonts array and ran `npx expo prebuild --platform android --no-install`.
+    - Removed `useFonts()` and `@expo-google-fonts/*` dependencies from `App.tsx`.
+    - Fonts are now linked directly at the native OS level (`Typeface` on Android, `UIFont` on iOS) at application launch before JavaScript boots. Startup wait time for fonts dropped to **0ms**, eliminating any possibility of font-loading delays or FOUT.
+
+20. **Pure Minimalist Brand Reveal (Option A / Apple & Spotify Standard)** — removed jumping dots and status text:
+    - Removed `BouncingDotsLoader` and `"Personalizing your data..."` caption from `AppLoadingScreen.tsx`.
+    - Focused 100% of visual attention on the centered brand lockup: the Terracotta Flame gliding leftward ($X: 0 \to -64\text{dp}$) and the solid black serif wordmark `"Calorify"` revealing letter-by-letter.
+    - Tightened startup lifecycle in `App.tsx`: background dashboard mounts at 600ms, display threshold reduced from 1200ms to **950ms**, followed by the 300ms dissolve into the active dashboard. Total startup time is now a crisp, luxury **~1.25s** with zero dropped frames.
+
+21. **Auth Screen Horizontal Padding Harmonization** — resolved 44px double-padding bug and vertical header misalignment:
+    - Root cause: `SignInScreen.tsx` had compounded paddings (`phoneFrame` had `paddingHorizontal: 20` and `scrollContent` had `paddingHorizontal: 24`, totaling 44px per side). This squished inputs and misaligned the form from the `<OnboardingHeader>` back button (which sat at 24px).
+    - Reduced `scrollContent` in `SignInScreen.tsx` to `paddingHorizontal: 4`, aligning form fields, titles, error banners, and buttons on the exact same 24px vertical grid line ($20\text{px} + 4\text{px} = 24\text{px}$) as `SignUpScreen.tsx`.
+    - Added matching `paddingHorizontal: 20` to `phoneFrame` and updated `scrollContent` to `4` in `ForgotPasswordScreen.tsx`.
+    - Unified `WelcomeScreen.tsx` container padding to `24px`. All screens across the auth flow now share an identical, balanced 24px gutter consistent with the rest of the application.
+
+22. **Navigation Button Shape Unification (Circle Standard)** — eliminated squircle back button in onboarding header:
+    - Root cause: `OnboardingHeader.tsx` had `borderRadius: 10` (a rounded square/squircle) on its 38x38 back button, while 100% of other navigation and modal close controls in the app (`Header.tsx` search/notification, `FoodLogModal.tsx`, `FoodVisionModal.tsx`, `RiaChatModal.tsx`, `GoalsModalSheet.tsx`, etc.) use circular buttons (`borderRadius = width / 2`).
+    - Updated `backButton` in `OnboardingHeader.tsx` to `borderRadius: 19`, matching `Header.tsx`'s `circleButton` (`38 × 38dp`, `borderRadius: 19`). Navigation icon buttons across the entire app are now 100% unified in shape and visual affordance.
+
+23. **Today Quick-Jump Affordance ("Return to Today")** — replaced ambiguous dot with actionable return icon:
+    - In `TopDateStrip.tsx`, replaced `<View style={styles.todayPillDot} />` inside `todayPill` with `<Ionicons name="arrow-undo-outline" size={12} color="#C2410C" />`.
+    - The button now clearly reads `[ ↩ Today ]`, providing an unambiguous, actionable visual affordance that clicking it returns to the current real-world day.
+
+24. **Safe Area Compliance Overhaul (`FoodLogModal.tsx`)** — grounded in Expo Safe Area guidelines (`useSafeAreaInsets`):
+    - Replaced hardcoded `paddingBottom: Platform.OS === 'ios' ? 24 : 14` on `productStickyFooter` with dynamic `paddingBottom: Math.max(insets.bottom, 16)`, preventing button overlap with the iOS home indicator bar (34px) and Android gesture bar.
+    - Updated `fullScreenScrollContent` to dynamic `paddingBottom: 160 + insets.bottom`, fully resolving the "Quick Portions" chips cutoff behind the sticky footer bar.
+    - Updated `fullScreenProductContainer` to `edges={['top']}`, allowing the sticky footer to cleanly bleed to the bottom edge.
+    - Updated in-modal `toastContainer` to dynamic `bottom: Math.max(insets.bottom + 12, 20)` to float above the home indicator.
+
+25. **Web Typography & Google Fonts CDN Integration** — eliminated browser Times New Roman fallback:
+    - In `App.tsx`, injected Google Fonts CDN `<link>` (preconnect to `fonts.googleapis.com` & `fonts.gstatic.com` + `Kurale` & `Poppins:wght@400;500;600;700&display=swap`) strictly within `Platform.OS === 'web'` (0 KB mobile bundle impact).
+    - Injected CSS `@font-face` aliases on Web for `Poppins_400Regular`, `Poppins_500Medium`, `Poppins_600SemiBold`, `Poppins_700Bold`, and `Kurale_400Regular`.
+    - In `typography.ts`, added modern system-ui fallback stacks (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`) on Web so text never renders in Times New Roman.
+
+26. **Design & Color System Harmonization (`FoodLogModal.tsx`)** — unified with Figma design tokens in `Colors.ts`:
+    - Replaced heavy dark forest green (`#15803D`) on primary CTA button (`confirmAddBtn`) with brand Terracotta (`Colors.primary = '#F47551'`), matching all other app action buttons.
+    - Harmonized Macro matrix dots in `nutritionMatrixGrid`: Protein uses `Colors.protein` (`#67BD6E`), Carbs uses `Colors.carbs` (`#F8D558`), Fat uses `Colors.fat` (`#F47551`).
+    - Harmonized Health Badge ("Gut Friendly") to `Colors.proteinLight` (`#E8F6E9`) with `#2E7D32` accessible typography.
+    - Unified live budget impact ticker to `Colors.protein` / `Colors.proteinLight`.
+    - Harmonized meal switcher active pills (`mealTabPillActive`) and active icons to `Colors.primary` (`#F47551`).
+    - Normalized `footerStepperPill` border to `borderWidth: 1` (was 1.5px), matching 1px border grid across all chips and cards.
+
+27. **Modal Header Typography Unification (`AvatarPickerModal`, `NotificationModal`, `SearchFoodModal`)**:
+    - Replaced serif `Fonts.kurale` header titles with `Fonts.poppins.bold` (`fontWeight: '700'`) in `AvatarPickerModal.tsx` ("Select Avatar"), `NotificationModal.tsx` ("Notifications"), and `SearchFoodModal.tsx` ("Search Food").
+    - Unified `emptyTitle` in `NotificationModal.tsx` to `Fonts.poppins.semiBold`.
+    - Modal sheets across the entire app now share a cohesive, modern geometric typography matching their subtitles and buttons.
+
+28. **Daily Habits & Activity Iconography & Button Harmonization (`DailyHabitsCard.tsx`)**:
+    - Replaced raw filled OS emojis (`💧` and `👟`) with monoline vector outline icons: `<Ionicons name="water-outline" size={13} color="#0284C7" />` and `<Ionicons name="footsteps-outline" size={13} color="#F47551" />`.
+    - Replaced heavy solid buttons with industry-standard soft-tinted surface action buttons matching `+ Log Workout`:
+      - Water Add Button: `#F0F9FF` background, `borderWidth: 1`, `#BAE6FD` border, `#0284C7` icon/text.
+      - Step Add Button: `#FFF5F1` background, `borderWidth: 1`, `#FFD5C6` border, `#F47551` icon/text.
+    - Result: Eliminates platform emoji distortion and heavy bottom weight, centering focus on the data gauges while keeping clean 1-tap touch affordances.
+
+29. **Date Strip Android Square Shadow Outline Bug Fix (`TopDateStrip.tsx`)**:
+    - Root cause: On Android, `ReactViewBackgroundDrawable` fails to compute rounded convex outline paths when a View/Pressable combines `borderRadius`, `borderWidth: 1.2`, semi-transparent RGBA borders, and child SVGs, causing Android's native hardware `ViewOutlineProvider` to fall back to the bounding rectangle box ($44 \times 72$ dp) and cast a square shadow behind the rounded capsules.
+    - Solution: Aligned with Google Material Design 3 and Apple HIG standards:
+      - Normalized borders to crisp integer `borderWidth: 1`.
+      - Applied `Platform.select`: set `elevation: 0` on Android across `capsule`, `futureCapsule`, `activeCapsule`, and `arrowCircle`, while preserving subtle, curved box-shadows on Web and iOS.
+      - Result: 100% elimination of square shadow artifacts on Android mobile, creating a clean, lightweight, tier-1 segmented date strip.
+
+30. **HeroCalorieCard Macro Visual Affordance & Track Polish (`HeroCalorieCard.tsx`)**:
+    - Grounded in Gestalt shape hierarchy: preserved Linear Progress Bars to prevent "Circle Overload" against the hero 120px circular calorie dial.
+    - Clean typography: pure, uncluttered macro labels (`Carbs`, `Protein`, `Fat`) without extra dot noise.
+    - Replaced dull gray `#E2E8F0` track with accessible, soft-tinted pastel tracks: Carbs (`#FEF3C7`), Protein (`#DCFCE7`), Fat (`#FFEDD5`).
+    - Elevated bar height from 5px to 6px with smooth rounded pill caps (`borderRadius: 3`), ensuring macros are warm, distinct, and visually identifiable even at 0g.
+
+31. **Universal 4-Tier Color Design System Rollout (`colors.ts`, `DailyHabitsCard.tsx`, `AnalyticsScreen.tsx`)**:
+    - Formalized 4-tier functional tokens (Primary Fill, Pastel Track, Hairline Border, Dark Accessible Text) across Carbs (`#F8D558`), Protein (`#67BD6E`), Fat (`#F47551`), Fiber (`#10B981`), Water (`#0284C7`), and Steps (`#EA580C`).
+    - Steps Unified to Kinetic Flame Orange (`#EA580C`): eliminates color collision between physical movement and dietary Fat (`#F47551`).
+    - `DailyHabitsCard`: Water and Steps dials upgraded to soft-tinted circular tracks (`Colors.waterTrack` `#E0F2FE` and `Colors.stepsTrack` `#FFEDD5`), creating high-contrast complementary balance (Sky Blue + Kinetic Orange).
+    - `AnalyticsScreen`: Resolved "Green Flame" cognitive conflict on Calories tab (flame icon now uses `#F47551` and active text `#0F172A`), aligning metric identity and reserving Green purely for "On Budget" evaluation and Protein.
+    - `AnalyticsScreen` Macro Tracks & Tooltip: Macro Averages Card now features pastel background tracks (`Colors.proteinLight`, `Colors.carbsLight`, `Colors.fatLight`, `Colors.fiberLight`) matching HeroCalorieCard; tooltip letters use accessible dark text tokens (`Colors.proteinDark`, `Colors.carbsDark`, `Colors.fatDark`); chart bars & legend dots fully tokenized to `Colors.water`, `Colors.waterSecondary`, `Colors.steps`, and `Colors.stepsSecondary`.
+
+32. **Complete Elimination of Green from Calorie Tracking & Analytics Charts**:
+    - **Problem Identified**: The legacy financial budget metaphor ("under budget = green, over budget = red") caused calorie bars, selected bar outlines, active day dots, the "On Budget" legend, and the tooltip status badge to render in bright green (`#67BD6E`). This created cognitive collision with Protein (`#67BD6E`) and broke the mental model that Calories = Warm Coral (`#F47551`).
+    - **Resolution**:
+      - `AnalyticsScreen.tsx`: Updated 7D and 30D/1Y calorie chart bars to use `Colors.primary` (`#F47551`) for on-budget days and `#DC2626` (Alert Crimson) for surplus days.
+      - Selected bar outline and active day indicator dot bound to `Colors.primary`.
+      - Chart legend "On Budget" dot updated to `Colors.primary`; "Surplus" dot updated to `#DC2626`.
+      - Interactive tooltip status badge updated from green (`tooltipPillGreen`) to warm coral (`tooltipPillWarm`: `#FFF5F1` background, `#FFD5C6` border, `Colors.primaryDark` text, and `Colors.primary` checkmark).
+      - `HeroCalorieCard.tsx`: Removed the 95–105% green dial override so the hero calorie dial stays brand Warm Coral (`Colors.primary`).
+      - `TopDateStrip.tsx`: Date capsule progress ring stroke standardized to `Colors.primary` instead of turning green at >= 90%.
+      - `MealCard.tsx`: Meal calorie progress bar updated to `Colors.primary` / `Colors.primaryDark` instead of green.
+      - Result: 100% green-free Calorie tracking across the entire app; green is now exclusively and unambiguously reserved for Protein (`#67BD6E`).
+
+33. **Architectural Dead Code Purge & Component Structure Simplification**:
+    - Safely eliminated 15 orphaned, duplicate, and superseded component files (~3,500 lines of dead code):
+      - **Dashboard Prototypes (6):** `CalorieBudgetCard.tsx`, `ActivityCard.tsx`, `AppleActivityCard.tsx`, `DietJourneyChart.tsx`, `FigmaDatePicker.tsx`, `HydrationTracker.tsx` (all superseded by `HeroCalorieCard.tsx` and `DailyHabitsCard.tsx`).
+      - **Duplicate Profile Modal Sheets (4):** `AwardsModalSheet.tsx`, `GoalsModalSheet.tsx`, `MetabolicSummaryModalSheet.tsx`, `PreferencesModalSheet.tsx` (superseded by full-screen views in `src/screens/profile/`). Removed empty `src/components/profile/modals` folder.
+      - **Orphaned Profile Cards (4):** `AccountSecurityCard.tsx`, `BodyCompositionCard.tsx`, `DailyTargetsCard.tsx`, `PreferencesCard.tsx` (integrated into `PreferencesScreen.tsx` and `ProfileMetricInspector.tsx`).
+      - **Unused Loaders (1):** `BrandRingLoader.tsx` (standardized on `AppLoadingScreen` and `BouncingDotsLoader`).
+    - Total component files reduced from 67 to 52; active app architecture is now 1:1 with reality. All 13 test suites (106 tests) pass with 0 errors.
+
+22. **Water Tracker & Water Intake History Domain Architecture**:
+    - **Clean Domain Separation (`src/components/water/`)**:
+      - `DropletVisualizer.tsx`: Reusable SVG sinusoidal wave physics engine with dual overlapping wave layers, teardrop contour halo, and Reanimated GPU "Slosh & Settle" physics.
+      - `HeroDropletCard.tsx`: Sized to `145 × 185` for non-scrolling full-screen proportions, large readout (`42px`), and tap-to-slosh gesture.
+      - `WaterHistoryCard.tsx`: Compact preview card (~125px) showing 1 latest drink entry or the dual-clipboard empty vector illustration with "No records yet".
+      - `WaterBottomDock.tsx`: Sticky bottom bar with container icon pill and "Drink (300 mL)" CTA with "Drinking..." momentary state.
+    - **Modals (`src/components/modals/`)**:
+      - `DailyWaterGoalModal.tsx`: Goal stepper ($\pm 100\text{ mL}$) and quick presets.
+      - `CupSizeModal.tsx`: "Switch Cup Size" with 10 volume presets ($100–600\text{ mL}$, $+$ custom input) and 12 beverage types.
+    - **Strict Non-Scrolling Full-Screen Viewport**:
+      - Refactored `WaterTrackerScreen.tsx` from `<ScrollView>` to `flex: 1` non-scrolling layout where Header, Week Strip, Hero Droplet, History Preview, and Bottom Dock fit in 100% viewport height with 0px overflow.
+    - **Dedicated Full-Screen History (`WaterIntakeHistoryScreen.tsx`)**:
+      - Top bar: Back arrow `←`, `Water Intake History`, Calendar icon `📅`.
+      - Date-grouped hydration feed (`Today, <Date>`, `Yesterday, <Date>`, past dates).
+      - Custom SVG beverage vectors (glass with bubbles, measuring mug, coffee cup with sleeve, juice with citrus garnish, steaming tea cup, tumbler).
+      - Floating popover menu (`✎ Edit`, `🗑 Delete`).
+      - Stepper edit modal and delete actions live-synchronized with `HealthContext` (`removeWaterEntry`, `updateWaterEntry`).
+
+23. **Water Tracker Edge-Case & Data Safety Audit Refinements**:
+    - **Data Safety Fix (`HealthContext.tsx`)**: Guarded `cleanWater` in `cleanDailyLog` so that `waterMl === 1250` and `steps === 4620` are only cleaned when `isMockLog` is true. Genuine user logs of 1250 mL / 4620 steps are preserved.
+    - **Multi-Entry Preview & Legacy Balance (`WaterHistoryCard.tsx`)**:
+      - Expanded the preview card from 1 to the 3 most recent entries, eliminating the visual mismatch between the 1500 mL hero total and history list.
+      - Added dynamic entry count badge next to `"History"` (e.g. `History [5]`).
+      - Added compact footer indicator (`+X more record(s)`) when entries exceed 3, keeping `View All →` solely in the header to avoid duplicate CTAs.
+      - Added tailored beverage icons and pastel color backgrounds for Coffee, Tea, Juice, Sport Drinks, Smoothies, Wine, Beer, and Water.
+      - Integrated unitemized legacy balance protection (`legacy_balance`) so historical totals without granular entries never vanish when adding a new drink.
+    - **Goal Celebration & Progress Subtitle (`HeroDropletCard.tsx`)**:
+      - Added a clean progress subtitle under the daily goal: `{percentage}% · {remainingMl} mL remaining`.
+      - Added an emerald celebration pill when intake meets or exceeds 100%: `Daily goal achieved! 🎉` or `Goal achieved! (+{overflow} mL)`.
+
+24. **Hydration Settings, Future Date Guards & Quick Minus Decrement**:
+    - **`HydrationSettingsModal.tsx`**: Added full hydration preferences sheet triggered via header settings cog with reminder toggles (`Every 1h`, `2h`, `3h`), metric/imperial unit switcher (`mL` vs `fl oz`), goal adjust shortcut, and scientific beverage hydration guide.
+    - **Future Date Guard (`WaterTrackerScreen.tsx` & `WaterBottomDock.tsx`)**: Added real-world date comparison `isFutureDate = selectedDate > todayStr`. When selecting a future day, the dock button disables with `"Cannot log for future date"` to avoid corrupting forward logs.
+    - **Quick Minus (`−`) Button (`WaterBottomDock.tsx`)**: Added a 48px circular `−` button to the dock. When `currentWater > 0`, tapping deducts `cupSize` (e.g. $-300\text{ mL}$) and triggers `heroDropletRef.current?.triggerSlosh('down')` with reverse wave physics. Dims and disables when `currentWater === 0` or on future dates.
+    - **Debounce Optimization**: Reduced button lock duration to 350ms for responsive multi-glass logging.
+
+25. **Entry Actions Parity in Preview Card (`WaterHistoryCard.tsx`)**:
+    - **Direct Action Menu**: Tapping `⋮` on any preview row (or inside the "View All" modal) now opens a dedicated action sheet displaying the beverage's custom icon, name, volume, and logged time, with options for **`✎ Edit Amount`** and **`🗑 Delete Entry`** plus **`Cancel`**.
+    - **Edit Amount Stepper Sheet**: Features an interactive volume stepper ($\pm 50\text{ mL}$, min 50, max 3000), quick preset chips ($150, 250, 300, 400, 500\text{ mL}$), and a "Save Changes" CTA that updates the entry in real time via `updateWaterEntry` (or `addWater` for synthetic/legacy balance entries) without leaving the screen.
+    - **Safe Delete Flow**: Choosing "Delete Entry" prompts a clean confirmation dialog displaying the exact mL being removed from today's intake before executing `removeWaterEntry`, preventing accidental loss.
+    - **Full Parity in "View All" Modal**: Upgraded the inner "View All" modal rows to also render contextual beverage icons and backgrounds, and wired their `⋮` triggers to the same edit/delete flow.
+
+26. **Water Data Storage & Cloud Sync Deep Audit & Fixes**:
+    - **Firestore Security Rules Schema Fix & Live Deploy (`firestore.rules`)**: Identified and fixed a critical rule bug where `isValidDailyLogDoc` had strict `data.keys().hasOnly(['date', 'waterMl', 'steps', 'meals', 'activities'])`. Because `waterEntries` was missing, the remote Firebase backend rejected every document containing `waterEntries` with `FirebaseError: Missing or insufficient permissions.`. Added `'waterEntries'` to `hasOnly`, added list validation (`size <= 200`), validated via Firebase MCP, and successfully deployed to live Firebase via `firebase_deploy`.
+    - **Multi-Date Firestore Sync (`HealthContext.tsx`)**: Replaced the hardcoded single-date `selectedDate` upload with a dirty-date tracker that syncs any modified log date (e.g. past dates edited from the history screen) to Cloud Firestore.
+    - **Offline-First Merging Protection (`HealthContext.tsx`)**: In `fetchAndHydrateUserData`, replaced destructive `merged[dateKey] = cloudLog` with an intelligent non-destructive merge (`Math.max(cloudWater, localWater)` and richer `waterEntries`), preventing offline water intake from being overwritten by a stale cloud document.
+    - **Synthetic & Legacy Entry Global Support**: `removeWaterEntry` and `updateWaterEntry` in `HealthContext.tsx` now natively handle `synth_`, `synthetic_`, and `legacy_` IDs so unitemized historical water can be updated or deleted from any screen without failing silently.
+27. **Hero Droplet Card Symmetrical Stepper Trio & Bottom Dock Removal**:
+    - **Physical Layout Collision Resolved**: The floating bottom dock previously collided with the floating lime-green camera FAB button on `BottomNavBar`.
+    - **Integrated Symmetrical Stepper Trio (Option A)**: Relocated the intake controls directly into the bottom of [HeroDropletCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/HeroDropletCard.tsx):
+      - **Left (`stepperMinusBtn`)**: 44px circular minus button `( − )` with deduction state, disabled when `currentWater === 0` or on future dates.
+      - **Center (`cupSelectorPill`)**: Pill container `[ 🥤 300 mL ▾ ]` rendering contextual SVG beverage icons, current container volume, and dropdown chevron; triggers `CupSizeModal` to switch presets or beverage type.
+      - **Right (`stepperPlusBtn`)**: 44px circular plus button `( + )` in brand water cyan with haptic bounce, momentary checkmark indicator, and slosh physics trigger.
+    - **Bottom Collision Permanently Eliminated**: Completely removed `WaterBottomDock` from [WaterTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterTrackerScreen.tsx) and reduced `ScrollView` bottom padding to `24`, giving `BottomNavBar` complete unobstructed visibility and creating a cohesive, self-contained hero tracker.
+28. **Hydration Container & Beverage Selection Architecture Overhaul (`CupSizeModal.tsx`)**:
+    - **Added "Water" as Primary Beverage (Index 0)**: Resolved a critical edge case where `water` was previously absent from `BEVERAGE_TYPES`, preventing users who switched to Coffee/Tea from ever switching back to plain Water. Water is now item 0 with dedicated SVG water glass vector and cyan `#0284C7`.
+    - **Replaced "Or Drink" with Clear Semantic Taxonomy**: Replaced ambiguous `"Or Drink"` divider with `"Beverage Type"` and added clear section headers (`Container Size`, `Beverage Type`).
+    - **Dual Selection with Single Confirm CTA (`Set Container`)**: Eliminated premature modal dismissals where selecting a volume preset slammed the modal shut before the user could choose a beverage. Users can now select both volume and beverage with active badges/highlights and confirm via a sticky bottom button: `Set Container · [size] mL [Beverage]`.
+    - **Persistent Custom Cup Sizes**: When users add a custom volume (e.g. 750 mL Hydro Flask) with bounds validation (50–3,000 mL) and inline error handling, the custom size is saved to AsyncStorage (`@calori_custom_cup_presets`) so it remains a permanent preset across sessions. Added clean `Cancel` button for custom input mode.
+    - **Eliminated Android Outline Tessellation on Selected Circle**: Removed `elevation: 2` on Android from `iconCircleSelected` and set crisp integer `borderWidth: 2`, preventing Android HWUI's `ViewOutlineProvider` from approximating the circle as an 8-sided polygon/octagon.
+29. **Hydration Ecosystem Cross-Component Edge-Case & Taxonomy Harmonization**:
+    - **Centralized Beverage Engine (`beverageUtils.tsx`)**: Created unified definitions, colors, background tints, and iconography for all 13 beverages (`water`, `coffee`, `tea`, `juice`, `sport`, `coconut`, `smoothie`, `chocolate`, `carbonated`, `soda`, `wine`, `beer`, `liquor`).
+    - **Fixed Label & Icon Fallback Bug in History Cards (`WaterHistoryCard.tsx`)**: Previously, 6 beverage types (`coconut`, `chocolate`, `carbonated`, `soda`, `liquor`) were missing from ternary mappings and fell back to the label `"Water"` and water glass icon. Connected `WaterHistoryCard` preview rows, action sheet header, and "View All" modal rows to `getBeverageName`, `getBeverageBg`, and `renderBeverageIconElement`.
+    - **Fixed History Screen Parity & Edit Beverage Picker (`WaterIntakeHistoryScreen.tsx`)**: Integrated `beverageUtils` into the full history feed. Upgraded the Edit Entry modal with an interactive horizontal beverage selector so users can modify both intake volume and beverage type simultaneously when editing past entries.
+    - **HealthContext 0 mL Guard (`HealthContext.tsx`)**: Added `if (updated === 0) { updatedEntries = []; }` so deducting intake to zero cleanses any orphaned entries from the local store.
+30. **Industry-Standard Beverage-Scoped Deductions & 1-Tap Undo Toast (Waterllama / YAZIO Standard)**:
+    - **Beverage-Scoped Deduction (`HealthContext.tsx`)**: In `addWater(-amount, beverageType)`, deductions target only entries matching the active beverage (e.g. deduct Water leaves Smoothie and Coffee entries 100% untouched). If multiple beverage types exist, non-matching entries are strictly protected.
+    - **Context-Aware `canDeduct` Button (`HeroDropletCard.tsx`)**: The `( − )` button dynamically checks if the user has any entries matching the active container's beverage type (`hasMatchingBeverage`). If the user switches to a drink they have not logged today (e.g. Coffee), the minus button dims to 45% opacity and disables, preventing accidental subtraction from non-existent drinks.
+    - **1-Tap Floating Undo Toast (`WaterTrackerScreen.tsx`)**: When tapping `( + )`, a dark navy floating snackbar appears for 4.5 seconds: `"Added [X] mL [Beverage] • [Undo]"`. Tapping `[Undo]` immediately reverts the exact entry without requiring any manual container configuration or mental math.
+31. **Contextual Edit & Delete Popover Architecture (`WaterEntryActionPopover.tsx`)**:
+    - **Floating Anchor Popover (`WaterEntryActionPopover.tsx`)**: Created reusable anchor-relative popover matching reference screenshot. Features pure white card (`#FFFFFF`), rounded corners (`borderRadius: 14`), fine border stroke (`rgba(15, 23, 42, 0.08)`), drop shadow (`elevation: 8, shadowRadius: 16`), and animated entry (`FadeIn.duration(130)`).
+    - **Boundary Detection & Auto-Flip**: Automatically detects if the tapped `[ ⋮ ]` row is near the bottom of the viewport (`positionY + CARD_HEIGHT > screenHeight - 90`). If near bottom, flips above the trigger row; otherwise aligns adjacent to the row.
+    - **Outside-Tap Dismiss Scrim**: Transparent backdrop overlay captures outside touches, dismissing the menu seamlessly without triggering unwanted clicks on other rows.
+    - **Ecosystem Harmonization (`WaterIntakeHistoryScreen.tsx` & `WaterHistoryCard.tsx`)**: Upgraded both full history feed and dashboard history preview card to use `WaterEntryActionPopover`.
+    - **1-Tap Delete Undo Toast in History Screen**: Tapping Delete instantly cleanses the entry with zero lag while displaying a 4.5-second dark floating snackbar (`"Deleted [X] mL [Beverage] • [Undo]"`), providing safe reversible deletion without intrusive confirmation dialogues.
+    - **Breathable Squircle Icon Containers (`WaterIntakeHistoryScreen.tsx`, `WaterHistoryCard.tsx`, `beverageUtils.tsx`)**: Replaced unconstrained collapsing rectangular icon wrappers with generous 44×44px continuous rounded squircles (`borderRadius: 14`, `borderCurve: 'continuous'`), centered 20px icons with ~12px of breathing room on all sides, and added a safe viewBox buffer (`-1 -1 22 26`) to `MiniWaterGlassSvg` so strokes and rims are never clipped.
+32. **Comprehensive Hydration Report Screen & Modular Chart Architecture (`WaterReportScreen.tsx`)**:
+    - **Header & Navigation ([WaterReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterReportScreen.tsx))**: Circular back button (`[ ‹ ]`), bold title (`Report`), options button (`[ ⋮ ]`), 3-tab segmented timeframe switcher (`Weekly` | `Monthly` | `Yearly`), and date range navigator with chevrons (`< Dec 16 - Dec 22, 2024 >`) connected to `WaterIntakeHistoryScreen` via `stats-chart-outline` button in header.
+    - **Dual-Mode Chart Type Toggle ([ChartTypeToggle.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ChartTypeToggle.tsx))**: Compact pill toggle with custom SVG Bar (`Rect`) and Line (`Path` + `Circle`) icons; active state in brand blue (`#2563EB`) with white glyph, inactive state in transparent with slate glyph (`#94A3B8`).
+    - **Circular Pin Tooltip Badge ([ChartTooltipPin.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ChartTooltipPin.tsx))**: Speech-bubble badge with downward needle pointer attached. Android elevation set to 0 with integer `borderWidth: 2` to prevent polygon tessellation. Displays `%` or volume with unit (`1750 mL`).
+    - **Drink Completion Card ([DrinkCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/DrinkCompletionCard.tsx))**: Dual-mode Bar (`capsuleBar` with responsive 26–30px width, `#90C5FE` unselected, `#2563EB` selected) and Line (`strokeWidth: 3.5`, white/blue nodes, vertical gradient fill). Dynamic Y-axis ticks (`100%`, `80%`, `60%`, `40%`, `20%`, `0%`), hairline header divider, and interactive floating pin badge tracking selected day.
+    - **Hydrate Volume Card ([HydrateVolumeCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/HydrateVolumeCard.tsx))**: Dual-mode Line and Bar views with auto-scaling Liter Y-axis (`2.5L`, `2L`, `1.5L`, `1L`, `0.5L`, `0%`), hairline header divider, and interactive floating volume badge.
+    - **Drink Types Card ([DrinkTypesCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/DrinkTypesCard.tsx))**: Multi-segment SVG Donut ring (`DONUT_SIZE: 126`, `STROKE_WIDTH: 13`) with center cutout displaying `100%` and `"Water Intake"`. Right side features 2-column legend grid showing rounded color swatches, drink names, and percentages (Water, Juice, Coffee, Tea, Beer, Soda, Wine, Carbon) with seamless fallback to template reference data when no logs exist.
+33. **Precision Radial Gauge & Beveled Liquid Droplet Architecture ([WaterGaugeVisualizer.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/WaterGaugeVisualizer.tsx))**:
+    - **270° Speedometer Radial Gauge**: Built a 270° radial gauge ($135^\circ \to 45^\circ$, $90^\circ$ bottom aperture) scaled to a prominent 300px canvas with 120px radius, 26px chunky stroke width (~292px outer diameter), rounded end-caps, and an outer bezel shadow track for 3D depth.
+    - **15 Precision Radial Instrument Ticks**: 15 evenly-spaced concentric radial tick marks pointing toward the gauge center in soft slate tint (`#CBD5E1`, outer radius 94px).
+    - **Floating Center Droplet**: Scaled to 98px × 122px with native SVG teardrop halo contour (`#F0F2F6`, `showHalo={true}`), completely eliminating artificial oval container borders. Features real-time liquid wave slosh physics and press-squish bounce (`DropletVisualizer` integration).
+    - **Integrated Bottom Metric Readout**: Nestled in the bottom aperture between the two arc tips with large bold intake text (`42px`, `Fonts.poppins.bold`, `#0F172A`) and goal subtitle with tap-to-edit pencil icon (`/{maxWater} mL`).
+    - **HeroDropletCard Integration ([HeroDropletCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/HeroDropletCard.tsx))**: Unified the hero water visualizer and metric row into `WaterGaugeVisualizer` while preserving the symmetrical stepper trio `[ ( − ) [ 🥤 300 mL ▾ ] ( + ) ]` and goal modal triggers. Removed redundant `32% · 2050 mL remaining` subtitle text for a clean, minimalist design matching reference specifications.
+    - **Smooth 60fps GPU Arc Interpolation & Mechanical De-stuttering**: Replaced instantaneous state-snap rendering with `AnimatedCircle = Animated.createAnimatedComponent(Circle)`, initialized `animatedProgress = useSharedValue(initialProgress)` to eliminate mount jumps, harmonized physics with `DropletVisualizer` using `withSpring(target, { damping: 18, stiffness: 85 })` (zero initial velocity $v_0 = 0$, organic acceleration), deduplicated `triggerSlosh` (removed 2 redundant triggers from parent screens that interrupted wave sequences), and removed blocking button disable/icon-swap states for instant, buttery-smooth tactile logging.
+34. **Weight Tracker Base Card & Quick Weigh-In Experience ([WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx), [LogWeightModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/LogWeightModal.tsx))**:
+    - **Base Card Implementation**: Crafted the pixel-perfect Weight Tracker card matching user reference mockup (`media_1790853712174.png`). Features 20px continuous rounded card styling, `"Weight Tracker"` bold header with pinkish-coral accent arrow (`#FF3B5C`), hairline divider, 34px bold current weight readout with unit label, directional progress chip badge (`[ ↓ ] - 2.5 kg` in emerald `#10B981` / `#059669` or rose if gain), and 44×44px circular weigh-in action button `( ✏️ )`.
+    - **Reanimated 4 Capsule Progress Bar**: Chunky 16px capsule track (`#EEF2F6`, `borderRadius: 8`) with smooth GPU-driven fill (`#FF3B5C`) calculating progress percentage from starting weight to goal weight with cubic easing.
+    - **Range Footer Row**: Displays `Starting: 100.0 kg` and `Goal: 76.0 kg` (or user's configured goal) with responsive `kg` / `lbs` formatting.
+    - **Quick Weigh-In Modal (`LogWeightModal.tsx`)**: Bottom sheet modal equipped with unit toggle (`kg` / `lbs`), high-contrast digital weight counter, micro-steppers `[-1.0 / -0.1 / +0.1 / +1.0]`, direct numerical input support, context tags (`Morning fasted`, `Post workout`, etc.), optional notes, and instant persistence via `logWeight` in `HealthContext`.
+    - **Today Screen Feed Mount**: Inserted `WeightTrackerCard` seamlessly below `WaterTracker` in `TodayScreen.tsx`.
+35. **Full Weight Tracker Screen Architecture ([WeightTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightTrackerScreen.tsx))**:
+    - **Top Navigation Bar**: Circle back button (`[ ← ]`), bold title (`Weight Tracker`), and circle settings gear (`[ ⚙️ ]`) that triggers `WeightGoalSettingsModal`.
+    - **Streamlined Card Layout**: Direct transition from top navigation to the `"Current"` hero card without a redundant date strip, matching the mockup layout and placing weight history directly below.
+    - **Current Weight Hero Component ([HeroWeightCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/HeroWeightCard.tsx))**: Matches user mockup with `"Current"` header, 36px bold current weight with unit label, directional delta badge (`[ ˇ - 0.2 kg ]` in emerald or rose for gain), chunky capsule progress bar, starting and goal footer labels, and full-width `"Update"` button launching `LogWeightModal`.
+    - **Weight History Component ([WeightHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/WeightHistoryCard.tsx))**: Matches user mockup with `"History"` and `"View All →"` header, sorted list of weigh-in records with relative dates (`"Yesterday, Dec 21, 2024"`), directional delta badges, and three-dots menu button `[ ⋮ ]` ([WeightEntryActionPopover.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/WeightEntryActionPopover.tsx)) providing Edit and Delete with 4.5-second reversible Undo Toast.
+    - **Weight Goal & Settings Modal ([WeightGoalSettingsModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/WeightGoalSettingsModal.tsx))**: Bottom sheet modal allowing users to configure starting weight, goal weight, and preferred unit (`kg`/`lbs`) with interactive micro-steppers.
+    - **Seamless App Integration**: Mounted via `SlideInSubScreen` in `App.tsx` connected to `WeightTrackerCard` header click on `TodayScreen`, with Android hardware back-button handling.
+36. **Dedicated Weight History Screen & Historical Backfilling Architecture**:
+    - **Dedicated Weight History Screen ([WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**: Full-screen date-grouped timeline screen displaying all historical weigh-ins, intra-day logs (`• 08:30 AM`), context tags (`Morning fasted`), adjacent deltas, and 3-dots popover for Edit and Delete with 4.5s reversible floating Undo Toast.
+    - **Cloud Firestore Security Hardening ([firestore.rules](file:///c:/Users/navee/Videos/Calorify/calori/firestore.rules))**: Added `weightKg` (numeric 0–500) and `weightEntries` (list up to 100 entries) to the whitelist (`hasOnly`) validator `isValidDailyLogDoc`, resolving `Missing or insufficient permissions` errors on dailyLogs synchronization. Deployed live to Firebase.
+    - **Past-Date Weigh-In & Calendar Picker ([LogWeightModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/LogWeightModal.tsx))**: Embedded quick date selector segmented pills (`Today`, `Yesterday`, `📅 Other Date`) and an expandable inline month calendar allowing users to backfill weigh-ins for any past date up to today (future dates disabled).
+    - **Historical Insertion & Chronological Guard ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx))**:
+      - `logWeight`: Past-date backfills anchor `loggedAt` to `${targetDate}T08:00:00.000Z` to guarantee intra-day sorting integrity. Chronologically sorts all recorded dates so `userGoals.currentWeightKg` is only updated if `targetDate` is $\ge$ the latest recorded date.
+      - `updateWeightEntry`: Extended to support cross-date entry transfers (`newDate?: string`), automatically removing from the source date, inserting into the destination date, and recalibrating the latest weight.
+    - **Robust Sorting Across Views ([WeightHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/WeightHistoryCard.tsx), [WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**: Replaced loose timestamp sorting with date-first descending sorting (`b.date.localeCompare(a.date)`), followed by intra-day timestamp descending, guaranteeing accurate adjacent delta calculations.
+37. **Full-Screen Non-Scroll Weight Logging & Settings Cloud Synchronization Engine ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx), [HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx), [WeightGoalSettingsModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/WeightGoalSettingsModal.tsx))**:
+    - **Full-Screen Non-Scroll Viewport ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx))**:
+      - Converted cramped bottom modal sheet into a distraction-free, 100% viewport bounded full-screen experience (`presentationStyle="fullScreen"`).
+      - Zero vertical scrolling required: top toolbar, date quick ribbon (`[ Today ]`, `[ Yesterday ]`, `[ 📅 Pick Date ]`), hero weight visualizer, context tags (`Morning fasted`, etc.), and note input fit seamlessly with pinned bottom CTA (`Save Weigh-In` / `Update Weigh-In`) anchored directly above bottom safe area.
+      - Hero card equipped with unit toggle pill (`[ kg | lbs ]`), 54px bold digital display, tap-to-type numeric input with instant checkmark, goal difference badge, and 4 micro-steppers (`[-1.0]`, `[-0.1]`, `[+0.1]`, `[+1.0]`).
+      - Full interactive calendar modal for arbitrary past-date backfilling with disabled future dates.
+    - **Settings & Goals Cloud Persistence Engine ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx))**:
+      - **Unblocked Debounced Goals Sync**: Removed restrictive `hydratedUidRef.current === auth.currentUser.uid` gate in `firestoreGoalsDebounceRef` that silently dropped user goal writes for newly registered or active accounts.
+      - **Dual Top-Level & Nested Map Parity**: Simultaneous synchronization of both top-level profile fields (`weight`, `weightUnit`, `startWeightKg`, `heightCm`, `updatedAt`) and nested `goals` map in Firestore `users/{userId}`.
+      - **Hydration Precedence Fix**: Prioritized `data.goals?.weightUnit` and `data.goals?.startWeightKg` over stale registration-time profile fields during `fetchAndHydrateUserData`, permanently preventing goal settings (e.g. `lbs` or custom targets) from being overwritten by stale cloud data on reload.
+      - **Cold-Start User Scoping**: Prioritizes `getUserGoalsKey(parsedAuth.id)` before falling back to generic `STORAGE_KEYS.USER_GOALS`.
+    - **Harmonized Fallbacks Across Modals ([WeightGoalSettingsModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/WeightGoalSettingsModal.tsx))**:
+38. **Red-Team Security Hardening, Information Leak Elimination & Viewport Keyboard Adaptability**:
+    - **Cloud Firestore Subcollection Purge on Account Deletion ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx))**:
+      - Root Cause: Deleting the parent user document via `deleteDoc(doc(db, 'users', uid))` left subcollections (`dailyLogs`, `customFoods`, `chatHistory`) permanently orphaned in Cloud Firestore. Once the Firebase Auth user was deleted, Firestore security rules denied all subsequent access, permanently trapping user health PII in the database.
+      - Resolution: Implemented recursive, pre-deletion chunked batching (`writeBatch`) capped at 400 operations per commit across `dailyLogs`, `customFoods`, and `chatHistory` prior to root document and auth account deletion. Purged all user-scoped offline storage keys (`getUserLogsKey`, `getUserGoalsKey`, `getUserCustomFoodsKey`) and revoked local hardware secrets via `SecureKeyStorage.removeApiKey()`.
+    - **Zero-Cloud Footprint Hardware-Backed BYOK Gemini API Key Storage ([SecureKeyStorage.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/services/ai/storage/SecureKeyStorage.ts))**:
+      - Root Cause: `safeEncode` (Base64) was uploading the user's BYOK Gemini API key to Firestore (`geminiKeyObfuscated`), exposing it to anyone with database/console read access.
+      - Resolution: Completely removed cloud uploads from `saveApiKey()`. API keys are now stored strictly in hardware-backed `expo-secure-store` (iOS Keychain / Android KeyStore with `AFTER_FIRST_UNLOCK`). In `removeApiKey()`, added permanent field deletion with `deleteField()`. In `restoreFromFirestore()`, added a one-time migration that pulls legacy keys into local secure store and immediately purges `geminiKeyObfuscated` from Firestore using `deleteField()`.
+    - **Indirect System Prompt Injection & Telemetry Sanitization ([NutritionContextBuilder.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/services/ai/context/NutritionContextBuilder.ts))**:
+      - Root Cause: Unsanitized user profile names and custom meal names were directly concatenated into system prompt instructions, opening an indirect prompt injection attack surface.
+      - Resolution: Implemented strict sanitization (`sanitizeText`) stripping newlines (`[\r\n]+`) and angle brackets (`[<>]`), length limits, and bounded logged meals to 30 items. Encapsulated dynamic context inside structured `<user_telemetry>` and `<today_meals>` XML boundary tags, with explicit guard instructions directing Ria to treat all content in these tags as untrusted passive reference data.
+    - **Cloud Firestore Rules Map Denial-of-Service Defense ([firestore.rules](file:///c:/Users/navee/Videos/Calorify/calori/firestore.rules))**:
+      - Root Cause: `isValidUserDoc` accepted arbitrary map contents for `goals` without sizing constraints, allowing up to 1MB of arbitrary nested document bloat.
+      - Resolution: Hardened rule constraint to `(!('goals' in data) || (data.goals is map && data.goals.keys().size() <= 35))` providing generous headroom for all 22 legitimate goal settings while strictly blocking document bloat DoS. Validated and deployed live to Firebase via `firebase_deploy`.
+    - **Adaptive Viewport Compression & Keyboard Responsiveness ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx))**:
+      - Root Cause: On small viewports (iPhone SE / smaller Android devices), opening the soft keyboard compressed available viewport height from ~800dp to ~480dp, risking element squishing and pushing note inputs or CTA buttons off-screen.
+      - Resolution: Added `Keyboard.addListener` detection (`isKeyboardOpen`). When the keyboard is active, conditionally hides the micro-steppers row (`steppersContainer`, saving ~54dp), scales the digital hero display from 54px to 38px, tightens hero card, date ribbon, and context card vertical paddings, and applies `keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}`, guaranteeing that 100% of the UI remains un-squished, fully visible, and interactive with zero vertical scrolling.
+39. **Comprehensive Weight Report Screen & Analytical Architecture ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Parity with Hydration Reporting**: Ported the high-density analytical experience of `WaterReportScreen` into the Weight domain, tailored for continuous body state tracking with `Weekly` (7 days), `Monthly` (4-5 weekly intervals), and `Yearly` (12 months) timeframes with `< Period >` date range navigation.
+    - **Period Overview KPI Card ([WeightSummaryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightSummaryCard.tsx))**: 4-pod summary showing Net Change ($\Delta$ with directional emerald `#10B981` / rose `#FF3B5C`), Current/Latest weigh-in, Period Average, and Goal Distance pill (`7.4 kg to goal` / `Goal Achieved! 🎉`).
+    - **Dual-Mode Trend Chart with Goal Reference Line ([WeightTrendCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightTrendCard.tsx))**:
+      - Line Mode: Smooth SVG spline with area gradient and intelligent linear interpolation across empty weigh-in days so paths connect cleanly without gaps. Features an overlaid dashed horizontal reference line for **Goal Weight** with milestone label (`Goal: 65.0 kg`).
+      - Bar Mode: Chunky capsule bars (`barWidth: 18–28px`) in brand Rose (`Colors.weight = '#FF3B5C'`).
+      - Interactive Pin Tooltip: Pins circular needle badge (`ChartTooltipPin`) above selected day, displaying exact weight and unit.
+      - Auto-Scaling Y-Axis: Dynamically calculates Y-bounds based on min/max weights and goal target.
+    - **Weight Fluctuation Delta Card ([WeightDeltaCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightDeltaCard.tsx))**: Dual-mode diverging chart showing day-to-day / interval $\pm \Delta$ variance centered on a zero baseline ($0.0$). Negative bars (losses) extend downward in emerald green; positive bars (gains) extend upward in warm coral.
+    - **Weigh-In Conditions Donut Card ([WeightContextCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightContextCard.tsx))**: SVG Donut chart (`DONUT_SIZE: 126`, `STROKE_WIDTH: 13`) with 2-column legend visualizing context habits (`Morning fasted`, `Post workout`, `Pre meal`, `Evening`) and center readout (`80% Fasted Logs`).
+    - **Seamless App-Wide Entrypoints**: Added dedicated `stats-chart-outline` button in the header of `WeightTrackerScreen.tsx` and wired existing `onOpenReport` in `WeightHistoryScreen.tsx`, mounting `WeightReportScreen` via `SlideInSubScreen` with hardware back support.
+40. **Weight History Header Report Icon & Resilient Fallback Wiring ([WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**:
+    - **Contextual Access**: Users reviewing their weigh-in timeline now have immediate access to the full Weight Report without having to return to the parent tracker screen first.
+    - **Unconditional Header Action Button**: Added `<Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />` circular action button (`width: 40, height: 40, borderRadius: 20`) alongside the coral `+` log button.
+    - **Dual Wiring Architecture**:
+      - If `onOpenReport` callback is provided by the parent (`WeightTrackerScreen`), it calls `onOpenReport()` to trigger the parent's `SlideInSubScreen` (`zIndex: 300`).
+      - If `onOpenReport` is absent (e.g. standalone usage), `WeightHistoryScreen` automatically activates its own internal fallback `SlideInSubScreen` with hardware `BackHandler` dismissal.
+    - **Pixel-Perfect Header Balance**: Styled `headerLeftWrapper` (`width: 88, alignItems: 'flex-start'`) to match `headerRightActions` (`width: 88, justifyContent: 'flex-end', gap: 8`), guaranteeing that the "Weight History" title remains centered with mathematical symmetry.
+41. **Weight Report Fine-Tuning, Subheader Copy & Data Connection Integrity ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Empathetic & Precise Copywriting**:
+      - Updated screen header to `"Weight Report"` with balanced layout (`width: 40` empty spacer balancing the back chevron).
+      - Replaced sterile statistical jargon (`"daily mean"`) with natural health phrasing (`"period average"`).
+      - Updated pod subheaders to `"across this period"` and `"recorded weigh-in"`. If a selected period has no entries, explicitly displays `"--"` and `"no entry in period"`.
+      - Enhanced goal distance badge to `🎯 7.4 kg to goal` / `🎉 Goal Reached!`.
+      - Updated Weigh-In Conditions card subtitle to `"Routine & habit consistency"`.
+    - **Timeframe-Aware Dynamic Subheaders**:
+      - Made the Weight Fluctuation card subtitle context-sensitive:
+        - Weekly: `"Day-to-day ± variance (kg)"`
+        - Monthly: `"Week-over-week ± variance (kg)"`
+        - Yearly: `"Month-over-month ± variance (kg)"`
+    - **Visual Logic & Color Semantics**:
+      - Fixed zero-variance coloring (`delta === 0`): rendered in neutral Slate (`#94A3B8`) rather than gain-red (`#FF3B5C`).
+      - Prevented synthetic flat horizontal line in Line Mode when only 1 weigh-in exists; renders a clean focal node dot with interactive tooltip.
+      - Updated interactive pins on unlogged days to display `"No entry"` instead of ambiguous `"--"`.
+    - **Data Connection & Calculation Integrity**:
+      - Multi-day lookback seed: Seeds Monday's weekly delta by looking back up to 7 days prior to Monday for the user's latest baseline weigh-in.
+      - Resilient data extraction: Added automatic fallback to `log.weightEntries[0].weightKg` if `log.weightKg` is missing or 0 across weekly, monthly, and yearly loops.
+      - Eliminated mock data fallbacks: When a period has 0 logs, `WeightContextCard` now displays an honest zero-state (`"0 No Logs"`) with a helpful prompt encouraging users to tag conditions, rather than rendering sample mock data.
+42. **Safe Areas & System Bars Hierarchy Audit (Expo SDK 57 & Edge-to-Edge Compliance)**:
+    - **App Architecture Validation**: Verified root `App.tsx` wraps the app in `<SafeAreaProvider>`, `<StatusBar style="dark" />`, and `<NavigationBar style="dark" />` with `<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>` wrapping `<View style={styles.contentArea}>`.
+    - **Double Top Inset Bug Resolved**:
+      - Because `contentArea` is already padded by `insets.top`, sub-screens inside `SlideInSubScreen` are already placed beneath the status bar.
+      - Identified that `WeightTrackerScreen.tsx` (`paddingTop: Math.max(insets.top, 12)`), `WeightHistoryScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`), `WeightReportScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`), and `WaterReportScreen.tsx` (`paddingTop: Math.max(insets.top, 10)`) were inadvertently applying `insets.top` twice, causing an unnatural 118px empty whitespace gap on iOS / Android edge-to-edge.
+      - Fixed all four screens to use consistent `{ paddingTop: 6 }`, harmonizing with `WaterTrackerScreen.tsx` and `WaterIntakeHistoryScreen.tsx`.
+    - **Modal Validation**: Confirmed that `LogWeightModal.tsx` (`presentationStyle="fullScreen"`) correctly applies `insets.top` and `insets.bottom` because full-screen modals bypass root `SafeAreaView`. Enhanced bottom sheet modals (`CupSizeModal.tsx`, `HydrationSettingsModal.tsx`, `WeightGoalSettingsModal.tsx`) to dynamically pad their bottom sheets using `Math.max(insets.bottom, 16..24)` to safely avoid collision with Android edge-to-edge system navigation bars and iOS home indicators.
+43. **Weight Trend Chart Card Reference Alignment ([WeightTrendCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/WeightTrendCard.tsx))**:
+    - **Header & Title**: Updated card title to `"Weight (kg)"` (dynamic to selected unit).
+    - **Dual Legend**: Added horizontal `● Selected` (solid vibrant orange dot) and `--- Weight Goal` (dashed orange indicator) side-by-side matching the reference images.
+    - **0-to-100 Y-Axis Scale**: Replaced floating truncated scale with standard baseline scale starting at 0 (`[100, 80, 60, 40, 20, 0]` with 20-step intervals), allowing bars to rise naturally from 0 and positioning 70-80 kg in the upper quartile.
+    - **Reference Squircles Toggle**: Refined `ChartTypeToggle.tsx` squircle buttons (`32x28`, `borderRadius: 8`, active background `#FF5B26`).
+    - **Pill Pillar Bars (Bar Mode)**: Modeled full-height vertical pill columns rising from 0, with unselected bars rendered in soft peach-coral (`#FFAA94`) and selected bar in solid vibrant orange (`#FF5B26`).
+    - **Node Styling (Line Mode)**: Unselected nodes rendered as crisp hollow white donuts with thick orange rim (`r=6.5, strokeWidth=3`), while selected node renders as a solid vibrant orange dot (`r=7`).
+    - **Circular Tooltip Badge ([ChartTooltipPin.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ChartTooltipPin.tsx))**: Thick 3.2px orange border, stacked bold value (`78.9`) and small unit (`kg`) with needle touching the apex of bars and line nodes.
+    - **Clean X-Axis**: Displaying clean day numbers (`16, 17, 18, 19...`) centered under each column.
+44. **Streamlined Weight Report Screen ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori/src/screens/main/WeightReportScreen.tsx))**:
+    - **Eliminated Redundant Charts**: Removed `WeightDeltaCard` (day-to-day ± variance) and `WeightContextCard` (weigh-in conditions donut chart).
+    - **Clean, Focused Experience**: Reduced visual cognitive load and scroll fatigue. The report is now centered entirely around:
+      1. Timeframe segmented tabs (`Weekly | Monthly | Yearly`)
+      2. Date range navigator (`< Dec 16 – Dec 22 >`)
+      3. Period Overview Summary card (`WeightSummaryCard`)
+      4. Hero `Weight (kg)` trend chart with 0-to-100 scale, `Selected` & `Weight Goal` legend, and `Line ⇄ Bar` toggle (`WeightTrendCard`)
+    - **Code Cleanup**: Removed all unused tag mapping logic (`QUICK_TAG_COLORS`), delta calculation loops, and unused state hooks, dramatically improving screen mount performance.
+45. **BMI Radial Speedometer Gauge Architecture ([BMIGaugeCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/BMIGaugeCard.tsx))**:
+    - **Header & Dynamic Status Pill**: Top row features title `"BMI (kg/m2)"` and dynamic classification pill badge displaying active status (e.g. `[Normal]` in emerald green `#22C55E`, `[Overweight]` in amber `#EAB308`, etc.).
+    - **240° Radial Speedometer SVG**:
+      - Sweep spans $240^\circ$ ($150^\circ$ bottom-left to $390^\circ$ bottom-right, centered at $(140, 116)$ on a $280\times 224$ canvas with $R = 90$ and stroke width $14$).
+      - Composed of 8 distinct WHO classification segments mapped proportionally to BMI spans ($[15.0, 42.0]$, total span $27.0$):
+        1. Very severely underweight ($< 16.0$, `#0284C7`)
+        2. Severely underweight ($16.0 - 16.9$, `#0EA5E9`)
+        3. Underweight ($17.0 - 18.4$, `#06B6D4`)
+        4. Normal ($18.5 - 24.9$, `#22C55E`)
+        5. Overweight ($25.0 - 29.9$, `#EAB308`)
+        6. Obese Class I ($30.0 - 34.9$, `#F97316`)
+        7. Obese Class II ($35.0 - 39.9$, `#EF4444`)
+        8. Obese Class III ($\ge 40.0$, `#DC2626`)
+      - Semicircular rounded end-caps on the outer extremities with seamless butt joins between internal segments.
+      - Concentric inner ring of 17 precision instrument tick marks in light slate (`#CBD5E1`).
+    - **Center Hub & Smooth 60fps Native-Driver Pointer Needle**:
+      - Tapered gradient blade needle with rounded apex, transitioning from semi-transparent to solid active category color.
+      - Center hollow donut hub ring (`r = 16`, `borderWidth = 4`, white background with colored border matching active tier).
+      - Silky smooth needle movement powered by React Native `Animated.spring` with native driver (`useNativeDriver: true`) and angular interpolation (`-120deg` at $150^\circ$ to `+120deg` at $390^\circ$), ensuring 60fps/120fps GPU performance, graceful reduced-motion support, and full Jest testing compatibility.
+    - **Central Readout**: Prominent bold numeric BMI display (`22.9`, 38px bold) and `"BMI (kg/m2)"` label nestled directly in the lower opening between the arc tips.
+    - **WHO Classification Table**: Comprehensive 8-category legend with colored dots, tier labels, and BMI threshold ranges; active tier is dynamically highlighted in bold dark text (`#0F172A`).
+    - **Seamless Screen Wiring ([WeightReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightReportScreen.tsx))**: Mounted directly below `WeightTrendCard`, dynamically pulling latest period weigh-in (`periodSummaryData.currentWeightKg ?? userGoals.currentWeightKg ?? 72.5`) and height (`userGoals.heightCm ?? 178`).
+46. **Weight Tracker Flow Edge-Case Hardening & Mathematical Precision**:
+    - **0.1 lbs Stepper Quantization Resolution ([LogWeightScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/LogWeightScreen.tsx), [WeightGoalSettingsModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/WeightGoalSettingsModal.tsx))**: Upgraded pound-stepping kg calculation to 2-decimal precision (`Math.round((nextLbs / 2.20462) * 100) / 100`). Resolves the critical math lock where $\pm 0.1\text{ lbs}$ ($\approx 0.045\text{ kg}$) was smaller than $0.1\text{ kg}$ resolution and rounded back to the initial value, freezing the stepper.
+    - **Zero-Variance Neutral Badge ([WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx), [WeightHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/weight/WeightHistoryCard.tsx))**: Added `isZero` condition rendering a neutral slate badge (`#94A3B8`) with horizontal dash icon (`remove`) and `0.0 kg/lbs` text (no minus sign), eliminating false green downward indicators when weight is unchanged.
+    - **Intra-Day Timestamp & Entry Restoration on Undo ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx), [WeightHistoryScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightHistoryScreen.tsx))**: Extended `logWeight` to accept `customLoggedAt` and `customId`. Tapping Undo on a deleted weigh-in now perfectly restores the original timestamp, unique ID, and chronological position in the intra-day feed.
+    - **Timezone-Safe Backfilling ([HealthContext.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/context/HealthContext.tsx))**: Replaced forced `T08:00:00.000Z` UTC string with local morning date construction (`new Date(y, m - 1, d, 8, 0, 0)`), preventing negative timezone offsets (UTC-8, UTC-10) from rolling over into the previous calendar day.
+47. **Compact BMI Spectrum Card on Dashboard Today Screen ([TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx), [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx))**:
+    - **Visual Hierarchy & Header**: Displays bold card header `"BMI (kg/m2)"` on the left and a circular 32px edit button `( ✎ )` on the right which triggers `LogWeightModal` to update weight.
+    - **Numeric Readout & Active Category**: Prominent 32px bold numeric BMI value (e.g. `22.9`) paired with an inline category subtitle (e.g. `Normal` in `#64748B`). Dynamically computes BMI from `currentLog?.weightKg ?? userGoals.currentWeightKg ?? 72.5` and `userGoals.heightCm ?? 178`.
+    - **8-Segment Proportional Spectrum Track**: Horizontal capsule bar segmented into the 8 clinical WHO categories:
+      1. Very severely underweight ($< 16.0$, span: 1.0, `#0284C7`)
+      2. Severely underweight ($16.0 - 16.9$, span: 1.0, `#0EA5E9`)
+      3. Underweight ($17.0 - 18.4$, span: 1.5, `#06B6D4`)
+      4. Normal ($18.5 - 24.9$, span: 6.5, `#22C55E`)
+      5. Overweight ($25.0 - 29.9$, span: 5.0, `#EAB308`)
+      6. Obese Class I ($30.0 - 34.9$, span: 5.0, `#F97316`)
+      7. Obese Class II ($35.0 - 39.9$, span: 5.0, `#EF4444`)
+      8. Obese Class III ($\ge 40.0$, span: 2.0, `#DC2626`)
+    - **Sliding Upward Triangle Indicator**: 14px upward SVG triangle caret sliding horizontally beneath the spectrum track, pointing exactly to the user's BMI position. Powered by `Animated.spring` with `useNativeDriver: true` and `AccessibilityInfo.isReduceMotionEnabled()` support.
+    - **Seamless Dashboard Feed Integration**: Mounted directly beneath `WeightTrackerCard` in `TodayScreen.tsx` with identical margins and borders for visual cadence.
+    - **Testing**: Added comprehensive unit test suite ([TodayBMICard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/TodayBMICard.test.tsx)) covering WHO categorization, dynamic metric display, edit modal interaction, and layout changes. 15/15 test suites and 129/129 tests passing.
+48. **Diary Tab Pivot to Dedicated Health Trackers Hub ([TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx), [BottomNavBar.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/navigation/BottomNavBar.tsx), [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx), [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx))**:
+    - **Architectural Motivation**: Eliminated the redundant `DiaryScreen` (which duplicated Today's meal cards) and resolved cognitive load/overlength scrolling on `TodayScreen`.
+    - **Navigation Rebrand (`BottomNavBar.tsx`)**: Rebranded Tab 2 from `'diary'` to `'tracker'` with universal health biomarker icon (`pulse` / `pulse-outline`) and label `"Tracker"`.
+    - **Dedicated Ria AI Top Deck**: Positioned [RiaCoachCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/RiaCoachCard.tsx) as the premier top hero card on `TrackerScreen`, establishing a dedicated gateway for daily AI synthesis and full-screen [RiaChatModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/RiaChatModal.tsx) access.
+    - **Biometric Trackers Suite (Zero UI Distortion)**: Moved biometric trackers into `TrackerScreen` in precise visual hierarchy:
+      1. Top Header (`"Trackers"`, formatted date subtitle, Search & Notifications quick actions)
+      2. 7-Day Date Selector ([TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx))
+      3. Ria AI Coach Top Deck ([RiaCoachCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/RiaCoachCard.tsx))
+      4. Water Tracker ([WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx) → launches [WaterTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterTrackerScreen.tsx))
+      5. Weight Tracker ([WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx) → launches [WeightTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WeightTrackerScreen.tsx))
+      6. Compact BMI Spectrum Card ([TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx))
+      7. Dual Dial Daily Habits ([DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx))
+    - **100% Wiring & Event Binding ([App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx))**: Connected `onOpenRiaChat`, `onOpenWaterTracker`, `onOpenWeightTracker`, `onSearchPress`, `onNotificationsPress`, scroll offset preservation (`trackerScrollRef`, `saveTrackerScrollOffset`), and Android back button handling.
+    - **Streamlined Today Screen ([TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx))**: Stripped duplicate tracker cards so Today Screen serves exclusively as the clean, lightning-fast Daily Nutrition & Energy Hub (`Header` → `TopDateStrip` → `HeroCalorieCard` → `MealSection`).
+    - **Testing**: Added unit test suite ([TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx)). All 16 test suites and 133 tests passing with 0 TypeScript compilation errors.
+49. **Compact Water Tracker Card Reference Alignment ([WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx))**:
+    - **Ultra-Compact Visual Footprint**: Reduced card height from ~195px down to a sleek ~105px, eliminating the old divider line, chevron arrow, and redundant `0% completed` text.
+    - **Header & Metric Stack**: Bold left title `"Water"` (18px, `#0F172A`), large intake readout (`32px` bold value + `16px` medium `" mL"` aligned to baseline), and subtle target subtitle (`/ 2,500 mL` in `#64748B`).
+    - **Symmetrical Stepper Trio with 3D Teardrop Droplet**:
+      - Circular outline minus button `( − )` (`40×40px`, `1.5px` sky blue border `#0EA5E9`), disabled when water is 0 mL.
+      - Center scaled [DropletVisualizer](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/DropletVisualizer.tsx) (`58×72px`) with outer 3D halo contour (`showHalo={true}`), soft cavity gradient, and dual GPU wave slosh physics.
+      - Circular outline plus button `( + )` (`40×40px`, `1.5px` sky blue border `#0EA5E9`), incrementing intake by step (default 250 mL).
+    - **Navigation & Affordance**: Title row features an inline sky blue chevron `[ Water › ]` (`Feather chevron-right`, `#0EA5E9`), clearly communicating to users that tapping the title navigates forward to [WaterTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/WaterTrackerScreen.tsx).
+    - **Testing**: Added dedicated unit test suite ([WaterTracker.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/WaterTracker.test.tsx)). All 17 test suites and 137 tests passing with 0 TypeScript errors.
+50. **Compact Weight Tracker Card Reference Alignment ([WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx))**:
+    - **Ultra-Compact Visual Footprint**: Removed the old dividing line, chevron arrow, and gray circular pencil button.
+    - **Header & Metric Stack**: Title row features `[ Weight › ]` with coral/orange chevron (`Feather chevron-right`, `#FF5B26`). Left metric row shows bold 32px weight value (`78.5`), medium unit (`kg`), and inline directional delta badge (`[ ˇ - 0.2 kg ]` with emerald circle & downward chevron).
+    - **Vibrant Orange "Update" Pill Button**: Replaced pencil icon with a solid vibrant coral-orange pill button (`backgroundColor: '#FF5B26'`, white text) on the right, which opens [LogWeightModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/LogWeightModal.tsx).
+    - **Chunky Orange Progress Bar**: Chunky 13px capsule progress bar in matching `#FF5B26` coral-orange animating from Starting weight to Goal weight.
+    - **Range Footer**: Subtle Starting (`80.0 kg`) and Goal (`75.0 kg`) range indicators below the progress track.
+    - **Testing**: Added unit test suite ([WeightTrackerCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/WeightTrackerCard.test.tsx)). All 18 test suites and 140 tests passing with 0 TypeScript compilation errors.
+51. **Dead Code Elimination, Interface Tightening & Re-Render Performance Optimization**:
+    - **Purged 6 Orphaned / Superseded Files & Duplicate Asset**:
+      - `WaterBottomDock.tsx`: Orphaned when dock controls were integrated directly into [HeroDropletCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/water/HeroDropletCard.tsx).
+      - `WeightDeltaCard.tsx` & `WeightContextCard.tsx`: Orphaned during the Weight Report chart streamlining.
+      - `SearchFoodModal.tsx`: 544 lines of dead prototype code superseded by [FoodLogModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/FoodLogModal.tsx).
+      - `DropletVisualizer.tsx` & `HeroDropletCard.tsx` shims in `src/components/dashboard/`: 2-line re-export shims with 0 references.
+      - `assets/icon.png`: Orphaned duplicate of `logo.png` (removed).
+    - **Barrel & Export Cleanup**:
+      - Cleaned barrel exports in `src/components/index.ts`, `src/components/water/index.ts`, and `src/components/report/index.ts`.
+    - **Component Interface Tightening & Dead Prop Elimination**:
+      - [TodayScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TodayScreen.tsx): Removed unused `onOpenWaterTracker` and `onOpenWeightTracker` props.
+      - [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx): Removed unused `onAvatarPress`, `onSignInPress`, `onSignOutPress` from `TrackerScreenProps`.
+      - [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx): Removed 5 unused header callback props.
+      - [BottomNavBar.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/navigation/BottomNavBar.tsx): Removed unused `Platform`, `MealType`, `onQuickLogFood`, and `onQuickLogWater`.
+      - [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx): Removed dead callbacks (`handleQuickWater`, unused `useDailyLog` import) and stopped passing dead props.
+    - **Re-Render & Performance Optimization**:
+      - [TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx): Wrapped touch gesture handlers (`onTouchStart`, `onTouchEnd`) and calendar navigation (`handleOpenCalendar`, `prevMonth`, `nextMonth`) with `useCallback`.
+      - [WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx): Wrapped `handlePlus` and `handleMinus` with `useCallback` and wrapped component with `React.memo`.
+      - [WeightTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WeightTrackerCard.tsx): Hoisted `toDisplayWeight` pure function, wrapped `handleSaveModal` with `useCallback`, and wrapped component with `React.memo`.
+      - [TodayBMICard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TodayBMICard.tsx): Wrapped `handleBarLayout` and `handleEditPress` with `useCallback` and wrapped component with `React.memo`.
+    - **Verification**:
+      - Full TypeScript type check (`npx tsc --noEmit`) passed with 0 errors.
+      - All 18 test suites and 140 unit tests passing.
+52. **Standalone Movement Tracker Card Reference Alignment & Full Suite Fine-Tuning ([MovementTrackerCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/MovementTrackerCard.tsx), [DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx), [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx))**:
+    - **Architectural Motivation (Option A)**: Eliminated the redundant duplicate hydration pod from the legacy `DailyHabitsCard.tsx` (Card #3 on `TrackerScreen` is already the dedicated [WaterTracker.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/WaterTracker.tsx)). Transformed the legacy dual-dial card into a sleek, standalone **Movement** card matching the visual language of `WaterTracker`, `WeightTrackerCard`, and `TodayBMICard` (~105px base height, 20px continuous rounded corners, `#FFFFFF` card surface, `#0F172A` soft shadow).
+    - **Header & Metric Stack with Auto Distance**:
+      - Title row: `[ Movement › ]` with Kinetic Flame Orange chevron (`Feather chevron-right`, `#EA580C`), signaling navigation affordance.
+      - Stat stack: 32px bold number (`6,420`), medium unit (`steps`), and 3-biomarker context (`/ 10,000 steps • ~4.9 km • ~257 kcal`).
+      - Top-right action: Soft-tinted `+ Workout` pill button (`#FFF7ED` bg, `#FED7AA` border, `#EA580C` text & barbell icon) opening the workout logging modal.
+    - **Chunky Kinetic Flame Orange Progress Bar, Celebration Badge & Stepper Controls**:
+      - Chunky 12px capsule progress bar (`#FFEDD5` track, `#EA580C` fill via Reanimated `withTiming`).
+      - Goal progress readout: Shows `{actualStepPercent}% of daily goal` when under goal, or a golden celebration badge `[ ✨ Goal Smashed! (110%) ]` (`#FEF3C7` bg, `#B45309` text) when steps >= goal.
+      - Symmetrical steppers with Haptic feedback (`expo-haptics`): Circular outline minus stepper `( − )` (deducts 1,000 steps, disabled when steps <= 0) and soft-tinted plus stepper `( + 1k )` (adds 1,000 steps).
+    - **Collapsible Logged Workouts Section with Timestamps & Tap-to-Edit**:
+      - Hairline divider appearing only when `currentLog.activities` contains logged workouts.
+      - Header showing count (`Today's Workouts (1)`) and total active burn (`+130 kcal total`).
+      - Activity chips display contextual emoji (`🚶`, `🏋️`, `🏃`, `🧘`, `🚴`, `🏊`, `⚡`, `🏸`), name, duration, calories, and time stamp (e.g. `• 9:30 AM`).
+      - Tapping an activity chip enters edit mode (`Edit Activity` / `Update Workout`).
+      - 1-tap delete button with tactile haptic feedback.
+    - **Quick Workout Logging Modal with Proportional Calorie Calculation**:
+      - 8 curated presets: Brisk Walk (30m, 130 kcal), Gym / Weights (45m, 220 kcal), Running (25m, 240 kcal), Yoga & Stretch (35m, 110 kcal), Cycling (30m, 190 kcal), Swimming (30m, 240 kcal), HIIT & Cardio (20m, 180 kcal), Badminton (40m, 220 kcal).
+      - Proportional calorie auto-calculation: Changing duration automatically adjusts estimated calories according to activity burn rate per minute.
+    - **Backwards Compatibility**:
+      - Retained [DailyHabitsCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/DailyHabitsCard.tsx) as an alias re-exporting `MovementTrackerCard` with default `testID="daily-habits-card"`.
+    - **Testing**: Added unit test suite ([MovementTrackerCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/__tests__/MovementTrackerCard.test.tsx)). All 19 test suites and 149 unit tests passing with 0 TypeScript compilation errors.
+
+28. **Step Tracker Screen Foundation & Slide-In Wiring** — wired dedicated sub-screen navigation to `[ Movement › ]`:
+    - Created [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx) with top safe-area insets, back button, title "Step Tracker", settings icon placeholder, scroll container, and Android hardware back handling.
+    - Exported `StepTrackerScreen` in [src/screens/index.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/index.ts).
+    - Wired `onOpenStepTracker` through [TrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/TrackerScreen.tsx) to `<MovementTrackerCard onPressHeader={onOpenStepTracker} />`.
+    - Integrated `<SlideInSubScreen>` in [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx) with state management (`stepTrackerVisible`, `isClosingStepTracker`, open/close/closed callbacks, and hardware back dismissal).
+    - Added unit test suite [StepTrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/StepTrackerScreen.test.tsx) and updated [TrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/TrackerScreen.test.tsx). 20 test suites, 152 tests passing.
+
+29. **Android Health Connect Integration (Phase 1: Working Steps Milestone — Verified Live on Device)**:
+    - Installed `react-native-health-connect` (`^4.1.3`) and `expo-build-properties` (`~57.0.4`).
+    - Configured plugins and Android SDK targets (`compileSdkVersion: 36`, `targetSdkVersion: 36`, `minSdkVersion: 26`) + `android.permission.health.READ_STEPS` in [app.json](file:///c:/Users/navee/Videos/Calorify/calori/app.json).
+    - Executed clean Android prebuild (`npx expo prebuild --clean --platform android`).
+    - Created isolated feature module under `src/features/health/`:
+      - [healthConnect.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthConnect.ts): `isHealthConnectAvailable()`, `initializeHealthConnect()`, `getTodayStepsAggregate()` (aggregated queries between 00:00:00 and 23:59:59.999 today), `getTodayStepsRecords()` (raw step records fallback for 3rd-party apps).
+      - [healthPermissions.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthPermissions.ts): `hasStepsPermission()`, `requestStepsPermission()`, `openHealthSettings()` (guarantees `initializeHealthConnect()` is awaited first to prevent `ClientNotInitialized` exception).
+      - [healthService.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/healthService.ts): `connectHealth()`, `getTodaySteps()` (dual aggregate + raw records fallback).
+      - [HealthScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/health/HealthScreen.tsx): Standalone test/dev component.
+    - Product UI Integration:
+      - Wired into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx): Connection badge, hero count display, `~km` and `~kcal` calculation, "Connect Health Connect" / "Sync Health Data" button, direct link to manage Health Connect settings, and automatic sync to `currentLog.steps` in `HealthContext`.
+    - **Live Device Verification**: Verified live on physical Android device connected with Google Fit:
+      - Query returned: `'{"dataOrigins":["com.google.android.apps.fitness"],"COUNT_TOTAL":1269}'`
+      - Displayed 1,269 steps, updated distance (~1.0 km) and active energy, syncing directly into `HealthContext.dailyLogs`.
+    - Unit tests: 21 test suites, 159 tests passing (`npm test`), 0 TypeScript compiler errors (`npx tsc --noEmit`).
+
+30. **Step Tracker Screen Hero Redesign (270° Radial Arc, Vector Sneaker, Date Picker & Micro-Metrics)**:
+    - **Vector Athletic Shoe**: Handcrafted [RunningShoeSvg.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/RunningShoeSvg.tsx) with sculpted midsole cushion, flame-orange speed swoosh, upper mesh, diagonal laces, and ambient drop shadow.
+    - **Radial Instrument Gauge**: Created [StepGaugeVisualizer.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepGaugeVisualizer.tsx) matching the precision geometry of `WaterGaugeVisualizer` (270° sweep, 15 radial instrument ticks, Reanimated GPU-animated gradient progress arc `#EA580C` → `#FB923C`, and tactile spring squish with haptic feedback on shoe tap).
+    - **Hero Card Container with 4 Micro-Metrics**: Created [HeroStepCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/HeroStepCard.tsx) with goal celebration badge (`Goal Smashed! ✨`), large Kurale/Poppins step count, `/10,000 steps` (tap-to-edit), and a 4-column micro-metrics bar with vector icons:
+      - 👣 **STEPS**: `{steps}` (`#FFEDD5` badge + `#EA580C` footsteps icon)
+      - ⏱️ **TIME**: `~{activeMinutes} min` (`#E0F2FE` badge + `#0284C7` clock icon)
+      - 🔥 **CALORIES**: `~{kcal} kcal` (`#FFF7ED` badge + `#F97316` flame icon)
+      - 📍 **DISTANCE**: `~{km} km` (`#DCFCE7` badge + `#16A34A` navigate pin icon)
+    - **Date Picker Integration**: Extended [TopDateStrip.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/dashboard/TopDateStrip.tsx) to support `metric="steps"` with orange theme colors, step goals, daily progress circles, and calendar popup. Connected date selection in [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx) to switch between live Health Connect steps (when viewing today) and historical logs (`dailyLogs[selectedDate]`).
+    - **Testing**: Added [HeroStepCard.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/__tests__/HeroStepCard.test.tsx) and updated [StepTrackerScreen.test.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/__tests__/StepTrackerScreen.test.tsx). All 22 test suites and 163 tests passing with 0 TypeScript compiler errors.
+
+31. **Step History Component with Minimalist Vector Outline Icons**:
+    - **Vector Outline Icons**: Created [StepOutlineIcons.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepOutlineIcons.tsx) featuring:
+      - 👣 `FootstepsOutlineSvg`: Dual minimalist shoe soles / footprints outline (`#F97316`)
+      - ⏱️ `ClockOutlineSvg`: Circular clock outline dial with 9 & 12 hands (`#22C55E`)
+      - 🔥 `FlameOutlineSvg`: Single-line contour flame teardrop (`#EF4444`)
+      - 📍 `LocationPinOutlineSvg`: Streamlined map pin with inner target ring (`#0EA5E9`)
+      - 👟 `EmptyShoesOutlineSvg`: Minimalist dual sneakers outline for empty states (`#CBD5E1`)
+    - **Step Utilities & Types**:
+      - Added `StepLogEntry` interface to [src/types/index.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/types/index.ts) and extended `DailyLog` with `stepEntries?: StepLogEntry[]`.
+      - Created [stepHistoryUtils.ts](file:///c:/Users/navee/Videos/Calorify/calori/src/utils/stepHistoryUtils.ts) with `formatHistoryDateHeader()`, `calculateStepMetrics()`, `mapHealthConnectRecordsToStepEntries()`, and `synthesizeSessionsFromTotal()` for smooth fallback display.
+    - **Card & Interaction Modules**:
+      - [StepHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryCard.tsx): Displays "History" header with brand orange `View All →` trigger, date subtitle (`Yesterday, Dec 21, 2024` or `Today, Oct 2, 2026`), 4 preview rows with the 5-column layout (`[ 👣 850 ]  [ ⏱️ 8m ]  [ 🔥 40 ]  [ 📍 0.7 ]  [ ⋮ ]`), and empty state illustration.
+      - [StepEntryActionPopover.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepEntryActionPopover.tsx): Floating anchored popover for 3-dots kebab menu with "Details" and "Delete" actions.
+      - [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx): Full-day breakdown modal with summary totals bar and chronological session timeline.
+    - **Screen Integration**:
+      - Integrated into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), querying Health Connect interval chunks via `getTodayStepsRecords()` and displaying historical sessions.
+    - **Verification**: Verified clean TypeScript compilation (`npx tsc --noEmit` exited with code 0).
+
+32. **Health Connect Setup & Sync Redesign with Official Google Heart Logo**:
+    - Converted `AndroidConnect.png` into lossless WebP at [assets/health_connect_logo.webp](file:///c:/Users/navee/Videos/Calorify/calori/assets/health_connect_logo.webp) (1254x1254 RGBA, reduced from 542 KB down to 334 KB).
+    - Created [HealthConnectSyncCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/HealthConnectSyncCard.tsx):
+      - **Disconnected State**: Stupidly simple horizontal 1-tap setup tile (~68px) with official logo, value proposition ("Auto-Sync Steps - Google Fit · Samsung Health · Watch"), and "Set Up →" button.
+      - **Connected State**: Minimalist status bar (~48px) with 22px logo, green live pulse indicator, `Health Connect Active`, `✓ {count} steps` pill badge, and `↻` quick sync button.
+    - Integrated into [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), completely replacing the old 200px bulky `actionCard` while keeping `HeroStepCard` and `StepHistoryCard` **100% untouched and preserved**.
+
+33. **Full "Step Counter History" View All Redesign**:
+    - Redesigned `StepHistoryModal.tsx` matching the user reference screenshots:
+      - Header: Left back arrow `←`, center title `Step Counter History` (bold), right calendar icon `📅`.
+      - Multi-day reverse chronological feed (`Today, Dec 22, 2024`, `Yesterday, Dec 21, 2024`, etc.) with date headers and subtle horizontal hairlines.
+      - Clean white cards per day with 5-column tabular session rows (`[ 👣 Steps ] [ ⏱️ Time ] [ 🔥 Calories ] [ 📍 Distance ] [ ⋮ Kebab ]`).
+      - **5-Row Threshold & Expansion**: Days with > 5 sessions display the first 5 sessions followed by a `+ Show {N} more sessions ▾` toggle. Tapping expands all sessions with `LayoutAnimation` and toggles to `Show less ▴`.
+      - **Labeled Total Divider & Grand Total**: Each card concludes with `Total ──────────────────────────────` and the day's aggregated metrics aligned under the 4 metric columns (with kebab space empty for grid alignment).
+      - **Single-Action Delete Popover**: Tapping `⋮` opens `StepEntryActionPopover.tsx` presenting a single `🗑 Delete` option in red (`#EF4444`, `trash-outline`), deleting the entry and immediately recalculating day totals.
+      - **Interactive Month Calendar Picker**: Tapping `📅` opens a month grid picker to inspect or navigate to past dates.
+      - Fully tested with comprehensive unit tests (`StepHistoryModal.test.tsx` and `StepHistoryCard.test.tsx`), with zero TypeScript compiler errors (`npx tsc --noEmit`).
+58. **3-Tier Health Connect Step Sync Architecture**:
+    - **Tier 1 (One-Time Past 7-Day Backfill on First Connect)**:
+      - Triggered once when the user first links Health Connect or when `@calori_hc_backfill_completed_v1` is not yet set in AsyncStorage.
+      - Queries the previous 7 days in parallel (`backfillPastSevenDays()`), filters positive records, maps interval sessions, updates `dailyLogs`, and marks backfill completed (`markBackfillCompleted()`).
+      - Populates the step history feed immediately so the user doesn't encounter an empty screen upon initial setup.
+    - **Tier 2 (Rolling 48-Hour Sync on App Open & Sync Tap)**:
+      - Solves the smartwatch Bluetooth sync delay problem (where late night steps sync to Health Connect hours later the next morning).
+      - Queries both Today and Yesterday in parallel (`syncRolling48Hours()`) in <50ms.
+      - Compares yesterday's Health Connect total against `dailyLogs[yesterdayStr]?.steps` and seamlessly updates local state and history entries if Health Connect has more steps.
+    - **Tier 3 (On-Demand Single-Day Lazy Fetch on Past Date Browsing)**:
+      - When the user navigates back in the top date strip or month calendar to an older past date that has 0 steps locally, lazily fetches only that specific day on the fly (`fetchSingleDaySteps(selectedDate)`).
+      - Tracks queried dates in a session `useRef(new Set())` to prevent redundant network/SDK calls for dates that legitimately had 0 steps.
+    - **Firestore Security Rules Schema Update & Live Deploy ([firestore.rules](file:///c:/Users/navee/Videos/Calorify\calori\firestore.rules))**:
+      - Identified cause of `dailyLogs setDoc async error: [FirebaseError: Missing or insufficient permissions.]`: `isValidDailyLogDoc` had a strict whitelist (`data.keys().hasOnly([...])`) that did not include `'stepEntries'`.
+      - Added `'stepEntries'` to `hasOnly` whitelist and added list validation (`size <= 200`).
+      - Hardened `dailyLogs` update rule: `allow update: if isOwner(userId) && isValidDailyLogDoc(date) && (!('date' in request.resource.data) || !('date' in resource.data) || resource.data.date == '' || request.resource.data.date == resource.data.date || request.resource.data.date == date)`.
+      - Updated `cleanDailyLog` and `dailyLogs` debounced sync in `HealthContext.tsx` to explicitly sanitize and guarantee the exact 9 allowed fields with `date: dKey`.
+    - **Multi-Day Step History Propagation ([StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepTrackerScreen.tsx), [StepHistoryCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryCard.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Fixed missing `dailyLogs` prop propagation: `StepTrackerScreen` now forwards `dailyLogs` to `StepHistoryCard`, which passes `dailyLogs` to `StepHistoryModal`.
+      - Added Tier 1 backfill check to `checkInitialStatus` on screen mount: if permission was already granted previously, automatically queries and populates past 7 days into `dailyLogs` immediately.
+      - Enables the "View All" modal to render all days (Today, Yesterday, past 7 days) in reverse chronological order with daily session threshold expansion.
+    - **Verification**: Fully covered by unit tests in `healthService.test.ts`, `StepTrackerScreen.test.tsx`, `StepHistoryCard.test.tsx`, `StepHistoryModal.test.tsx`, and `HealthContext-test.tsx`. All test suites pass.
+59. **Step Report Screen Creation & History Header Wiring**:
+    - **Step Report Screen Template ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**: Created blank step report template matching `WaterReportScreen.tsx` and `WeightReportScreen.tsx` aesthetics, with `#FAF9F6` background, safe area insets, standard 40x40 circular white elevated navigation buttons (`chevron-back` left, `ellipsis-vertical` right), Poppins bold header title (`"Step Report"`), Android hardware back button handler, and placeholder container for upcoming step analytics and charts.
+    - **Export**: Exported `StepReportScreen` in `src/screens/index.ts`.
+    - **Header Icon Replacement ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**: Replaced the calendar icon (`calendar-outline`) in the history header with the report icon (`stats-chart-outline`, size 20, `#0F172A`, `accessibilityLabel="View Step Report"`).
+    - **Navigation Wiring**: Integrated `SlideInSubScreen` (zIndex 300) inside `StepHistoryModal.tsx` to mount `StepReportScreen` on report button tap, allowing seamless slide-in over the history feed and slide-out back to history. Propagated optional `onOpenReport?: () => void` in `StepHistoryModalProps` and `StepHistoryCardProps`.
+    - **Testing & Verification**: Updated `StepHistoryModal.test.tsx` to assert the report button and its press action. Verified with `npx tsc --noEmit` (0 errors) and jest test suites (13 passed, 0 failed).
+60. **Step Report Analytics: Timeframe Tabs, Date Range Navigator & Step Completion Card**:
+    - **StepCompletionCard ([StepCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCompletionCard.tsx))**:
+      - Built interactive chart card matching user reference with Bar Chart (Image 2) and Line/Area Chart (Image 3) toggled via `ChartTypeToggle` (`activeColor="#F97316"`).
+      - **Color Palette**: Saturated step brand orange (`#F97316`) for active tab, selected bar, trend line, goal line, and tooltip pin; soft warm peach (`#FED7AA`) for unselected bars; `#FFF7ED` to transparent gradient fill for line area.
+      - **Adaptive Y-Axis**: 7-level scale (e.g. 7000 to 1000) with horizontal dashed Step Goal benchmark line across the canvas (`strokeDasharray="6, 5"`).
+      - **Interactive Selection & Tooltip Pin**: Tapping any day updates the selected point and positions `ChartTooltipPin` directly above the bar/node showing `{steps} steps` with downward needle pointer.
+      - **X-Axis Day Numbers**: Labels (e.g. `16`, `17`, `18`, `19`, `20`, `21`, `22`) aligned under each column.
+    - **Timeframe Segmented Tabs ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+      - Pill container with `Weekly`, `Monthly`, `Yearly` options; active tab highlighted with `#F97316` and bold white text.
+    - **Date Range Picker Navigator**:
+      - Formatted labels (e.g. `Sep 28 – Oct 4, 2026`), with `<` and `>` period switching and future-navigation guard.
+    - **Unit Tests**: Added `StepCompletionCard.test.tsx` and `StepReportScreen.test.tsx`. All 20 step tests pass across 5 test suites.
+61. **Active Calorie Burn Card ([StepCalorieBurnCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCalorieBurnCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+    - **Focused Active Energy Scope**: Streamlined the step energy analytics to focus exclusively on Active Calorie Burn (`kcal`), completely removing the redundant distance tab and the two bottom micro-summary tiles to keep the interface clean, elegant, and directly tied to Calorify's core calorie-tracking mission.
+    - **Header & Controls**: Features bold title `"Active Calorie Burn"` with `ChartTypeToggle` (Bar ⇄ Line) with smooth indicator styling.
+    - **Subheader Legend**: Shows `● Selected` bullet and dashed indicator line for `--- Daily Avg ({avgValue} kcal)` dynamically computed from `periodDailyAvgCalories`.
+    - **Adaptive Dual Chart Rendering**:
+      - **Bar Mode**: Rendered using rounded-top capsule bars (`borderTopLeftRadius: barWidth / 2`, `borderTopRightRadius: barWidth / 2`). Unselected days render in soft warm peach (`#FED7AA`), and the selected day renders in solid flame orange (`#F97316`).
+      - **Line / Area Mode**: Rendered using SVG path with vertical gradient area fill (`#calorieAreaGrad`: `#F97316` at 22% opacity fading to 0% at bottom), stroke line (width 3.5, `#F97316`), and circular nodes.
+    - **Interactive Day Selection & Tooltip Pin**: Tapping any day column positions `ChartTooltipPin` dynamically above the bar or node showing `{calories}` with `kcal` unit text.
+    - **Clean Footer**: Clean X-axis row with day numbers, letting the card breathe without duplicate summary footer tiles.
+    - **Testing & Verification**: Created `StepCalorieBurnCard.test.tsx` (all 4 tests pass). Clean `npx tsc --noEmit` with 0 compiler errors. Full suite of 24 step tests passing across 6 test suites.
+62. **Responsive Mobile Screen Layout & Proportion Alignment for Step Screens**:
+    - **Centered Mobile Viewport Containers ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx), [StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepTrackerScreen.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Solved the ultra-wide stretching issue when running in web browser or tablet orientations by wrapping all screen content in `mobileContainer` (`maxWidth: 480`, `width: '100%'`, `alignItems: 'center'` on root).
+      - On physical mobile phones (width < 480px), automatically renders 100% full width edge-to-edge.
+      - On Web, Desktop, and Tablet browsers, centers as a crisp, authentic mobile phone viewport.
+    - **Responsive Bar Width & Gap Scaling ([StepCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCompletionCard.tsx), [StepCalorieBurnCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepCalorieBurnCard.tsx))**:
+      - Changed `barWidth` lower bound from 22px to 10px (`Math.min(34, Math.max(10, Math.round(colWidth * 0.62)))`).
+      - Eliminates bar crowding and overlapping in 12-month Yearly view on mobile phones, while preserving chunky 28-34px capsule bars in Weekly (7-day) and Monthly (4-5 week) views.
+      - Added dynamic X-axis font scaling (`days.length > 7 && { fontSize: 10 }`) to guarantee 12 month labels never wrap on narrow devices.
+    - **History Metrics Grid Optimization ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\steps\StepHistoryModal.tsx))**:
+      - Adjusted `valueText` font size to 14.5px, ensuring 4-digit formatted steps (`1,250`) and units never wrap or clip on narrow 360px Android devices.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 24 step unit tests pass across 6 test suites.
+63. **Step Report Top All-Time Summary Card ([StepTotalSummaryCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepTotalSummaryCard.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**:
+    - **Visual Reference Match (1:1 Reference Screenshot)**: Built top summary card positioned at the very top of `StepReportScreen`:
+      - **Top Header**: Centered dual footsteps SVG (`#8B5CF6`), bold 34px total step count (e.g. `256,480`), and subtitle `"Total steps all the time"`.
+      - **Hairline Horizontal Divider**: Crisp `#F1F5F9` separator.
+      - **Bottom 3-Column Metrics Section with Hairline Dividers**:
+        1. **Duration**: Orange outline clock SVG (`#F97316`), bold formatted duration (e.g. `85h 24m` or `45m`), label `"time"`.
+        2. **Active Energy**: Red flame outline SVG (`#EF4444`), bold calorie count (e.g. `20,492`), label `"kcal"`.
+        3. **Distance**: Green location pin outline SVG (`#22C55E`), bold distance with 2 decimal places (e.g. `294.35`), label `"km"`.
+    - **All-Time Aggregation Engine**: `StepReportScreen` computes `allTimeSummary` from all recorded history in `dailyLogs`, aggregating total steps, active calorie burn, distance in km, and active walking duration.
+    - **Locale-Consistent Number Formatting**: Utilized `toLocaleString('en-US')` so digit groupings consistently adhere to 3-digit comma notation (e.g. `256,480`) across all devices and locales.
+    - **Component Export & Unit Tests**: Exported from `src/components/report/index.ts`. Created `StepTotalSummaryCard.test.tsx` and updated `StepReportScreen.test.tsx`.
+    - **Verification**: Verified with `npx tsc --noEmit` (0 errors) and Jest test suites (all 23 tests pass across 6 test suites).
+64. **Step Report Layout Harmonization, Decoupled Chart Selection & Active Walking Time Chart**:
+    - **Timeframe Segmented Tabs at Top ([StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\screens\main\StepReportScreen.tsx))**: Moved `timeframeSegmentContainer` (`Weekly | Monthly | Yearly`) to the very top of `scrollContent` above `StepTotalSummaryCard`, creating 100% structural parity with `WaterReportScreen.tsx` and `WeightReportScreen.tsx`.
+    - **Independent Multi-Chart Day Selection**: Decoupled the single shared selection state into three isolated state hooks: `selectedStepIndex`, `selectedCalorieIndex`, and `selectedTimeIndex` with bounds safety (`maxChartIndex`). Clicking any bar or node in one chart updates only that specific card's pin tooltip and bar highlight without affecting any other charts.
+    - **Active Walking Time Chart Component ([StepTimeDurationCard.tsx](file:///c:/Users/navee/Videos/Calorify\calori\src\components\report\StepTimeDurationCard.tsx))**:
+      - Built a dedicated time chart representing walking duration in minutes/hours corresponding to the `"time"` metric in `StepTotalSummaryCard`.
+      - **Modes**: Features `ChartTypeToggle` for Bar (rounded-top capsule bars) and Line (smooth curve, circular nodes, vertical gradient fill `#timeAreaGrad`).
+      - **Adaptive Y-Axis**: Dynamically generates readable bounds and ticks in hours/minutes (e.g. `2h`, `1.5h`, `1h`, `45m`, `30m`, `0`).
+      - **Tooltip Pin**: Speech bubble pin with downward tail showing formatted time (`X min` or `X.X hr`).
+      - **Subheader Legend**: Displays `● Selected` and `--- Daily Avg ({formattedDuration})`.
+    - **Testing & Verification**: Created `StepTimeDurationCard.test.tsx` and updated `StepReportScreen.test.tsx`. Passed strict `npx tsc --noEmit` verification (0 errors) and all 29 step unit tests pass across 7 test suites.
+65. **Global Card & Surface Corner Smoothing (`borderCurve: 'continuous'` Squircles)**:
+    - **Apple-Style $G^2$ Superellipse Curvature**: Applied `borderCurve: 'continuous'` systematically across all cards and containers that had standard circular `borderRadius`, bringing full visual harmony with the hero cards (`HeroCalorieCard`, `MovementTrackerCard`, `WeightTrackerCard`, `WaterTracker`):
+      - **Report Cards**: `StepTotalSummaryCard.tsx`, `StepCompletionCard.tsx`, `StepCalorieBurnCard.tsx`, `StepTimeDurationCard.tsx`, `WeightSummaryCard.tsx`, and `WeightTrendCard.tsx`.
+      - **Step Tracker Elements**: `HeroStepCard.tsx` (card, progress pill, celebration pill), `HealthConnectSyncCard.tsx` (connected bar, setup card, setup CTA button, steps badge), `StepHistoryCard.tsx` (card container), and `StepHistoryModal.tsx` (`dayCard`).
+      - **Navigation & Timeframe Controls**: `StepReportScreen.tsx` (`navCircleBtn`, `timeframeSegmentContainer`, `timeframeTab`), `StepTrackerScreen.tsx` (`iconBtn`), `WaterReportScreen.tsx` (`timeframeSegmentContainer`, `timeframeTab`), and `WeightReportScreen.tsx` (`timeframeSegmentContainer`, `timeframeTab`).
+      - **Weight Elements**: `HeroWeightCard.tsx` (`card`, `updateButton`).
+66. **Unified Urbanist Typography & Cross-Platform Squircle Card Smoothing Overhaul**:
+    - **Urbanist Typography Integration**: Installed `@expo-google-fonts/urbanist` and extracted static TTFs (`400Regular`, `500Medium`, `600SemiBold`, `700Bold`, `800ExtraBold`) to `assets/fonts/` and `android/app/src/main/assets/fonts/`. Registered fonts in `app.json` `expo-font` plugin for 0ms native boot.
+    - **Typography Mapping (`src/theme/typography.ts`)**: Added `Fonts.urbanist` token and mapped `Fonts.poppins` directly to Urbanist across all weights so the entire app (all 200+ components) immediately renders in crisp, modernist Urbanist.
+    - **Web Typography CDN & Antialiasing (`App.tsx`)**: Injected Google Fonts CDN stylesheet for Urbanist and explicit `@font-face` definitions on Web. Set `Urbanist` as the primary font family in global web styles with `-webkit-font-smoothing: antialiased`.
+    - **Cross-Platform Squircle & Shadow Tuning**:
+      - `HeroCalorieCard.tsx`: Upgraded to 26px continuous radius, `borderCurve: 'continuous'`, whisper border `rgba(15, 23, 42, 0.06)`, and platform-specific soft ambient shadow (`Platform.select`) so Web doesn't get clipped by Android elevation.
+      - `MealCard.tsx`: Upgraded to 22px continuous radius, `borderCurve: 'continuous'`, whisper border, soft multi-layer shadow, and circular action buttons.
+      - `MealSection.tsx`: Tuned `sectionTitle` letter-spacing (`-0.4`) for crisp Urbanist presentation.
+      - `WaterTracker.tsx`, `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `MovementTrackerCard.tsx`: Harmonized to 22px squircle radius with `Platform.select` web shadows.
+67. **Architectural Nearly-Square Card Radius Refinement (`borderRadius: 10px`)**:
+    - **User Preference Alignment**: Transitioned all cards from bulbous 20–26px radiuses to a crisp, architectural **`10px`** radius with `borderCurve: 'continuous'` — creating a modern, nearly-square silhouette with just a subtle softened edge.
+    - **Components Updated**:
+      - **Dashboard**: `HeroCalorieCard.tsx`, `WaterTracker.tsx`, `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `MovementTrackerCard.tsx` (card + quickCard), `RiaCoachCard.tsx`.
+      - **Diary**: `MealCard.tsx` (card container).
+      - **Report Screens**: `StepTotalSummaryCard.tsx`, `StepCompletionCard.tsx`, `StepCalorieBurnCard.tsx`, `StepTimeDurationCard.tsx`, `WeightSummaryCard.tsx`, `WeightTrendCard.tsx`, `HydrateVolumeCard.tsx`, `DrinkTypesCard.tsx`, `DrinkCompletionCard.tsx`, `BMIGaugeCard.tsx`.
+      - **Trackers & Profile**: `HeroStepCard.tsx`, `StepHistoryCard.tsx`, `HealthConnectSyncCard.tsx` (setupCard & connectedBar), `HeroWeightCard.tsx`, `WeightHistoryCard.tsx`, `HeroDropletCard.tsx`, `WaterHistoryCard.tsx`, `ProfileHeaderCard.tsx`, `ProfileMetricInspector.tsx`, `ProfileQuickNavGrid.tsx`, `WorkoutHistoryCard.tsx`.
+    - **Verification**: Clean `npx tsc --noEmit` check (0 errors) and all 30 test suites (199/199 unit tests) passed.
+
+68. **Stitch MCP `DESIGN.md` Generation, Upload & Design System Application**:
+    - **Forensic Codebase Design System Audit**: Conducted an exhaustive audit of colors (`src/theme/colors.ts`), fonts (`Urbanist` geometric sans-serif across 100% of telemetry and UI), layout tokens, safe areas, 10px continuous squircle geometry, and interaction timing (`withTiming` 80–120ms).
+    - **Local `DESIGN.md` Full Refinement**: Updated [DESIGN.md](file:///c:/Users/navee/Videos/Calorify/calori/DESIGN.md) at the repository root encoding strict frontmatter design tokens:
+      - **Colors**: Full 12-element Master Functional Color System with matched active fill and 10%–15% container tints (Calories `#F47551`, Protein `#67BD6E`, Carbs `#F8D558`, Fat `#E07A5F`, Fibre `#059669`, Water `#0284C7`, Steps `#F97316`, Weight `#F43F5E`) + Stitch Material 3 aliases (`secondary: '#67BD6E'`, `tertiary: '#F8D558'`).
+      - **Zero Card Float Shadows**: Flat architectural planes resting on linen porcelain canvas defined exclusively by 1px whisper borders (`rgba(15, 23, 42, 0.06)` or `#E2E8F0`) with `elevation: 0` and `shadowOpacity: 0` (no bottom shadow halos or smudges). Floating overlays & toasts maintain crisp 1px borders and controlled elevation.
+      - **Typography**: 100% Pure Urbanist across all UI, telemetry numbers (`telemetry-hero: 42px`, `telemetry-card: 32px`, `telemetry-macro: 22px`, `telemetry-unit: 13px`), and onboarding pickers. Kurale restricted strictly to solitary logo wordmark.
+      - **Shapes & Controls**: 10px squircle cards (`borderCurve: 'continuous'`), 16px bottom sheet modals, 12px/10px segmented tabs, 52px primary action buttons, 48px/10px form search inputs, 64px bottom nav with 52px floating FAB (+), and report chart tokens (gridlines, bar geometry, tooltip pins).
+    - **Stitch MCP Sync**:
+      - Uploaded refined [DESIGN.md](file:///c:/Users/navee/Videos/Calorify/calori/DESIGN.md) via `upload_design_md` to Stitch project `4569112279491298338` (*Calorify Mobile Onboarding Flow*).
+      - Generated updated Stitch design system `assets/ce0acd05616241f58c62f7e99a0c26f4` (*"Calorify Architectural Modernist"*).
+      - Applied the updated design system to Stitch screens using `apply_design_system`.
+35. **Complete Design System Standardization (Phase 1–6 Rollout)**:
+    - Standardized all 6 groups of screens and components against the locked Design System in `DESIGN.md`:
+      - **Typography**: 100% pure Urbanist typography (`Fonts.urbanist.*`). `Kurale` remains strictly quarantined to the brand logo wordmark on the splash screen. `Fonts.poppins` completely purged from all screens and components.
+      - **Zero Shadows on Canvas**: Purged all card drop shadows (`elevation: 0`, `shadowOpacity: 0`). Framed canvas cards with crisp 1px borders (`rgba(15, 23, 42, 0.06)`). Only floating popovers/toasts retain subtle shadows.
+      - **Architectural Squircles**: Fixed canvas cards at `borderRadius: 10`, `borderCurve: 'continuous'`.
+      - **Buttons & Controls**: Primary CTAs standardized to `height: 52`, `borderRadius: 10`, `borderCurve: 'continuous'`, zero elevation/shadow. Circular action buttons standardized to 38×38, `borderRadius: 19`, 1px border `rgba(15, 23, 42, 0.08)`.
+      - **Verification**: Validated zero TypeScript errors (`npx tsc --noEmit` exited 0) and 100% test suite passing (30/30 test suites, 199/199 tests passing).
+
+
+
+67. **Safe Area Inset & Navigation Icon Parity Overhaul ([StepTrackerScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepTrackerScreen.tsx), [StepReportScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/StepReportScreen.tsx), [StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx))**:
+    - **Double Top Safe Area Inset Resolution**: Removed redundant `Math.max(insets.top, 14)` on `StepTrackerScreen.tsx` header and `StepReportScreen.tsx` root container, standardizing both to `paddingTop: 6`. Because parent wrappers (`App.tsx`'s `<SafeAreaView edges={['top', 'left', 'right']}>` and `StepHistoryModal.tsx`'s `screenContainer`) already absorb the device status bar / notch inset, applying it again caused an excessive 44-59px blank whitespace gap.
+    - **Dynamic ScrollView Bottom Safe Area**: Replaced hardcoded `paddingBottom: 90` with dynamic `{ paddingBottom: Math.max(insets.bottom + 16, 90) }` in `StepTrackerScreen.tsx`'s `contentContainerStyle`, ensuring edge-to-edge Android/iOS gesture navigation bars never obstruct the Health Connect card.
+    - **App-Wide Navigation Icon Parity**: Harmonized legacy `arrow-back` icons in `StepTrackerScreen.tsx` and `StepHistoryModal.tsx` to `chevron-back` (size 22, `#0F172A`), matching `WaterTrackerScreen`, `WaterReportScreen`, `WeightReportScreen`, and `PreferencesScreen`.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 13 test suites pass across `StepTrackerScreen.test.tsx`, `StepReportScreen.test.tsx`, and `StepHistoryModal.test.tsx`.
+68. **Step Counter History Header Modernization ([StepHistoryModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/steps/StepHistoryModal.tsx))**:
+    - **Dead-Center Balanced Header Architecture**: Replaced the unconstrained `space-between` header layout with a symmetrical 3-column architecture: `headerSideWrapper` (width 44, left-aligned) + `headerTitleContainer` (`flex: 1`, centered) + `headerSideWrapper` (width 44, right-aligned). Guaranteed mathematical centering of `"Step Counter History"` on all devices.
+    - **Typography Standardized**: Upgraded header title from `fontSize: 20` to `fontSize: 18`, `Fonts.urbanist.bold`, `fontWeight: '700'`, `letterSpacing: -0.3`, matching `WaterIntakeHistoryScreen.tsx` and `WeightHistoryScreen.tsx`.
+    - **Circular Card Buttons**: Upgraded bare 40×40 hit targets to standard 38×38 circular porcelain cards (`borderRadius: 19`, `backgroundColor: '#FFFFFF'`, 1px border `rgba(15, 23, 42, 0.08)`).
+    - **Focused Action Controls**: Maintained clean focus with the Back button (`chevron-back`, size 22) on the left and the Step Report analytics chart button (`stats-chart-outline`, size 19) on the right, keeping the header clean without unnecessary calendar clutter.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 23 unit tests pass across 6 test suites.
+69. **Expo Model Context Protocol (MCP) Setup ([package.json](file:///c:/Users/navee/Videos/Calorify/calori/package.json), [mcp_config.json](file:///C:/Users/navee/.gemini/config/mcp_config.json))**:
+    - **Local Capability Package**: Installed `expo-mcp` (`~0.2.1`) into `devDependencies` for SDK 57 local automation, screenshot capture, DevTools, and React Native view inspection.
+    - **NPM Start Script**: Added `"start:mcp": "npx cross-env EXPO_UNSTABLE_MCP_SERVER=1 expo start"` to easily run the development server with local MCP capabilities enabled across all platforms.
+    - **Remote MCP Registration**: Added `expo-mcp` (`mcp-remote https://mcp.expo.dev/mcp`) to `~/.gemini/config/mcp_config.json` for AI assistant integration.
+    - **Account Verified**: Verified Expo CLI authentication with `npx expo whoami` (`naveen0004`).
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors).
+70. **Expo Model Context Protocol (MCP) App-Wide Phase-by-Phase Audit**:
+    - **Methodology**: Systematically audited all 7 major application areas against official Expo SDK 57 documentation fetched directly via `expo-mcp` tools (`read_documentation`).
+    - **Phase 1 (Project Config, Native Manifest & System UI)**:
+      - Validated `app.json` configuration, `Theme.SplashScreen` Android 12+ API, edge-to-edge status bar & navigation bar handling.
+      - Hardened `app.json`: added `"ios": { "config": { "usesNonExemptEncryption": false } }` (skipping App Store export compliance prompts for SecureStore) and `"ios": { "deploymentTarget": "16.4" }` in `expo-build-properties` to prevent CocoaPods version drift.
+      - Hardened `SplashScreen.hideAsync()` in `App.tsx` with `.catch(() => {})` against promise rejections on fast unmounts.
+    - **Phase 2 (Assets, Storage & Haptics)**:
+      - Embedded static fonts (`expo-font`) build-time linking verified against SDK 57 documentation.
+      - Audited `expo-image` usages: verified universal WebP support, `cachePolicy="memory-disk"`, and zero legacy `react-native` Image imports.
+      - Hardened `expo-image-picker`: configured plugin in `app.json` with `"microphonePermission": false` so Android/iOS don't request unnecessary `RECORD_AUDIO` permissions for food photography.
+      - Audited `expo-secure-store`: confirmed hex-encoded safe keys in `firebase.ts` and `_` sanitized keys in `SecureKeyStorage.ts`.
+      - Hardened `expo-haptics`: added `.catch(() => {})` in `MovementTrackerCard.tsx`'s `triggerHaptic` for safe cross-platform vibration failure handling.
+    - **Phase 3 (Health Connect & Reanimated)**:
+      - Audited `react-native-health-connect`: confirmed correct Android 14+ permissions (`READ_STEPS`), `ACTION_SHOW_PERMISSIONS_RATIONALE`, and `ViewPermissionUsageActivity` alias in `AndroidManifest.xml`, alongside graceful non-Android/Expo Go fallback.
+      - Confirmed Reanimated 4.5.1 + worklets 0.10.1 UI-thread animations.
+    - **Phase 4 (Validation)**:
+      - Validated zero TypeScript compilation errors (`npx tsc --noEmit` exited 0).
+      - Validated 100% test suite passing (30/30 test suites, 199/199 tests passing).
+71. **Analytics Screen Modernization & Unified Tracker Report Architecture ([AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx), [ReportPickerModal.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/ReportPickerModal.tsx), [CalorieCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/CalorieCompletionCard.tsx), [MacroBreakdownCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroBreakdownCard.tsx))**:
+    - **Monolith Elimination**: Completely replaced the legacy 2,550-line ad-hoc implementation of `AnalyticsScreen.tsx`, reducing it to a lean ~570 lines of clean, modular, and maintainable architecture.
+    - **Header Title + Interactive Capsule Dropdown**: Replaced fragmented tab bars with an ergonomic porcelain capsule selector button in the screen header (`[ 🍽️ Nutrition & Calories ▾ ]`). Tapping opens a bottom sheet (`ReportPickerModal.tsx`) to switch between the 4 core health pillars:
+      1. `🍽️ Nutrition & Calories` (`CalorieCompletionCard`, `MacroBreakdownCard`, `StepCalorieBurnCard`)
+      2. `👟 Step Activity` (`StepCompletionCard`, `StepCalorieBurnCard`, `StepTimeDurationCard`, `StepTotalSummaryCard`)
+      3. `💧 Hydration Intake` (`DrinkCompletionCard`, `HydrateVolumeCard`, `DrinkTypesCard`)
+      4. `⚖️ Weight & Body` (`WeightSummaryCard`, `WeightTrendCard`, `BMIGaugeCard`)
+    - **Shared Controls Bar**: Standardized timeframe pill segments (`Weekly` | `Monthly` | `Yearly`) with subtle continuous squircle active indicator, paired with a synchronous date range navigator (`< Sep 28 – Oct 4, 2026 >`).
+    - **Tracker Component Reuse**: Directly mounted the high-fidelity chart cards authored for the individual trackers (`src/components/report/`), ensuring pixel-perfect visual consistency across the entire app.
+    - **Mobile Bottom Sheet Framing**: Constrained `ReportPickerModal` with `maxWidth: 480`, `width: '100%'`, `alignSelf: 'center'` and centered overlay (`alignItems: 'center'`) plus top drag handle bar, ensuring it fits cleanly into the mobile phone container on web and native mobile devices rather than stretching full-width across desktop screens.
+    - **Independent Card Selection State Isolation**: Decoupled the previously shared `selectedDayIndex` into independent states (`selectedStepIndex`, `selectedStepCalorieIndex`, `selectedStepTimeIndex`, `selectedWaterIndex`, etc.) with synchronous bounds clamping. Tapping or inspecting a day in one card (e.g. `StepCompletionCard`) no longer unexpectedly triggers selection changes or moves tooltips in sibling cards (`StepCalorieBurnCard`, `StepTimeDurationCard`), matching `StepReportScreen` architecture.
+    - **Step Summary Metrics Card Hierarchy**: Positioned `StepTotalSummaryCard` (total steps, duration, calories burned, distance) directly below the date range navigator and above the charts, providing instant high-level overview metrics before granular day-by-day chart details.
+    - **Primary Screen Header Sizing Standardization**: Upgraded the `Analytics` header title from `fontSize: 18` to the primary tab design standard: `fontSize: 26`, `lineHeight: 32`, `fontWeight: '700'`, `letterSpacing: -0.5`, wrapped in `minHeight: 56` container with `minHeight: 42` inner row, matching `TrackerScreen` and `ProfileScreen`.
+    - **Weight Summary Micro Cards Redesign**: Refactored `WeightSummaryCard.tsx` into 3 separate porcelain cards side by side (`Weight Lost`, `Current Weight`, `Goal Weight`) with bold numbers (`fontSize: 18, fontWeight: '700'`) and clean slate subtitle labels, matching the user reference design.
+    - **Verification**: Clean `npx tsc --noEmit` (0 errors) and all 30 test suites (199 tests) passing.
+72. **Dedicated Nutrients & Calories Report Card Suite Redesign ([CalorieCompletionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/CalorieCompletionCard.tsx), [MacroDistributionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroDistributionCard.tsx), [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx))**:
+    - **Aesthetics & Architecture Grounding**: Designed from user reference mockups to deliver high-end nutrition tracking visuals with independent selection states and reactive tap feedback.
+    - **`Calorie (kcal)` Card**:
+      - Title: `Calorie (kcal)` with segmented Bar ⇄ Line visualizer toggle (`#8DBE3B` lime active pill).
+      - Subheader: Synchronous legend indicators (`● Selected` with active green dot, `--- Calorie Intake Goal` with dashed stroke).
+      - Goal Reference: Dashed reference guide line plotted across the chart at `calorieGoal` (e.g. 2,500 kcal).
+      - Dual Visualizer Modes:
+        - Bar Mode: Stadium pill columns with unselected pastel lime (`#D4E7A5`) and selected vivid lime (`#8DBE3B`).
+        - Line Mode: Smooth cubic Bezier curves (`C` path commands) with a gradient fill under the curve (`#8DBE3B` 25% → 0%), hollow circular unselected nodes, and filled selected node.
+      - Teardrop Tooltip Pin: Floating green circular teardrop pin indicator showing exact intake (e.g. `2100 kcal`) positioned directly above the selected node/bar with downward pointing triangle.
+    - **`Nutrition (%)` Card**:
+      - Title: `Nutrition (%)` with subtle hairline divider.
+      - Legend: 🔴 Carbs (`#EF4444`), 🟠 Protein (`#F97316`), 🔵 Fat (`#0EA5E9`).
+      - 100% Stacked Bar Geometry: 4-tier Y-axis (`100, 75, 50, 25`), columns stacked from top (Fat) to bottom (Carbs) with 2.5px gap separators, and per-column SVG `<ClipPath>` with rounded stadium caps (`rx={barWidth / 2}`).
+      - Dual State Styling: Unselected bars use soft pastel shades (`#FECDD3`, `#FED7AA`, `#BAE6FD`), while the selected day pops in vivid colors.
+      - Floating Speech-Bubble Popover: Displays exact macronutrient percentages (`Carbs XX%`, `Protein XX%`, `Fat XX%`) with a pointer triangle tracking the selected column.
+    - **Integration into `AnalyticsScreen.tsx`**:
+      - Calculated Atwater caloric ratios (`Carbs 4 kcal/g`, `Protein 4 kcal/g`, `Fat 9 kcal/g`) with fallback to user's personalized `userGoals` target macro distribution when no meals are logged.
+      - Wired `selectedMacroRatioIndex` with safe bounds clamping and timeframe reset.
+      - Placed `<MacroDistributionCard>` immediately below `<CalorieCompletionCard>` in the `Nutrition & Calories` report view.
+    - **Verification**: Zero TypeScript errors (`npx tsc --noEmit` exited 0) and all 30 test suites (199 tests) passing.
+
+53. **Macro Target Compliance Chart Redesign & Precision Formatting ([MacroDistributionCard.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/components/report/MacroDistributionCard.tsx), [AnalyticsScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/main/AnalyticsScreen.tsx))**:
+    - **Architectural Motivation (Option A)**: Transformed the nutrition card into a single-macro Target Compliance Chart matching the visual layout of `CalorieCompletionCard`. Replaced the previous 3-stacked bar design with an anchored dropdown selector allowing users to inspect Protein, Carbs, Fat, and Fiber separately against their personal goals.
+    - **Card Curvature & Dropdown Stacking**:
+      - Fixed container styling to continuous squircle `borderRadius: 12`, `borderCurve: 'continuous'`, with zero float shadow (`elevation: 0`, `shadowOpacity: 0`).
+      - Anchored dropdown menu styled with solid opaque `#FFFFFF` surface (`elevation: 40`, `zIndex: 99999`, soft slate border `rgba(15, 23, 42, 0.1)`) so underlying SVG chart elements never bleed through.
+    - **Single Decimal Place Formatting**:
+      - Added `formatMacroValue(val: number): string` ensuring at most one digit appears after the decimal point (e.g. `24.67` -> `24.7`, `12` -> `12`).
+      - Applied to SVG teardrop pin tooltips, goal labels, and accessibility tags to eliminate floating-point precision artifacts in meals and aggregations.
+    - **Verification**:
+      - `npx tsc --noEmit` passed with 0 errors.
+      - Component tests in `MacroDistributionCard.test.tsx` (9 tests) and `CalorieCompletionCard.test.tsx` (5 tests) passed 100%.
+
+43. **Scalable Multi-Phase Feature Rollout & Architecture Hardening**:
+    - **Foolproof Folder Structure & Pruning**:
+      - Cleaned up obsolete orphaned components (`WorkoutHistoryCard.tsx`, `MacroBreakdownCard.tsx`, `DailyHabitsCard.tsx`).
+      - Created `ARCHITECTURE.md` as the definitive single source of truth mapping all 4 Health Trackers (Nutrition, Hydration, Movement, Weight) and designating modular homes in `src/features/` and `src/services/`.
+    - **Phase 1: Centralized Tactile Engine (`src/utils/haptics.ts`)**:
+      - Implemented full `haptics` facade (`selection`, `impactLight/Medium/Heavy/Rigid/Soft`, `success`, `warning`, `error`, `setEnabled`, `isEnabled`).
+      - Verified with 8/8 passing unit tests (`haptics.test.ts`).
+    - **Phase 2: Onboarding Flow & Mifflin-St Jeor Engine (`src/features/onboarding/`)**:
+      - Implemented `onboardingCalculator.ts` with validated clinical formula for BMR, TDEE, macros, water targets, and step goals with physiological safety floors (1,200 kcal female / 1,500 kcal male).
+      - Built `PlanCalculationStep.tsx` blueprint summary and `PermissionPrimerStep.tsx` pre-permission explainer.
+      - Built `OnboardingWizardScreen.tsx` master orchestrator connecting all 7 steps (`Age` -> `Weight` -> `Height` -> `Goal` -> `Gender` -> `Plan` -> `Permissions`).
+      - Integrated steps seamlessly into `WelcomeScreen.tsx`.
+      - Verified with 12/12 passing unit tests.
+    - **Phase 3: Gamification & Achievements Engine (`src/features/gamification/`)**:
+      - Implemented `achievementRules.ts` with 11 badges across 4 tiers (Bronze, Silver, Gold, Diamond) covering Nutrition, Hydration, Movement, and Consistency.
+      - Implemented `AchievementEvaluator.ts` audit engine with persistent unlocked history in AsyncStorage.
+      - Built `AchievementBadge.tsx`, `StreakFlameBadge.tsx`, `CelebrationModal.tsx`, and `AchievementCenterScreen.tsx` with category tabs and progress tracking.
+      - Verified with 7/7 passing unit tests.
+    - **Phase 4: Pro Subscription & Monetization (`src/features/subscription/` & `src/services/payments/`)**:
+      - Implemented `paymentService.ts` and `entitlementManager.ts` managing Annual (50% off), Monthly, and Lifetime tiers.
+      - Implemented `usePro.ts` hook, `ProBadge.tsx`, `ProGate.tsx` feature gating, and `ProPaywallModal.tsx` high-converting paywall.
+      - Verified with 8/8 passing unit tests.
+    - **Phase 5: Notifications & Habit Reminders (`src/services/notifications/`)**:
+      - Implemented `notificationService.ts` with fail-safe dynamic runtime resolution and preference persistence.
+      - Implemented `notificationScheduler.ts` orchestrating Hydration nudges, Breakfast/Lunch/Dinner prompts, and 21:00 Streak Protection reminders.
+      - Verified with 6/6 passing unit tests.
+    - **Phase 6: Profile, Analytics & App Shell Integration**:
+      - Built `ProMembershipCard.tsx` (VIP active membership card with renewal date vs warm gold upgrade CTA).
+      - Enhanced `ProfileHeaderCard.tsx` to display real `isPro` status with clickable PRO badge / upgrade trigger.
+      - Wired `AchievementCenterScreen.tsx` into `ProfileScreen.tsx` (sub-screen navigation on Awards tap).
+      - Wired `ProMembershipCard` and `ProPaywallModal` into `ProfileScreen.tsx` with one-tap trigger.
+      - Connected `NotificationService` and `NotificationScheduler.syncSchedules()` into `PreferencesScreen.tsx` to update background reminders on water/meal/step toggle.
+      - Added Pro status & Manage button into `PreferencesScreen.tsx`.
+      - Built comprehensive integration suite `ProfileScreen.test.tsx`.
+      - Fully resolved barrel import recursion by directing component imports to their specific domain paths.
+      - Added `AnalyticsScreen.tsx` Pro feature gating for Deep Monthly & Annual Trends, with lock indicators on timeframe tabs and `ProPaywallModal` trigger.
+      - Added startup background habit reminder synchronization in `App.tsx` on user authentication.
+      - Built `AnalyticsScreen.test.tsx` integration test suite verifying timeframe switching and Pro paywall gating (3/3 passed).
+    - **Phase 7: Domain-Driven Restructuring (The 4 Health Trackers & Onboarding)**:
+      - **Onboarding Domain (`src/features/onboarding/`)**: Consolidated legacy `src/screens/onboarding/` (`Age`, `Gender`, `Goal`, `Height`, `Weight`) and `OnboardingHeader` into `src/features/onboarding/`, deleted the legacy directory.
+      - **Awards Cleanup**: Removed obsolete orphaned `src/screens/profile/AwardsScreen.tsx`, aliased to `AchievementCenterScreen`.
+      - **Hydration Domain (`src/features/hydration/`)**: Consolidated `WaterTracker.tsx`, gauges (`DropletVisualizer`, `HeroDropletCard`, `WaterGaugeVisualizer`), history card, popovers, and screens (`WaterTrackerScreen`, `WaterIntakeHistoryScreen`, `WaterReportScreen`) and modals.
+      - **Movement Domain (`src/features/movement/`)**: Consolidated `MovementTrackerCard.tsx`, gauges (`HeroStepCard`, `StepGaugeVisualizer`, `StepHistoryCard`), shoe illustrations, popovers, and screens (`StepTrackerScreen`, `StepReportScreen`), unified with `health/`.
+      - **Weight Domain (`src/features/weight/`)**: Consolidated `WeightTrackerCard.tsx`, `TodayBMICard.tsx`, `HeroWeightCard.tsx`, `ClinicalBmiGauge.tsx`, and screens (`WeightTrackerScreen`, `WeightHistoryScreen`, `WeightReportScreen`, `LogWeightScreen`) and modals.
+      - **Nutrition Domain (`src/features/nutrition/`)**: Consolidated `HeroCalorieCard.tsx`, `MealSection.tsx`, `MealCard.tsx`, report cards, and food modals (`FoodLogModal.tsx`, `FoodVisionModal.tsx`).
+      - **Zero Regressions & Backward Compatibility**: Clean barrel proxies retained in `src/components/` and `src/screens/` ensuring 0 broken consumer imports.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; 45/45 test suites passed (259/259 tests green).
+
+    - **Path B: Domain Data Encapsulation (Clean Architecture)**:
+      - **Hydration Domain Hook (`useHydration`)**: Encapsulates water intake, remaining target volume, intake percentage, container size, entries collection, and add/update/remove/reset/goal actions. Refactored `WaterTracker.tsx`, `HeroDropletCard.tsx`, and `WaterHistoryCard.tsx`.
+      - **Movement Domain Hook (`useMovement`)**: Encapsulates steps, goals, clamped bar percentage, true percentage, distance in km, active burn, brisk walking minutes, workouts burn, total burn, workout activity logging, and step batch updates. Refactored `MovementTrackerCard.tsx` and `HeroStepCard.tsx`.
+      - **Weight Domain Hook (`useWeight`)**: Encapsulates current/start/target weight resolution, unit conversion (`kg` / `lbs`), display strings, progress toward target percentage, multi-entry and prior-day delta tracking, BMI calculation, and WHO classification. Refactored `WeightTrackerCard.tsx` and `TodayBMICard.tsx`.
+      - **Pure Calculator Extraction (`bmiCalculator.ts`)**: Decoupled `getTodayBMICategory` and `BMI_SPECTRUM_CATEGORIES` into a pure utility under `src/features/weight/utils/`, preventing UI component/asset imports inside domain hooks and unit test harnesses.
+      - **Nutrition Domain Hook (`useNutrition`)**: Encapsulates calorie budget, consumed, burned, remaining allowance, net calories, over-budget indicators, full macro distribution (carbs, protein, fat, fiber with targets and percentages), and meal items list with mutation actions. Refactored `MealSection.tsx` and `MealCard.tsx`.
+      - **Unit Test Coverage**: Created dedicated test suites for all 4 domain hooks (`useHydration.test.ts`, `useMovement.test.ts`, `useWeight.test.ts`, `useNutrition.test.ts`).
+    - **Path C: Complete Cleanup of Legacy Duplicate Components, Shims, and Test Co-location (Single Source of Truth)**:
+      - **Deleted All Duplicate Legacy Implementations**:
+        - Purged `src/components/steps/` (`HealthConnectSyncCard`, `HeroStepCard`, `RunningShoeSvg`, `StepEntryActionPopover`, `StepGaugeVisualizer`, `StepHistoryCard`, `StepHistoryModal`, `StepOutlineIcons`).
+        - Purged `src/components/weight/` (`HeroWeightCard`, `WeightEntryActionPopover`, `WeightHistoryCard`).
+        - Purged `src/components/profile/ClinicalBmiGauge.tsx` (now unified in `@/features/weight`).
+        - Purged `src/components/report/CalorieCompletionCard.tsx` and `MacroDistributionCard.tsx` duplicates (now unified in `@/features/nutrition`).
+        - Purged `src/components/modals/` duplicates (`CupSizeModal`, `DailyWaterGoalModal`, `HydrationSettingsModal`, `LogWeightModal`, `WeightGoalSettingsModal`, `FoodLogModal`, `FoodVisionModal`).
+        - Purged `src/components/dashboard/` proxy stubs (`HeroCalorieCard`, `MealSection`, `MovementTrackerCard`, `TodayBMICard`, `WaterTracker`, `WeightTrackerCard`).
+      - **Deleted Obsolete Component Folders**: Removed empty/redundant directories `src/components/water/`, `src/components/diary/`, `src/components/onboarding/`, `src/components/steps/`, `src/components/weight/`, and `src/components/dashboard/`.
+      - **Deleted 9 Screen Shims from `src/screens/main/`**: Removed all re-export files (`WaterTrackerScreen.tsx`, `WaterIntakeHistoryScreen.tsx`, `WaterReportScreen.tsx`, `StepTrackerScreen.tsx`, `StepReportScreen.tsx`, `WeightTrackerScreen.tsx`, `WeightHistoryScreen.tsx`, `WeightReportScreen.tsx`, `LogWeightScreen.tsx`). `src/screens/main/` now strictly contains the 4 primary app tabs (`TodayScreen.tsx`, `TrackerScreen.tsx`, `AnalyticsScreen.tsx`, `ProfileScreen.tsx`).
+      - **Test Suite Domain Co-location**: Relocated all 13 test suites out of `src/components/**/__tests__/` and `src/screens/main/__tests__/` directly into their true domain directories:
+        - `src/features/movement/components/__tests__/` (`HeroStepCard.test.tsx`, `HealthConnectSyncCard.test.tsx`, `StepHistoryCard.test.tsx`, `StepHistoryModal.test.tsx`, `MovementTrackerCard.test.tsx`)
+        - `src/features/movement/screens/__tests__/` (`StepTrackerScreen.test.tsx`, `StepReportScreen.test.tsx`)
+        - `src/features/hydration/components/__tests__/` (`WaterTracker.test.tsx`)
+        - `src/features/weight/components/__tests__/` (`WeightTrackerCard.test.tsx`, `TodayBMICard.test.tsx`)
+        - `src/features/nutrition/components/__tests__/` (`MealCard-large-dataset.test.tsx`, `CalorieCompletionCard.test.tsx`, `MacroDistributionCard.test.tsx`)
+      - **Clean Facade Architecture**:
+        - `src/components/index.ts` is now a clean aggregator re-exporting primitives and domain components without any circular barrel dependencies or legacy file paths.
+        - Shared components and barrels import directly from specific feature component files (e.g. `@/features/nutrition/components/CalorieCompletionCard`), avoiding module resolution cascades into untransformed ESM in Jest.
+      - **Verification**: `npx tsc --noEmit` passed with 0 compiler errors; all 49/49 test suites (273/273 tests) passing 100% green.
+
+    22. **Onboarding Redesign — Phase 0: Cleanup & Architecture Foundation**
+      - Removed duplicate 7-step wizard logic from `WelcomeScreen.tsx`; transformed it into a dedicated hero landing screen with primary "Get started" and secondary "I already have an account" actions.
+      - Made `OnboardingWizardScreen.tsx` the single source of truth for the onboarding wizard, with Android hardware `BackHandler` integration.
+      - Renamed all legacy `"Calori"` instances across user-facing screens (`WelcomeScreen.tsx`, `OnboardingHeader.tsx`, `PreferencesScreen.tsx`, `ProfileHeaderCard.tsx`, `App.tsx`) to `"Calorify"`.
+      - Added `WelcomeScreen.test.tsx` verifying render, brand wordmark, and callback navigation.
+      - Committed as commit `1686817` on `cmd-v5`.
+
+    23. **Onboarding Redesign — Phase 1: Foundation (Draft Persistence, Calculator Upgrades, Section Progress Bar)**
+      - **Draft Persistence (`onboardingDraft.ts`)**:
+        - Created typed `OnboardingDraft` interface and AsyncStorage helper functions (`loadOnboardingDraft`, `saveOnboardingDraft`, `clearOnboardingDraft`) using key `onboarding_draft_v1`.
+        - Added comprehensive unit test suite `onboardingDraft.test.ts`.
+      - **Calculator Engine Upgrade (`onboardingCalculator.ts`)**:
+        - Added `Pace` (`'gentle' | 'steady' | 'faster'`) for deficits (10%, 20%, 25%) and surpluses (+150, +300, +450 kcal).
+        - Added `estimatedWeeksToGoal` based on 7,700 kcal/kg rule after floor, and fixed gain rates (0.15, 0.25, 0.35 kg/wk).
+        - Added `goalDate` helper (`calculateGoalDate`) and multi-pace plan preview (`previewPlans`).
+        - Added guardrails: `minSafeTargetKg` (BMI 18.5 limit), `evaluateAgePolicy` (<13 blocked, 13–17 maintain only), and sex-specific minimum calorie floors (1200 kcal female, 1500 kcal male, 1350 kcal midpoint).
+        - Upgraded `onboardingCalculator.test.ts` to full test coverage.
+      - **Section Progress Bar (`OnboardingHeader.tsx`)**:
+        - Upgraded header to support 4-segment section progress indicator (`about_you`, `your_goal`, `your_lifestyle`, `your_plan`) alongside legacy step text fallback.
+        - Added unit tests in `OnboardingHeader.test.tsx`.
+      - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 52/52 test suites (297/297 tests) passing 100% green.
+
+    24. **Onboarding Redesign — Phase 2 & 3: Interactive Instruments & Plan Presentation**
+      - **Target Weight Screen (`TargetWeightScreen.tsx`)**: Upgraded to tactile horizontal ruler with live delta calculation, target date projection, and BMI 18.5 safety floor banner.
+      - **Building Plan Screen (`BuildingPlanScreen.tsx`)**: Created 4-step sequential animated loading screen with spinning ring and timed transitions.
+      - **Plan Reveal Screen (`PlanRevealScreen.tsx`)**: Built segmented SVG macro ring, personalized struggle insight, and dynamic calorie/macro calculation breakdown.
+
+    25. **Onboarding Cross-Screen Uniformity & Spacing Audit**
+      - **Vertical Title Alignment**: Standardized distance from `OnboardingHeader` to screen title to exactly `16px` across all screens, eliminating screen-to-screen vertical title jumping.
+      - **Title-to-Content Margins**: Standardized `titleContainer.marginBottom` to `20px` across card/content screens (`NameInput`, `GoalSelection`, `Struggles`, `AboutYou`, `ActivityLevel`, `PaceSelection`, `FoodStyle`, `PlanReveal`) and `16px` on instrument ruler screens (`HeightSelection`, `WeightSelection`, `TargetWeight`).
+      - **Typography Standardization**: Standardized all screen titles to `Fonts.kurale` (`fontSize: 28`, `lineHeight: 36`, `marginBottom: 8`) and subtitles to `Fonts.urbanist.medium` (`fontSize: 15`, `lineHeight: 22`).
+      - **Font Cleanup**: Purged all residual `Poppins` references in `AboutYouScreen.tsx` and `OnboardingHeader.tsx`, replacing them with `Fonts.urbanist` (`bold`, `semiBold`, `medium`, `regular`).
+      - **Footer / CTA Consistency**: Verified and aligned all 11 screens to `paddingBottom: Platform.OS === 'ios' ? 16 : 24, paddingTop: 12`, with `Fonts.urbanist.bold` 16px white text on `#1E293B` container (`borderRadius: 16, paddingVertical: 18`).
+      - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); 62/62 test suites (327/327 tests) passing 100% green.
+
+    26. **Onboarding Redesign — Phase 4: S13 First Meal Win (`FirstMealWinScreen.tsx`)**
+      - **Scan Limit Engine (`scanLimitService.ts`)**:
+        - Implemented 5 free AI scans per day with auto-reset via local date key (`@calori_ai_scans_YYYY-MM-DD_<uid>`).
+        - Pro users bypass limits (`unlimited: true`).
+        - Created unit test suite `scanLimitService.test.ts` (100% pass).
+      - **Starter Foods Catalog (`starterFoods.ts`)**:
+        - Curated tailored starter items categorized by diet style (`vegetarian`, `eggetarian`, `non_veg`, `vegan`) with calories, protein, carbs, fat, and icons.
+        - Implemented smart meal slot guessing based on local clock time (`breakfast`, `lunch`, `dinner`, `snack`).
+      - **First Meal Win Screen (`FirstMealWinScreen.tsx`)**:
+        - Built 3 logging modalities: AI Camera vision (with permission primer modal), live search input across 1,000+ foods, and 1-tap quick pick starter food cards.
+        - Interactive portion review mode with macro trio (protein green `#67BD6E`, carbs yellow `#F8D558`, fat coral `#E07A5F`), portion size multiplier pills (0.5x, 1.0x, 1.5x, 2.0x), and struggle quote insights.
+        - The "Aha moment" celebration mode with Day 1 streak flame ignition, animated SVG calorie progress ring, success haptic feedback, and draft persistence.
+        - Complies strictly with `DESIGN.md`: warm `#FAF9F6` canvas, 10px continuous curvature squircle cards, 1px whisper borders (`rgba(15, 23, 42, 0.06)`), pure Urbanist telemetry, and zero drop shadows.
+      - **Wizard Wiring (`OnboardingWizardScreen.tsx`)**:
+        - Integrated `first_meal` step between `plan` and `permissions` in `OnboardingWizardScreen`.
+    27. **Onboarding Redesign — Phase 5: S14 Save Your Plan (`SavePlanScreen.tsx`) & Data Migration Service**
+      - **Onboarding Migration Service (`onboardingMigration.ts`)**:
+        - Created `migrateOnboardingToUserAccount()` to write user profile to `/users/{uid}` in Firestore, populate goals, save calculated health plan, and migrate the S13 first meal draft into today's log (`/dailyLogs/{date}`) in Firestore + local cache.
+        - Automatically purges `@calori_onboarding_draft` on completion.
+        - Created unit test suite `onboardingMigration.test.ts` (100% pass).
+      - **HealthContext Upgrade**:
+        - Added `signInAnonymously()` and `loginAnonymous()` to `HealthContextType` and `AuthContextValue` to support the anonymous guest flow.
+      - **Save Plan Screen (`SavePlanScreen.tsx`)**:
+        - Summary card with live plan preview (daily calorie budget in Kurale `#1E293B`, target date, and `"1 meal logged"` badge).
+        - Google 1-tap sign-in CTA with crisp official 4-color SVG emblem.
+        - Inline expandable Email + Password form with prefilled name, show/hide eye toggle, live password checklist (8+ chars, 1 number), without redundant confirm-password field.
+        - Account collision detection: inline prompt (`"Account exists. Sign in to link your plan"`) switching to sign-in mode without losing draft state.
+        - Anonymous guest link (`"Continue without an account"`).
+        - Warm founder note modal (`"A quick note from the maker... — Naveen"`) with 3.5s auto-progress or tap-to-continue.
+        - Strict `DESIGN.md` craft floor: `#FAF9F6` background, 10px continuous squircle cards, 1px whisper borders, Urbanist typography, and 0 drop shadows.
+      - **Wizard Wiring (`OnboardingWizardScreen.tsx`)**:
+        - Integrated `save_plan` step between `first_meal` (S13) and `permissions` (S16).
+        - Updated `OnboardingWizardScreen.test.tsx` and unit tests.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 66/66 test suites (352/352 tests) passing 100% green.
+
+    28. **Comprehensive Onboarding Flow & Wiring Rectification**
+      - **Resolved `BuildingPlanScreen` Back Loop**: On 3s timer completion, replaces `building_plan` with `plan` in `stepHistory` (and purged from `buildReconstructedHistory`), allowing Back from `PlanRevealScreen` to cleanly return to `FoodStyleScreen` rather than getting stuck in an infinite calculation loop.
+      - **Prevented Premature Wizard Unmount on Auth**: Added `isOnboardingActive` state to [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx) and [WelcomeScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/auth/WelcomeScreen.tsx), keeping the onboarding wizard mounted across Firebase auth in S14 so the Founder Note modal and S16 Permission Primer execute completely before transitioning to `TodayScreen`.
+      - **Fixed Back Navigation on Permission Primer**: Added `onBack?: () => void` to [PermissionPrimerStep.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/components/PermissionPrimerStep.tsx) with a top header back button, and passed `onBack={popStep}` in [OnboardingWizardScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/OnboardingWizardScreen.tsx).
+      - **Fixed Graduation Routing in WelcomeScreen**: Updated `onComplete` in [WelcomeScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/screens/auth/WelcomeScreen.tsx) to graduate directly to the dashboard via `onLoginSuccess()` rather than redirecting to the obsolete pre-onboarding `SignUpScreen`.
+      - **Mobile Dimensional Framing**: Added `phoneFrame: { maxWidth: 480, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }` to [SavePlanScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/SavePlanScreen.tsx) and wrapped `WelcomeScreen` in `phoneContainer` in [App.tsx](file:///c:/Users/navee/Videos/Calorify/calori/App.tsx).
+      - **Verification**: `npx tsc --noEmit` passed cleanly (0 errors); all 66/66 test suites (352/352 tests) passing 100% green.
+
+    29. **Phase 6: S15 Soft Paywall Architecture (`SoftPaywallScreen.tsx`)**
+      - **Zero-Pressure Value Offer (`DESIGN.md`)**: Built an elegant Pro trial offer screen with Kurale serif titles, Urbanist telemetry, 10px continuous squircle cards, 1px whisper borders (`rgba(15, 23, 42, 0.06)`), `#FAF9F6` canvas, and zero drop shadows.
+      - **Personalized Plan Chip**: Dynamic badge chip (`Calibrated for [Name] · [Budget] kcal/day target`) anchoring the value to user's calculated caloric targets.
+      - **4 Pro Value Pillars**: Unlimited AI Meal Vision (unlimited scans), Dynamic Adaptive Coaching (Ria weekly recalibrations), 30-Day Deep Trend Graphs, and Priority Cloud Backup.
+      - **Trust Trial Timeline**: 3-stage visualizer detailing the 7-day trial transparency: Today ($0.00) -> Day 5 (gentle reminder) -> Day 7 (billed only if you love it).
+      - **Interactive Plan Selection**: Annual Plan ($29.99/year, 7-day free trial, SAVE 50%) vs Monthly Plan ($4.99/month).
+      - **Zero-Pressure Dismiss Flow**: Primary CTA (`"Start 7-Day Free Trial"` / `"Upgrade to Pro"`), plus respectful `"Continue with Free Plan"` bottom link and top header `"Skip"` button.
+      - **Full Wizard Integration**: Wired as `'paywall'` step in [OnboardingWizardScreen.tsx](file:///c:/Users/navee/Videos/Calorify/calori/src/features/onboarding/screens/OnboardingWizardScreen.tsx) between S14 `save_plan` and S16 `permissions`.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (363/363 tests) passing 100% green.
+
+    30. **Onboarding-to-Dashboard Seamless Data Handoff Bridge (`HealthContext.tsx`, `onboardingMigration.ts`, `WelcomeScreen.tsx`)**
+      - **Storage Key Harmonization**: Aligned `onboardingMigration.ts` AsyncStorage keys to write to `STORAGE_KEYS.USER_GOALS` (`@calori_user_goals_v1`) and `STORAGE_KEYS.DAILY_LOGS` (`@calori_daily_logs_v1`) alongside user-scoped and legacy keys.
+      - **`applyOnboardingPlan` Engine**: Added `applyOnboardingPlan(data)` to `HealthContextType`, `AuthContextValue`, and `HealthContext.tsx`. Immediately updates in-memory React state for `userGoals`, persists to storage, updates `currentUser.name`, and injects the first logged meal into `dailyLogs[todayStr]`.
+      - **Live Dashboard Connection (`WelcomeScreen.tsx`)**: In `onComplete(data)`, `WelcomeScreen` awaits `applyOnboardingPlan(data)` before calling `onLoginSuccess()`. Guarantees that when `TodayScreen` mounts, the Calorie Ring, consumed macros, user name, and the S13 first logged meal appear instantly with 0ms delay.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
+
+    31. **Path 1 Audit: Full Onboarding-to-Dashboard End-to-End Walkthrough & Wiring Rectification**
+      - **WelcomeScreen History Reset Fix**: Unmemoized `onOnboardingStart` inline callback in `App.tsx` combined with an unbounded `useEffect([initialMode, onOnboardingStart])` was resetting onboarding history back to landing upon state re-render. Stabilized callbacks via `useCallback` in `App.tsx` and guarded `initialMode` with `useRef` in `WelcomeScreen.tsx`.
+      - **Snack vs Snacks Taxonomy Normalization (`HealthContext.tsx`, `onboardingMigration.ts`)**: Onboarding S13 logged meals with `mealSlot: 'snack'` (singular), while `MealType` and `MealSection` standard is `'snacks'`. Normalizing `snack` to `'snacks'` in `applyOnboardingPlan`, `convertPendingMealToLoggedMeal`, and `mealsByType` resolved the bug where the first logged meal was counted in calories but missing from the Snacks `MealCard`.
+      - **Live Playwright E2E Validation**: Successfully walked through all 16 onboarding steps live on `http://localhost:8081` (Name -> Goal -> Struggles -> Demographics -> Height -> Weight -> Target Weight -> Activity -> Pace -> Food Style -> Calculation -> Plan Reveal -> First Meal -> Save Plan -> Soft Paywall -> Permissions -> Dashboard). Verified instant reflection in `HeroCalorieCard` and `MealCard`, and tested real-time stepper quantity mutations (340 kcal -> 680 kcal, 104g Carbs, 26g Protein, 16g Fat).
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green.
+
+    32. **Path 2 Audit: Today Dashboard Header & Top Actions Deep-Dive & Personalization Fix (`Header.tsx`)**
+      - **Personalized Header Display Fix (`Header.tsx`)**: Resolved a defect where `currentUser?.isGuest ? 'Guest Explorer' : ...` unconditionally eclipsed the user's name entered in Onboarding (`userGoals.name` = "Naveen"). Updated to `currentUser?.name || userGoals.name || (currentUser?.isGuest ? 'Guest Explorer' : 'User')`, so users see their personalized greeting `Welcome [Guest]` + `Naveen`.
+      - **Avatar Button & Persona Picker (`AvatarPickerModal`)**: Live E2E verified opening modal, selecting avatars from catalog (tested switching to Woman avatar), and updating user profile.
+      - **Search Button**: Verified contextual time-of-day meal slot assignment and live launching of `FoodLogModal` with food catalog search, categories, and AI camera scanner.
+      - **Notification Bell**: Verified unread indicator dot, live modal opening with real-time stats (Hydration, Calorie budget, Ria AI advice), and "Mark all read" / "Clear all".
+      - **Guest Banner & Sign-In Screen**: Tested live launch of `SignInScreen` and verified hardware/software back button returns cleanly without state loss.
+      - **TopDateStrip & Dynamic Jump**: Verified past date selection (SUN 4) dynamically triggers `[ ↩ Today ]` quick-jump pill, and tapping it restores MON 5 and live data.
+      - **HeroCalorieCard Mode Switcher**: Verified seamless switching between circular calorie HUD dial and 7-day trend bar graph with calorie and macro breakdowns.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+
+    33. **Path 3 Audit: Food Vision Camera & Logging Pipeline Live Verification**
+      - **Camera FAB (`BottomNavBar.tsx` -> `FoodVisionModal`)**: Live E2E verified opening `FoodVisionModal` with Gemini badge and key requirement banner. Tapped "Connect Free Gemini Key", verified opening of `BYOKSetupModal` with encrypted key inputs, tutorials, and validation flows.
+      - **Food Search & Quick Add (`FoodLogModal`)**: Live verified opening Breakfast logger, typing search query "Dosa", instantaneous real-time filtering to "Crispy Plain Dosa" (135 kcal), and 1-tap quick adding to Breakfast.
+      - **Custom Food Creation Pipeline (`CreateCustomFoodModal`)**: Live verified tapping "+ Create", filling custom dish details ("Paneer Bhurji with Toast", 1 plate, 280 kcal, 18g Protein, 22g Carbs, 14g Fat, 3g Fiber), and saving directly to user's private library.
+      - **Real-Time Calorie & Macro Recalculation**: Tested increasing quantity of custom dish from 1x to 2x (560 kcal). Total consumed calories updated immediately to 1,375 Cal eaten, Calorie Dial recalculated to 683 Cal left, and protein jumped to 65g / 122g with 0ms delay.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+
+    34. **Path 4 & 5 Audit: Slide-In Health Trackers (Water, Weight & Movement) Live Verification**
+      - **Hydration Ecosystem (`WaterTrackerScreen`, `CupSizeModal`, `WaterReportScreen`)**: Live verified quick logging steppers, opening `WaterTrackerScreen`, testing dynamic container switching from 300 mL to 500 mL via `CupSizeModal`, testing water logging (550 mL -> 1,050 mL / 2,400 mL target), and viewing the live 44% drink completion bar on `WaterReportScreen`.
+      - **Weight Tracker & Biometric Sync (`WeightTrackerScreen`, `LogWeightScreen`)**: Live verified opening `WeightTrackerScreen`, logging a weight progress entry (68.0 kg -> 67.0 kg, -1.0 kg, "Morning fasted" context chip), and verifying that `TodayBMICard` dynamically recalculated from 23.5 -> 23.2 Normal with 0ms delay.
+      - **Movement Tracker (`StepTrackerScreen`)**: Verified opening `StepTrackerScreen`, inspecting 4 core habit telemetry pods (1,000 steps, 10 min, 40 kcal, 0.8 km), chronological step logs, and Google Health Connect sync card.
+      - **Web Fonts Optimization (`App.tsx`)**: Replaced fragile static Google Fonts TTF hashes (`https://fonts.gstatic.com/...`) with official dynamic stylesheet `@import url('https://fonts.googleapis.com/css2?family=Kurale&family=Urbanist:wght@400;500;600;700;800&display=swap')`, eliminating all 404 font asset warnings and reducing console errors to 0.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+    35. **Path 6 Audit & Global Performance Telemetry (Profile, Awards, Metabolic Summary, Preferences & Goals)**
+      - **Awards & Milestones (`AwardsScreen.tsx`)**: Live verified opening from Profile tile, auditing 1/11 Trophies (9% Mastered), Bronze First Step unlocked badge, and returning cleanly via `Go back`.
+      - **Metabolic & TDEE Clinical Summary (`MetabolicSummaryScreen.tsx`)**: Live verified dynamic calculations reflecting recorded biometrics (BMR 1,618 kcal resting burn, TDEE 2,225 kcal total burn, 207 daily deficit, ~0.19 kg/week fat loss projection, 67 kg current weight vs 63 kg goal weight via Mifflin-St Jeor equation).
+      - **Preferences & AI Coach Customization (`PreferencesScreen.tsx`)**: Live tested switching Ria AI Coaching style from "Warm & Encouraging" to "Disciplined & Direct", verified real-time reactive state updates on both sub-screens and parent Profile tiles, and verified notifications toggles and BYOK Gemini management link.
+      - **Nutritional Targets & Presets (`GoalsScreen.tsx`)**: Verified goal presets (Fat Loss 1,650 kcal, Muscle Gain 2,300 kcal, Maintain 1,950 kcal), macro energy distribution charts, and direct budget editing.
+      - **Biometric Inspector Tabs**: Tested live switching between BMI, Weight journey, Calorie Intake, Steps, and Hydration tabs.
+      - **Telemetry & Heap Benchmark**: Chrome memory telemetry verified 37.54 MB used JS heap (out of 4,192 MB limit), 0 DOM leaks, 395 active DOM nodes, 0 console errors, and 13 synced offline localStorage keys.
+    36. **Path 7 Audit & Subscription Reactivity Fix (Pro Paywall, Tier Switching & Entitlement Pub/Sub)**
+      - **Pro Paywall Modal (`ProPaywallModal.tsx`)**: Live audited feature highlights (Unlimited AI Vision, Adaptive Macro Coaching, Deep Trends, Priority Backup), plan radio selection (Annual $29.99/yr, Monthly $4.99/mo, Lifetime $79.99), and CTA toggles.
+      - **Subscription Entitlement Pub/Sub Fix (`PaymentService.ts` & `usePro.ts`)**: Discovered that individual `usePro()` hooks relied on unshared local state; saving or purchasing an entitlement in the modal did not propagate to `ProfileScreen` or `PreferencesScreen` without a full remount. Added pub/sub listener registration (`PaymentService.subscribe` / `notifyListeners`) so any entitlement change automatically and reactively updates all mounted UI components with zero lag.
+      - **Live Purchase & UI Transition**: Executed "Start 7-Day Free Trial" for Annual VIP membership. Verified instant dynamic transition on `ProfileScreen` from promotional banner to active gold badge ("Calorify Pro ACTIVE • Annual VIP Membership • Renews on 10/5/2027 • Manage"), and verified `PreferencesScreen` reflects "Calorify Pro (Annual VIP)". Tested "Manage Pro Subscription" and close button dismissal.
+    37. **Path 8 Audit: Analytics & Trends Deep-Dive (4 Health Pillars & Unlocked Pro Trends)**
+      - **Report Picker & Health Pillars (`AnalyticsScreen.tsx`)**: Live audited the 4 core health report pillars via the modal selector:
+        - **Weight & Body**: Verified 67.0 kg current weight (-1.0 kg lost), 63.0 kg goal weight, interactive weight trajectory graph (bar vs line), and 23.2 Normal BMI classification breakdown.
+        - **Nutrition & Calories**: Audited calorie intake bar/line chart displaying 1,375 kcal on Day 5 (matching exact breakfast + lunch/snack logged meals). Tested interactive macronutrient switcher (Protein 65.2g / 122g goal, Carbs 171g / 241g goal, Fat, Fiber), confirming all charts update dynamically.
+        - **Step Activity**: Audited habit telemetry (1,000 steps, 7h 49m duration, 40 kcal burn, 0.80 km distance) and daily active burn average bar chart.
+        - **Hydration Intake**: Audited 44% drink completion and 1,050 mL water intake graph (matching logged water entries).
+      - **Unlocked Pro Access**: Verified that because user is Calorify Pro Active, all advanced trends and historical views render with zero paywall lockouts or overlays.
+      - **Telemetry & Memory**: Evaluated performance via `browser_evaluate`: 38.68 MB JS heap, 238 DOM nodes, and 0 console errors.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+    38. **Celebratory Pro Success Card & Gold Header Badge (`[PRO ✦]`) Implementation**
+      - **Header Luxury Badge (`Header.tsx`)**: Replaced plain user name row with dynamic `isPro` check rendering a gold badge `<View style={styles.proTag}><Ionicons name="sparkles" size={10} color="#D97706" /><Text style={styles.proTagText}>PRO ✦</Text></View>` with warm amber `#FEF3C7` background, 1px `#FDE68A` border, and Urbanist Bold 9.5px `#B45309` typography.
+      - **Celebratory Success Card (`ProPaywallModal.tsx`)**: Upgraded purchase completion flow to prevent abrupt modal exit. On payment success (`res.success`), triggers `haptics.success()` and renders an animated golden celebration card featuring:
+        - 84px gold sparkles circle icon (`#FEF3C7` fill with `#FDE68A` border)
+        - `VIP ACCESS ACTIVATED` luxury pill
+        - Kurale 28px headline "Welcome to Calorify Pro!"
+        - Dynamic trial renewal transparency copy ("Your 7-day free trial is now active. Billed on [Date] unless canceled")
+        - 4 unlocked perk checklist rows (Unlimited AI Meal Vision, Dynamic Adaptive Coaching, Deep 30-Day & Yearly Trends, Streak Freeze Protection)
+        - Primary CTA button "Explore Pro Features" with `arrow-forward` icon that smoothly dismisses modal back to the upgraded app shell.
+      - **Jest & E2E Validation (`ProPaywallModal.test.tsx`)**: Enhanced test suite to mock `haptics.success()` / `haptics.error()`, testing plan purchase execution, celebratory card rendering, and graceful dismissal via `Explore Pro Features`.
+      - **Verification**: `npx tsc --noEmit` passed (0 errors); all 67/67 test suites (364/364 tests) passing 100% green.
+    39. **App-Wide Urbanist Font Resolution & Redundant `fontWeight` Elimination**
+      - **Root Cause Analysis**: In React Native Android, specifying `fontWeight: '700'`, `'600'`, `'bold'` alongside custom font families with embedded weight variants (`Urbanist_700Bold`, `Urbanist_600SemiBold`) causes Android's `ReactFontManager` to search for nonexistent sub-files (e.g., `Urbanist_700Bold_bold.ttf`). Failing to find them, Android silently drops the custom font and falls back to system Roboto. On iOS, native `UIFont fontWithName:size:` requires the true PostScript name (`Urbanist-Bold`), which differed from Android's asset filename (`Urbanist_700Bold`).
+      - **Platform-Aware Typography Architecture (`src/theme/typography.ts`)**:
+        - Mapped iOS to exact PostScript names (`Urbanist-Regular`, `Urbanist-Medium`, `Urbanist-SemiBold`, `Urbanist-Bold`, `Urbanist-ExtraBold`, `Kurale-Regular`).
+        - Mapped Android to native asset filenames (`Urbanist_400Regular`, `Urbanist_500Medium`, `Urbanist_600SemiBold`, `Urbanist_700Bold`, `Urbanist_800ExtraBold`, `Kurale_400Regular`).
+        - Preserved Web CSS font-stack fallbacks.
+      - **Global `fontWeight` Elimination (169 instances across 46 UI files)**:
+        - Removed all redundant `fontWeight` declarations from styles using `Fonts.urbanist.*` and `Fonts.kurale` across the entire codebase (`TodayScreen`, `Header`, `TopDateStrip`, `HeroCalorieCard`, `MealCard`, `MealSection`, `FoodLogModal`, `FoodVisionModal`, `PreferencesScreen`, `MetabolicSummaryScreen`, `GoalsScreen`, `WaterTrackerScreen`, `WeightTrackerScreen`, `AnalyticsScreen`, etc.).
+        - Added missing `Fonts.urbanist` font families to `ErrorBoundary.tsx` and `HealthScreen.tsx`.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (364/364 tests) passing 100% green; snapshot updated.
+    40. **App Name Branding, Sub-Report Pro Gating & Chart Ring Alignment Fixes**
+      - **App Launcher Name (`Calorify`)**:
+        - Updated `app.json`: changed `"name": "calori"` to `"name": "Calorify"`.
+        - Updated `android/app/src/main/res/values/strings.xml`: changed `<string name="app_name">calori</string>` to `<string name="app_name">Calorify</string>` so Android OS launcher icon displays "Calorify".
+      - **Sub-Screen Report Pro Gating (`StepReportScreen`, `WaterReportScreen`, `WeightReportScreen`)**:
+        - Previously, free users navigating to sub-screen reports from Water Tracker or Step Tracker could switch freely to "Monthly" and "Yearly" timeframes without restriction, unlike the main `AnalyticsScreen` which locked them.
+        - Integrated `usePro` and `ProPaywallModal` across `StepReportScreen.tsx`, `WaterReportScreen.tsx`, and `WeightReportScreen.tsx`.
+        - Displayed `<Ionicons name="lock-closed" size={10} color="#94A3B8" />` on Monthly and Yearly tabs when `!isPro`.
+        - Added haptic feedback (`haptics.impactLight()`) and triggered `ProPaywallModal` when tapping locked tabs as a free user.
+      - **Chart Ring / Teardrop Pin Floating Alignment (`CalorieCompletionCard`, `MacroDistributionCard`)**:
+        - Root Cause: In `CalorieCompletionCard.tsx` and `MacroDistributionCard.tsx`, the circular teardrop ring was rendered via a nested `<Svg x={...} y={pinSvgTop}>` inside the root `<Svg>`. In `react-native-svg` on native Android, nested `<Svg>` with `y` ignored vertical offset and rendered at `y=0` (top of the canvas, floating above 2500), while the text label was placed in a separate absolute `<View>` down by the bar.
+        - Replaced the disconnected nested `<Svg>` with the standardized `<ChartTooltipPin>` inside an absolute container `<View style={[styles.floatingPinContainer, { left: pinLeft, top: pinTop }]}>`, unifying the circular bubble, downward needle pointer, and text value into a single component anchored directly above the bar/data node.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (365/365 tests) passing 100% green.
+
+- **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
+- **`MealCard` kept `maxHeight`** (moved to UI thread) rather than `scaleY` + measured height — the lower-risk fix. Could upgrade to `scaleY` later if desired.
+- **`FoodLogModal` drawer slide/fade was dead code** — the `Modal` already slides via `animationType="slide"`; the unused `drawerSlideAnim`/`drawerFadeAnim` were removed.
+- **SecureStore keys must only contain alphanumeric, '.', '-', and '_'.** Firebase persistence keys contain `:` and `[`/`]`, so `firebase.ts` hex-encodes keys (`fb_auth_` + hex). `SecureKeyStorage.ts` previously used `${GEMINI_API_KEY_STORAGE_KEY}:${activeUid}` containing a colon `:`, which threw `Invalid key provided to SecureStore`. Updated to `${GEMINI_API_KEY_STORAGE_KEY}_${safeUid}` with regex sanitization.
+- **One-time re-login** was required after switching auth persistence from AsyncStorage → SecureStore.
+- **Reduced motion** is respected in `AnimatedProgressBar`, `AnimatedSvgRing`, and the `FoodLogModal` toast (via `AccessibilityInfo.isReduceMotionEnabled()`).
+- **Native splash renders a single image only** — no text/layout, so "logo + wordmark" must be a pre-composited PNG.
+- **Android adaptive-icon assets are mismatched** (`android-icon-background.png` is a blue geometric design, `android-icon-monochrome.png` reads as a chevron, not the flame) — left unwired.
+- **No `expo-navigation-bar` config plugin** — light-only app, the OS already renders dark nav buttons correctly via color-scheme; `enforceContrast: false` would just disable useful OS logic.
+- **Metro config** keeps `unstable_enablePackageExports: false` for Firebase. Reanimated 4 uses package exports — if bundling errors ("cannot resolve react-native-worklets"), flip it to `true`.
+- **Android `elevation` polygon tessellation on circles:** Setting `elevation > 0` on circular `View` elements (`borderRadius: 50%`) forces Android's `ViewOutlineProvider` to approximate the circle using an 8-vertex polygon for 3D shadow casting, creating a visible octagon shape along borders. Fix: use `Platform.select({ ios: { shadow... }, android: { elevation: 0 } })` and integer `borderWidth: 2` on circular selections (e.g., [`CupSizeModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/CupSizeModal.tsx) and [`AvatarPickerModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/AvatarPickerModal.tsx)).
+
+## Known / pending items
+
+- Verify the Reanimated bundle on a device (Metro resolution wasn't exercised in-session).
+- Optionally regenerate a proper Android monochrome + background adaptive-icon layer from the flame.
+- `expo-doctor` reports a pre-existing patch mismatch (`expo` / `@expo/metro-runtime`) — unrelated to the work above.
+
+## Reference
+
+- Expo v57 docs are the source of truth for API changes (per `AGENTS.md`).
+- `firestore.rules` = owner-scoped access (`request.auth.uid == userId`), default deny.

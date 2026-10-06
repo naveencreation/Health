@@ -1,28 +1,91 @@
 {
   "expo": {
-    "name": "calori",
+    "name": "Calorify",
     "slug": "calori",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#FAF9F6",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.calorify.app",
+      "buildNumber": "1",
+      "backgroundColor": "#FAF9F6",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.calorify.app",
+      "versionCode": 1,
+      "backgroundColor": "#FAF9F6",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/logo.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.health.READ_STEPS"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Kurale_400Regular.ttf",
+            "./assets/fonts/Poppins_400Regular.ttf",
+            "./assets/fonts/Poppins_500Medium.ttf",
+            "./assets/fonts/Poppins_600SemiBold.ttf",
+            "./assets/fonts/Poppins_700Bold.ttf",
+            "./assets/fonts/Urbanist_400Regular.ttf",
+            "./assets/fonts/Urbanist_500Medium.ttf",
+            "./assets/fonts/Urbanist_600SemiBold.ttf",
+            "./assets/fonts/Urbanist_700Bold.ttf",
+            "./assets/fonts/Urbanist_800ExtraBold.ttf"
+          ]
+        }
+      ],
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Calorify to access your photos to select meal images.",
+          "cameraPermission": "Allow Calorify to access your camera to snap meal photos.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#FAF9F6",
+          "imageWidth": 288
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 26
+          },
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ]
+    ],
+    "owner": "naveen0004",
+    "extra": {
+      "eas": {
+        "projectId": "b9a9bbaf-deb3-4e7b-bd12-3a8425fd7083"
+      }
+    }
   }
 }

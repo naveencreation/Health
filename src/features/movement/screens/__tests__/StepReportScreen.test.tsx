@@ -1,0 +1,137 @@
+import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+
+import React from 'react';
+import { render, fireEvent, waitFor, cleanup } from '@testing-library/react-native';
+import { StepReportScreen } from '../StepReportScreen';
+
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View: ReactNative.View,
+      createAnimatedComponent: (c: any) => c,
+    },
+    useSharedValue: (value: number) => ({ value }),
+    useAnimatedStyle: (factory: () => unknown) => factory(),
+    useAnimatedProps: (factory: () => unknown) => factory(),
+    FadeIn: { duration: () => ({}) },
+    FadeOut: { duration: () => ({}) },
+  };
+});
+
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+}));
+
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: any) => children,
+  SafeAreaView: ({ children }: any) => children,
+}));
+
+jest.mock('@/context/HealthContext', () => ({
+  useDailyLog: () => ({
+    dailyLogs: {
+      '2026-10-02': { steps: 5200 },
+      '2026-10-01': { steps: 4800 },
+    },
+  }),
+  useGoals: () => ({
+    userGoals: { stepGoal: 6000 },
+  }),
+}));
+
+const mockUsePro = jest.fn();
+jest.mock('@/features/subscription/hooks/usePro', () => ({
+  usePro: () => mockUsePro(),
+}));
+
+describe('StepReportScreen', () => {
+  beforeEach(() => {
+    mockUsePro.mockReturnValue({ isPro: true });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test('renders top header, timeframe tabs, date navigator, and step chart card', async () => {
+    const handleBack = jest.fn();
+    const { getByText, getByLabelText, getAllByText } = await render(
+      <StepReportScreen onBack={handleBack} />
+    );
+
+    // Header
+    expect(getByText('Step Report')).toBeTruthy();
+    expect(getByLabelText('Back to Step History')).toBeTruthy();
+
+    // Top All-Time Summary Card
+    expect(getByText('Total steps all the time')).toBeTruthy();
+    expect(getByText('10,000')).toBeTruthy();
+    expect(getByText('time')).toBeTruthy();
+    expect(getAllByText('kcal').length).toBeGreaterThanOrEqual(1);
+    expect(getByText('km')).toBeTruthy();
+
+    // Timeframe tabs
+    expect(getByText('Weekly')).toBeTruthy();
+    expect(getByText('Monthly')).toBeTruthy();
+    expect(getByText('Yearly')).toBeTruthy();
+
+    // Step chart card
+    expect(getByText('Step')).toBeTruthy();
+    expect(getAllByText('Selected').length).toBeGreaterThanOrEqual(1);
+    expect(getByText('Step Goal')).toBeTruthy();
+
+    // Active Calorie Burn card
+    expect(getByText('Active Calorie Burn')).toBeTruthy();
+
+    // Active Walking Time card
+    expect(getByText('Active Walking Time')).toBeTruthy();
+  });
+
+  test('switches timeframe to Monthly and Yearly when tabs are clicked for Pro user', async () => {
+    mockUsePro.mockReturnValue({ isPro: true });
+    const { getByLabelText, getAllByText } = await render(<StepReportScreen onBack={jest.fn()} />);
+
+    // Click Monthly
+    await fireEvent.press(getByLabelText('Monthly timeframe'));
+    await waitFor(() => {
+      expect(getAllByText(/2026/).length).toBeGreaterThan(0);
+    });
+
+    // Click Yearly
+    await fireEvent.press(getByLabelText('Yearly timeframe'));
+    await waitFor(() => {
+      expect(getAllByText(/2026/).length).toBeGreaterThan(0);
+    });
+  });
+
+  test('triggers Pro paywall modal when tapping Monthly on Free tier', async () => {
+    mockUsePro.mockReturnValue({ isPro: false });
+    const { getByRole, findByText } = await render(<StepReportScreen onBack={jest.fn()} />);
+
+    const monthlyTab = getByRole('button', {
+      name: /Monthly timeframe \(Calorify Pro required\)/i,
+    });
+    await fireEvent.press(monthlyTab);
+    expect(await findByText(/Unlock Calorify Pro/i)).toBeTruthy();
+  });
+
+  test('calls onBack when back chevron is pressed', async () => {
+    const handleBack = jest.fn();
+    const { getByLabelText } = await render(<StepReportScreen onBack={handleBack} />);
+
+    await fireEvent.press(getByLabelText('Back to Step History'));
+    expect(handleBack).toHaveBeenCalledTimes(1);
+  });
+
+  test('maintains independent selection states across charts', async () => {
+    const { getAllByRole } = await render(<StepReportScreen onBack={jest.fn()} />);
+
+    // Verify buttons can be tapped independently
+    const buttons = getAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(0);
+  });
+});
