@@ -15,6 +15,7 @@ interface HeaderProps {
   onAvatarPress?: () => void;
   onSignInPress?: () => void;
   onSignOutPress?: () => void;
+  onRiaPress?: () => void;
   scrollY?: SharedValue<number>;
   isScrolled?: boolean;
 }
@@ -51,6 +52,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   onAvatarPress,
   onSignInPress,
   onSignOutPress,
+  onRiaPress,
   scrollY,
   isScrolled,
 }) => {
@@ -193,8 +195,25 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           </View>
         </View>
 
-        {/* Right: Search and Notification Buttons (Rock solid, zero movement!) */}
+        {/* Right: Search, Notification & Ria Buttons */}
         <View style={styles.actionButtonsRow}>
+          {onRiaPress && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.circleButton,
+                styles.riaHeaderButton,
+                pressed ? styles.circleButtonPressed : null,
+              ]}
+              onPress={onRiaPress}
+              hitSlop={HIT_SLOP_8}
+              accessibilityRole="button"
+              accessibilityLabel="Open Ria AI Coach"
+              testID="header-ria-button"
+            >
+              <Ionicons name="sparkles" size={17} color="#F47551" />
+            </Pressable>
+          )}
+
           <Pressable
             style={({ pressed }) => [
               styles.circleButton,
@@ -431,6 +450,11 @@ const styles = StyleSheet.create({
   circleButtonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.94 }],
+  },
+  riaHeaderButton: {
+    backgroundColor: '#FFF2EE',
+    borderWidth: 1,
+    borderColor: '#FFD7CC',
   },
   notificationDot: {
     position: 'absolute',

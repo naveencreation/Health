@@ -14,3 +14,7 @@ export { TokenBudgetManager } from './memory/TokenBudgetManager';
 export { ConversationMemoryManager } from './memory/ConversationMemoryManager';
 export { AIRateLimiter } from './gateway/AIRateLimiter';
 export { AIObservability } from './observability/AIObservability';
+export { RiaCardParser } from './cards/RiaCardParser';
+export { RiaDuplicateChecker } from './cards/RiaDuplicateChecker';
+export * from './limits';
+export * from './safety/RiaSafetyService';

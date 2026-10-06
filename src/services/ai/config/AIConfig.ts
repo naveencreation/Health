@@ -5,7 +5,8 @@
 
 export const AI_CONFIG = {
   // Model & Endpoint
-  MODEL: 'gemini-3.5-flash-lite',
+  MODEL: 'gemma-4-26b-a4b-it',
+  VISION_MODEL: 'gemini-3.5-flash-lite',
   BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
 
   // Token Budgets (Cap: 8,000 tokens for optimal latency & free-tier efficiency)

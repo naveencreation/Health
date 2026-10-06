@@ -304,7 +304,9 @@ export interface HealthContextType {
   mealsByType: Record<MealType, LoggedMealItem[]>;
   mealCalories: Record<MealType, number>;
   addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => LoggedMealItem;
+  batchAddLoggedMeals: (items: LoggedMealItem[]) => LoggedMealItem[];
   removeMealItem: (mealId: string) => void;
+  batchRemoveMealItems: (mealIds: string[]) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
   addWater: (ml: number, beverageType?: string) => void;
   removeWaterEntry: (id: string, date?: string) => void;
@@ -381,7 +383,9 @@ export type DailyLogContextValue = Pick<
   | 'mealsByType'
   | 'mealCalories'
   | 'addMealItem'
+  | 'batchAddLoggedMeals'
   | 'removeMealItem'
+  | 'batchRemoveMealItems'
   | 'updateMealQuantity'
   | 'addWater'
   | 'removeWaterEntry'
@@ -1077,6 +1081,49 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           [selectedDate]: {
             ...existing,
             meals: existing.meals.filter(m => m.id !== mealId),
+          },
+        };
+      });
+    },
+    [selectedDate]
+  );
+
+  const batchAddLoggedMeals = useCallback(
+    (items: LoggedMealItem[]) => {
+      if (!items || items.length === 0) return [];
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate] || {
+          date: selectedDate,
+          meals: [],
+          waterMl: 0,
+          steps: 0,
+          activities: [],
+        };
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            meals: [...existing.meals, ...items],
+          },
+        };
+      });
+      return items;
+    },
+    [selectedDate]
+  );
+
+  const batchRemoveMealItems = useCallback(
+    (mealIds: string[]) => {
+      if (!mealIds || mealIds.length === 0) return;
+      const idsSet = new Set(mealIds);
+      setDailyLogs(prev => {
+        const existing = prev[selectedDate];
+        if (!existing) return prev;
+        return {
+          ...prev,
+          [selectedDate]: {
+            ...existing,
+            meals: existing.meals.filter(m => !idsSet.has(m.id)),
           },
         };
       });
@@ -2508,7 +2555,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       mealsByType,
       mealCalories,
       addMealItem,
+      batchAddLoggedMeals,
       removeMealItem,
+      batchRemoveMealItems,
       updateMealQuantity,
       addWater,
       removeWaterEntry,
@@ -2554,7 +2603,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       mealsByType,
       mealCalories,
       addMealItem,
+      batchAddLoggedMeals,
       removeMealItem,
+      batchRemoveMealItems,
       updateMealQuantity,
       addWater,
       removeWaterEntry,
@@ -2634,7 +2685,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       mealsByType,
       mealCalories,
       addMealItem,
+      batchAddLoggedMeals,
       removeMealItem,
+      batchRemoveMealItems,
       updateMealQuantity,
       addWater,
       removeWaterEntry,
@@ -2664,7 +2717,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       mealsByType,
       mealCalories,
       addMealItem,
+      batchAddLoggedMeals,
       removeMealItem,
+      batchRemoveMealItems,
       updateMealQuantity,
       addWater,
       removeWaterEntry,

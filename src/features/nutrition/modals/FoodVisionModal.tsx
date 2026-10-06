@@ -25,6 +25,7 @@ interface FoodVisionModalProps {
   onClose: () => void;
   initialMealType?: MealType;
   onOpenBYOKSetup: () => void;
+  onOpenRiaChat?: (promptText?: string) => void;
 }
 
 const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
@@ -32,6 +33,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   onClose,
   initialMealType,
   onOpenBYOKSetup,
+  onOpenRiaChat,
 }) => {
   const { addCustomFood } = useFoodData();
   const { addMealItem } = useDailyLog();
@@ -617,6 +619,34 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       {Math.round(analysisResult.calories * portionMultiplier)} kcal)
                     </Text>
                   </Pressable>
+
+                  {/* Ask Ria about this meal action */}
+                  {onOpenRiaChat ? (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.askRiaMealBtn,
+                        pressed ? styles.btnPressed : null,
+                      ]}
+                      onPress={() => {
+                        const cal = Math.round(analysisResult.calories * portionMultiplier);
+                        const p = (analysisResult.protein * portionMultiplier).toFixed(1);
+                        const c = (analysisResult.carbs * portionMultiplier).toFixed(1);
+                        const f = (analysisResult.fat * portionMultiplier).toFixed(1);
+                        const prompt = `I just analyzed ${analysisResult.name} (${cal} kcal, ${p}g protein, ${c}g carbs, ${f}g fat). What are your tips or advice on how to balance this with my nutrition goals today?`;
+                        onClose();
+                        onOpenRiaChat(prompt);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Ask Ria about this meal"
+                      testID="ask-ria-meal-button"
+                    >
+                      <View style={styles.askRiaMealBtnLeft}>
+                        <Ionicons name="sparkles" size={16} color="#F47551" />
+                        <Text style={styles.askRiaMealBtnText}>Ask Ria about this meal</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color="#F47551" />
+                    </Pressable>
+                  ) : null}
                 </View>
               ) : null}
 
@@ -1270,6 +1300,29 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13.5,
     color: '#FFFFFF',
+  },
+  askRiaMealBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF5F2',
+    borderWidth: 1,
+    borderColor: '#FFD7CC',
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  askRiaMealBtnLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  askRiaMealBtnText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13.5,
+    color: '#F47551',
   },
   btnPressed: {
     transform: [{ scale: 0.98 }],

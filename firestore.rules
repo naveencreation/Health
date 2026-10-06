@@ -59,6 +59,13 @@ rules_version = '2';
 //   - sodium: number (optional, >= 0 and <= 50,000 mg)
 //   - healthScore: number (optional, >= 0 and <= 100)
 //
+// Subcollection: users/{userId}/usage/{date}
+// Document ID: Date string formatted as YYYY-MM-DD
+// Fields:
+//   - chat: number (optional, >= 0 and <= 500)
+//   - scan: number (optional, >= 0 and <= 100)
+//   - updatedAt: string (optional, ISO timestamp <= 40 chars)
+//
 // ===============================================================
 
 service cloud.firestore {
@@ -165,6 +172,14 @@ service cloud.firestore {
         data.updatedAt is string && data.updatedAt.size() <= 40;
     }
 
+    function isValidUsageDoc(date) {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['chat', 'scan', 'updatedAt']) &&
+        (!('chat' in data) || (data.chat is int && data.chat >= 0 && data.chat <= 500)) &&
+        (!('scan' in data) || (data.scan is int && data.scan >= 0 && data.scan <= 100)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
     // ===============================================================
     // Collection Rules
     // ===============================================================
@@ -206,6 +221,13 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) &&
           ((messageId == 'recent' && isValidRecentChatDoc()) ||
            (messageId == 'summary' && isValidChatSummaryDoc()));
+      }
+
+      // Match Subcollection: usage (Ria Assistant & Vision Quota Tracking)
+      match /usage/{date} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidUsageDoc(date);
+        allow delete: if isOwner(userId);
       }
     }
 

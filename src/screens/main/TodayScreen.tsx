@@ -13,11 +13,13 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Header, TopDateStrip, HeroCalorieCard, MealSection } from '@/components';
+import { FloatingRiaButton, RiaQuickActionType } from '@/features/ria';
 import { MealType } from '@/types';
 
 interface TodayScreenProps {
   onAddFood: (mealType: MealType) => void;
-  onOpenRiaChat: () => void;
+  onOpenRiaChat: (prompt?: string) => void;
+  onOpenFoodVision?: () => void;
   onSearchPress?: () => void;
   onNotificationsPress?: () => void;
   onAvatarPress?: () => void;
@@ -31,6 +33,7 @@ interface TodayScreenProps {
 const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onAddFood,
   onOpenRiaChat,
+  onOpenFoodVision,
   onSearchPress,
   onNotificationsPress,
   onAvatarPress,
@@ -96,6 +99,7 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         onAvatarPress={onAvatarPress}
         onSignInPress={onSignInPress}
         onSignOutPress={onSignOutPress}
+        onRiaPress={() => onOpenRiaChat()}
       />
 
       {/* Main Scroll Content */}
@@ -126,6 +130,20 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         {/* 3. Meals Section (Breakfast, Lunch, Dinner, Snacks) */}
         <MealSection onAddFood={onAddFood} />
       </Animated.ScrollView>
+
+      {/* Floating Ria Button (Draggable, pulse halo, coach mark, quick actions) */}
+      <FloatingRiaButton
+        onPress={() => onOpenRiaChat()}
+        onQuickAction={(action: RiaQuickActionType) => {
+          if (action === 'scan' && onOpenFoodVision) {
+            onOpenFoodVision();
+          } else if (action === 'day_review') {
+            onOpenRiaChat("How is my nutrition and activity looking today? Give me a full review.");
+          } else {
+            onOpenRiaChat();
+          }
+        }}
+      />
     </View>
   );
 };

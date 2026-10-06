@@ -83,6 +83,7 @@ export interface DailyLog {
   weightKg?: number;
   weightEntries?: WeightLogEntry[];
   stepEntries?: StepLogEntry[];
+  fiberG?: number;
 }
 
 export interface UserGoals {
@@ -108,6 +109,13 @@ export interface UserGoals {
   waterReminder?: boolean;
   mealReminder?: boolean;
   stepReminder?: boolean;
+  struggles?: string[];
+  foodStyle?: string;
+  pace?: string;
+  goalIntent?: string;
+  activityLevel?: string;
+  skipsBreakfast?: boolean;
+  snacks?: boolean;
 }
 
 export interface WeeklyTrendItem {

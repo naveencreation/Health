@@ -1,7 +1,8 @@
 import { SecureKeyStorage } from './storage/SecureKeyStorage';
 import { ConversationMemoryManager } from './memory/ConversationMemoryManager';
+import { FirebaseAIProvider } from './providers/FirebaseAIProvider';
 import { GeminiProvider } from './providers/GeminiProvider';
-import { AIErrorMapper } from './errors/AIErrorMapper';
+import { RemoteConfigService } from './config/RemoteConfigService';
 import { AIObservability } from './observability/AIObservability';
 import {
   ChatMessage,
@@ -14,21 +15,22 @@ class AIServiceFacade {
   private cachedInsights = new Map<string, { text: string; timestamp: number }>();
 
   /**
-   * Checks if user has a valid stored Gemini key.
+   * Checks if AI access is enabled and configured.
+   * With Firebase AI Logic & App Check, this is automatically true when ria_enabled is on.
    */
   async isKeyConfigured(): Promise<boolean> {
-    return SecureKeyStorage.hasApiKey();
+    return RemoteConfigService.get('ria_enabled');
   }
 
   /**
-   * Retrieves the raw key securely (internal use only).
+   * Retrieves the raw key securely (legacy compatibility).
    */
   async getApiKey(): Promise<string | null> {
     return SecureKeyStorage.getApiKey();
   }
 
   /**
-   * Retrieves the masked key for display in settings UI.
+   * Retrieves the masked key for display in settings UI (legacy compatibility).
    */
   async getMaskedKey(): Promise<string> {
     const key = await SecureKeyStorage.getApiKey();
@@ -36,14 +38,14 @@ class AIServiceFacade {
   }
 
   /**
-   * Sanitizes user key input by stripping quotes, env prefixes, and whitespace.
+   * Sanitizes key input (legacy compatibility).
    */
   sanitizeKey(rawKey: string): string {
     return GeminiProvider.sanitizeKey(rawKey);
   }
 
   /**
-   * 5-Stage validation handshake, saving only on success.
+   * 5-Stage validation handshake (legacy compatibility).
    */
   async validateAndSaveKey(rawKey: string): Promise<ValidationResult> {
     const sanitized = GeminiProvider.sanitizeKey(rawKey);
@@ -63,7 +65,7 @@ class AIServiceFacade {
   }
 
   /**
-   * Streams a conversation turn with Ria with full memory & budget protection.
+   * Streams a conversation turn with Ria using Firebase AI Logic.
    */
   async streamChat(
     prompt: string,
@@ -73,20 +75,12 @@ class AIServiceFacade {
     signal?: AbortSignal,
     userId?: string
   ): Promise<string> {
-    const apiKey = await SecureKeyStorage.getApiKey();
-    if (!apiKey) {
-      throw AIErrorMapper.createError(
-        'NO_KEY_CONFIGURED',
-        'Please connect your Gemini API key in Settings to chat with Ria.'
-      );
-    }
-
     // Load active summary if available
     const activeSummary = await ConversationMemoryManager.loadSummary(userId);
     const summaryText = activeSummary?.text || '';
 
-    const completedText = await GeminiProvider.streamChat(
-      apiKey,
+    // Primary: Firebase AI Logic with App Check
+    return FirebaseAIProvider.streamChat(
       prompt,
       history,
       context,
@@ -94,31 +88,16 @@ class AIServiceFacade {
       signal,
       summaryText
     );
-
-    // Trigger non-blocking background summarization if history is getting long
-    if (history.length >= 10) {
-      this.triggerBackgroundSummarization(apiKey, history, summaryText, userId).catch(() => {});
-    }
-
-    return completedText;
   }
 
   /**
-   * Analyzes food from a base64 image string with Atwater consistency check.
+   * Analyzes food from a base64 image string with Atwater consistency check using Firebase AI Logic.
    */
   async analyzeFoodImage(
     rawBase64Data: string,
     mimeType: string = 'image/jpeg'
   ): Promise<FoodVisionResult> {
-    const apiKey = await SecureKeyStorage.getApiKey();
-    if (!apiKey) {
-      throw AIErrorMapper.createError(
-        'NO_KEY_CONFIGURED',
-        'Please connect your Gemini API key to use the AI Food Camera.'
-      );
-    }
-
-    return GeminiProvider.analyzeFoodImage(apiKey, rawBase64Data, mimeType);
+    return FirebaseAIProvider.analyzeFoodImage(rawBase64Data, mimeType);
   }
 
   /**
@@ -128,18 +107,15 @@ class AIServiceFacade {
     context: UserNutritionContext,
     cacheKey = 'default'
   ): Promise<string | null> {
-    const apiKey = await SecureKeyStorage.getApiKey();
-    if (!apiKey) return null;
-
     const now = Date.now();
-    // Cache insight for 4 hours to preserve user quota and prevent flickering
+    // Cache insight for 4 hours to preserve quota and prevent flickering
     const cachedInsight = this.cachedInsights.get(cacheKey);
     if (cachedInsight && now - cachedInsight.timestamp < 4 * 60 * 60 * 1000) {
       return cachedInsight.text;
     }
 
     try {
-      const insight = await GeminiProvider.generateDailyInsight(apiKey, context);
+      const insight = await FirebaseAIProvider.generateDailyInsight(context);
       if (insight) {
         this.cachedInsights.set(cacheKey, { text: insight, timestamp: now });
         return insight;
@@ -169,37 +145,6 @@ class AIServiceFacade {
    */
   getObservabilityMetrics() {
     return AIObservability.getSummary();
-  }
-
-  /**
-   * Background task to condense older messages into a summary without blocking UI.
-   */
-  private async triggerBackgroundSummarization(
-    apiKey: string,
-    history: ChatMessage[],
-    existingSummary: string,
-    userId?: string
-  ): Promise<void> {
-    try {
-      const oldestTurns = history.slice(0, 6);
-      const newSummary = await GeminiProvider.generateConversationSummary(
-        apiKey,
-        oldestTurns,
-        existingSummary
-      );
-      if (newSummary) {
-        await ConversationMemoryManager.saveSummary(
-          {
-            text: newSummary,
-            lastSummarizedIndex: 6,
-            updatedAt: new Date().toISOString(),
-          },
-          userId
-        );
-      }
-    } catch {
-      // Silent background catch
-    }
   }
 }
 

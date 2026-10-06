@@ -6,8 +6,9 @@ const CLINICAL_DISCLAIMER_TAG =
   '\n\n*Medical Notice: Ria provides nutritional guidance only, not clinical prescriptions or medical diagnoses. Please consult your physician regarding medications or clinical conditions.*';
 
 const MEDICATION_TERMS = [
-  /\b(?:insulin|metformin|ozempic|wegovy|mounjaro|statin|steroids|blood\s*pressure\s*med)\b/i,
+  /\b(?:insulin|metformin|ozempic|wegovy|mounjaro|semaglutide|statin|steroids|blood\s*pressure\s*med)\b/i,
   /\b(?:prescribed|dosage|milligram|mg\s+dose)\b/i,
+  /\b(?:pregnant|pregnancy|breastfeeding|kidney\s+disease|dialysis|type\s*1\s*diabetes)\b/i,
 ];
 
 export class AIOutputValidator {

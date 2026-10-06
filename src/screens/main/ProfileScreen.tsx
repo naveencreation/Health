@@ -39,6 +39,7 @@ export type ProfileSubView = 'main' | 'awards' | 'summary' | 'preferences' | 'go
 interface ProfileScreenProps {
   onSignIn?: () => void;
   onSignOut?: () => void;
+  onOpenRiaSpace?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
@@ -99,6 +100,7 @@ const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
 const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onSignIn,
   onSignOut,
+  onOpenRiaSpace,
   scrollRef,
   initialScrollOffset = 0,
   onScrollPositionChange,
@@ -178,7 +180,14 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           />
         );
       case 'preferences':
-        return <PreferencesScreen onBack={handleBack} onSignIn={onSignIn} onSignOut={onSignOut} />;
+        return (
+          <PreferencesScreen
+            onBack={handleBack}
+            onSignIn={onSignIn}
+            onSignOut={onSignOut}
+            onOpenRiaSpace={onOpenRiaSpace}
+          />
+        );
       case 'goals':
         return <GoalsScreen onBack={handleBack} />;
       default:

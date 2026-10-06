@@ -1048,7 +1048,140 @@
       - **Chart Ring / Teardrop Pin Floating Alignment (`CalorieCompletionCard`, `MacroDistributionCard`)**:
         - Root Cause: In `CalorieCompletionCard.tsx` and `MacroDistributionCard.tsx`, the circular teardrop ring was rendered via a nested `<Svg x={...} y={pinSvgTop}>` inside the root `<Svg>`. In `react-native-svg` on native Android, nested `<Svg>` with `y` ignored vertical offset and rendered at `y=0` (top of the canvas, floating above 2500), while the text label was placed in a separate absolute `<View>` down by the bar.
         - Replaced the disconnected nested `<Svg>` with the standardized `<ChartTooltipPin>` inside an absolute container `<View style={[styles.floatingPinContainer, { left: pinLeft, top: pinTop }]}>`, unifying the circular bubble, downward needle pointer, and text value into a single component anchored directly above the bar/data node.
-      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 67/67 test suites (365/365 tests) passing 100% green.
+      - **Phase R0: Firebase AI Logic Provider Swap & Key Flow Removal (`RIA_Chat.md`)**:
+        - Created `RemoteConfigService.ts` implementing all 9 keys with safe in-code defaults (`ria_enabled: true`, `ria_free_chat_daily: 3`, `ria_pro_chat_daily: 50`, `scan_free_daily: 5`, `ria_model_chat: 'gemma-4-26b-a4b-it'`, `ria_model_vision: 'gemini-3.5-flash-lite'`, `ria_max_output_tokens: 350`, `ria_insight_enabled: true`, `ria_pool_degraded: false`). Added unit test suite `RemoteConfigService.test.ts` (3/3 pass).
+        - Created `AppCheckService.ts` for Firebase App Check initialization.
+        - Created `FirebaseAIProvider.ts` backed by `firebase/ai` with dynamic Remote Config model selection (`gemma-4-26b-a4b-it` for chat conversation, `gemini-3.5-flash-lite` for food vision image analysis), rate limiting, kill switch check, token estimation, and Atwater output validation. Added unit test suite `FirebaseAIProvider.test.ts` (5/5 pass).
+        - Updated `AIService.ts` to route all chat streaming, insights, and food vision requests directly through `FirebaseAIProvider`, with `isKeyConfigured()` returning `ria_enabled` without requiring manual API key input.
+        - Cleaned up user-facing BYOK references: removed offline "Connect your Gemini key" banner from `RiaChatModal.tsx`, updated `PreferencesScreen.tsx` to display active Firebase AI Logic engine without key input dialogs.
+        - Configured `moduleNameMapper` in `jest.config.js` for `@firebase/*` CommonJS resolution.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 69/69 test suites (373/373 tests) passing 100% green.
+      - **Phase R1: Usage Counter, Limit Gate, Kill Switch & Capacity States (`RIA_Chat.md`)**:
+        - Created `RiaLimitGate.ts` with pure deterministic gating functions (`canSendChatMessage`, `canPerformScan`, `shouldShowRemainingNotice`, `formatCapacityResetTime`, `getLimitReachedInfo`, `getCapacityNoticeInfo`). Enforced Free (3 msgs/day), Pro (50 msgs/day), Scan (5/day), in-flight pending reservation prevention, kill switch (`ria_pool_degraded`, `ria_enabled`), and crisis safety bypass (self-harm/crisis messages never blocked). Added unit test suite `RiaLimitGate.test.ts` (14/14 pass).
+        - Created `RiaUsageCounter.ts` managing atomic Firestore `increment(1)` under `users/{uid}/usage/{yyyy-MM-dd}`, local `AsyncStorage` caching and guest persistence (`@calorify_guest_usage_{date}`), and guest-to-user usage migration upon signup (`migrateGuestUsageToUser`). Added unit test suite `RiaUsageCounter.test.ts` (10/10 pass).
+        - Created `LimitReachedCard.tsx` (state 5: "That's your {n} for today. Resets at midnight." with Upgrade to Pro CTA for Free and fair-use copy for Pro) and `CapacityNoticeCard.tsx` (state 6: "Ria is resting. Back around {time}." with Check Status action). Added test suites `LimitReachedCard.test.tsx` (3/3 pass) and `CapacityNoticeCard.test.tsx` (2/2 pass).
+        - Updated `AIErrorMapper.ts` HTTP 429 (`QUOTA_EXCEEDED`) user metadata to reflect Ria's capacity resting state.
+        - Updated `firestore.rules` to permit owner-scoped read/write/increment on `users/{userId}/usage/{date}` with `isValidUsageDoc` domain validation.
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 73/73 test suites (414/414 tests) passing 100% green.
+      - **Phase R2: Full-Screen Ria Space Screen, Composer, Streaming, States & Storage (`RIA_Chat.md`)**:
+        - **Types & Storage (`ai.types.ts`, `ChatHistoryStorage.ts`)**: Added `RiaRole`, `RiaKind`, `RiaStatus`, and `RiaMessage` types. Upgraded `ChatHistoryStorage` to persist up to 50 messages per UID under `@calori_ria_thread_{id}`, migrating legacy formats and supporting guest-to-account thread migration (`migrateGuestThread`). Added unit test suite `ChatHistoryStorage.test.ts` (5/5 pass).
+        - **Collapsible Context Strip (`RiaContextStrip.tsx`)**: Created real-time nutrition bar displaying consumed/remaining calories and protein goals. Collapsible with persistent user toggle and privacy/sensitive mode support. Added unit test suite `RiaContextStrip.test.tsx` (2/2 pass).
+        - **Contextual Suggestions (`RiaSuggestionRow.tsx`)**: Built dynamic time-of-day contextual suggestion chips (breakfast/morning, lunch/afternoon, evening snacks, night wrap-up, and craving insights linked to user onboarding struggles). Added unit test suite `RiaSuggestionRow.test.tsx` (6/6 pass).
+        - **Bubble & Streaming Renderer (`RiaMessageBubble.tsx`)**: High-end bubble rendering with Markdown formatting (`MarkdownText`), Ria persona avatar, pulsating streaming cursor (`#F47551`), 15s/30s thinking indicator notices, tap-to-retry on failures/interruptions, and long-press clipboard copy.
+        - **Dual-Bezel Multiline Composer (`RiaComposer.tsx`)**: Double-bezel input shell with multiline text input (up to 500 chars with progressive warning badge > 400 chars), camera trigger button, and dynamic state switcher between circular terracotta Send button and Stop streaming button. Added unit test suite `RiaComposer.test.tsx` (6/6 pass).
+        - **Full-Screen Ria Space Screen (`RiaSpaceScreen.tsx`)**: Migrated from legacy `RiaChatModal` to a premier full-screen experience. Includes hardware back navigation (`BackHandler`), keyboard handling (`Keyboard.addListener`), empty state starter cards, menu options (Clear history, sensitive mode), and dynamic replacement of the composer with `LimitReachedCard` (State 5) or `CapacityNoticeCard` (State 6). Added unit test suite `RiaSpaceScreen.test.tsx` (8/8 pass).
+      - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 78/78 test suites (441/441 tests) passing 100% green.
+      - **Phase R3: Floating Ria Button & Unified Entry Points (`RIA_Chat.md`)**:
+        - **Floating Ria Button (`FloatingRiaButton.tsx`)**: Created 56dp circular avatar button with terracotta ring (`#F47551`), idle pulse halo (`RNAnimated.loop`), unread notification dot badge, snap-to-edge gesture tracking via `PanResponder`, dismissible coach mark bubble ("Ask Ria anything ✨" with `@calorify_ria_coach_mark_dismissed` AsyncStorage persistence), and long-press quick actions sheet (Log meal by text, Scan meal camera, Full day review). Added unit test suite `FloatingRiaButton.test.tsx` (5/5 pass).
+        - **Today Screen Integration (`TodayScreen.tsx`)**: Rendered floating button anchored above tab content. Added `onOpenFoodVision` forwarding for scan action and initial review prompt generation for day review. Added unit test suite `TodayScreen.test.tsx` (4/4 pass).
+        - **Header Entry Point (`Header.tsx`)**: Added `onRiaPress` prop and terracotta sparkle action button (`#FFF2EE` background, `#FFD7CC` border) in `actionButtonsRow` next to search and notifications.
+        - **Preferences & Profile Entry Points (`PreferencesScreen.tsx`, `ProfileScreen.tsx`)**: Added interactive "Open Ria Space" button in the AI Engine card within Preferences, forwarded via `ProfileScreenProps.onOpenRiaSpace`.
+        - **Coach Card Passthrough (`RiaCoachCard.tsx`, `TrackerScreen.tsx`)**: Forwarded contextual daily insight speech bubble tap and suggestions directly to `onOpenRiaChat(promptText)`.
+        - **Food Vision Continuity (`FoodVisionModal.tsx`)**: Added "Ask Ria about this meal" action in the analysis review step, passing scanned food macros and name directly into `RiaSpaceScreen` as an initial prompt.
+        - **Root Navigation Integration (`App.tsx`)**: Replaced legacy `RiaChatModal` with `SlideInSubScreen` presenting `RiaSpaceScreen` as a full-screen premier view with hardware back support, slide-out exit animation, and unified `handleOpenRiaSpace(prompt?)`.
+      - **Phase R4: Context Injector & System Prompt Architecture (`RIA_Chat.md` Sections 10 & 11)**:
+        - **`NutritionContextBuilder.ts`**: Pure context builder implementing:
+          - `createContext`: Computes nutrition snapshots, calorie deficit/surplus/on_track balance, macro percentages, hydration delta/percent, step delta/percent, weight delta to goal, minor flag (ages 13–17 maintain-only), and meal item mappings with portions and timestamps.
+          - Pure section builders with XML tagging boundaries:
+            - `<nutrition_snapshot>`: Daily budget, consumed, remaining, deficit/surplus status, macro targets and achievement percentages.
+            - `<recent_meals_today>`: Grouped by slots (`[Breakfast]`, `[Lunch]`, `[Dinner]`, `[Snacks]`, `[Other Logged Items]`) with item names, portions, calories, macros, and formatted timestamps.
+            - `<dietary_profile_and_struggles>`: Food style translation (`translateFoodStyle`), onboarding struggles mapped to coaching topics (`translateStruggle`), and breakfast skipping habits.
+            - `<goal_plan_and_pace>`: Primary goal, translated goal pace (`translateGoalPace`), weight deltas (to lose, to gain, or at target), height, and streak days.
+            - `<hydration_and_movement>`: Water consumed vs target (ml delta and percentage), steps vs goal (step delta and percentage).
+            - `<pro_memory_summary>`: Rolling long-term memory block for Pro users.
+          - Clinical safety directives: Calorie floor (female min 1,200 kcal, male min 1,500 kcal), disordered eating boundaries, medical scope, and minor policy (ages 13–17 maintain-only, forbidding caloric restriction).
+          - Prompt injection defense: Strict XML compartmentalization and sanitization of user strings (`sanitizeText`).
+        - **Caller Integration**:
+          - `RiaSpaceScreen.tsx`: Wired `NutritionContextBuilder.createContext({ ... })` with proactive Pro long-term rolling memory loading via `ConversationMemoryManager.loadSummary(currentUser?.id)`.
+          - `useRiaDailyInsight.ts`: Wired `NutritionContextBuilder.createContext({ ... })` and updated cache fingerprint with struggles, food style, and pace.
+          - `RiaChatModal.tsx`: Updated to use `NutritionContextBuilder.createContext({ ... })`.
+        - **Types Extended (`ai.types.ts`, `src/types/index.ts`)**:
+          - `LoggedMealContextItem`: ID, name, mealType, calories, protein, carbs, fat, time, quantity, unit.
+          - `UserNutritionContext`: `calorieStatus`, `calorieDeficitOrSurplus`, `struggles`, `foodStyle`, `dietaryPreferences`, `skipsBreakfast`, `snacksRegularly`, `goal`, `goalIntent`, `pace`, `startWeightKg`, `weightDeltaToGoalKg`, `waterDeltaMl`, `waterPercent`, `stepDelta`, `stepPercent`, `isMinor`, `memorySummary`, `streakDays`.
+          - `DailyLog`: Added optional `fiberG`.
+          - `UserGoals`: Added optional `skipsBreakfast`, `snacks`, `foodStyle`, `pace`, `goalIntent`, `activityLevel`.
+        - **Unit Test Suite (`NutritionContextBuilder.test.ts`)**:
+          - Created 25 comprehensive unit tests covering all functions: sanitization, struggle mapping, food style mapping, pace mapping, snapshot builders, meal grouping, hydration/movement deltas, minor checks, Pro memory, safety floors, and tone switching.
+        - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 81/81 test suites (475/475 tests) passing 100% green.
+      - **Phase R5: Action Cards and Logging Integration with Live Undo, 10s Expiration & Duplicate Checks (`RIA_Chat.md` Sections 7, 8, 10, 11, 12, 16)**:
+        - **Types Extended (`ai.types.ts`)**:
+          - Added `MealCardSlot`, `MealCardItem`, `ActionCardState`, `MealCardData`, `SuggestionOption`, `SuggestionCardData`, `WaterCardData`, `WeightCardData`, `DayReviewCardData`, `PlanChangeCardData`, `RiaCard`.
+          - Extended `RiaMessage` with optional `card?: RiaCard`.
+        - **HealthContext Batch Extensions (`HealthContext.tsx`)**:
+          - Added atomic `batchAddLoggedMeals(items: LoggedMealItem[])` returning added items.
+          - Added atomic `batchRemoveMealItems(mealIds: string[])` removing items by ID in a single state update and persisting to storage/Firestore.
+        - **Pure Services & Parsers**:
+          - `RiaDuplicateChecker.ts`: Pure service comparing candidate food item name and slot against recent meals within a configurable threshold (default 10 minutes). Normalizes strings, handles slot variations (e.g. snack/snacks), and extracts timestamps from `loggedAt`, `createdAt`, or `time`.
+          - `RiaCardParser.ts`: Strips ````ria_action```` or fallback ````json```` blocks from bubble text, checks Atwater consistency (`|kcal - (4P+4C+9F)| / kcal > 0.25`), validates bounds, runs duplicate check on meals, clamps water (50–2000 ml), computes weight delta and sanity warning if $>3\text{ kg}$, builds day review targets, and enforces safety floors (min 1,200 kcal female / 1,500 kcal male) and minor protection on plan changes.
+          - `NutritionContextBuilder.ts`: Fixed template literal string escaping (`\```ria_action`) in `buildSystemInstruction`.
+          - `src/services/ai/index.ts`: Exported `RiaCardParser` and `RiaDuplicateChecker`.
+        - **High-End Double-Bezel Action Card Views (`src/features/ria/cards/`)**:
+          - Adhered to `design-taste-frontend` and `high-end-visual-design` standards (Doppelrand/double-bezel nested architecture, high-contrast typography, warm cream `#FAF9F6`/terracotta `#F47551` and pastel semantic accents, concentric rounded squircles, tactile haptic feedback).
+          - `RiaMealCardView.tsx`: Double-bezel (`#FFF7F2` outer, `#FFFFFF` inner), slot badges, Atwater macro pills, 10-minute duplicate warning banner, 10s countdown undo ticker, assumption note, and haptic actions.
+          - `RiaWaterCardView.tsx`: Water glass icon (`#0284C7`), quick adjustment chips (`+100 ml`, `+250 ml`, `+500 ml`), "Log Water" action, 10s countdown undo ticker.
+          - `RiaWeightCardView.tsx`: Scale icon (`#4F46E5`), proposed kg, delta vs previous entry, $>3\text{ kg}$ sanity confirmation banner, "Confirm Weight" action.
+          - `RiaDayReviewCardView.tsx`: Calorie progress bar, macro breakdown cards (P/C/F), "Today's Win" 🏆, and "Next Focus" 🎯.
+          - `RiaSuggestionCardView.tsx`: 2–3 nutritious options with macro pills, portion tags, and 1-tap "Log this" action.
+          - `RiaPlanChangeCardView.tsx`: Before/after target comparison with deltas, coach rationale note, Pro badge, and "Update My Plan" action.
+          - `RiaActionCard.tsx`: Root switcher component delegating `RiaCard` to specific card views with action callbacks.
+        - **Chat Bubble & Space Screen Integration**:
+          - `RiaMessageBubble.tsx`: Integrated `<RiaActionCard>` beneath message text, broadened bubble wrapper (`maxWidth: '88%'`), forwarded all callbacks.
+          - `RiaSpaceScreen.tsx`: Sanitized streaming chunks on-the-fly (`RiaCardParser.parseMessage(chunk).cleanText`), parsed completed response into `text` and `card`, implemented atomic handlers (`handleConfirmMeal`, `handleUndoMeal`, `handleEditMeal`, `handleDismissMeal`, `handleConfirmWater`, `handleUndoWater`, `handleDismissWater`, `handleConfirmWeight`, `handleDismissWeight`, `handleLogSuggestionOption`, `handleApplyPlanChange`, `handleDismissPlanChange`), and forwarded them to `RiaMessageBubble`.
+        - **Unit Test Coverage**:
+          - `RiaDuplicateChecker.test.ts` (7/7 pass)
+          - `RiaCardParser.test.ts` (12/12 pass)
+          - `RiaCards.test.tsx` (11/11 pass)
+        - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 84/84 test suites (505/505 tests) passing 100% green.
+      - **Phase R6: Photos in Chat via the Scan Pipeline and Scan Counter (`RIA_Chat.md` Sections 1, 2, 7, 8, 9, 10, 16)**:
+        - **Types Extended (`ai.types.ts`)**: Added `photoThumbUri?: string` to `MealCardData` for local thumbnail rendering in proposed and collapsed cards.
+        - **Vision Model Prompt Enhanced (`FirebaseAIProvider.ts`)**: Updated prompt in `analyzeFoodImage` to prioritize printed calories, serving size, and macro values directly from visible packaged food or Nutrition Facts labels.
+        - **Chat Bubble & Meal Card Thumbnail Views**:
+          - `RiaMessageBubble.tsx`: Added photo thumbnail rendering to user bubbles (`userPhotoThumbContainer`, `userPhotoThumb`, `userPhotoBadge` "Scanned plate", caption styling).
+          - `RiaMealCardView.tsx`: Integrated `expo-image` rendering a double-bezel `cardPhotoBanner` with "Scanned plate" badge in proposed state, and mini thumbnail squircle (`loggedMiniThumb`) in collapsed logged state.
+        - **In-Chat Photo Scanner & Limit Gating (`RiaSpaceScreen.tsx`)**:
+          - Added double-bezel `photoSheetContainer` bottom sheet modal with "Take Photo" (Camera) and "Photo Library" (Gallery) actions.
+          - Implemented `handlePressPhoto`: Evaluates `canPerformScan({ currentScanUsage: usage.scan, ... })`; shows limit Alert (State 5) or capacity Alert if blocked; opens photo sheet if permitted.
+          - Implemented `handleLaunchCamera` and `handleLaunchGallery`: Requests camera/gallery permissions, launches `ImagePicker` with 4:3 aspect ratio and base64 encoding.
+          - Implemented `handleProcessPhotoScan`:
+            - Reserves in-flight scan via `RiaUsageCounter.reservePending('scan')`.
+            - Optimistically appends user photo message (`kind: 'photo'`, `photoThumbUri: asset.uri`) and persists thread.
+            - Sets Ria thinking state with notice: `"Analyzing your meal photo..."`.
+            - Calls `AIService.analyzeFoodImage(asset.base64, mimeType)`.
+            - On success: Atomically increments scan usage (`RiaUsageCounter.incrementUsage('scan', currentUser?.id)`), releases in-flight reservation, detects non-food photos (`isFood === false`), determines time-of-day meal slot, checks 10-minute duplicate, and delivers Ria's proposed meal card with thumbnail into the thread.
+            - On failure: Releases in-flight scan without incrementing usage and displays retryable error bubble.
+            - Photos remain strictly on-device (`asset.uri`), zero Cloud Storage upload.
+          - In `App.tsx`: Removed external `onOpenFoodVision` override so tapping camera stays in-chat.
+        - **Unit Test Coverage & Verification**:
+          - `RiaCards.test.tsx`: Verified `RiaMealCardView` renders photo thumbnail banner when `photoThumbUri` is present (12/12 pass).
+          - `RiaSpaceScreen.test.tsx`: Mocked `expo-image-picker` and `Modal`; added tests for photo selection sheet, camera photo scanning, scan counter increment, meal card thumbnail rendering, non-food guidance fallback, and scan limit gating (12/12 pass).
+          - `npx tsc --noEmit` passed with 0 errors; all 84/84 test suites (510/510 tests) passing 100% green.
+      - **Phase R7: Safety Layer, Sensitive Mode, and Red-Team Tests (`RIA_Chat.md` Sections 11 & 16)**:
+        - **Safety Service  Created (`src/services/ai/safety/RiaSafetyService.ts`)**:
+          - **Local Crisis Pre-Check (`checkCrisisPreCheck`)**: Regex patterns for self-harm/suicide (`suicide`, `kill myself`, `ending my life`, `want to die`, `overdose`, `hurt myself`, `cut my wrists`, `slit wrists`, `no reason to live`); returns verified Indian Helplines: Tele-MANAS (`14416` / `1800-891-4416`), KIRAN (`1800-599-0019`), Vandrevala Foundation (`+91 9999 666 555`), Emergency (`112`). Bypasses AI streaming, usage limits, and kill switches. 0 tokens spent, 0 usage increments.
+          - **Disordered Eating & Sensitive Mode (`checkDisorderedEating`)**: Detects purging (`purge`, `purged`, `purging`, `throw up`, `threw up`, `made myself throw up`, `vomit`, `puke`, `laxatives`), extreme/multi-day fasting (`water fasting for 5 days`, `not eating for 7 days`, `how to starve`), severe food guilt (`hate myself for eating`, `punish myself for eating`, `food makes me feel worthless`), and sub-800 kcal severe restriction (`eating under 800 cal`, `diet of 600 cal`). Sets `shouldActivateSensitiveMode: true` and provides compassionate guidance without numbers.
+          - **Calorie Safety Floor Enforcement (`checkRestrictionQuery`)**: Rejects restriction queries below clinical safety floors (<1,200 kcal female / <1,500 kcal male). Explains risks of muscle catabolism, micronutrient deficiency, and hormonal disruption, proposing safe sustainable floors.
+          - **Medical Scope & Disclaimers (`checkMedicalScope`, `AIOutputValidator`)**: Identifies prescription drugs (Ozempic, Metformin, insulin, blood pressure meds, dosage queries), pregnancy & breastfeeding deficits, and chronic diseases (kidney disease, dialysis, type 1 diabetes); automatically appends standardized clinical notice.
+          - **Supplements & Steroids Guard (`checkSupplementsAndSteroids`)**: Neutral, safety-first defense against anabolic steroids and unverified PEDs (Trenbolone, Dianabol, Anavar, Clenbuterol, SARMs RAD-140/LGD-4033, testosterone cycles); permits verified safe natural supplements (creatine, whey, vitamin D, omega-3).
+          - **Minor Protection Policy (`checkMinorPolicy`)**: Restricts teens aged 13–17 to maintain-only nutrition guidance, blocks calorie reduction/deficit plans, and prevents plan change cards from being shown or applied.
+          - **Prompt Injection Defense (`checkPromptInjection`)**: Neutralizes XML tags (`<system>`, `<instruction>`), system prompt extraction attempts, and DAN jailbreak prompts (`[filtered]`), while leaving benign nutrition queries untouched.
+          - **Sensitive Mode Persistence (`isSensitiveModeActive`, `setSensitiveModeActive`)**: Persists per-user sensitive mode state in AsyncStorage under `@calori_ria_sensitive_mode_${userId}`.
+        - **Context Builder Updates (`NutritionContextBuilder.ts`)**:
+          - Added `isSensitiveMode?: boolean` to `UserNutritionContext` and `CreateContextParams`.
+          - `buildNutritionSnapshot`: When sensitive mode is active, completely strips numerical calories and deficits from `<nutrition_snapshot>`, replacing them with `"Sensitive Mode Active: Numerical calories and deficits are hidden"` and whole-food nourishment focus.
+          - `buildSystemInstruction`: Injects strict clinical directive forbidding numerical calories, deficits, or counts in Ria's response when sensitive mode is active.
+        - **UI & Screen Integration (`RiaSpaceScreen.tsx`)**:
+          - Wired local crisis pre-check at the very top of `handleSendMessage`, ensuring self-harm queries never hit Gemini or daily limits.
+          - Connected disordered eating, restriction floor, and steroid pre-checks, providing immediate safe guidance.
+          - Sanitizes user input with `checkPromptInjection` before dispatching to AI.
+          - Passes `isSensitiveMode` to `NutritionContextBuilder.createContext`.
+          - Validates AI response post-stream via `AIOutputValidator.validateChatResponse` and appends medical notice if medical topics appear.
+          - Suppresses plan change cards for minors (ages 13–17) and enforces safety floors before updating goals.
+          - Added sensitive mode toggle button (`menu-sensitive-mode-btn`) in overflow menu modal.
+          - Connected `isSensitiveMode` prop to `RiaContextStrip` (displays `"Gentle mode · Focus on balance and nourishment"` and heart icon).
+        - **Automated Red-Team Test Suite (`RiaSafetyRedTeam.test.ts`)**:
+          - 41 test cases across crisis, disordered eating, calorie floors, minors, medical scope, steroids, prompt injection, sensitive mode persistence, context builder, and limit gate crisis bypass (41/41 passing).
+        - **Verification**: `npx tsc --noEmit` passed with 0 errors; all 85/85 test suites (551/551 tests) passing 100% green.
+
 
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
 - **`MealCard` kept `maxHeight`** (moved to UI thread) rather than `scaleY` + measured height — the lower-risk fix. Could upgrade to `scaleY` later if desired.

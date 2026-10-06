@@ -20,6 +20,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { AIService, ChatMessage, UserNutritionContext } from '@/services/ai';
+import { NutritionContextBuilder } from '@/services/ai/context/NutritionContextBuilder';
 import { MarkdownText } from '../common/MarkdownText';
 
 interface RiaChatModalProps {
@@ -205,34 +206,18 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      const telemetryContext: UserNutritionContext = {
-        name: firstName,
-        riaTone: userGoals.riaTone || 'supportive',
-        dailyCalorieBudget: userGoals.dailyCalorieBudget,
+      const telemetryContext = NutritionContextBuilder.createContext({
+        userGoals: {
+          ...userGoals,
+          name: firstName,
+        },
+        currentLog,
         remainingCalories,
-        consumedCalories: totalConsumed,
-        targetProtein: userGoals.targetProtein,
-        consumedProtein: totalProtein,
-        targetCarbs: userGoals.targetCarbs,
-        consumedCarbs: totalCarbs,
-        targetFat: userGoals.targetFat,
-        consumedFat: totalFat,
-        targetWaterMl: userGoals.waterGoalMl,
-        consumedWaterMl: currentLog.waterMl,
-        stepGoal: userGoals.stepGoal,
-        currentSteps: currentLog.steps,
-        currentWeightKg: userGoals.currentWeightKg,
-        targetWeightKg: userGoals.targetWeightKg,
-        heightCm: userGoals.heightCm,
-        age: userGoals.age,
-        gender: userGoals.gender,
-        loggedMealsToday: currentLog.meals.map(m => ({
-          name: m.name,
-          mealType: m.mealType,
-          calories: m.calories,
-          protein: m.protein,
-        })),
-      };
+        totalCalories: totalConsumed,
+        totalProtein,
+        totalCarbs,
+        totalFat,
+      });
 
       try {
         const fullResponse = await AIService.streamChat(
@@ -365,9 +350,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                     <Text style={styles.headerName}>Ria AI Coach</Text>
                     <View style={[styles.onlineDot, !hasApiKey ? styles.offlineDot : null]} />
                   </View>
-                  <Text style={styles.headerSub}>
-                    {hasApiKey ? 'AI Coach • Active' : 'Offline Mode'}
-                  </Text>
+                  <Text style={styles.headerSub}>AI Coach • Active</Text>
                 </View>
               </View>
 
@@ -385,26 +368,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               </Pressable>
             </View>
 
-            {/* Unconfigured Key Banner */}
-            {hasApiKey === false ? (
-              <View style={styles.offlineBanner}>
-                <Ionicons name="sparkles" size={14} color="#F47551" />
-                <Text style={styles.offlineBannerText}>
-                  Ria is in offline mode. Connect your Gemini key for live conversational AI.
-                </Text>
-                {onOpenBYOKSetup ? (
-                  <Pressable
-                    style={styles.connectPill}
-                    onPress={() => {
-                      onClose();
-                      onOpenBYOKSetup();
-                    }}
-                  >
-                    <Text style={styles.connectPillText}>Connect</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
+
 
             {/* Chat Scroll Area */}
             <ScrollView

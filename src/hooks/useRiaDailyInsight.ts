@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DailyLog, UserGoals } from '@/types';
+import { DailyLog, UserGoals, LoggedMealItem } from '@/types';
 import { AIService } from '@/services/ai';
+import { NutritionContextBuilder } from '@/services/ai/context/NutritionContextBuilder';
 
 interface RiaDailyInsightParams {
   userId: string;
@@ -48,7 +49,10 @@ export const useRiaDailyInsight = ({
         targetFat: userGoals.targetFat,
         targetWaterMl: userGoals.waterGoalMl,
         stepGoal: userGoals.stepGoal,
-        meals: currentLog.meals.map(meal => ({
+        struggles: userGoals.struggles,
+        foodStyle: userGoals.foodStyle,
+        pace: userGoals.pace,
+        meals: currentLog.meals.map((meal: LoggedMealItem) => ({
           id: meal.id,
           name: meal.name,
           mealType: meal.mealType,
@@ -67,6 +71,9 @@ export const useRiaDailyInsight = ({
       userGoals.targetFat,
       userGoals.waterGoalMl,
       userGoals.stepGoal,
+      userGoals.struggles,
+      userGoals.foodStyle,
+      userGoals.pace,
       currentLog.meals,
     ]
   );
@@ -90,29 +97,12 @@ export const useRiaDailyInsight = ({
         const isConfigured = await AIService.isKeyConfigured();
         if (!isConfigured || disposed || version !== requestVersionRef.current) return;
 
-        const context = {
-          name: userGoals.name?.split(' ')[0] || 'Friend',
-          riaTone: userGoals.riaTone || 'supportive',
-          dailyCalorieBudget: userGoals.dailyCalorieBudget,
+        const context = NutritionContextBuilder.createContext({
+          userGoals,
+          currentLog,
           remainingCalories,
-          consumedCalories: userGoals.dailyCalorieBudget - remainingCalories,
-          targetProtein: userGoals.targetProtein,
-          consumedProtein: totalProtein,
-          targetCarbs: userGoals.targetCarbs,
-          consumedCarbs: 0,
-          targetFat: userGoals.targetFat,
-          consumedFat: 0,
-          targetWaterMl: userGoals.waterGoalMl,
-          consumedWaterMl: currentLog.waterMl,
-          stepGoal: userGoals.stepGoal,
-          currentSteps: currentLog.steps,
-          loggedMealsToday: currentLog.meals.map(meal => ({
-            name: meal.name,
-            mealType: meal.mealType,
-            calories: meal.calories,
-            protein: meal.protein,
-          })),
-        };
+          totalProtein,
+        });
 
         const nextInsight = await AIService.getDailyInsight(
           context,

@@ -1,5 +1,36 @@
 export type RiaTone = 'supportive' | 'focused' | 'scientific';
 
+export type RiaRole = 'user' | 'ria' | 'system';
+
+export type RiaKind =
+  | 'text'
+  | 'photo'
+  | 'meal_card'
+  | 'suggestion_card'
+  | 'water_card'
+  | 'weight_card'
+  | 'day_review_card'
+  | 'plan_change_card'
+  | 'limit_card'
+  | 'capacity_notice'
+  | 'offline_notice'
+  | 'error';
+
+export type RiaStatus = 'sending' | 'streaming' | 'done' | 'interrupted' | 'failed' | 'unsent';
+
+export interface RiaMessage {
+  id: string;
+  role: RiaRole;
+  kind: RiaKind;
+  text?: string;
+  createdAt: number;
+  status: RiaStatus;
+  photoThumbUri?: string; // local only
+  card?: RiaCard;
+  rating?: 'up' | 'down';
+  error?: string;
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'ria' | 'user';
@@ -108,33 +139,78 @@ export interface AIObservabilityMetric {
   atwaterAdjusted?: boolean;
 }
 
+export interface LoggedMealContextItem {
+  id?: string;
+  name: string;
+  mealType: string;
+  calories: number;
+  protein: number;
+  carbs?: number;
+  fat?: number;
+  time?: string;
+  quantity?: number;
+  unit?: string;
+}
+
 export interface UserNutritionContext {
+  // 1. Profile, Persona & Demographics
   name: string;
   riaTone: RiaTone;
+  age?: number;
+  gender?: string;
+  heightCm?: number;
+  isMinor?: boolean;
+  streakDays?: number;
+
+  // 2. Nutrition Snapshot
   dailyCalorieBudget: number;
-  remainingCalories: number;
   consumedCalories: number;
+  remainingCalories: number;
+  calorieStatus?: 'deficit' | 'surplus' | 'on_track';
+  calorieDeficitOrSurplus?: number;
   targetProtein: number;
   consumedProtein: number;
   targetCarbs: number;
   consumedCarbs: number;
   targetFat: number;
   consumedFat: number;
-  targetWaterMl: number;
-  consumedWaterMl: number;
-  stepGoal: number;
-  currentSteps: number;
+  targetFiber?: number;
+  consumedFiber?: number;
+
+  // 3. Recent Meals Today
+  loggedMealsToday: LoggedMealContextItem[];
+
+  // 4. Onboarding Struggles & Dietary Preferences
+  struggles?: string[];
+  foodStyle?: string;
+  dietaryPreferences?: string[];
+  skipsBreakfast?: boolean;
+  snacksRegularly?: boolean;
+
+  // 5. Goal, Plan & Pace
+  goal?: string;
+  goalIntent?: string;
+  pace?: string;
+  startWeightKg?: number;
   currentWeightKg?: number;
   targetWeightKg?: number;
-  heightCm?: number;
-  age?: number;
-  gender?: string;
-  loggedMealsToday: Array<{
-    name: string;
-    mealType: string;
-    calories: number;
-    protein: number;
-  }>;
+  weightDeltaToGoalKg?: number;
+
+  // 6. Water & Step Deltas
+  targetWaterMl: number;
+  consumedWaterMl: number;
+  waterDeltaMl?: number;
+  waterPercent?: number;
+  stepGoal: number;
+  currentSteps: number;
+  stepDelta?: number;
+  stepPercent?: number;
+
+  // 7. Pro Long-Term Memory Summary
+  memorySummary?: string;
+
+  // 8. Safety & Sensitive Mode (Phase R7)
+  isSensitiveMode?: boolean;
 }
 
 export interface FoodVisionResult {
@@ -164,3 +240,101 @@ export interface NaturalMealParseItem {
   fat: number;
   fiber: number;
 }
+
+// ==========================================
+// RIA ACTION CARDS (Phase R5 - RIA_Chat.md)
+// ==========================================
+
+export type MealCardSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export interface MealCardItem {
+  id?: string;
+  name: string;
+  qty: number;
+  unit: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  source: 'catalog' | 'estimate';
+}
+
+export type ActionCardState = 'proposed' | 'logged' | 'dismissed' | 'undone';
+
+export interface MealCardData {
+  slot: MealCardSlot;
+  items: MealCardItem[];
+  assumption?: string; // e.g. "1 katori ~ 150 g"
+  state: ActionCardState;
+  loggedAt?: number;
+  undoUntil?: number; // loggedAt + 10s (10000 ms)
+  entryIds?: string[]; // IDs created in daily log
+  duplicateWarning?: string; // "You logged this 4m ago. Add again?"
+  photoThumbUri?: string; // local photo thumbnail for photo-scanned meals
+}
+
+export interface SuggestionOption {
+  name: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  portion?: string;
+  tag?: string;
+}
+
+export interface SuggestionCardData {
+  options: SuggestionOption[];
+}
+
+export interface WaterCardData {
+  amountMl: number;
+  state: ActionCardState;
+  loggedAt?: number;
+  undoUntil?: number;
+  entryId?: string;
+}
+
+export interface WeightCardData {
+  weightKg: number;
+  previousWeightKg?: number;
+  deltaKg?: number;
+  needsSanityConfirm?: boolean; // >3 kg change in 1 day
+  state: 'proposed' | 'logged' | 'dismissed';
+  loggedAt?: number;
+}
+
+export interface DayReviewCardData {
+  caloriesConsumed: number;
+  calorieTarget: number;
+  proteinConsumed: number;
+  proteinTarget: number;
+  carbsConsumed: number;
+  carbsTarget: number;
+  fatConsumed: number;
+  fatTarget: number;
+  win: string;
+  focus: string;
+}
+
+export interface PlanChangeCardData {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  currentCalories: number;
+  currentProtein: number;
+  currentCarbs: number;
+  currentFat: number;
+  reason: string;
+  state: 'proposed' | 'applied' | 'dismissed';
+}
+
+export type RiaCard =
+  | { type: 'meal'; data: MealCardData }
+  | { type: 'suggestion'; data: SuggestionCardData }
+  | { type: 'water'; data: WaterCardData }
+  | { type: 'weight'; data: WeightCardData }
+  | { type: 'day_review'; data: DayReviewCardData }
+  | { type: 'plan_change'; data: PlanChangeCardData };
+

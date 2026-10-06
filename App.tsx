@@ -32,6 +32,7 @@ import {
   WeightTrackerScreen,
   StepTrackerScreen,
 } from '@/screens';
+import { RiaSpaceScreen } from '@/features/ria';
 
 // Components, Navigation & Modals
 import {
@@ -40,7 +41,6 @@ import {
   FoodLogModal,
   NotificationModal,
   AvatarPickerModal,
-  RiaChatModal,
   ConfirmationModal,
   ErrorBoundary,
   FoodVisionModal,
@@ -89,7 +89,9 @@ function MainApp() {
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
-  const [riaChatVisible, setRiaChatVisible] = useState(false);
+  const [riaSpaceVisible, setRiaSpaceVisible] = useState(false);
+  const [isClosingRiaSpace, setIsClosingRiaSpace] = useState(false);
+  const [riaInitialPrompt, setRiaInitialPrompt] = useState<string | undefined>(undefined);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
   const [isOnboardingActive, setIsOnboardingActive] = useState(false);
@@ -143,6 +145,22 @@ function MainApp() {
   const handleStepTrackerClosed = useCallback(() => {
     setIsClosingStepTracker(false);
     setStepTrackerVisible(false);
+  }, []);
+
+  const handleOpenRiaSpace = useCallback((prompt?: string) => {
+    setIsClosingRiaSpace(false);
+    setRiaInitialPrompt(prompt);
+    setRiaSpaceVisible(true);
+  }, []);
+
+  const handleCloseRiaSpace = useCallback(() => {
+    setIsClosingRiaSpace(true);
+  }, []);
+
+  const handleRiaSpaceClosed = useCallback(() => {
+    setIsClosingRiaSpace(false);
+    setRiaSpaceVisible(false);
+    setRiaInitialPrompt(undefined);
   }, []);
 
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
@@ -325,6 +343,9 @@ function MainApp() {
       if (stepTrackerVisible) {
         handleCloseStepTracker();
       }
+      if (riaSpaceVisible) {
+        handleCloseRiaSpace();
+      }
       if (tab === 'today' && activeTabRef.current === 'today') {
         todayScrollRef.current?.scrollTo({ y: 0, animated: true });
       } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
@@ -343,6 +364,8 @@ function MainApp() {
       handleCloseWeightTracker,
       stepTrackerVisible,
       handleCloseStepTracker,
+      riaSpaceVisible,
+      handleCloseRiaSpace,
     ]
   );
 
@@ -373,7 +396,7 @@ function MainApp() {
     byokSetupVisible,
     notificationsVisible,
     avatarModalVisible,
-    riaChatVisible,
+    riaSpaceVisible,
     authModalVisible,
     signOutModalVisible,
     waterTrackerVisible,
@@ -388,7 +411,7 @@ function MainApp() {
       byokSetupVisible,
       notificationsVisible,
       avatarModalVisible,
-      riaChatVisible,
+      riaSpaceVisible,
       authModalVisible,
       signOutModalVisible,
       waterTrackerVisible,
@@ -401,7 +424,7 @@ function MainApp() {
     byokSetupVisible,
     notificationsVisible,
     avatarModalVisible,
-    riaChatVisible,
+    riaSpaceVisible,
     authModalVisible,
     signOutModalVisible,
     waterTrackerVisible,
@@ -425,6 +448,10 @@ function MainApp() {
         handleCloseStepTracker();
         return true;
       }
+      if (ms.riaSpaceVisible) {
+        handleCloseRiaSpace();
+        return true;
+      }
       if (ms.foodModalVisible) {
         setFoodModalVisible(false);
         return true;
@@ -445,10 +472,6 @@ function MainApp() {
         setAvatarModalVisible(false);
         return true;
       }
-      if (ms.riaChatVisible) {
-        setRiaChatVisible(false);
-        return true;
-      }
       if (ms.authModalVisible) {
         setAuthModalVisible(false);
         return true;
@@ -467,7 +490,12 @@ function MainApp() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
     return () => subscription.remove();
-  }, [handleCloseWaterTracker, handleCloseWeightTracker]);
+  }, [
+    handleCloseWaterTracker,
+    handleCloseWeightTracker,
+    handleCloseStepTracker,
+    handleCloseRiaSpace,
+  ]);
 
   const handleOpenSignIn = React.useCallback(() => {
     setAuthInitialMode('signin');
@@ -490,8 +518,8 @@ function MainApp() {
     setAuthModalVisible(false);
   }, []);
 
-  const handleOpenRiaChat = React.useCallback(() => setRiaChatVisible(true), []);
-  const handleCloseRiaChat = React.useCallback(() => setRiaChatVisible(false), []);
+  const handleOpenRiaChat = handleOpenRiaSpace;
+  const handleCloseRiaChat = handleCloseRiaSpace;
   const handleOpenNotifications = React.useCallback(() => setNotificationsVisible(true), []);
   const handleCloseNotifications = React.useCallback(() => setNotificationsVisible(false), []);
   const handleOpenAvatarModal = React.useCallback(() => setAvatarModalVisible(true), []);
@@ -583,7 +611,8 @@ function MainApp() {
                 initialScrollOffset={scrollOffsetsRef.current.today}
                 onScrollPositionChange={saveTodayScrollOffset}
                 onAddFood={handleOpenFoodLogger}
-                onOpenRiaChat={handleOpenRiaChat}
+                onOpenRiaChat={handleOpenRiaSpace}
+                onOpenFoodVision={handleOpenFoodVision}
                 onSearchPress={handleGlobalSearchPress}
                 onNotificationsPress={handleOpenNotifications}
                 onAvatarPress={handleOpenAvatarModal}
@@ -597,7 +626,7 @@ function MainApp() {
                 scrollRef={trackerScrollRef}
                 initialScrollOffset={scrollOffsetsRef.current.tracker}
                 onScrollPositionChange={saveTrackerScrollOffset}
-                onOpenRiaChat={handleOpenRiaChat}
+                onOpenRiaChat={handleOpenRiaSpace}
                 onOpenWaterTracker={handleOpenWaterTracker}
                 onOpenWeightTracker={handleOpenWeightTracker}
                 onOpenStepTracker={handleOpenStepTracker}
@@ -621,6 +650,7 @@ function MainApp() {
                 onScrollPositionChange={saveProfileScrollOffset}
                 onSignIn={handleOpenSignIn}
                 onSignOut={handleSignOutCompleted}
+                onOpenRiaSpace={handleOpenRiaSpace}
               />
             )}
 
@@ -683,6 +713,7 @@ function MainApp() {
           onClose={handleCloseFoodVision}
           initialMealType={activeMealType}
           onOpenBYOKSetup={handleOpenBYOKSetup}
+          onOpenRiaChat={handleOpenRiaSpace}
         />
 
         {/* Global BYOK Setup Modal */}
@@ -699,12 +730,20 @@ function MainApp() {
           onSelectAvatar={handleSelectAvatar}
         />
 
-        {/* Ria AI Interactive Chat Modal */}
-        <RiaChatModal
-          visible={riaChatVisible}
-          onClose={handleCloseRiaChat}
-          onOpenBYOKSetup={handleOpenBYOKSetup}
-        />
+        {/* Slide-In Ria Space Premier Full-Screen Route */}
+        {riaSpaceVisible && (
+          <SlideInSubScreen
+            screenWidth={Math.min(screenWidth, 480)}
+            isClosing={isClosingRiaSpace}
+            onClosed={handleRiaSpaceClosed}
+            zIndex={300}
+          >
+            <RiaSpaceScreen
+              onBack={handleCloseRiaSpace}
+              initialPrompt={riaInitialPrompt}
+            />
+          </SlideInSubScreen>
+        )}
 
         {/* In-App Sign Out Confirmation Modal */}
         <ConfirmationModal

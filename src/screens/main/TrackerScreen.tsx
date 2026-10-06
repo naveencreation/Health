@@ -29,7 +29,7 @@ import {
 } from '@/components';
 
 export interface TrackerScreenProps {
-  onOpenRiaChat?: () => void;
+  onOpenRiaChat?: (promptText?: string) => void;
   onOpenWaterTracker?: () => void;
   onOpenWeightTracker?: () => void;
   onOpenStepTracker?: () => void;
@@ -143,9 +143,12 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
     return selectedDate;
   }, [selectedDate, isViewingToday]);
 
-  const handleRiaChat = useCallback(() => {
-    onOpenRiaChat?.();
-  }, [onOpenRiaChat]);
+  const handleRiaChat = useCallback(
+    (promptText?: string) => {
+      onOpenRiaChat?.(promptText);
+    },
+    [onOpenRiaChat]
+  );
 
   return (
     <View style={styles.rootContainer}>

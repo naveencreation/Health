@@ -14,7 +14,6 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals } from '@/context/HealthContext';
 import { AIService } from '@/services/ai';
-import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
 import { NotificationService } from '@/services/notifications/notificationService';
@@ -28,12 +27,14 @@ interface PreferencesScreenProps {
   onBack: () => void;
   onSignIn?: () => void;
   onSignOut?: () => void;
+  onOpenRiaSpace?: () => void;
 }
 
 export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   onBack,
   onSignIn,
   onSignOut,
+  onOpenRiaSpace,
 }) => {
   const { currentUser, logout, deleteAccount } = useAuth();
   const { userGoals, updateGoals } = useGoals();
@@ -47,9 +48,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const [stepReminder, setStepReminder] = useState(userGoals.stepReminder || false);
 
   // AI BYOK Configuration States
-  const [byokModalVisible, setByokModalVisible] = useState(false);
-  const [aiConnected, setAiConnected] = useState(false);
-  const [maskedApiKey, setMaskedApiKey] = useState('');
+  const [aiConnected, setAiConnected] = useState(true);
 
   // Pro Subscription State
   const { isPro, activePlanId } = usePro();
@@ -58,12 +57,6 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const refreshAIStatus = async () => {
     const configured = await AIService.isKeyConfigured();
     setAiConnected(configured);
-    if (configured) {
-      const masked = await AIService.getMaskedKey();
-      setMaskedApiKey(masked);
-    } else {
-      setMaskedApiKey('');
-    }
   };
 
   useEffect(() => {
@@ -272,8 +265,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           </Pressable>
         </View>
 
-        {/* 2. AI Intelligence Engine (BYOK) */}
-        <Text style={styles.sectionHeader}>Gemini AI Engine (BYOK)</Text>
+        {/* 2. AI Intelligence Engine (Firebase AI Logic) */}
+        <Text style={styles.sectionHeader}>Ria AI Engine</Text>
         <View style={styles.byokCard}>
           <View style={styles.byokHeaderRow}>
             <View style={styles.byokIconBox}>
@@ -281,74 +274,36 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             </View>
             <View style={styles.flex1}>
               <View style={styles.byokTitleRow}>
-                <Text style={styles.byokTitle}>Gemini AI</Text>
-                <View
-                  style={[
-                    styles.statusPill,
-                    aiConnected ? styles.statusPillActive : styles.statusPillInactive,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.statusDot,
-                      aiConnected ? styles.statusDotActive : styles.statusDotInactive,
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.statusPillText,
-                      aiConnected ? styles.statusTextActive : styles.statusTextInactive,
-                    ]}
-                  >
-                    {aiConnected ? 'Active' : 'Not Connected'}
-                  </Text>
+                <Text style={styles.byokTitle}>Firebase AI Logic</Text>
+                <View style={[styles.statusPill, styles.statusPillActive]}>
+                  <View style={[styles.statusDot, styles.statusDotActive]} />
+                  <Text style={[styles.statusPillText, styles.statusTextActive]}>Active</Text>
                 </View>
               </View>
               <Text style={styles.byokDesc}>
-                {aiConnected
-                  ? 'Powers Ria 1-on-1 coaching & AI camera food vision.'
-                  : 'Connect your personal Google Gemini API key to enable live coaching and food vision.'}
+                Powers Ria 1-on-1 coaching & AI food vision with App Check security.
               </Text>
             </View>
           </View>
 
-          {aiConnected && maskedApiKey ? (
-            <View style={styles.byokKeyChip}>
-              <View style={styles.byokKeyChipLeft}>
-                <Ionicons name="key-outline" size={13} color={Colors.primary} />
-                <Text style={styles.byokKeyChipLabel}>Key:</Text>
-                <Text style={styles.byokKeyChipValue}>{maskedApiKey}</Text>
+          {onOpenRiaSpace && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.openRiaSpaceBtn,
+                pressed ? styles.pressedSubtle : null,
+              ]}
+              onPress={onOpenRiaSpace}
+              accessibilityRole="button"
+              accessibilityLabel="Chat with Ria in full screen"
+              testID="preferences-open-ria-button"
+            >
+              <View style={styles.openRiaSpaceBtnLeft}>
+                <Ionicons name="sparkles" size={16} color="#F47551" />
+                <Text style={styles.openRiaSpaceBtnText}>Open Ria Space</Text>
               </View>
-              <View style={styles.byokSecureTag}>
-                <Ionicons name="shield-checkmark" size={11} color={Colors.protein} />
-                <Text style={styles.byokSecureText}>Encrypted</Text>
-              </View>
-            </View>
-          ) : null}
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.byokActionBtn,
-              pressed ? styles.byokActionBtnPressed : null,
-            ]}
-            onPress={() => setByokModalVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Manage Gemini API key"
-          >
-            <View style={styles.byokActionLeft}>
-              <View style={styles.byokActionIconCircle}>
-                <Ionicons
-                  name={aiConnected ? 'settings-outline' : 'key-outline'}
-                  size={14}
-                  color={Colors.primary}
-                />
-              </View>
-              <Text style={styles.byokActionBtnText}>
-                {aiConnected ? 'Manage Key & Settings' : 'Connect Personal Gemini Key'}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={15} color={Colors.primary} />
-          </Pressable>
+              <Ionicons name="chevron-forward" size={16} color="#F47551" />
+            </Pressable>
+          )}
         </View>
 
         {/* 2.5. Calorify Pro Membership */}
@@ -529,14 +484,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         </View>
       </ScrollView>
 
-      {/* Sub-modals for BYOK & Account Actions */}
-      <BYOKSetupModal
-        visible={byokModalVisible}
-        onClose={() => {
-          setByokModalVisible(false);
-          refreshAIStatus();
-        }}
-      />
+
 
       <ProPaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
 
@@ -758,6 +706,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     color: '#64748B',
+  },
+  openRiaSpaceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF5F2',
+    borderWidth: 1,
+    borderColor: '#FFD7CC',
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  openRiaSpaceBtnLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  openRiaSpaceBtnText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    color: '#F47551',
   },
   statusPill: {
     flexDirection: 'row',

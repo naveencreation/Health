@@ -74,7 +74,7 @@ export class AIErrorMapper {
         return this.createError(
           'QUOTA_EXCEEDED',
           extractedDetail ||
-            'Gemini API daily quota limit reached. Free keys reset daily at midnight Pacific Time.',
+            'Ria is resting. The shared AI pool has reached temporary capacity.',
           429,
           false
         );
@@ -217,10 +217,10 @@ export class AIErrorMapper {
         break;
 
       case 'QUOTA_EXCEEDED':
-        error.userTitle = 'Daily Quota Limit';
+        error.userTitle = 'Ria is resting.';
         error.userMessage =
-          'Your free Google AI Studio key has hit its daily limit (1,500 requests). Free quotas refresh every 24 hours.';
-        error.actionLabel = 'Update Key';
+          'Ria is temporarily taking a breather due to high demand on our shared AI pool. Please check back shortly.';
+        error.actionLabel = 'Check Status';
         break;
 
       case 'RATE_LIMIT':
