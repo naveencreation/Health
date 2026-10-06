@@ -1,7 +1,7 @@
 <!-- prettier-ignore -->
 <div align="center">
 
-<img src="./assets/splash-icon.png" alt="Calorify Logo" height="88" />
+<img src="./assets/flame-icon.png" alt="Calorify Logo" height="84" />
 
 # Calorify
 
