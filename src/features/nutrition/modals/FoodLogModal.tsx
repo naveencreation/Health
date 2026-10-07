@@ -2280,8 +2280,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   quickAddButtonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   fullScreenProductContainer: {
     flex: 1,
@@ -2748,14 +2748,15 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   btnPressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   btnPressedPill: {
-    opacity: 0.8,
-    transform: [{ scale: 0.97 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   btnPressedPrimary: {
-    opacity: 0.88,
+    opacity: 0.92,
     transform: [{ scale: 0.985 }],
   },
   confirmAddBtn: {

@@ -79,7 +79,7 @@ export const HealthConnectSyncCard: React.FC<HealthConnectSyncCardProps> = ({
               style={({ pressed }) => [styles.syncIconBtn, pressed && styles.btnPressed]}
               onPress={handleConnectPress}
               disabled={loading}
-              hitSlop={10}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Sync steps data now"
             >
@@ -267,7 +267,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   btnPressed: {
-    opacity: 0.75,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   btnDisabled: {
     opacity: 0.6,

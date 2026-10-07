@@ -145,7 +145,7 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
                 await haptics.selection();
                 onBack();
               }}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               testID="btn-paywall-back"
@@ -366,20 +366,20 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
 
             {/* Legal & Restore row */}
             <View style={styles.legalRow}>
-              <Pressable onPress={handleRestore} hitSlop={6} testID="btn-restore-purchases">
+              <Pressable onPress={handleRestore} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }} testID="btn-restore-purchases">
                 <Text style={styles.legalLink}>Restore</Text>
               </Pressable>
               <Text style={styles.legalDivider}>·</Text>
               <Pressable
                 onPress={() => Linking.openURL('https://calorify.app/terms')}
-                hitSlop={6}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Text style={styles.legalLink}>Terms</Text>
               </Pressable>
               <Text style={styles.legalDivider}>·</Text>
               <Pressable
                 onPress={() => Linking.openURL('https://calorify.app/privacy')}
-                hitSlop={6}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Text style={styles.legalLink}>Privacy</Text>
               </Pressable>

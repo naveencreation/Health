@@ -302,7 +302,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
             <Pressable
               style={({ pressed }) => [styles.undoBtn, pressed && styles.btnPressed]}
               onPress={handleUndo}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={`Undo adding ${undoToast.amount} mL ${getBeverageName(undoToast.beverage)}`}
             >
@@ -344,8 +344,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   circleNavBtnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    backgroundColor: '#F8FAFC',
+    transform: [{ scale: 0.97 }],
   },
   headerTitleContainer: {
     flex: 1,
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
   },
   btnPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 });

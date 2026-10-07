@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   unitButtonPressed: {
-    opacity: 0.85,
+    opacity: 0.9,
     transform: [{ scale: 0.97 }],
   },
   unitButtonActive: {
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   tickSlotPressed: {
-    opacity: 0.6,
+    opacity: 0.85,
   },
   tickLineBase: {
     borderRadius: 1,
@@ -552,12 +552,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   continueButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
   },
   btnPressedSubtle: {
-    opacity: 0.65,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   continueButtonText: {
     fontFamily: Fonts.urbanist.bold,

@@ -474,8 +474,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,

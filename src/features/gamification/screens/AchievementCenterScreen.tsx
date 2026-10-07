@@ -102,7 +102,7 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
             onPress={handleBack}
-            hitSlop={10}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >

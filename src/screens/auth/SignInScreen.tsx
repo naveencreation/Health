@@ -136,7 +136,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 {email.length > 0 ? (
                   <Pressable
                     onPress={() => setEmail('')}
-                    hitSlop={8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                     accessibilityRole="button"
                     accessibilityLabel="Clear email"
@@ -154,7 +154,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 {onForgotPassword ? (
                   <Pressable
                     onPress={onForgotPassword}
-                    hitSlop={8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                     testID="btn-signin-forgot-password"
                     accessibilityRole="button"
@@ -204,7 +204,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 />
                 <Pressable
                   onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signin-toggle-password"
                   accessibilityRole="button"
@@ -245,7 +245,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 <Text style={styles.footerText}>{"Don't have an account? "}</Text>
                 <Pressable
                   onPress={onSwitchToRegister}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
                   testID="btn-signin-switch-register"
                   accessibilityRole="button"
@@ -420,6 +420,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   pressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
 });

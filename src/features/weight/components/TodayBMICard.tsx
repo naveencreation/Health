@@ -111,7 +111,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({ onOpenLogModal, st
           <Pressable
             style={({ pressed }) => [styles.editCircleBtn, pressed && styles.btnPressed]}
             onPress={handleEditPress}
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel="Update weight to recalculate BMI"
           >
@@ -234,8 +234,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   metricRow: {
     flexDirection: 'row',

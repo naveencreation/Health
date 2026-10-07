@@ -139,7 +139,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
             onPress={() => setModalVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Update weight"
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name={ActionIcons.add} size={IconSizes.compact} color={Colors.weight} />
             <Text style={styles.updateButtonText}>Update</Text>
@@ -204,7 +204,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   titleRow: {
     flexDirection: 'row',
@@ -301,8 +302,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   updateButtonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   updateButtonText: {
     fontFamily: Fonts.urbanist.bold,

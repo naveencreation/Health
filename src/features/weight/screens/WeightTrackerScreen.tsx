@@ -258,7 +258,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
             <Pressable
               style={({ pressed }) => [styles.undoBtn, pressed && styles.undoBtnPressed]}
               onPress={handleUndoDelete}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>
@@ -331,9 +331,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   circleNavBtnPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
     backgroundColor: '#F8FAFC',
-    transform: [{ scale: 0.94 }],
+    transform: [{ scale: 0.96 }],
   },
   scrollArea: {
     flex: 1,
@@ -380,7 +380,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   undoBtnPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   undoBtnText: {
     fontSize: 13,

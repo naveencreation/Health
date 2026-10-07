@@ -429,8 +429,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   circleButtonPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   notificationDot: {
     position: 'absolute',

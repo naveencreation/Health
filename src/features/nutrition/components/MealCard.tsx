@@ -434,11 +434,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryDark,
   },
   pressedSubtle: {
-    opacity: 0.65,
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   pressedAddButton: {
-    opacity: 0.8,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   headerRight: {
     flexDirection: 'row',
@@ -536,8 +537,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     color: Colors.textPrimary,
-    minWidth: 16,
+    minWidth: 24,
     textAlign: 'center',
+    includeFontPadding: false,
   },
   foodCalories: {
     fontFamily: Fonts.urbanist.bold,

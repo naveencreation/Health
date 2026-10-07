@@ -505,6 +505,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   btnPressedSubtle: {
-    opacity: 0.75,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
 });

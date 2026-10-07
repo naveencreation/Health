@@ -171,7 +171,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 <Pressable
                   style={styles.textLinkButton}
                   onPress={onBack}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel="Remember your password? Sign in"
                 >
@@ -249,7 +249,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 <Pressable
                   style={styles.textLinkButton}
                   onPress={() => setIsSent(false)}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel="Use a different email address"
                 >

@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   btnPressedSubtle: {
-    opacity: 0.65,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 
   topSection: {
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   unitButtonPressed: {
-    opacity: 0.85,
+    opacity: 0.9,
     transform: [{ scale: 0.97 }],
   },
   unitButtonActive: {
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     width: 110,
   },
   tickSlotPressed: {
-    opacity: 0.6,
+    opacity: 0.85,
   },
   tickLineSlot: {
     width: 44,
@@ -647,8 +647,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   continueButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
   },
   continueButtonText: {
     fontFamily: Fonts.urbanist.bold,

@@ -451,7 +451,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             <Pressable
               style={({ pressed }) => [styles.headerCircleBtn, pressed && styles.btnPressed]}
               onPress={handleClose}
-              hitSlop={12}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
             >
@@ -469,7 +469,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Pressable
                 style={({ pressed }) => [styles.headerDeleteBtn, pressed && styles.btnPressed]}
                 onPress={handleDeleteEntry}
-                hitSlop={12}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 accessibilityRole="button"
                 accessibilityLabel="Delete entry"
               >
@@ -715,7 +715,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                 <Pressable
                   style={({ pressed }) => [styles.pickerNavBtn, pressed && styles.btnPressed]}
                   onPress={prevMonth}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
                 </Pressable>
@@ -730,7 +730,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   ]}
                   onPress={nextMonth}
                   disabled={isCurrentOrFutureMonth}
-                  hitSlop={8}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons
                     name="chevron-forward"
@@ -865,8 +865,8 @@ const styles = StyleSheet.create({
     width: 38,
   },
   btnPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 
   // 2. Date Quick Ribbon

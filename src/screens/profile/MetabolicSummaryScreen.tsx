@@ -262,8 +262,8 @@ const styles = StyleSheet.create({
     height: 38,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitleContainer: {
     flex: 1,

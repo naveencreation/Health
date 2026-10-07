@@ -619,7 +619,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   adjustButtonPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   adjustButtonText: {
     fontFamily: Fonts.urbanist.semiBold,

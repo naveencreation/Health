@@ -197,7 +197,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               <Pressable
                 style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
                 onPress={onClose}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
@@ -301,7 +301,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     <Pressable
                       style={styles.inputActionIcon}
                       onPress={() => setShowKey(!showKey)}
-                      hitSlop={8}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Ionicons
                         name={showKey ? 'eye-off-outline' : 'eye-outline'}
@@ -481,7 +481,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   scrollContent: {
     paddingHorizontal: 20,

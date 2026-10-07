@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   goalSubtitlePressed: {
-    opacity: 0.7,
+    opacity: 0.9,
   },
   goalSubtitle: {
     fontFamily: Fonts.urbanist.medium,

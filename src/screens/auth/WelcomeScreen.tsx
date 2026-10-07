@@ -317,7 +317,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     pressed ? styles.pressedSubtle : null,
                   ]}
                   onPress={onClose}
-                  hitSlop={10}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
                   accessibilityLabel="Close welcome screen"
                 >
@@ -665,6 +665,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   pressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
 });

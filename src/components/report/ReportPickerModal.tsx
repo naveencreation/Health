@@ -94,7 +94,7 @@ export const ReportPickerModal: React.FC<ReportPickerModalProps> = ({
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
               onPress={onClose}
-              hitSlop={10}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Close modal"
             >
@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   optionsList: {
     paddingTop: 12,

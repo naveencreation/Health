@@ -87,7 +87,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           disabled={currentWater <= 0}
           accessibilityRole="button"
           accessibilityLabel={`Decrease water by ${step} mL`}
-          hitSlop={8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name={ActionIcons.minus} size={IconSizes.standard} color={currentWater <= 0 ? Colors.textLight : Colors.water} />
         </Pressable>
@@ -120,7 +120,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           disabled={currentWater >= maxWater}
           accessibilityRole="button"
           accessibilityLabel={`Increase water by ${step} mL`}
-          hitSlop={8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name={ActionIcons.plus} size={IconSizes.standard} color={currentWater >= maxWater ? Colors.textLight : Colors.water} />
         </Pressable>
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   leftColumnPressed: {
-    opacity: 0.7,
+    opacity: 0.94,
   },
   titleRow: {
     flexDirection: 'row',
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
   },
   buttonPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   buttonDisabled: {
     borderColor: Colors.borderInset,

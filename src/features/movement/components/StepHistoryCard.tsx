@@ -111,7 +111,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
         <Pressable
           style={({ pressed }) => [styles.viewAllBtn, pressed && styles.btnPressed]}
           onPress={() => setIsModalOpen(true)}
-          hitSlop={8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="View all step history"
         >
@@ -187,7 +187,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
                   <Pressable
                     style={({ pressed }) => [styles.kebabBtn, pressed && styles.btnPressed]}
                     onPress={e => handleOpenMenu(entry, e)}
-                    hitSlop={10}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
                     accessibilityLabel="Options for step entry"
                   >
@@ -255,7 +255,8 @@ const styles = StyleSheet.create({
     color: Colors.steps,
   },
   btnPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   dateSubtitle: {
     fontFamily: Fonts.urbanist.medium,

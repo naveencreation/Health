@@ -265,7 +265,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
           <Pressable
             style={({ pressed }) => [styles.viewAllBtn, pressed && styles.btnPressed]}
             onPress={handleViewAllPress}
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel="View all history records"
           >
@@ -355,7 +355,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                       <Pressable
                         style={({ pressed }) => [styles.optionsBtn, pressed && styles.btnPressed]}
                         onPress={e => handleOpenOptions(item, e)}
-                        hitSlop={8}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${item.date}`}
                       >
@@ -375,7 +375,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
               <Pressable
                 style={({ pressed }) => [styles.moreFooterBtn, pressed && styles.btnPressed]}
                 onPress={handleViewAllPress}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel={`View all ${historyItems.length} records`}
               >
@@ -454,7 +454,8 @@ const styles = StyleSheet.create({
     color: Colors.weight
   },
   btnPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   emptyContainer: {
     alignItems: 'center',

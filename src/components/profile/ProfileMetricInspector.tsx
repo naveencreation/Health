@@ -441,7 +441,8 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   pressedSubtle: {
-    opacity: 0.75,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   weightValueRow: {
     flexDirection: 'row',

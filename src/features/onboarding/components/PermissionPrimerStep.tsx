@@ -39,7 +39,7 @@ export const PermissionPrimerStep: React.FC<PermissionPrimerStepProps> = ({
                 await haptics.selection();
                 onBack();
               }}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               testID="btn-permission-back"

@@ -361,8 +361,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   container: {
     flex: 1,

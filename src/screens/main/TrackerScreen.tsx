@@ -298,8 +298,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   container: {
     flex: 1,

@@ -51,7 +51,7 @@ export const DailyWaterGoalModal: React.FC<DailyWaterGoalModalProps> = ({
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
               onPress={onClose}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Close goal editor"
             >
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 });

@@ -671,8 +671,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.65,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
 
   // 2. Strip Row
@@ -770,8 +770,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   pressedCapsule: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
   },
 
   // 3. Month Calendar Modal Styles

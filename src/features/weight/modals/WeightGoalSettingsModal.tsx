@@ -104,7 +104,7 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
               onPress={onClose}
-              hitSlop={10}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Close weight settings"
             >
@@ -295,7 +295,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   scrollBody: {
     paddingBottom: 12,

@@ -1129,8 +1129,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   controlsBar: {
     paddingHorizontal: 16,

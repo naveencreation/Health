@@ -613,8 +613,8 @@ const styles = StyleSheet.create({
     height: 38,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitleContainer: {
     flex: 1,
@@ -841,7 +841,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   byokActionBtnPressed: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   byokActionLeft: {
     flexDirection: 'row',
@@ -984,7 +985,8 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   pressedSubtle: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   flex1: {
     flex: 1,

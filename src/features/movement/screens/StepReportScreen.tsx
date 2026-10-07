@@ -541,8 +541,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,

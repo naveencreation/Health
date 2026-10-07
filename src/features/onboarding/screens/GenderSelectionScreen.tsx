@@ -292,12 +292,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F3FF',
   },
   btnPressedSubtle: {
-    opacity: 0.65,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   genderCardPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
+    opacity: 0.94,
+    transform: [{ scale: 0.97 }],
   },
   cardTextContent: {
     flex: 1,
@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   continueButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
   },
   continueButtonText: {
     fontFamily: Fonts.urbanist.semiBold,

@@ -432,11 +432,11 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   numberRowPressed: {
-    opacity: 0.7,
+    opacity: 0.9,
   },
   btnPressedSubtle: {
-    opacity: 0.65,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   selectedAgeText: {
     fontFamily: Fonts.urbanist.bold,
@@ -483,8 +483,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   continueButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.97 }],
   },
   continueButtonText: {
     fontFamily: Fonts.urbanist.semiBold,

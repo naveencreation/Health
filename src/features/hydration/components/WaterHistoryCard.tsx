@@ -271,7 +271,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
         <Pressable
           style={({ pressed }) => [styles.viewAllBtn, pressed && styles.btnPressed]}
           onPress={handleViewAllPress}
-          hitSlop={8}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="View all water history logs"
         >
@@ -318,7 +318,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 <Pressable
                   style={({ pressed }) => [styles.menuTriggerBtn, pressed && styles.btnPressed]}
                   onPress={e => handleOpenActionMenu(entry, e)}
-                  hitSlop={10}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
                   accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
                 >
@@ -333,7 +333,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
             <Pressable
               style={({ pressed }) => [styles.moreFooterBtn, pressed && styles.btnPressed]}
               onPress={handleViewAllPress}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={`View all ${displayEntries.length} water logs`}
             >
@@ -378,7 +378,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
               <Pressable
                 style={({ pressed }) => [styles.editCloseBtn, pressed && styles.btnPressed]}
                 onPress={() => setEditingEntry(null)}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close edit modal"
               >
@@ -553,7 +553,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
               <Pressable
                 style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
                 onPress={() => setIsViewAllModalOpen(false)}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
@@ -589,7 +589,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                     <Pressable
                       style={({ pressed }) => [styles.menuTriggerBtn, pressed && styles.btnPressed]}
                       onPress={e => handleOpenActionMenu(entry, e)}
-                      hitSlop={8}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Ionicons name="ellipsis-vertical" size={16} color={Colors.textSecondary} />
                     </Pressable>
@@ -1138,6 +1138,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
   },
   btnPressed: {
-    opacity: 0.75,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 });

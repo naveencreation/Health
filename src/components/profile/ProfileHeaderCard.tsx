@@ -42,7 +42,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
             <Pressable
               style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onBack}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Back"
             >
@@ -58,7 +58,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
             <Pressable
               style={({ pressed }) => [styles.navCircleBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onOpenSettings}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Settings"
             >
@@ -75,7 +75,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
         <Pressable
           style={({ pressed }) => [styles.avatarWrapper, pressed ? styles.avatarPressed : null]}
           onPress={onEditAvatar}
-          hitSlop={6}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           accessibilityRole="button"
           accessibilityLabel="Change avatar"
         >
@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   pressedSubtle: {
-    opacity: 0.75,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   identityCard: {
     flexDirection: 'row',

@@ -523,7 +523,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
             <Pressable
               style={({ pressed }) => [styles.undoBtn, pressed && styles.btnPressed]}
               onPress={handleUndoDelete}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Undo weight deletion"
             >
@@ -582,8 +582,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitleContainer: {
     flex: 1,

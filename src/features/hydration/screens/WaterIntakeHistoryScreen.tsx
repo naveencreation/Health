@@ -626,7 +626,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             <Pressable
               style={({ pressed }) => [styles.undoBtn, pressed && styles.btnPressed]}
               onPress={handleUndoDelete}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={`Undo deleting ${undoToast.entry.amountMl} mL ${getBeverageName(undoToast.entry.beverageType)}`}
             >
@@ -987,7 +987,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
   },
   btnPressed: {
-    opacity: 0.75,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   undoToastWrapper: {
     position: 'absolute',

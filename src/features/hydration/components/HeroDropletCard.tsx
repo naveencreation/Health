@@ -251,8 +251,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   btnDisabled: {
     borderColor: '#E2E8F0',

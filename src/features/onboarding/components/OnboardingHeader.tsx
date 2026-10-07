@@ -189,8 +189,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressedSubtle: {
-    opacity: 0.7,
-    backgroundColor: '#E2E8F0',
+    opacity: 0.88,
+    backgroundColor: '#F1F5F9',
     transform: [{ scale: 0.96 }],
   },
   centerContainer: {

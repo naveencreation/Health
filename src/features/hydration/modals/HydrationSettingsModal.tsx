@@ -75,7 +75,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
               onPress={onClose}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Close settings"
             >
@@ -404,6 +404,7 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
   },
   btnPressed: {
-    opacity: 0.8,
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 });

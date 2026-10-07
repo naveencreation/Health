@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   leftColumnPressed: {
-    opacity: 0.75,
+    opacity: 0.94,
   },
   titleRow: {
     flexDirection: 'row',
@@ -615,8 +615,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stepperPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   stepperDisabled: {
     borderColor: Colors.borderInset,
@@ -687,7 +687,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderWhisper,
   },
   activityChipPressed: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
   activityChipLeft: {
     flexDirection: 'row',
@@ -727,7 +728,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityRemovePressed: {
-    opacity: 0.6,
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
   // Modal Styling
   modalOverlay: {
@@ -794,7 +796,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderInset,
   },
   quickCardPressed: {
-    opacity: 0.75,
+    opacity: 0.92,
     transform: [{ scale: 0.97 }],
   },
   quickName: {

@@ -105,7 +105,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Close avatar picker"
             >
@@ -271,8 +271,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedCloseBtn: {
-    opacity: 0.7,
-    backgroundColor: '#E2E8F0',
+    opacity: 0.88,
+    backgroundColor: '#F1F5F9',
+    transform: [{ scale: 0.96 }],
   },
   headerSpacer: {
     width: 38,
@@ -365,7 +366,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   pressedGridCard: {
-    opacity: 0.8,
+    opacity: 0.94,
     transform: [{ scale: 0.97 }],
   },
   avatarThumbWrapper: {

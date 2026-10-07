@@ -605,8 +605,8 @@ const styles = StyleSheet.create({
     color: Colors.successDark,
   },
   btnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   headerTitleContainer: {
     flex: 1,
@@ -870,6 +870,7 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
   },
   pressedSubtle: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
   },
 });

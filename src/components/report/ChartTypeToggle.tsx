@@ -28,9 +28,10 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
     <View style={styles.toggleContainer}>
       {/* 1. Bar Chart Option */}
       <Pressable
-        style={[
+        style={({ pressed }) => [
           styles.toggleBtn,
           isBar && [styles.toggleBtnActive, { backgroundColor: activeColor }],
+          pressed ? styles.btnPressed : null,
         ]}
         onPress={() => onChange('bar')}
         accessibilityRole="button"
@@ -66,9 +67,10 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
 
       {/* 2. Line Chart Option */}
       <Pressable
-        style={[
+        style={({ pressed }) => [
           styles.toggleBtn,
           isLine && [styles.toggleBtnActive, { backgroundColor: activeColor }],
+          pressed ? styles.btnPressed : null,
         ]}
         onPress={() => onChange('line')}
         accessibilityRole="button"
@@ -110,6 +112,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+  btnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
+  },
   toggleBtnActive: {
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
@@ -118,3 +124,4 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
 });
+

@@ -192,7 +192,7 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Close notifications modal"
             >
@@ -341,8 +341,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedCloseBtn: {
-    opacity: 0.7,
-    backgroundColor: '#E2E8F0',
+    opacity: 0.88,
+    backgroundColor: '#F1F5F9',
+    transform: [{ scale: 0.96 }],
   },
   headerSpacer: {
     width: 44,
@@ -369,8 +370,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   pressedActionBtn: {
-    opacity: 0.75,
-    backgroundColor: '#E2E8F0',
+    opacity: 0.88,
+    backgroundColor: '#F1F5F9',
+    transform: [{ scale: 0.98 }],
   },
   actionBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -468,7 +470,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   pressedSubtle: {
-    opacity: 0.6,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   trashIcon: {
     marginRight: 4,

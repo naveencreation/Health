@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedChatBtn: {
-    opacity: 0.7,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   // Conversational Speech Bubble UX
   bubbleWrapper: {
@@ -398,8 +398,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   chipPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   chipSelected: {
     backgroundColor: '#F47551',

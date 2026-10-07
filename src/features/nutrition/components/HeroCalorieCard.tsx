@@ -690,8 +690,8 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   pressedBtnSubtle: {
-    opacity: 0.7,
-    transform: [{ scale: 0.94 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   // Segment Switcher Pill
   segmentPill: {
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   pressedSegment: {
-    opacity: 0.8,
+    opacity: 0.9,
   },
   segmentBtnActive: {
     backgroundColor: Colors.card,
@@ -963,8 +963,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedTimelineBtn: {
-    opacity: 0.7,
-    transform: [{ scale: 0.93 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   timelineBtnSelected: {
     backgroundColor: Colors.textPrimary,
@@ -995,7 +995,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.2)',
   },
   pressedDot: {
-    opacity: 0.7,
+    opacity: 0.88,
   },
   paginationDotActive: {
     width: 16,

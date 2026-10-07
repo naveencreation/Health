@@ -348,7 +348,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
               <Pressable
                 onPress={onClose}
                 style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close Ria chat"
               >
@@ -377,7 +377,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                   styles.clearChatBtn,
                   pressed ? styles.pressedCloseBtn : null,
                 ]}
-                hitSlop={8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel="Clear chat history"
               >
@@ -683,7 +683,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   pressedCloseBtn: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.96 }],
   },
   headerProfile: {
     flexDirection: 'row',

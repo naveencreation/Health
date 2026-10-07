@@ -1093,6 +1093,32 @@
     - **Domain Exceptions**: Preserved dedicated domain iconography for nutrition and hydration (`barley` for carbs grain, `dumbbell` for protein, curated beverage drink glyphs in `beverageUtils`, category glyphs in `FoodIconBadge`).
     - **Verification**: 0 TypeScript errors (`npx tsc --noEmit`) and 72/72 test suites passing (401/401 tests).
 
+31. **Global UI Refinement Pass 7: Shared Interactive Controls Standardization**:
+    - **Central Control Design Tokens (`src/theme/controls.ts`)**:
+      - Defined standardized height tokens: `ControlHeights` (`sm: 36`, `md: 44`, `lg: 48`, `xl: 54`).
+      - Defined control border radii: `ControlRadii` (`sm: 8`, `md: 10`, `lg: 12`, `pill: 9999`).
+      - Defined circular control size scale: `CircularControlSizes` (`sm: 32`, `md: 40`, `lg: 44`, `xl: 48`).
+      - Defined standard hit slop touch-target expanders (`HitSlop.standard` 8px inset, `HitSlop.dense` 4px inset, `HitSlop.spacious` 12px inset).
+      - Reusable `ControlStyles` for primary buttons, outline/secondary, segmented pill tracks, steppers, and restrained press feedback presets.
+      - Exported tokens cleanly via `src/theme/index.ts`.
+    - **Global Elimination of Destructive Tap Bleaching**:
+      - Banned and eliminated all aggressive opacity values (`opacity < 0.85`, e.g. 0.60–0.78) across 64+ component and screen files.
+      - Standardized all button and interactive press states to restrained, tactile, non-bleaching physics:
+        - Primary CTA: `opacity: 0.92, transform: [{ scale: 0.985 }]`
+        - Secondary / Outline / Ghost: `backgroundColor: '#F8FAFC', borderColor: '#CBD5E1', transform: [{ scale: 0.985 }]`
+        - Icon / Circular buttons: `opacity: 0.88, transform: [{ scale: 0.96 }]`
+        - Subtle cards / accessories: `opacity: 0.90, transform: [{ scale: 0.985 }]`
+      - Verified 0 instances of `opacity < 0.85` remain anywhere in `src/`.
+    - **Touch Target Standardization**:
+      - Migrated all deprecated raw number `hitSlop={8}` across 32 files to explicit Inset objects `{ top: 8, bottom: 8, left: 8, right: 8 }` (or `HitSlop.standard`), eliminating modern React Native / Expo console warnings and ensuring min 44x44px touch targets.
+    - **Stepper & Numeric Stability**:
+      - `MealCard.tsx`: Standardized quantity stepper pill with `minWidth: 24` and `includeFontPadding: false` to eliminate horizontal layout jumps when stepping between 1 -> 10 -> 0.5. Standardized `pressedSubtle` and `pressedAddButton` to `0.88`.
+      - `FoodLogModal.tsx`: Stabilized `footerStepperPill` with fixed width and `adjustsFontSizeToFit` and standardized press feedback (`btnPressedSubtle` 0.88, `btnPressedPill` 0.90, `btnPressedPrimary` 0.92).
+      - `WaterTracker.tsx`, `HeroDropletCard.tsx`, and `MovementTrackerCard.tsx`: Standardized circular stepper buttons (`32x32` and `40x40`) with restrained press feedback and standard hit slop.
+    - **Segmented Control Harmonization**:
+      - Standardized track height, continuous squircle curvature (12px outer radius), `#F1F5F9` track fill, and crisp white `#FFFFFF` active tab thumb with whisper border (`rgba(15, 23, 42, 0.06)`) across `ChartTypeToggle.tsx`, `AnalyticsScreen.tsx`, `WaterReportScreen.tsx`, `StepReportScreen.tsx`, and `WeightReportScreen.tsx`.
+    - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
+
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

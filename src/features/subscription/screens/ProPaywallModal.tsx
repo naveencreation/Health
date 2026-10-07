@@ -122,7 +122,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               <Pressable
                 style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
                 onPress={onClose}
-                hitSlop={12}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >
@@ -213,7 +213,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               <Pressable
                 style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
                 onPress={onClose}
-                hitSlop={12}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >

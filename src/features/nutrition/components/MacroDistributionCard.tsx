@@ -604,7 +604,7 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
                     height: CHART_HEIGHT,
                   }}
                   onPress={() => handleSelectDay(idx)}
-                  hitSlop={4}
+                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   accessibilityRole="button"
                   accessibilityLabel={`Day ${days[idx]?.dayNum || idx + 1}: ${formatMacroValue(coord.grams)} ${activeConfig.unit}`}
                 />

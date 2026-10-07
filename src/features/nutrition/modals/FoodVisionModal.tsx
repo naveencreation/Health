@@ -248,7 +248,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onClose}
-              hitSlop={8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="close" size={20} color={Colors.textSecondary} />
             </Pressable>
@@ -598,7 +598,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Pressable
                         style={styles.stepBtn}
                         onPress={() => setPortionMultiplier(p => Math.max(0.5, p - 0.5))}
-                        hitSlop={4}
+                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                       >
                         <Ionicons name="remove" size={16} color={Colors.textSlate700} />
                       </Pressable>
@@ -606,7 +606,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Pressable
                         style={styles.stepBtn}
                         onPress={() => setPortionMultiplier(p => p + 0.5)}
-                        hitSlop={4}
+                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                       >
                         <Ionicons name="add" size={16} color={Colors.textSlate700} />
                       </Pressable>
@@ -630,7 +630,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                             pressed ? styles.slotPillPressed : null,
                           ]}
                           onPress={() => setMealSlot(slot)}
-                          hitSlop={4}
+                          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                         >
                           <Text
                             style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}
@@ -790,7 +790,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressedSubtle: {
-    opacity: 0.7,
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -1282,7 +1283,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   slotPillPressed: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   slotText: {
     fontFamily: Fonts.urbanist.medium,

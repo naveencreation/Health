@@ -231,7 +231,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
               onPress={onClose}
-              hitSlop={10}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Close container selector"
             >
@@ -330,7 +330,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                       setIsCustomMode(false);
                       setCustomError(null);
                     }}
-                    hitSlop={8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text style={styles.cancelCustomText}>Cancel</Text>
                   </Pressable>
@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   btnPressed: {
-    opacity: 0.82,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
 });

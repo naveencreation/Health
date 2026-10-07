@@ -497,8 +497,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   btnPressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.97 }],
   },
   scrollArea: {
     flex: 1,
