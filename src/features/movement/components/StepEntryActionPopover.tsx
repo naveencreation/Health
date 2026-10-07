@@ -85,7 +85,7 @@ export const StepEntryActionPopover: React.FC<StepEntryActionPopoverProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="View session details"
               >
-                <Ionicons name="information-circle-outline" size={17} color="#0F172A" />
+                <Ionicons name="information-circle-outline" size={18} color="#0F172A" />
                 <Text style={styles.menuText}>Details</Text>
               </Pressable>
               <View style={styles.hairlineDivider} />

@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 import { useDailyLog } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
@@ -395,7 +396,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             accessibilityRole="button"
             accessibilityLabel="Back to Water Tracker"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name={ActionIcons.back} size={IconSizes.standard} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -413,7 +414,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               accessibilityRole="button"
               accessibilityLabel="View Hydration Report"
             >
-              <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+              <Ionicons name={ActionIcons.chart} size={IconSizes.standard} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.headerRightSpacer} />
@@ -629,7 +630,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               accessibilityRole="button"
               accessibilityLabel={`Undo deleting ${undoToast.entry.amountMl} mL ${getBeverageName(undoToast.entry.beverageType)}`}
             >
-              <Ionicons name="arrow-undo" size={13} color={Colors.waterSecondary} />
+              <Ionicons name="arrow-undo" size={IconSizes.compact} color={Colors.waterSecondary} />
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>
           </Animated.View>

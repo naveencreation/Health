@@ -78,7 +78,7 @@ export const WeightEntryActionPopover: React.FC<WeightEntryActionPopoverProps> =
             accessibilityRole="button"
             accessibilityLabel="Edit weigh-in"
           >
-            <Ionicons name="pencil-outline" size={17} color="#0F172A" />
+            <Ionicons name="pencil-outline" size={18} color="#0F172A" />
             <Text style={styles.editText}>Edit</Text>
           </Pressable>
 
@@ -95,7 +95,7 @@ export const WeightEntryActionPopover: React.FC<WeightEntryActionPopoverProps> =
             accessibilityRole="button"
             accessibilityLabel="Delete weigh-in"
           >
-            <Ionicons name="trash-outline" size={17} color="#EF4444" />
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
             <Text style={styles.deleteText}>Delete</Text>
           </Pressable>
         </Animated.View>

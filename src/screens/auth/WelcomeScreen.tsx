@@ -321,7 +321,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Close welcome screen"
                 >
-                  <Ionicons name="close" size={22} color="#64748B" />
+                  <Ionicons name="close" size={20} color="#64748B" />
                 </Pressable>
               ) : null}
               <View style={styles.logoRow}>

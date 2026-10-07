@@ -24,6 +24,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
 import { useFoodData, useDailyLog, useGoals } from '@/context/HealthContext';
@@ -410,15 +411,14 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
 interface MealTabItem {
   id: MealType;
   label: string;
-  iconFamily: 'mci' | 'ion';
-  iconName: string;
+  iconName: keyof typeof Ionicons.glyphMap;
 }
 
 const MEAL_TABS: MealTabItem[] = [
-  { id: 'breakfast', label: 'Breakfast', iconFamily: 'mci', iconName: 'weather-sunset' },
-  { id: 'lunch', label: 'Lunch', iconFamily: 'ion', iconName: 'sunny-outline' },
-  { id: 'snacks', label: 'Snacks', iconFamily: 'ion', iconName: 'cafe-outline' },
-  { id: 'dinner', label: 'Dinner', iconFamily: 'ion', iconName: 'moon-outline' },
+  { id: 'breakfast', label: 'Breakfast', iconName: 'partly-sunny-outline' },
+  { id: 'lunch', label: 'Lunch', iconName: 'sunny-outline' },
+  { id: 'snacks', label: 'Snacks', iconName: 'cafe-outline' },
+  { id: 'dinner', label: 'Dinner', iconName: 'moon-outline' },
 ];
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -520,7 +520,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
             accessibilityRole="button"
             accessibilityLabel={`Quick add 1 serving of ${item.name}`}
           >
-            <Ionicons name="add" size={22} color={Colors.onPrimary} />
+            <Ionicons name={ActionIcons.add} size={IconSizes.standard} color={Colors.onPrimary} />
           </Pressable>
         </View>
       </Animated.View>
@@ -1301,7 +1301,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     <View style={styles.nutriCardIconWrap}>
                       <MaterialCommunityIcons
                         name="dumbbell"
-                        size={19}
+                        size={20}
                         color={Colors.water}
                         style={{ transform: [{ rotate: '-45deg' }] }}
                       />
@@ -1336,7 +1336,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   {/* Fat */}
                   <View style={[styles.nutriCard, styles.nutriCardFat]}>
                     <View style={styles.nutriCardIconWrap}>
-                      <Ionicons name="water-outline" size={19} color={Colors.water} />
+                      <Ionicons name="water-outline" size={20} color={Colors.water} />
                     </View>
                     <Text
                       style={styles.nutriVal}
@@ -1535,7 +1535,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
               >
-                <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+                <Ionicons name={ActionIcons.arrowBack} size={IconSizes.standard} color={Colors.textPrimary} />
               </Pressable>
 
               {/* Center: Clean title only — no budget clutter */}
@@ -1582,24 +1582,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Select ${slot.label}`}
                   >
-                    {slot.iconFamily === 'mci' ? (
-                      <MaterialCommunityIcons
+                    <Ionicons
                         name={slot.iconName as any}
-                        size={16}
+                        size={IconSizes.compact}
                         color={iconColor}
                       />
-                    ) : (
-                      <Ionicons
-                        name={slot.iconName as any}
-                        size={16}
-                        color={iconColor}
-                      />
-                    )}
                     <Text
                       style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
                       numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.8}
                     >
                       {slot.label}
                     </Text>

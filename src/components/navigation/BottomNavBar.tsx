@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { haptics } from '@/utils/haptics';
 
 export type TabType = 'today' | 'tracker' | 'analytics' | 'profile';
@@ -56,8 +56,8 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           accessibilityState={{ selected: activeTab === 'today' }}
         >
           <Ionicons
-            name={activeTab === 'today' ? 'home' : 'home-outline'}
-            size={20}
+            name={activeTab === 'today' ? ActionIcons.navTodayActive : ActionIcons.navToday}
+            size={IconSizes.standard}
             color={activeTab === 'today' ? Colors.textPrimary : Colors.textMuted}
           />
           <Text style={[styles.tabLabel, activeTab === 'today' ? styles.tabLabelActive : null]}>
@@ -65,7 +65,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           </Text>
         </Pressable>
 
-        {/* Tab 2: Health Trackers & Biometrics (heart-pulse) */}
+        {/* Tab 2: Health Trackers & Biometrics (heart-pulse -> pulse) */}
         <Pressable
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => handleTabPress('tracker')}
@@ -73,9 +73,9 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           accessibilityLabel="Health Trackers and Biometrics"
           accessibilityState={{ selected: activeTab === 'tracker' }}
         >
-          <MaterialCommunityIcons
-            name="heart-pulse"
-            size={21}
+          <Ionicons
+            name={activeTab === 'tracker' ? ActionIcons.navTrackActive : ActionIcons.navTrack}
+            size={IconSizes.standard}
             color={activeTab === 'tracker' ? Colors.textPrimary : Colors.textMuted}
           />
           <Text style={[styles.tabLabel, activeTab === 'tracker' ? styles.tabLabelActive : null]}>
@@ -92,7 +92,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Snap and analyze meal with Ria AI"
           >
-            <Ionicons name="camera-outline" size={24} color="#FFFFFF" />
+            <Ionicons name={ActionIcons.navScan} size={IconSizes.prominent} color="#FFFFFF" />
           </Pressable>
         </View>
 
@@ -104,23 +104,11 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           accessibilityLabel="Insights and Trends"
           accessibilityState={{ selected: activeTab === 'analytics' }}
         >
-          <Svg
-            width={20}
-            height={20}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={activeTab === 'analytics' ? Colors.textPrimary : Colors.textMuted}
-            strokeWidth={activeTab === 'analytics' ? 2.3 : 1.9}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <Path d="M12 16v5" />
-            <Path d="M16 14.639V21" />
-            <Path d="M20 10.656V21" />
-            <Path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15" />
-            <Path d="M4 18.463V21" />
-            <Path d="M8 14.656V21" />
-          </Svg>
+          <Ionicons
+            name={activeTab === 'analytics' ? ActionIcons.navInsightsActive : ActionIcons.navInsights}
+            size={IconSizes.standard}
+            color={activeTab === 'analytics' ? Colors.textPrimary : Colors.textMuted}
+          />
           <Text style={[styles.tabLabel, activeTab === 'analytics' ? styles.tabLabelActive : null]}>
             Insights
           </Text>
@@ -135,8 +123,8 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           accessibilityState={{ selected: activeTab === 'profile' }}
         >
           <Ionicons
-            name={activeTab === 'profile' ? 'person' : 'person-outline'}
-            size={20}
+            name={activeTab === 'profile' ? ActionIcons.navProfileActive : ActionIcons.navProfile}
+            size={IconSizes.standard}
             color={activeTab === 'profile' ? Colors.textPrimary : Colors.textMuted}
           />
           <Text style={[styles.tabLabel, activeTab === 'profile' ? styles.tabLabelActive : null]}>

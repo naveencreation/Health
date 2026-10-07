@@ -122,7 +122,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
                 : 'Deduct water button disabled'
             }
           >
-            <Ionicons name="remove" size={22} color={canDeduct ? '#0284C7' : '#94A3B8'} />
+            <Ionicons name="remove" size={20} color={canDeduct ? '#0284C7' : '#94A3B8'} />
           </Pressable>
 
           {/* Center: Container Size & Beverage Type Pill Selector */}
@@ -138,7 +138,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
             <Text style={styles.cupSizeText} numberOfLines={1}>
               {cupSize} mL
             </Text>
-            <Ionicons name="chevron-down" size={13} color="#0284C7" style={styles.cupChevron} />
+            <Ionicons name="chevron-down" size={16} color="#0284C7" style={styles.cupChevron} />
           </Pressable>
 
           {/* Right: Quick Plus Button */}
@@ -153,7 +153,7 @@ export const HeroDropletCard = forwardRef<HeroDropletCardRef, HeroDropletCardPro
             accessibilityRole="button"
             accessibilityLabel={`Add ${cupSize} mL ${getBeverageName(beverageType)}`}
           >
-            <Ionicons name="add" size={22} color="#FFFFFF" />
+            <Ionicons name="add" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>

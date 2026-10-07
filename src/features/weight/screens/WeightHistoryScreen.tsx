@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import Svg, { Rect, Circle, Path } from 'react-native-svg';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
@@ -329,7 +330,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Back to Weight Tracker"
             >
-              <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+              <Ionicons name={ActionIcons.back} size={IconSizes.standard} color={Colors.iconNavy} />
             </Pressable>
           </View>
 
@@ -353,7 +354,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="View Weight Report"
             >
-              <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+              <Ionicons name={ActionIcons.chart} size={IconSizes.standard} color={Colors.iconNavy} />
             </Pressable>
 
             <Pressable
@@ -401,11 +402,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                     >
                       {/* Left Scale Icon */}
                       <View style={styles.scaleIconBox}>
-                        <MaterialCommunityIcons
-                          name="scale-bathroom"
-                          size={22}
-                          color={Colors.weight}
-                        />
+                        <Ionicons name="scale-outline" size={IconSizes.standard} color={Colors.weight} />
                       </View>
 
                       {/* Weight, Time & Note */}
@@ -466,7 +463,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${entry.weightKg} ${unit} entry`}
                       >
-                        <Ionicons name="ellipsis-vertical" size={17} color={Colors.textSecondary} />
+                        <Ionicons name={ActionIcons.moreVertical} size={IconSizes.secondary} color={Colors.textSecondary} />
                       </Pressable>
                     </View>
                   );
@@ -530,7 +527,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Undo weight deletion"
             >
-              <Ionicons name="arrow-undo" size={13} color={Colors.waterSecondary} />
+              <Ionicons name="arrow-undo" size={IconSizes.compact} color={Colors.waterSecondary} />
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>
           </Animated.View>

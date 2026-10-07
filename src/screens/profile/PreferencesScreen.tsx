@@ -167,7 +167,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>

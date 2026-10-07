@@ -302,7 +302,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                 accessibilityRole="button"
                 accessibilityLabel="Back"
               >
-                <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+                <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
               </Pressable>
             </View>
 
@@ -320,7 +320,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                 accessibilityRole="button"
                 accessibilityLabel="View Step Report"
               >
-                <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+                <Ionicons name="stats-chart-outline" size={20} color={Colors.iconNavy} />
               </Pressable>
             </View>
           </View>
@@ -433,7 +433,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                   accessibilityRole="button"
                                   accessibilityLabel="More options"
                                 >
-                                  <Ionicons name="ellipsis-vertical" size={17} color={Colors.textPrimary} />
+                                  <Ionicons name="ellipsis-vertical" size={18} color={Colors.textPrimary} />
                                 </Pressable>
                               </View>
                             );

@@ -126,7 +126,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >
-                <Ionicons name="close" size={22} color={Colors.textPrimary} />
+                <Ionicons name="close" size={20} color={Colors.textPrimary} />
               </Pressable>
             </View>
 
@@ -217,7 +217,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >
-                <Ionicons name="close" size={22} color={Colors.textPrimary} />
+                <Ionicons name="close" size={20} color={Colors.textPrimary} />
               </Pressable>
             </View>
 

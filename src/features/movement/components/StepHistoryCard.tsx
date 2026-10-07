@@ -191,7 +191,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Options for step entry"
                   >
-                    <Ionicons name="ellipsis-vertical" size={17} color="#64748B" />
+                    <Ionicons name="ellipsis-vertical" size={18} color="#64748B" />
                   </Pressable>
                 </View>
               );

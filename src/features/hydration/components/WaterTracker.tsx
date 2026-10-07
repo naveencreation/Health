@@ -1,10 +1,11 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, StyleProp, ViewStyle } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { DropletVisualizer, DropletVisualizerRef } from './DropletVisualizer';
 import { useHydration } from '../hooks/useHydration';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 
 const DEFAULT_STEP = 250;
 
@@ -61,10 +62,10 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
       >
         <View style={styles.titleRow}>
           <View style={styles.iconBadge}>
-            <Ionicons name="water" size={14} color={Colors.water} />
+            <Ionicons name="water" size={IconSizes.compact} color={Colors.water} />
           </View>
           <Text style={styles.title}>Water</Text>
-          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={styles.titleChevron} />
+          <Ionicons name={ActionIcons.chevronRight} size={IconSizes.compact} color={Colors.textMuted} style={styles.titleChevron} />
         </View>
         <View style={styles.mainStatRow}>
           <Text style={styles.mainStatText}>{currentWater.toLocaleString()}</Text>
@@ -88,7 +89,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Decrease water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather name="minus" size={20} color={currentWater <= 0 ? Colors.textLight : Colors.water} />
+          <Ionicons name={ActionIcons.minus} size={IconSizes.standard} color={currentWater <= 0 ? Colors.textLight : Colors.water} />
         </Pressable>
 
         {/* Center Droplet with Outer 3D Halo Contour & Dual Wave Simulation */}
@@ -121,7 +122,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Increase water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather name="plus" size={20} color={currentWater >= maxWater ? Colors.textLight : Colors.water} />
+          <Ionicons name={ActionIcons.plus} size={IconSizes.standard} color={currentWater >= maxWater ? Colors.textLight : Colors.water} />
         </Pressable>
       </View>
     </View>

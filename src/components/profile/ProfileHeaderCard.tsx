@@ -62,7 +62,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Settings"
             >
-              <Ionicons name="settings-outline" size={19} color={Colors.iconNavy} />
+              <Ionicons name="settings-outline" size={20} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.navPlaceholder} />

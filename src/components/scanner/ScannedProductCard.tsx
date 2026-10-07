@@ -12,6 +12,7 @@ import { Image } from 'expo-image';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { Fonts } from '@/theme/typography';
 import { NormalizedFoodItem } from '@/types/barcode';
 import { MealType } from '@/types';
@@ -33,13 +34,12 @@ const MULTIPLIER_PRESETS = [0.5, 1, 1.5, 2];
 const MEAL_OPTIONS: Array<{
   id: MealType;
   label: string;
-  iconFamily: 'mci' | 'ionicons';
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }> = [
-  { id: 'breakfast', label: 'Breakfast', iconFamily: 'mci', icon: 'weather-sunset' },
-  { id: 'lunch', label: 'Lunch', iconFamily: 'ionicons', icon: 'sunny-outline' },
-  { id: 'snacks', label: 'Snacks', iconFamily: 'ionicons', icon: 'cafe-outline' },
-  { id: 'dinner', label: 'Dinner', iconFamily: 'ionicons', icon: 'moon-outline' },
+  { id: 'breakfast', label: 'Breakfast', icon: 'partly-sunny-outline' },
+  { id: 'lunch', label: 'Lunch', icon: 'sunny-outline' },
+  { id: 'snacks', label: 'Snacks', icon: 'cafe-outline' },
+  { id: 'dinner', label: 'Dinner', icon: 'moon-outline' },
 ];
 
 /**
@@ -201,7 +201,7 @@ export function ScannedProductCard({
             accessibilityRole="button"
             accessibilityLabel="Back to barcode scanner"
           >
-            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+            <Ionicons name={ActionIcons.arrowBack} size={IconSizes.standard} color={Colors.textPrimary} />
           </Pressable>
 
           <Text style={styles.appBarTitle}>Item Details</Text>
@@ -214,7 +214,7 @@ export function ScannedProductCard({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={22} color={Colors.textPrimary} />
+              <Ionicons name={ActionIcons.close} size={IconSizes.standard} color={Colors.textPrimary} />
             </Pressable>
           ) : (
             <View style={{ width: 40 }} />
@@ -296,7 +296,7 @@ export function ScannedProductCard({
           accessibilityRole="button"
           accessibilityLabel="Back to scanner"
         >
-          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          <Ionicons name={ActionIcons.arrowBack} size={IconSizes.standard} color={Colors.textPrimary} />
         </Pressable>
 
         <Text style={styles.appBarTitle}>Log Scanned Item</Text>
@@ -312,7 +312,7 @@ export function ScannedProductCard({
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={22} color={Colors.textPrimary} />
+            <Ionicons name={ActionIcons.close} size={IconSizes.standard} color={Colors.textPrimary} />
           </Pressable>
         ) : (
           <View style={{ width: 40 }} />
@@ -356,7 +356,7 @@ export function ScannedProductCard({
 
               {effectiveProduct.id ? (
                 <View style={styles.barcodePill}>
-                  <MaterialCommunityIcons name="barcode" size={12} color={Colors.textSecondary} style={{ marginRight: 3 }} />
+                  <Ionicons name="barcode-outline" size={IconSizes.compact} color={Colors.textSecondary} style={{ marginRight: 3 }} />
                   <Text style={styles.barcodePillText} numberOfLines={1}>
                     {effectiveProduct.id}
                   </Text>
@@ -369,7 +369,7 @@ export function ScannedProductCard({
             </Text>
 
             <View style={styles.servingTagRow}>
-              <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} style={{ marginRight: 5 }} />
+              <Ionicons name={ActionIcons.calendar} size={IconSizes.compact} color={Colors.textSecondary} style={{ marginRight: 5 }} />
               <Text style={styles.servingTagText}>
                 {effectiveProduct.servingSize || 'Standard 100g serving'}
               </Text>
@@ -382,7 +382,7 @@ export function ScannedProductCard({
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Assign to meal</Text>
             <View style={styles.timeTag}>
-              <Ionicons name="time-outline" size={14} color={Colors.textSecondary} style={{ marginRight: 4 }} />
+              <Ionicons name={ActionIcons.clock} size={IconSizes.compact} color={Colors.textSecondary} style={{ marginRight: 4 }} />
               <Text style={styles.timeTagText}>{formatCurrentTime()}</Text>
             </View>
           </View>
@@ -406,25 +406,16 @@ export function ScannedProductCard({
                   accessibilityRole="button"
                   accessibilityLabel={`Select ${slot.label}`}
                 >
-                  {slot.iconFamily === 'mci' ? (
-                    <MaterialCommunityIcons
-                      name={slot.icon as any}
-                      size={24}
-                      color={iconColor}
-                      style={styles.mealCardIcon}
-                    />
-                  ) : (
-                    <Ionicons
-                      name={slot.icon as any}
-                      size={24}
-                      color={iconColor}
-                      style={styles.mealCardIcon}
-                    />
-                  )}
+                  <Ionicons
+                    name={slot.icon as any}
+                    size={IconSizes.standard}
+                    color={iconColor}
+                    style={styles.mealCardIcon}
+                  />
                   <Text
                     style={[
                       styles.mealCardLabel,
-                      isActive ? styles.mealCardLabelActive : null,
+                      isActive && styles.mealCardLabelActive,
                     ]}
                   >
                     {slot.label}
@@ -541,7 +532,7 @@ export function ScannedProductCard({
               accessibilityRole="button"
               accessibilityLabel="Save package values"
             >
-              <Ionicons name="checkmark-circle" size={17} color={Colors.onPrimary} style={{ marginRight: 6 }} />
+              <Ionicons name="checkmark-circle" size={18} color={Colors.onPrimary} style={{ marginRight: 6 }} />
               <Text style={styles.editorApplyBtnText}>Save Package Values</Text>
             </Pressable>
           </View>
@@ -725,7 +716,7 @@ export function ScannedProductCard({
           accessibilityRole="button"
           accessibilityLabel={`Add to ${activeMealLabel}, ${calculatedCalories} calories`}
         >
-          <Ionicons name="checkmark-circle-outline" size={22} color={Colors.onPrimary} style={styles.btnIcon} />
+          <Ionicons name="checkmark-circle-outline" size={20} color={Colors.onPrimary} style={styles.btnIcon} />
           <Text style={styles.primaryButtonText}>
             Add to {activeMealLabel} • {calculatedCalories} kcal
           </Text>

@@ -138,7 +138,7 @@ export const ReportPickerModal: React.FC<ReportPickerModalProps> = ({
                   {/* Selection indicator */}
                   <View style={styles.checkWrap}>
                     {isSelected ? (
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.primary} />
+                      <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
                     ) : (
                       <View style={styles.unselectedRing} />
                     )}

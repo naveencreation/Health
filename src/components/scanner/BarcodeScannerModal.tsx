@@ -118,7 +118,7 @@ export function BarcodeScannerModal({
                 accessibilityRole="button"
                 accessibilityLabel="Close camera"
               >
-                <Ionicons name="close" size={22} color="#0F172A" />
+                <Ionicons name="close" size={20} color="#0F172A" />
               </Pressable>
             </View>
 
@@ -226,7 +226,7 @@ export function BarcodeScannerModal({
                   accessibilityRole="button"
                   accessibilityLabel="Close scanner"
                 >
-                  <Ionicons name="close" size={22} color="#0F172A" />
+                  <Ionicons name="close" size={20} color="#0F172A" />
                 </Pressable>
 
                 <View style={styles.headerTitleContainer}>

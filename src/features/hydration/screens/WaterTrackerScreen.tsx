@@ -183,7 +183,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Back to today dashboard"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -294,7 +294,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
             style={styles.undoToastCard}
           >
             <View style={styles.undoToastInfo}>
-              <Ionicons name="checkmark-circle" size={17} color="#059669" />
+              <Ionicons name="checkmark-circle" size={18} color="#059669" />
               <Text style={styles.undoToastText} numberOfLines={1}>
                 Added {undoToast.amount} mL {getBeverageName(undoToast.beverage)}
               </Text>

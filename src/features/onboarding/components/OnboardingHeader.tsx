@@ -85,7 +85,7 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
         <View style={styles.centerContainer} pointerEvents="box-none">
           <View style={styles.logoRow}>
             <View style={styles.logoIconBadge}>
-              <Ionicons name="flame" size={17} color="#FFFFFF" />
+              <Ionicons name="flame" size={18} color="#FFFFFF" />
             </View>
             <Text style={styles.logoText}>Calorify</Text>
           </View>

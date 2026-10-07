@@ -355,3 +355,48 @@ The defining visual signature of Calorify is the **10px Architectural Squircle**
 6. **No Stiff Circular Corners**: Standard un-smoothed circular arc corners are forbidden where squircle curvature is possible.
 7. **No Gray Progress Tracks**: Never use dull gray tracks for nutrient or activity progress bars; always use the calibrated 10%–15% pastel container tint.
 8. **No AI Copywriting Clichés**: Avoid words like *"Elevate"*, *"Seamless"*, *"Unleash"*, *"Next-Gen"*. Use calm, direct, supportive health language.
+9. **No Mixed Icon Families**: Do not mix Feather, AntDesign, FontAwesome, or ad-hoc SVGs for standard UI actions. General UI actions are strictly standardized on **Ionicons**.
+
+---
+
+## 9. Iconography System & Canonical Tokens
+
+### 1. Primary Icon Family
+- **Library**: `Ionicons` (`@expo/vector-icons`).
+- **Visual Weight**: Consistent outline language with ~1.8–2.0px optical stroke weight.
+- **Rule**: Feather is eliminated from UI rendering. Ionicons is the single canonical outline family for general UI actions.
+
+### 2. Semantic Size Scale
+- **`16px` (Compact)**: Metadata chips, badge icons, micro-details, inline status.
+- **`18px` (Secondary)**: Popover actions, secondary buttons, list accessory chevrons.
+- **`20px` (Standard)**: Primary interactive controls, navigation tabs, search inputs, modal triggers.
+- **`24px` (Prominent)**: Hero controls, Center Scan FAB, modal dismiss triggers.
+- *Odd / Arbitrary sizes (17, 19, 21, 22, 23px) are strictly prohibited.*
+
+### 3. Canonical Action Mappings
+- **Back / Navigation**: `chevron-back` (subscreens) / `arrow-back` (modals).
+- **Forward / Disclosure**: `chevron-forward` / `arrow-forward`.
+- **Close / Dismiss**: `close` / `close-circle`.
+- **Add / Stepper Plus**: `add`.
+- **Remove / Stepper Minus**: `remove`.
+- **Edit**: `pencil-outline`.
+- **Delete**: `trash-outline`.
+- **Search**: `search-outline`.
+- **Settings**: `settings-outline`.
+- **Calendar**: `calendar-outline`.
+- **Clock / Time**: `time-outline`.
+- **Check / Confirm**: `checkmark` / `checkmark-circle`.
+- **More / Overflow**: `ellipsis-horizontal` / `ellipsis-vertical`.
+- **Chart / Analytics**: `stats-chart-outline` / `stats-chart`.
+
+### 4. Navigation Shell Iconography
+- **Today**: `home-outline` (inactive) / `home` (active) — 20px
+- **Track**: `pulse-outline` (inactive) / `pulse` (active) — 20px
+- **Scan FAB**: `camera-outline` — 24px (White `#FFFFFF` on `#CDE26D` Lime Accent)
+- **Insights**: `stats-chart-outline` (inactive) / `stats-chart` (active) — 20px
+- **Profile**: `person-outline` (inactive) / `person` (active) — 20px
+
+### 5. Domain-Specific Exceptions
+- **Carbs / Grain**: `MaterialCommunityIcons` `barley`.
+- **Beverage Types**: Curated drink glyphs in `beverageUtils` (coffee, tea, cup-water, etc.).
+- **Food Badges**: Domain category icons in `FoodIconBadge`.

@@ -426,7 +426,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
               <Text style={styles.confirmBtnText}>
                 Set Container · {selectedSize} mL {activeBeverage.name}
               </Text>
-              <Ionicons name="checkmark-circle" size={19} color={Colors.onPrimary} />
+              <Ionicons name="checkmark-circle" size={20} color={Colors.onPrimary} />
             </Pressable>
           </View>
         </View>

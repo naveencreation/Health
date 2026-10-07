@@ -289,7 +289,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            <Ionicons name="chevron-back" size={20} color="#0F172A" />
           </Pressable>
 
           <Text style={styles.headerTitle}>Step Tracker</Text>

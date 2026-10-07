@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, Text, Pressable, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes } from '@/theme/icons';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -53,8 +54,8 @@ const GOAL_OPTIONS: GoalCardItem[] = [
     title: 'Maintain my weight',
     subtitle: 'Equilibrium to optimize daily energy & health',
     reassurance: "We'll help you balance what you eat without restricting.",
-    iconName: 'scale-balance',
-    iconFamily: 'mci',
+    iconName: 'scale-outline',
+    iconFamily: 'ionicons',
     iconColor: '#16A34A',
   },
   {
@@ -160,15 +161,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                     testID={`goal-card-${option.id}`}
                   >
                     <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
-                      {option.iconFamily === 'ionicons' ? (
-                        <Ionicons name={option.iconName as any} size={22} color={option.iconColor} />
-                      ) : (
-                        <MaterialCommunityIcons
-                          name={option.iconName as any}
-                          size={22}
-                          color={option.iconColor}
-                        />
-                      )}
+                      <Ionicons name={option.iconName as any} size={IconSizes.standard} color={option.iconColor} />
                     </View>
 
                     <View style={styles.cardTextContent}>
@@ -201,7 +194,7 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
                       style={styles.reassuranceBanner}
                       testID={`reassurance-${option.id}`}
                     >
-                      <Ionicons name="sparkles" size={14} color="#F47551" style={styles.reassuranceIcon} />
+                      <Ionicons name="sparkles" size={IconSizes.compact} color="#F47551" style={styles.reassuranceIcon} />
                       <Text style={styles.reassuranceText}>{option.reassurance}</Text>
                     </Animated.View>
                   )}

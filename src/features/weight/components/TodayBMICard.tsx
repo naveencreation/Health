@@ -12,10 +12,11 @@ import {
   ViewStyle,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { LogWeightModal } from '../modals/LogWeightModal';
 
 import {
@@ -100,7 +101,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({ onOpenLogModal, st
         <View style={styles.headerRow}>
           <View style={styles.titleLeft}>
             <View style={styles.iconBadge}>
-              <Ionicons name="speedometer-outline" size={14} color="#059669" />
+              <Ionicons name="speedometer-outline" size={IconSizes.compact} color="#059669" />
             </View>
             <Text style={styles.headerTitle}>BMI</Text>
             <View style={styles.unitTag}>
@@ -114,7 +115,7 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({ onOpenLogModal, st
             accessibilityRole="button"
             accessibilityLabel="Update weight to recalculate BMI"
           >
-            <Feather name="edit-2" size={13} color="#64748B" />
+            <Ionicons name={ActionIcons.edit} size={IconSizes.compact} color="#64748B" />
           </Pressable>
         </View>
 

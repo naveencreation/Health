@@ -373,7 +373,7 @@ export const TargetWeightScreen: React.FC<TargetWeightScreenProps> = ({
           {/* Live Feedback Card */}
           <View style={styles.feedbackCard} testID="live-feedback-card">
             <View style={styles.feedbackHeader}>
-              <Ionicons name="trending-up-outline" size={17} color="#F47551" />
+              <Ionicons name="trending-up-outline" size={18} color="#F47551" />
               <Text style={styles.feedbackTitle}>Projected Timeline</Text>
             </View>
             <Text style={styles.feedbackBody}>

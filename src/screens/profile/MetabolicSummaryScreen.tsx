@@ -44,7 +44,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>
@@ -64,7 +64,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Tune goals"
             >
-              <Ionicons name="options-outline" size={19} color={Colors.iconNavy} />
+              <Ionicons name="options-outline" size={20} color={Colors.iconNavy} />
             </Pressable>
           ) : (
             <View style={styles.headerPlaceholder} />

@@ -78,7 +78,7 @@ export const WaterEntryActionPopover: React.FC<WaterEntryActionPopoverProps> = (
             accessibilityRole="button"
             accessibilityLabel="Edit entry"
           >
-            <Ionicons name="pencil-outline" size={17} color="#0F172A" />
+            <Ionicons name="pencil-outline" size={18} color="#0F172A" />
             <Text style={styles.editText}>Edit</Text>
           </Pressable>
 
@@ -95,7 +95,7 @@ export const WaterEntryActionPopover: React.FC<WaterEntryActionPopoverProps> = (
             accessibilityRole="button"
             accessibilityLabel="Delete entry"
           >
-            <Ionicons name="trash-outline" size={17} color="#EF4444" />
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
             <Text style={styles.deleteText}>Delete</Text>
           </Pressable>
         </Animated.View>

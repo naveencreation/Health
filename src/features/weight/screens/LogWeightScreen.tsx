@@ -12,7 +12,8 @@ import {
   Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { useDailyLog, useGoals, getTodayDateString } from '@/context/HealthContext';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -454,7 +455,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel"
             >
-              <Ionicons name="close" size={22} color={Colors.textPrimary} />
+              <Ionicons name={ActionIcons.close} size={IconSizes.standard} color={Colors.textPrimary} />
             </Pressable>
 
             <View style={styles.headerTitleCenter}>
@@ -513,12 +514,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               style={[styles.dateChip, isCustomDate && styles.dateChipActive]}
               onPress={() => setIsDatePickerOpen(true)}
             >
-              <Ionicons
-                name="calendar-outline"
-                size={14}
-                color={isCustomDate ? Colors.weight : Colors.textSecondary}
-                style={{ marginRight: 5 }}
-              />
+              <Ionicons name={ActionIcons.calendar} size={IconSizes.compact} color={isCustomDate ? Colors.weight : Colors.textSecondary} style={{ marginRight: 5 }} />
               <Text style={[styles.dateChipText, isCustomDate && styles.dateChipTextActive]}>
                 {customDateChipLabel}
               </Text>
@@ -594,7 +590,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   {unit}
                 </Text>
                 <View style={styles.editPencilBadge}>
-                  <Feather name="edit-2" size={14} color={Colors.textMuted} />
+                  <Ionicons name={ActionIcons.edit} size={IconSizes.compact} color={Colors.textMuted} />
                 </View>
               </Pressable>
             )}
@@ -602,12 +598,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             {/* Goal Diff Hint */}
             {goalDiffHint && (
               <View style={styles.goalHintContainer}>
-                <Ionicons
-                  name="flag-outline"
-                  size={13}
-                  color={Colors.weightDark}
-                  style={{ marginRight: 4 }}
-                />
+                <Ionicons name="flag-outline" size={IconSizes.compact} color={Colors.weightDark} style={{ marginRight: 4 }} />
                 <Text style={styles.goalHintText}>{goalDiffHint}</Text>
               </View>
             )}
@@ -672,12 +663,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
 
             {/* Note Input */}
             <View style={styles.noteInputRow}>
-              <Ionicons
-                name="create-outline"
-                size={17}
-                color={Colors.textMuted}
-                style={{ marginRight: 8 }}
-              />
+              <Ionicons name={ActionIcons.edit} size={IconSizes.secondary} color={Colors.textMuted} style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.noteTextInput}
                 placeholder="Add personal note (e.g. after morning run)..."

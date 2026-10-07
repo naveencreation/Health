@@ -6,7 +6,8 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -76,7 +77,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
           >
             <View style={styles.titleRow}>
               <View style={styles.iconBadge}>
-                <Ionicons name="scale-outline" size={14} color={Colors.weight} />
+                <Ionicons name="scale-outline" size={IconSizes.compact} color={Colors.weight} />
               </View>
               <Text style={styles.title}>Weight</Text>
               <Ionicons
@@ -140,7 +141,7 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
             accessibilityLabel="Update weight"
             hitSlop={8}
           >
-            <Ionicons name="add" size={14} color={Colors.weight} />
+            <Ionicons name={ActionIcons.add} size={IconSizes.compact} color={Colors.weight} />
             <Text style={styles.updateButtonText}>Update</Text>
           </Pressable>
         </View>

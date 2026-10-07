@@ -225,7 +225,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Open settings and preferences"
           >
-            <Ionicons name="settings-outline" size={19} color={Colors.iconNavy} />
+            <Ionicons name="settings-outline" size={20} color={Colors.iconNavy} />
           </Pressable>
         </View>
       </View>

@@ -366,7 +366,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
             accessibilityRole="button"
             accessibilityLabel="Back to Step History"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <Text style={styles.headerTitle}>Step Report</Text>

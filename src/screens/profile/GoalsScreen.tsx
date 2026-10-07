@@ -122,7 +122,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <View style={styles.headerTitleContainer}>

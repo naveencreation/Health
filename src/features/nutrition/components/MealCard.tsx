@@ -202,7 +202,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Add food to ${title}`}
         >
-          <Ionicons name="add" size={22} color={Colors.protein} />
+          <Ionicons name="add" size={20} color={Colors.protein} />
         </Pressable>
       </View>
 
@@ -254,7 +254,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Decrease quantity"
                       >
-                        <Ionicons name="remove" size={13} color="#475569" />
+                        <Ionicons name="remove" size={16} color="#475569" />
                       </Pressable>
 
                       <Text style={styles.stepperQty}>{item.quantity}</Text>
@@ -275,7 +275,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Increase quantity"
                       >
-                        <Ionicons name="add" size={13} color="#475569" />
+                        <Ionicons name="add" size={16} color="#475569" />
                       </Pressable>
                     </View>
 
@@ -295,7 +295,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                       accessibilityRole="button"
                       accessibilityLabel={`Remove ${item.name}`}
                     >
-                      <Ionicons name="close" size={15} color="#94A3B8" />
+                      <Ionicons name="close" size={16} color="#94A3B8" />
                     </Pressable>
                   </View>
                 </View>

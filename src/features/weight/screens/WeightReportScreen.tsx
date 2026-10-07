@@ -332,7 +332,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
           accessibilityRole="button"
           accessibilityLabel="Back to Weight Tracker"
         >
-          <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+          <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
         </Pressable>
 
         <Text style={styles.headerTitle}>Weight Report</Text>

@@ -337,7 +337,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
           accessibilityRole="button"
           accessibilityLabel="Back to Water Tracker"
         >
-          <Ionicons name="chevron-back" size={22} color={Colors.iconNavy} />
+          <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
         </Pressable>
 
         <Text style={styles.headerTitle}>Report</Text>

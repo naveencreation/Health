@@ -154,7 +154,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Back to today dashboard"
           >
-            <Ionicons name="arrow-back" size={21} color={Colors.iconNavy} />
+            <Ionicons name="arrow-back" size={20} color={Colors.iconNavy} />
           </Pressable>
         </View>
 
@@ -170,7 +170,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Weight Report and Analytics"
           >
-            <Ionicons name="stats-chart-outline" size={19} color={Colors.iconNavy} />
+            <Ionicons name="stats-chart-outline" size={20} color={Colors.iconNavy} />
           </Pressable>
 
           <Pressable
@@ -250,7 +250,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
         >
           <View style={styles.toastCard}>
             <View style={styles.toastLeft}>
-              <Ionicons name="trash-outline" size={17} color="#94A3B8" />
+              <Ionicons name="trash-outline" size={18} color="#94A3B8" />
               <Text style={styles.toastText}>
                 Deleted {undoToast.entry.weightKg.toFixed(1)} kg entry
               </Text>

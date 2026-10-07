@@ -10,7 +10,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
-import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { useHydration } from '../hooks/useHydration';
 import { WaterLogEntry } from '@/types';
 import { Fonts } from '@/theme/typography';
@@ -275,7 +276,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
           accessibilityLabel="View all water history logs"
         >
           <Text style={styles.viewAllText}>View All</Text>
-          <Ionicons name="arrow-forward" size={14} color={Colors.water} />
+          <Ionicons name={ActionIcons.arrowForward} size={IconSizes.compact} color={Colors.water} />
         </Pressable>
       </View>
 
@@ -393,7 +394,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 accessibilityRole="button"
                 accessibilityLabel="Decrease 50 mL"
               >
-                <Ionicons name="remove" size={22} color={Colors.water} />
+                <Ionicons name={ActionIcons.remove} size={IconSizes.standard} color={Colors.water} />
               </Pressable>
               <View style={styles.stepperValueBox}>
                 <Text style={styles.stepperValueText}>{editVolume}</Text>
@@ -405,7 +406,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 accessibilityRole="button"
                 accessibilityLabel="Increase 50 mL"
               >
-                <Ionicons name="add" size={22} color={Colors.water} />
+                <Ionicons name={ActionIcons.add} size={IconSizes.standard} color={Colors.water} />
               </Pressable>
             </View>
 

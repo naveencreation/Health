@@ -1084,6 +1084,15 @@
       - **Fixed Bottom Action Dock**: Floating action bar anchored with safe area padding, hosting primary CTA (`Add to [Meal] • X kcal`) and secondary (`Scan Another Item`).
     - **Testing & Verification**: 71/71 test suites passing 100% green (394/394 tests), 0 TypeScript errors (`npx tsc --noEmit`).
 
+30. **Global UI Refinement Pass 6: Iconography Standardization**:
+    - **Primary Icon Family**: Standardized 100% of general UI action icons onto **`Ionicons`** (`@expo/vector-icons`), providing a unified outline visual weight (~1.8–2.0px stroke).
+    - **Complete Feather Elimination**: Removed all `Feather` usages (7 active usages across steppers, edit buttons, and chevron arrows in `WaterTracker`, `MovementTrackerCard`, `TodayBMICard`, `WeightHistoryCard`, and `LogWeightScreen`), plus all unused imports. Zero `Feather` usages remain in UI rendering.
+    - **Navigation Shell Iconography**: Standardized `BottomNavBar.tsx` to Ionicons across all 4 destinations (Today: `home-outline`/`home` 20px, Track: `pulse-outline`/`pulse` 20px, Insights: `stats-chart-outline`/`stats-chart` 20px, Profile: `person-outline`/`person` 20px). Maintained center Scan FAB with `camera-outline` (24px, #FFFFFF on #CDE26D Lime Accent).
+    - **Design Tokens**: Created `src/theme/icons.ts` with `IconSizes` (`compact: 16`, `secondary: 18`, `standard: 20`, `prominent: 24`) and `ActionIcons` canonical semantic mappings, exported via `src/theme/index.ts`.
+    - **Size Normalization**: Completely eliminated odd/arbitrary icon sizes (17px, 19px, 21px, 22px, 23px) across 41 files in `src/`. All UI action icons now strictly conform to the 16 / 18 / 20 / 24px scale.
+    - **Domain Exceptions**: Preserved dedicated domain iconography for nutrition and hydration (`barley` for carbs grain, `dumbbell` for protein, curated beverage drink glyphs in `beverageUtils`, category glyphs in `FoodIconBadge`).
+    - **Verification**: 0 TypeScript errors (`npx tsc --noEmit`) and 72/72 test suites passing (401/401 tests).
+
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

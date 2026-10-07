@@ -86,7 +86,7 @@ export const HealthConnectSyncCard: React.FC<HealthConnectSyncCardProps> = ({
               {loading ? (
                 <ActivityIndicator size="small" color="#0F172A" />
               ) : (
-                <Ionicons name="sync-outline" size={17} color="#0F172A" />
+                <Ionicons name="sync-outline" size={18} color="#0F172A" />
               )}
             </Pressable>
           </View>

@@ -18,9 +18,10 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { useMovement } from '../hooks/useMovement';
 import { WorkoutActivity } from '@/types';
 
@@ -231,12 +232,12 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
         >
           <View style={styles.titleRow}>
             <View style={styles.iconBadge}>
-              <Ionicons name="footsteps-outline" size={14} color={Colors.steps} />
+              <Ionicons name="footsteps-outline" size={IconSizes.compact} color={Colors.steps} />
             </View>
             <Text style={styles.title}>Movement</Text>
             <Ionicons
-              name="chevron-forward"
-              size={14}
+              name={ActionIcons.chevronRight}
+              size={IconSizes.compact}
               color="#94A3B8"
               style={styles.titleChevron}
             />
@@ -259,7 +260,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
           accessibilityLabel="Log workout"
           hitSlop={HIT_SLOP_8}
         >
-          <Ionicons name="barbell-outline" size={14} color={Colors.steps} />
+          <Ionicons name="barbell-outline" size={IconSizes.compact} color={Colors.steps} />
           <Text style={styles.workoutButtonText}>+ Workout</Text>
         </Pressable>
       </View>
@@ -279,7 +280,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
       <View style={styles.footerRow}>
         {isGoalReached ? (
           <View style={styles.goalReachedBadge}>
-            <Ionicons name="sparkles" size={13} color="#D97706" />
+            <Ionicons name="sparkles" size={IconSizes.compact} color="#D97706" />
             <Text style={styles.goalReachedText}>Goal Smashed! ({actualStepPercent}%)</Text>
           </View>
         ) : (
@@ -301,7 +302,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
             accessibilityLabel="Decrease steps by 1,000"
             hitSlop={HIT_SLOP_8}
           >
-            <Feather name="minus" size={15} color={steps <= 0 ? '#CBD5E1' : Colors.steps} />
+            <Ionicons name={ActionIcons.minus} size={IconSizes.compact} color={steps <= 0 ? '#CBD5E1' : Colors.steps} />
           </Pressable>
 
           <Pressable
@@ -311,7 +312,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
             accessibilityLabel="Add 1,000 steps"
             hitSlop={HIT_SLOP_8}
           >
-            <Feather name="plus" size={14} color={Colors.steps} />
+            <Ionicons name={ActionIcons.plus} size={IconSizes.compact} color={Colors.steps} />
             <Text style={styles.stepAddBtnText}>1k steps</Text>
           </Pressable>
         </View>
@@ -388,7 +389,7 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
                 accessibilityLabel="Close workout modal"
                 style={({ pressed }) => [pressed && styles.stepperPressed]}
               >
-                <Ionicons name="close" size={22} color="#0F172A" />
+                <Ionicons name={ActionIcons.close} size={IconSizes.standard} color="#0F172A" />
               </Pressable>
             </View>
 

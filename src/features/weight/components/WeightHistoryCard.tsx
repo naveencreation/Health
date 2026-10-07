@@ -9,7 +9,8 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import Svg, { Rect, Path, Circle, G } from 'react-native-svg';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { IconSizes, ActionIcons } from '@/theme/icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
@@ -271,9 +272,9 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
             <Text style={styles.viewAllText}>
               {onViewAll ? 'View All' : isExpanded ? 'Collapse' : 'View All'}
             </Text>
-            <Feather
-              name={onViewAll ? 'arrow-right' : isExpanded ? 'chevron-up' : 'arrow-right'}
-              size={15}
+            <Ionicons
+              name={onViewAll ? ActionIcons.arrowForward : isExpanded ? ActionIcons.chevronUp : ActionIcons.arrowForward}
+              size={IconSizes.compact}
               color={Colors.weight}
             />
           </Pressable>
@@ -358,7 +359,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${item.date}`}
                       >
-                        <Ionicons name="ellipsis-vertical" size={17} color={Colors.textSecondary} />
+                        <Ionicons name={ActionIcons.moreVertical} size={IconSizes.secondary} color={Colors.textSecondary} />
                       </Pressable>
                     </View>
                   </View>
@@ -379,7 +380,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                 accessibilityLabel={`View all ${historyItems.length} records`}
               >
                 <Text style={styles.moreFooterText}>+{historyItems.length - 4} more records</Text>
-                <Feather name="arrow-right" size={13} color={Colors.weight} />
+                <Ionicons name={ActionIcons.arrowForward} size={IconSizes.compact} color={Colors.weight} />
               </Pressable>
             )}
           </View>
