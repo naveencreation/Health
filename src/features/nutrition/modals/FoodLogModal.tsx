@@ -21,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -46,6 +47,7 @@ interface CategoryItem {
   label: string;
   iconFamily: 'ion' | 'mci';
   iconName: string;
+  hasDropdown?: boolean;
   activeColor?: string;
   inactiveColor?: string;
 }
@@ -74,7 +76,9 @@ const CategoryPill = React.memo(function CategoryPill({
     transform: [{ translateX: translateX.value }],
   }));
 
-  const iconColor = isSelected ? cat.activeColor || '#FFFFFF' : cat.inactiveColor || '#64748B';
+  const iconColor = isSelected
+    ? cat.activeColor || '#FFFFFF'
+    : cat.inactiveColor || '#64748B';
 
   return (
     <Animated.View style={pillStyle}>
@@ -89,9 +93,19 @@ const CategoryPill = React.memo(function CategoryPill({
         accessibilityLabel={`Filter by ${cat.label}`}
       >
         {cat.iconFamily === 'mci' ? (
-          <MaterialCommunityIcons name={cat.iconName as any} size={14} color={iconColor} />
+          <MaterialCommunityIcons name={cat.iconName as any} size={15} color={iconColor} />
         ) : (
-          <Ionicons name={cat.iconName as any} size={14} color={iconColor} />
+          <Ionicons
+            name={
+              cat.id === 'popular'
+                ? isSelected
+                  ? 'star'
+                  : 'star-outline'
+                : (cat.iconName as any)
+            }
+            size={15}
+            color={iconColor}
+          />
         )}
         <Text style={[styles.categoryText, isSelected ? styles.categoryTextActive : null]}>
           {cat.label}
@@ -108,17 +122,17 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       id: 'popular',
       label: 'Popular',
       iconFamily: 'ion',
-      iconName: 'star',
-      activeColor: '#FACC15',
-      inactiveColor: '#EAB308',
+      iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
+      id: 'all',
+      label: 'All',
+      iconFamily: 'ion',
+      iconName: 'pricetag-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#8B5CF6',
+      inactiveColor: '#64748B',
     },
     {
       id: 'south_indian',
@@ -126,7 +140,7 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'pot-steam-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#F97316',
+      inactiveColor: '#64748B',
     },
     {
       id: 'breads',
@@ -134,29 +148,29 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#D97706',
+      inactiveColor: '#64748B',
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
-      iconName: 'flash',
-      activeColor: '#FACC15',
-      inactiveColor: '#F59E0B',
+      iconName: 'flash-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
       id: 'fruits',
       label: 'Fruits & Nuts',
       iconFamily: 'ion',
       iconName: 'nutrition-outline',
-      activeColor: '#34D399',
-      inactiveColor: '#10B981',
-    },
-    {
-      id: 'all',
-      label: 'All Foods',
-      iconFamily: 'ion',
-      iconName: 'grid-outline',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -166,17 +180,17 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       id: 'popular',
       label: 'Popular',
       iconFamily: 'ion',
-      iconName: 'star',
-      activeColor: '#FACC15',
-      inactiveColor: '#EAB308',
+      iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
+      id: 'all',
+      label: 'All',
+      iconFamily: 'ion',
+      iconName: 'pricetag-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#8B5CF6',
+      inactiveColor: '#64748B',
     },
     {
       id: 'curries',
@@ -184,7 +198,7 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'bowl-mix-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#EA580C',
+      inactiveColor: '#64748B',
     },
     {
       id: 'rice',
@@ -192,7 +206,7 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'rice',
       activeColor: '#FFFFFF',
-      inactiveColor: '#0D9488',
+      inactiveColor: '#64748B',
     },
     {
       id: 'breads',
@@ -200,21 +214,21 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#D97706',
+      inactiveColor: '#64748B',
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
-      iconName: 'flash',
-      activeColor: '#FACC15',
-      inactiveColor: '#F59E0B',
+      iconName: 'flash-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'all',
-      label: 'All Foods',
-      iconFamily: 'ion',
-      iconName: 'grid-outline',
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -224,17 +238,17 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       id: 'popular',
       label: 'Popular',
       iconFamily: 'ion',
-      iconName: 'star',
-      activeColor: '#FACC15',
-      inactiveColor: '#EAB308',
+      iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
+      id: 'all',
+      label: 'All',
+      iconFamily: 'ion',
+      iconName: 'pricetag-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#8B5CF6',
+      inactiveColor: '#64748B',
     },
     {
       id: 'curries',
@@ -242,7 +256,7 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'bowl-mix-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#EA580C',
+      inactiveColor: '#64748B',
     },
     {
       id: 'breads',
@@ -250,7 +264,7 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#D97706',
+      inactiveColor: '#64748B',
     },
     {
       id: 'south_indian',
@@ -258,21 +272,21 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'pot-steam-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#F97316',
+      inactiveColor: '#64748B',
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
-      iconName: 'flash',
-      activeColor: '#FACC15',
-      inactiveColor: '#F59E0B',
+      iconName: 'flash-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'all',
-      label: 'All Foods',
-      iconFamily: 'ion',
-      iconName: 'grid-outline',
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -282,17 +296,17 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       id: 'popular',
       label: 'Popular',
       iconFamily: 'ion',
-      iconName: 'star',
-      activeColor: '#FACC15',
-      inactiveColor: '#EAB308',
+      iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
+      id: 'all',
+      label: 'All',
+      iconFamily: 'ion',
+      iconName: 'pricetag-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#8B5CF6',
+      inactiveColor: '#64748B',
     },
     {
       id: 'snacks',
@@ -300,29 +314,29 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       iconFamily: 'mci',
       iconName: 'cookie-outline',
       activeColor: '#FFFFFF',
-      inactiveColor: '#F97316',
+      inactiveColor: '#64748B',
     },
     {
       id: 'fruits',
       label: 'Fruits & Nuts',
       iconFamily: 'ion',
       iconName: 'nutrition-outline',
-      activeColor: '#34D399',
-      inactiveColor: '#10B981',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
-      iconName: 'flash',
-      activeColor: '#FACC15',
-      inactiveColor: '#F59E0B',
+      iconName: 'flash-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
     },
     {
-      id: 'all',
-      label: 'All Foods',
-      iconFamily: 'ion',
-      iconName: 'grid-outline',
+      id: 'custom',
+      label: 'My Custom',
+      iconFamily: 'mci',
+      iconName: 'chef-hat',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -332,15 +346,15 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
 interface MealTabItem {
   id: MealType;
   label: string;
-  iconActive: keyof typeof Ionicons.glyphMap;
-  iconInactive: keyof typeof Ionicons.glyphMap;
+  iconFamily: 'mci' | 'ion';
+  iconName: string;
 }
 
 const MEAL_TABS: MealTabItem[] = [
-  { id: 'breakfast', label: 'Breakfast', iconActive: 'sunny', iconInactive: 'sunny-outline' },
-  { id: 'lunch', label: 'Lunch', iconActive: 'restaurant', iconInactive: 'restaurant-outline' },
-  { id: 'snacks', label: 'Snacks', iconActive: 'cafe', iconInactive: 'cafe-outline' },
-  { id: 'dinner', label: 'Dinner', iconActive: 'moon', iconInactive: 'moon-outline' },
+  { id: 'breakfast', label: 'Breakfast', iconFamily: 'mci', iconName: 'weather-sunset' },
+  { id: 'lunch', label: 'Lunch', iconFamily: 'ion', iconName: 'sunny-outline' },
+  { id: 'snacks', label: 'Snacks', iconFamily: 'ion', iconName: 'cafe-outline' },
+  { id: 'dinner', label: 'Dinner', iconFamily: 'ion', iconName: 'moon-outline' },
 ];
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -381,11 +395,24 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
     pressScale.value = withTiming(1, { duration: 120 });
   }, [pressScale]);
 
+  const foodImg = getFoodImageSource(item);
+
   return (
     <Pressable onPress={() => onSelect(item)} onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View style={[styles.foodItemCard, pressStyle]}>
-        {/* Food Vector / Photo Badge */}
-        <FoodIconBadge item={item} size={42} style={styles.foodItemBadge} />
+        {/* Food Dish Photo Thumbnail */}
+        <View style={styles.foodThumbWrapper}>
+          {foodImg ? (
+            <Image
+              source={foodImg}
+              style={styles.foodItemImg}
+              contentFit="cover"
+              transition={150}
+            />
+          ) : (
+            <FoodIconBadge item={item} size={48} style={styles.foodItemBadge} />
+          )}
+        </View>
 
         {/* Clean Food Details (Name + Serving Unit) */}
         <View style={styles.foodItemMain}>
@@ -409,14 +436,13 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
           </Text>
         </View>
 
-        {/* Calories Stack + 44×44 Touch Target Quick Add */}
+        {/* Calories Stack + Prominent Circular Plus Action */}
         <View style={styles.foodItemRight}>
           <View style={styles.caloriesStack}>
             <Text style={styles.foodItemCals}>{item.calories}</Text>
             <Text style={styles.foodItemCalUnit}>kcal</Text>
           </View>
 
-          {/* 44×44 Touch Target Button — stopPropagation prevents card select */}
           <Pressable
             style={({ pressed }) => [
               styles.quickAddButton,
@@ -427,11 +453,10 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
               onQuickAdd(item);
             }}
             hitSlop={HIT_SLOP_8}
+            accessibilityRole="button"
             accessibilityLabel={`Quick add 1 serving of ${item.name}`}
           >
-            <View style={styles.quickAddIconCircle}>
-              <Ionicons name="add" size={20} color="#FFFFFF" />
-            </View>
+            <Ionicons name="add" size={22} color="#FFFFFF" />
           </Pressable>
         </View>
       </Animated.View>
@@ -794,7 +819,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
+      <StatusBar style="dark" />
       <View style={styles.modalRoot}>
         {selectedFood ? (
           /* =======================================================
@@ -1119,6 +1146,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             <View style={styles.mealSwitcherRow}>
               {MEAL_TABS.map(slot => {
                 const isSelected = selectedMealType === slot.id;
+                const iconColor = isSelected ? '#FFFFFF' : '#64748B';
                 return (
                   <Pressable
                     key={slot.id}
@@ -1134,11 +1162,19 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Select ${slot.label}`}
                   >
-                    <Ionicons
-                      name={isSelected ? slot.iconActive : slot.iconInactive}
-                      size={13}
-                      color={isSelected ? '#FFFFFF' : Colors.primary}
-                    />
+                    {slot.iconFamily === 'mci' ? (
+                      <MaterialCommunityIcons
+                        name={slot.iconName as any}
+                        size={16}
+                        color={iconColor}
+                      />
+                    ) : (
+                      <Ionicons
+                        name={slot.iconName as any}
+                        size={16}
+                        color={iconColor}
+                      />
+                    )}
                     <Text
                       style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
                       numberOfLines={1}
@@ -1325,23 +1361,29 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                         {onOpenBarcodeScanner ? (
                           <Pressable
                             onPress={onOpenBarcodeScanner}
-                            style={styles.barcodeScanBtn}
+                            style={({ pressed }) => [
+                              styles.barcodeScanBtn,
+                              pressed ? styles.btnPressedSubtle : null,
+                            ]}
                             hitSlop={HIT_SLOP_8}
                             accessibilityRole="button"
                             accessibilityLabel="Scan barcode on packaged food"
                           >
-                            <Ionicons name="barcode-outline" size={20} color="#D95A32" />
+                            <Ionicons name="barcode-outline" size={20} color="#EA580C" />
                           </Pressable>
                         ) : null}
                         {onOpenFoodVision ? (
                           <Pressable
                             onPress={onOpenFoodVision}
-                            style={styles.cameraScanBtn}
+                            style={({ pressed }) => [
+                              styles.cameraScanBtn,
+                              pressed ? styles.btnPressedSubtle : null,
+                            ]}
                             hitSlop={HIT_SLOP_8}
                             accessibilityRole="button"
                             accessibilityLabel="Scan food with AI camera"
                           >
-                            <Ionicons name="camera" size={20} color="#F47551" />
+                            <Ionicons name="camera-outline" size={20} color="#EA580C" />
                           </Pressable>
                         ) : null}
                       </View>
@@ -1377,11 +1419,6 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     initialNumToRender={10}
                     maxToRenderPerBatch={10}
                     windowSize={5}
-                    getItemLayout={(_data, index) => ({
-                      length: 64,
-                      offset: 64 * index,
-                      index,
-                    })}
                   />
                 </>
               )}
@@ -1447,49 +1484,34 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 const styles = StyleSheet.create({
   modalRoot: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? 'rgba(15, 23, 42, 0.65)' : '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FAF9F6',
   },
   phoneScreenContainer: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
-    height: Platform.OS === 'web' ? '100%' : undefined,
-    backgroundColor: '#FFFFFF',
+    alignSelf: 'center',
+    backgroundColor: '#FAF9F6',
     position: 'relative',
     overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? {
-          shadowColor: '#0F172A',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 24,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: '#E2E8F0',
-        }
-      : {}),
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAF9F6',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   customToggleBtnHidden: {
     opacity: 0,
@@ -1502,7 +1524,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
+    fontSize: 20,
     color: '#0F172A',
     letterSpacing: -0.3,
   },
@@ -1546,16 +1568,16 @@ const styles = StyleSheet.create({
     color: '#EA580C',
   },
   customToggleBtn: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#FED7AA',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
   },
   customToggleText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
     color: '#EA580C',
   },
   mealSwitcherRow: {
@@ -1565,7 +1587,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 4,
-    gap: 6,
+    gap: 8,
   },
   mealSwitcherScroll: {
     alignItems: 'center',
@@ -1577,25 +1599,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
+    paddingVertical: 9,
+    paddingHorizontal: 6,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 4,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    gap: 5,
   },
   mealTabPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: '#EA580C',
+    borderColor: '#EA580C',
+    borderWidth: 1.5,
   },
   mealTabEmoji: {
     fontSize: 13,
   },
   mealTabLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#475569',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 12,
+    color: '#64748B',
   },
   mealTabLabelActive: {
     color: '#FFFFFF',
@@ -1604,25 +1627,26 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 4,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   searchInput: {
     flex: 1,
-    fontFamily: Fonts.urbanist.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     color: '#0F172A',
+    paddingVertical: 4,
   },
   categoryWrapper: {
     flexShrink: 0,
-    height: 46,
+    height: 48,
     marginVertical: 6,
   },
   categoryScroll: {
@@ -1633,22 +1657,22 @@ const styles = StyleSheet.create({
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 5.5,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    gap: 6,
   },
   categoryPillActive: {
     backgroundColor: '#0F172A',
     borderColor: '#0F172A',
   },
   categoryText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: '#0F172A',
   },
   categoryTextActive: {
     color: '#FFFFFF',
@@ -1657,36 +1681,64 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
-    paddingTop: 4,
+    paddingTop: 6,
   },
   foodItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingVertical: 12,
     paddingHorizontal: 14,
-    marginBottom: 8,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  foodThumbWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+  },
+  foodItemImg: {
+    width: '100%',
+    height: '100%',
   },
   foodItemBadge: {
-    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   foodItemMain: {
     flex: 1,
+    justifyContent: 'center',
   },
   foodItemNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginBottom: 2,
   },
   foodItemName: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14.5,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
+    lineHeight: 20,
     color: '#0F172A',
     flexShrink: 1,
   },
@@ -1720,23 +1772,33 @@ const styles = StyleSheet.create({
   searchActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   barcodeScanBtn: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(217, 90, 50, 0.08)',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraScanBtn: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(244, 117, 81, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   foodItemUnit: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    lineHeight: 17,
     color: '#64748B',
-    marginTop: 2,
   },
   macroPillRow: {
     flexDirection: 'row',
@@ -1775,61 +1837,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginLeft: 8,
+    marginLeft: 10,
   },
   caloriesStack: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 36,
   },
   foodItemCals: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
     lineHeight: 20,
+    color: '#0F172A',
+    textAlign: 'center',
   },
   foodItemCalUnit: {
-    fontFamily: Fonts.urbanist.regular,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#94A3B8',
+    lineHeight: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 1,
   },
   quickAddButton: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EA580C',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  quickAddIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 0,
-    shadowOpacity: 0,
   },
   quickAddButtonPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.95 }],
+    opacity: 0.8,
+    transform: [{ scale: 0.94 }],
   },
   fullScreenProductContainer: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
-    height: Platform.OS === 'web' ? '100%' : undefined,
-    backgroundColor: '#FFFFFF',
+    alignSelf: 'center',
+    backgroundColor: '#FAF9F6',
     position: 'relative',
     overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? {
-          shadowColor: '#0F172A',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 24,
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: '#E2E8F0',
-        }
-      : {}),
   },
   fullScreenScrollView: {
     flex: 1,
