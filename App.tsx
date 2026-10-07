@@ -528,6 +528,14 @@ function MainApp() {
     setFoodModalVisible(false);
     setBarcodeScannerVisible(true);
   }, []);
+  const handleFoodVisionToModal = React.useCallback(() => {
+    setFoodVisionVisible(false);
+    setFoodModalVisible(true);
+  }, []);
+  const handleFoodVisionToBarcode = React.useCallback(() => {
+    setFoodVisionVisible(false);
+    setBarcodeScannerVisible(true);
+  }, []);
   const handleBarcodeEnterManually = React.useCallback((barcode: string) => {
     setBarcodeScannerVisible(false);
     setManualBarcodePrefill(barcode);
@@ -709,6 +717,8 @@ function MainApp() {
           onClose={handleCloseFoodVision}
           initialMealType={activeMealType}
           onOpenBYOKSetup={handleOpenBYOKSetup}
+          onOpenManualSearch={handleFoodVisionToModal}
+          onOpenBarcodeScanner={handleFoodVisionToBarcode}
         />
 
         {/* Packaged Food Barcode Scanner Modal */}

@@ -127,6 +127,22 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       inactiveColor: '#64748B',
     },
     {
+      id: 'recent',
+      label: 'Recent',
+      iconFamily: 'ion',
+      iconName: 'time-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'yesterday',
+      label: 'Yesterday',
+      iconFamily: 'ion',
+      iconName: 'refresh-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
@@ -181,6 +197,22 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'recent',
+      label: 'Recent',
+      iconFamily: 'ion',
+      iconName: 'time-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'yesterday',
+      label: 'Yesterday',
+      iconFamily: 'ion',
+      iconName: 'refresh-outline',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -243,6 +275,22 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       inactiveColor: '#64748B',
     },
     {
+      id: 'recent',
+      label: 'Recent',
+      iconFamily: 'ion',
+      iconName: 'time-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'yesterday',
+      label: 'Yesterday',
+      iconFamily: 'ion',
+      iconName: 'refresh-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
@@ -297,6 +345,22 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'recent',
+      label: 'Recent',
+      iconFamily: 'ion',
+      iconName: 'time-outline',
+      activeColor: '#FFFFFF',
+      inactiveColor: '#64748B',
+    },
+    {
+      id: 'yesterday',
+      label: 'Yesterday',
+      iconFamily: 'ion',
+      iconName: 'refresh-outline',
       activeColor: '#FFFFFF',
       inactiveColor: '#64748B',
     },
@@ -475,7 +539,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { foodDatabase, addCustomFood } = useFoodData();
-  const { addMealItem, removeMealItem, mealCalories, mealsByType } = useDailyLog();
+  const { addMealItem, removeMealItem, mealCalories, mealsByType, dailyLogs, selectedDate, remainingCalories } = useDailyLog();
   const { userGoals } = useGoals();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
@@ -493,6 +557,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
   useEffect(() => {
     setSelectedMealType(mealType);
   }, [mealType, visible]);
+
+  const mealTitle = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+  const categoriesList = MEAL_CATEGORIES[selectedMealType] || MEAL_CATEGORIES.breakfast;
 
   useEffect(() => {
     if (prefillBarcode) {
@@ -620,6 +687,40 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       );
     }
 
+    if (selectedCategory === 'recent' || selectedCategory === 'yesterday') {
+      const getPastLog = (daysBack: number) => {
+        if (!selectedDate) return undefined;
+        const parts = selectedDate.split('-');
+        if (parts.length !== 3) return undefined;
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        d.setDate(d.getDate() - daysBack);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return dailyLogs[`${y}-${m}-${day}`];
+      };
+
+      if (selectedCategory === 'yesterday') {
+        const log = getPastLog(1);
+        if (log && log.meals) {
+           const pastItems = log.meals.filter(m => m.mealType === selectedMealType);
+           const ids = pastItems.map(m => m.foodId);
+           return list.filter(f => ids.includes(f.id));
+        }
+        return [];
+      } else {
+        // recent
+        const recentIds = new Set<string>();
+        for(let i = 1; i <= 7; i++){
+          const log = getPastLog(i);
+          if (log && log.meals) {
+            log.meals.filter(m => m.mealType === selectedMealType).forEach(m => recentIds.add(m.foodId));
+          }
+        }
+        return list.filter(f => recentIds.has(f.id));
+      }
+    }
+
     // Category filtering
     if (selectedCategory === 'popular') {
       if (selectedMealType === 'breakfast') {
@@ -692,7 +793,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     if (selectedCategory === 'custom') return list.filter(item => item.isCustom);
     if (selectedCategory === 'high_protein') return list.filter(item => item.protein >= 8);
     return list.filter(item => item.category === selectedCategory);
-  }, [foodDatabase, searchQuery, selectedCategory, selectedMealType]);
+  }, [foodDatabase, searchQuery, selectedCategory, selectedMealType, dailyLogs, selectedDate]);
 
   const handleSelectFood = useCallback((food: FoodItem) => {
     setSelectedFood(food);
@@ -712,8 +813,11 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     const cals = Math.round(selectedFood.calories * quantity);
     const addedItem = addMealItem(selectedMealType, selectedFood, quantity);
     setLastAddedMeal(addedItem);
+    
+    const rem = remainingCalories - cals;
+    const proteinStr = (selectedFood.protein * quantity).toFixed(0);
     setToastMessage(
-      `Added ${quantity > 1 ? `${quantity}x ` : ''}${selectedFood.name} (${cals} kcal)`
+      `+${cals} kcal, ${proteinStr}g protein • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
     );
     setSelectedFood(null);
 
@@ -730,7 +834,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       if (toastTimer) clearTimeout(toastTimer);
       const addedItem = addMealItem(selectedMealType, food, 1);
       setLastAddedMeal(addedItem);
-      setToastMessage(`Added ${food.name} (${food.calories} kcal)`);
+      
+      const cals = food.calories;
+      const rem = remainingCalories - cals;
+      const proteinStr = food.protein.toFixed(0);
+      setToastMessage(
+        `+${cals} kcal, ${proteinStr}g protein • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
+      );
 
       const timer = setTimeout(() => {
         setToastMessage(null);
@@ -738,7 +848,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       }, 4500);
       setToastTimer(timer);
     },
-    [addMealItem, selectedMealType, toastTimer]
+    [addMealItem, selectedMealType, toastTimer, remainingCalories]
   );
 
   const currentMealItems = mealsByType[selectedMealType] || [];
@@ -749,6 +859,71 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     });
     return map;
   }, [currentMealItems]);
+
+  // Yesterday meal items for 1-tap quick repeat
+  const yesterdayMealItems = useMemo(() => {
+    if (!selectedDate) return [];
+    const parts = selectedDate.split('-');
+    if (parts.length !== 3) return [];
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    d.setDate(d.getDate() - 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const log = dailyLogs[`${y}-${m}-${day}`];
+    if (log && Array.isArray(log.meals)) {
+      return log.meals.filter(meal => meal.mealType === selectedMealType);
+    }
+    return [];
+  }, [dailyLogs, selectedDate, selectedMealType]);
+
+  const yesterdayMealTotalCals = useMemo(() => {
+    return yesterdayMealItems.reduce((sum, item) => sum + (item.calories || 0), 0);
+  }, [yesterdayMealItems]);
+
+  const handleRepeatYesterdayMeal = useCallback(() => {
+    if (yesterdayMealItems.length === 0) return;
+    if (toastTimer) clearTimeout(toastTimer);
+
+    let totalAddedCals = 0;
+    yesterdayMealItems.forEach(meal => {
+      const existingFood = foodDatabase.find(f => f.id === meal.foodId);
+      const foodToLog: FoodItem = existingFood || {
+        id: meal.foodId,
+        name: meal.name,
+        category: 'snacks',
+        categoryLabel: 'Meal Item',
+        servingUnit: meal.servingUnit,
+        defaultServingSize: 1,
+        calories: Math.round(meal.calories / (meal.quantity || 1)),
+        protein: (meal.protein || 0) / (meal.quantity || 1),
+        carbs: (meal.carbs || 0) / (meal.quantity || 1),
+        fat: (meal.fat || 0) / (meal.quantity || 1),
+        fiber: 0,
+        icon: '🍱',
+      };
+      addMealItem(selectedMealType, foodToLog, meal.quantity || 1);
+      totalAddedCals += meal.calories;
+    });
+
+    const rem = remainingCalories - totalAddedCals;
+    setToastMessage(
+      `Repeated yesterday's ${selectedMealType} (+${totalAddedCals} kcal) • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
+    );
+
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+      setLastAddedMeal(null);
+    }, 4500);
+    setToastTimer(timer);
+  }, [
+    yesterdayMealItems,
+    foodDatabase,
+    addMealItem,
+    selectedMealType,
+    remainingCalories,
+    toastTimer,
+  ]);
 
   const renderFoodItem = useCallback(
     ({ item }: { item: FoodItem }) => (
@@ -761,6 +936,176 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     ),
     [handleSelectFood, handleQuickAdd, loggedMap]
   );
+
+  const renderListHeader = useCallback(() => {
+    if (yesterdayMealItems.length === 0 || searchQuery.trim() || selectedCategory === 'yesterday') {
+      return null;
+    }
+    return (
+      <View style={styles.repeatYesterdayCard}>
+        <View style={styles.repeatYesterdayHeader}>
+          <View style={styles.repeatIconBadge}>
+            <Ionicons name="refresh-outline" size={16} color={Colors.primary} />
+          </View>
+          <View style={styles.repeatTextCol}>
+            <Text style={styles.repeatTitle}>
+              Repeat Yesterday's {mealTitle}
+            </Text>
+            <Text style={styles.repeatSubtitle}>
+              {yesterdayMealItems.length} item{yesterdayMealItems.length > 1 ? 's' : ''} • {yesterdayMealTotalCals} kcal
+            </Text>
+          </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.repeatActionBtn,
+              pressed && styles.btnPressedSubtle,
+            ]}
+            onPress={handleRepeatYesterdayMeal}
+            accessibilityRole="button"
+            accessibilityLabel={`Repeat yesterday's ${mealTitle}`}
+          >
+            <Ionicons name="flash" size={13} color="#FFFFFF" />
+            <Text style={styles.repeatActionBtnText}>Log All</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }, [
+    yesterdayMealItems,
+    searchQuery,
+    selectedCategory,
+    mealTitle,
+    yesterdayMealTotalCals,
+    handleRepeatYesterdayMeal,
+  ]);
+
+  const renderListEmpty = useCallback(() => {
+    if (searchQuery.trim()) {
+      return (
+        <View style={styles.emptyListContainer}>
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="search-outline" size={26} color="#94A3B8" />
+          </View>
+          <Text style={styles.emptyTitle}>No foods matching "{searchQuery.trim()}"</Text>
+          <Text style={styles.emptySubtitle}>
+            Can't find what you're looking for? Add it as a custom food or scan the packaging.
+          </Text>
+          <View style={styles.emptyActionsRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.emptyActionBtnPrimary,
+                pressed && styles.btnPressedSubtle,
+              ]}
+              onPress={() => {
+                setCustomName(searchQuery.trim());
+                setIsCustomMode(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Create custom food"
+            >
+              <Ionicons name="add-circle-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.emptyActionBtnPrimaryText}>Create Custom Food</Text>
+            </Pressable>
+
+            {onOpenBarcodeScanner ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.emptyActionBtnSecondary,
+                  pressed && styles.btnPressedSubtle,
+                ]}
+                onPress={onOpenBarcodeScanner}
+                accessibilityRole="button"
+                accessibilityLabel="Scan barcode"
+              >
+                <Ionicons name="barcode-outline" size={16} color="#0F172A" />
+                <Text style={styles.emptyActionBtnSecondaryText}>Scan Barcode</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      );
+    }
+
+    if (selectedCategory === 'yesterday') {
+      return (
+        <View style={styles.emptyListContainer}>
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="time-outline" size={26} color="#94A3B8" />
+          </View>
+          <Text style={styles.emptyTitle}>No {mealTitle} Logged Yesterday</Text>
+          <Text style={styles.emptySubtitle}>
+            Foods you log today will automatically appear here tomorrow for 1-tap logging.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.emptyActionBtnPrimary,
+              pressed && styles.btnPressedSubtle,
+            ]}
+            onPress={() => setSelectedCategory('popular')}
+            accessibilityRole="button"
+            accessibilityLabel="Browse popular foods"
+          >
+            <Ionicons name="star-outline" size={16} color="#FFFFFF" />
+            <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    if (selectedCategory === 'recent') {
+      return (
+        <View style={styles.emptyListContainer}>
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="hourglass-outline" size={26} color="#94A3B8" />
+          </View>
+          <Text style={styles.emptyTitle}>No Recent Foods Yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Foods you log over the past 7 days will appear here for fast re-logging.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.emptyActionBtnPrimary,
+              pressed && styles.btnPressedSubtle,
+            ]}
+            onPress={() => setSelectedCategory('popular')}
+            accessibilityRole="button"
+            accessibilityLabel="Browse popular foods"
+          >
+            <Ionicons name="star-outline" size={16} color="#FFFFFF" />
+            <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyListContainer}>
+        <View style={styles.emptyIconBadge}>
+          <Ionicons name="restaurant-outline" size={26} color="#94A3B8" />
+        </View>
+        <Text style={styles.emptyTitle}>No Foods Found</Text>
+        <Text style={styles.emptySubtitle}>
+          Try choosing another category or search for an ingredient above.
+        </Text>
+        <Pressable
+          style={({ pressed }) => [
+            styles.emptyActionBtnPrimary,
+            pressed && styles.btnPressedSubtle,
+          ]}
+          onPress={() => setSelectedCategory('popular')}
+          accessibilityRole="button"
+          accessibilityLabel="Browse popular foods"
+        >
+          <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
+        </Pressable>
+      </View>
+    );
+  }, [
+    searchQuery,
+    selectedCategory,
+    mealTitle,
+    onOpenBarcodeScanner,
+  ]);
 
   const handleCreateCustomFood = () => {
     if (!customName.trim() || !customCals) return;
@@ -799,9 +1144,6 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     setCustomFat('');
     setCustomFiber('');
   };
-
-  const mealTitle = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
-  const categoriesList = MEAL_CATEGORIES[selectedMealType] || MEAL_CATEGORIES.breakfast;
 
   // Projected Live Budget Impact for Speed 2 Portion Drawer
   const projectedAddedCals = selectedFood ? Math.round(selectedFood.calories * quantity) : 0;
@@ -873,7 +1215,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               style={styles.fullScreenScrollView}
               contentContainerStyle={[
                 styles.fullScreenScrollContent,
-                { paddingBottom: 130 + insets.bottom },
+                { paddingBottom: 100 + insets.bottom },
               ]}
             >
               {/* 2. First: The Food Image — 4:3 container, subject centered via contain */}
@@ -1494,6 +1836,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     renderItem={renderFoodItem}
+                    ListHeaderComponent={renderListHeader}
+                    ListEmptyComponent={renderListEmpty}
                     initialNumToRender={10}
                     maxToRenderPerBatch={10}
                     windowSize={5}
@@ -1758,7 +2102,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
     paddingTop: 6,
   },
   foodItemCard: {
@@ -2608,6 +2952,127 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     fontSize: 15,
+  },
+  // Repeat Yesterday Banner
+  repeatYesterdayCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  repeatYesterdayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  repeatIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  repeatTextCol: {
+    flex: 1,
+  },
+  repeatTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: '#0F172A',
+  },
+  repeatSubtitle: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  repeatActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  repeatActionBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    color: '#FFFFFF',
+  },
+
+  // Empty List View
+  emptyListContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  emptyIconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 20,
+    maxWidth: 280,
+  },
+  emptyActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  emptyActionBtnPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  emptyActionBtnPrimaryText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: '#FFFFFF',
+  },
+  emptyActionBtnSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  emptyActionBtnSecondaryText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: '#0F172A',
   },
 });
 

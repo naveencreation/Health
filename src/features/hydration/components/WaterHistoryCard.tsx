@@ -99,7 +99,7 @@ const EmptyClipboardIllustration: React.FC = () => (
         />
       </G>
     </Svg>
-    <Text style={styles.emptyTitle}>No records yet</Text>
+    <Text style={styles.emptyTitle}>Add your first glass</Text>
   </View>
 );
 

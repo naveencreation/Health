@@ -13,6 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType, FoodItem } from '@/types';
@@ -25,6 +26,8 @@ interface FoodVisionModalProps {
   onClose: () => void;
   initialMealType?: MealType;
   onOpenBYOKSetup: () => void;
+  onOpenManualSearch?: () => void;
+  onOpenBarcodeScanner?: () => void;
 }
 
 const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
@@ -32,7 +35,10 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   onClose,
   initialMealType,
   onOpenBYOKSetup,
+  onOpenManualSearch,
+  onOpenBarcodeScanner,
 }) => {
+  const insets = useSafeAreaInsets();
   const { addCustomFood } = useFoodData();
   const { addMealItem } = useDailyLog();
 
@@ -220,11 +226,14 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+      <View style={selectedImageUri ? styles.fullScreenOverlay : styles.modalOverlay}>
+        {!selectedImageUri && <Pressable style={styles.backdropPressable} onPress={onClose} />}
 
-        <View style={styles.sheetContainer}>
-          <View style={styles.dragHandle} />
+        <View style={[
+          selectedImageUri ? styles.fullScreenContainer : styles.sheetContainer,
+          selectedImageUri && { paddingTop: Math.max(insets.top, 20) }
+        ]}>
+          {!selectedImageUri && <View style={styles.dragHandle} />}
 
           {/* Top Header */}
           <View style={styles.headerRow}>
@@ -268,6 +277,51 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                 <GeminiIcon size={18} />
                 <Text style={styles.connectKeyBtnText}>Connect Free Gemini Key</Text>
               </Pressable>
+
+              {/* 1-Tap Manual Logging Fallback */}
+              <View style={styles.unconfiguredDivider}>
+                <View style={styles.unconfiguredLine} />
+                <Text style={styles.unconfiguredOrText}>OR LOG MANUALLY</Text>
+                <View style={styles.unconfiguredLine} />
+              </View>
+
+              <View style={styles.unconfiguredActionsRow}>
+                {onOpenManualSearch ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.unconfiguredAltBtn,
+                      pressed ? styles.pressedBtn : null,
+                    ]}
+                    onPress={() => {
+                      onClose();
+                      onOpenManualSearch();
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Search foods manually"
+                  >
+                    <Ionicons name="search-outline" size={16} color="#0F172A" />
+                    <Text style={styles.unconfiguredAltBtnText}>Search Foods</Text>
+                  </Pressable>
+                ) : null}
+
+                {onOpenBarcodeScanner ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.unconfiguredAltBtn,
+                      pressed ? styles.pressedBtn : null,
+                    ]}
+                    onPress={() => {
+                      onClose();
+                      onOpenBarcodeScanner();
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Scan food barcode"
+                  >
+                    <Ionicons name="barcode-outline" size={16} color="#0F172A" />
+                    <Text style={styles.unconfiguredAltBtnText}>Scan Barcode</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
           ) : (
             <ScrollView
@@ -648,6 +702,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
+  fullScreenOverlay: {
+    flex: 1,
+    backgroundColor: '#FAF9F6',
+  },
+  fullScreenContainer: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#FAF9F6',
+  },
   backdropPressable: {
     position: 'absolute',
     top: 0,
@@ -788,6 +851,47 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: '#FFFFFF',
+  },
+  unconfiguredDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+    width: '100%',
+    gap: 12,
+  },
+  unconfiguredLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  unconfiguredOrText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 11,
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  unconfiguredActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  unconfiguredAltBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 46,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  unconfiguredAltBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: '#0F172A',
   },
   pressedBtn: {
     transform: [{ scale: 0.98 }],

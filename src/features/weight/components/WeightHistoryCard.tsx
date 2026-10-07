@@ -91,8 +91,8 @@ const EmptyWeightIllustration: React.FC = () => (
       {/* Accent dot on top center */}
       <Circle cx="50" cy="18" r="1.5" fill="#FF5722" />
     </Svg>
-    <Text style={styles.emptyTitle}>No weigh-ins logged yet</Text>
-    <Text style={styles.emptySubtitle}>Tap Update above to log your current weight</Text>
+    <Text style={styles.emptyTitle}>Weekly weigh-ins build habits</Text>
+    <Text style={styles.emptySubtitle}>Log your weight to see your progress over time.</Text>
   </View>
 );
 
