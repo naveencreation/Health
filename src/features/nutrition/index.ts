@@ -9,3 +9,6 @@ export * from './modals/FoodLogModal';
 export * from './modals/FoodVisionModal';
 
 export * from './hooks/useNutrition';
+export { BarcodeScannerModal, ScannedProductCard } from '@/components/scanner';
+export { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
+export { BarcodeService } from '@/services/barcodeService';

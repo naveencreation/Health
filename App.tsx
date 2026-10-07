@@ -47,6 +47,7 @@ import {
   BYOKSetupModal,
   AppLoadingScreen,
   SlideInSubScreen,
+  BarcodeScannerModal,
 } from '@/components';
 
 SplashScreen.preventAutoHideAsync();
@@ -85,6 +86,8 @@ function MainApp() {
 
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);
+  const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+  const [manualBarcodePrefill, setManualBarcodePrefill] = useState<string | null>(null);
   const [byokSetupVisible, setByokSetupVisible] = useState(false);
   const [activeMealType, setActiveMealType] = useState<MealType>('breakfast');
   const [notificationsVisible, setNotificationsVisible] = useState(false);
@@ -370,6 +373,7 @@ function MainApp() {
   const modalStatesRef = useRef({
     foodModalVisible,
     foodVisionVisible,
+    barcodeScannerVisible,
     byokSetupVisible,
     notificationsVisible,
     avatarModalVisible,
@@ -385,6 +389,7 @@ function MainApp() {
     modalStatesRef.current = {
       foodModalVisible,
       foodVisionVisible,
+      barcodeScannerVisible,
       byokSetupVisible,
       notificationsVisible,
       avatarModalVisible,
@@ -398,6 +403,7 @@ function MainApp() {
   }, [
     foodModalVisible,
     foodVisionVisible,
+    barcodeScannerVisible,
     byokSetupVisible,
     notificationsVisible,
     avatarModalVisible,
@@ -431,6 +437,10 @@ function MainApp() {
       }
       if (ms.foodVisionVisible) {
         setFoodVisionVisible(false);
+        return true;
+      }
+      if (ms.barcodeScannerVisible) {
+        setBarcodeScannerVisible(false);
         return true;
       }
       if (ms.byokSetupVisible) {
@@ -502,12 +512,26 @@ function MainApp() {
   );
   const handleOpenFoodVision = React.useCallback(() => setFoodVisionVisible(true), []);
   const handleCloseFoodVision = React.useCallback(() => setFoodVisionVisible(false), []);
+  const handleOpenBarcodeScanner = React.useCallback(() => setBarcodeScannerVisible(true), []);
+  const handleCloseBarcodeScanner = React.useCallback(() => setBarcodeScannerVisible(false), []);
   const handleOpenBYOKSetup = React.useCallback(() => setByokSetupVisible(true), []);
   const handleCloseBYOKSetup = React.useCallback(() => setByokSetupVisible(false), []);
-  const handleCloseFoodModal = React.useCallback(() => setFoodModalVisible(false), []);
+  const handleCloseFoodModal = React.useCallback(() => {
+    setFoodModalVisible(false);
+    setManualBarcodePrefill(null);
+  }, []);
   const handleFoodModalToVision = React.useCallback(() => {
     setFoodModalVisible(false);
     setFoodVisionVisible(true);
+  }, []);
+  const handleFoodModalToBarcode = React.useCallback(() => {
+    setFoodModalVisible(false);
+    setBarcodeScannerVisible(true);
+  }, []);
+  const handleBarcodeEnterManually = React.useCallback((barcode: string) => {
+    setBarcodeScannerVisible(false);
+    setManualBarcodePrefill(barcode);
+    setFoodModalVisible(true);
   }, []);
   const handleCloseAuthModal = React.useCallback(() => setAuthModalVisible(false), []);
   const handleOnboardingStart = React.useCallback(() => setIsOnboardingActive(true), []);
@@ -675,6 +699,8 @@ function MainApp() {
           mealType={activeMealType}
           onClose={handleCloseFoodModal}
           onOpenFoodVision={handleFoodModalToVision}
+          onOpenBarcodeScanner={handleFoodModalToBarcode}
+          prefillBarcode={manualBarcodePrefill}
         />
 
         {/* AI Food Vision Camera Modal */}
@@ -683,6 +709,14 @@ function MainApp() {
           onClose={handleCloseFoodVision}
           initialMealType={activeMealType}
           onOpenBYOKSetup={handleOpenBYOKSetup}
+        />
+
+        {/* Packaged Food Barcode Scanner Modal */}
+        <BarcodeScannerModal
+          visible={barcodeScannerVisible}
+          onClose={handleCloseBarcodeScanner}
+          initialMealType={activeMealType}
+          onEnterManually={handleBarcodeEnterManually}
         />
 
         {/* Global BYOK Setup Modal */}

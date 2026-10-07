@@ -108,23 +108,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const popMode = () => {
     setTransitionDirection('backward');
-    setHistory(prev => {
-      const current = prev[prev.length - 1];
-      if (current === 'onboarding') {
-        onOnboardingEndRef.current?.();
-      }
-      if (prev.length > 1) {
-        return prev.slice(0, -1);
-      }
-      if (onClose) {
-        onClose();
-        return prev;
-      }
-      if (prev[0] !== 'welcome') {
-        return ['welcome'];
-      }
-      return prev;
-    });
+    const current = history[history.length - 1];
+    if (current === 'onboarding') {
+      onOnboardingEndRef.current?.();
+    }
+    if (history.length > 1) {
+      setHistory(prev => (prev.length > 1 ? prev.slice(0, -1) : prev));
+      return;
+    }
+    if (onClose) {
+      onClose();
+      return;
+    }
+    if (history[0] !== 'welcome') {
+      setHistory(['welcome']);
+    }
   };
 
   // Android Hardware Back Handler for Auth & Onboarding Flow
@@ -262,7 +260,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             }
           }}
           onBackToWelcome={() => {
-            onOnboardingEnd?.();
             popMode();
           }}
           onSignIn={() => {

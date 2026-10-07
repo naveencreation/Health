@@ -37,6 +37,8 @@ interface FoodLogModalProps {
   mealType: MealType;
   onClose: () => void;
   onOpenFoodVision?: () => void;
+  onOpenBarcodeScanner?: () => void;
+  prefillBarcode?: string | null;
 }
 
 interface CategoryItem {
@@ -443,6 +445,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
   mealType,
   onClose,
   onOpenFoodVision,
+  onOpenBarcodeScanner,
+  prefillBarcode,
 }) => {
   const insets = useSafeAreaInsets();
   const { foodDatabase, addCustomFood } = useFoodData();
@@ -464,6 +468,13 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
   useEffect(() => {
     setSelectedMealType(mealType);
   }, [mealType, visible]);
+
+  useEffect(() => {
+    if (prefillBarcode) {
+      setCustomName(prefillBarcode);
+      setIsCustomMode(true);
+    }
+  }, [prefillBarcode]);
 
   // In-modal Toast & Undo State for 2-Speed Fast Path
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1309,17 +1320,32 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                       >
                         <Ionicons name="close-circle" size={18} color="#94A3B8" />
                       </Pressable>
-                    ) : onOpenFoodVision ? (
-                      <Pressable
-                        onPress={onOpenFoodVision}
-                        style={styles.cameraScanBtn}
-                        hitSlop={HIT_SLOP_8}
-                        accessibilityRole="button"
-                        accessibilityLabel="Scan food with AI camera"
-                      >
-                        <Ionicons name="camera" size={20} color="#F47551" />
-                      </Pressable>
-                    ) : null}
+                    ) : (
+                      <View style={styles.searchActionRow}>
+                        {onOpenBarcodeScanner ? (
+                          <Pressable
+                            onPress={onOpenBarcodeScanner}
+                            style={styles.barcodeScanBtn}
+                            hitSlop={HIT_SLOP_8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Scan barcode on packaged food"
+                          >
+                            <Ionicons name="barcode-outline" size={20} color="#D95A32" />
+                          </Pressable>
+                        ) : null}
+                        {onOpenFoodVision ? (
+                          <Pressable
+                            onPress={onOpenFoodVision}
+                            style={styles.cameraScanBtn}
+                            hitSlop={HIT_SLOP_8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Scan food with AI camera"
+                          >
+                            <Ionicons name="camera" size={20} color="#F47551" />
+                          </Pressable>
+                        ) : null}
+                      </View>
+                    )}
                   </View>
 
                   {/* 3. Non-Clipped Category Filter Tabs */}
@@ -1691,9 +1717,18 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#059669',
   },
+  searchActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  barcodeScanBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(217, 90, 50, 0.08)',
+  },
   cameraScanBtn: {
     padding: 6,
-    marginLeft: 4,
     borderRadius: 8,
     backgroundColor: 'rgba(244, 117, 81, 0.1)',
   },

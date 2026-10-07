@@ -58,6 +58,9 @@ export {
   useNutrition,
 } from '@/features/nutrition';
 
+// Scanner Components
+export { BarcodeScannerModal, ScannedProductCard } from './scanner';
+
 // Global Modals
 export { AvatarPickerModal } from './modals/AvatarPickerModal';
 export { NotificationModal } from './modals/NotificationModal';
