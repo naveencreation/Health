@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 20,
     borderWidth: 1,
@@ -323,7 +323,8 @@ const styles = StyleSheet.create({
   tabPill: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 14,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',

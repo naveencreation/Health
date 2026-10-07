@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   progressPill: {
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 14,
     borderCurve: 'continuous',
     backgroundColor: Colors.surfaceInset,
   },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 12,
+    borderRadius: 14,
     borderCurve: 'continuous',
     backgroundColor: Colors.carbsLight,
   },

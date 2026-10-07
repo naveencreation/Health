@@ -611,8 +611,8 @@ const styles = StyleSheet.create({
     maxHeight: '94%',
     height: '90%',
     backgroundColor: '#FAF9F6',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     borderCurve: 'continuous',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -631,8 +631,8 @@ const styles = StyleSheet.create({
   sheetContainerKeyboard: {
     height: '100%',
     maxHeight: '100%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   handleContainer: {
     width: '100%',

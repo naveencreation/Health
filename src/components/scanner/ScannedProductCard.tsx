@@ -815,22 +815,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: Colors.borderWhisper,
     padding: 14,
     marginBottom: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   thumbnailContainer: {
     width: 68,
@@ -1083,23 +1075,15 @@ const styles = StyleSheet.create({
   nutritionUnifiedCard: {
     flexDirection: 'row',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: Colors.borderWhisper,
     paddingVertical: 14,
     paddingHorizontal: 6,
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   nutritionColumn: {
     flex: 1,

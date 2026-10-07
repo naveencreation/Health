@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   dialogCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 16,
     borderCurve: 'continuous',
     padding: 24,
     alignItems: 'center',
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFEDD5',
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 20,
+    borderRadius: 14,
     borderCurve: 'continuous',
   },
   sparkleText: {

@@ -98,24 +98,15 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 14,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
     justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    shadowOpacity: 0,
+    elevation: 0,
   },
   metricValue: {
     fontFamily: Fonts.urbanist.bold,

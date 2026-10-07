@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
     gap: 14,

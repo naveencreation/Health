@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   undoToastCard: {
     backgroundColor: '#0F172A',
-    borderRadius: 24,
+    borderRadius: 12,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',

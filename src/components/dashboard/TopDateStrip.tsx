@@ -786,7 +786,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 350,
     backgroundColor: Colors.card,
-    borderRadius: 12,
+    borderRadius: 16,
     borderCurve: 'continuous',
     padding: 20,
     shadowColor: Colors.shadowColor,

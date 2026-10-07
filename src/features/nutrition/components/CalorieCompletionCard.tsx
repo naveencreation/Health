@@ -500,7 +500,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12, // ← DESIGN.md card spec: 12px, not 20px
+    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',

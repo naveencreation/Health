@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 380,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 16,
     borderCurve: 'continuous',
     padding: 24,
     shadowColor: '#0F172A',

@@ -417,17 +417,15 @@ const styles = StyleSheet.create({
   // Hero Card with Ring
   heroCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     paddingVertical: 22,
     paddingHorizontal: 18,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
     marginBottom: 14,
   },
   ringContainer: {
@@ -515,7 +513,8 @@ const styles = StyleSheet.create({
   // Insight Card
   insightCard: {
     backgroundColor: '#FFF7ED',
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
     borderColor: '#FED7AA',
@@ -543,7 +542,8 @@ const styles = StyleSheet.create({
   // Accordion Card
   accordionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
     paddingHorizontal: 16,

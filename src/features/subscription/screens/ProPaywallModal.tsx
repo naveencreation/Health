@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: Colors.card,
-    borderRadius: 14,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   planCard: {
     width: '100%',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1.5,
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   unlockedBox: {
     width: '100%',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,

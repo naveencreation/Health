@@ -184,7 +184,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ECFDF5',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 14,
+    borderCurve: 'continuous',
     marginTop: 6,
   },
   goalAchievedText: {

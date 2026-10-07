@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 14,
     borderCurve: 'continuous',
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',

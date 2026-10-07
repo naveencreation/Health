@@ -78,7 +78,7 @@ export const ProGate: React.FC<ProGateProps> = ({
 const styles = StyleSheet.create({
   gateCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 20,
     borderWidth: 1,

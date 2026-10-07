@@ -827,7 +827,8 @@ const styles = StyleSheet.create({
   // Hero Card: Scan AI
   scanCard: {
     backgroundColor: Colors.primaryLight,
-    borderRadius: 18,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: Colors.primary,
     padding: 16,
@@ -977,7 +978,8 @@ const styles = StyleSheet.create({
   starterCard: {
     width: '48.5%',
     backgroundColor: Colors.card,
-    borderRadius: 16,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
     padding: 14,

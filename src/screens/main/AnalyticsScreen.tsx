@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
   timeframeSegmentContainer: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
-    borderRadius: 10,
+    borderRadius: 12,
     borderCurve: 'continuous',
     padding: 3,
   },
@@ -1159,17 +1159,10 @@ const styles = StyleSheet.create({
   },
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.06)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   timeframeTabText: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -1220,7 +1213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 32,
     marginTop: 16,

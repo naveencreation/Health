@@ -204,8 +204,8 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: Colors.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     borderCurve: 'continuous',
     width: '100%',
     maxWidth: 480,
