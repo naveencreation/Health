@@ -657,13 +657,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 4,
     marginBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingTop: 18,
     paddingBottom: 18,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   editBtn: {
@@ -696,12 +696,12 @@ const styles = StyleSheet.create({
   // Segment Switcher Pill
   segmentPill: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9', // Soft Slate 100 track
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 2.5,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   segmentBtn: {
     paddingVertical: 3.5,
@@ -713,18 +713,18 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   segmentBtnActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
   },
   segmentBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   segmentBtnTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   slide: {
     paddingHorizontal: 20,
@@ -755,17 +755,17 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   metricValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   metricUnit: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   dialContainer: {
     position: 'relative',
@@ -780,13 +780,13 @@ const styles = StyleSheet.create({
   calLeftNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 21,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     lineHeight: 25,
   },
   calLeftLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   // Slide 0: Macros Row
@@ -800,19 +800,19 @@ const styles = StyleSheet.create({
   },
   macroName: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#475569',
+    fontSize: 11,
+    color: Colors.textSlate600,
     marginBottom: 5,
   },
   macroRatioText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   macroBoldVal: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   // Slide 1: Option A Subheader
   journeySubheaderRow: {
@@ -823,17 +823,17 @@ const styles = StyleSheet.create({
   },
   avgIntakeLabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   avgIntakeBold: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   daySelectedLabel: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   statusBadge: {
@@ -855,10 +855,10 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 10.5,
+    fontSize: 11,
   },
   statusTextGreen: {
-    color: '#2E7D32',
+    color: Colors.proteinDark,
   },
   statusTextOrange: {
     color: Colors.primaryDark,
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.carbsLight,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     paddingVertical: 7,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -885,7 +885,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: Colors.proteinBorder,
     paddingVertical: 7,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.fatBorder,
     paddingVertical: 7,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -906,22 +906,22 @@ const styles = StyleSheet.create({
   macroTitleCyan: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#A16207',
+    color: Colors.carbsDark,
   },
   macroTitleGreen: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#2E7D32',
+    color: Colors.proteinDark,
   },
   macroTitleOrange: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: Colors.primaryDark,
+    color: Colors.fatDark,
   },
   macroPillValue: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 13.5,
-    color: '#0F172A',
+    fontSize: 13,
+    color: Colors.textPrimary,
     marginTop: 1,
   },
   // Slide 1: Wave Canvas & Horizon
@@ -944,8 +944,8 @@ const styles = StyleSheet.create({
   },
   goalHorizonText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 9.5,
-    color: '#94A3B8',
+    fontSize: 10,
+    color: Colors.textMuted,
   },
   // Slide 1: Timeline Row (SUN to SAT)
   timelineRow: {
@@ -967,7 +967,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.93 }],
   },
   timelineBtnSelected: {
-    backgroundColor: '#0F172A', // Obsidian Black Pill!
+    backgroundColor: Colors.textPrimary,
     paddingHorizontal: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -975,10 +975,10 @@ const styles = StyleSheet.create({
   timelineDayText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   timelineDayTextSelected: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   // Bottom Micro Pagination Dots
   paginationRow: {
@@ -999,7 +999,7 @@ const styles = StyleSheet.create({
   },
   paginationDotActive: {
     width: 16,
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.textPrimary,
   },
 });
 

@@ -338,14 +338,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
     marginHorizontal: 16,
-    marginBottom: 14,
+    marginBottom: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
     elevation: 0,
     shadowOpacity: 0,
   },
   cardActive: {
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -374,8 +374,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     marginRight: 12,
-    backgroundColor: '#F8FAFC',
-    borderColor: 'rgba(0, 0, 0, 0.06)',
+    backgroundColor: Colors.surfaceLow,
+    borderColor: Colors.borderWhisper,
   },
   thumbnailImg: {
     width: '100%',
@@ -396,26 +396,26 @@ const styles = StyleSheet.create({
   mealTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   chevronPill: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   recommendedText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   progressBarTrack: {
     height: 3.5,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.primaryLight,
     borderRadius: 2,
     borderCurve: 'continuous',
     marginTop: 6,
@@ -428,10 +428,10 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   progressBarFillNormal: {
-    backgroundColor: '#10B981', // Emerald on track
+    backgroundColor: Colors.primary,
   },
   progressBarFillOver: {
-    backgroundColor: '#F47551', // Supportive warm coral
+    backgroundColor: Colors.primaryDark,
   },
   pressedSubtle: {
     opacity: 0.65,
@@ -452,13 +452,13 @@ const styles = StyleSheet.create({
   calorieNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     lineHeight: 22,
   },
   calorieUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   addButtonCircle: {
     width: 38,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: 'rgba(103, 189, 110, 0.35)',
+    borderColor: Colors.proteinBorder,
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 0,
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   itemsContainer: {
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: Colors.surfaceInset,
     paddingTop: 4,
   },
   foodRow: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   foodRowBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: Colors.surfaceLow,
   },
   foodInfo: {
     flex: 1,
@@ -499,13 +499,13 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14.5,
-    color: '#0F172A',
+    fontSize: 15,
+    color: Colors.textPrimary,
   },
   foodServing: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   foodActions: {
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   stepperCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 10,
     borderCurve: 'continuous',
     height: 30,
@@ -534,28 +534,28 @@ const styles = StyleSheet.create({
   },
   stepperQty: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 12.5,
-    color: '#0F172A',
+    fontSize: 13,
+    color: Colors.textPrimary,
     minWidth: 16,
     textAlign: 'center',
   },
   foodCalories: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     minWidth: 54,
     textAlign: 'right',
   },
   foodCaloriesUnit: {
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   deleteBtn: {
     width: 26,
     height: 26,
     borderRadius: 13,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAF9F6', // Warm porcelain tint
+    backgroundColor: Colors.background,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 8,
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
+    borderColor: Colors.borderWhisper,
     flexWrap: 'wrap',
   },
   macroSummaryPill: {
@@ -595,12 +595,12 @@ const styles = StyleSheet.create({
   },
   macroSummaryText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11.5,
-    color: '#334155',
+    fontSize: 11,
+    color: Colors.textSlate700,
   },
   macroSummaryDivider: {
     fontSize: 10,
-    color: '#CBD5E1',
+    color: Colors.textLight,
   },
 });
 

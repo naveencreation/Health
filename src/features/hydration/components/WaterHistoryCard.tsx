@@ -321,7 +321,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                   accessibilityRole="button"
                   accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
                 >
-                  <Ionicons name="ellipsis-vertical" size={16} color="#64748B" />
+                  <Ionicons name="ellipsis-vertical" size={16} color={Colors.textSecondary} />
                 </Pressable>
               </View>
             );
@@ -381,7 +381,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 accessibilityRole="button"
                 accessibilityLabel="Close edit modal"
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -497,7 +497,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
           <Pressable style={styles.actionSheetContent} onPress={e => e.stopPropagation()}>
             <View style={styles.deleteConfirmHeader}>
               <View style={styles.deleteConfirmIconBox}>
-                <Ionicons name="trash-outline" size={24} color="#EF4444" />
+                <Ionicons name="trash-outline" size={24} color={Colors.danger} />
               </View>
               <Text style={styles.deleteConfirmTitle}>Delete Hydration Entry?</Text>
               <Text style={styles.deleteConfirmSubtitle}>
@@ -554,7 +554,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 onPress={() => setIsViewAllModalOpen(false)}
                 hitSlop={8}
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -590,7 +590,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                       onPress={e => handleOpenActionMenu(entry, e)}
                       hitSlop={8}
                     >
-                      <Ionicons name="ellipsis-vertical" size={16} color="#64748B" />
+                      <Ionicons name="ellipsis-vertical" size={16} color={Colors.textSecondary} />
                     </Pressable>
                   </View>
                 ))
@@ -605,13 +605,13 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 20,
     marginHorizontal: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -629,17 +629,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
   },
   countBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#0284C7',
+    color: Colors.water,
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   viewAllBtn: {
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   },
   headerDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     marginTop: 12,
     marginBottom: 6,
   },
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 8,
   },
   // List Container Styles
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   },
   rowBorderTop: {
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: Colors.surfaceLow,
   },
   beverageIconBox: {
     width: 44,
@@ -701,18 +701,18 @@ const styles = StyleSheet.create({
   beverageName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   beverageTime: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   beverageAmount: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginRight: 8,
   },
   menuTriggerBtn: {
@@ -725,30 +725,30 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 4,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: Colors.surfaceLow,
     gap: 4,
   },
   moreFooterText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   // Modal / Action Sheet Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   actionSheetContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 22,
     borderCurve: 'continuous',
     width: '100%',
     maxWidth: 340,
     padding: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -769,24 +769,24 @@ const styles = StyleSheet.create({
   actionSheetTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 2,
   },
   actionSheetSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   actionMenuRowsContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 16,
     borderCurve: 'continuous',
     paddingVertical: 2,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: Colors.surfaceInset,
   },
   actionMenuRow: {
     flexDirection: 'row',
@@ -796,14 +796,14 @@ const styles = StyleSheet.create({
   },
   actionMenuDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     marginHorizontal: 12,
   },
   editActionIconBox: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -823,17 +823,17 @@ const styles = StyleSheet.create({
   actionMenuPrimaryText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   deleteActionPrimaryText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#EF4444',
+    color: Colors.danger,
   },
   actionMenuSecondaryText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   // Delete Confirmation Styles
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -853,14 +853,14 @@ const styles = StyleSheet.create({
   deleteConfirmTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 6,
   },
   deleteConfirmSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   deleteConfirmBtn: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
     height: 46,
     borderRadius: 14,
     borderCurve: 'continuous',
@@ -878,10 +878,10 @@ const styles = StyleSheet.create({
   deleteConfirmBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   cancelBtn: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     height: 46,
     borderRadius: 14,
     borderCurve: 'continuous',
@@ -891,14 +891,14 @@ const styles = StyleSheet.create({
   cancelBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   // Edit Modal Sheet Styles
   editModalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
   },
   editModalBackdrop: {
     position: 'absolute',
@@ -911,14 +911,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
     paddingTop: 12,
     paddingBottom: 32,
     paddingHorizontal: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
@@ -933,19 +933,19 @@ const styles = StyleSheet.create({
   editModalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   editModalSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   editCloseBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -960,11 +960,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: Colors.waterBorder,
   },
   stepperValueBox: {
     flexDirection: 'row',
@@ -974,12 +974,12 @@ const styles = StyleSheet.create({
   stepperValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   stepperUnitText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   presetChipsRow: {
     flexDirection: 'row',
@@ -992,18 +992,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   presetChipActive: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     borderColor: Colors.water,
   },
   presetChipText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   presetChipTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -1021,14 +1021,14 @@ const styles = StyleSheet.create({
   saveEditBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   // View All Modal Sheet
   viewAllOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
   },
   viewAllBackdrop: {
     position: 'absolute',
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 32,
     paddingHorizontal: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
@@ -1059,7 +1059,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -1069,24 +1069,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.surfaceInset,
   },
   viewAllModalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   viewAllModalSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1105,7 +1105,7 @@ const styles = StyleSheet.create({
   editSectionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   editBeverageChipsRow: {
     flexDirection: 'row',
@@ -1121,9 +1121,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   editBeverageChipSelected: {
     borderWidth: 1.5,
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
   editBeverageChipText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   editBeverageChipTextSelected: {
     fontFamily: Fonts.urbanist.semiBold,

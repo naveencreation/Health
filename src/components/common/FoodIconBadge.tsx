@@ -1,3 +1,4 @@
+import { Colors } from '@/theme/colors';
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -30,17 +31,13 @@ export const getFoodIconTheme = (
   if (name.includes('idli') || name.includes('dhokla') || name.includes('steamed')) {
     return {
       iconName: 'pot-steam-outline' as const,
-      bgColor: '#FFF7ED',
-      iconColor: '#EA580C',
-      borderColor: '#FFEDD5',
+      bgColor: Colors.primaryLight, iconColor: Colors.primary, borderColor: Colors.primaryLight,
     };
   }
   if (name.includes('dosa') || name.includes('uttapam')) {
     return {
       iconName: 'silverware-fork-knife' as const,
-      bgColor: '#FEF3C7',
-      iconColor: '#D97706',
-      borderColor: '#FDE68A',
+      bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
     };
   }
   if (
@@ -51,25 +48,19 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'cookie-outline' as const,
-      bgColor: '#FFF7ED',
-      iconColor: '#EA580C',
-      borderColor: '#FFEDD5',
+      bgColor: Colors.primaryLight, iconColor: Colors.primary, borderColor: Colors.primaryLight,
     };
   }
   if (name.includes('chai') || name.includes('tea') || name.includes('coffee')) {
     return {
       iconName: 'coffee-outline' as const,
-      bgColor: '#FAF5FF',
-      iconColor: '#7C3AED',
-      borderColor: '#F3E8FF',
+      bgColor: Colors.fatLight, iconColor: Colors.fatDark, borderColor: Colors.fatBorder,
     };
   }
   if (name.includes('egg')) {
     return {
       iconName: 'egg-outline' as const,
-      bgColor: '#FEF3C7',
-      iconColor: '#D97706',
-      borderColor: '#FDE68A',
+      bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
     };
   }
   if (
@@ -80,9 +71,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'food-drumstick-outline' as const,
-      bgColor: '#FFF1F2',
-      iconColor: '#E11D48',
-      borderColor: '#FFE4E6',
+      bgColor: Colors.proteinLight, iconColor: Colors.proteinDark, borderColor: Colors.proteinBorder,
     };
   }
   if (
@@ -93,9 +82,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'rice' as const,
-      bgColor: '#FFFBEB',
-      iconColor: '#B45309',
-      borderColor: '#FEF3C7',
+      bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
     };
   }
   if (
@@ -108,9 +95,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'bread-slice-outline' as const,
-      bgColor: '#FEFCE8',
-      iconColor: '#CA8A04',
-      borderColor: '#FEF08A',
+      bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
     };
   }
   if (
@@ -123,9 +108,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'bowl-mix-outline' as const,
-      bgColor: '#FEF2F2',
-      iconColor: '#DC2626',
-      borderColor: '#FEE2E2',
+      bgColor: Colors.proteinLight, iconColor: Colors.proteinDark, borderColor: Colors.proteinBorder,
     };
   }
   if (
@@ -136,9 +119,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'food-apple-outline' as const,
-      bgColor: '#ECFDF5',
-      iconColor: '#059669',
-      borderColor: '#D1FAE5',
+      bgColor: Colors.fiberLight, iconColor: Colors.fiberDark, borderColor: Colors.fiberBorder,
     };
   }
   if (
@@ -150,9 +131,7 @@ export const getFoodIconTheme = (
   ) {
     return {
       iconName: 'cup-water' as const,
-      bgColor: '#F0F9FF',
-      iconColor: '#0284C7',
-      borderColor: '#E0F2FE',
+      bgColor: Colors.waterLight, iconColor: Colors.water, borderColor: Colors.waterTrack,
     };
   }
 
@@ -161,65 +140,47 @@ export const getFoodIconTheme = (
     case 'south_indian':
       return {
         iconName: 'pot-steam-outline' as const,
-        bgColor: '#FFF7ED',
-        iconColor: '#EA580C',
-        borderColor: '#FFEDD5',
+        bgColor: Colors.primaryLight, iconColor: Colors.primary, borderColor: Colors.primaryLight,
       };
     case 'curries':
       return {
         iconName: 'bowl-mix-outline' as const,
-        bgColor: '#FEF2F2',
-        iconColor: '#DC2626',
-        borderColor: '#FEE2E2',
+        bgColor: Colors.proteinLight, iconColor: Colors.proteinDark, borderColor: Colors.proteinBorder,
       };
     case 'breads':
       return {
         iconName: 'bread-slice-outline' as const,
-        bgColor: '#FEFCE8',
-        iconColor: '#CA8A04',
-        borderColor: '#FEF08A',
+        bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
       };
     case 'rice':
       return {
         iconName: 'rice' as const,
-        bgColor: '#FFFBEB',
-        iconColor: '#B45309',
-        borderColor: '#FEF3C7',
+        bgColor: Colors.carbsLight, iconColor: Colors.carbsDark, borderColor: Colors.carbsBorder,
       };
     case 'beverages':
       return {
         iconName: 'coffee-outline' as const,
-        bgColor: '#FAF5FF',
-        iconColor: '#7C3AED',
-        borderColor: '#F3E8FF',
+        bgColor: Colors.fatLight, iconColor: Colors.fatDark, borderColor: Colors.fatBorder,
       };
     case 'fruits':
       return {
         iconName: 'food-apple-outline' as const,
-        bgColor: '#ECFDF5',
-        iconColor: '#059669',
-        borderColor: '#D1FAE5',
+        bgColor: Colors.fiberLight, iconColor: Colors.fiberDark, borderColor: Colors.fiberBorder,
       };
     case 'dairy':
       return {
         iconName: 'cup-water' as const,
-        bgColor: '#F0F9FF',
-        iconColor: '#0284C7',
-        borderColor: '#E0F2FE',
+        bgColor: Colors.waterLight, iconColor: Colors.water, borderColor: Colors.waterTrack,
       };
     case 'snacks':
       return {
         iconName: 'cookie-outline' as const,
-        bgColor: '#FFF7ED',
-        iconColor: '#EA580C',
-        borderColor: '#FFEDD5',
+        bgColor: Colors.primaryLight, iconColor: Colors.primary, borderColor: Colors.primaryLight,
       };
     default:
       return {
         iconName: 'food-outline' as const,
-        bgColor: '#F8FAFC',
-        iconColor: '#64748B',
-        borderColor: '#F1F5F9',
+        bgColor: Colors.surfaceLow, iconColor: Colors.textSecondary, borderColor: Colors.surfaceInset,
       };
   }
 };
@@ -245,8 +206,8 @@ export const FoodIconBadge: React.FC<FoodIconBadgeProps> = React.memo(
           contentFit="cover"
           width={size}
           borderRadius={radius}
-          backgroundColor="#FFFFFF"
-          style={[{ borderWidth: 1, borderColor: '#E2E8F0' }, style]}
+          backgroundColor={Colors.card}
+          style={[{ borderWidth: 1, borderColor: Colors.borderInset }, style]}
           recyclingKey={item?.id}
         />
       );

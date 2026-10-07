@@ -454,7 +454,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Cancel"
             >
-              <Ionicons name="close" size={22} color="#0F172A" />
+              <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </Pressable>
 
             <View style={styles.headerTitleCenter}>
@@ -472,7 +472,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Delete entry"
               >
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                <Ionicons name="trash-outline" size={20} color={Colors.danger} />
               </Pressable>
             ) : (
               <View style={styles.headerRightSpacer} />
@@ -516,7 +516,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Ionicons
                 name="calendar-outline"
                 size={14}
-                color={isCustomDate ? Colors.weight : '#64748B'}
+                color={isCustomDate ? Colors.weight : Colors.textSecondary}
                 style={{ marginRight: 5 }}
               />
               <Text style={[styles.dateChipText, isCustomDate && styles.dateChipTextActive]}>
@@ -559,7 +559,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   keyboardType="decimal-pad"
                   autoFocus
                   placeholder={formattedDisplay}
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   selectTextOnFocus
                 />
                 <Text style={[styles.heroUnitLabel, isKeyboardOpen && styles.heroUnitLabelCompact]}>
@@ -572,7 +572,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                     Keyboard.dismiss();
                   }}
                 >
-                  <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                  <Ionicons name="checkmark" size={18} color={Colors.onPrimary} />
                 </Pressable>
               </View>
             ) : (
@@ -594,7 +594,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   {unit}
                 </Text>
                 <View style={styles.editPencilBadge}>
-                  <Feather name="edit-2" size={14} color="#94A3B8" />
+                  <Feather name="edit-2" size={14} color={Colors.textMuted} />
                 </View>
               </Pressable>
             )}
@@ -605,7 +605,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                 <Ionicons
                   name="flag-outline"
                   size={13}
-                  color="#9F1239"
+                  color={Colors.weightDark}
                   style={{ marginRight: 4 }}
                 />
                 <Text style={styles.goalHintText}>{goalDiffHint}</Text>
@@ -675,13 +675,13 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Ionicons
                 name="create-outline"
                 size={17}
-                color="#94A3B8"
+                color={Colors.textMuted}
                 style={{ marginRight: 8 }}
               />
               <TextInput
                 style={styles.noteTextInput}
                 placeholder="Add personal note (e.g. after morning run)..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={Colors.textMuted}
                 value={customNote}
                 onChangeText={setCustomNote}
                 maxLength={100}
@@ -731,7 +731,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   onPress={prevMonth}
                   hitSlop={8}
                 >
-                  <Ionicons name="chevron-back" size={18} color="#0F172A" />
+                  <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
                 </Pressable>
                 <Text style={styles.pickerMonthTitle}>
                   {MONTH_NAMES[calendarMonth]} {calendarYear}
@@ -749,7 +749,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   <Ionicons
                     name="chevron-forward"
                     size={18}
-                    color={isCurrentOrFutureMonth ? '#CBD5E1' : '#0F172A'}
+                    color={isCurrentOrFutureMonth ? Colors.textLight : Colors.textPrimary}
                   />
                 </Pressable>
               </View>
@@ -820,7 +820,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6', // App standard warm porcelain canvas
+    backgroundColor: Colors.background
   },
   keyboardContainer: {
     flex: 1,
@@ -842,9 +842,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -856,22 +856,22 @@ const styles = StyleSheet.create({
   headerTitleText: {
     fontSize: 18,
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   headerSubtitleText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.medium,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   headerDeleteBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: Colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -898,18 +898,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   dateChipActive: {
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.weightLight,
     borderColor: Colors.weight,
   },
   dateChipText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.medium,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   dateChipTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
 
   // 3. Central Hero Display Card
   heroCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 20,
@@ -926,12 +926,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     marginBottom: 16,
   },
   unitPillContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 3,
@@ -943,18 +943,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   unitTabActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
   },
   unitTabText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.medium,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   unitTabTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   heroDisplayRow: {
     flexDirection: 'row',
@@ -971,14 +971,14 @@ const styles = StyleSheet.create({
   heroUnitLabel: {
     fontSize: 22,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#E11D48',
+    color: Colors.weight,
     marginLeft: 6,
   },
   editPencilBadge: {
     marginLeft: 8,
     padding: 6,
     borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
   },
   manualInputRow: {
     flexDirection: 'row',
@@ -1011,13 +1011,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: '#FFF1F2',
+    backgroundColor: Colors.weightLight,
     borderRadius: 8,
   },
   goalHintText: {
     fontSize: 12,
     fontFamily: Fonts.urbanist.medium,
-    color: '#9F1239',
+    color: Colors.weightDark,
   },
   steppersContainer: {
     flexDirection: 'row',
@@ -1034,14 +1034,14 @@ const styles = StyleSheet.create({
   stepperDivider: {
     width: 1,
     height: 24,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
     marginHorizontal: 10,
   },
   stepperBtn: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 10,
@@ -1051,23 +1051,23 @@ const styles = StyleSheet.create({
   stepperBtnLabel: {
     fontSize: 14,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
 
   // 4. Context & Note Card
   contextCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     marginBottom: 12,
   },
   contextLabel: {
     fontSize: 11,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     letterSpacing: 0.6,
     marginBottom: 10,
   },
@@ -1082,18 +1082,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   tagPillActive: {
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.weightLight,
     borderColor: Colors.weight,
   },
   tagPillText: {
     fontSize: 12,
     fontFamily: Fonts.urbanist.medium,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   tagPillTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -1102,11 +1102,11 @@ const styles = StyleSheet.create({
   noteInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -1114,7 +1114,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: Fonts.urbanist.regular,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     padding: 0,
     margin: 0,
   },
@@ -1144,7 +1144,7 @@ const styles = StyleSheet.create({
   saveCtaBtnText: {
     fontSize: 16,
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.3,
   },
 
@@ -1187,7 +1187,7 @@ const styles = StyleSheet.create({
   // 6. Overlaid Date Picker Modal
   pickerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -1195,11 +1195,11 @@ const styles = StyleSheet.create({
   pickerCard: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 18,
-    shadowColor: '#000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.16,
     shadowRadius: 16,
@@ -1215,11 +1215,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   pickerNavBtnDisabled: {
     opacity: 0.3,
@@ -1227,7 +1227,7 @@ const styles = StyleSheet.create({
   pickerMonthTitle: {
     fontSize: 15,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   pickerWeekdaysRow: {
     flexDirection: 'row',
@@ -1237,7 +1237,7 @@ const styles = StyleSheet.create({
   pickerWeekdayText: {
     fontSize: 12,
     fontFamily: Fonts.urbanist.medium,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     width: 32,
     textAlign: 'center',
   },
@@ -1270,20 +1270,20 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
   pickerDayText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.medium,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   pickerDayTextSelected: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   pickerDayTextToday: {
     fontFamily: Fonts.urbanist.semiBold,
     color: Colors.weight,
   },
   pickerDayTextDisabled: {
-    color: '#CBD5E1',
+    color: Colors.textLight,
   },
   pickerLogDot: {
     width: 4,
@@ -1299,11 +1299,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 14,
     borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   pickerCloseBtnText: {
     fontSize: 13,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
 });

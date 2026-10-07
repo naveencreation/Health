@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   insightBody: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13.5,
+    fontSize: 14,
     lineHeight: 20,
     color: '#431407',
   },
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   calcDisclaimer: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#94A3B8',
     marginTop: 4,
     textAlign: 'center',

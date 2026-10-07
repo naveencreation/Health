@@ -267,7 +267,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           {Math.abs(macroDiff) > 50 ? (
             <View style={styles.diffWarning}>
-              <Ionicons name="information-circle-outline" size={14} color="#D97706" />
+              <Ionicons name="information-circle-outline" size={14} color={Colors.warningDark} />
               <Text style={styles.diffWarningText}>
                 Macros sum to {computedMacroCals} kcal (
                 {macroDiff > 0 ? `+${macroDiff}` : macroDiff} vs budget)
@@ -329,7 +329,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="nutrition-outline" size={18} color="#D97706" />
+              <Ionicons name="nutrition-outline" size={18} color={Colors.carbsDark} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Carbohydrates</Text>
@@ -453,7 +453,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="scale-outline" size={18} color="#7C3AED" />
+              <Ionicons name="scale-outline" size={18} color={Colors.weight} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Current Weight</Text>
@@ -477,7 +477,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="flag-outline" size={18} color="#D97706" />
+              <Ionicons name="flag-outline" size={18} color={Colors.warningDark} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Target Goal Weight</Text>
@@ -501,7 +501,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
 
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
-              <Ionicons name="body-outline" size={18} color="#475569" />
+              <Ionicons name="body-outline" size={18} color={Colors.textSlate600} />
             </View>
             <View style={styles.fieldLabelContainer}>
               <Text style={styles.fieldLabel}>Height</Text>
@@ -536,7 +536,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
           <Ionicons
             name={savedSuccess ? 'checkmark-circle' : 'checkmark'}
             size={18}
-            color="#FFFFFF"
+            color={Colors.onPrimary}
           />
           <Text style={styles.saveBtnText}>
             {savedSuccess ? 'Goals Saved Successfully' : 'Save Goals'}
@@ -572,11 +572,11 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -588,9 +588,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: Colors.dangerLight,
   },
   headerSaveBtnSuccess: {
     backgroundColor: Colors.proteinLight,
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   headerSaveBtnTextSuccess: {
-    color: '#15803D',
+    color: Colors.successDark,
   },
   btnPressed: {
     opacity: 0.75,
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
     lineHeight: 28,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
     includeFontPadding: false,
   },
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
@@ -653,19 +653,19 @@ const styles = StyleSheet.create({
   },
   presetCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },
   presetCardActive: {
     borderColor: Colors.primary,
-    backgroundColor: '#FFF9F8',
+    backgroundColor: Colors.primaryLight,
   },
   presetIconBox: {
     width: 32,
@@ -687,21 +687,21 @@ const styles = StyleSheet.create({
   presetName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   presetMeta: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 10.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   macroSplitCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
     gap: 12,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   macroSplitTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   macroSplitSum: {
     fontFamily: Fonts.urbanist.bold,
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   macroBarSeg: {
     height: '100%',
@@ -766,30 +766,30 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
   },
   diffWarning: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: Colors.carbsLight,
     padding: 8,
     borderRadius: 8,
   },
   diffWarningText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#D97706',
+    color: Colors.carbsDark,
     flex: 1,
   },
   inputCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -813,17 +813,17 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   fieldSub: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   fieldInput: {
     width: 75,
     height: 44,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 0,
@@ -831,28 +831,28 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     includeFontPadding: false,
   },
   fieldUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginLeft: 8,
     width: 34,
   },
   fieldDivider: {
     height: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: Colors.borderWhisper,
     marginVertical: 6,
   },
   saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.textPrimary,
     height: 52,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -862,12 +862,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtnSuccess: {
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.success,
   },
   saveBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   pressedSubtle: {
     opacity: 0.8,

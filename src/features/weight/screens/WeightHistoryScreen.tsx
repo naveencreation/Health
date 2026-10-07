@@ -82,23 +82,23 @@ const formatDateGroupHeader = (dateStr: string): string => {
 const EmptyWeightHistoryIllustration: React.FC<{ onAdd?: () => void }> = ({ onAdd }) => (
   <View style={styles.emptyContainer}>
     <Svg width={96} height={80} viewBox="0 0 100 85" fill="none">
-      <Rect x="16" y="16" width="68" height="58" rx="16" fill="#FFF1EE" />
+      <Rect x="16" y="16" width="68" height="58" rx="16" fill={Colors.weightLight} />
       <Rect
         x="18"
         y="14"
         width="64"
         height="56"
         rx="14"
-        fill="#FFFFFF"
-        stroke="#FFDCD2"
+        fill={Colors.card}
+        stroke={Colors.weightBorder}
         strokeWidth="1.8"
       />
-      <Rect x="36" y="22" width="28" height="12" rx="3" fill="#0F172A" />
-      <Rect x="42" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
-      <Circle cx="49" cy="28" r="0.8" fill="#38BDF8" />
-      <Rect x="52" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
-      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill="#FFF1EE" />
-      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill="#FFF1EE" />
+      <Rect x="36" y="22" width="28" height="12" rx="3" fill={Colors.textPrimary} />
+      <Rect x="42" y="27" width="4" height="2" rx="0.5" fill={Colors.waterSecondary} />
+      <Circle cx="49" cy="28" r="0.8" fill={Colors.waterSecondary} />
+      <Rect x="52" y="27" width="4" height="2" rx="0.5" fill={Colors.waterSecondary} />
+      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill={Colors.weightLight} />
+      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill={Colors.weightLight} />
       <Circle cx="50" cy="18" r="1.5" fill={Colors.weight} />
     </Svg>
     <Text style={styles.emptyTitle}>No weight logs found</Text>
@@ -110,7 +110,7 @@ const EmptyWeightHistoryIllustration: React.FC<{ onAdd?: () => void }> = ({ onAd
         accessibilityRole="button"
         accessibilityLabel="Log weigh-in"
       >
-        <Ionicons name="add" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+        <Ionicons name="add" size={18} color={Colors.onPrimary} style={{ marginRight: 6 }} />
         <Text style={styles.emptyAddBtnText}>Log First Weigh-In</Text>
       </Pressable>
     )}
@@ -363,7 +363,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Log weigh-in"
             >
-              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Ionicons name="add" size={20} color={Colors.onPrimary} />
             </Pressable>
           </View>
         </View>
@@ -437,7 +437,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                           <Ionicons
                             name={isZero ? 'remove' : isGain ? 'chevron-up' : 'chevron-down'}
                             size={11}
-                            color="#FFFFFF"
+                            color={Colors.onPrimary}
                           />
                         </View>
                         <Text
@@ -466,7 +466,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${entry.weightKg} ${unit} entry`}
                       >
-                        <Ionicons name="ellipsis-vertical" size={17} color="#64748B" />
+                        <Ionicons name="ellipsis-vertical" size={17} color={Colors.textSecondary} />
                       </Pressable>
                     </View>
                   );
@@ -518,7 +518,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
             style={styles.undoToastCard}
           >
             <View style={styles.undoToastInfo}>
-              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Ionicons name="trash-outline" size={16} color={Colors.danger} />
               <Text style={styles.undoToastText} numberOfLines={1}>
                 Deleted {toDisplay(undoToast.entry.weightKg).toFixed(1)} {unit} entry
               </Text>
@@ -530,7 +530,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Undo weight deletion"
             >
-              <Ionicons name="arrow-undo" size={13} color="#38BDF8" />
+              <Ionicons name="arrow-undo" size={13} color={Colors.waterSecondary} />
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>
           </Animated.View>
@@ -557,7 +557,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   headerContainer: {
     paddingHorizontal: 16,
@@ -578,9 +578,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
@@ -631,19 +631,19 @@ const styles = StyleSheet.create({
   groupHeaderTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     paddingHorizontal: 20,
     marginBottom: 8,
   },
   groupCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     marginHorizontal: 16,
     paddingHorizontal: 18,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -654,14 +654,14 @@ const styles = StyleSheet.create({
   },
   rowBorderTop: {
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: Colors.surfaceLow,
   },
   scaleIconBox: {
     width: 42,
     height: 42,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFF1EE',
+    backgroundColor: Colors.weightLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -677,18 +677,18 @@ const styles = StyleSheet.create({
   },
   weightText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 15.5,
-    color: '#0F172A',
+    fontSize: 16,
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   timeText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   tagPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   tagPillText: {
     fontSize: 11,
     fontFamily: Fonts.urbanist.medium,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   deltaBadge: {
     flexDirection: 'row',
@@ -709,26 +709,26 @@ const styles = StyleSheet.create({
     width: 17,
     height: 17,
     borderRadius: 8.5,
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.weightLoss,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deltaIconCircleGain: {
-    backgroundColor: '#F43F5E',
+    backgroundColor: Colors.weight,
   },
   deltaIconCircleZero: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: Colors.textMuted,
   },
   deltaText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#10B981',
+    color: Colors.weightLoss,
   },
   deltaTextGain: {
-    color: '#F43F5E',
+    color: Colors.weight,
   },
   deltaTextZero: {
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   menuTriggerBtn: {
     padding: 6,
@@ -743,13 +743,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#334155',
+    color: Colors.textSlate700,
     marginTop: 12,
   },
   emptySubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -768,8 +768,8 @@ const styles = StyleSheet.create({
   },
   emptyAddBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 13.5,
-    color: '#FFFFFF',
+    fontSize: 14,
+    color: Colors.onPrimary,
   },
   undoToastWrapper: {
     position: 'absolute',
@@ -781,12 +781,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
     borderRadius: 12,
     borderCurve: 'continuous',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 10,
@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
   undoToastText: {
     fontSize: 13,
     fontFamily: Fonts.urbanist.medium,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     flex: 1,
   },
   undoBtn: {
@@ -814,8 +814,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   undoBtnText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#38BDF8',
+    color: Colors.waterSecondary,
   },
 });

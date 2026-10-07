@@ -83,7 +83,7 @@ export const MealSection = React.memo(MealSectionComponent);
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 12,
+    marginTop: 0,
     marginBottom: 8,
   },
   sectionTitle: {
@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: '#0F172A',
     letterSpacing: -0.4,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    marginTop: 6,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 0,
   },
 });

@@ -2,9 +2,11 @@ export const Colors = {
   // Brand Primary & Accents (Terracotta Core)
   primary: '#F47551', // Terracotta / Coral
   primaryDark: '#D9532F',
+  primaryDeep: '#C2410C',
   primaryLight: '#FFEDD5', // Inactive track / container
   primaryMuted: '#FFAA93',
   primaryContainer: '#FFEDD5',
+  onPrimary: '#FFFFFF',
   onPrimaryContainer: '#9A3412',
 
   // 4 Nutrients (Macro & Micro Breakdown - Harmonized with DESIGN.md)
@@ -37,6 +39,20 @@ export const Colors = {
   fiberDark: '#065F46',
   fiberContainer: '#D1FAE5',
   onFiberContainer: '#065F46',
+  fibre: '#059669', // Alias matching DESIGN.md
+  fibreLight: '#D1FAE5',
+  fibreContainer: '#D1FAE5',
+  onFibreContainer: '#065F46',
+
+  // Material 3 / Semantic Aliases
+  secondary: '#67BD6E',
+  onSecondary: '#FFFFFF',
+  secondaryContainer: '#DCFCE7',
+  onSecondaryContainer: '#166534',
+  tertiary: '#F8D558',
+  onTertiary: '#451A03',
+  tertiaryContainer: '#FEF3C7',
+  onTertiaryContainer: '#92400E',
 
   // Action & Floating Accents
   accentLime: '#CDE26D', // Center Floating '+' button
@@ -46,13 +62,18 @@ export const Colors = {
   iconNavyAlt: '#1C274C',
 
   // Status & Semantics
-  success: '#67BD6E',
-  successLight: '#E8F6E9',
+  success: '#16A34A', // Emerald 600
+  successLight: '#DCFCE7',
+  successDark: '#15803D',
   danger: '#EF4444',
+  dangerDark: '#DC2626',
   dangerLight: '#FEE2E2',
-  warning: '#F8D558',
-  warningLight: '#FEF9E6',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  warningDark: '#B45309',
   error: '#EF4444',
+  errorDark: '#DC2626',
+  errorLight: '#FEF2F2',
   errorContainer: '#FEE2E2',
   onErrorContainer: '#991B1B',
 
@@ -60,22 +81,35 @@ export const Colors = {
   background: '#FAF9F6', // Warm sunlit porcelain linen canvas
   backgroundCanvas: '#FAF9F6',
   backgroundAlt: '#FAF9F6', // Soft warm backdrop
+  surfaceDim: '#F4F1EA',
   card: '#FFFFFF',
   cardHover: '#F8FAFC',
+  surfaceLow: '#F8FAFC',
   surfaceContainer: '#F1F5F9', // Recessed tab switcher / stepper track
   surfaceInset: '#F1F5F9',
+  surfaceVariant: '#F1F5F9',
+  inverseSurface: '#1E293B',
+  inverseOnSurface: '#F8FAFC',
+
+  // Borders (Architectural Standard)
   border: 'rgba(15, 23, 42, 0.06)', // 1px hairline whisper border
   borderWhisper: 'rgba(15, 23, 42, 0.06)',
+  borderSubtle: 'rgba(15, 23, 42, 0.08)', // Popover / trigger hairline
+  borderMedium: '#CBD5E1',
   borderLight: '#F1F5F9',
   borderInset: '#E2E8F0',
   borderCard: 'rgba(15, 23, 42, 0.06)',
 
   // Neutral Core Typography (Deep Slate 900 Standard)
   textPrimary: '#0F172A', // Deep Slate 900 (eliminates harsh #000000)
+  textSlate800: '#1E293B',
+  textSlate700: '#334155',
+  textSlate600: '#475569',
   textSecondary: '#64748B', // Muted Slate metadata & unit indicator
   textMuted: '#94A3B8', // Subdued placeholder & axis copy
   textLight: '#CBD5E1', // Inactive iconography & dividers
   textInverse: '#FFFFFF',
+  textDisabled: '#94A3B8',
 
   // Water & Hydration
   water: '#0284C7', // Ocean Sky Azure
@@ -112,8 +146,11 @@ export const Colors = {
   weightDark: '#BE123C', // Deep rose
   weightContainer: '#FFE4E6',
   onWeightContainer: '#BE123C',
+  weightLoss: '#10B981', // Emerald for weight loss delta per DESIGN.md line 224
+  weightGain: '#F43F5E', // Rose Coral for weight gain delta
 
   // Elevation & Overlays
   shadowColor: '#0F172A',
   overlayScrim: 'rgba(15, 23, 42, 0.4)',
+  overlayDark: 'rgba(15, 23, 42, 0.65)',
 };

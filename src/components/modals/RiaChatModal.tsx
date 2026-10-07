@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#64748B',
   },
   offlineBanner: {
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   },
   connectPillText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#FFFFFF',
   },
   chatArea: {
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   bubbleText: {
-    fontSize: 13.5,
+    fontSize: 14,
     lineHeight: 20,
   },
   bubbleTextRia: {
@@ -822,7 +822,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 9.5,
+    fontSize: 10,
     marginTop: 4,
     textAlign: 'right',
   },
@@ -859,7 +859,7 @@ const styles = StyleSheet.create({
   },
   stopBtnText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#FFFFFF',
   },
   quickChipsWrapper: {
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
   },
   quickChipText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#475569',
   },
   inputBar: {
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 10 : 8,
     paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
+    fontSize: 14,
     lineHeight: 18,
     color: '#0F172A',
     borderWidth: 1,

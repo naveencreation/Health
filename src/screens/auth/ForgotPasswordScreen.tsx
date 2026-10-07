@@ -109,7 +109,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 {/* Error Alert */}
                 {errorMessage ? (
                   <View style={styles.errorAlert}>
-                    <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                    <Ionicons name="alert-circle" size={18} color={Colors.dangerDark} />
                     <Text style={styles.errorAlertText}>{errorMessage}</Text>
                   </View>
                 ) : null}
@@ -121,13 +121,13 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                     <Ionicons
                       name="mail-outline"
                       size={20}
-                      color="#94A3B8"
+                      color={Colors.textMuted}
                       style={styles.inputIcon}
                     />
                     <TextInput
                       style={styles.textInput}
                       placeholder="name@example.com"
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={Colors.textMuted}
                       value={email}
                       onChangeText={t => {
                         setEmail(t);
@@ -158,11 +158,11 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                   accessibilityLabel="Send Password Reset Link"
                 >
                   {loading ? (
-                    <BouncingDotsLoader color="#FFFFFF" size={6} gap={5} />
+                    <BouncingDotsLoader color={Colors.onPrimary} size={6} gap={5} />
                   ) : (
                     <View style={styles.btnContentRow}>
                       <Text style={styles.submitButtonText}>Send Reset Link</Text>
-                      <Ionicons name="paper-plane-outline" size={18} color="#FFFFFF" />
+                      <Ionicons name="paper-plane-outline" size={18} color={Colors.onPrimary} />
                     </View>
                   )}
                 </Pressable>
@@ -183,7 +183,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               /* Confirmation Link Sent State */
               <View style={styles.confirmationContainer}>
                 <View style={[styles.iconCircle, styles.successCircle]}>
-                  <Ionicons name="mail-unread-outline" size={32} color="#059669" />
+                  <Ionicons name="mail-unread-outline" size={32} color={Colors.fiber} />
                 </View>
 
                 <Text style={styles.titleText}>Check Your Email</Text>
@@ -201,7 +201,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 {/* Error Alert on Resend */}
                 {errorMessage ? (
                   <View style={styles.errorAlert}>
-                    <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                    <Ionicons name="alert-circle" size={18} color={Colors.dangerDark} />
                     <Text style={styles.errorAlertText}>{errorMessage}</Text>
                   </View>
                 ) : null}
@@ -219,7 +219,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                 >
                   <View style={styles.btnContentRow}>
                     <Text style={styles.submitButtonText}>Back to Sign In</Text>
-                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                    <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
                   </View>
                 </Pressable>
 
@@ -268,14 +268,14 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   phoneFrame: {
     flex: 1,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
@@ -298,36 +298,36 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   successCircle: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: Colors.proteinLight,
+    borderColor: Colors.fiberBorder,
     alignSelf: 'center',
     marginBottom: 16,
   },
   titleText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 26,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   subtitleText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     lineHeight: 22,
   },
   subtitleTextCenter: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 24,
@@ -339,14 +339,14 @@ const styles = StyleSheet.create({
   confirmationDescription: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 4,
     marginBottom: 8,
   },
   emailHighlightBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 16,
@@ -356,14 +356,14 @@ const styles = StyleSheet.create({
   emailHighlightText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   errorAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: Colors.dangerLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   errorAlertText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#B91C1C',
+    color: Colors.dangerDark,
     flex: 1,
   },
   inputGroup: {
@@ -384,18 +384,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.6,
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     paddingHorizontal: 14,
     height: 52,
   },
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.regular,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     height: '100%',
     paddingVertical: 0,
   },
@@ -424,9 +424,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   secondaryButton: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     height: 52,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   pressedSecondary: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     transform: [{ scale: 0.985 }],
   },
   disabledButton: {
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.2,
   },
   secondaryButtonText: {
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   textLinkMuted: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   textLinkPrimary: {
     fontFamily: Fonts.urbanist.semiBold,

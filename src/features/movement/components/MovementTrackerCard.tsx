@@ -466,16 +466,16 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
-    marginHorizontal: 20,
-    marginTop: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -502,14 +502,14 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 7,
     borderCurve: 'continuous',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   titleChevron: {
@@ -523,20 +523,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     lineHeight: 38,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.6,
   },
   unitText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 16,
-    color: '#334155',
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginLeft: 4,
-    lineHeight: 22,
+    lineHeight: 18,
   },
   subStatText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
-    color: '#64748B',
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginTop: 2,
     lineHeight: 18,
   },
@@ -591,12 +591,12 @@ const styles = StyleSheet.create({
   percentSubText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   goalReachedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   goalReachedText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#B45309',
+    color: Colors.carbsDark,
   },
   stepperActionRow: {
     flexDirection: 'row',
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }],
   },
   stepperDisabled: {
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     opacity: 0.45,
   },
   stepMinusBtn: {
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.stepsBorder,
     alignItems: 'center',
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   },
   stepAddBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11.5,
+    fontSize: 11,
     color: Colors.steps,
   },
   // Activities / Workouts Section
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    borderTopColor: Colors.borderWhisper,
   },
   activitiesHeaderRow: {
     flexDirection: 'row',
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   activitiesSectionTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   activitiesTotalBurn: {
     fontFamily: Fonts.urbanist.bold,
@@ -676,14 +676,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     paddingVertical: 7,
     paddingHorizontal: 11,
     borderRadius: 10,
     borderCurve: 'continuous',
     marginBottom: 5,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
+    borderColor: Colors.borderWhisper,
   },
   activityChipPressed: {
     opacity: 0.8,
@@ -701,23 +701,23 @@ const styles = StyleSheet.create({
   activityChipName: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#1E293B',
+    color: Colors.inverseSurface,
     maxWidth: 120,
   },
   activityMetaText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   activityBurnText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11.5,
+    fontSize: 11,
     color: Colors.steps,
   },
   activityTimeText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
-    color: '#94A3B8',
+    fontSize: 11,
+    color: Colors.textMuted,
   },
   activityRemoveBtn: {
     padding: 4,
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   // Modal Styling
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -739,11 +739,11 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 20,
-    shadowColor: '#000000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.14,
     shadowRadius: 24,
@@ -763,18 +763,18 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   modalSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 8,
   },
   modalSubtitleMt14: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 8,
     marginTop: 14,
   },
@@ -785,12 +785,12 @@ const styles = StyleSheet.create({
   },
   quickCard: {
     width: '48%',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     padding: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   quickCardPressed: {
     opacity: 0.75,
@@ -799,25 +799,25 @@ const styles = StyleSheet.create({
   quickName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#1E293B',
+    color: Colors.inverseSurface,
     marginTop: 4,
   },
   quickMeta: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   input: {
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 9,
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginTop: 4,
   },
   rowInputs: {
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   saveWorkoutBtn: {
     backgroundColor: Colors.steps,
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
   },
   saveWorkoutBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontSize: 14,
   },
 });

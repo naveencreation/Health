@@ -250,7 +250,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               onPress={onClose}
               hitSlop={8}
             >
-              <Ionicons name="close" size={20} color="#64748B" />
+              <Ionicons name="close" size={20} color={Colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -299,7 +299,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Search foods manually"
                   >
-                    <Ionicons name="search-outline" size={16} color="#0F172A" />
+                    <Ionicons name="search-outline" size={16} color={Colors.textPrimary} />
                     <Text style={styles.unconfiguredAltBtnText}>Search Foods</Text>
                   </Pressable>
                 ) : null}
@@ -317,7 +317,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Scan food barcode"
                   >
-                    <Ionicons name="barcode-outline" size={16} color="#0F172A" />
+                    <Ionicons name="barcode-outline" size={16} color={Colors.textPrimary} />
                     <Text style={styles.unconfiguredAltBtnText}>Scan Barcode</Text>
                   </Pressable>
                 ) : null}
@@ -350,7 +350,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       accessibilityLabel="Take a photo with camera"
                     >
                       <View style={[styles.pickerIconBox, styles.cameraIconBg]}>
-                        <Ionicons name="camera-outline" size={28} color="#F47551" />
+                        <Ionicons name="camera-outline" size={28} color={Colors.primary} />
                       </View>
                       <Text style={styles.pickerCardTitle}>Take Photo</Text>
                       <Text style={styles.pickerCardSubtitle}>Snap with camera</Text>
@@ -366,7 +366,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       accessibilityLabel="Choose photo already taken from library"
                     >
                       <View style={[styles.pickerIconBox, styles.galleryIconBg]}>
-                        <Ionicons name="images-outline" size={28} color="#0284C7" />
+                        <Ionicons name="images-outline" size={28} color={Colors.water} />
                       </View>
                       <Text style={styles.pickerCardTitle}>Photo Library</Text>
                       <Text style={styles.pickerCardSubtitle}>Already taken</Text>
@@ -386,7 +386,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
                   {isAnalyzing ? (
                     <View style={styles.analyzingOverlay}>
-                      <ActivityIndicator size="large" color="#F47551" />
+                      <ActivityIndicator size="large" color={Colors.primary} />
                       <Text style={styles.analyzingTitle}>Ria is analyzing your food...</Text>
                       <Text style={styles.analyzingSubtitle}>
                         Calculating calories, protein & macros
@@ -396,7 +396,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
                   {!isAnalyzing ? (
                     <Pressable style={styles.retakeBtn} onPress={resetFlow}>
-                      <Ionicons name="refresh" size={14} color="#FFFFFF" />
+                      <Ionicons name="refresh" size={14} color={Colors.onPrimary} />
                       <Text style={styles.retakeBtnText}>Retake</Text>
                     </Pressable>
                   ) : null}
@@ -441,11 +441,11 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                             {isKeyError ? (
                               <GeminiIcon size={20} />
                             ) : isNetworkOrTimeout ? (
-                              <Ionicons name="cloud-offline-outline" size={20} color="#DC2626" />
+                              <Ionicons name="cloud-offline-outline" size={20} color={Colors.dangerDark} />
                             ) : isImageOrNotFood ? (
-                              <Ionicons name="fast-food-outline" size={20} color="#EA580C" />
+                              <Ionicons name="fast-food-outline" size={20} color={Colors.primary} />
                             ) : (
-                              <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
+                              <Ionicons name="alert-circle-outline" size={20} color={Colors.dangerDark} />
                             )}
                           </View>
 
@@ -508,7 +508,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                               ]}
                               onPress={handleRetryAnalysis}
                             >
-                              <Ionicons name="refresh" size={16} color="#FFFFFF" />
+                              <Ionicons name="refresh" size={16} color={Colors.onPrimary} />
                               <Text style={styles.primaryErrorActionText}>
                                 {analysisError.actionLabel || 'Retry Analysis'}
                               </Text>
@@ -522,7 +522,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                             ]}
                             onPress={resetFlow}
                           >
-                            <Ionicons name="images-outline" size={15} color="#475569" />
+                            <Ionicons name="images-outline" size={15} color={Colors.textSlate600} />
                             <Text style={styles.secondaryErrorActionText}>
                               {selectedAsset ? 'Choose Different Photo' : 'Dismiss'}
                             </Text>
@@ -542,7 +542,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                       <Text style={styles.dishServing}>Serving: {analysisResult.servingUnit}</Text>
                     </View>
                     <View style={styles.confidencePill}>
-                      <Ionicons name="checkmark-circle" size={12} color="#16A34A" />
+                      <Ionicons name="checkmark-circle" size={12} color={Colors.success} />
                       <Text style={styles.confidenceText}>Verified</Text>
                     </View>
                   </View>
@@ -563,28 +563,28 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                   {/* 4 Macro Pods (Sunny Vitality Palette) */}
                   <View style={styles.macroGrid}>
                     <View style={[styles.macroPod, styles.podCalories]}>
-                      <Text style={[styles.macroVal, { color: '#F47551' }]}>
+                      <Text style={[styles.macroVal, { color: Colors.primary }]}>
                         {Math.round(analysisResult.calories * portionMultiplier)}
                       </Text>
                       <Text style={styles.macroLbl}>Calories</Text>
                     </View>
 
                     <View style={[styles.macroPod, styles.podProtein]}>
-                      <Text style={[styles.macroVal, { color: '#16A34A' }]}>
+                      <Text style={[styles.macroVal, { color: Colors.proteinDark }]}>
                         {(analysisResult.protein * portionMultiplier).toFixed(1)}g
                       </Text>
                       <Text style={styles.macroLbl}>Protein</Text>
                     </View>
 
                     <View style={[styles.macroPod, styles.podCarbs]}>
-                      <Text style={[styles.macroVal, { color: '#D97706' }]}>
+                      <Text style={[styles.macroVal, { color: Colors.carbsDark }]}>
                         {(analysisResult.carbs * portionMultiplier).toFixed(1)}g
                       </Text>
                       <Text style={styles.macroLbl}>Carbs</Text>
                     </View>
 
                     <View style={[styles.macroPod, styles.podFat]}>
-                      <Text style={[styles.macroVal, { color: '#EA580C' }]}>
+                      <Text style={[styles.macroVal, { color: Colors.fatDark }]}>
                         {(analysisResult.fat * portionMultiplier).toFixed(1)}g
                       </Text>
                       <Text style={styles.macroLbl}>Fat</Text>
@@ -600,7 +600,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                         onPress={() => setPortionMultiplier(p => Math.max(0.5, p - 0.5))}
                         hitSlop={4}
                       >
-                        <Ionicons name="remove" size={16} color="#334155" />
+                        <Ionicons name="remove" size={16} color={Colors.textSlate700} />
                       </Pressable>
                       <Text style={styles.stepVal}>{portionMultiplier}x</Text>
                       <Pressable
@@ -608,7 +608,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                         onPress={() => setPortionMultiplier(p => p + 0.5)}
                         hitSlop={4}
                       >
-                        <Ionicons name="add" size={16} color="#334155" />
+                        <Ionicons name="add" size={16} color={Colors.textSlate700} />
                       </Pressable>
                     </View>
                   </View>
@@ -650,7 +650,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     <Ionicons
                       name={saveToCustom ? 'checkbox' : 'square-outline'}
                       size={20}
-                      color={saveToCustom ? Colors.primary : '#94A3B8'}
+                      color={saveToCustom ? Colors.primary : Colors.textMuted}
                     />
                     <View style={styles.checkTextCol}>
                       <Text style={styles.checkTitle}>Save to My Custom Foods</Text>
@@ -665,7 +665,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
                     style={({ pressed }) => [styles.confirmBtn, pressed ? styles.btnPressed : null]}
                     onPress={handleConfirmAndLog}
                   >
-                    <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                    <Ionicons name="checkmark-circle" size={18} color={Colors.onPrimary} />
                     <Text style={styles.confirmBtnText}>
                       Log to {mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)} (
                       {Math.round(analysisResult.calories * portionMultiplier)} kcal)
@@ -678,7 +678,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               {isLoggedSuccess ? (
                 <View style={styles.successContainer}>
                   <View style={styles.successCheckCircle}>
-                    <Ionicons name="checkmark" size={32} color="#16A34A" />
+                    <Ionicons name="checkmark" size={32} color={Colors.success} />
                   </View>
                   <Text style={styles.successTitle}>Meal Logged Successfully!</Text>
                   <Text style={styles.successDesc}>
@@ -704,12 +704,12 @@ const styles = StyleSheet.create({
   },
   fullScreenOverlay: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   fullScreenContainer: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   backdropPressable: {
     position: 'absolute',
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
     borderWidth: 1,
     borderColor: 'rgba(244, 117, 81, 0.15)',
-    shadowColor: '#000000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -740,14 +740,14 @@ const styles = StyleSheet.create({
       ? {
           borderLeftWidth: 1,
           borderRightWidth: 1,
-          borderColor: '#E2E8F0',
+          borderColor: Colors.borderInset,
         }
       : {}),
   },
   dragHandle: {
     width: 42,
     height: 5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
     borderRadius: 3,
     borderCurve: 'continuous',
     alignSelf: 'center',
@@ -771,21 +771,21 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
-    color: '#F47551',
+    fontSize: 10,
+    color: Colors.primary,
     letterSpacing: 0.5,
   },
   sheetTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -823,14 +823,14 @@ const styles = StyleSheet.create({
   unconfiguredTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
   },
   unconfiguredDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 24,
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
   connectKeyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: Colors.inverseSurface,
     paddingHorizontal: 22,
     height: 52,
     borderRadius: 10,
@@ -850,7 +850,7 @@ const styles = StyleSheet.create({
   connectKeyBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   unconfiguredDivider: {
     flexDirection: 'row',
@@ -862,12 +862,12 @@ const styles = StyleSheet.create({
   unconfiguredLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
   },
   unconfiguredOrText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     letterSpacing: 0.5,
   },
   unconfiguredActionsRow: {
@@ -884,14 +884,14 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   unconfiguredAltBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   pressedBtn: {
     transform: [{ scale: 0.98 }],
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   pickerIntro: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     lineHeight: 19,
     marginBottom: 20,
   },
@@ -913,7 +913,7 @@ const styles = StyleSheet.create({
   },
   pickerCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 18,
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
   },
   pickerCardPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
   },
   pickerIconBox: {
     width: 56,
@@ -940,18 +940,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(244, 117, 81, 0.12)',
   },
   galleryIconBg: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
   },
   pickerCardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   pickerCardSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   imagePreviewContainer: {
     position: 'relative',
@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   foodImagePreview: {
     width: '100%',
@@ -982,14 +982,14 @@ const styles = StyleSheet.create({
   analyzingTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     marginTop: 12,
     textAlign: 'center',
   },
   analyzingSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#E2E8F0',
+    color: Colors.borderInset,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
   retakeBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   errorCardContainer: {
     borderRadius: 10,
@@ -1021,12 +1021,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   keyErrorCardBorder: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderColor: 'rgba(78, 130, 238, 0.3)',
   },
   generalErrorCardBorder: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FECACA',
+    backgroundColor: Colors.card,
+    borderColor: Colors.dangerLight,
   },
   errorIconHeaderRow: {
     flexDirection: 'row',
@@ -1048,9 +1048,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(78, 130, 238, 0.25)',
   },
   generalErrorIconBg: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: Colors.dangerLight,
   },
   errorTitleBox: {
     flex: 1,
@@ -1060,18 +1060,18 @@ const styles = StyleSheet.create({
   },
   errorCategoryText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
+    fontSize: 10,
     letterSpacing: 0.6,
   },
   errorTitleText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   errorBodyText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
-    color: '#475569',
+    fontSize: 13,
+    color: Colors.textSlate600,
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -1092,15 +1092,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   keyActionBtnBg: {
-    backgroundColor: '#1E293B',
+    backgroundColor: Colors.inverseSurface,
   },
   retryActionBtnBg: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
   },
   primaryErrorActionText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   secondaryErrorActionBtn: {
     flexDirection: 'row',
@@ -1109,18 +1109,18 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     gap: 6,
   },
   secondaryErrorActionText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
-    color: '#475569',
+    fontSize: 13,
+    color: Colors.textSlate600,
   },
   resultContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 18,
@@ -1142,30 +1142,30 @@ const styles = StyleSheet.create({
   dishName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   dishServing: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   confidencePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: Colors.proteinBorder,
     gap: 4,
   },
   confidenceText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#16A34A',
+    color: Colors.success,
   },
   macroGrid: {
     flexDirection: 'row',
@@ -1181,20 +1181,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   podCalories: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryLight,
   },
   podProtein: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
+    borderColor: Colors.proteinBorder,
   },
   podCarbs: {
-    backgroundColor: '#FEFCE8',
-    borderColor: '#FEF08A',
+    backgroundColor: Colors.carbsLight,
+    borderColor: Colors.carbsBorder,
   },
   podFat: {
-    backgroundColor: '#FFF1F2',
-    borderColor: '#FFE4E6',
+    backgroundColor: Colors.fatLight,
+    borderColor: Colors.fatBorder,
   },
   macroVal: {
     fontFamily: Fonts.urbanist.bold,
@@ -1203,7 +1203,7 @@ const styles = StyleSheet.create({
   macroLbl: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   portionRow: {
@@ -1213,17 +1213,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.surfaceInset,
   },
   portionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 3,
@@ -1234,14 +1234,14 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 8,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepVal: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     minWidth: 28,
     textAlign: 'center',
   },
@@ -1253,13 +1253,13 @@ const styles = StyleSheet.create({
   },
   slotHeaderLabel: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12.5,
-    color: '#334155',
+    fontSize: 13,
+    color: Colors.textSlate700,
   },
   slotHeaderHint: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   slotRow: {
     flexDirection: 'row',
@@ -1271,34 +1271,34 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 12,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   slotPillSelected: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#F47551',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
   },
   slotPillPressed: {
     opacity: 0.8,
   },
   slotText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
     includeFontPadding: false,
   },
   slotTextSelected: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#F47551',
+    color: Colors.primary,
     includeFontPadding: false,
   },
   riaCoachBubble: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderRadius: 14,
     borderCurve: 'continuous',
     padding: 12,
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
   riaCoachLabel: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#EA580C',
+    color: Colors.primaryDark,
     letterSpacing: 0.2,
     marginBottom: 2,
     includeFontPadding: false,
@@ -1331,13 +1331,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#334155',
+    color: Colors.textSlate700,
     includeFontPadding: false,
   },
   customCheckRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 10,
@@ -1350,12 +1350,12 @@ const styles = StyleSheet.create({
   checkTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   checkSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   confirmBtn: {
@@ -1372,8 +1372,8 @@ const styles = StyleSheet.create({
   },
   confirmBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 13.5,
-    color: '#FFFFFF',
+    fontSize: 14,
+    color: Colors.onPrimary,
   },
   btnPressed: {
     transform: [{ scale: 0.98 }],
@@ -1388,7 +1388,7 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderCurve: 'continuous',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -1396,13 +1396,13 @@ const styles = StyleSheet.create({
   successTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#166534',
+    color: Colors.proteinDark,
     marginBottom: 6,
   },
   successDesc: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
-    color: '#15803D',
+    fontSize: 13,
+    color: Colors.successDark,
     textAlign: 'center',
     lineHeight: 18,
   },

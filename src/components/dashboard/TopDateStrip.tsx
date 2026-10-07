@@ -115,8 +115,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     : isWeight
       ? Colors.weightTrack
       : isSteps
-        ? '#F1F5F9'
-        : '#E2E8F0';
+        ? Colors.surfaceInset : Colors.borderInset;
 
   // Real-world today reference
   const todayStr = useMemo(() => toDateString(new Date()), []);
@@ -302,9 +301,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Change month, currently ${monthHeaderTitle}`}
         >
-          <Ionicons name="calendar-outline" size={15} color="#475569" style={styles.monthIcon} />
+          <Ionicons name="calendar-outline" size={15} color={Colors.textSlate600} style={styles.monthIcon} />
           <Text style={styles.monthTitleText}>{monthHeaderTitle}</Text>
-          <Ionicons name="chevron-down" size={13} color="#64748B" style={styles.chevronDown} />
+          <Ionicons name="chevron-down" size={13} color={Colors.textSecondary} style={styles.chevronDown} />
         </Pressable>
 
         {/* Right Action Group: Dynamic "Today" Pill + Week Arrow Chevrons */}
@@ -344,7 +343,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Previous week"
             >
-              <Ionicons name="chevron-back" size={15} color="#334155" />
+              <Ionicons name="chevron-back" size={15} color={Colors.textSlate700} />
             </Pressable>
 
             <Pressable
@@ -354,7 +353,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Next week"
             >
-              <Ionicons name="chevron-forward" size={15} color="#334155" />
+              <Ionicons name="chevron-forward" size={15} color={Colors.textSlate700} />
             </Pressable>
           </View>
         </View>
@@ -397,7 +396,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                       cx={size / 2}
                       cy={size / 2}
                       r={radius}
-                      stroke="#FFFFFF"
+                      stroke={Colors.onPrimary}
                       strokeWidth={strokeWidth}
                       strokeDasharray={`${circumference} ${circumference}`}
                       strokeDashoffset={strokeDashoffset}
@@ -498,7 +497,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                   onPress={prevMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="chevron-back" size={20} color="#0F172A" />
+                  <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
                 </Pressable>
 
                 <Text style={styles.modalMonthTitle}>
@@ -510,7 +509,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                   onPress={nextMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="chevron-forward" size={20} color="#0F172A" />
+                  <Ionicons name="chevron-forward" size={20} color={Colors.textPrimary} />
                 </Pressable>
               </View>
 
@@ -519,7 +518,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                 onPress={() => setIsCalendarOpen(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -622,7 +621,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     lineHeight: 19,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   chevronDown: {
@@ -638,7 +637,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.burnBorder,
     paddingHorizontal: 9,
     paddingVertical: 3.5,
     borderRadius: 10,
@@ -665,9 +664,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -687,16 +686,16 @@ const styles = StyleSheet.create({
     width: 42,
     height: 72,
     borderRadius: 21,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   futureCapsule: {
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(15, 23, 42, 0.05)',
+    backgroundColor: Colors.card,
+    borderColor: Colors.borderWhisper,
   },
   circleNumberWrapper: {
     width: 32,
@@ -714,10 +713,10 @@ const styles = StyleSheet.create({
   dayNumText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   futureDayNumText: {
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   todayIndicatorDot: {
     position: 'absolute',
@@ -725,16 +724,16 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
   },
   dayNameText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.3,
   },
   futureDayNameText: {
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
 
   // Active High-Contrast Capsule
@@ -742,7 +741,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 76,
     borderRadius: 22,
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
@@ -762,12 +761,12 @@ const styles = StyleSheet.create({
   activeDayNumText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   activeDayNameText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.3,
   },
   pressedCapsule: {
@@ -778,7 +777,7 @@ const styles = StyleSheet.create({
   // 3. Month Calendar Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -786,11 +785,11 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 350,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -813,12 +812,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
   },
   modalMonthTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   modalCloseBtn: {
     width: 32,
@@ -826,7 +825,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   modalWeekdaysRow: {
     flexDirection: 'row',
@@ -838,7 +837,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   modalGrid: {
     flexDirection: 'row',
@@ -860,7 +859,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   modalDayCellSelected: {
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
   },
   modalDayCellToday: {
     borderWidth: 1.5,
@@ -870,10 +869,10 @@ const styles = StyleSheet.create({
   modalDayText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#1E293B',
+    color: Colors.textSlate800,
   },
   modalDayTextSelected: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontFamily: Fonts.urbanist.bold,
   },
   modalDayTextToday: {
@@ -892,7 +891,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: Colors.surfaceInset,
     alignItems: 'center',
   },
   modalTodayBtn: {

@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
   },
   baseText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
-    lineHeight: 20.5,
+    fontSize: 14,
+    lineHeight: 20,
     color: '#1E293B',
   },
   paragraphSpacer: {
@@ -283,15 +283,15 @@ const styles = StyleSheet.create({
   },
   heading1: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 18,
+    lineHeight: 24,
     marginTop: 8,
     marginBottom: 4,
   },
   heading2: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 15.5,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 6,
     marginBottom: 3,
   },

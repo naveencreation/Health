@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13.5,
+    fontSize: 14,
   },
   statusUnder: {
     color: '#3B82F6',
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   },
   tickText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#94A3B8',
   },
   contextRow: {
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   contextText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
   },
   boldText: {

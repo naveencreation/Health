@@ -333,7 +333,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
           >
             {activeDays.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <EmptyShoesOutlineSvg size={90} color="#CBD5E1" />
+                <EmptyShoesOutlineSvg size={90} color={Colors.textLight} />
                 <Text style={styles.emptyTitle}>No step records recorded</Text>
                 <Text style={styles.emptySub}>
                   Walking sessions logged through Health Connect or manually will appear here.
@@ -385,7 +385,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                 {/* 1. Footsteps (Orange) */}
                                 <View style={[styles.col, styles.colSteps]}>
                                   <View style={styles.iconCell}>
-                                    <FootstepsOutlineSvg size={20} color="#F97316" />
+                                    <FootstepsOutlineSvg size={20} color={Colors.steps} />
                                   </View>
                                   <Text style={styles.valueText} numberOfLines={1}>
                                     {entry.steps.toLocaleString()}
@@ -395,7 +395,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                 {/* 2. Time Duration (Green) */}
                                 <View style={[styles.col, styles.colTime]}>
                                   <View style={styles.iconCell}>
-                                    <ClockOutlineSvg size={20} color="#22C55E" />
+                                    <ClockOutlineSvg size={20} color={Colors.success} />
                                   </View>
                                   <Text style={styles.valueText} numberOfLines={1}>
                                     {entry.durationMinutes}m
@@ -405,7 +405,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                 {/* 3. Calories (Red) */}
                                 <View style={[styles.col, styles.colCalories]}>
                                   <View style={styles.iconCell}>
-                                    <FlameOutlineSvg size={20} color="#EF4444" />
+                                    <FlameOutlineSvg size={20} color={Colors.danger} />
                                   </View>
                                   <Text style={styles.valueText} numberOfLines={1}>
                                     {entry.caloriesBurned}
@@ -415,7 +415,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                 {/* 4. Distance (Blue) */}
                                 <View style={[styles.col, styles.colDistance]}>
                                   <View style={styles.iconCell}>
-                                    <LocationPinOutlineSvg size={20} color="#0EA5E9" />
+                                    <LocationPinOutlineSvg size={20} color={Colors.water} />
                                   </View>
                                   <Text style={styles.valueText} numberOfLines={1}>
                                     {entry.distanceKm}
@@ -433,7 +433,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                                   accessibilityRole="button"
                                   accessibilityLabel="More options"
                                 >
-                                  <Ionicons name="ellipsis-vertical" size={17} color="#0F172A" />
+                                  <Ionicons name="ellipsis-vertical" size={17} color={Colors.textPrimary} />
                                 </Pressable>
                               </View>
                             );
@@ -462,7 +462,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                               <Ionicons
                                 name={isExpanded ? 'chevron-up' : 'chevron-down'}
                                 size={14}
-                                color="#64748B"
+                                color={Colors.textSecondary}
                               />
                             </Pressable>
                           )}
@@ -480,7 +480,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                         {/* Total Steps */}
                         <View style={[styles.col, styles.colSteps]}>
                           <View style={styles.iconCell}>
-                            <FootstepsOutlineSvg size={20} color="#F97316" />
+                            <FootstepsOutlineSvg size={20} color={Colors.steps} />
                           </View>
                           <Text style={styles.valueText} numberOfLines={1}>
                             {dayTotalSteps.toLocaleString()}
@@ -490,7 +490,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                         {/* Total Duration */}
                         <View style={[styles.col, styles.colTime]}>
                           <View style={styles.iconCell}>
-                            <ClockOutlineSvg size={20} color="#22C55E" />
+                            <ClockOutlineSvg size={20} color={Colors.success} />
                           </View>
                           <Text style={styles.valueText} numberOfLines={1}>
                             {dayTotalTime}m
@@ -500,7 +500,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                         {/* Total Calories */}
                         <View style={[styles.col, styles.colCalories]}>
                           <View style={styles.iconCell}>
-                            <FlameOutlineSvg size={20} color="#EF4444" />
+                            <FlameOutlineSvg size={20} color={Colors.danger} />
                           </View>
                           <Text style={styles.valueText} numberOfLines={1}>
                             {dayTotalCalories}
@@ -510,7 +510,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                         {/* Total Distance */}
                         <View style={[styles.col, styles.colDistance]}>
                           <View style={styles.iconCell}>
-                            <LocationPinOutlineSvg size={20} color="#0EA5E9" />
+                            <LocationPinOutlineSvg size={20} color={Colors.water} />
                           </View>
                           <Text style={styles.valueText} numberOfLines={1}>
                             {dayTotalDistance.toFixed(1)}
@@ -561,7 +561,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                       }}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Ionicons name="chevron-back" size={20} color="#0F172A" />
+                      <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
                     </Pressable>
 
                     <Text style={styles.calendarMonthTitle}>
@@ -580,7 +580,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                       }}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
-                      <Ionicons name="chevron-forward" size={20} color="#0F172A" />
+                      <Ionicons name="chevron-forward" size={20} color={Colors.textPrimary} />
                     </Pressable>
                   </View>
 
@@ -589,7 +589,7 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
                     onPress={() => setIsCalendarOpen(false)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="close" size={20} color="#64748B" />
+                    <Ionicons name="close" size={20} color={Colors.textSecondary} />
                   </Pressable>
                 </View>
 
@@ -668,7 +668,7 @@ export const StepHistoryModal: React.FC<StepHistoryModalProps> = props => {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     alignItems: 'center',
   },
   mobileContainer: {
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 12,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     minHeight: 44,
   },
   headerSideWrapper: {
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     textAlign: 'center',
   },
@@ -712,9 +712,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -740,22 +740,22 @@ const styles = StyleSheet.create({
   },
   dateHeaderText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13.5,
-    color: '#8E95A5',
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginRight: 12,
   },
   dateHeaderHairline: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(15, 23, 42, 0.08)',
+    backgroundColor: Colors.borderSubtle,
   },
   dayCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 18,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.05)',
-    shadowColor: '#0F172A',
+    borderColor: Colors.borderWhisper,
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
   },
   rowBorderBottom: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(15, 23, 42, 0.06)',
+    borderBottomColor: Colors.borderWhisper,
   },
   col: {
     flexDirection: 'row',
@@ -799,8 +799,8 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14.5,
-    color: '#0F172A',
+    fontSize: 15,
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   kebabBtn: {
@@ -817,15 +817,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    borderTopColor: Colors.borderWhisper,
     gap: 6,
   },
   expandToggleText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   totalDividerRow: {
     flexDirection: 'row',
@@ -836,14 +836,14 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13.5,
-    color: '#94A3B8',
+    fontSize: 13,
+    color: Colors.textMuted,
     marginRight: 10,
   },
   totalHairline: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(15, 23, 42, 0.08)',
+    backgroundColor: Colors.borderSubtle,
   },
   totalRow: {
     flexDirection: 'row',
@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
   dayEmptyText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -872,13 +872,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginTop: 16,
   },
   emptySub: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
   // Calendar Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: Colors.overlayScrim,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -894,10 +894,10 @@ const styles = StyleSheet.create({
   calendarModalCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 20,
     padding: 18,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.14,
     shadowRadius: 14,
@@ -920,7 +920,7 @@ const styles = StyleSheet.create({
   calendarMonthTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   calCloseBtn: {
     padding: 4,
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -956,15 +956,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   calendarDayCellSelected: {
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.steps,
   },
   calendarDayText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   calendarDayTextSelected: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     fontFamily: Fonts.urbanist.semiBold,
   },
   calendarStepDot: {
@@ -973,6 +973,6 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.steps,
   },
 });

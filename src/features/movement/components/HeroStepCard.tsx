@@ -94,8 +94,8 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
 
           {/* B. Active Time Metric */}
           <View style={styles.metricItem}>
-            <View style={[styles.metricIconCircle, { backgroundColor: '#E0F2FE' }]}>
-              <Ionicons name="time" size={15} color="#0284C7" />
+            <View style={[styles.metricIconCircle, { backgroundColor: Colors.waterTrack }]}>
+              <Ionicons name="time" size={15} color={Colors.water} />
             </View>
             <Text style={styles.metricValue} numberOfLines={1}>
               {activeMinutes} min
@@ -107,8 +107,8 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
 
           {/* C. Calories Burned Metric */}
           <View style={styles.metricItem}>
-            <View style={[styles.metricIconCircle, { backgroundColor: '#FFF7ED' }]}>
-              <Ionicons name="flame" size={15} color="#F97316" />
+            <View style={[styles.metricIconCircle, { backgroundColor: Colors.stepsLight }]}>
+              <Ionicons name="flame" size={15} color={Colors.steps} />
             </View>
             <Text style={styles.metricValue} numberOfLines={1}>
               {stepBurnKcal} kcal
@@ -120,8 +120,8 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
 
           {/* D. Distance Metric */}
           <View style={styles.metricItem}>
-            <View style={[styles.metricIconCircle, { backgroundColor: '#DCFCE7' }]}>
-              <Ionicons name="navigate" size={15} color="#16A34A" />
+            <View style={[styles.metricIconCircle, { backgroundColor: Colors.proteinLight }]}>
+              <Ionicons name="navigate" size={15} color={Colors.proteinDark} />
             </View>
             <Text style={styles.metricValue} numberOfLines={1}>
               {distanceKm} km
@@ -137,18 +137,18 @@ HeroStepCard.displayName = 'HeroStepCard';
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     paddingTop: 18,
     paddingBottom: 20,
     paddingHorizontal: 16,
     marginHorizontal: 16,
     shadowOpacity: 0,
     elevation: 0,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   cardEyebrow: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.8,
   },
   progressPill: {
@@ -168,12 +168,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 12,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   progressPillText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   celebrationPill: {
     flexDirection: 'row',
@@ -183,16 +183,16 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 12,
     borderCurve: 'continuous',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
   },
   celebrationText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#B45309',
+    color: Colors.carbsDark,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     marginHorizontal: 8,
     marginTop: 8,
     marginBottom: 16,
@@ -220,14 +220,14 @@ const styles = StyleSheet.create({
   metricValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
     textAlign: 'center',
   },
   metricLabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 9.5,
-    color: '#94A3B8',
+    fontSize: 10,
+    color: Colors.textMuted,
     letterSpacing: 0.5,
     marginTop: 2,
     textAlign: 'center',
@@ -235,6 +235,6 @@ const styles = StyleSheet.create({
   verticalDivider: {
     width: 1,
     height: 36,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
 });

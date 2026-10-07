@@ -1078,8 +1078,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 34,
     color: '#0F172A',
     letterSpacing: -0.5,
     includeFontPadding: false,
@@ -1224,7 +1224,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     padding: 32,
     marginTop: 16,
-    marginHorizontal: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
   },
@@ -1266,7 +1265,7 @@ const styles = StyleSheet.create({
   },
   insightBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 10.5,
+    fontSize: 11,
     letterSpacing: 0.6,
   },
   insightHeadlineText: {
@@ -1277,7 +1276,7 @@ const styles = StyleSheet.create({
   },
   insightSublineText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 17,
     color: '#64748B',
   },

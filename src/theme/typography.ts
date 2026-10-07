@@ -99,13 +99,33 @@ export const Typography = {
     color: '#64748B',
   } as TextStyle,
 
-  // Headlines
+  // Display Scale
+  display: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 44,
+    lineHeight: 52,
+    letterSpacing: -1.3,
+  } as TextStyle,
   displayLg: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 44,
+    lineHeight: 52,
+    letterSpacing: -1.3,
+  } as TextStyle,
+  displayMobile: {
     fontFamily: Fonts.urbanist.extraBold,
     fontSize: 34,
     lineHeight: 40,
     letterSpacing: -0.8,
   } as TextStyle,
+  displayLgMobile: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 34,
+    lineHeight: 40,
+    letterSpacing: -0.8,
+  } as TextStyle,
+
+  // Headlines
   headlineLg: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
@@ -128,6 +148,16 @@ export const Typography = {
   // Body & Labels
   bodyLg: {
     fontFamily: Fonts.urbanist.medium,
+    fontSize: 16,
+    lineHeight: 24,
+  } as TextStyle,
+  bodyBold: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    lineHeight: 24,
+  } as TextStyle,
+  labelBold: {
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     lineHeight: 24,
   } as TextStyle,

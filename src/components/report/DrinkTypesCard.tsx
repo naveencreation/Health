@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     paddingVertical: 18,
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
     shadowOpacity: 0,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   donutCenterLabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 9.5,
+    fontSize: 10,
     color: '#94A3B8',
     textAlign: 'center',
     lineHeight: 13,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   legendItemPct: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#64748B',
   },
 });

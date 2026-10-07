@@ -201,7 +201,7 @@ export function ScannedProductCard({
             accessibilityRole="button"
             accessibilityLabel="Back to barcode scanner"
           >
-            <Ionicons name="arrow-back" size={22} color="#0F172A" />
+            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
           </Pressable>
 
           <Text style={styles.appBarTitle}>Item Details</Text>
@@ -214,7 +214,7 @@ export function ScannedProductCard({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={22} color="#0F172A" />
+              <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </Pressable>
           ) : (
             <View style={{ width: 40 }} />
@@ -223,7 +223,7 @@ export function ScannedProductCard({
 
         <View style={styles.errorContentWrapper}>
           <View style={styles.errorIconCircle}>
-            <Ionicons name="barcode-outline" size={38} color="#EA580C" />
+            <Ionicons name="barcode-outline" size={38} color={Colors.primary} />
           </View>
 
           <Text style={styles.errorTitle}>Packaged Item Not Found</Text>
@@ -233,7 +233,7 @@ export function ScannedProductCard({
 
           {scannedCode ? (
             <View style={styles.barcodeChip}>
-              <Ionicons name="pricetag-outline" size={14} color="#64748B" style={{ marginRight: 6 }} />
+              <Ionicons name="pricetag-outline" size={14} color={Colors.textSecondary} style={{ marginRight: 6 }} />
               <Text style={styles.barcodeChipLabel}>Barcode: </Text>
               <Text style={styles.barcodeChipValue}>{scannedCode}</Text>
             </View>
@@ -253,7 +253,7 @@ export function ScannedProductCard({
                 accessibilityRole="button"
                 accessibilityLabel="Enter food details manually"
               >
-                <Ionicons name="create-outline" size={20} color="#FFFFFF" style={styles.btnIcon} />
+                <Ionicons name="create-outline" size={20} color={Colors.onPrimary} style={styles.btnIcon} />
                 <Text style={styles.primaryButtonText}>Enter Details Manually</Text>
               </Pressable>
             ) : null}
@@ -270,7 +270,7 @@ export function ScannedProductCard({
               accessibilityRole="button"
               accessibilityLabel="Scan another barcode"
             >
-              <Ionicons name="scan-outline" size={18} color="#0F172A" style={styles.btnIcon} />
+              <Ionicons name="scan-outline" size={18} color={Colors.textPrimary} style={styles.btnIcon} />
               <Text style={styles.secondaryButtonText}>Scan Another Item</Text>
             </Pressable>
           </View>
@@ -296,7 +296,7 @@ export function ScannedProductCard({
           accessibilityRole="button"
           accessibilityLabel="Back to scanner"
         >
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
         </Pressable>
 
         <Text style={styles.appBarTitle}>Log Scanned Item</Text>
@@ -312,7 +312,7 @@ export function ScannedProductCard({
             accessibilityRole="button"
             accessibilityLabel="Close"
           >
-            <Ionicons name="close" size={22} color="#0F172A" />
+            <Ionicons name="close" size={22} color={Colors.textPrimary} />
           </Pressable>
         ) : (
           <View style={{ width: 40 }} />
@@ -339,7 +339,7 @@ export function ScannedProductCard({
               />
             ) : (
               <View style={styles.thumbnailFallback}>
-                <Ionicons name="nutrition-outline" size={32} color="#64748B" />
+                <Ionicons name="nutrition-outline" size={32} color={Colors.textSecondary} />
               </View>
             )}
           </View>
@@ -356,7 +356,7 @@ export function ScannedProductCard({
 
               {effectiveProduct.id ? (
                 <View style={styles.barcodePill}>
-                  <MaterialCommunityIcons name="barcode" size={12} color="#64748B" style={{ marginRight: 3 }} />
+                  <MaterialCommunityIcons name="barcode" size={12} color={Colors.textSecondary} style={{ marginRight: 3 }} />
                   <Text style={styles.barcodePillText} numberOfLines={1}>
                     {effectiveProduct.id}
                   </Text>
@@ -369,7 +369,7 @@ export function ScannedProductCard({
             </Text>
 
             <View style={styles.servingTagRow}>
-              <Ionicons name="calendar-outline" size={13} color="#64748B" style={{ marginRight: 5 }} />
+              <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} style={{ marginRight: 5 }} />
               <Text style={styles.servingTagText}>
                 {effectiveProduct.servingSize || 'Standard 100g serving'}
               </Text>
@@ -382,7 +382,7 @@ export function ScannedProductCard({
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Assign to meal</Text>
             <View style={styles.timeTag}>
-              <Ionicons name="time-outline" size={14} color="#64748B" style={{ marginRight: 4 }} />
+              <Ionicons name="time-outline" size={14} color={Colors.textSecondary} style={{ marginRight: 4 }} />
               <Text style={styles.timeTagText}>{formatCurrentTime()}</Text>
             </View>
           </View>
@@ -390,7 +390,7 @@ export function ScannedProductCard({
           <View style={styles.mealGridContainer}>
             {MEAL_OPTIONS.map(slot => {
               const isActive = selectedMealType === slot.id;
-              const iconColor = isActive ? '#EA580C' : '#64748B';
+              const iconColor = isActive ? Colors.primary : Colors.textSecondary;
               return (
                 <Pressable
                   key={slot.id}
@@ -440,7 +440,7 @@ export function ScannedProductCard({
           <View style={styles.estimateBanner}>
             <View style={styles.estimateBannerTop}>
               <View style={styles.estimateBadge}>
-                <Ionicons name="alert-circle" size={18} color="#D97706" />
+                <Ionicons name="alert-circle" size={18} color={Colors.carbsDark} />
                 <Text style={styles.estimateBadgeText}>
                   Estimated {effectiveProduct.estimatedCategory ? `from ${effectiveProduct.estimatedCategory}` : ''}
                 </Text>
@@ -457,7 +457,7 @@ export function ScannedProductCard({
                 <Ionicons
                   name={isEditingMacros ? 'close' : 'options-outline'}
                   size={16}
-                  color="#C2410C"
+                  color={Colors.primaryDeep}
                   style={{ marginRight: 4 }}
                 />
                 <Text style={styles.estimateEditBtnText}>
@@ -541,7 +541,7 @@ export function ScannedProductCard({
               accessibilityRole="button"
               accessibilityLabel="Save package values"
             >
-              <Ionicons name="checkmark-circle" size={17} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Ionicons name="checkmark-circle" size={17} color={Colors.onPrimary} style={{ marginRight: 6 }} />
               <Text style={styles.editorApplyBtnText}>Save Package Values</Text>
             </Pressable>
           </View>
@@ -559,7 +559,7 @@ export function ScannedProductCard({
           <View style={styles.nutritionUnifiedCard}>
             {/* 1. Calories */}
             <View style={styles.nutritionColumn}>
-              <Ionicons name="flame-outline" size={20} color="#EA580C" style={styles.macroIcon} />
+              <Ionicons name="flame-outline" size={20} color={Colors.primary} style={styles.macroIcon} />
               <Text style={styles.macroColLabel}>Calories</Text>
               <View style={styles.macroColValueRow}>
                 <Text style={styles.macroColNumber}>{calculatedCalories}</Text>
@@ -571,7 +571,7 @@ export function ScannedProductCard({
 
             {/* 2. Protein */}
             <View style={styles.nutritionColumn}>
-              <Ionicons name="barbell-outline" size={20} color="#2563EB" style={styles.macroIcon} />
+              <Ionicons name="barbell-outline" size={20} color={Colors.proteinDark} style={styles.macroIcon} />
               <Text style={styles.macroColLabel}>Protein</Text>
               <View style={styles.macroColValueRow}>
                 <Text style={styles.macroColNumber}>{calculatedProtein}</Text>
@@ -583,7 +583,7 @@ export function ScannedProductCard({
 
             {/* 3. Carbs */}
             <View style={styles.nutritionColumn}>
-              <MaterialCommunityIcons name="barley" size={20} color="#D97706" style={styles.macroIcon} />
+              <MaterialCommunityIcons name="barley" size={20} color={Colors.carbsDark} style={styles.macroIcon} />
               <Text style={styles.macroColLabel}>Carbs</Text>
               <View style={styles.macroColValueRow}>
                 <Text style={styles.macroColNumber}>{calculatedCarbs}</Text>
@@ -595,7 +595,7 @@ export function ScannedProductCard({
 
             {/* 4. Fat */}
             <View style={styles.nutritionColumn}>
-              <Ionicons name="water-outline" size={20} color="#059669" style={styles.macroIcon} />
+              <Ionicons name="water-outline" size={20} color={Colors.fatDark} style={styles.macroIcon} />
               <Text style={styles.macroColLabel}>Fat</Text>
               <View style={styles.macroColValueRow}>
                 <Text style={styles.macroColNumber}>{calculatedFat}</Text>
@@ -626,7 +626,7 @@ export function ScannedProductCard({
                 accessibilityRole="button"
                 accessibilityLabel="Decrease portion"
               >
-                <Ionicons name="remove" size={16} color="#0F172A" />
+                <Ionicons name="remove" size={16} color={Colors.textPrimary} />
               </Pressable>
 
               <Text style={styles.stepperValueText}>
@@ -642,7 +642,7 @@ export function ScannedProductCard({
                 accessibilityRole="button"
                 accessibilityLabel="Increase portion"
               >
-                <Ionicons name="add" size={16} color="#0F172A" />
+                <Ionicons name="add" size={16} color={Colors.textPrimary} />
               </Pressable>
             </View>
 
@@ -725,7 +725,7 @@ export function ScannedProductCard({
           accessibilityRole="button"
           accessibilityLabel={`Add to ${activeMealLabel}, ${calculatedCalories} calories`}
         >
-          <Ionicons name="checkmark-circle-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+          <Ionicons name="checkmark-circle-outline" size={22} color={Colors.onPrimary} style={styles.btnIcon} />
           <Text style={styles.primaryButtonText}>
             Add to {activeMealLabel} • {calculatedCalories} kcal
           </Text>
@@ -743,7 +743,7 @@ export function ScannedProductCard({
           accessibilityRole="button"
           accessibilityLabel="Scan another item"
         >
-          <Ionicons name="scan-outline" size={20} color="#0F172A" style={styles.btnIcon} />
+          <Ionicons name="scan-outline" size={20} color={Colors.textPrimary} style={styles.btnIcon} />
           <Text style={styles.secondaryButtonText}>Scan Another Item</Text>
         </Pressable>
       </View>
@@ -754,7 +754,7 @@ export function ScannedProductCard({
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6', // Warm porcelain canvas
+    backgroundColor: Colors.background
   },
 
   // 1. Top App Bar
@@ -764,39 +764,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   iconCircleBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   appBarTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   topBarcodeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     maxWidth: 130,
   },
   topBarcodeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.4,
   },
 
@@ -814,15 +814,15 @@ const styles = StyleSheet.create({
   productHeroCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     padding: 14,
     marginBottom: 16,
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,
         shadowRadius: 8,
@@ -836,9 +836,9 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   brandPill: {
-    backgroundColor: '#FFF1EB',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 8,
     paddingVertical: 2.5,
     borderRadius: 6,
@@ -873,13 +873,13 @@ const styles = StyleSheet.create({
   brandPillText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    color: '#EA580C',
+    color: Colors.primary,
     letterSpacing: 0.5,
   },
   barcodePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 6,
@@ -887,14 +887,14 @@ const styles = StyleSheet.create({
   barcodePillText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.3,
   },
   productTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     lineHeight: 23,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     marginBottom: 4,
   },
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   servingTagText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // B. Meal Slot & Time Selector
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   timeTag: {
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
   timeTagText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   mealGridContainer: {
     flexDirection: 'row',
@@ -939,18 +939,18 @@ const styles = StyleSheet.create({
   },
   mealCardItem: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     paddingVertical: 14,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mealCardItemActive: {
-    backgroundColor: '#FFF7F2',
-    borderColor: '#EA580C',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
     borderWidth: 1.5,
   },
   mealCardIcon: {
@@ -959,18 +959,18 @@ const styles = StyleSheet.create({
   mealCardLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   mealCardLabelActive: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#EA580C',
+    color: Colors.primary,
   },
 
   // C. Estimation Notice Banner
   estimateBanner: {
-    backgroundColor: '#FFFDF5',
+    backgroundColor: Colors.carbsLight,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
   estimateBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
   },
   estimateEditBtn: {
     flexDirection: 'row',
@@ -1000,21 +1000,21 @@ const styles = StyleSheet.create({
   estimateEditBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
   },
   estimateDescription: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
-    color: '#78716C',
+    color: Colors.textSecondary,
   },
 
   // D. Inline Macro Editor
   macroEditorCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     padding: 14,
     marginBottom: 16,
   },
@@ -1027,7 +1027,7 @@ const styles = StyleSheet.create({
   macroEditorTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   editorInputsGrid: {
     flexDirection: 'row',
@@ -1040,20 +1040,20 @@ const styles = StyleSheet.create({
   editorInputLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 4,
     textAlign: 'center',
   },
   editorInput: {
     height: 42,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.12)',
+    borderColor: Colors.borderSubtle,
     borderRadius: 10,
     textAlign: 'center',
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     paddingHorizontal: 4,
   },
   editorApplyBtn: {
@@ -1067,7 +1067,7 @@ const styles = StyleSheet.create({
   editorApplyBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
 
   // E. Unified 4-Nutrient Telemetry Deck
@@ -1078,20 +1078,20 @@ const styles = StyleSheet.create({
   nutritionSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   nutritionUnifiedCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     paddingVertical: 14,
     paddingHorizontal: 6,
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,
         shadowRadius: 8,
@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
   nutritionDivider: {
     width: 1,
     height: 38,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: Colors.borderWhisper,
   },
   macroIcon: {
     marginBottom: 6,
@@ -1117,7 +1117,7 @@ const styles = StyleSheet.create({
   macroColLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   macroColValueRow: {
@@ -1128,12 +1128,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
     lineHeight: 24,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   macroColUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginLeft: 3,
   },
 
@@ -1141,7 +1141,7 @@ const styles = StyleSheet.create({
   portionReadout: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#EA580C',
+    color: Colors.primary,
   },
   portionControlRow: {
     flexDirection: 'row',
@@ -1151,26 +1151,26 @@ const styles = StyleSheet.create({
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     padding: 4,
   },
   stepperBtn: {
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.05)',
+    borderColor: Colors.borderWhisper,
     justifyContent: 'center',
     alignItems: 'center',
   },
   stepperValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     paddingHorizontal: 12,
   },
   presetChipsRow: {
@@ -1182,40 +1182,40 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
   presetChipActive: {
-    backgroundColor: '#FFF7F2',
-    borderColor: '#EA580C',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
     borderWidth: 1.5,
   },
   presetChipText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   presetChipTextActive: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#EA580C',
+    color: Colors.primary,
   },
 
   // G. Micronutrients Row
   microSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     padding: 12,
     marginTop: 4,
   },
   microSectionTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     letterSpacing: 0.5,
     marginBottom: 8,
   },
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -1236,25 +1236,25 @@ const styles = StyleSheet.create({
   microPillLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   microPillValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
 
   // 3. Sticky Bottom Action Dock
   bottomActionDock: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    borderTopColor: Colors.borderWhisper,
     gap: 8,
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.04,
         shadowRadius: 10,
@@ -1267,13 +1267,13 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 54,
     borderRadius: 16,
-    backgroundColor: '#EA580C',
+    backgroundColor: Colors.primary,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#EA580C',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 8,
@@ -1286,14 +1286,14 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   secondaryButton: {
     height: 50,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1301,7 +1301,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   btnIcon: {
     marginRight: 8,
@@ -1325,9 +1325,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.stepsBorder,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -1335,7 +1335,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     marginBottom: 8,
     textAlign: 'center',
@@ -1344,14 +1344,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
   },
   barcodeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 10,
@@ -1360,12 +1360,12 @@ const styles = StyleSheet.create({
   barcodeChipLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   barcodeChipValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: 0.8,
   },
   buttonStack: {

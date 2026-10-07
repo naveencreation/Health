@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: '#64748B',
   },
   chartWrapper: {

@@ -162,7 +162,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               {/* Endowed Progress Badge */}
               {initialData?.age ? (
                 <View style={styles.biometricsPill}>
-                  <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
                   <Text style={styles.biometricsPillText}>
                     Onboarding Complete • Targets Calibrated
                   </Text>
@@ -173,7 +173,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
             {/* Error Banner */}
             {errorMessage ? (
               <View style={styles.errorAlert}>
-                <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                <Ionicons name="alert-circle" size={18} color={Colors.dangerDark} />
                 <Text style={styles.errorAlertText}>{errorMessage}</Text>
               </View>
             ) : null}
@@ -195,13 +195,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="person-outline"
                   size={20}
-                  color={focusedField === 'name' ? '#0F172A' : '#94A3B8'}
+                  color={focusedField === 'name' ? Colors.textPrimary : Colors.textMuted}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   style={styles.textInput}
                   placeholder="John Doe"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   value={name}
                   onChangeText={text => {
                     setName(text);
@@ -239,14 +239,14 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="mail-outline"
                   size={20}
-                  color={focusedField === 'email' ? '#0F172A' : '#94A3B8'}
+                  color={focusedField === 'email' ? Colors.textPrimary : Colors.textMuted}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   ref={emailRef}
                   style={styles.textInput}
                   placeholder="name@example.com"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   value={email}
                   onChangeText={text => {
                     setEmail(text);
@@ -274,7 +274,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Clear email"
                   >
-                    <Ionicons name="close-circle" size={18} color="#CBD5E1" />
+                    <Ionicons name="close-circle" size={18} color={Colors.textLight} />
                   </Pressable>
                 ) : null}
               </View>
@@ -297,7 +297,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={focusedField === 'password' ? '#0F172A' : '#94A3B8'}
+                  color={focusedField === 'password' ? Colors.textPrimary : Colors.textMuted}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -307,7 +307,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                     Platform.OS === 'android' && !showPassword ? styles.androidPasswordInput : null,
                   ]}
                   placeholder="Min. 8 characters"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={text => {
@@ -338,7 +338,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={focusedField === 'password' ? '#0F172A' : '#94A3B8'}
+                    color={focusedField === 'password' ? Colors.textPrimary : Colors.textMuted}
                   />
                 </Pressable>
               </View>
@@ -351,7 +351,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={hasMinLength ? 'checkmark-circle' : 'ellipse-outline'}
                     size={14}
-                    color={hasMinLength ? '#10B981' : '#94A3B8'}
+                    color={hasMinLength ? Colors.success : Colors.textMuted}
                   />
                   <Text style={[styles.reqText, hasMinLength ? styles.reqTextActive : null]}>
                     At least 8 characters
@@ -361,7 +361,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={hasNumber ? 'checkmark-circle' : 'ellipse-outline'}
                     size={14}
-                    color={hasNumber ? '#10B981' : '#94A3B8'}
+                    color={hasNumber ? Colors.success : Colors.textMuted}
                   />
                   <Text style={[styles.reqText, hasNumber ? styles.reqTextActive : null]}>
                     Contains a number
@@ -371,7 +371,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={hasUpper ? 'checkmark-circle' : 'ellipse-outline'}
                     size={14}
-                    color={hasUpper ? '#10B981' : '#94A3B8'}
+                    color={hasUpper ? Colors.success : Colors.textMuted}
                   />
                   <Text style={[styles.reqText, hasUpper ? styles.reqTextActive : null]}>
                     Uppercase letter
@@ -381,7 +381,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={hasSpecial ? 'checkmark-circle' : 'ellipse-outline'}
                     size={14}
-                    color={hasSpecial ? '#10B981' : '#94A3B8'}
+                    color={hasSpecial ? Colors.success : Colors.textMuted}
                   />
                   <Text style={[styles.reqText, hasSpecial ? styles.reqTextActive : null]}>
                     Special character (!@#$)
@@ -409,7 +409,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   name="shield-checkmark-outline"
                   size={20}
                   color={
-                    passwordsMatch ? '#10B981' : focusedField === 'confirm' ? '#0F172A' : '#94A3B8'
+                    passwordsMatch ? Colors.success : focusedField === 'confirm' ? Colors.textPrimary : Colors.textMuted
                   }
                   style={styles.inputIcon}
                 />
@@ -422,7 +422,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                       : null,
                   ]}
                   placeholder="Repeat password"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
                   onChangeText={text => {
@@ -455,13 +455,13 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color={focusedField === 'confirm' ? '#0F172A' : '#94A3B8'}
+                    color={focusedField === 'confirm' ? Colors.textPrimary : Colors.textMuted}
                   />
                 </Pressable>
               </View>
             </View>
 
-            {/* Standardized 52px High-Contrast CTA Button (Lime #CDE26D / Slate #0F172A) */}
+            {/* Standardized 52px High-Contrast CTA Button  */}
             <Pressable
               style={({ pressed }) => [
                 styles.submitButton,
@@ -475,11 +475,11 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               testID="btn-signup-submit"
             >
               {loading ? (
-                <BouncingDotsLoader color="#FFFFFF" size={6} gap={5} />
+                <BouncingDotsLoader color={Colors.onPrimary} size={6} gap={5} />
               ) : (
                 <View style={styles.btnContentRow}>
                   <Text style={styles.submitButtonText}>Create Account</Text>
-                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
                 </View>
               )}
             </Pressable>
@@ -510,19 +510,19 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 440,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
     borderWidth: Platform.OS === 'web' ? 1 : 0,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   flexOne: {
     flex: 1,
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     textAlign: 'center',
     marginBottom: 6,
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     maxWidth: 290,
   },
@@ -560,9 +560,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: '#DCFCE7',
+    borderColor: Colors.proteinBorder,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -572,14 +572,14 @@ const styles = StyleSheet.create({
   biometricsPillText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#166534',
+    color: Colors.proteinDark,
   },
   errorAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: Colors.dangerLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   errorAlertText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#B91C1C',
+    color: Colors.dangerDark,
     flex: 1,
   },
   inputGroup: {
@@ -599,27 +599,27 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.6,
     marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     paddingHorizontal: 14,
     height: 50,
   },
   inputWrapperFocused: {
-    borderColor: '#0F172A',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.textPrimary,
+    backgroundColor: Colors.card,
   },
   inputWrapperSuccess: {
-    borderColor: '#10B981',
+    borderColor: Colors.success,
   },
   inputIcon: {
     marginRight: 10,
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     backgroundColor: 'transparent',
     height: '100%',
     paddingVertical: 0,
@@ -643,14 +643,14 @@ const styles = StyleSheet.create({
     fontFamily: undefined,
   },
   requirementsBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 10,
     marginBottom: 14,
     gap: 5,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: Colors.surfaceInset,
   },
   reqRow: {
     flexDirection: 'row',
@@ -660,14 +660,14 @@ const styles = StyleSheet.create({
   reqText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   reqTextActive: {
-    color: '#10B981',
+    color: Colors.success,
     fontFamily: Fonts.urbanist.medium,
   },
 
-  // Standardized 52px CTA Button (Colors.primary / #FFFFFF)
+  // Standardized 52px CTA Button 
   submitButton: {
     backgroundColor: Colors.primary,
     height: 52,
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.2,
   },
   footerRow: {
@@ -710,12 +710,12 @@ const styles = StyleSheet.create({
   footerText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   footerLinkText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#F47551',
+    color: Colors.primary,
   },
   pressedSubtle: {
     opacity: 0.7,

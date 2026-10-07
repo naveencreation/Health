@@ -126,7 +126,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >
-                <Ionicons name="close" size={22} color="#0F172A" />
+                <Ionicons name="close" size={22} color={Colors.textPrimary} />
               </Pressable>
             </View>
 
@@ -135,7 +135,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.celebrationBadgeCircle}>
-                <Ionicons name="sparkles" size={42} color="#D97706" />
+                <Ionicons name="sparkles" size={42} color={Colors.warningDark} />
               </View>
 
               <View style={styles.celebrationPill}>
@@ -153,7 +153,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               <View style={styles.unlockedBox}>
                 <View style={styles.unlockedRow}>
                   <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                    <Ionicons name="checkmark" size={15} color={Colors.success} />
                   </View>
                   <View style={styles.unlockedTextWrap}>
                     <Text style={styles.unlockedTitle}>Unlimited AI Meal Vision</Text>
@@ -163,7 +163,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
                 <View style={styles.unlockedRow}>
                   <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                    <Ionicons name="checkmark" size={15} color={Colors.success} />
                   </View>
                   <View style={styles.unlockedTextWrap}>
                     <Text style={styles.unlockedTitle}>Dynamic Adaptive Coaching</Text>
@@ -173,7 +173,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
                 <View style={styles.unlockedRow}>
                   <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                    <Ionicons name="checkmark" size={15} color={Colors.success} />
                   </View>
                   <View style={styles.unlockedTextWrap}>
                     <Text style={styles.unlockedTitle}>Deep 30-Day & Yearly Trends</Text>
@@ -183,7 +183,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
                 <View style={styles.unlockedRow}>
                   <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color="#16A34A" />
+                    <Ionicons name="checkmark" size={15} color={Colors.success} />
                   </View>
                   <View style={styles.unlockedTextWrap}>
                     <Text style={styles.unlockedTitle}>Streak Freeze Protection</Text>
@@ -202,7 +202,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                 accessibilityLabel="Explore Pro Features"
               >
                 <Text style={styles.exploreBtnText}>Explore Pro Features</Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
               </Pressable>
             </ScrollView>
           </View>
@@ -217,7 +217,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close Paywall"
               >
-                <Ionicons name="close" size={22} color="#0F172A" />
+                <Ionicons name="close" size={22} color={Colors.textPrimary} />
               </Pressable>
             </View>
 
@@ -228,7 +228,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
           {/* Hero Crown Badge */}
           <View style={styles.crownWrap}>
             <View style={styles.crownCircle}>
-              <Ionicons name="star" size={32} color="#FFFFFF" />
+              <Ionicons name="star" size={32} color={Colors.onPrimary} />
             </View>
           </View>
 
@@ -241,7 +241,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
           {highlightFeature && (
             <View style={styles.highlightPill}>
-              <Ionicons name="lock-open" size={14} color="#EA580C" />
+              <Ionicons name="lock-open" size={14} color={Colors.primary} />
               <Text style={styles.highlightText}>Unlocks: {highlightFeature}</Text>
             </View>
           )}
@@ -319,7 +319,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
             accessibilityLabel="Unlock Calorify Pro"
           >
             {purchasing ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={Colors.onPrimary} />
             ) : (
               <>
                 <Text style={styles.purchaseBtnText}>
@@ -327,7 +327,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                     ? `Start ${selectedPlan.trialDays}-Day Free Trial`
                     : 'Unlock Calorify Pro'}
                 </Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
               </>
             )}
           </Pressable>
@@ -360,7 +360,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   topBar: {
     alignItems: 'flex-end',
@@ -371,9 +371,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -394,10 +394,10 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#F59E0B',
+    backgroundColor: Colors.warning,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#F59E0B',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   headline: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 26,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 8,
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
     lineHeight: 20,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     paddingHorizontal: 12,
@@ -424,9 +424,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   highlightText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#EA580C',
+    color: Colors.primary,
   },
   benefitsList: {
     width: '100%',
@@ -446,19 +446,19 @@ const styles = StyleSheet.create({
   benefitCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     gap: 12,
   },
   benefitIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -468,19 +468,19 @@ const styles = StyleSheet.create({
   benefitTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   benefitDescription: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   choosePlanTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     alignSelf: 'flex-start',
     marginBottom: 12,
   },
@@ -491,17 +491,17 @@ const styles = StyleSheet.create({
   },
   planCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     position: 'relative',
   },
   planCardSelected: {
     borderColor: Colors.primary,
-    backgroundColor: '#FFFBF9',
+    backgroundColor: Colors.primaryLight,
   },
   planBadge: {
     position: 'absolute',
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   planBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.5,
   },
   planCardHeader: {
@@ -541,34 +541,34 @@ const styles = StyleSheet.create({
   planTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   planBillingPeriod: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   planPrice: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   planPerMonth: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#10B981',
+    color: Colors.weightLoss,
   },
   statusBox: {
     width: '100%',
     padding: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 10,
     marginBottom: 16,
   },
   statusText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
     textAlign: 'center',
   },
   purchaseBtn: {
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   purchaseBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   restoreBtn: {
     paddingVertical: 8,
@@ -595,13 +595,13 @@ const styles = StyleSheet.create({
   restoreBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   termsNote: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
     lineHeight: 16,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: 8,
   },
@@ -618,37 +618,37 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     borderWidth: 2,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#D97706',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 4,
   },
   celebrationPill: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     marginBottom: 12,
   },
   celebrationPillText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#B45309',
+    color: Colors.warningDark,
     letterSpacing: 0.6,
   },
   celebrationHeadline: {
     fontFamily: Fonts.kurale,
     fontSize: 28,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -656,19 +656,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
     lineHeight: 20,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 8,
   },
   unlockedBox: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     gap: 16,
     marginBottom: 28,
   },
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -692,14 +692,14 @@ const styles = StyleSheet.create({
   unlockedTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   unlockedDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   exploreBtn: {
     width: '100%',
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   exploreBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
 });
 

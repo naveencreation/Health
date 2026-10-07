@@ -138,7 +138,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                 <Text style={styles.welcomeText}>Welcome</Text>
                 {isPro ? (
                   <View style={styles.proTag} accessibilityLabel="Calorify Pro Member">
-                    <Ionicons name="sparkles" size={10} color="#D97706" style={styles.proTagIcon} />
+                    <Ionicons name="sparkles" size={10} color={Colors.warningDark} style={styles.proTagIcon} />
                     <Text style={styles.proTagText}>PRO ✦</Text>
                   </View>
                 ) : currentUser?.isGuest ? (
@@ -238,12 +238,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           accessibilityLabel="Guest Mode, tap to sign in or create account"
         >
           <View style={styles.guestBannerLeft}>
-            <Ionicons name="sparkles" size={14} color="#D97706" />
+            <Ionicons name="sparkles" size={14} color={Colors.warningDark} />
             <Text style={styles.guestBannerText}>
               Guest Mode • <Text style={styles.guestBannerBold}>Sign In / Create Account</Text>
             </Text>
           </View>
-          <Ionicons name="arrow-forward" size={14} color="#D97706" />
+          <Ionicons name="arrow-forward" size={14} color={Colors.warningDark} />
         </Pressable>
       ) : null}
     </View>
@@ -252,7 +252,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     zIndex: 10,
   },
   topBar: {
@@ -275,9 +275,9 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1.5,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     elevation: 0,
     shadowOpacity: 0,
     alignItems: 'center',
@@ -311,11 +311,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 17,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: -0.1,
   },
   guestTag: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 6,
@@ -323,19 +323,19 @@ const styles = StyleSheet.create({
   },
   guestTagText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 9.5,
-    color: '#D97706',
+    fontSize: 10,
+    color: Colors.carbsDark,
   },
   proTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 6,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     gap: 3,
   },
   proTagIcon: {
@@ -343,15 +343,15 @@ const styles = StyleSheet.create({
   },
   proTagText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
-    color: '#B45309',
+    fontSize: 10,
+    color: Colors.warningDark,
     letterSpacing: 0.3,
   },
   userNameText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
     lineHeight: 25,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   collapsedHudStack: {
@@ -366,8 +366,8 @@ const styles = StyleSheet.create({
   },
   collapsedDateText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 12.5,
-    color: '#0F172A',
+    fontSize: 13,
+    color: Colors.textPrimary,
     flexShrink: 1,
   },
   caloriePill: {
@@ -382,12 +382,12 @@ const styles = StyleSheet.create({
   caloriePillOk: {
     backgroundColor: Colors.fatLight,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.burnBorder,
   },
   caloriePillOver: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: Colors.dangerLight,
   },
   calorieDot: {
     width: 5,
@@ -398,17 +398,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   calorieDotOver: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
   calorieText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10.5,
+    fontSize: 11,
   },
   calorieTextOk: {
     color: Colors.primaryDark,
   },
   calorieTextOver: {
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -419,9 +419,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -441,17 +441,17 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: Colors.badgeOrange,
     borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.card,
   },
   guestBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#FEF3C7',
+    borderTopColor: Colors.carbsLight,
     marginHorizontal: 16,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -469,11 +469,11 @@ const styles = StyleSheet.create({
   guestBannerText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#92400E',
+    color: Colors.carbsDark,
   },
   guestBannerBold: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#B45309',
+    color: Colors.warningDark,
     textDecorationLine: 'underline',
   },
 });

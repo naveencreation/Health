@@ -201,7 +201,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -218,7 +218,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                 <Ionicons
                   name="shield-checkmark"
                   size={15}
-                  color="#059669"
+                  color={Colors.fiber}
                   style={styles.shieldIcon}
                 />
                 <View style={styles.privacyTextContainer}>
@@ -238,7 +238,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                   </View>
 
                   <View style={styles.maskedRow}>
-                    <Ionicons name="key-outline" size={15} color="#64748B" />
+                    <Ionicons name="key-outline" size={15} color={Colors.textSecondary} />
                     <Text style={styles.maskedKeyText}>{maskedKey || 'Key Configured'}</Text>
                   </View>
 
@@ -252,10 +252,10 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                       disabled={isValidating}
                     >
                       {isValidating ? (
-                        <ActivityIndicator size="small" color="#F47551" />
+                        <ActivityIndicator size="small" color={Colors.primary} />
                       ) : (
                         <>
-                          <Ionicons name="refresh-outline" size={14} color="#475569" />
+                          <Ionicons name="refresh-outline" size={14} color={Colors.textSlate600} />
                           <Text style={styles.testBtnText}>Test Connection</Text>
                         </>
                       )}
@@ -268,7 +268,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                       ]}
                       onPress={handleDisconnect}
                     >
-                      <Ionicons name="trash-outline" size={14} color="#DC2626" />
+                      <Ionicons name="trash-outline" size={14} color={Colors.dangerDark} />
                       <Text style={styles.disconnectBtnText}>Disconnect</Text>
                     </Pressable>
                   </View>
@@ -282,11 +282,11 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 
               <View style={styles.inputCard}>
                 <View style={styles.inputRow}>
-                  <Ionicons name="key-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                  <Ionicons name="key-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.keyTextInput}
                     placeholder="Paste AIzaSy... key"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={Colors.textMuted}
                     value={apiKeyInput}
                     onChangeText={text => {
                       setApiKeyInput(text);
@@ -306,12 +306,12 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                       <Ionicons
                         name={showKey ? 'eye-off-outline' : 'eye-outline'}
                         size={18}
-                        color="#64748B"
+                        color={Colors.textSecondary}
                       />
                     </Pressable>
                   ) : (
                     <Pressable style={styles.pastePill} onPress={handlePaste}>
-                      <Ionicons name="clipboard-outline" size={12} color="#64748B" />
+                      <Ionicons name="clipboard-outline" size={12} color={Colors.textSecondary} />
                       <Text style={styles.pastePillText}>Paste</Text>
                     </Pressable>
                   )}
@@ -321,14 +321,14 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               {/* Validation Feedback */}
               {validationError ? (
                 <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle" size={16} color="#DC2626" />
+                  <Ionicons name="alert-circle" size={16} color={Colors.dangerDark} />
                   <Text style={styles.errorText}>{validationError}</Text>
                 </View>
               ) : null}
 
               {successMessage ? (
                 <View style={styles.successBox}>
-                  <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+                  <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
                   <Text style={styles.successText}>{successMessage}</Text>
                 </View>
               ) : null}
@@ -345,12 +345,12 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               >
                 {isValidating ? (
                   <View style={styles.btnRow}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={Colors.onPrimary} />
                     <Text style={styles.btnText}>Verifying with Google...</Text>
                   </View>
                 ) : (
                   <View style={styles.btnRow}>
-                    <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                    <Ionicons name="sparkles" size={16} color={Colors.onPrimary} />
                     <Text style={styles.btnText}>
                       {isConnected ? 'Update & Verify Key' : 'Validate & Connect'}
                     </Text>
@@ -364,7 +364,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                 onPress={handleOpenGoogleAIStudio}
               >
                 <View style={styles.helperIcon}>
-                  <Ionicons name="help-circle-outline" size={18} color="#475569" />
+                  <Ionicons name="help-circle-outline" size={18} color={Colors.textSlate600} />
                 </View>
                 <View style={styles.helperTextCol}>
                   <Text style={styles.helperTitle}>How do I get a free Gemini API key?</Text>
@@ -372,7 +372,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     Tap to open Google AI Studio and generate a free personal key in 30 seconds.
                   </Text>
                 </View>
-                <Ionicons name="open-outline" size={15} color="#94A3B8" />
+                <Ionicons name="open-outline" size={15} color={Colors.textMuted} />
               </Pressable>
             </ScrollView>
           </View>
@@ -385,7 +385,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     borderWidth: 1,
     borderColor: 'rgba(244, 117, 81, 0.15)',
-    shadowColor: '#000000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -423,14 +423,14 @@ const styles = StyleSheet.create({
       ? {
           borderLeftWidth: 1,
           borderRightWidth: 1,
-          borderColor: '#E2E8F0',
+          borderColor: Colors.borderInset,
         }
       : {}),
   },
   dragHandle: {
     width: 42,
     height: 5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
     borderRadius: 3,
     borderCurve: 'continuous',
     alignSelf: 'center',
@@ -457,26 +457,26 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.5,
   },
   sheetTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   closeBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -492,13 +492,13 @@ const styles = StyleSheet.create({
   privacyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     marginBottom: 14,
     gap: 8,
   },
@@ -509,15 +509,15 @@ const styles = StyleSheet.create({
   privacyTitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   connectedCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     marginBottom: 16,
     elevation: 0,
     shadowOpacity: 0,
@@ -533,16 +533,16 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     borderCurve: 'continuous',
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.success,
   },
   statusTitle: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13.5,
-    color: '#0F172A',
+    fontSize: 14,
+    color: Colors.textPrimary,
     flex: 1,
   },
   modelTag: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
@@ -551,25 +551,25 @@ const styles = StyleSheet.create({
   modelTagText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   maskedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: Colors.surfaceInset,
     marginBottom: 10,
   },
   maskedKeyText: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 12.5,
-    color: '#334155',
+    fontSize: 12,
+    color: Colors.textSlate700,
   },
   connectedActionRow: {
     flexDirection: 'row',
@@ -582,49 +582,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     paddingVertical: 8,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     gap: 6,
   },
   testBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   disconnectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     gap: 5,
   },
   disconnectBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   inputSectionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12.5,
-    color: '#475569',
+    fontSize: 13,
+    color: Colors.textSlate600,
     marginBottom: 10,
   },
   inputCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginBottom: 12,
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     paddingVertical: 10,
   },
   inputActionIcon: {
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
   pastePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -659,12 +659,12 @@ const styles = StyleSheet.create({
   pastePillText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     padding: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -675,12 +675,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   successBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.proteinLight,
     padding: 10,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#16A34A',
+    color: Colors.success,
   },
   primaryConnectBtn: {
     backgroundColor: Colors.primary,
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
   },
   disabledBtn: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
     shadowOpacity: 0,
   },
   btnPressed: {
@@ -720,17 +720,17 @@ const styles = StyleSheet.create({
   btnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   helperBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     padding: 13,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     gap: 10,
   },
   helperIcon: {
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderCurve: 'continuous',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -747,14 +747,14 @@ const styles = StyleSheet.create({
   },
   helperTitle: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12.5,
-    color: '#1E293B',
+    fontSize: 13,
+    color: Colors.textSlate800,
     marginBottom: 2,
   },
   helperSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     lineHeight: 15,
   },
 });

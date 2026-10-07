@@ -64,7 +64,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
             <Ionicons name="water" size={14} color={Colors.water} />
           </View>
           <Text style={styles.title}>Water</Text>
-          <Ionicons name="chevron-forward" size={14} color="#94A3B8" style={styles.titleChevron} />
+          <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} style={styles.titleChevron} />
         </View>
         <View style={styles.mainStatRow}>
           <Text style={styles.mainStatText}>{currentWater.toLocaleString()}</Text>
@@ -88,7 +88,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Decrease water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather name="minus" size={20} color={currentWater <= 0 ? '#CBD5E1' : '#0EA5E9'} />
+          <Feather name="minus" size={20} color={currentWater <= 0 ? Colors.textLight : Colors.water} />
         </Pressable>
 
         {/* Center Droplet with Outer 3D Halo Contour & Dual Wave Simulation */}
@@ -121,7 +121,7 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
           accessibilityLabel={`Increase water by ${step} mL`}
           hitSlop={8}
         >
-          <Feather name="plus" size={20} color={currentWater >= maxWater ? '#CBD5E1' : '#0EA5E9'} />
+          <Feather name="plus" size={20} color={currentWater >= maxWater ? Colors.textLight : Colors.water} />
         </Pressable>
       </View>
     </View>
@@ -130,15 +130,15 @@ const WaterTrackerComponent: React.FC<WaterTrackerProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingVertical: 18,
-    marginHorizontal: 20,
-    marginTop: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -163,14 +163,14 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 7,
     borderCurve: 'continuous',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   titleChevron: {
@@ -184,20 +184,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
     lineHeight: 38,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.6,
   },
   unitText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 16,
-    color: '#334155',
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginLeft: 4,
-    lineHeight: 22,
+    lineHeight: 18,
   },
   subStatText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
     lineHeight: 18,
   },
@@ -214,14 +214,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.water,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   buttonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.94 }],
   },
   buttonDisabled: {
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     opacity: 0.5,
   },
   dropletWrapper: {

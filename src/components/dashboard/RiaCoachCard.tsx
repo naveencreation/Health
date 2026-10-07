@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   },
   insightTag: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
+    fontSize: 10,
     color: '#F47551',
     letterSpacing: 0.3,
   },
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13.5,
+    fontSize: 14,
     lineHeight: 20,
     color: '#1E293B',
   },
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#334155',
   },
   chipTextSelected: {

@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     lineHeight: 16,
     color: '#475569',
   },

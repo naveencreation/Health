@@ -261,15 +261,15 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
               <View style={styles.targetCol}>
                 {formattedGoalDate && targetWeightKg ? (
                   <View style={styles.goalDatePill}>
-                    <Ionicons name="calendar-outline" size={13} color="#C2410C" />
+                    <Ionicons name="calendar-outline" size={13} color={Colors.primaryDeep} />
                     <Text style={styles.goalDatePillText}>
                       {targetWeightKg} {weightUnit} by {formattedGoalDate}
                     </Text>
                   </View>
                 ) : (
                   <View style={styles.goalDatePill}>
-                    <Ionicons name="shield-checkmark-outline" size={13} color="#166534" />
-                    <Text style={[styles.goalDatePillText, { color: '#166534' }]}>
+                    <Ionicons name="shield-checkmark-outline" size={13} color={Colors.proteinDark} />
+                    <Text style={[styles.goalDatePillText, { color: Colors.proteinDark }]}>
                       Daily metabolic balance
                     </Text>
                   </View>
@@ -284,7 +284,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
               {firstMeal ? (
                 <>
                   <View style={styles.mealStatusPill}>
-                    <Ionicons name="checkmark-circle" size={15} color="#166534" />
+                    <Ionicons name="checkmark-circle" size={15} color={Colors.proteinDark} />
                     <Text style={styles.mealStatusText}>1 meal logged</Text>
                   </View>
                   <Text style={styles.mealDetailsText} numberOfLines={1}>
@@ -293,9 +293,9 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                 </>
               ) : (
                 <>
-                  <View style={[styles.mealStatusPill, { backgroundColor: '#F1F5F9' }]}>
-                    <Ionicons name="sparkles" size={14} color="#64748B" />
-                    <Text style={[styles.mealStatusText, { color: '#475569' }]}>Plan calibrated</Text>
+                  <View style={[styles.mealStatusPill, { backgroundColor: Colors.surfaceInset }]}>
+                    <Ionicons name="sparkles" size={14} color={Colors.textSecondary} />
+                    <Text style={[styles.mealStatusText, { color: Colors.textSlate600 }]}>Plan calibrated</Text>
                   </View>
                   <Text style={styles.mealDetailsText}>Ready for Day 1 tracking</Text>
                 </>
@@ -309,7 +309,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
               <Ionicons
                 name={collisionDetected ? 'information-circle' : 'alert-circle'}
                 size={18}
-                color={collisionDetected ? '#0284C7' : '#EF4444'}
+                color={collisionDetected ? Colors.water : Colors.danger}
                 style={styles.errorIcon}
               />
               <View style={styles.errorTextCol}>
@@ -378,7 +378,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                   value={userName}
                   onChangeText={setUserName}
                   placeholder="Your name"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   onFocus={() => setFocusedField('name')}
                   onBlur={() => setFocusedField(null)}
                   autoCapitalize="words"
@@ -394,7 +394,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                 value={email}
                 onChangeText={setEmail}
                 placeholder="name@example.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={Colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -414,7 +414,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Create a strong password"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   onFocus={() => setFocusedField('password')}
@@ -432,7 +432,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#64748B"
+                    color={Colors.textSecondary}
                   />
                 </Pressable>
               </View>
@@ -445,7 +445,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                   <Ionicons
                     name={hasMinLength ? 'checkmark' : 'ellipse-outline'}
                     size={13}
-                    color={hasMinLength ? '#166534' : '#64748B'}
+                    color={hasMinLength ? Colors.proteinDark : Colors.textSecondary}
                   />
                   <Text style={[styles.checkPillText, hasMinLength && styles.checkPillTextActive]}>
                     8+ characters
@@ -456,7 +456,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                   <Ionicons
                     name={hasNumber ? 'checkmark' : 'ellipse-outline'}
                     size={13}
-                    color={hasNumber ? '#166534' : '#64748B'}
+                    color={hasNumber ? Colors.proteinDark : Colors.textSecondary}
                   />
                   <Text style={[styles.checkPillText, hasNumber && styles.checkPillTextActive]}>
                     At least 1 number
@@ -479,7 +479,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
               testID="btn-submit-auth"
             >
               {isLoading ? (
-                <BouncingDotsLoader color="#FFFFFF" size={5} gap={4} />
+                <BouncingDotsLoader color={Colors.onPrimary} size={5} gap={4} />
               ) : (
                 <Text style={styles.submitButtonText}>
                   {formMode === 'signup' ? 'Create Account & Save Plan' : 'Sign In & Link Plan'}
@@ -520,7 +520,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
 
           {/* 8. Privacy Commitment */}
           <View style={styles.privacyRow}>
-            <Ionicons name="lock-closed-outline" size={13} color="#64748B" style={styles.lockIcon} />
+            <Ionicons name="lock-closed-outline" size={13} color={Colors.textSecondary} style={styles.lockIcon} />
             <Text style={styles.privacyText}>
               Your data stays private. We never sell it.{' '}
               <Text
@@ -553,7 +553,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
           <Animated.View entering={FadeInDown.duration(350)} style={styles.founderCard}>
             <View style={styles.founderBadgeRow}>
               <View style={styles.founderFlameIcon}>
-                <Ionicons name="flame" size={14} color="#F47551" />
+                <Ionicons name="flame" size={14} color={Colors.primary} />
               </View>
               <Text style={styles.founderBadgeText}>A QUICK NOTE FROM THE MAKER</Text>
             </View>
@@ -577,7 +577,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
 
             <View style={styles.tapToContinueHint}>
               <Text style={styles.tapToContinueText}>Tap anywhere to continue</Text>
-              <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
+              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
             </View>
           </Animated.View>
         </Pressable>
@@ -589,7 +589,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
@@ -615,21 +615,21 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   summaryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     padding: 16,
     marginBottom: 20,
   },
@@ -645,14 +645,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 34,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.02,
   },
   calorieUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   targetCol: {
     alignItems: 'flex-end',
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -669,11 +669,11 @@ const styles = StyleSheet.create({
   goalDatePillText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     marginVertical: 12,
   },
   mealBadgeRow: {
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -693,21 +693,21 @@ const styles = StyleSheet.create({
   mealStatusText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#166534',
+    color: Colors.proteinDark,
     letterSpacing: 0.02,
   },
   mealDetailsText: {
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: Colors.dangerLight,
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   collisionActionBtn: {
     marginTop: 6,
@@ -731,18 +731,18 @@ const styles = StyleSheet.create({
   collisionActionText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0284C7',
+    color: Colors.water,
   },
   googleButton: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.12)',
+    borderColor: Colors.borderSubtle,
     marginBottom: 18,
   },
   googleIcon: {
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   dividerRow: {
     flexDirection: 'row',
@@ -761,12 +761,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
   },
   dividerText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     paddingHorizontal: 12,
   },
   formContainer: {
@@ -779,28 +779,28 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     lineHeight: 18,
-    color: '#334155',
+    color: Colors.textSlate700,
     marginBottom: 6,
   },
   inputField: {
     height: 48,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 14,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   passwordWrapper: {
     height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 14,
@@ -809,12 +809,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     height: 48,
   },
   inputFocused: {
-    borderColor: '#F47551',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.card,
   },
   checklistRow: {
     flexDirection: 'row',
@@ -827,26 +827,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
   },
   checkPillActive: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   checkPillText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   checkPillTextActive: {
-    color: '#166534',
+    color: Colors.proteinDark,
     fontFamily: Fonts.urbanist.semiBold,
   },
   submitButton: {
     height: 52,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
     borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -854,12 +854,12 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   submitButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
   },
   submitButtonText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   switchModeBtn: {
     alignItems: 'center',
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
   switchModeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   guestButton: {
     alignItems: 'center',
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   guestButtonText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   privacyRow: {
     flexDirection: 'row',
@@ -895,12 +895,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   privacyLink: {
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textDecorationLine: 'underline',
   },
   buttonPressed: {
@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: Colors.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
   founderCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderCurve: 'continuous',
     padding: 24,
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -940,37 +940,37 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
     letterSpacing: 0.04,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
   },
   founderTitle: {
     fontFamily: Fonts.kurale,
     fontSize: 22,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
   founderBody: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: Colors.textSlate700,
     marginBottom: 10,
   },
   founderSignatureRow: {
     marginTop: 14,
     marginBottom: 20,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: Colors.surfaceInset,
     paddingTop: 14,
   },
   founderSignature: {
     fontFamily: Fonts.kurale,
     fontSize: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   founderRole: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   tapToContinueHint: {
@@ -983,6 +983,6 @@ const styles = StyleSheet.create({
   tapToContinueText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
 });

@@ -15,6 +15,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useWeight } from '../hooks/useWeight';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { LogWeightModal } from '../modals/LogWeightModal';
 
 import {
@@ -170,16 +171,16 @@ const TodayBMICardComponent: React.FC<TodayBMICardProps> = ({ onOpenLogModal, st
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
-    marginHorizontal: 20,
-    marginTop: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -198,18 +199,18 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 7,
     borderCurve: 'continuous',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.secondaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   unitTag: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 5,
@@ -219,15 +220,15 @@ const styles = StyleSheet.create({
   unitTagText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   editCircleBtn: {
     width: 30,
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -244,14 +245,14 @@ const styles = StyleSheet.create({
   bmiNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 32,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     lineHeight: 38,
     letterSpacing: -0.6,
   },
   categoryName: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginLeft: 8,
     lineHeight: 22,
   },

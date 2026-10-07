@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   },
   toggleSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#64748B',
   },
   divider: {

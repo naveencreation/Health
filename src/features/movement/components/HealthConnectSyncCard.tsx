@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   stepsBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#15803D',
   },
   syncIconBtn: {
@@ -241,13 +241,13 @@ const styles = StyleSheet.create({
   },
   setupTitle: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14.5,
+    fontSize: 15,
     color: '#0F172A',
     letterSpacing: -0.2,
   },
   setupSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
     marginTop: 2,
   },
@@ -274,14 +274,14 @@ const styles = StyleSheet.create({
   },
   feedbackText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#15803D',
     marginTop: 6,
     textAlign: 'center',
   },
   feedbackNoticeText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#D97706',
     marginTop: 6,
     textAlign: 'center',

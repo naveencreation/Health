@@ -342,8 +342,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 34,
     color: '#0F172A',
     letterSpacing: -0.5,
     includeFontPadding: false,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 120, // Clear bottom nav bar
-    gap: 14,
+    gap: 16,
   },
   subScreenContainer: {
     position: 'absolute',

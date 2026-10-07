@@ -77,8 +77,8 @@ const CategoryPill = React.memo(function CategoryPill({
   }));
 
   const iconColor = isSelected
-    ? cat.activeColor || '#FFFFFF'
-    : cat.inactiveColor || '#64748B';
+    ? cat.activeColor || Colors.textInverse
+    : cat.inactiveColor || Colors.textSecondary;
 
   return (
     <Animated.View style={pillStyle}>
@@ -123,72 +123,72 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'recent',
       label: 'Recent',
       iconFamily: 'ion',
       iconName: 'time-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'yesterday',
       label: 'Yesterday',
       iconFamily: 'ion',
       iconName: 'refresh-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
       iconName: 'pricetag-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'south_indian',
       label: 'South Indian',
       iconFamily: 'mci',
       iconName: 'pot-steam-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'breads',
       label: 'Breads & Toast',
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
       iconName: 'flash-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'custom',
       label: 'My Custom',
       iconFamily: 'mci',
       iconName: 'chef-hat',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'fruits',
       label: 'Fruits & Nuts',
       iconFamily: 'ion',
       iconName: 'nutrition-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
   ],
   lunch: [
@@ -197,72 +197,72 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'recent',
       label: 'Recent',
       iconFamily: 'ion',
       iconName: 'time-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'yesterday',
       label: 'Yesterday',
       iconFamily: 'ion',
       iconName: 'refresh-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
       iconName: 'pricetag-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'curries',
       label: 'Dals & Curries',
       iconFamily: 'mci',
       iconName: 'bowl-mix-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'rice',
       label: 'Rice & Grains',
       iconFamily: 'mci',
       iconName: 'rice',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'breads',
       label: 'Breads & Rotis',
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
       iconName: 'flash-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'custom',
       label: 'My Custom',
       iconFamily: 'mci',
       iconName: 'chef-hat',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
   ],
   dinner: [
@@ -271,72 +271,72 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'recent',
       label: 'Recent',
       iconFamily: 'ion',
       iconName: 'time-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'yesterday',
       label: 'Yesterday',
       iconFamily: 'ion',
       iconName: 'refresh-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
       iconName: 'pricetag-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'curries',
       label: 'Dals & Curries',
       iconFamily: 'mci',
       iconName: 'bowl-mix-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'breads',
       label: 'Breads',
       iconFamily: 'mci',
       iconName: 'bread-slice-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'south_indian',
       label: 'South Indian',
       iconFamily: 'mci',
       iconName: 'pot-steam-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
       iconName: 'flash-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'custom',
       label: 'My Custom',
       iconFamily: 'mci',
       iconName: 'chef-hat',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
   ],
   snacks: [
@@ -345,64 +345,64 @@ const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
       label: 'Popular',
       iconFamily: 'ion',
       iconName: 'star-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'recent',
       label: 'Recent',
       iconFamily: 'ion',
       iconName: 'time-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'yesterday',
       label: 'Yesterday',
       iconFamily: 'ion',
       iconName: 'refresh-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'all',
       label: 'All',
       iconFamily: 'ion',
       iconName: 'pricetag-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'snacks',
       label: 'Snacks',
       iconFamily: 'mci',
       iconName: 'cookie-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'fruits',
       label: 'Fruits & Nuts',
       iconFamily: 'ion',
       iconName: 'nutrition-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'high_protein',
       label: 'High Protein',
       iconFamily: 'ion',
       iconName: 'flash-outline',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
     {
       id: 'custom',
       label: 'My Custom',
       iconFamily: 'mci',
       iconName: 'chef-hat',
-      activeColor: '#FFFFFF',
-      inactiveColor: '#64748B',
+      activeColor: Colors.textInverse,
+      inactiveColor: Colors.textSecondary,
     },
   ],
 };
@@ -520,7 +520,7 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
             accessibilityRole="button"
             accessibilityLabel={`Quick add 1 serving of ${item.name}`}
           >
-            <Ionicons name="add" size={22} color="#FFFFFF" />
+            <Ionicons name="add" size={22} color={Colors.onPrimary} />
           </Pressable>
         </View>
       </Animated.View>
@@ -964,7 +964,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Repeat yesterday's ${mealTitle}`}
           >
-            <Ionicons name="flash" size={13} color="#FFFFFF" />
+            <Ionicons name="flash" size={13} color={Colors.onPrimary} />
             <Text style={styles.repeatActionBtnText}>Log All</Text>
           </Pressable>
         </View>
@@ -984,7 +984,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       return (
         <View style={styles.emptyListContainer}>
           <View style={styles.emptyIconBadge}>
-            <Ionicons name="search-outline" size={26} color="#94A3B8" />
+            <Ionicons name="search-outline" size={26} color={Colors.textMuted} />
           </View>
           <Text style={styles.emptyTitle}>No foods matching "{searchQuery.trim()}"</Text>
           <Text style={styles.emptySubtitle}>
@@ -1003,7 +1003,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Create custom food"
             >
-              <Ionicons name="add-circle-outline" size={16} color="#FFFFFF" />
+              <Ionicons name="add-circle-outline" size={16} color={Colors.onPrimary} />
               <Text style={styles.emptyActionBtnPrimaryText}>Create Custom Food</Text>
             </Pressable>
 
@@ -1017,7 +1017,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Scan barcode"
               >
-                <Ionicons name="barcode-outline" size={16} color="#0F172A" />
+                <Ionicons name="barcode-outline" size={16} color={Colors.textPrimary} />
                 <Text style={styles.emptyActionBtnSecondaryText}>Scan Barcode</Text>
               </Pressable>
             ) : null}
@@ -1030,7 +1030,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       return (
         <View style={styles.emptyListContainer}>
           <View style={styles.emptyIconBadge}>
-            <Ionicons name="time-outline" size={26} color="#94A3B8" />
+            <Ionicons name="time-outline" size={26} color={Colors.textMuted} />
           </View>
           <Text style={styles.emptyTitle}>No {mealTitle} Logged Yesterday</Text>
           <Text style={styles.emptySubtitle}>
@@ -1045,7 +1045,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Browse popular foods"
           >
-            <Ionicons name="star-outline" size={16} color="#FFFFFF" />
+            <Ionicons name="star-outline" size={16} color={Colors.onPrimary} />
             <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
           </Pressable>
         </View>
@@ -1056,7 +1056,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       return (
         <View style={styles.emptyListContainer}>
           <View style={styles.emptyIconBadge}>
-            <Ionicons name="hourglass-outline" size={26} color="#94A3B8" />
+            <Ionicons name="hourglass-outline" size={26} color={Colors.textMuted} />
           </View>
           <Text style={styles.emptyTitle}>No Recent Foods Yet</Text>
           <Text style={styles.emptySubtitle}>
@@ -1071,7 +1071,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Browse popular foods"
           >
-            <Ionicons name="star-outline" size={16} color="#FFFFFF" />
+            <Ionicons name="star-outline" size={16} color={Colors.onPrimary} />
             <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
           </Pressable>
         </View>
@@ -1081,7 +1081,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     return (
       <View style={styles.emptyListContainer}>
         <View style={styles.emptyIconBadge}>
-          <Ionicons name="restaurant-outline" size={26} color="#94A3B8" />
+          <Ionicons name="restaurant-outline" size={26} color={Colors.textMuted} />
         </View>
         <Text style={styles.emptyTitle}>No Foods Found</Text>
         <Text style={styles.emptySubtitle}>
@@ -1187,7 +1187,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Back to food list"
               >
-                <Ionicons name="arrow-back" size={20} color="#0F172A" />
+                <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
               </Pressable>
 
               <Pressable
@@ -1203,7 +1203,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 <Ionicons
                   name={isFav ? 'heart' : 'heart-outline'}
                   size={21}
-                  color={isFav ? '#EF4444' : '#0F172A'}
+                  color={isFav ? Colors.danger : Colors.textPrimary}
                 />
               </Pressable>
             </View>
@@ -1231,7 +1231,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   contentFit="contain"
                   width="100%"
                   style={styles.productHeroImage}
-                  backgroundColor="#FFFFFF"
+                  backgroundColor={Colors.card}
                   fallback={<FoodIconBadge item={selectedFood} size={160} />}
                 />
               </View>
@@ -1241,7 +1241,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 {/* Category Pill + Health Tag */}
                 <View style={styles.productHeaderMetaRow}>
                   <View style={styles.productCategoryWrap}>
-                    <MaterialCommunityIcons name="bowl-mix-outline" size={15} color="#64748B" />
+                    <MaterialCommunityIcons name="bowl-mix-outline" size={15} color={Colors.textSecondary} />
                     <Text style={styles.productCategoryLabel} numberOfLines={1}>
                       {(
                         selectedFood.categoryLabel ||
@@ -1251,7 +1251,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     </Text>
                   </View>
                   <View style={styles.productHealthBadgePill}>
-                    <Ionicons name="leaf-outline" size={13} color="#059669" style={{ marginRight: 4 }} />
+                    <Ionicons name="leaf-outline" size={13} color={Colors.fiber} style={{ marginRight: 4 }} />
                     <Text style={styles.productHealthBadgeText} numberOfLines={1}>
                       {selectedFood.badge || 'Gut Friendly'}
                     </Text>
@@ -1283,7 +1283,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   {/* Calories */}
                   <View style={[styles.nutriCard, styles.nutriCardCalories]}>
                     <View style={styles.nutriCardIconWrap}>
-                      <Ionicons name="flame-outline" size={20} color="#EA580C" />
+                      <Ionicons name="flame-outline" size={20} color={Colors.primary} />
                     </View>
                     <Text
                       style={styles.nutriVal}
@@ -1302,7 +1302,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                       <MaterialCommunityIcons
                         name="dumbbell"
                         size={19}
-                        color="#2563EB"
+                        color={Colors.water}
                         style={{ transform: [{ rotate: '-45deg' }] }}
                       />
                     </View>
@@ -1320,7 +1320,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   {/* Carbs */}
                   <View style={[styles.nutriCard, styles.nutriCardCarbs]}>
                     <View style={styles.nutriCardIconWrap}>
-                      <MaterialCommunityIcons name="barley" size={20} color="#D97706" />
+                      <MaterialCommunityIcons name="barley" size={20} color={Colors.carbsDark} />
                     </View>
                     <Text
                       style={styles.nutriVal}
@@ -1336,7 +1336,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   {/* Fat */}
                   <View style={[styles.nutriCard, styles.nutriCardFat]}>
                     <View style={styles.nutriCardIconWrap}>
-                      <Ionicons name="water-outline" size={19} color="#0EA5E9" />
+                      <Ionicons name="water-outline" size={19} color={Colors.water} />
                     </View>
                     <Text
                       style={styles.nutriVal}
@@ -1390,7 +1390,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               <View style={styles.footerImpactStrip}>
                 <View style={styles.footerImpactMetaRow}>
                   <View style={styles.footerImpactLeft}>
-                    <Ionicons name="speedometer-outline" size={15} color="#64748B" />
+                    <Ionicons name="speedometer-outline" size={15} color={Colors.textSecondary} />
                     <Text
                       style={styles.footerImpactLabel}
                       numberOfLines={1}
@@ -1412,7 +1412,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     <Ionicons
                       name="time-outline"
                       size={12}
-                      color={isProjectedOver ? '#DC2626' : '#16A34A'}
+                      color={isProjectedOver ? Colors.dangerDark : Colors.success}
                       style={{ marginRight: 3 }}
                     />
                     <Text
@@ -1458,7 +1458,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Decrease portion by 0.5"
                   >
-                    <Ionicons name="remove" size={18} color="#0F172A" />
+                    <Ionicons name="remove" size={18} color={Colors.textPrimary} />
                   </Pressable>
 
                   <View style={styles.footerStepperValueWrap}>
@@ -1486,7 +1486,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Increase portion by 0.5"
                   >
-                    <Ionicons name="add" size={18} color="#0F172A" />
+                    <Ionicons name="add" size={18} color={Colors.textPrimary} />
                   </Pressable>
                 </View>
 
@@ -1501,7 +1501,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
                 >
                   <View style={styles.ctaCheckBadge}>
-                    <Ionicons name="checkmark" size={14} color="#EA580C" />
+                    <Ionicons name="checkmark" size={14} color={Colors.primary} />
                   </View>
                   <View style={styles.ctaTextCol}>
                     <Text
@@ -1535,7 +1535,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
               >
-                <Ionicons name="arrow-back" size={22} color="#0F172A" />
+                <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
               </Pressable>
 
               {/* Center: Clean title only — no budget clutter */}
@@ -1566,7 +1566,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             <View style={styles.mealSwitcherRow}>
               {MEAL_TABS.map(slot => {
                 const isSelected = selectedMealType === slot.id;
-                const iconColor = isSelected ? '#FFFFFF' : '#64748B';
+                const iconColor = isSelected ? Colors.textInverse : Colors.textSecondary;
                 return (
                   <Pressable
                     key={slot.id}
@@ -1641,7 +1641,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                           hitSlop={HIT_SLOP_8}
                           accessibilityLabel="Remove photo"
                         >
-                          <Ionicons name="close" size={14} color="#FFFFFF" />
+                          <Ionicons name="close" size={14} color={Colors.textInverse} />
                         </Pressable>
                       </View>
                     ) : (
@@ -1653,7 +1653,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                         onPress={handlePickCustomPhoto}
                         accessibilityLabel="Pick photo for custom food"
                       >
-                        <Ionicons name="camera-outline" size={20} color="#EA580C" />
+                        <Ionicons name="camera-outline" size={20} color={Colors.primary} />
                         <Text style={styles.customAddPhotoText}>Add Dish Photo (Optional)</Text>
                       </Pressable>
                     )}
@@ -1756,7 +1756,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     <Ionicons
                       name="search-outline"
                       size={19}
-                      color="#64748B"
+                      color={Colors.textSecondary}
                       style={{ marginRight: 8 }}
                     />
                     <TextInput
@@ -1764,7 +1764,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                       placeholder={`Search ${selectedMealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor={Colors.textMuted}
                       clearButtonMode="while-editing"
                     />
                     {searchQuery.length > 0 ? (
@@ -1774,7 +1774,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Clear search input"
                       >
-                        <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                        <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
                       </Pressable>
                     ) : (
                       <View style={styles.searchActionRow}>
@@ -1789,7 +1789,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                             accessibilityRole="button"
                             accessibilityLabel="Scan barcode on packaged food"
                           >
-                            <Ionicons name="barcode-outline" size={20} color="#EA580C" />
+                            <Ionicons name="barcode-outline" size={20} color={Colors.primary} />
                           </Pressable>
                         ) : null}
                         {onOpenFoodVision ? (
@@ -1803,7 +1803,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                             accessibilityRole="button"
                             accessibilityLabel="Scan food with AI camera"
                           >
-                            <Ionicons name="camera-outline" size={20} color="#EA580C" />
+                            <Ionicons name="camera-outline" size={20} color={Colors.primary} />
                           </Pressable>
                         ) : null}
                       </View>
@@ -1861,7 +1861,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               <Ionicons
                 name="checkmark-circle"
                 size={18}
-                color="#22C55E"
+                color={Colors.success}
                 style={{ marginRight: 8 }}
               />
               <Text style={styles.toastText} numberOfLines={1}>
@@ -1893,7 +1893,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Dismiss toast"
               >
-                <Ionicons name="close" size={16} color="#94A3B8" />
+                <Ionicons name="close" size={16} color={Colors.textMuted} />
               </Pressable>
             </View>
           </Animated.View>
@@ -1906,14 +1906,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 const styles = StyleSheet.create({
   modalRoot: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneScreenContainer: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -1921,7 +1921,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -1931,9 +1931,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   customToggleBtnHidden: {
     opacity: 0,
@@ -1947,7 +1947,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   headerBudgetRow: {
@@ -1959,11 +1959,11 @@ const styles = StyleSheet.create({
   headerSubtitleText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   headerBoldVal: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   headerBudgetBadge: {
     paddingHorizontal: 6,
@@ -1972,27 +1972,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   budgetBadgeOk: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: Colors.proteinLight,
+    borderColor: Colors.fiberBorder,
   },
   budgetBadgeOver: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FED7AA',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.stepsBorder,
   },
   headerBudgetBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
   },
   budgetTextOk: {
-    color: '#059669',
+    color: Colors.fiberDark,
   },
   budgetTextOver: {
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   customToggleBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.stepsBorder,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 16,
@@ -2000,7 +2000,7 @@ const styles = StyleSheet.create({
   customToggleText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   mealSwitcherRow: {
     flexDirection: 'row',
@@ -2024,14 +2024,14 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 6,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     gap: 5,
   },
   mealTabPillActive: {
-    backgroundColor: '#EA580C',
-    borderColor: '#EA580C',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
     borderWidth: 1.5,
   },
   mealTabEmoji: {
@@ -2040,16 +2040,16 @@ const styles = StyleSheet.create({
   mealTabLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   mealTabLabelActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontFamily: Fonts.urbanist.bold,
   },
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 4,
@@ -2057,13 +2057,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   searchInput: {
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     paddingVertical: 4,
   },
   categoryWrapper: {
@@ -2082,22 +2082,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     gap: 6,
   },
   categoryPillActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
+    borderColor: Colors.textPrimary,
   },
   categoryText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   categoryTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontFamily: Fonts.urbanist.bold,
   },
   listContent: {
@@ -2108,16 +2108,16 @@ const styles = StyleSheet.create({
   foodItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.03,
         shadowRadius: 8,
@@ -2131,13 +2131,13 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
   },
   foodItemImg: {
     width: '100%',
@@ -2161,13 +2161,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     lineHeight: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     flexShrink: 1,
   },
   customBadge: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 6,
@@ -2175,21 +2175,21 @@ const styles = StyleSheet.create({
   customBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9,
-    color: '#EA580C',
+    color: Colors.primaryDark,
     letterSpacing: 0.3,
   },
   loggedCountBadge: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: Colors.fiberBorder,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 6,
   },
   loggedCountBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9.5,
-    color: '#059669',
+    fontSize: 10,
+    color: Colors.fiberDark,
   },
   searchActionRow: {
     flexDirection: 'row',
@@ -2200,9 +2200,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.stepsBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2210,9 +2210,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.stepsBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2220,7 +2220,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 17,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   macroPillRow: {
     flexDirection: 'row',
@@ -2238,22 +2238,22 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   macroDotProtein: {
-    backgroundColor: '#22C55E',
+    backgroundColor: Colors.success,
   },
   macroDotCarbs: {
-    backgroundColor: '#EAB308',
+    backgroundColor: Colors.carbs,
   },
   macroDotFat: {
-    backgroundColor: '#F97316',
+    backgroundColor: Colors.steps,
   },
   foodItemCardPressed: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: Colors.surfaceLow,
+    borderColor: Colors.borderMedium,
   },
   macroText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   foodItemRight: {
     flexDirection: 'row',
@@ -2270,14 +2270,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     lineHeight: 20,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
   },
   foodItemCalUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
     lineHeight: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 1,
   },
@@ -2285,7 +2285,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EA580C',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2298,16 +2298,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     position: 'relative',
     overflow: 'hidden',
   },
   fullScreenScrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   fullScreenScrollContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     flexGrow: 1,
   },
   productTopNavRow: {
@@ -2323,14 +2323,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
         shadowRadius: 6,
@@ -2344,7 +2344,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingBottom: 8,
     paddingHorizontal: 16,
     position: 'relative',
@@ -2356,11 +2356,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     marginTop: -24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 16,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -2371,12 +2371,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 16,
     paddingTop: 14,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -2387,9 +2387,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     borderRadius: 14,
     height: 52,
     paddingHorizontal: 4,
@@ -2400,14 +2400,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.04,
         shadowRadius: 2,
@@ -2429,12 +2429,12 @@ const styles = StyleSheet.create({
   footerStepperNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   footerStepperUnit: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
-    color: '#64748B',
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   productHeaderMetaRow: {
     flexDirection: 'row',
@@ -2452,13 +2452,13 @@ const styles = StyleSheet.create({
   productCategoryLabel: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.8,
   },
   productHealthBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 14,
@@ -2468,28 +2468,28 @@ const styles = StyleSheet.create({
   },
   productHealthBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11.5,
-    color: '#059669',
+    fontSize: 11,
+    color: Colors.fiberDark,
   },
   productMainTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     marginTop: 6,
     lineHeight: 28,
   },
   productBaseServingText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13.5,
-    color: '#64748B',
+    fontSize: 14,
+    color: Colors.textSecondary,
     marginTop: 3,
     marginBottom: 8,
   },
   productDescriptionText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
-    color: '#475569',
+    fontSize: 14,
+    color: Colors.textSlate600,
     lineHeight: 21,
     marginBottom: 16,
   },
@@ -2502,25 +2502,25 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   distributionChipActive: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#EA580C',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
     borderWidth: 1.5,
   },
   distributionChipText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   distributionChipTextActive: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -2532,37 +2532,37 @@ const styles = StyleSheet.create({
   sectionHeaderLabel: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   sectionHeaderSub: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     marginBottom: 8,
   },
   stepButton: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    shadowColor: '#000',
+    borderColor: Colors.borderMedium,
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 2,
@@ -2576,12 +2576,12 @@ const styles = StyleSheet.create({
   quantityDisplay: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   quantityUnitText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   presetRow: {
@@ -2591,26 +2591,26 @@ const styles = StyleSheet.create({
   },
   presetBtn: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     minHeight: 40,
     paddingVertical: 8,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   presetBtnActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
+    borderColor: Colors.textPrimary,
   },
   presetBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   presetBtnTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontFamily: Fonts.urbanist.bold,
   },
   nutritionMatrixGrid: {
@@ -2629,20 +2629,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   nutriCardCalories: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FED7AA',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.stepsBorder,
   },
   nutriCardProtein: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#DBEAFE',
+    backgroundColor: Colors.waterLight,
+    borderColor: Colors.waterTrack,
   },
   nutriCardCarbs: {
-    backgroundColor: '#FEFCE8',
+    backgroundColor: Colors.carbsLight,
     borderColor: 'rgba(234, 179, 8, 0.28)',
   },
   nutriCardFat: {
-    backgroundColor: '#ECFEFF',
-    borderColor: '#CFFAFE',
+    backgroundColor: Colors.waterLight,
+    borderColor: Colors.waterBorder,
   },
   nutriCardIconWrap: {
     height: 24,
@@ -2653,13 +2653,13 @@ const styles = StyleSheet.create({
   nutriKey: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   nutriVal: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 2,
     textAlign: 'center',
   },
@@ -2683,16 +2683,16 @@ const styles = StyleSheet.create({
   footerImpactLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   footerImpactBold: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   footerImpactSub: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   footerImpactBadge: {
     flexDirection: 'row',
@@ -2703,14 +2703,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   footerImpactBadgeOk: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   footerImpactBadgeOver: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: Colors.dangerLight,
   },
   footerImpactDot: {
     width: 5,
@@ -2719,24 +2719,24 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   footerImpactDotOk: {
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.success,
   },
   footerImpactDotOver: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
   footerImpactBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11.5,
+    fontSize: 11,
   },
   footerImpactBadgeTextOk: {
-    color: '#16A34A',
+    color: Colors.success,
   },
   footerImpactBadgeTextOver: {
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   footerImpactTrack: {
     height: 3.5,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -2745,10 +2745,10 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   footerImpactBarOk: {
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.weightLoss,
   },
   footerImpactBarOver: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
   footerActionRow: {
     flexDirection: 'row',
@@ -2771,7 +2771,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EA580C',
+    backgroundColor: Colors.primary,
     height: 52,
     borderRadius: 16,
     gap: 8,
@@ -2781,7 +2781,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -2793,8 +2793,8 @@ const styles = StyleSheet.create({
   },
   confirmAddBtnTitle: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
-    fontSize: 14.5,
+    color: Colors.textInverse,
+    fontSize: 15,
     lineHeight: 18,
   },
   confirmAddBtnSub: {
@@ -2808,14 +2808,14 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 16,
     right: 16,
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -2831,7 +2831,7 @@ const styles = StyleSheet.create({
   toastText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     flexShrink: 1,
   },
   toastActions: {
@@ -2848,7 +2848,7 @@ const styles = StyleSheet.create({
   toastUndoText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#FACC15',
+    color: Colors.warning,
   },
   toastCloseBtn: {
     padding: 4,
@@ -2864,9 +2864,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     borderRadius: 12,
     paddingVertical: 12,
     borderStyle: 'dashed',
@@ -2874,7 +2874,7 @@ const styles = StyleSheet.create({
   customAddPhotoText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#EA580C',
+    color: Colors.primaryDark,
   },
   customPhotoPreviewContainer: {
     position: 'relative',
@@ -2882,7 +2882,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     overflow: 'hidden',
   },
   customPhotoPreviewImg: {
@@ -2903,32 +2903,32 @@ const styles = StyleSheet.create({
   customFormTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   customFormDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 16,
     marginTop: 2,
   },
   inputLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 10,
     marginBottom: 4,
   },
   input: {
     fontFamily: Fonts.urbanist.regular,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   grid2: {
     flexDirection: 'row',
@@ -2950,16 +2950,16 @@ const styles = StyleSheet.create({
   },
   saveCustomBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     fontSize: 15,
   },
   // Repeat Yesterday Banner
   repeatYesterdayCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
@@ -2973,7 +2973,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2983,12 +2983,12 @@ const styles = StyleSheet.create({
   repeatTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   repeatSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   repeatActionBtn: {
@@ -3003,7 +3003,7 @@ const styles = StyleSheet.create({
   repeatActionBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
 
   // Empty List View
@@ -3016,7 +3016,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -3024,7 +3024,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 6,
   },
@@ -3032,7 +3032,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     maxWidth: 280,
@@ -3056,23 +3056,23 @@ const styles = StyleSheet.create({
   emptyActionBtnPrimaryText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   emptyActionBtnSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   emptyActionBtnSecondaryText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
 });
 

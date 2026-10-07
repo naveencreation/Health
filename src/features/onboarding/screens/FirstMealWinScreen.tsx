@@ -342,14 +342,14 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
             >
               <View style={styles.scanCardContent}>
                 <View style={styles.scanIconBadge}>
-                  <Ionicons name="camera" size={24} color="#FFFFFF" />
+                  <Ionicons name="camera" size={24} color={Colors.onPrimary} />
                 </View>
 
                 <View style={styles.scanTextCol}>
                   <View style={styles.scanTagRow}>
                     <Text style={styles.scanCardTitle}>Scan with AI Vision</Text>
                     <View style={styles.scanLimitPill}>
-                      <Ionicons name="sparkles" size={11} color="#EA580C" />
+                      <Ionicons name="sparkles" size={11} color={Colors.primary} />
                       <Text style={styles.scanLimitText}>
                         {scansRemaining} of 5 free today
                       </Text>
@@ -360,18 +360,18 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                   </Text>
                 </View>
 
-                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
               </View>
             </Pressable>
 
             {/* 2. Quick Search Card */}
             <View style={styles.searchContainer}>
               <View style={styles.searchBar}>
-                <Ionicons name="search" size={18} color="#64748B" style={styles.searchIcon} />
+                <Ionicons name="search" size={18} color={Colors.textSecondary} style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search 1,000+ foods or drinks..."
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.textMuted}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   onFocus={() => setIsSearchActive(true)}
@@ -382,7 +382,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                     onPress={() => setSearchQuery('')}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="close-circle" size={18} color="#94A3B8" />
+                    <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
                   </Pressable>
                 )}
               </View>
@@ -418,7 +418,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                           {item.calories} kcal · {item.protein}g protein
                         </Text>
                       </View>
-                      <Ionicons name="add-circle-outline" size={20} color="#F47551" />
+                      <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
                     </Pressable>
                   ))}
                 </View>
@@ -494,7 +494,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                 <View style={styles.reviewTitleCol}>
                   <Text style={styles.reviewFoodName}>{selectedFood.name}</Text>
                   <View style={styles.reviewSlotTag}>
-                    <Ionicons name="time-outline" size={13} color="#F47551" />
+                    <Ionicons name="time-outline" size={13} color={Colors.primary} />
                     <Text style={styles.reviewSlotText}>
                       Logging as {mealSlot.toUpperCase()}
                     </Text>
@@ -566,7 +566,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
 
               {/* Struggle insight line */}
               <View style={styles.insightBox}>
-                <Ionicons name="sparkles" size={15} color="#F47551" style={styles.insightIcon} />
+                <Ionicons name="sparkles" size={15} color={Colors.primary} style={styles.insightIcon} />
                 <Text style={styles.insightText}>{struggleInsight}</Text>
               </View>
             </View>
@@ -583,7 +583,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
             <Animated.View entering={FadeInDown.duration(400)} style={styles.celebrationCenter}>
               {/* Day 1 Streak Badge */}
               <View style={styles.streakBadge}>
-                <Ionicons name="flame" size={16} color="#FFFFFF" />
+                <Ionicons name="flame" size={16} color={Colors.onPrimary} />
                 <Text style={styles.streakBadgeText}>DAY 1 STREAK STARTED!</Text>
               </View>
 
@@ -595,7 +595,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                     cx="90"
                     cy="90"
                     r={radius}
-                    stroke="#FFEDD5"
+                    stroke={Colors.primaryLight}
                     strokeWidth={strokeWidth}
                     fill="none"
                   />
@@ -604,7 +604,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                     cx="90"
                     cy="90"
                     r={radius}
-                    stroke="#F47551"
+                    stroke={Colors.primary}
                     strokeWidth={strokeWidth}
                     strokeDasharray={`${circumference} ${circumference}`}
                     strokeDashoffset={strokeDashoffset}
@@ -691,7 +691,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
           <View style={styles.modalBackdrop}>
             <View style={styles.primerCard}>
               <View style={styles.primerSparkleRow}>
-                <Ionicons name="sparkles" size={14} color="#EA580C" />
+                <Ionicons name="sparkles" size={14} color={Colors.primary} />
                 <Text style={styles.primerBadgeText}>AI MEAL VISION</Text>
               </View>
 
@@ -708,7 +708,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                   accessibilityLabel="Take a photo with camera"
                   testID="btn-open-camera"
                 >
-                  <Ionicons name="camera" size={18} color="#FFFFFF" style={styles.btnIcon} />
+                  <Ionicons name="camera" size={18} color={Colors.onPrimary} style={styles.btnIcon} />
                   <Text style={styles.primerCameraBtnText}>Take Photo</Text>
                 </Pressable>
 
@@ -719,7 +719,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
                   accessibilityLabel="Choose photo from library"
                   testID="btn-open-gallery"
                 >
-                  <Ionicons name="images-outline" size={18} color="#0F172A" style={styles.btnIcon} />
+                  <Ionicons name="images-outline" size={18} color={Colors.textPrimary} style={styles.btnIcon} />
                   <Text style={styles.primerGalleryBtnText}>Choose from Photos</Text>
                 </Pressable>
 
@@ -739,7 +739,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
           <Modal transparent visible={isAnalyzingImage}>
             <View style={styles.modalBackdrop}>
               <View style={styles.loadingCard}>
-                <ActivityIndicator size="large" color="#F47551" />
+                <ActivityIndicator size="large" color={Colors.primary} />
                 <Text style={styles.loadingTitle}>Analyzing your plate...</Text>
                 <Text style={styles.loadingSubtitle}>
                   Calorify AI is estimating portions and macros
@@ -756,7 +756,7 @@ export const FirstMealWinScreen: React.FC<FirstMealWinScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
@@ -780,14 +780,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#1E293B',
+    color: Colors.textSlate800,
     marginBottom: 8,
   },
   screenSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // Meal Slot Selector
@@ -805,31 +805,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   slotPillActive: {
-    backgroundColor: '#FFFBF9',
-    borderColor: '#F47551',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
   },
   slotPillInactive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    backgroundColor: Colors.card,
+    borderColor: Colors.borderSubtle,
   },
   slotText: {
     fontSize: 13,
   },
   slotTextActive: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#F47551',
+    color: Colors.primary,
   },
   slotTextInactive: {
     fontFamily: Fonts.urbanist.medium,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // Hero Card: Scan AI
   scanCard: {
-    backgroundColor: '#FFFBF9',
+    backgroundColor: Colors.primaryLight,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#F47551',
+    borderColor: Colors.primary,
     padding: 16,
     marginBottom: 16,
   },
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -864,13 +864,13 @@ const styles = StyleSheet.create({
   scanCardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   scanLimitPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
@@ -878,13 +878,13 @@ const styles = StyleSheet.create({
   scanLimitText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
   },
   scanCardSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // Search
@@ -896,10 +896,10 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -910,15 +910,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     padding: 0,
   },
   searchResultsBox: {
     marginTop: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     paddingVertical: 6,
   },
   searchResultRow: {
@@ -927,7 +927,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.surfaceInset,
   },
   searchResultIcon: {
     fontSize: 20,
@@ -940,12 +940,12 @@ const styles = StyleSheet.create({
   searchResultName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   searchResultMeta: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
 
@@ -962,12 +962,12 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   sectionHint: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   startersGrid: {
     flexDirection: 'row',
@@ -976,10 +976,10 @@ const styles = StyleSheet.create({
   },
   starterCard: {
     width: '48.5%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     padding: 14,
     justifyContent: 'space-between',
     minHeight: 120,
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   starterBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -1002,13 +1002,13 @@ const styles = StyleSheet.create({
   starterBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 10,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   starterName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     lineHeight: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 10,
   },
   starterBottomRow: {
@@ -1019,20 +1019,20 @@ const styles = StyleSheet.create({
   starterCalories: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#F47551',
+    color: Colors.primary,
   },
   starterProtein: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // Review Mode Card
   reviewCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     padding: 20,
   },
   reviewHeaderRow: {
@@ -1044,7 +1044,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -1058,7 +1058,7 @@ const styles = StyleSheet.create({
   reviewFoodName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   reviewSlotTag: {
@@ -1069,15 +1069,15 @@ const styles = StyleSheet.create({
   reviewSlotText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#F47551',
+    color: Colors.primary,
   },
   reviewCalorieBanner: {
-    backgroundColor: '#FFFBF9',
+    backgroundColor: Colors.primaryLight,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     marginBottom: 16,
   },
   calorieBigRow: {
@@ -1088,18 +1088,18 @@ const styles = StyleSheet.create({
   reviewCalorieNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
   reviewCalorieUnit: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   reviewCalorieSub: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
     marginTop: 2,
   },
   macroTrioRow: {
@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
   },
   macroPillGreen: {
     flex: 1,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: 'center',
@@ -1117,16 +1117,16 @@ const styles = StyleSheet.create({
   macroValueGreen: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#166534',
+    color: Colors.proteinDark,
   },
   macroLabelGreen: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#166534',
+    color: Colors.proteinDark,
   },
   macroPillYellow: {
     flex: 1,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: 'center',
@@ -1134,16 +1134,16 @@ const styles = StyleSheet.create({
   macroValueYellow: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#92400E',
+    color: Colors.carbsDark,
   },
   macroLabelYellow: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#92400E',
+    color: Colors.carbsDark,
   },
   macroPillCoral: {
     flex: 1,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: 'center',
@@ -1151,12 +1151,12 @@ const styles = StyleSheet.create({
   macroValueCoral: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#9A3412',
+    color: Colors.fatDark,
   },
   macroLabelCoral: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#9A3412',
+    color: Colors.fatDark,
   },
 
   // Portion Stepper
@@ -1166,7 +1166,7 @@ const styles = StyleSheet.create({
   portionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   portionChipsRow: {
@@ -1177,33 +1177,33 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     alignItems: 'center',
   },
   portionChipActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: Colors.textPrimary,
+    borderColor: Colors.textPrimary,
   },
   portionChipText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   portionChipTextActive: {
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
 
   // Insight Box
   insightBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     gap: 8,
   },
   insightIcon: {
@@ -1214,7 +1214,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     lineHeight: 17,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
 
   // Celebration Mode
@@ -1232,7 +1232,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -1241,7 +1241,7 @@ const styles = StyleSheet.create({
   streakBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: 0.5,
   },
   ringWrapper: {
@@ -1260,20 +1260,20 @@ const styles = StyleSheet.create({
   ringCalorieNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 34,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -1,
   },
   ringCalorieUnit: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   celebrateTitle: {
     fontFamily: Fonts.kurale,
     fontSize: 30,
     lineHeight: 38,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -1281,7 +1281,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 16,
     marginBottom: 24,
@@ -1290,12 +1290,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   celebratePillEmoji: {
     fontSize: 18,
@@ -1303,12 +1303,12 @@ const styles = StyleSheet.create({
   celebratePillName: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   celebratePillCals: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#F47551',
+    color: Colors.primary,
   },
 
   // Footer & Buttons
@@ -1317,7 +1317,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   primaryButton: {
-    backgroundColor: '#1E293B',
+    backgroundColor: Colors.inverseSurface,
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
@@ -1326,7 +1326,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   buttonPressed: {
     opacity: 0.9,
@@ -1339,13 +1339,13 @@ const styles = StyleSheet.create({
   skipButtonText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 
   // Modals
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -1353,18 +1353,18 @@ const styles = StyleSheet.create({
   primerCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   primerSparkleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1373,21 +1373,21 @@ const styles = StyleSheet.create({
   primerBadgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
     letterSpacing: 0.5,
   },
   primerTitle: {
     fontFamily: Fonts.kurale,
     fontSize: 24,
     lineHeight: 30,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   primerSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
     lineHeight: 20,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 20,
   },
   primerActions: {
@@ -1397,27 +1397,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
     borderRadius: 14,
     paddingVertical: 14,
   },
   primerCameraBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   primerGalleryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     borderRadius: 14,
     paddingVertical: 14,
   },
   primerGalleryBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   btnIcon: {
     marginRight: 8,
@@ -1429,10 +1429,10 @@ const styles = StyleSheet.create({
   primerCancelText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   loadingCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
@@ -1442,14 +1442,14 @@ const styles = StyleSheet.create({
   loadingTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginTop: 16,
     marginBottom: 6,
   },
   loadingSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
 });

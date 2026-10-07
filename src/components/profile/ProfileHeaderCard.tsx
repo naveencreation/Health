@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
     marginTop: 1,
     includeFontPadding: false,

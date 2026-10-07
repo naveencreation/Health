@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   },
   centerBMILabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#64748B',
     lineHeight: 16,
     letterSpacing: -0.1,
@@ -528,13 +528,13 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#64748B',
     letterSpacing: -0.1,
   },
   categoryRange: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#64748B',
     letterSpacing: -0.1,
   },

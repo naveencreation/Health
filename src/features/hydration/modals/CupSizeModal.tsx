@@ -92,7 +92,7 @@ const BEVERAGE_TYPES: BeverageOption[] = [
     name: 'Liquor',
     iconName: 'bottle-tonic-plus-outline',
     iconFamily: 'mci',
-    color: '#475569',
+    color: Colors.textSlate600,
   },
 ];
 
@@ -101,16 +101,16 @@ const MiniGlassSvg: React.FC<{ fillPercent?: number }> = ({ fillPercent = 0.65 }
   <Svg width={20} height={24} viewBox="0 0 20 24">
     <Path
       d="M 3 2 L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 17 2 Z"
-      fill="#E0F2FE"
-      stroke="#38BDF8"
+      fill={Colors.waterTrack}
+      stroke={Colors.waterSecondary}
       strokeWidth={1.2}
     />
     <Path
       d={`M 4.2 ${24 - 24 * fillPercent} L 5 21 C 5.2 22.5 7 23 10 23 C 13 23 14.8 22.5 15 21 L 15.8 ${24 - 24 * fillPercent} Z`}
-      fill="#0284C7"
+      fill={Colors.water}
     />
-    <Circle cx="8" cy="18" r="0.8" fill="#FFFFFF" opacity={0.9} />
-    <Circle cx="12" cy="15" r="0.9" fill="#FFFFFF" opacity={0.9} />
+    <Circle cx="8" cy="18" r="0.8" fill={Colors.textInverse} opacity={0.9} />
+    <Circle cx="12" cy="15" r="0.9" fill={Colors.textInverse} opacity={0.9} />
   </Svg>
 );
 
@@ -235,7 +235,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close container selector"
             >
-              <Ionicons name="close" size={24} color="#0F172A" />
+              <Ionicons name="close" size={24} color={Colors.textPrimary} />
             </Pressable>
 
             <Text style={styles.headerTitle}>Container & Beverage</Text>
@@ -271,7 +271,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                         <Ionicons
                           name="cafe"
                           size={22}
-                          color={isSelected ? Colors.water : '#38BDF8'}
+                          color={isSelected ? Colors.water : Colors.waterSecondary}
                         />
                       ) : preset.ml <= 400 ? (
                         <MiniGlassSvg fillPercent={preset.ml / 500} />
@@ -279,12 +279,12 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                         <MaterialCommunityIcons
                           name="cup"
                           size={24}
-                          color={isSelected ? Colors.water : '#0284C7'}
+                          color={isSelected ? Colors.water : Colors.water}
                         />
                       )}
                       {isSelected && (
                         <View style={styles.selectedBadge}>
-                          <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                          <Ionicons name="checkmark" size={10} color={Colors.onPrimary} />
                         </View>
                       )}
                     </View>
@@ -340,7 +340,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                   <TextInput
                     style={[styles.customInput, customError ? styles.customInputError : null]}
                     placeholder="e.g. 750"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={Colors.textMuted}
                     keyboardType="number-pad"
                     value={customMlInput}
                     onChangeText={t => {
@@ -396,7 +396,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
                       )}
                       {isSelected && (
                         <View style={[styles.selectedBadge, { backgroundColor: bev.color }]}>
-                          <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                          <Ionicons name="checkmark" size={10} color={Colors.onPrimary} />
                         </View>
                       )}
                     </View>
@@ -426,7 +426,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
               <Text style={styles.confirmBtnText}>
                 Set Container · {selectedSize} mL {activeBeverage.name}
               </Text>
-              <Ionicons name="checkmark-circle" size={19} color="#FFFFFF" />
+              <Ionicons name="checkmark-circle" size={19} color={Colors.onPrimary} />
             </Pressable>
           </View>
         </View>
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
   },
   backdrop: {
     position: 'absolute',
@@ -453,14 +453,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
     maxHeight: '85%',
     paddingTop: 16,
     paddingBottom: 16,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.surfaceInset,
   },
   closeBtn: {
     width: 38,
@@ -481,14 +481,14 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     textAlign: 'center',
   },
   headerPlaceholder: {
@@ -512,12 +512,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   sectionSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -533,9 +533,9 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   iconCircleSelected: {
     borderWidth: 2,
     borderColor: Colors.water,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     ...Platform.select({
       ios: {
         shadowColor: Colors.water,
@@ -568,17 +568,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.card,
   },
   addCircle: {
     borderStyle: 'dashed',
     borderColor: Colors.water,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
   },
   itemLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
     textAlign: 'center',
   },
   itemLabelSelected: {
@@ -587,13 +587,13 @@ const styles = StyleSheet.create({
   },
   // Custom Input Box
   customInputContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   customInputHeader: {
     flexDirection: 'row',
@@ -604,12 +604,12 @@ const styles = StyleSheet.create({
   customInputTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   cancelCustomText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   customInputRow: {
     flexDirection: 'row',
@@ -618,18 +618,18 @@ const styles = StyleSheet.create({
   customInput: {
     flex: 1,
     height: 48,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: Colors.borderMedium,
     paddingHorizontal: 14,
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   customInputError: {
-    borderColor: '#EF4444',
+    borderColor: Colors.danger,
   },
   applyBtn: {
     backgroundColor: Colors.water,
@@ -643,12 +643,12 @@ const styles = StyleSheet.create({
   applyBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   errorText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#EF4444',
+    color: Colors.danger,
     marginTop: 6,
   },
   // Sticky Bottom Confirmation Footer
@@ -656,8 +656,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: Colors.surfaceInset,
+    backgroundColor: Colors.card,
   },
   confirmBtn: {
     height: 52,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
     letterSpacing: -0.2,
   },
   btnPressed: {

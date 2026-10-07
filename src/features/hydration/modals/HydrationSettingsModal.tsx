@@ -79,7 +79,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close settings"
             >
-              <Ionicons name="close" size={20} color="#64748B" />
+              <Ionicons name="close" size={20} color={Colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -92,7 +92,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
             <View style={styles.settingCard}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.cardIconBox}>
-                  <Ionicons name="flag-outline" size={18} color="#0284C7" />
+                  <Ionicons name="flag-outline" size={18} color={Colors.water} />
                 </View>
                 <View style={styles.cardTextCol}>
                   <Text style={styles.cardTitle}>Daily Target Goal</Text>
@@ -113,8 +113,8 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
             {/* 2. Hydration Reminders */}
             <View style={styles.settingCard}>
               <View style={styles.cardHeaderRow}>
-                <View style={[styles.cardIconBox, { backgroundColor: '#F0FDF4' }]}>
-                  <Ionicons name="notifications-outline" size={18} color="#16A34A" />
+                <View style={[styles.cardIconBox, { backgroundColor: Colors.proteinLight }]}>
+                  <Ionicons name="notifications-outline" size={18} color={Colors.success} />
                 </View>
                 <View style={styles.cardTextCol}>
                   <Text style={styles.cardTitle}>Drink Reminders</Text>
@@ -123,8 +123,8 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
                 <Switch
                   value={isReminderOn}
                   onValueChange={handleToggleReminder}
-                  trackColor={{ false: '#E2E8F0', true: '#BAE6FD' }}
-                  thumbColor={isReminderOn ? Colors.water : '#94A3B8'}
+                  trackColor={{ false: Colors.borderInset, true: Colors.waterBorder }}
+                  thumbColor={isReminderOn ? Colors.water : Colors.textMuted}
                 />
               </View>
 
@@ -161,7 +161,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
             {/* 3. Beverage Hydration Science Guide */}
             <View style={styles.infoCard}>
               <View style={styles.infoHeaderRow}>
-                <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
+                <Ionicons name="information-circle-outline" size={18} color={Colors.water} />
                 <Text style={styles.infoCardTitle}>Hydration Insights</Text>
               </View>
               <Text style={styles.infoCardText}>
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
   },
   backdrop: {
     position: 'absolute',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderCurve: 'continuous',
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
     paddingHorizontal: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.surfaceInset,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -238,20 +238,20 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   closeBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -263,12 +263,12 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   settingCard: {
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.waterTrack,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   cardValue: {
     fontFamily: Fonts.urbanist.medium,
@@ -301,20 +301,20 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   editGoalBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   editGoalBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: Colors.borderInset,
   },
   subSectionTitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginBottom: 8,
   },
   intervalPillRow: {
@@ -342,31 +342,31 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     alignItems: 'center',
   },
   intervalPillActive: {
     borderColor: Colors.water,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
   },
   intervalPillText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   intervalPillTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
     color: Colors.water,
   },
   infoCard: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: Colors.waterBorder,
   },
   infoHeaderRow: {
     flexDirection: 'row',
@@ -377,13 +377,13 @@ const styles = StyleSheet.create({
   infoCardTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#0369A1',
+    color: Colors.waterDark,
   },
   infoCardText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 18,
-    color: '#0C4A6E',
+    color: Colors.waterDark,
   },
   footerContainer: {
     paddingTop: 12,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   doneBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   btnPressed: {
     opacity: 0.8,

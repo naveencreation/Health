@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15.5,
+    fontSize: 15,
     color: '#0F172A',
     letterSpacing: -0.2,
   },

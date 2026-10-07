@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   chipLabel: {
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 14.5,
+    fontSize: 15,
     lineHeight: 20,
   },
   chipLabelSelected: {

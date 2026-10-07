@@ -38,32 +38,32 @@ const PRO_VALUE_PILLARS = [
     icon: 'camera',
     title: 'Unlimited AI Meal Vision',
     description: 'No 5-scan daily limit. Snap photos of every dish, snack, and beverage instantly.',
-    accentColor: '#F47551',
-    bgColor: '#FFF7ED',
+    accentColor: Colors.primary,
+    bgColor: Colors.primaryLight,
   },
   {
     id: 'coaching',
     icon: 'sparkles',
     title: 'Dynamic Adaptive Coaching',
     description: 'Ria AI recalculates your calories and macros weekly based on your real metabolic pace.',
-    accentColor: '#16A34A',
-    bgColor: '#DCFCE7',
+    accentColor: Colors.proteinDark,
+    bgColor: Colors.proteinLight,
   },
   {
     id: 'analytics',
     icon: 'stats-chart',
     title: '30-Day Deep Trend Graphs',
     description: 'Interactive expenditure curves, micronutrient radar, and projected weight timeline.',
-    accentColor: '#0284C7',
-    bgColor: '#E0F2FE',
+    accentColor: Colors.water,
+    bgColor: Colors.waterTrack,
   },
   {
     id: 'backup',
     icon: 'shield-checkmark',
     title: 'Priority Backup & Sync',
     description: 'Never lose a single meal log, water record, or streak day across your devices.',
-    accentColor: '#7C3AED',
-    bgColor: '#EDE9FE',
+    accentColor: Colors.fiberDark,
+    bgColor: Colors.fiberLight,
   },
 ];
 
@@ -150,14 +150,14 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
               accessibilityLabel="Go back"
               testID="btn-paywall-back"
             >
-              <Ionicons name="arrow-back" size={20} color="#0F172A" />
+              <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
             </Pressable>
           ) : (
             <View style={{ width: 36 }} />
           )}
 
           <View style={styles.badge}>
-            <Ionicons name="sparkles" size={13} color="#EA580C" />
+            <Ionicons name="sparkles" size={13} color={Colors.primary} />
             <Text style={styles.badgeText}>7-DAY FREE TRIAL</Text>
           </View>
 
@@ -325,7 +325,7 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
           {/* Error Message */}
           {errorMessage && (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Ionicons name="alert-circle" size={16} color={Colors.dangerDark} />
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           )}
@@ -341,13 +341,13 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
               testID="btn-start-trial"
             >
               {isPurchasing ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={Colors.onPrimary} size="small" />
               ) : (
                 <>
                   <Text style={styles.primaryBtnText}>
                     {selectedPlanId === 'pro_annual' ? 'Start 7-Day Free Trial' : 'Upgrade to Pro'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
                 </>
               )}
             </Pressable>
@@ -394,7 +394,7 @@ export const SoftPaywallScreen: React.FC<SoftPaywallScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
@@ -416,9 +416,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   btnPressed: {
     opacity: 0.9,
@@ -428,18 +428,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.stepsBorder,
   },
   badgeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
     letterSpacing: 0.5,
   },
   skipHeaderBtn: {
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   skipHeaderText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   scrollView: {
     flex: 1,
@@ -465,22 +465,22 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.kurale,
     fontSize: 28,
     lineHeight: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   planChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     borderRadius: 8,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
@@ -492,12 +492,12 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#16A34A',
+    backgroundColor: Colors.success,
   },
   planChipText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   pillarsList: {
     gap: 12,
@@ -506,11 +506,11 @@ const styles = StyleSheet.create({
   pillarCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     padding: 14,
     gap: 14,
   },
@@ -527,28 +527,28 @@ const styles = StyleSheet.create({
   pillarTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 3,
   },
   pillarDescription: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   timelineCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     padding: 16,
     marginBottom: 22,
   },
   timelineHeader: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     letterSpacing: 0.8,
     marginBottom: 14,
   },
@@ -566,16 +566,16 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
     marginTop: 3,
   },
   timelineDotActive: {
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
   },
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
     marginVertical: 4,
   },
   timelineInfo: {
@@ -585,12 +585,12 @@ const styles = StyleSheet.create({
   timelineNodeTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   timelineNodeSub: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   plansContainer: {
@@ -598,16 +598,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   planOptionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1.5,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     padding: 16,
   },
   planOptionCardSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#FFFBF9',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
   },
   planHeaderRow: {
     flexDirection: 'row',
@@ -625,31 +625,31 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#94A3B8',
+    borderColor: Colors.textMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioOuterSelected: {
-    borderColor: '#F47551',
+    borderColor: Colors.primary,
   },
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
   },
   planTitleText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   planSubText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   badgeSavings: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -658,20 +658,20 @@ const styles = StyleSheet.create({
   badgeSavingsText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
-    color: '#166534',
+    color: Colors.proteinDark,
     letterSpacing: 0.3,
   },
   perMonthText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginLeft: 32,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.dangerLight,
     padding: 12,
     borderRadius: 8,
     borderCurve: 'continuous',
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#B91C1C',
+    color: Colors.dangerDark,
     flex: 1,
   },
   actionSection: {
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     height: 52,
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     borderCurve: 'continuous',
     flexDirection: 'row',
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   ghostBtn: {
     height: 44,
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
   ghostBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   legalRow: {
     flexDirection: 'row',
@@ -721,12 +721,12 @@ const styles = StyleSheet.create({
   legalLink: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   legalDivider: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#CBD5E1',
+    color: Colors.textLight,
   },
 });
 

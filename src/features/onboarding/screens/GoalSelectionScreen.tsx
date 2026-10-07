@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   reassuranceText: {
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
+    fontSize: 13,
     lineHeight: 17,
     color: '#9A3412',
   },

@@ -476,7 +476,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
                       >
-                        <Ionicons name="ellipsis-vertical" size={16} color="#64748B" />
+                        <Ionicons name="ellipsis-vertical" size={16} color={Colors.textSecondary} />
                       </Pressable>
                     </View>
                   );
@@ -512,7 +512,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             <View style={styles.editHeaderRow}>
               <Text style={styles.editModalTitle}>Edit Water Entry</Text>
               <Pressable style={styles.editCloseBtn} onPress={() => setEditingEntry(null)}>
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
 
@@ -616,7 +616,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             style={styles.undoToastCard}
           >
             <View style={styles.undoToastInfo}>
-              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Ionicons name="trash-outline" size={16} color={Colors.danger} />
               <Text style={styles.undoToastText} numberOfLines={1}>
                 Deleted {undoToast.entry.amountMl} mL{' '}
                 {getBeverageName(undoToast.entry.beverageType)}
@@ -629,7 +629,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               accessibilityRole="button"
               accessibilityLabel={`Undo deleting ${undoToast.entry.amountMl} mL ${getBeverageName(undoToast.entry.beverageType)}`}
             >
-              <Ionicons name="arrow-undo" size={13} color="#38BDF8" />
+              <Ionicons name="arrow-undo" size={13} color={Colors.waterSecondary} />
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>
           </Animated.View>
@@ -660,11 +660,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   headerTitleContainer: {
     flex: 1,
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
     textAlign: 'center',
   },
@@ -691,19 +691,19 @@ const styles = StyleSheet.create({
   groupHeaderTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     paddingHorizontal: 20,
     marginBottom: 8,
   },
   groupCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     marginHorizontal: 16,
     paddingHorizontal: 18,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   },
   rowBorderTop: {
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: Colors.surfaceLow,
   },
   beverageIconCol: {
     width: 42,
@@ -731,18 +731,18 @@ const styles = StyleSheet.create({
   beverageName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   beverageTime: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   beverageAmount: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginRight: 12,
   },
   menuTriggerBtn: {
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   // Floating Action Popover Menu
   popoverOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.18)',
+    backgroundColor: Colors.overlayScrim,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     paddingRight: 32,
@@ -760,17 +760,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 28,
     width: 140,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 4,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.14,
     shadowRadius: 16,
     elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   popoverRow: {
     flexDirection: 'row',
@@ -780,21 +780,21 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   popoverRowPressed: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
   },
   popoverEditText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   popoverDeleteText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#EF4444',
+    color: Colors.danger,
   },
   popoverDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     marginHorizontal: 10,
   },
   // Edit Modal Sheet
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: Colors.overlayScrim,
   },
   editModalBackdrop: {
     position: 'absolute',
@@ -815,14 +815,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderCurve: 'continuous',
     paddingTop: 12,
     paddingBottom: 32,
     paddingHorizontal: 20,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 18,
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: Colors.borderInset,
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -845,13 +845,13 @@ const styles = StyleSheet.create({
   editModalTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   editCloseBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -867,11 +867,11 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: Colors.waterBorder,
   },
   stepperValueBox: {
     flexDirection: 'row',
@@ -881,12 +881,12 @@ const styles = StyleSheet.create({
   stepperValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 36,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   stepperUnitText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   presetChipsRow: {
     flexDirection: 'row',
@@ -899,18 +899,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   presetChipActive: {
-    backgroundColor: '#F0F9FF',
+    backgroundColor: Colors.waterLight,
     borderColor: Colors.water,
   },
   presetChipText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   presetChipTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -928,7 +928,7 @@ const styles = StyleSheet.create({
   saveEditBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
   },
   headerRightSpacer: {
     width: 38,
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 13,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 8,
   },
   editSectionRow: {
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
   editSectionLabel: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#334155',
+    color: Colors.textSlate700,
   },
   editBeverageChipsRow: {
     flexDirection: 'row',
@@ -970,9 +970,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   editBeverageChipSelected: {
     borderWidth: 1.5,
@@ -980,7 +980,7 @@ const styles = StyleSheet.create({
   editBeverageChipText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   editBeverageChipTextSelected: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -997,7 +997,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   undoToastCard: {
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.inverseSurface,
     borderRadius: 12,
     borderCurve: 'continuous',
     flexDirection: 'row',
@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     width: '100%',
     maxWidth: 420,
-    shadowColor: '#0F172A',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   undoToastText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: Colors.textInverse,
     letterSpacing: -0.2,
   },
   undoBtn: {
@@ -1038,6 +1038,6 @@ const styles = StyleSheet.create({
   undoBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
-    color: '#38BDF8',
+    color: Colors.waterSecondary,
   },
 });

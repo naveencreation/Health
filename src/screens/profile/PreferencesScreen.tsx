@@ -204,7 +204,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityLabel="Warm and encouraging tone: Celebrates streaks, offers gentle reminders, positive reinforcement"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconSupportive]}>
-              <Ionicons name="sparkles" size={16} color="#A16207" />
+              <Ionicons name="sparkles" size={16} color={Colors.warningDark} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Warm & Encouraging</Text>
@@ -258,7 +258,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             accessibilityLabel="Nutritional scientist tone: Deep analytical focus on glycemic response, micronutrients, recovery"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconScientific]}>
-              <Ionicons name="flask" size={16} color="#4338CA" />
+              <Ionicons name="flask" size={16} color={Colors.waterDark} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Nutritional Scientist</Text>
@@ -355,8 +355,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         <Text style={styles.sectionHeader}>Calorify Pro</Text>
         <View style={styles.card}>
           <View style={styles.accountRow}>
-            <View style={[styles.switchIconBox, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="star" size={18} color="#D97706" />
+            <View style={[styles.switchIconBox, { backgroundColor: Colors.carbsLight }]}>
+              <Ionicons name="star" size={18} color={Colors.carbsDark} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Membership Status</Text>
@@ -391,8 +391,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <Switch
               value={waterReminder}
               onValueChange={handleToggleWater}
-              trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
-              thumbColor={waterReminder ? Colors.primary : '#F8FAFC'}
+              trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+              thumbColor={waterReminder ? Colors.primary : Colors.surfaceLow}
               accessibilityLabel="Toggle water reminders"
             />
           </View>
@@ -401,7 +401,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
           <View style={styles.switchRow}>
             <View style={[styles.switchIconBox, styles.switchIconMeal]}>
-              <Ionicons name="restaurant-outline" size={18} color="#EA580C" />
+              <Ionicons name="restaurant-outline" size={18} color={Colors.primary} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.switchTitle}>Meal Logging Reminders</Text>
@@ -410,8 +410,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <Switch
               value={mealReminder}
               onValueChange={handleToggleMeal}
-              trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
-              thumbColor={mealReminder ? Colors.primary : '#F8FAFC'}
+              trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+              thumbColor={mealReminder ? Colors.primary : Colors.surfaceLow}
               accessibilityLabel="Toggle meal logging reminders"
             />
           </View>
@@ -420,7 +420,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
           <View style={styles.switchRow}>
             <View style={[styles.switchIconBox, styles.switchIconStep]}>
-              <Ionicons name="footsteps-outline" size={18} color="#16A34A" />
+              <Ionicons name="footsteps-outline" size={18} color={Colors.steps} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.switchTitle}>Step Milestone Alerts</Text>
@@ -429,8 +429,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <Switch
               value={stepReminder}
               onValueChange={handleToggleStep}
-              trackColor={{ false: '#CBD5E1', true: SWITCH_TRACK_ACTIVE }}
-              thumbColor={stepReminder ? Colors.primary : '#F8FAFC'}
+              trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+              thumbColor={stepReminder ? Colors.primary : Colors.surfaceLow}
               accessibilityLabel="Toggle step milestone alerts"
             />
           </View>
@@ -441,7 +441,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         <View style={styles.card}>
           <View style={styles.accountRow}>
             <View style={[styles.switchIconBox, styles.switchIconAccount]}>
-              <Ionicons name="mail-outline" size={18} color="#475569" />
+              <Ionicons name="mail-outline" size={18} color={Colors.textSlate600} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Signed In As</Text>
@@ -466,13 +466,13 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
           <View style={styles.accountRow}>
             <View style={[styles.switchIconBox, styles.switchIconBackup]}>
-              <Ionicons name="cloud-done-outline" size={18} color="#059669" />
+              <Ionicons name="cloud-done-outline" size={18} color={Colors.fiber} />
             </View>
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Cloud Backup</Text>
               <Text style={styles.accountValue}>Auto-synced with Calorify Cloud</Text>
             </View>
-            <Ionicons name="checkmark-circle" size={18} color="#059669" />
+            <Ionicons name="checkmark-circle" size={18} color={Colors.fiber} />
           </View>
 
           <View style={styles.divider} />
@@ -502,7 +502,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Sign out of Calorify"
               >
-                <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+                <Ionicons name="log-out-outline" size={18} color={Colors.dangerDark} />
                 <Text style={styles.signOutBtnText}>Sign Out of Calorify</Text>
               </Pressable>
 
@@ -516,10 +516,10 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 accessibilityLabel="Delete Account Permanently"
               >
                 {isDeleting ? (
-                  <ActivityIndicator size="small" color="#DC2626" />
+                  <ActivityIndicator size="small" color={Colors.dangerDark} />
                 ) : (
                   <>
-                    <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                    <Ionicons name="trash-outline" size={16} color={Colors.dangerDark} />
                     <Text style={styles.deleteBtnText}>Delete Account Permanently</Text>
                   </>
                 )}
@@ -600,11 +600,11 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
     lineHeight: 28,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
     includeFontPadding: false,
   },
@@ -651,33 +651,33 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },
   proManageBtn: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
   },
   proManageBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
-    color: '#D97706',
+    color: Colors.carbsDark,
   },
   personalityCard: {
     flexDirection: 'row',
@@ -704,27 +704,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.fatLight,
   },
   personalityIconScientific: {
-    backgroundColor: '#E0E7FF',
+    backgroundColor: Colors.waterLight,
   },
   personalityTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   personalityDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   byokCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
     gap: 12,
@@ -751,13 +751,13 @@ const styles = StyleSheet.create({
   byokTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   byokDesc: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 17,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   statusPill: {
     flexDirection: 'row',
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.proteinLight,
   },
   statusPillInactive: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   statusDot: {
     width: 6,
@@ -782,23 +782,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.protein,
   },
   statusDotInactive: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: Colors.textMuted,
   },
   statusPillText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
   },
   statusTextActive: {
-    color: '#15803D',
+    color: Colors.successDark,
   },
   statusTextInactive: {
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   byokKeyChip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderRadius: 8,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
@@ -813,12 +813,12 @@ const styles = StyleSheet.create({
   byokKeyChipLabel: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   byokKeyChipValue: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 11,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   byokSecureTag: {
     flexDirection: 'row',
@@ -828,13 +828,13 @@ const styles = StyleSheet.create({
   byokSecureText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    color: '#059669',
+    color: Colors.fiber,
   },
   byokActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     borderRadius: 8,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
@@ -852,14 +852,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   byokActionBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12.5,
-    color: '#EA580C',
+    fontSize: 12,
+    color: Colors.primaryDark,
   },
   switchRow: {
     flexDirection: 'row',
@@ -875,29 +875,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   switchIconWater: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: Colors.waterTrack,
   },
   switchIconMeal: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
   },
   switchIconStep: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
   },
   switchIconAccount: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
   },
   switchIconBackup: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: Colors.fiberLight,
   },
   switchTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   switchDesc: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   accountRow: {
@@ -908,37 +908,37 @@ const styles = StyleSheet.create({
   },
   accountLabel: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11.5,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.textSecondary,
   },
   accountValue: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13.5,
-    color: '#0F172A',
+    fontSize: 13,
+    color: Colors.textPrimary,
   },
   statusTag: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.proteinLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   statusTagGuest: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.carbsLight,
   },
   statusTagText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 10,
-    color: '#15803D',
+    color: Colors.successDark,
   },
   statusTagTextGuest: {
-    color: '#D97706',
+    color: Colors.carbsDark,
   },
   authBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     height: 52,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -946,7 +946,7 @@ const styles = StyleSheet.create({
   },
   authBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13.5,
+    fontSize: 14,
     color: Colors.primary,
   },
   signOutBtn: {
@@ -954,7 +954,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.errorLight,
     height: 52,
     borderRadius: 10,
     borderCurve: 'continuous',
@@ -962,8 +962,8 @@ const styles = StyleSheet.create({
   },
   signOutBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13.5,
-    color: '#DC2626',
+    fontSize: 14,
+    color: Colors.dangerDark,
   },
   deleteBtn: {
     flexDirection: 'row',
@@ -976,11 +976,11 @@ const styles = StyleSheet.create({
   deleteBtnText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#DC2626',
+    color: Colors.dangerDark,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: Colors.borderWhisper,
     marginVertical: 4,
   },
   pressedSubtle: {

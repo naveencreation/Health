@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#64748B',
     includeFontPadding: false,
   },
@@ -483,17 +483,17 @@ const styles = StyleSheet.create({
   },
   milestoneText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#94A3B8',
   },
   milestoneProgressText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: Colors.weight,
   },
   milestoneTextActive: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10.5,
+    fontSize: 11,
     color: Colors.weight,
   },
   contextSummaryRow: {
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   },
   contextSummaryText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
     flex: 1,
   },

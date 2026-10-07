@@ -12,6 +12,7 @@ import Svg, { Rect, Path, Circle, G } from 'react-native-svg';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { WeightEntryActionPopover } from './WeightEntryActionPopover';
 
 export interface WeightHistoryItem {
@@ -66,7 +67,7 @@ const EmptyWeightIllustration: React.FC = () => (
   <View style={styles.emptyContainer}>
     <Svg width={96} height={80} viewBox="0 0 100 85" fill="none">
       {/* Background shadow glow */}
-      <Rect x="16" y="16" width="68" height="58" rx="16" fill="#FFF1EE" />
+      <Rect x="16" y="16" width="68" height="58" rx="16" fill={Colors.weightLight} />
       {/* Bathroom Scale Platform */}
       <Rect
         x="18"
@@ -74,22 +75,22 @@ const EmptyWeightIllustration: React.FC = () => (
         width="64"
         height="56"
         rx="14"
-        fill="#FFFFFF"
-        stroke="#FFDCD2"
+        fill={Colors.card}
+        stroke={Colors.weightBorder}
         strokeWidth="1.8"
       />
       {/* Scale LCD Display Screen */}
-      <Rect x="36" y="22" width="28" height="12" rx="3" fill="#0F172A" />
+      <Rect x="36" y="22" width="28" height="12" rx="3" fill={Colors.textPrimary} />
       {/* Glowing 0.0 display reading */}
-      <Rect x="42" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
-      <Circle cx="49" cy="28" r="0.8" fill="#38BDF8" />
-      <Rect x="52" y="27" width="4" height="2" rx="0.5" fill="#38BDF8" />
+      <Rect x="42" y="27" width="4" height="2" rx="0.5" fill={Colors.waterSecondary} />
+      <Circle cx="49" cy="28" r="0.8" fill={Colors.waterSecondary} />
+      <Rect x="52" y="27" width="4" height="2" rx="0.5" fill={Colors.waterSecondary} />
 
       {/* Decorative Footprint/Tread lines */}
-      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill="#FFF1EE" />
-      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill="#FFF1EE" />
+      <Path d="M 27 46 C 27 42 33 42 33 46 L 33 56 C 33 58 27 58 27 56 Z" fill={Colors.weightLight} />
+      <Path d="M 67 46 C 67 42 73 42 73 46 L 73 56 C 73 58 67 58 67 56 Z" fill={Colors.weightLight} />
       {/* Accent dot on top center */}
-      <Circle cx="50" cy="18" r="1.5" fill="#FF5722" />
+      <Circle cx="50" cy="18" r="1.5" fill={Colors.weight} />
     </Svg>
     <Text style={styles.emptyTitle}>Weekly weigh-ins build habits</Text>
     <Text style={styles.emptySubtitle}>Log your weight to see your progress over time.</Text>
@@ -273,7 +274,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
             <Feather
               name={onViewAll ? 'arrow-right' : isExpanded ? 'chevron-up' : 'arrow-right'}
               size={15}
-              color="#F43F5E"
+              color={Colors.weight}
             />
           </Pressable>
         </View>
@@ -331,7 +332,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                           <Ionicons
                             name={isZero ? 'remove' : isGain ? 'chevron-up' : 'chevron-down'}
                             size={11}
-                            color="#FFFFFF"
+                            color={Colors.onPrimary}
                           />
                         </View>
                         <Text
@@ -357,7 +358,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Options for ${item.date}`}
                       >
-                        <Ionicons name="ellipsis-vertical" size={17} color="#64748B" />
+                        <Ionicons name="ellipsis-vertical" size={17} color={Colors.textSecondary} />
                       </Pressable>
                     </View>
                   </View>
@@ -378,7 +379,7 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
                 accessibilityLabel={`View all ${historyItems.length} records`}
               >
                 <Text style={styles.moreFooterText}>+{historyItems.length - 4} more records</Text>
-                <Feather name="arrow-right" size={13} color="#F43F5E" />
+                <Feather name="arrow-right" size={13} color={Colors.weight} />
               </Pressable>
             )}
           </View>
@@ -400,14 +401,14 @@ export const WeightHistoryCard: React.FC<WeightHistoryCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 20,
     marginHorizontal: 16,
     marginTop: 14,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -425,19 +426,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   countBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
-    backgroundColor: '#FFF1F2', // Soft rose background
+    backgroundColor: Colors.weightLight
   },
   countBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#F43F5E', // Weight rose
+    color: Colors.weight
   },
   viewAllBtn: {
     flexDirection: 'row',
@@ -449,7 +450,7 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#F43F5E', // Weight rose
+    color: Colors.weight
   },
   btnPressed: {
     opacity: 0.7,
@@ -463,13 +464,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#334155',
+    color: Colors.textSlate700,
     marginTop: 10,
   },
   emptySubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 2,
     textAlign: 'center',
   },
@@ -495,13 +496,13 @@ const styles = StyleSheet.create({
   itemWeightText: {
     fontSize: 16,
     fontFamily: Fonts.urbanist.bold,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   itemTimeText: {
     fontSize: 12,
     fontFamily: Fonts.urbanist.regular,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   metaRow: {
     flexDirection: 'row',
@@ -513,19 +514,19 @@ const styles = StyleSheet.create({
   itemDateText: {
     fontSize: 12,
     fontFamily: Fonts.urbanist.medium,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   tagPill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceInset,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 6,
     maxWidth: 130,
   },
   tagPillText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontFamily: Fonts.urbanist.medium,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   rightActionCol: {
     flexDirection: 'row',
@@ -541,26 +542,26 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#10B981', // Emerald 500 — weight loss
+    backgroundColor: Colors.weightLoss,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deltaIconCircleGain: {
-    backgroundColor: '#F43F5E', // Rose 500
+    backgroundColor: Colors.weight,
   },
   deltaIconCircleZero: {
-    backgroundColor: '#94A3B8', // Slate 400
+    backgroundColor: Colors.textMuted,
   },
   deltaText: {
     fontSize: 13,
     fontFamily: Fonts.urbanist.semiBold,
-    color: '#10B981',
+    color: Colors.weightLoss,
   },
   deltaTextGain: {
-    color: '#F43F5E',
+    color: Colors.weight,
   },
   deltaTextZero: {
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   optionsBtn: {
     width: 32,
@@ -571,7 +572,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: Colors.borderWhisper,
   },
   moreFooterBtn: {
     flexDirection: 'row',
@@ -580,12 +581,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 4,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(15, 23, 42, 0.06)',
+    borderTopColor: Colors.borderWhisper,
     gap: 6,
   },
   moreFooterText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12.5,
-    color: '#64748B',
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
 });

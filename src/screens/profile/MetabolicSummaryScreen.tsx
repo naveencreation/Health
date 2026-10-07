@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   },
   engineSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#64748B',
     marginTop: 1,
   },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   },
   formulaKey: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#64748B',
     marginTop: 3,
     textAlign: 'center',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   fatLossText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 18,
     color: Colors.primaryDark,
     flex: 1,
