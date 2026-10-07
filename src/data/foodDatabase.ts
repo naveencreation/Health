@@ -169,7 +169,7 @@ const RAW_FOOD_DATABASE: FoodItem[] = [
     icon: '⚪',
     badge: 'Gut Friendly',
     description:
-      'Soft and fluffy steamed cakes prepared from naturally fermented rice and urad dal batter. Gentle on digestion.',
+      'Soft and fluffy steamed cakes prepared from naturally fermented rice and urad dal batter. Gentle on digestion and a healthy breakfast option.',
   },
   {
     id: 'plain_dosa',

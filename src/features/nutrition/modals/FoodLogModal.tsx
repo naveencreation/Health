@@ -827,9 +827,14 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
           /* =======================================================
              1. FULL-SCREEN DEDICATED FOOD PRODUCT DETAIL PAGE
              ======================================================= */
-          <SafeAreaView style={styles.fullScreenProductContainer} edges={['top']}>
+          <View style={styles.fullScreenProductContainer}>
             {/* Top Bar: Floating Back & Favorite Buttons */}
-            <View style={styles.productTopNavRow}>
+            <View
+              style={[
+                styles.productTopNavRow,
+                { top: insets.top + (Platform.OS === 'web' ? 14 : 10) },
+              ]}
+            >
               <Pressable
                 style={({ pressed }) => [
                   styles.productNavCircleBtn,
@@ -840,7 +845,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Back to food list"
               >
-                <Ionicons name="arrow-back" size={22} color="#0F172A" />
+                <Ionicons name="arrow-back" size={20} color="#0F172A" />
               </Pressable>
 
               <Pressable
@@ -855,8 +860,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               >
                 <Ionicons
                   name={isFav ? 'heart' : 'heart-outline'}
-                  size={22}
-                  color={isFav ? '#EF4444' : '#64748B'}
+                  size={21}
+                  color={isFav ? '#EF4444' : '#0F172A'}
                 />
               </Pressable>
             </View>
@@ -864,20 +869,26 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
             <ScrollView
               showsVerticalScrollIndicator={false}
               bounces={true}
-              alwaysBounceVertical={true}
+              alwaysBounceVertical={false}
               style={styles.fullScreenScrollView}
               contentContainerStyle={[
                 styles.fullScreenScrollContent,
-                { paddingBottom: 160 + insets.bottom },
+                { paddingBottom: 130 + insets.bottom },
               ]}
             >
               {/* 2. First: The Food Image — 4:3 container, subject centered via contain */}
-              <View style={styles.productHeroStage}>
+              <View
+                style={[
+                  styles.productHeroStage,
+                  { paddingTop: insets.top + (Platform.OS === 'web' ? 50 : 54) },
+                ]}
+              >
                 <FoodImage
                   source={heroImageSource}
                   aspectRatio={4 / 3}
                   contentFit="contain"
                   width="100%"
+                  style={styles.productHeroImage}
                   backgroundColor="#FFFFFF"
                   fallback={<FoodIconBadge item={selectedFood} size={160} />}
                 />
@@ -887,16 +898,20 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               <View style={styles.productDetailCard}>
                 {/* Category Pill + Health Tag */}
                 <View style={styles.productHeaderMetaRow}>
-                  <Text style={styles.productCategoryLabel}>
-                    {(
-                      selectedFood.categoryLabel ||
-                      selectedFood.category ||
-                      'WHOLESOME'
-                    ).toUpperCase()}
-                  </Text>
+                  <View style={styles.productCategoryWrap}>
+                    <MaterialCommunityIcons name="bowl-mix-outline" size={15} color="#64748B" />
+                    <Text style={styles.productCategoryLabel} numberOfLines={1}>
+                      {(
+                        selectedFood.categoryLabel ||
+                        selectedFood.category ||
+                        'WHOLESOME'
+                      ).toUpperCase()}
+                    </Text>
+                  </View>
                   <View style={styles.productHealthBadgePill}>
-                    <Text style={styles.productHealthBadgeText}>
-                      {selectedFood.badge || 'Clean Energy'}
+                    <Ionicons name="leaf-outline" size={13} color="#059669" style={{ marginRight: 4 }} />
+                    <Text style={styles.productHealthBadgeText} numberOfLines={1}>
+                      {selectedFood.badge || 'Gut Friendly'}
                     </Text>
                   </View>
                 </View>
@@ -916,45 +931,86 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 
                 {/* Nutrition Breakdown */}
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeaderLabel}>Nutrition Breakdown</Text>
+                  <Text style={styles.sectionHeaderLabel}>NUTRITION BREAKDOWN</Text>
+                  <Text style={styles.sectionHeaderSub}>
+                    Per {selectedFood.servingUnit}
+                  </Text>
                 </View>
 
                 <View style={styles.nutritionMatrixGrid}>
+                  {/* Calories */}
                   <View style={[styles.nutriCard, styles.nutriCardCalories]}>
-                    <Text style={styles.nutriVal}>{projectedAddedCals}</Text>
-                    <Text style={[styles.nutriKey, { color: '#C2410C' }]}>CALORIES</Text>
-                  </View>
-                  <View style={styles.nutriCard}>
-                    <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.protein }]} />
-                      <Text style={styles.nutriKey}>PROTEIN</Text>
+                    <View style={styles.nutriCardIconWrap}>
+                      <Ionicons name="flame-outline" size={20} color="#EA580C" />
                     </View>
-                    <Text style={styles.nutriVal}>
-                      {(selectedFood.protein * quantity).toFixed(1)}g
+                    <Text
+                      style={styles.nutriVal}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.72}
+                    >
+                      {projectedAddedCals}
                     </Text>
+                    <Text style={styles.nutriKey} numberOfLines={1}>Calories</Text>
                   </View>
-                  <View style={styles.nutriCard}>
-                    <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.carbs }]} />
-                      <Text style={styles.nutriKey}>CARBS</Text>
+
+                  {/* Protein */}
+                  <View style={[styles.nutriCard, styles.nutriCardProtein]}>
+                    <View style={styles.nutriCardIconWrap}>
+                      <MaterialCommunityIcons
+                        name="dumbbell"
+                        size={19}
+                        color="#2563EB"
+                        style={{ transform: [{ rotate: '-45deg' }] }}
+                      />
                     </View>
-                    <Text style={styles.nutriVal}>
-                      {(selectedFood.carbs * quantity).toFixed(1)}g
+                    <Text
+                      style={styles.nutriVal}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.72}
+                    >
+                      {(selectedFood.protein * quantity).toFixed(1)} g
                     </Text>
+                    <Text style={styles.nutriKey} numberOfLines={1}>Protein</Text>
                   </View>
-                  <View style={styles.nutriCard}>
-                    <View style={styles.nutriHeaderRow}>
-                      <View style={[styles.drawerMacroDot, { backgroundColor: Colors.fat }]} />
-                      <Text style={styles.nutriKey}>FAT</Text>
+
+                  {/* Carbs */}
+                  <View style={[styles.nutriCard, styles.nutriCardCarbs]}>
+                    <View style={styles.nutriCardIconWrap}>
+                      <MaterialCommunityIcons name="barley" size={20} color="#D97706" />
                     </View>
-                    <Text style={styles.nutriVal}>{(selectedFood.fat * quantity).toFixed(1)}g</Text>
+                    <Text
+                      style={styles.nutriVal}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.72}
+                    >
+                      {(selectedFood.carbs * quantity).toFixed(1)} g
+                    </Text>
+                    <Text style={styles.nutriKey} numberOfLines={1}>Carbs</Text>
+                  </View>
+
+                  {/* Fat */}
+                  <View style={[styles.nutriCard, styles.nutriCardFat]}>
+                    <View style={styles.nutriCardIconWrap}>
+                      <Ionicons name="water-outline" size={19} color="#0EA5E9" />
+                    </View>
+                    <Text
+                      style={styles.nutriVal}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.72}
+                    >
+                      {(selectedFood.fat * quantity).toFixed(1)} g
+                    </Text>
+                    <Text style={styles.nutriKey} numberOfLines={1}>Fat</Text>
                   </View>
                 </View>
 
-                {/* Effective Quantity Distribution */}
                 {/* Quick Portion Chips */}
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeaderLabel}>Quick Portions</Text>
+                  <Text style={styles.sectionHeaderLabel}>QUICK PORTIONS</Text>
                 </View>
 
                 <View style={styles.distributionChipsRow}>
@@ -992,11 +1048,16 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
               <View style={styles.footerImpactStrip}>
                 <View style={styles.footerImpactMetaRow}>
                   <View style={styles.footerImpactLeft}>
-                    <Ionicons name="pie-chart-outline" size={13} color="#64748B" />
-                    <Text style={styles.footerImpactLabel} numberOfLines={1}>
+                    <Ionicons name="speedometer-outline" size={15} color="#64748B" />
+                    <Text
+                      style={styles.footerImpactLabel}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.82}
+                    >
                       {mealTitle} Target:{' '}
                       <Text style={styles.footerImpactBold}>{mealTarget} kcal</Text>
-                      <Text style={styles.footerImpactSub}> • {projectedTotal} total</Text>
+                      <Text style={styles.footerImpactSub}> · {projectedTotal} total</Text>
                     </Text>
                   </View>
 
@@ -1006,11 +1067,11 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                       isProjectedOver ? styles.footerImpactBadgeOver : styles.footerImpactBadgeOk,
                     ]}
                   >
-                    <View
-                      style={[
-                        styles.footerImpactDot,
-                        isProjectedOver ? styles.footerImpactDotOver : styles.footerImpactDotOk,
-                      ]}
+                    <Ionicons
+                      name="time-outline"
+                      size={12}
+                      color={isProjectedOver ? '#DC2626' : '#16A34A'}
+                      style={{ marginRight: 3 }}
                     />
                     <Text
                       style={[
@@ -1027,7 +1088,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   </View>
                 </View>
 
-                {/* Hairline 3px Micro-Progress Track */}
+                {/* Hairline 3.5px Micro-Progress Track */}
                 <View style={styles.footerImpactTrack}>
                   <View
                     style={[
@@ -1055,11 +1116,16 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Decrease portion by 0.5"
                   >
-                    <Ionicons name="remove" size={20} color="#0F172A" />
+                    <Ionicons name="remove" size={18} color="#0F172A" />
                   </Pressable>
 
                   <View style={styles.footerStepperValueWrap}>
-                    <Text style={styles.footerStepperValue} numberOfLines={1}>
+                    <Text
+                      style={styles.footerStepperValue}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.75}
+                    >
                       <Text style={styles.footerStepperNumber}>{quantity}</Text>
                       <Text style={styles.footerStepperUnit}>
                         {' '}
@@ -1078,7 +1144,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Increase portion by 0.5"
                   >
-                    <Ionicons name="add" size={20} color="#0F172A" />
+                    <Ionicons name="add" size={18} color="#0F172A" />
                   </Pressable>
                 </View>
 
@@ -1092,14 +1158,26 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
                 >
-                  <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                  <Text style={styles.confirmAddBtnText} numberOfLines={1}>
-                    Add to {mealTitle} • {projectedAddedCals} kcal
-                  </Text>
+                  <View style={styles.ctaCheckBadge}>
+                    <Ionicons name="checkmark" size={14} color="#EA580C" />
+                  </View>
+                  <View style={styles.ctaTextCol}>
+                    <Text
+                      style={styles.confirmAddBtnTitle}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.8}
+                    >
+                      Add to {mealTitle}
+                    </Text>
+                    <Text style={styles.confirmAddBtnSub} numberOfLines={1}>
+                      {projectedAddedCals} kcal
+                    </Text>
+                  </View>
                 </Pressable>
               </View>
             </View>
-          </SafeAreaView>
+          </View>
         ) : (
           /* =======================================================
              2. CATALOG / SEARCH PAGE
@@ -1876,7 +1954,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: '#FFFFFF',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -1885,11 +1963,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   fullScreenScrollContent: {
-    paddingBottom: 120,
+    backgroundColor: '#FFFFFF',
+    flexGrow: 1,
   },
   productTopNavRow: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 14 : 8,
     left: 16,
     right: 16,
     flexDirection: 'row',
@@ -1898,26 +1976,37 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   productNavCircleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 0,
-    shadowOpacity: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   productHeroStage: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    paddingTop: 56,
-    paddingBottom: 16,
+    paddingBottom: 8,
     paddingHorizontal: 16,
     position: 'relative',
+  },
+  productHeroImage: {
+    maxHeight: 230,
   },
   productDetailCard: {
     borderTopLeftRadius: 32,
@@ -1926,9 +2015,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    paddingBottom: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.04,
@@ -1941,38 +2028,54 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 14,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 10,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 12,
     zIndex: 20,
   },
   footerStepperPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
+    borderRadius: 14,
     height: 52,
     paddingHorizontal: 4,
-    minWidth: 120,
+    width: 136,
+    flexShrink: 0,
   },
   footerStepBtn: {
     width: 36,
     height: 36,
     borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   footerStepperValueWrap: {
-    paddingHorizontal: 4,
+    flex: 1,
+    paddingHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1993,49 +2096,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 6,
     marginBottom: 4,
   },
+  productCategoryWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
   productCategoryLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11.5,
-    color: '#94A3B8',
-    letterSpacing: 1.2,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    color: '#64748B',
+    letterSpacing: 0.8,
   },
   productHealthBadgePill: {
-    backgroundColor: Colors.proteinLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
     paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingVertical: 4,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(103, 189, 110, 0.35)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    flexShrink: 0,
   },
   productHealthBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: '#2E7D32',
+    fontSize: 11.5,
+    color: '#059669',
   },
   productMainTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
     color: '#0F172A',
     letterSpacing: -0.3,
-    marginTop: 4,
+    marginTop: 6,
     lineHeight: 28,
   },
   productBaseServingText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#64748B',
-    marginTop: 2,
+    marginTop: 3,
     marginBottom: 8,
   },
   productDescriptionText: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#475569',
-    lineHeight: 20,
-    marginBottom: 14,
+    lineHeight: 21,
+    marginBottom: 16,
   },
   distributionChipsRow: {
     flexDirection: 'row',
@@ -2044,8 +2156,8 @@ const styles = StyleSheet.create({
   },
   distributionChip: {
     flex: 1,
-    height: 42,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -2053,8 +2165,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   distributionChipActive: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#FFF7ED',
+    borderColor: '#EA580C',
+    borderWidth: 1.5,
   },
   distributionChipText: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -2063,22 +2176,26 @@ const styles = StyleSheet.create({
   },
   distributionChipTextActive: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#FFFFFF',
+    color: '#EA580C',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
-    marginTop: 2,
-    paddingHorizontal: 2,
+    marginBottom: 8,
+    marginTop: 4,
   },
   sectionHeaderLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 11,
     color: '#64748B',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+  },
+  sectionHeaderSub: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 11.5,
+    color: '#64748B',
   },
   stepperContainer: {
     flexDirection: 'row',
@@ -2155,47 +2272,55 @@ const styles = StyleSheet.create({
   nutritionMatrixGrid: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   nutriCard: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    paddingVertical: 9,
-    paddingHorizontal: 4,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 3,
+    minHeight: 84,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
   },
   nutriCardCalories: {
     backgroundColor: '#FFF7ED',
-    borderColor: '#FFEDD5',
+    borderColor: '#FED7AA',
   },
-  nutriHeaderRow: {
-    flexDirection: 'row',
+  nutriCardProtein: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#DBEAFE',
+  },
+  nutriCardCarbs: {
+    backgroundColor: '#FEFCE8',
+    borderColor: 'rgba(234, 179, 8, 0.28)',
+  },
+  nutriCardFat: {
+    backgroundColor: '#ECFEFF',
+    borderColor: '#CFFAFE',
+  },
+  nutriCardIconWrap: {
+    height: 24,
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 2,
-  },
-  drawerMacroDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   nutriKey: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 9.5,
+    fontSize: 11,
     color: '#64748B',
-    letterSpacing: 0.4,
+    textAlign: 'center',
   },
   nutriVal: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
+    fontSize: 16,
     color: '#0F172A',
+    marginBottom: 2,
+    textAlign: 'center',
   },
   footerImpactStrip: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   footerImpactMetaRow: {
     flexDirection: 'row',
@@ -2209,6 +2334,7 @@ const styles = StyleSheet.create({
     gap: 6,
     flex: 1,
     marginRight: 8,
+    overflow: 'hidden',
   },
   footerImpactLabel: {
     fontFamily: Fonts.urbanist.medium,
@@ -2216,25 +2342,26 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   footerImpactBold: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     color: '#0F172A',
   },
   footerImpactSub: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 11.5,
+    color: '#64748B',
   },
   footerImpactBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexShrink: 0,
   },
   footerImpactBadgeOk: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: 'rgba(103, 189, 110, 0.35)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   footerImpactBadgeOver: {
     backgroundColor: '#FEF2F2',
@@ -2248,33 +2375,33 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   footerImpactDotOk: {
-    backgroundColor: Colors.protein,
+    backgroundColor: '#16A34A',
   },
   footerImpactDotOver: {
     backgroundColor: '#EF4444',
   },
   footerImpactBadgeText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
+    fontSize: 11.5,
   },
   footerImpactBadgeTextOk: {
-    color: '#2E7D32',
+    color: '#16A34A',
   },
   footerImpactBadgeTextOver: {
     color: '#DC2626',
   },
   footerImpactTrack: {
-    height: 3,
+    height: 3.5,
     backgroundColor: '#F1F5F9',
-    borderRadius: 1.5,
+    borderRadius: 2,
     overflow: 'hidden',
   },
   footerImpactBar: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: 2,
   },
   footerImpactBarOk: {
-    backgroundColor: Colors.protein,
+    backgroundColor: '#10B981',
   },
   footerImpactBarOver: {
     backgroundColor: '#EF4444',
@@ -2282,7 +2409,7 @@ const styles = StyleSheet.create({
   footerActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   btnPressedSubtle: {
     opacity: 0.7,
@@ -2300,19 +2427,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: '#EA580C',
     height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
+    borderRadius: 16,
     gap: 8,
     paddingHorizontal: 12,
-    elevation: 0,
-    shadowOpacity: 0,
   },
-  confirmAddBtnText: {
+  ctaCheckBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  ctaTextCol: {
+    flex: 1,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  confirmAddBtnTitle: {
     fontFamily: Fonts.urbanist.bold,
     color: '#FFFFFF',
     fontSize: 14.5,
+    lineHeight: 18,
+  },
+  confirmAddBtnSub: {
+    fontFamily: Fonts.urbanist.medium,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 12,
+    lineHeight: 15,
   },
   toastContainer: {
     position: 'absolute',
