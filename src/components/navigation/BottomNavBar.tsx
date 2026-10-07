@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 
@@ -63,13 +64,13 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
         accessibilityLabel="Health Trackers and Biometrics"
         accessibilityState={{ selected: activeTab === 'tracker' }}
       >
-        <Ionicons
-          name={activeTab === 'tracker' ? 'pulse' : 'pulse-outline'}
-          size={20}
+        <MaterialCommunityIcons
+          name="heart-pulse"
+          size={21}
           color={activeTab === 'tracker' ? Colors.iconNavy : '#8E95A2'}
         />
         <Text style={[styles.tabLabel, activeTab === 'tracker' ? styles.tabLabelActive : null]}>
-          Tracker
+          Track
         </Text>
       </Pressable>
 
@@ -85,21 +86,33 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
         </Pressable>
       </View>
 
-      {/* Tab 3: Analytics */}
+      {/* Tab 3: Analytics / Insights */}
       <Pressable
         style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
         onPress={() => handleTabPress('analytics')}
         accessibilityRole="tab"
-        accessibilityLabel="Analytics and Trends"
+        accessibilityLabel="Insights and Trends"
         accessibilityState={{ selected: activeTab === 'analytics' }}
       >
-        <Ionicons
-          name={activeTab === 'analytics' ? 'bar-chart' : 'bar-chart-outline'}
-          size={20}
-          color={activeTab === 'analytics' ? Colors.iconNavy : '#8E95A2'}
-        />
+        <Svg
+          width={20}
+          height={20}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={activeTab === 'analytics' ? Colors.iconNavy : '#8E95A2'}
+          strokeWidth={activeTab === 'analytics' ? 2.3 : 1.9}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <Path d="M12 16v5" />
+          <Path d="M16 14.639V21" />
+          <Path d="M20 10.656V21" />
+          <Path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15" />
+          <Path d="M4 18.463V21" />
+          <Path d="M8 14.656V21" />
+        </Svg>
         <Text style={[styles.tabLabel, activeTab === 'analytics' ? styles.tabLabelActive : null]}>
-          Analytics
+          Insights
         </Text>
       </Pressable>
 

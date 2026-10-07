@@ -790,7 +790,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       {/* 1. Header with Screen Title and Dropdown Capsule */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
-          <Text style={styles.headerTitle}>Analytics</Text>
+          <Text style={styles.headerTitle}>Insights</Text>
 
           {/* Report Selector Capsule Button */}
           <Pressable

@@ -158,7 +158,7 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
               titleStyle,
             ]}
           >
-            <Text style={styles.headerTitle}>Trackers</Text>
+            <Text style={styles.headerTitle}>Track</Text>
           </Animated.View>
 
           {/* Quick Actions */}

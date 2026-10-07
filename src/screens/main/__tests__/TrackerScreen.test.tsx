@@ -65,7 +65,7 @@ describe('TrackerScreen', () => {
   test('renders header title and all 6 health & habit components in exact sequence', async () => {
     const { getByText, getByTestId } = await render(<TrackerScreen />);
 
-    expect(getByText('Trackers')).toBeTruthy();
+    expect(getByText('Track')).toBeTruthy();
     expect(getByTestId('top-date-strip')).toBeTruthy();
     expect(getByTestId('ria-coach-card')).toBeTruthy();
     expect(getByTestId('water-tracker-card')).toBeTruthy();

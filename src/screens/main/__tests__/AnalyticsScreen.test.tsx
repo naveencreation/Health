@@ -105,7 +105,7 @@ describe('AnalyticsScreen Integration', () => {
   it('renders Analytics header with default Weekly timeframe and active Nutrition report', async () => {
     const { getByText } = await render(<AnalyticsScreen />);
 
-    expect(getByText('Analytics')).toBeTruthy();
+    expect(getByText('Insights')).toBeTruthy();
     expect(getByText('Weekly')).toBeTruthy();
     expect(getByText('Monthly')).toBeTruthy();
     expect(getByText('Yearly')).toBeTruthy();

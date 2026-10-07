@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   interpolate,
+  Easing,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +44,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const { removeMealItem, updateMealQuantity } = useNutrition();
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
+  const [contentHeight, setContentHeight] = useState<number>(0);
   const expandAnim = useSharedValue(1);
 
   const resolvedImageSource =
@@ -50,9 +52,12 @@ const MealCardComponent: React.FC<MealCardProps> = ({
     (imageUrl ? (typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl) : null);
 
   const handleToggleExpand = () => {
-    const toValue = isExpanded ? 0 : 1;
-    setIsExpanded(prev => !prev);
-    expandAnim.value = withTiming(toValue, { duration: 220 });
+    const nextVal = isExpanded ? 0 : 1;
+    setIsExpanded(!isExpanded);
+    expandAnim.value = withTiming(nextVal, {
+      duration: 200,
+      easing: Easing?.bezier ? Easing.bezier(0.25, 0.1, 0.25, 1) : undefined,
+    });
   };
 
   // Sync anim when items change (card goes from empty to filled)
@@ -61,9 +66,34 @@ const MealCardComponent: React.FC<MealCardProps> = ({
     setIsExpanded(true);
   }, [items.length === 0]);
 
-  const collapseStyle = useAnimatedStyle(() => ({
-    opacity: expandAnim.value,
-    maxHeight: interpolate(expandAnim.value, [0, 1], [0, 2000]),
+  // UI-thread continuous chevron rotation (0deg collapsed -> 180deg expanded)
+  const chevronAnimatedStyle = useAnimatedStyle(() => {
+    const rotation = interpolate(expandAnim.value, [0, 1], [0, 180]);
+    return {
+      transform: [{ rotate: `${rotation}deg` }],
+    };
+  });
+
+  // Smooth measured-height accordion container
+  const collapseContainerStyle = useAnimatedStyle(() => {
+    const isMeasured = contentHeight > 0;
+    const targetH = isMeasured ? contentHeight : 600;
+    return {
+      overflow: 'hidden',
+      height: isMeasured ? interpolate(expandAnim.value, [0, 1], [0, targetH]) : undefined,
+      maxHeight: !isMeasured ? interpolate(expandAnim.value, [0, 1], [0, 600]) : undefined,
+      opacity: interpolate(expandAnim.value, [0, 0.2, 1], [0, 0.5, 1]),
+    };
+  });
+
+  // Subtle fade and slide-in for the expanded rows and macro summary
+  const contentInnerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(expandAnim.value, [0, 0.35, 1], [0, 0.6, 1]),
+    transform: [
+      {
+        translateY: interpolate(expandAnim.value, [0, 1], [-8, 0]),
+      },
+    ],
   }));
 
   const totalMealCals = items.reduce((sum, item) => sum + item.calories, 0);
@@ -88,10 +118,10 @@ const MealCardComponent: React.FC<MealCardProps> = ({
         isDimmed && !hasItems ? styles.dimmedCard : null,
       ]}
     >
-      {/* 1. Header Row */}
+      {/* 1. Header Row - Fully Tappable with isolated Plus Action Button */}
       <View style={styles.headerRow}>
         <Pressable
-          style={({ pressed }) => [styles.headerLeft, pressed ? styles.pressedSubtle : null]}
+          style={styles.headerLeft}
           onPress={() => {
             if (hasItems) {
               handleToggleExpand();
@@ -100,6 +130,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             }
           }}
           accessibilityRole="button"
+          accessibilityState={{ expanded: hasItems ? isExpanded : undefined }}
           accessibilityLabel={`${title}, ${hasItems ? (isExpanded ? 'collapse details' : 'expand details') : 'add food to ' + title}`}
         >
           {/* Circular Thumbnail with Crisp Border */}
@@ -110,7 +141,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                 style={styles.thumbnailImg}
                 contentFit="cover"
                 cachePolicy="memory-disk"
-                transition={150}
+                transition={typeof resolvedImageSource === 'number' ? 0 : 150}
                 onError={() => setImgError(true)}
               />
             ) : (
@@ -118,18 +149,18 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             )}
           </View>
 
-          {/* Title, Target Subtitle & Clean Progress Bar */}
+          {/* Title, Animated Chevron, Target Subtitle & Clean Progress Bar */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
               <Text style={styles.mealTitle}>{hasItems ? title.replace('Add ', '') : title}</Text>
               {hasItems ? (
-                <View style={styles.chevronPill}>
+                <Animated.View style={[styles.chevronPill, chevronAnimatedStyle]}>
                   <Ionicons
-                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    name="chevron-down"
                     size={13}
                     color="#475569"
                   />
-                </View>
+                </Animated.View>
               ) : null}
             </View>
 
@@ -149,142 +180,150 @@ const MealCardComponent: React.FC<MealCardProps> = ({
               style={{ marginTop: 4 }}
             />
           </View>
-        </Pressable>
 
-        {/* Right Action: Calorie Badge & Lime Green Add Button */}
-        <View style={styles.headerRight}>
+          {/* Calorie Badge inside Header Clickable Area */}
           {hasItems ? (
             <View style={styles.calorieBadge}>
               <Text style={styles.calorieNumber}>{totalMealCals}</Text>
               <Text style={styles.calorieUnit}>cal</Text>
             </View>
           ) : null}
+        </Pressable>
 
-          {/* Round Action Add Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.addButtonCircle,
-              isDimmed && !hasItems ? styles.dimmedAddButton : null,
-              pressed ? styles.pressedAddButton : null,
-            ]}
-            onPress={() => onAddPress(mealType)}
-            hitSlop={HIT_SLOP_8}
-            accessibilityRole="button"
-            accessibilityLabel={`Add food to ${title}`}
-          >
-            <Ionicons name="add" size={22} color={Colors.protein} />
-          </Pressable>
-        </View>
+        {/* Independent Right Action: Circular Add Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.addButtonCircle,
+            isDimmed && !hasItems ? styles.dimmedAddButton : null,
+            pressed ? styles.pressedAddButton : null,
+          ]}
+          onPress={() => onAddPress(mealType)}
+          hitSlop={HIT_SLOP_8}
+          accessibilityRole="button"
+          accessibilityLabel={`Add food to ${title}`}
+        >
+          <Ionicons name="add" size={22} color={Colors.protein} />
+        </Pressable>
       </View>
 
-      {/* 2. Expanded Items List: Flat Rows (No Nested Cards) */}
+      {/* 2. Expanded Items List: Smooth Measured Accordion */}
       {hasItems ? (
-        <Animated.View style={[styles.itemsContainer, { overflow: 'hidden' }, collapseStyle]}>
-          {items.map((item, index) => {
-            const isLast = index === items.length - 1;
-            return (
-              <View key={item.id} style={[styles.foodRow, !isLast ? styles.foodRowBorder : null]}>
-                {/* Left: Food Name & Serving */}
-                <View style={styles.foodInfo}>
-                  <Text style={styles.foodName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.foodServing} numberOfLines={1}>
-                    {item.servingUnit}
-                  </Text>
-                </View>
-
-                {/* Right: Stepper + Single Calorie + Delete */}
-                <View style={styles.foodActions}>
-                  {/* Capsule Stepper */}
-                  <View style={styles.stepperCapsule}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.stepperBtn,
-                        pressed ? styles.pressedSubtle : null,
-                      ]}
-                      hitSlop={HIT_SLOP_8}
-                      onPress={() => {
-                        if (item.quantity > 1) {
-                          updateMealQuantity(item.id, item.quantity - 1);
-                        } else if (item.quantity === 1) {
-                          updateMealQuantity(item.id, 0.5);
-                        } else {
-                          removeMealItem(item.id);
-                        }
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Decrease quantity"
-                    >
-                      <Ionicons name="remove" size={13} color="#475569" />
-                    </Pressable>
-
-                    <Text style={styles.stepperQty}>{item.quantity}</Text>
-
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.stepperBtn,
-                        pressed ? styles.pressedSubtle : null,
-                      ]}
-                      hitSlop={HIT_SLOP_8}
-                      onPress={() => {
-                        if (item.quantity === 0.5) {
-                          updateMealQuantity(item.id, 1);
-                        } else {
-                          updateMealQuantity(item.id, Math.round((item.quantity + 1) * 10) / 10);
-                        }
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Increase quantity"
-                    >
-                      <Ionicons name="add" size={13} color="#475569" />
-                    </Pressable>
+        <Animated.View style={[styles.itemsContainer, collapseContainerStyle]}>
+          <Animated.View
+            style={contentInnerStyle}
+            onLayout={(e) => {
+              const h = e.nativeEvent.layout.height;
+              if (h > 0 && Math.abs(h - contentHeight) > 1) {
+                setContentHeight(h);
+              }
+            }}
+          >
+            {items.map((item, index) => {
+              const isLast = index === items.length - 1;
+              return (
+                <View key={item.id} style={[styles.foodRow, !isLast ? styles.foodRowBorder : null]}>
+                  {/* Left: Food Name & Serving */}
+                  <View style={styles.foodInfo}>
+                    <Text style={styles.foodName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.foodServing} numberOfLines={1}>
+                      {item.servingUnit}
+                    </Text>
                   </View>
 
-                  {/* Single Clean Calorie Metric */}
-                  <Text style={styles.foodCalories}>
-                    {item.calories} <Text style={styles.foodCaloriesUnit}>cal</Text>
-                  </Text>
+                  {/* Right: Stepper + Single Calorie + Delete */}
+                  <View style={styles.foodActions}>
+                    {/* Capsule Stepper */}
+                    <View style={styles.stepperCapsule}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.stepperBtn,
+                          pressed ? styles.pressedSubtle : null,
+                        ]}
+                        hitSlop={HIT_SLOP_8}
+                        onPress={() => {
+                          if (item.quantity > 1) {
+                            updateMealQuantity(item.id, item.quantity - 1);
+                          } else if (item.quantity === 1) {
+                            updateMealQuantity(item.id, 0.5);
+                          } else {
+                            removeMealItem(item.id);
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Decrease quantity"
+                      >
+                        <Ionicons name="remove" size={13} color="#475569" />
+                      </Pressable>
 
-                  {/* Delete Button */}
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.deleteBtn,
-                      pressed ? styles.pressedSubtle : null,
-                    ]}
-                    hitSlop={HIT_SLOP_10}
-                    onPress={() => removeMealItem(item.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${item.name}`}
-                  >
-                    <Ionicons name="close" size={15} color="#94A3B8" />
-                  </Pressable>
+                      <Text style={styles.stepperQty}>{item.quantity}</Text>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.stepperBtn,
+                          pressed ? styles.pressedSubtle : null,
+                        ]}
+                        hitSlop={HIT_SLOP_8}
+                        onPress={() => {
+                          if (item.quantity === 0.5) {
+                            updateMealQuantity(item.id, 1);
+                          } else {
+                            updateMealQuantity(item.id, Math.round((item.quantity + 1) * 10) / 10);
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Increase quantity"
+                      >
+                        <Ionicons name="add" size={13} color="#475569" />
+                      </Pressable>
+                    </View>
+
+                    {/* Single Clean Calorie Metric */}
+                    <Text style={styles.foodCalories}>
+                      {item.calories} <Text style={styles.foodCaloriesUnit}>cal</Text>
+                    </Text>
+
+                    {/* Delete Button */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.deleteBtn,
+                        pressed ? styles.pressedSubtle : null,
+                      ]}
+                      hitSlop={HIT_SLOP_10}
+                      onPress={() => removeMealItem(item.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${item.name}`}
+                    >
+                      <Ionicons name="close" size={15} color="#94A3B8" />
+                    </Pressable>
+                  </View>
                 </View>
+              );
+            })}
+
+            {/* 3. Meal-Level Macro Summary Bar (Harmonized: Carbs -> Protein -> Fat) */}
+            <View style={styles.macroSummaryBar}>
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotCarbs]} />
+                <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
               </View>
-            );
-          })}
 
-          {/* 3. Meal-Level Macro Summary Bar (Harmonized: Carbs -> Protein -> Fat) */}
-          <View style={styles.macroSummaryBar}>
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotCarbs]} />
-              <Text style={styles.macroSummaryText}>{totalCarbs}g Carbs</Text>
+              <Text style={styles.macroSummaryDivider}>•</Text>
+
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotProtein]} />
+                <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
+              </View>
+
+              <Text style={styles.macroSummaryDivider}>•</Text>
+
+              <View style={styles.macroSummaryPill}>
+                <View style={[styles.macroDot, styles.macroDotFat]} />
+                <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
+              </View>
             </View>
-
-            <Text style={styles.macroSummaryDivider}>•</Text>
-
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotProtein]} />
-              <Text style={styles.macroSummaryText}>{totalProtein}g Protein</Text>
-            </View>
-
-            <Text style={styles.macroSummaryDivider}>•</Text>
-
-            <View style={styles.macroSummaryPill}>
-              <View style={[styles.macroDot, styles.macroDotFat]} />
-              <Text style={styles.macroSummaryText}>{totalFat}g Fat</Text>
-            </View>
-          </View>
+          </Animated.View>
         </Animated.View>
       ) : null}
     </View>
@@ -408,6 +447,7 @@ const styles = StyleSheet.create({
   },
   calorieBadge: {
     alignItems: 'flex-end',
+    marginLeft: 8,
   },
   calorieNumber: {
     fontFamily: Fonts.urbanist.bold,
