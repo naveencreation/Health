@@ -290,13 +290,13 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.985 }],
   },
   scrollBody: {
     paddingBottom: 12,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   },
   unitPillContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 3,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   unitTabActive: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     elevation: 0,
     shadowOpacity: 0,
   },
@@ -343,11 +343,11 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   stepperCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     padding: 12,
     marginBottom: 12,
   },

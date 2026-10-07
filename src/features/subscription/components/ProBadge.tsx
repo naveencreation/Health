@@ -67,8 +67,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   text: {
     fontFamily: Fonts.urbanist.bold,

@@ -680,11 +680,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   pressedCloseBtn: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   headerProfile: {
     flexDirection: 'row',

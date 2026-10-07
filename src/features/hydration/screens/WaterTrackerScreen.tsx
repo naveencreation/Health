@@ -345,8 +345,8 @@ const styles = StyleSheet.create({
   },
   circleNavBtnPressed: {
     opacity: 0.88,
-    backgroundColor: '#F8FAFC',
-    transform: [{ scale: 0.97 }],
+    backgroundColor: Colors.surfaceLow,
+    transform: [{ scale: 0.985 }],
   },
   headerTitleContainer: {
     flex: 1,

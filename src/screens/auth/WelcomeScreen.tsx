@@ -622,11 +622,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   pressedSecondary: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: Colors.surfaceLow,
+    borderColor: Colors.borderMedium,
     transform: [{ scale: 0.985 }],
   },
   demoButtonText: {

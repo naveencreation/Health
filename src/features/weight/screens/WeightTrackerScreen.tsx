@@ -332,8 +332,8 @@ const styles = StyleSheet.create({
   },
   circleNavBtnPressed: {
     opacity: 0.88,
-    backgroundColor: '#F8FAFC',
-    transform: [{ scale: 0.96 }],
+    backgroundColor: Colors.surfaceLow,
+    transform: [{ scale: 0.985 }],
   },
   scrollArea: {
     flex: 1,

@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   timeframeSegmentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 2.5,
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },

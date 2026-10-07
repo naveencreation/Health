@@ -284,8 +284,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   textMorphZone: {
     marginLeft: 10,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   circleButtonPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   notificationDot: {
     position: 'absolute',

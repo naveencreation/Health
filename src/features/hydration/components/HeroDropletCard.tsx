@@ -252,11 +252,11 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   btnDisabled: {
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: Colors.borderInset,
+    backgroundColor: Colors.surfaceLow,
     opacity: 0.45,
     shadowOpacity: 0,
     elevation: 0,

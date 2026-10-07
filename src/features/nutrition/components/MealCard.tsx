@@ -435,11 +435,11 @@ const styles = StyleSheet.create({
   },
   pressedSubtle: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   pressedAddButton: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   headerRight: {
     flexDirection: 'row',

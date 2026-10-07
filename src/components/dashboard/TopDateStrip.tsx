@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
 
   // 2. Strip Row

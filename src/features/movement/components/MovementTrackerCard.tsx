@@ -554,8 +554,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   workoutButtonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   workoutButtonText: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   },
   stepperPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   stepperDisabled: {
     borderColor: Colors.borderInset,
@@ -728,8 +728,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityRemovePressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   // Modal Styling
   modalOverlay: {

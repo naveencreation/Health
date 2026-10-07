@@ -1130,7 +1130,7 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.985 }],
   },
   controlsBar: {
     paddingHorizontal: 16,
@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
   },
   timeframeSegmentContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: 12,
     borderCurve: 'continuous',
     padding: 3,
@@ -1160,7 +1160,7 @@ const styles = StyleSheet.create({
   timeframeTabActive: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   },

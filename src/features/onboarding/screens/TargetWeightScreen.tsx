@@ -667,13 +667,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   quickChipPressed: {
-    backgroundColor: '#E2E8F0',
-    transform: [{ scale: 0.96 }],
+    backgroundColor: Colors.borderInset,
+    transform: [{ scale: 0.985 }],
   },
   quickChipText: {
     fontFamily: Fonts.urbanist.medium,

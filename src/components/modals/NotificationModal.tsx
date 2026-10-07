@@ -336,14 +336,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressedCloseBtn: {
     opacity: 0.88,
-    backgroundColor: '#F1F5F9',
-    transform: [{ scale: 0.96 }],
+    backgroundColor: Colors.surfaceContainer,
+    transform: [{ scale: 0.985 }],
   },
   headerSpacer: {
     width: 44,

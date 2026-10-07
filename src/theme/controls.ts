@@ -4,6 +4,15 @@ import { Colors } from './colors';
 /**
  * Global Interactive Control Design Tokens (DESIGN.md Pass 7)
  * Standardizes buttons, chips, pills, steppers, inputs, circular controls, and hit zones.
+ *
+ * RADIUS VOCABULARY:
+ * - Status / metadata pills = 14px
+ * - Selectable/filter chips = 10px
+ * - Segmented track = 12px
+ * - Segmented active thumb = 8–10px
+ * - Normal canvas card = 10px
+ * - Primary / secondary buttons = 10px
+ * - Form inputs = 10px
  */
 
 export const ControlHeights = {
@@ -26,20 +35,32 @@ export const ControlHeights = {
 } as const;
 
 export const ControlRadii = {
-  /** Standard buttons & form inputs */
-  control: 10,
-  /** Full-width primary CTA squircle */
-  button: 10,
-  input: 10,
-  /** Selectable filter / category chip */
-  chip: 10,
-  /** Semantic metadata / status pill (strictly 14px per DESIGN.md) */
+  /** Status / metadata pills (strictly 14px per DESIGN.md) */
   pill: 14,
+  statusPill: 14,
+  metadataPill: 14,
+
+  /** Selectable filter / category chips (strictly 10px per DESIGN.md) */
+  chip: 10,
+  filterChip: 10,
+  selectableChip: 10,
+
   /** Segmented track container (strictly 12px per DESIGN.md) */
   segmentedTrack: 12,
-  /** Segmented active tab pill */
+
+  /** Segmented active thumb pill (strictly 8–10px per DESIGN.md) */
+  segmentedThumb: 8,
   segmentedTab: 8,
-  /** Circular controls */
+
+  /** Normal canvas card (strictly 10px continuous squircle per DESIGN.md) */
+  card: 10,
+
+  /** Standard buttons & form inputs */
+  button: 10,
+  input: 10,
+  control: 10,
+
+  /** Circular controls (width / 2 or 999) */
   circle: 999,
 } as const;
 
@@ -79,19 +100,20 @@ export const ControlStyles = {
   } as ViewStyle,
 
   pressedSecondary: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: Colors.surfaceLow,
+    borderColor: Colors.borderMedium,
     transform: [{ scale: 0.985 }],
   } as ViewStyle,
 
   pressedSubtle: {
     opacity: 0.88,
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.985 }],
   } as ViewStyle,
 
+  /** Compact circular controls press feedback: restrained tactile response (scale 0.98–0.985) */
   pressedIcon: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   } as ViewStyle,
 
   pressedCard: {
@@ -109,9 +131,9 @@ export const ControlStyles = {
     height: ControlHeights.input,
     borderRadius: ControlRadii.input,
     borderCurve: 'continuous',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
     paddingHorizontal: 14,
   } as ViewStyle,
 
@@ -125,7 +147,7 @@ export const ControlStyles = {
   segmentedTrack: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: ControlRadii.segmentedTrack,
     borderCurve: 'continuous',
     padding: 3,
@@ -137,7 +159,7 @@ export const ControlStyles = {
     borderRadius: ControlRadii.segmentedTab,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
     elevation: 0,
   } as ViewStyle,

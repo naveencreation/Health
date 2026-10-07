@@ -992,7 +992,7 @@ const styles = StyleSheet.create({
   presetChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 10,
     backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
     borderColor: Colors.borderInset,

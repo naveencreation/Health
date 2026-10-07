@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatarPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.96 }],
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   cameraIconBadge: {
     position: 'absolute',

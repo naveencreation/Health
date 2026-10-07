@@ -1156,7 +1156,7 @@ const styles = StyleSheet.create({
   presetChip: {
     flex: 1,
     height: 42,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.borderSubtle,

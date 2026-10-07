@@ -184,14 +184,14 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   btnPressedSubtle: {
     opacity: 0.88,
-    backgroundColor: '#F1F5F9',
-    transform: [{ scale: 0.96 }],
+    backgroundColor: Colors.surfaceContainer,
+    transform: [{ scale: 0.985 }],
   },
   centerContainer: {
     position: 'absolute',

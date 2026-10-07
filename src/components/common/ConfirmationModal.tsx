@@ -208,11 +208,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   cancelBtnPressed: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: Colors.surfaceLow,
+    borderColor: Colors.borderMedium,
     transform: [{ scale: 0.985 }],
   },
   cancelBtnText: {

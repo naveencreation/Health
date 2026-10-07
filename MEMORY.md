@@ -1117,6 +1117,10 @@
       - `WaterTracker.tsx`, `HeroDropletCard.tsx`, and `MovementTrackerCard.tsx`: Standardized circular stepper buttons (`32x32` and `40x40`) with restrained press feedback and standard hit slop.
     - **Segmented Control Harmonization**:
       - Standardized track height, continuous squircle curvature (12px outer radius), `#F1F5F9` track fill, and crisp white `#FFFFFF` active tab thumb with whisper border (`rgba(15, 23, 42, 0.06)`) across `ChartTypeToggle.tsx`, `AnalyticsScreen.tsx`, `WaterReportScreen.tsx`, `StepReportScreen.tsx`, and `WeightReportScreen.tsx`.
+    - **Targeted Consistency Corrections**:
+      - *Radius Vocabulary*: Codified exact semantic radius distinctions in `src/theme/controls.ts`: Status/metadata pills = 14px, Selectable/filter chips = 10px, Segmented track = 12px, Segmented active thumb = 8–10px, Normal canvas cards = 10px, Buttons/inputs = 10px. Fixed outlier chip radii in `WaterHistoryCard.tsx` (16 -> 10), `ScannedProductCard.tsx` (12 -> 10), and `FoodStyleScreen.tsx` (14 -> 10).
+      - *Shared Control Colors*: Replaced hardcoded `#CBD5E1`, `#F8FAFC`, `#F1F5F9`, and `rgba(15, 23, 42, 0.06)` across controls, modals, and segmented switchers with existing semantic tokens (`Colors.borderMedium`, `Colors.surfaceLow`, `Colors.surfaceContainer`, `Colors.borderWhisper`, `Colors.borderInset`).
+      - *Circular Press Feedback*: Standardized compact circular controls and icon buttons from aggressive `scale: 0.96` to restrained `scale: 0.985` (maintaining Scan FAB as its own intentional interaction), preserving immediate, tactile, non-bleaching touch physics.
     - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
 
 

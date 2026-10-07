@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
+import { Colors, ControlRadii } from '../../theme';
 
 export type ChartType = 'bar' | 'line';
 
@@ -98,8 +99,8 @@ const styles = StyleSheet.create({
   toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    backgroundColor: Colors.surfaceContainer,
+    borderRadius: ControlRadii.segmentedTrack,
     borderCurve: 'continuous',
     padding: 3,
     gap: 3,
@@ -107,14 +108,14 @@ const styles = StyleSheet.create({
   toggleBtn: {
     width: 34,
     height: 32,
-    borderRadius: 8,
+    borderRadius: ControlRadii.segmentedThumb,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   toggleBtnActive: {
     shadowColor: '#0F172A',

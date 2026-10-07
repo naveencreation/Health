@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.985 }],
   },
   buttonDisabled: {
     borderColor: Colors.borderInset,
