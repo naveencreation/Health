@@ -126,7 +126,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
         return 'Muscle Hypertrophy';
       case 'maintain':
       default:
-        return 'Balanced Diet';
+        return 'Daily Goal';
     }
   })();
 
@@ -228,7 +228,6 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
     return Math.round(sum / activeDays.length);
   }, [trendDays, eaten]);
 
-  const isOnTrack = avgCals <= budget;
 
   // Chart Canvas Dimensions (20px horizontal padding on card)
   const chartWidth = Math.max(240, cardWidth - 40);
@@ -279,6 +278,13 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   // Active Selected Day Coordinates
   const activePt = dayPoints[selectedDayIdx] || dayPoints[dayPoints.length - 1];
 
+  const tooltipWidth = 84;
+  const tooltipLeft = Math.max(
+    2,
+    Math.min(chartWidth - tooltipWidth - 2, (activePt?.x ?? 0) - tooltipWidth / 2)
+  );
+  const caretOffset = (activePt?.x ?? 0) - tooltipLeft;
+
   // Carousel Switching Handlers
   const handleSlideChange = (index: number) => {
     setActiveSlide(index);
@@ -307,7 +313,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
       <View style={styles.cardTopHeader}>
         <View style={styles.titleRow}>
           <Text style={styles.goalTitle}>
-            {activeSlide === 0 ? `${goalLabel} : ${budget} Cal` : '7-Day Diet Journey'}
+            {activeSlide === 0 ? `${goalLabel} : ${budget} Cal` : 'Weekly Diet Journey'}
           </Text>
           {activeSlide === 0 && onEditGoal ? (
             <Pressable
@@ -353,7 +359,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
             ]}
             onPress={() => handleSlideChange(1)}
             accessibilityRole="tab"
-            accessibilityLabel="Show 7-day trend"
+            accessibilityLabel="Show weekly trend"
             accessibilityState={{ selected: activeSlide === 1 }}
           >
             <Text
@@ -362,7 +368,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 activeSlide === 1 ? styles.segmentBtnTextActive : null,
               ]}
             >
-              7-Day Trend
+              Weekly Trend
             </Text>
           </Pressable>
         </View>
@@ -478,43 +484,13 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
           </View>
         </View>
 
-        {/* SLIDE 1: 7-Day Diet Journey (Option A: Frost White Apple Health Style) */}
+        {/* SLIDE 1: Weekly Diet Journey (Option A: Frost White Apple Health Style) */}
         <View style={[styles.slide, { width: cardWidth }]}>
-          {/* A. Subheader: Average Intake + "On Track" Status Badge */}
+          {/* A. Subheader: Average Intake */}
           <View style={styles.journeySubheaderRow}>
-            <View>
-              <Text style={styles.avgIntakeLabel}>
-                Avg: <Text style={styles.avgIntakeBold}>{avgCals.toLocaleString()} kcal/day</Text>
-              </Text>
-              <Text style={styles.daySelectedLabel}>
-                {currentDay.isToday
-                  ? 'Today'
-                  : `${currentDay.fullDayName}, ${currentDay.monthName} ${currentDay.dayNum}`}
-                : {currentDay.cals.toLocaleString()} kcal
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.statusBadge,
-                isOnTrack ? styles.statusBadgeGreen : styles.statusBadgeOrange,
-              ]}
-            >
-              <Ionicons
-                name={isOnTrack ? 'checkmark-circle' : 'alert-circle'}
-                size={13}
-                color={isOnTrack ? Colors.protein : Colors.primary}
-                style={styles.statusBadgeIcon}
-              />
-              <Text
-                style={[
-                  styles.statusBadgeText,
-                  isOnTrack ? styles.statusTextGreen : styles.statusTextOrange,
-                ]}
-              >
-                {isOnTrack ? 'On Track' : 'Above Target'}
-              </Text>
-            </View>
+            <Text style={styles.avgIntakeLabel}>
+              Avg: <Text style={styles.avgIntakeBold}>{avgCals.toLocaleString()} kcal/day</Text>
+            </Text>
           </View>
 
           {/* B. Macro Pill Badges (Carbs, Protein, Fat) */}
@@ -610,6 +586,61 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
             {/* Goal Horizon Label on right */}
             <View style={[styles.goalHorizonLabel, { top: Math.max(1, goalY - 14) }]}>
               <Text style={styles.goalHorizonText}>Goal: {budget.toLocaleString()} kcal</Text>
+            </View>
+
+            {/* Active Point Calorie Tooltip */}
+            {activePt && (
+              <View
+                style={[
+                  styles.chartTooltipContainer,
+                  {
+                    left: tooltipLeft,
+                    top: Math.max(-10, activePt.y - 32),
+                    width: tooltipWidth,
+                  },
+                ]}
+                pointerEvents="none"
+              >
+                <View style={styles.chartTooltipBadge}>
+                  <Text style={styles.chartTooltipText}>
+                    {currentDay.cals.toLocaleString()} kcal
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.chartTooltipCaret,
+                    { left: Math.max(5, Math.min(tooltipWidth - 15, caretOffset - 5)) },
+                  ]}
+                />
+              </View>
+            )}
+
+            {/* Interactive Touch Columns */}
+            <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+              {trendDays.map((day, i) => {
+                const colWidth = usableWidth / 6;
+                const colLeft = horizontalPadding + (i - 0.5) * colWidth;
+                return (
+                  <Pressable
+                    key={`chart-touch-${day.dateStr || i}`}
+                    style={[
+                      styles.chartTouchCol,
+                      {
+                        left: Math.max(0, colLeft),
+                        width: colWidth,
+                      },
+                    ]}
+                    onPress={() => {
+                      if (day.dateStr) {
+                        setSelectedDate(day.dateStr);
+                      }
+                    }}
+                    hitSlop={HIT_SLOP_TIMELINE}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${day.dayName}, ${day.cals} calories`}
+                  />
+                );
+              })}
             </View>
           </View>
 
@@ -946,6 +977,48 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
     color: Colors.textMuted,
+  },
+  chartTooltipContainer: {
+    position: 'absolute',
+    alignItems: 'flex-start',
+    zIndex: 10,
+  },
+  chartTooltipBadge: {
+    backgroundColor: Colors.textPrimary,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    shadowColor: Colors.textPrimary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 3.5,
+    elevation: 4,
+  },
+  chartTooltipText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    lineHeight: 15,
+    color: Colors.textInverse,
+    letterSpacing: -0.2,
+  },
+  chartTooltipCaret: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 5,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: Colors.textPrimary,
+  },
+  chartTouchCol: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
   },
   // Slide 1: Timeline Row (SUN to SAT)
   timelineRow: {
