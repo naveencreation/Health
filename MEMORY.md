@@ -1147,6 +1147,32 @@
       - Added `AccessibilityInfo.isReduceMotionEnabled()` check to disable infinite bouncing and keep dots resting when reduced motion is preferred.
     - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
 
+32. **Pass 10 — Native-Feeling Camera Implementation (ChatGPT-style Bottom-Sheet Viewfinder)**:
+    - **Architecture & Packaging (`src/features/camera/`)**:
+      - Created a dedicated, modular camera feature avoiding heavy modals:
+        - `types.ts`: typed finite state machine (`CaptureState`: `idle` | `capturing` | `captured` | `preview` | `error`), camera modes, gestures, and captured photo interfaces.
+        - `hooks/useCameraLifecycle.ts`: AppState listener (unmounts sensor when app is backgrounded or inactive to release hardware camera), auto-requests permissions, manages mount readiness.
+        - `hooks/useCameraCapture.ts`: Synchronous ref lock (`isCapturingRef`) preventing double-taps, fires haptic tactile pulse + UI-thread brightness flash, invokes `takePictureAsync` with `skipProcessing: true`, and returns capture state.
+        - `hooks/useCameraGestures.ts`: Multi-touch pinch-to-zoom (0..1 range) with math-clamping, and single-touch tap-to-focus indicator with Reanimated spring/cubic reticle animation.
+        - `components/CameraSheet.tsx`: Bottom-anchored viewfinder sheet (~64% screen height, 32dp top rounded corners, 36% top backdrop with tap-to-dismiss), Reanimated `translateY` and backdrop opacity transitions.
+        - `components/CameraSurface.tsx`: Memoized `CameraView` with dark background placeholder to eliminate white/black flashes.
+        - `components/ShutterButton.tsx`: 76dp outer tactile ring + 64dp white disc with UI-thread `withTiming` touch-down scale (0.93 -> 1.0) and zero bouncy overshoot.
+        - `components/CaptureFlash.tsx`: Dedicated UI-thread white flash overlay with 60ms decay.
+        - `components/FocusIndicator.tsx`: Square reticle with corner brackets and fade animation.
+        - `components/CameraMenu.tsx`: Floating popover menu for flash toggle, camera flip, and photo library shortcut.
+    - **Handoff Bridge & Zero-Flicker Photo Transition**:
+      - Integrated directly with `FoodVisionModal.tsx` via `prefillAsset`: when capture finishes, `CameraSheet` overlays the captured photo with an `<Image priority="high">` and triggers the handoff upon `onLoad`, seamlessly transitioning into AI meal analysis without screen teardown or white flashes.
+      - Fixed `skipProcessing: true` in Expo Camera which was bypassing Android's image processing pipeline and omitting `base64`. Standardized capture to `quality: 0.8` with `base64: true`.
+      - Fixed `CameraSheet.tsx` `handleImageLoaded` discarding the captured `base64` payload (it was previously reconstructing `{ uri, width: 0, height: 0 }` without `base64`). Stored full captured photo in `capturedPhotoRef.current` and forwarded it directly with a 350ms fallback timer to ensure `FoodVisionModal` always receives the full, non-empty base64 image data.
+      - Resolved "Image payload appears to be empty or corrupted":
+        - Root Cause: In Android React Native, `fetch()` on `file://` schemes is unsupported by OkHttp and returns an empty Blob or fails. When `base64` was missing from the captured photo object, fallback `readBase64FromUri` was producing an empty data URL, causing `EdgeImagePreprocessor.ts` to reject payloads < 100 estimated bytes.
+        - Fix: Guaranteed single-shot handoff via `hasHandedOffRef` in `CameraSheet.tsx`, added `prefillAsset` & `processImage` to `useEffect` dependencies in `FoodVisionModal.tsx`, hardened `readBase64FromUri` in `src/utils/imageUtils.ts` to validate >= 100 character length, and guaranteed direct base64 propagation from `CameraView.takePictureAsync` to `AIService.analyzeFoodImage`.
+    - **Hardware Back Navigation**:
+      - Integrated with `App.tsx` hardware back handler and `BottomNavBar` center camera button.
+    - **Verification**:
+      - `npx tsc --noEmit` cleanly passed with 0 errors.
+      - Full test suite: 73 passed, 73 total; 408 passed, 408 total.
+
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.
@@ -1159,7 +1185,7 @@
 - **Android adaptive-icon assets are mismatched** (`android-icon-background.png` is a blue geometric design, `android-icon-monochrome.png` reads as a chevron, not the flame) — left unwired.
 - **No `expo-navigation-bar` config plugin** — light-only app, the OS already renders dark nav buttons correctly via color-scheme; `enforceContrast: false` would just disable useful OS logic.
 - **Metro config** keeps `unstable_enablePackageExports: false` for Firebase. Reanimated 4 uses package exports — if bundling errors ("cannot resolve react-native-worklets"), flip it to `true`.
-- **Android `elevation` polygon tessellation on circles:** Setting `elevation > 0` on circular `View` elements (`borderRadius: 50%`) forces Android's `ViewOutlineProvider` to approximate the circle using an 8-vertex polygon for 3D shadow casting, creating a visible octagon shape along borders. Fix: use `Platform.select({ ios: { shadow... }, android: { elevation: 0 } })` and integer `borderWidth: 2` on circular selections (e.g., [`CupSizeModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/CupSizeModal.tsx) and [`AvatarPickerModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/AvatarPickerModal.tsx)).
+- **Android `elevation` polygon tessellation on circles:** Setting `elevation > 0` on circular `View` elements (`borderRadius: 50%`) forces Android's `ViewOutlineProvider` to approximate the circle using an 8-vertex polygon for 3D shadow casting, creating a visible octagon shape along borders. Fix: use `Platform.select({ ios: { shadow... }, android: { elevation: 0 } })` and integer `borderWidth` on circular selections (e.g., [`CupSizeModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/CupSizeModal.tsx), [`AvatarPickerModal.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/components/modals/AvatarPickerModal.tsx), [`CameraControls.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/features/camera/components/CameraControls.tsx), and [`ShutterButton.tsx`](file:///c:/Users/navee/Videos/Calorify/calori/src/features/camera/components/ShutterButton.tsx)).
 
 ## Known / pending items
 

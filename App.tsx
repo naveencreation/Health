@@ -13,6 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import { HealthProvider, useAuth, useGoals } from '@/context/HealthContext';
@@ -48,6 +49,8 @@ import {
   AppLoadingScreen,
   SlideInSubScreen,
   BarcodeScannerModal,
+  CameraSheet,
+  CapturedPhoto,
 } from '@/components';
 
 SplashScreen.preventAutoHideAsync();
@@ -86,6 +89,8 @@ function MainApp() {
 
   const [foodModalVisible, setFoodModalVisible] = useState(false);
   const [foodVisionVisible, setFoodVisionVisible] = useState(false);
+  const [cameraSheetVisible, setCameraSheetVisible] = useState(false);
+  const [visionPrefillAsset, setVisionPrefillAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
   const [manualBarcodePrefill, setManualBarcodePrefill] = useState<string | null>(null);
   const [byokSetupVisible, setByokSetupVisible] = useState(false);
@@ -373,6 +378,7 @@ function MainApp() {
   const modalStatesRef = useRef({
     foodModalVisible,
     foodVisionVisible,
+    cameraSheetVisible,
     barcodeScannerVisible,
     byokSetupVisible,
     notificationsVisible,
@@ -389,6 +395,7 @@ function MainApp() {
     modalStatesRef.current = {
       foodModalVisible,
       foodVisionVisible,
+      cameraSheetVisible,
       barcodeScannerVisible,
       byokSetupVisible,
       notificationsVisible,
@@ -403,6 +410,7 @@ function MainApp() {
   }, [
     foodModalVisible,
     foodVisionVisible,
+    cameraSheetVisible,
     barcodeScannerVisible,
     byokSetupVisible,
     notificationsVisible,
@@ -433,6 +441,10 @@ function MainApp() {
       }
       if (ms.foodModalVisible) {
         setFoodModalVisible(false);
+        return true;
+      }
+      if (ms.cameraSheetVisible) {
+        setCameraSheetVisible(false);
         return true;
       }
       if (ms.foodVisionVisible) {
@@ -510,8 +522,37 @@ function MainApp() {
     (newUrl: string) => updateGoals({ avatarUrl: newUrl }),
     [updateGoals]
   );
+  const handleOpenNativeCamera = React.useCallback(() => {
+    const hour = new Date().getHours();
+    let slot: MealType = 'lunch';
+    if (hour < 11) slot = 'breakfast';
+    else if (hour < 16) slot = 'lunch';
+    else if (hour < 19) slot = 'snacks';
+    else slot = 'dinner';
+    setActiveMealType(slot);
+    setCameraSheetVisible(true);
+  }, []);
+
+  const handleCloseNativeCamera = React.useCallback(() => {
+    setCameraSheetVisible(false);
+  }, []);
+
+  const handleCameraPhotoCaptured = React.useCallback((photo: CapturedPhoto) => {
+    setCameraSheetVisible(false);
+    setVisionPrefillAsset({
+      uri: photo.uri,
+      width: photo.width,
+      height: photo.height,
+      base64: photo.base64,
+    } as any);
+    setFoodVisionVisible(true);
+  }, []);
+
   const handleOpenFoodVision = React.useCallback(() => setFoodVisionVisible(true), []);
-  const handleCloseFoodVision = React.useCallback(() => setFoodVisionVisible(false), []);
+  const handleCloseFoodVision = React.useCallback(() => {
+    setFoodVisionVisible(false);
+    setVisionPrefillAsset(null);
+  }, []);
   const handleOpenBarcodeScanner = React.useCallback(() => setBarcodeScannerVisible(true), []);
   const handleCloseBarcodeScanner = React.useCallback(() => setBarcodeScannerVisible(false), []);
   const handleOpenBYOKSetup = React.useCallback(() => setByokSetupVisible(true), []);
@@ -530,10 +571,12 @@ function MainApp() {
   }, []);
   const handleFoodVisionToModal = React.useCallback(() => {
     setFoodVisionVisible(false);
+    setVisionPrefillAsset(null);
     setFoodModalVisible(true);
   }, []);
   const handleFoodVisionToBarcode = React.useCallback(() => {
     setFoodVisionVisible(false);
+    setVisionPrefillAsset(null);
     setBarcodeScannerVisible(true);
   }, []);
   const handleBarcodeEnterManually = React.useCallback((barcode: string) => {
@@ -697,7 +740,7 @@ function MainApp() {
           <BottomNavBar
             activeTab={activeTab}
             onTabChange={handleTabChange}
-            onOpenFoodVision={handleOpenFoodVision}
+            onOpenFoodVision={handleOpenNativeCamera}
           />
         </SafeAreaView>
 
@@ -711,14 +754,44 @@ function MainApp() {
           prefillBarcode={manualBarcodePrefill}
         />
 
-        {/* AI Food Vision Camera Modal */}
+                {/* AI Food Vision Camera Modal */}
         <FoodVisionModal
           visible={foodVisionVisible}
-          onClose={handleCloseFoodVision}
+          onClose={() => {
+            setFoodVisionVisible(false);
+            setVisionPrefillAsset(null);
+          }}
           initialMealType={activeMealType}
           onOpenBYOKSetup={handleOpenBYOKSetup}
           onOpenManualSearch={handleFoodVisionToModal}
           onOpenBarcodeScanner={handleFoodVisionToBarcode}
+          prefillAsset={visionPrefillAsset}
+          onOpenNativeCamera={handleOpenNativeCamera}
+        />
+
+        {/* Native ChatGPT-Style Camera Sheet */}
+        <CameraSheet
+          visible={cameraSheetVisible}
+          onClose={handleCloseNativeCamera}
+          onPhotoCaptured={handleCameraPhotoCaptured}
+          onOpenGallery={async () => {
+            handleCloseNativeCamera();
+            try {
+              const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (!permission.granted) return;
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.85,
+                base64: true,
+              });
+              if (!result.canceled && result.assets && result.assets[0]) {
+                setVisionPrefillAsset(result.assets[0]);
+                setFoodVisionVisible(true);
+              }
+            } catch (err) {}
+          }}
         />
 
         {/* Packaged Food Barcode Scanner Modal */}

@@ -20,6 +20,7 @@ import { MealType, FoodItem } from '@/types';
 import { useFoodData, useDailyLog } from '@/context/HealthContext';
 import { AIService, FoodVisionResult, AIError, AIErrorMapper } from '@/services/ai';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
+import { readBase64FromUri } from '@/utils/imageUtils';
 
 interface FoodVisionModalProps {
   visible: boolean;
@@ -28,6 +29,8 @@ interface FoodVisionModalProps {
   onOpenBYOKSetup: () => void;
   onOpenManualSearch?: () => void;
   onOpenBarcodeScanner?: () => void;
+  prefillAsset?: ImagePicker.ImagePickerAsset | null;
+  onOpenNativeCamera?: () => void;
 }
 
 const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
@@ -37,6 +40,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   onOpenBYOKSetup,
   onOpenManualSearch,
   onOpenBarcodeScanner,
+  prefillAsset,
+  onOpenNativeCamera,
 }) => {
   const insets = useSafeAreaInsets();
   const { addCustomFood } = useFoodData();
@@ -74,7 +79,12 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
     setAnalysisResult(null);
 
     try {
-      if (!asset.base64) {
+      let base64Data = asset.base64;
+      if (!base64Data && asset.uri) {
+        base64Data = await readBase64FromUri(asset.uri);
+      }
+
+      if (!base64Data) {
         throw AIErrorMapper.createError(
           'INVALID_REQUEST',
           'Image data could not be read from this photo. Please try another photo.'
@@ -82,7 +92,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
       }
 
       const mimeType = asset.mimeType || 'image/jpeg';
-      const result = await AIService.analyzeFoodImage(asset.base64, mimeType);
+      const result = await AIService.analyzeFoodImage(base64Data, mimeType);
       setAnalysisResult(result);
     } catch (err: any) {
       const mapped = AIErrorMapper.fromRawError(err);
@@ -101,6 +111,11 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   }, [selectedAsset, processImage, resetFlow]);
 
   const handleLaunchCamera = useCallback(async () => {
+    if (onOpenNativeCamera) {
+      onClose();
+      onOpenNativeCamera();
+      return;
+    }
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
@@ -158,7 +173,11 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      resetFlow();
+      if (prefillAsset) {
+        processImage(prefillAsset);
+      } else {
+        resetFlow();
+      }
       if (initialMealType) {
         setMealSlot(initialMealType);
       } else {
@@ -173,7 +192,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         setHasKey(configured);
       });
     }
-  }, [visible, initialMealType, resetFlow]);
+  }, [visible, prefillAsset, initialMealType, processImage, resetFlow]);
 
   const handleConfirmAndLog = () => {
     if (!analysisResult) return;
@@ -238,17 +257,25 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
           {/* Top Header */}
           <View style={styles.headerRow}>
             <View style={styles.headerTitleBox}>
-              <View style={styles.badgeRow}>
-                <GeminiIcon size={12} />
-                <Text style={styles.badgeText}>POWERED BY GOOGLE GEMINI</Text>
-              </View>
-              <Text style={styles.sheetTitle}>Snap & Log Meal</Text>
+              {analysisResult && !isLoggedSuccess ? (
+                <Text style={styles.sheetTitle}>Review Meal</Text>
+              ) : (
+                <>
+                  <View style={styles.badgeRow}>
+                    <GeminiIcon size={12} />
+                    <Text style={styles.badgeText}>POWERED BY GOOGLE GEMINI</Text>
+                  </View>
+                  <Text style={styles.sheetTitle}>Snap & Log Meal</Text>
+                </>
+              )}
             </View>
 
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
             >
               <Ionicons name="close" size={20} color={Colors.textSecondary} />
             </Pressable>
@@ -377,7 +404,12 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
 
               {/* STEP 2: Selected Image + Analysis Radar */}
               {selectedImageUri ? (
-                <View style={styles.imagePreviewContainer}>
+                <View
+                  style={[
+                    styles.imagePreviewContainer,
+                    analysisResult && !isLoggedSuccess ? styles.imagePreviewCompact : null,
+                  ]}
+                >
                   <Image
                     source={{ uri: selectedImageUri }}
                     style={styles.foodImagePreview}
@@ -536,139 +568,178 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
               {/* STEP 3: Successful Analysis Result & Confirmation */}
               {analysisResult && !isLoggedSuccess ? (
                 <View style={styles.resultContainer}>
-                  <View style={styles.dishTitleRow}>
+                  {/* Dish Identity Header */}
+                  <View style={styles.dishHeader}>
                     <View style={styles.dishTitleCol}>
-                      <Text style={styles.dishName}>{analysisResult.name}</Text>
-                      <Text style={styles.dishServing}>Serving: {analysisResult.servingUnit}</Text>
+                      <Text style={styles.dishName} numberOfLines={2}>
+                        {analysisResult.name}
+                      </Text>
+                      <Text style={styles.dishServing}>
+                        Serving: {analysisResult.servingUnit}
+                      </Text>
                     </View>
-                    <View style={styles.confidencePill}>
-                      <Ionicons name="checkmark-circle" size={12} color={Colors.success} />
-                      <Text style={styles.confidenceText}>Verified</Text>
+                    {analysisResult.categoryLabel ? (
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryBadgeText}>
+                          {analysisResult.categoryLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {/* Nutrition Hero Card: Calories + Direct Portion Stepper */}
+                  <View style={styles.nutritionHeroCard}>
+                    <View style={styles.calorieHeroCol}>
+                      <Text style={styles.calorieHeroLabel}>CALORIES</Text>
+                      <View style={styles.calorieValueRow}>
+                        <Text style={styles.calorieHeroValue}>
+                          {Math.round(analysisResult.calories * portionMultiplier)}
+                        </Text>
+                        <Text style={styles.calorieHeroUnit}>kcal</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.heroDivider} />
+
+                    <View style={styles.portionCol}>
+                      <Text style={styles.portionColLabel}>PORTION</Text>
+                      <View style={styles.stepperContainer}>
+                        <Pressable
+                          style={({ pressed }) => [styles.stepBtn, pressed ? styles.btnPressed : null]}
+                          onPress={() => setPortionMultiplier(p => Math.max(0.5, Math.round((p - 0.5) * 10) / 10))}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Decrease portion"
+                        >
+                          <Ionicons name="remove" size={16} color={Colors.textPrimary} />
+                        </Pressable>
+                        <Text style={styles.stepVal}>{portionMultiplier}x</Text>
+                        <Pressable
+                          style={({ pressed }) => [styles.stepBtn, pressed ? styles.btnPressed : null]}
+                          onPress={() => setPortionMultiplier(p => Math.round((p + 0.5) * 10) / 10)}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Increase portion"
+                        >
+                          <Ionicons name="add" size={16} color={Colors.textPrimary} />
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
 
-                  {/* Ria Coach Nutrition Breakdown */}
+                  {/* Clean Macro Breakdown Strip */}
+                  <View style={styles.macroStrip}>
+                    <View style={styles.macroItem}>
+                      <View style={[styles.macroDot, { backgroundColor: Colors.protein }]} />
+                      <View>
+                        <Text style={styles.macroVal}>
+                          {(analysisResult.protein * portionMultiplier).toFixed(1)}g
+                        </Text>
+                        <Text style={styles.macroLbl}>Protein</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.macroDivider} />
+
+                    <View style={styles.macroItem}>
+                      <View style={[styles.macroDot, { backgroundColor: Colors.carbs }]} />
+                      <View>
+                        <Text style={styles.macroVal}>
+                          {(analysisResult.carbs * portionMultiplier).toFixed(1)}g
+                        </Text>
+                        <Text style={styles.macroLbl}>Carbs</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.macroDivider} />
+
+                    <View style={styles.macroItem}>
+                      <View style={[styles.macroDot, { backgroundColor: Colors.fat }]} />
+                      <View>
+                        <Text style={styles.macroVal}>
+                          {(analysisResult.fat * portionMultiplier).toFixed(1)}g
+                        </Text>
+                        <Text style={styles.macroLbl}>Fat</Text>
+                      </View>
+                    </View>
+
+                    {analysisResult.fiber > 0 && (
+                      <>
+                        <View style={styles.macroDivider} />
+                        <View style={styles.macroItem}>
+                          <View style={[styles.macroDot, { backgroundColor: Colors.fiber }]} />
+                          <View>
+                            <Text style={styles.macroVal}>
+                              {(analysisResult.fiber * portionMultiplier).toFixed(1)}g
+                            </Text>
+                            <Text style={styles.macroLbl}>Fiber</Text>
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </View>
+
+                  {/* Contextual dietary notes (quiet, non-slop helper text) */}
                   {analysisResult.notes ? (
-                    <View style={styles.riaCoachBubble}>
-                      <View style={styles.riaCoachIcon}>
-                        <GeminiIcon size={16} />
-                      </View>
-                      <View style={styles.riaCoachTextCol}>
-                        <Text style={styles.riaCoachLabel}>{"Ria's Gemini Vision Breakdown"}</Text>
-                        <Text style={styles.riaCoachNote}>{analysisResult.notes}</Text>
-                      </View>
+                    <View style={styles.notesRow}>
+                      <Ionicons name="information-circle-outline" size={13} color={Colors.textMuted} />
+                      <Text style={styles.notesText} numberOfLines={2}>
+                        {analysisResult.notes}
+                      </Text>
                     </View>
                   ) : null}
 
-                  {/* 4 Macro Pods (Sunny Vitality Palette) */}
-                  <View style={styles.macroGrid}>
-                    <View style={[styles.macroPod, styles.podCalories]}>
-                      <Text style={[styles.macroVal, { color: Colors.primary }]}>
-                        {Math.round(analysisResult.calories * portionMultiplier)}
-                      </Text>
-                      <Text style={styles.macroLbl}>Calories</Text>
-                    </View>
-
-                    <View style={[styles.macroPod, styles.podProtein]}>
-                      <Text style={[styles.macroVal, { color: Colors.proteinDark }]}>
-                        {(analysisResult.protein * portionMultiplier).toFixed(1)}g
-                      </Text>
-                      <Text style={styles.macroLbl}>Protein</Text>
-                    </View>
-
-                    <View style={[styles.macroPod, styles.podCarbs]}>
-                      <Text style={[styles.macroVal, { color: Colors.carbsDark }]}>
-                        {(analysisResult.carbs * portionMultiplier).toFixed(1)}g
-                      </Text>
-                      <Text style={styles.macroLbl}>Carbs</Text>
-                    </View>
-
-                    <View style={[styles.macroPod, styles.podFat]}>
-                      <Text style={[styles.macroVal, { color: Colors.fatDark }]}>
-                        {(analysisResult.fat * portionMultiplier).toFixed(1)}g
-                      </Text>
-                      <Text style={styles.macroLbl}>Fat</Text>
-                    </View>
-                  </View>
-
-                  {/* Portion Multiplier Stepper */}
-                  <View style={styles.portionRow}>
-                    <Text style={styles.portionLabel}>Portion Size:</Text>
-                    <View style={styles.stepperContainer}>
-                      <Pressable
-                        style={styles.stepBtn}
-                        onPress={() => setPortionMultiplier(p => Math.max(0.5, p - 0.5))}
-                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                      >
-                        <Ionicons name="remove" size={16} color={Colors.textSlate700} />
-                      </Pressable>
-                      <Text style={styles.stepVal}>{portionMultiplier}x</Text>
-                      <Pressable
-                        style={styles.stepBtn}
-                        onPress={() => setPortionMultiplier(p => p + 0.5)}
-                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                      >
-                        <Ionicons name="add" size={16} color={Colors.textSlate700} />
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  {/* Context-Aware Meal Slot Selector (Tap to change) */}
-                  <View style={styles.slotHeaderRow}>
-                    <Text style={styles.slotHeaderLabel}>Log to Meal Slot:</Text>
-                    <Text style={styles.slotHeaderHint}>Tap to change</Text>
-                  </View>
-                  <View style={styles.slotRow}>
-                    {(['breakfast', 'lunch', 'snacks', 'dinner'] as MealType[]).map(slot => {
-                      const isSelected = mealSlot === slot;
-                      return (
-                        <Pressable
-                          key={slot}
-                          style={({ pressed }) => [
-                            styles.slotPill,
-                            isSelected ? styles.slotPillSelected : null,
-                            pressed ? styles.slotPillPressed : null,
-                          ]}
-                          onPress={() => setMealSlot(slot)}
-                          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                        >
-                          <Text
-                            style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}
+                  {/* Context-Aware Meal Slot Selector */}
+                  <View style={styles.slotSection}>
+                    <Text style={styles.sectionTitle}>Log to Meal</Text>
+                    <View style={styles.slotRow}>
+                      {(["breakfast", "lunch", "snacks", "dinner"] as MealType[]).map(slot => {
+                        const isSelected = mealSlot === slot;
+                        return (
+                          <Pressable
+                            key={slot}
+                            style={({ pressed }) => [
+                              styles.slotPill,
+                              isSelected ? styles.slotPillSelected : null,
+                              pressed ? styles.slotPillPressed : null,
+                            ]}
+                            onPress={() => setMealSlot(slot)}
+                            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                           >
-                            {slot.charAt(0).toUpperCase() + slot.slice(1)}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                            <Text
+                              style={[styles.slotText, isSelected ? styles.slotTextSelected : null]}
+                            >
+                              {slot.charAt(0).toUpperCase() + slot.slice(1)}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   </View>
 
-                  {/* Save to Custom Foods Checkbox */}
+                  {/* Compact Save to Custom Foods */}
                   <Pressable
                     style={styles.customCheckRow}
                     onPress={() => setSaveToCustom(!saveToCustom)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: saveToCustom }}
                   >
                     <Ionicons
-                      name={saveToCustom ? 'checkbox' : 'square-outline'}
-                      size={20}
+                      name={saveToCustom ? "checkbox" : "square-outline"}
+                      size={19}
                       color={saveToCustom ? Colors.primary : Colors.textMuted}
                     />
-                    <View style={styles.checkTextCol}>
-                      <Text style={styles.checkTitle}>Save to My Custom Foods</Text>
-                      <Text style={styles.checkSubtitle}>
-                        Add to your private library for 1-tap re-logging without re-taking photos.
-                      </Text>
-                    </View>
+                    <Text style={styles.checkTitle}>Save to My Foods for quick 1-tap re-logging</Text>
                   </Pressable>
 
-                  {/* Confirm & Log Button */}
+                  {/* Primary Confirm & Log CTA Button */}
                   <Pressable
                     style={({ pressed }) => [styles.confirmBtn, pressed ? styles.btnPressed : null]}
                     onPress={handleConfirmAndLog}
                   >
                     <Ionicons name="checkmark-circle" size={18} color={Colors.onPrimary} />
                     <Text style={styles.confirmBtnText}>
-                      Log to {mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)} (
-                      {Math.round(analysisResult.calories * portionMultiplier)} kcal)
+                      Log {mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)} · {Math.round(analysisResult.calories * portionMultiplier)} kcal
                     </Text>
                   </Pressable>
                 </View>
@@ -1122,120 +1193,126 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     backgroundColor: Colors.card,
-    borderRadius: 10,
+    borderRadius: 16,
     borderCurve: 'continuous',
-    padding: 18,
+    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    elevation: 0,
-    shadowOpacity: 0,
+    borderColor: Colors.borderCard,
+    marginBottom: 16,
+    shadowColor: Colors.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  dishTitleRow: {
+  dishHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 14,
   },
   dishTitleCol: {
     flex: 1,
-    paddingRight: 8,
+    paddingRight: 10,
   },
   dishName: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
+    fontSize: 20,
     color: Colors.textPrimary,
+    letterSpacing: -0.3,
   },
   dishServing: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  confidencePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.proteinLight,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  categoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
     borderCurve: 'continuous',
+    backgroundColor: Colors.surfaceContainer,
     borderWidth: 1,
-    borderColor: Colors.proteinBorder,
-    gap: 4,
+    borderColor: Colors.borderInset,
   },
-  confidenceText: {
+  categoryBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10,
-    color: Colors.success,
+    fontSize: 11,
+    color: Colors.textSlate600,
+    textTransform: 'capitalize',
   },
-  macroGrid: {
+  nutritionHeroCard: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  macroPod: {
-    flex: 1,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 14,
     borderCurve: 'continuous',
-    paddingVertical: 10,
-    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
+    borderColor: Colors.borderInset,
+    marginBottom: 12,
   },
-  podCalories: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.primaryLight,
+  calorieHeroCol: {
+    flex: 1,
   },
-  podProtein: {
-    backgroundColor: Colors.proteinLight,
-    borderColor: Colors.proteinBorder,
-  },
-  podCarbs: {
-    backgroundColor: Colors.carbsLight,
-    borderColor: Colors.carbsBorder,
-  },
-  podFat: {
-    backgroundColor: Colors.fatLight,
-    borderColor: Colors.fatBorder,
-  },
-  macroVal: {
+  calorieHeroLabel: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-  },
-  macroLbl: {
-    fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    color: Colors.textSecondary,
-    marginTop: 2,
+    color: Colors.textMuted,
+    letterSpacing: 0.8,
+    marginBottom: 2,
   },
-  portionRow: {
+  calorieValueRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceInset,
+    alignItems: 'baseline',
+    gap: 4,
   },
-  portionLabel: {
+  calorieHeroValue: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 30,
+    color: Colors.primary,
+    includeFontPadding: false,
+  },
+  calorieHeroUnit: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: Colors.textSlate700,
+    color: Colors.textSecondary,
+  },
+  heroDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: Colors.borderInset,
+    marginHorizontal: 14,
+  },
+  portionCol: {
+    alignItems: 'flex-end',
+  },
+  portionColLabel: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 10,
+    color: Colors.textMuted,
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceInset,
-    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderRadius: 10,
     borderCurve: 'continuous',
     padding: 3,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderInset,
+    gap: 4,
   },
   stepBtn: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: 7,
     borderCurve: 'continuous',
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1243,139 +1320,143 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
     color: Colors.textPrimary,
-    minWidth: 28,
+    minWidth: 26,
     textAlign: 'center',
   },
-  slotHeaderRow: {
+  macroStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    justifyContent: 'space-around',
+    backgroundColor: Colors.surfaceLow,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderInset,
+    marginBottom: 12,
   },
-  slotHeaderLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
+  macroItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  macroDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  macroVal: {
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: Colors.textSlate700,
+    color: Colors.textPrimary,
+    includeFontPadding: false,
   },
-  slotHeaderHint: {
+  macroLbl: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 10,
+    color: Colors.textSecondary,
+    includeFontPadding: false,
+  },
+  macroDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: Colors.borderInset,
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  notesText: {
+    flex: 1,
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textMuted,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 16,
+  },
+  slotSection: {
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 12,
+    color: Colors.textSlate700,
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
   slotRow: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 16,
   },
   slotPill: {
     flex: 1,
     paddingVertical: 9,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
     backgroundColor: Colors.surfaceLow,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   slotPillSelected: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
   slotPillPressed: {
-    opacity: 0.9,
+    opacity: 0.85,
     transform: [{ scale: 0.98 }],
   },
   slotText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: Colors.textSlate600,
     includeFontPadding: false,
   },
   slotTextSelected: {
-    fontFamily: Fonts.urbanist.semiBold,
-    color: Colors.primary,
-    includeFontPadding: false,
-  },
-  riaCoachBubble: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(244, 117, 81, 0.25)',
-    marginBottom: 14,
-    gap: 10,
-  },
-  riaCoachIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(244, 117, 81, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  riaCoachTextCol: {
-    flex: 1,
-  },
-  riaCoachLabel: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: Colors.primaryDark,
-    letterSpacing: 0.2,
-    marginBottom: 2,
-    includeFontPadding: false,
-  },
-  riaCoachNote: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 17,
-    color: Colors.textSlate700,
+    color: Colors.onPrimary,
     includeFontPadding: false,
   },
   customCheckRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.surfaceLow,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    padding: 10,
+    alignItems: 'center',
+    paddingVertical: 4,
     marginBottom: 16,
     gap: 8,
   },
-  checkTextCol: {
-    flex: 1,
-  },
   checkTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: Colors.textPrimary,
-  },
-  checkSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 1,
+    color: Colors.textSlate700,
   },
   confirmBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 10,
+    height: 50,
+    borderRadius: 12,
     borderCurve: 'continuous',
     gap: 8,
-    elevation: 0,
-    shadowOpacity: 0,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 3,
   },
   confirmBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.onPrimary,
+  },
+  imagePreviewCompact: {
+    height: 145,
+    borderRadius: 16,
+    marginBottom: 12,
   },
   btnPressed: {
     transform: [{ scale: 0.98 }],

@@ -1,3 +1,19 @@
+// Native Camera Components (ChatGPT-style bottom-sheet experience)
+export {
+  CameraSheet,
+  CameraSurface,
+  CameraControls,
+  ShutterButton,
+  CaptureFlash,
+  FocusIndicator,
+  CameraMenu,
+  useCameraLifecycle,
+  useCameraCapture,
+  useCameraGestures,
+  type CapturedPhoto,
+  type CameraSheetProps,
+} from '@/features/camera';
+
 // Dashboard Primitives
 export { TopDateStrip } from './dashboard/TopDateStrip';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
