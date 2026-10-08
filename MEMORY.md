@@ -1123,6 +1123,30 @@
       - *Circular Press Feedback*: Standardized compact circular controls and icon buttons from aggressive `scale: 0.96` to restrained `scale: 0.985` (maintaining Scan FAB as its own intentional interaction), preserving immediate, tactile, non-bleaching touch physics.
     - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
 
+22. **Pass 8 — Global Motion System**:
+    - **Motion Principles Established**: Calm, Immediate, Physical, Predictable. Banned decorative animations, layout thrashing, bleached opacity on touch, and delayed readability.
+    - **Global Motion Tokens Created (`src/theme/motion.ts`)**:
+      - Semantic Durations: `instant: 100` (press feedback, micro-toggles), `micro: 140` (popovers, chips), `standard: 180` (state transitions, toasts, tabs), `emphasized: 200` (accordions, chevrons, dialogs), `screen: 250` (sub-screen horizontal slides), `sheet: 280` (bottom sheets, modal presentations).
+      - Semantic Curves: `easeOut` (entering/settling), `easeInOut` (reflow/state transitions), `easeIn` (exit/dismissal), `accordion` (`cubic-bezier(0.25, 0.1, 0.25, 1)` for natural deceleration without bounce), `decelerate` (`cubic-bezier(0.16, 1, 0.3, 1)`). Safe fallback to linear in test environments without crashing native worklets.
+      - Spring Presets: `gentle`, `gauge` (needle/pointer tracking), `slosh` (liquid droplet physics).
+      - `checkReducedMotion` utility for `AccessibilityInfo.isReduceMotionEnabled()`.
+      - Exported tokens cleanly via `src/theme/index.ts`.
+    - **Accordion & Chevron Standardization (`MealCard.tsx`)**:
+      - Standardized `handleToggleExpand` to `MotionDurations.emphasized` (200ms) with `MotionCurves.accordion`.
+      - Kept UI-thread continuous chevron rotation ($0^\circ \to 180^\circ$) mapped to expansion value.
+      - Added reduced-motion check to immediately snap without animation.
+      - Preserved stable card surface (0 card press scaling/bleaching) and remote image transition tokens (150ms remote, 0 local).
+    - **Sub-Screen Navigation Standardization (`SlideInSubScreen.tsx`, `ProfileScreen.tsx`)**:
+      - Standardized `SlideInSubScreen.tsx` to `MotionDurations.screen` (250ms) and `MotionDurations.emphasized` (200ms) with `MotionCurves.easeOut`/`easeIn` and reduced-motion instant snap.
+      - Deduplicated `ProfileScreen.tsx` by eliminating its inlined duplicate `SlideInSubScreen` implementation and importing the canonical component.
+    - **Removal of Staggered Delay Anti-Patterns (`FoodLogModal.tsx`)**:
+      - Eliminated the `withDelay(index * 55)` cascading animation on category pills; now immediate and readable without waiting.
+      - Standardized `FoodItemRow` `pressScale` to `0.985` with `MotionDurations.instant` (100ms).
+      - Standardized in-modal toast notifications to `MotionDurations.standard` (180ms) and `MotionDurations.micro` (140ms).
+    - **Continuous Animation Reduced-Motion Hardening (`BouncingDotsLoader.tsx`)**:
+      - Added `AccessibilityInfo.isReduceMotionEnabled()` check to disable infinite bouncing and keep dots resting when reduced motion is preferred.
+    - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
+
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   interpolate,
-  Easing,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { MotionDurations, MotionCurves } from '@/theme/motion';
 import { LoggedMealItem, MealType } from '@/types';
 import { useNutrition } from '../hooks/useNutrition';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
@@ -54,10 +54,23 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const handleToggleExpand = () => {
     const nextVal = isExpanded ? 0 : 1;
     setIsExpanded(!isExpanded);
-    expandAnim.value = withTiming(nextVal, {
-      duration: 200,
-      easing: Easing?.bezier ? Easing.bezier(0.25, 0.1, 0.25, 1) : undefined,
-    });
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(reduced => {
+        if (reduced) {
+          expandAnim.value = nextVal;
+        } else {
+          expandAnim.value = withTiming(nextVal, {
+            duration: MotionDurations.emphasized,
+            easing: MotionCurves.accordion,
+          });
+        }
+      })
+      .catch(() => {
+        expandAnim.value = withTiming(nextVal, {
+          duration: MotionDurations.emphasized,
+          easing: MotionCurves.accordion,
+        });
+      });
   };
 
   // Sync anim when items change (card goes from empty to filled)

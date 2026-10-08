@@ -17,13 +17,13 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withDelay,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
+import { MotionDurations, MotionCurves } from '@/theme/motion';
 import { IconSizes, ActionIcons } from '@/theme/icons';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
@@ -54,65 +54,48 @@ interface CategoryItem {
 }
 
 const CategoryPill = React.memo(function CategoryPill({
-  index,
   cat,
   isSelected,
   onPress,
 }: {
-  index: number;
   cat: CategoryItem;
   isSelected: boolean;
   onPress: () => void;
 }) {
-  const opacity = useSharedValue(0);
-  const translateX = useSharedValue(-10);
-
-  useEffect(() => {
-    opacity.value = withDelay(index * 55, withTiming(1, { duration: 200 }));
-    translateX.value = withDelay(index * 55, withTiming(0, { duration: 200 }));
-  }, [index, opacity, translateX]);
-
-  const pillStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
-  }));
-
   const iconColor = isSelected
     ? cat.activeColor || Colors.textInverse
     : cat.inactiveColor || Colors.textSecondary;
 
   return (
-    <Animated.View style={pillStyle}>
-      <Pressable
-        style={({ pressed }) => [
-          styles.categoryPill,
-          isSelected ? styles.categoryPillActive : null,
-          pressed ? styles.btnPressedPill : null,
-        ]}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={`Filter by ${cat.label}`}
-      >
-        {cat.iconFamily === 'mci' ? (
-          <MaterialCommunityIcons name={cat.iconName as any} size={15} color={iconColor} />
-        ) : (
-          <Ionicons
-            name={
-              cat.id === 'popular'
-                ? isSelected
-                  ? 'star'
-                  : 'star-outline'
-                : (cat.iconName as any)
-            }
-            size={15}
-            color={iconColor}
-          />
-        )}
-        <Text style={[styles.categoryText, isSelected ? styles.categoryTextActive : null]}>
-          {cat.label}
-        </Text>
-      </Pressable>
-    </Animated.View>
+    <Pressable
+      style={({ pressed }) => [
+        styles.categoryPill,
+        isSelected ? styles.categoryPillActive : null,
+        pressed ? styles.btnPressedPill : null,
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${cat.label}`}
+    >
+      {cat.iconFamily === 'mci' ? (
+        <MaterialCommunityIcons name={cat.iconName as any} size={15} color={iconColor} />
+      ) : (
+        <Ionicons
+          name={
+            cat.id === 'popular'
+              ? isSelected
+                ? 'star'
+                : 'star-outline'
+              : (cat.iconName as any)
+          }
+          size={15}
+          color={iconColor}
+        />
+      )}
+      <Text style={[styles.categoryText, isSelected ? styles.categoryTextActive : null]}>
+        {cat.label}
+      </Text>
+    </Pressable>
   );
 });
 
@@ -452,11 +435,11 @@ const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect,
   }));
 
   const handlePressIn = useCallback(() => {
-    pressScale.value = withTiming(0.97, { duration: 80 });
+    pressScale.value = withTiming(0.985, { duration: MotionDurations.instant });
   }, [pressScale]);
 
   const handlePressOut = useCallback(() => {
-    pressScale.value = withTiming(1, { duration: 120 });
+    pressScale.value = withTiming(1, { duration: MotionDurations.instant });
   }, [pressScale]);
 
   const foodImg = getFoodImageSource(item);
@@ -602,8 +585,8 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       }
       toastSlideAnim.value = 20;
       toastFadeAnim.value = 0;
-      toastFadeAnim.value = withTiming(1, { duration: 180 });
-      toastSlideAnim.value = withTiming(0, { duration: 180 });
+      toastFadeAnim.value = withTiming(1, { duration: MotionDurations.standard });
+      toastSlideAnim.value = withTiming(0, { duration: MotionDurations.standard });
     }
   }, [toastMessage, toastSlideAnim, toastFadeAnim]);
 
@@ -614,12 +597,12 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       if (toastTimer) clearTimeout(toastTimer);
       return;
     }
-    toastFadeAnim.value = withTiming(0, { duration: 150 });
+    toastFadeAnim.value = withTiming(0, { duration: MotionDurations.micro });
     setTimeout(() => {
       setToastMessage(null);
       setLastAddedMeal(null);
       if (toastTimer) clearTimeout(toastTimer);
-    }, 150);
+    }, MotionDurations.micro);
   }, [toastFadeAnim, toastTimer]);
 
   useEffect(() => {
@@ -1807,10 +1790,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.categoryScroll}
                     >
-                      {categoriesList.map((cat, index) => (
+                      {categoriesList.map(cat => (
                         <CategoryPill
                           key={cat.id}
-                          index={index}
                           cat={cat}
                           isSelected={selectedCategory === cat.id}
                           onPress={() => setSelectedCategory(cat.id)}

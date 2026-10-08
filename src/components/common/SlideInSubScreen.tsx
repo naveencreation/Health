@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Platform, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, Platform, ViewStyle, StyleProp, AccessibilityInfo } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  Easing,
   runOnJS,
 } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
+import { MotionDurations, MotionCurves } from '@/theme/motion';
 
 export interface SlideInSubScreenProps {
   children: React.ReactNode;
@@ -29,26 +29,68 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
   const translateX = useSharedValue(screenWidth);
 
   useEffect(() => {
-    translateX.value = withTiming(0, {
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-    });
+    let isMounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(reduced => {
+        if (!isMounted) return;
+        if (reduced) {
+          translateX.value = 0;
+        } else {
+          translateX.value = withTiming(0, {
+            duration: MotionDurations.screen,
+            easing: MotionCurves.easeOut,
+          });
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        translateX.value = withTiming(0, {
+          duration: MotionDurations.screen,
+          easing: MotionCurves.easeOut,
+        });
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [screenWidth, translateX]);
 
   useEffect(() => {
     if (isClosing) {
-      translateX.value = withTiming(
-        screenWidth,
-        {
-          duration: 220,
-          easing: Easing.in(Easing.cubic),
-        },
-        finished => {
-          if (finished) {
-            runOnJS(onClosed)();
+      AccessibilityInfo.isReduceMotionEnabled()
+        .then(reduced => {
+          if (reduced) {
+            translateX.value = screenWidth;
+            onClosed();
+          } else {
+            translateX.value = withTiming(
+              screenWidth,
+              {
+                duration: MotionDurations.emphasized,
+                easing: MotionCurves.easeIn,
+              },
+              finished => {
+                if (finished) {
+                  runOnJS(onClosed)();
+                }
+              }
+            );
           }
-        }
-      );
+        })
+        .catch(() => {
+          translateX.value = withTiming(
+            screenWidth,
+            {
+              duration: MotionDurations.emphasized,
+              easing: MotionCurves.easeIn,
+            },
+            finished => {
+              if (finished) {
+                runOnJS(onClosed)();
+              }
+            }
+          );
+        });
     }
   }, [isClosing, screenWidth, translateX, onClosed]);
 

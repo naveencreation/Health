@@ -11,13 +11,6 @@ import {
   NativeScrollEvent,
   Platform,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  runOnJS,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -26,6 +19,7 @@ import { ProfileHeaderCard } from '@/components/profile/ProfileHeaderCard';
 import { ProfileQuickNavGrid } from '@/components/profile/ProfileQuickNavGrid';
 import { ProfileMetricInspector } from '@/components/profile/ProfileMetricInspector';
 import { AvatarPickerModal } from '@/components/modals/AvatarPickerModal';
+import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
 
 import { MetabolicSummaryScreen, PreferencesScreen, GoalsScreen } from '@/screens/profile';
 import { AchievementCenterScreen } from '@/features/gamification';
@@ -43,58 +37,6 @@ interface ProfileScreenProps {
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
 }
-
-interface SlideInSubScreenProps {
-  children: React.ReactNode;
-  isClosing: boolean;
-  onClosed: () => void;
-  screenWidth: number;
-  zIndex: number;
-}
-
-const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
-  children,
-  isClosing,
-  onClosed,
-  screenWidth,
-  zIndex,
-}) => {
-  const translateX = useSharedValue(screenWidth);
-
-  useEffect(() => {
-    translateX.value = withTiming(0, {
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [screenWidth, translateX]);
-
-  useEffect(() => {
-    if (isClosing) {
-      translateX.value = withTiming(
-        screenWidth,
-        {
-          duration: 220,
-          easing: Easing.in(Easing.cubic),
-        },
-        finished => {
-          if (finished) {
-            runOnJS(onClosed)();
-          }
-        }
-      );
-    }
-  }, [isClosing, screenWidth, translateX, onClosed]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  return (
-    <Animated.View style={[styles.subScreenContainer, { zIndex }, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
-};
 
 const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onSignIn,
@@ -362,7 +304,7 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.88,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.985 }],
   },
   container: {
     flex: 1,
@@ -373,22 +315,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 120, // Clear bottom nav bar
     gap: 16,
-  },
-  subScreenContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: Colors.background,
-    ...(Platform.OS !== 'android'
-      ? {
-          shadowColor: '#0F172A',
-          shadowOffset: { width: -3, height: 0 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-        }
-      : {}),
   },
 });
 

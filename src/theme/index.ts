@@ -3,4 +3,4 @@ export * from './typography';
 export * from './spacing';
 export * from './icons';
 export * from './controls';
-
+export * from './motion';

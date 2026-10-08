@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, AccessibilityInfo } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,24 +28,61 @@ export const BouncingDotsLoader: React.FC<BouncingDotsLoaderProps> = ({
   const dot3 = useSharedValue(0);
 
   useEffect(() => {
-    const bounce = (toValue: number, delay: number, rest: number, restTarget: number) => {
-      return withRepeat(
-        withSequence(
-          withDelay(
-            delay,
-            withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })
-          ),
-          withTiming(0, { duration: 320, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
-          withDelay(rest, withTiming(restTarget, { duration: 0 }))
-        ),
-        -1,
-        false
-      );
-    };
+    let isMounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(reduced => {
+        if (!isMounted) return;
+        if (reduced) {
+          dot1.value = 0;
+          dot2.value = 0;
+          dot3.value = 0;
+          return;
+        }
 
-    dot1.value = bounce(-6, 0, 320, 0);
-    dot2.value = bounce(-6, 140, 180, 0);
-    dot3.value = bounce(-6, 280, 40, 0);
+        const bounce = (toValue: number, delay: number, rest: number, restTarget: number) => {
+          return withRepeat(
+            withSequence(
+              withDelay(
+                delay,
+                withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })
+              ),
+              withTiming(0, { duration: 320, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+              withDelay(rest, withTiming(restTarget, { duration: 0 }))
+            ),
+            -1,
+            false
+          );
+        };
+
+        dot1.value = bounce(-6, 0, 320, 0);
+        dot2.value = bounce(-6, 140, 180, 0);
+        dot3.value = bounce(-6, 280, 40, 0);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        const bounce = (toValue: number, delay: number, rest: number, restTarget: number) => {
+          return withRepeat(
+            withSequence(
+              withDelay(
+                delay,
+                withTiming(toValue, { duration: 320, easing: Easing.bezier(0.2, 0.64, 0.21, 1) })
+              ),
+              withTiming(0, { duration: 320, easing: Easing.bezier(0.42, 0, 0.58, 1) }),
+              withDelay(rest, withTiming(restTarget, { duration: 0 }))
+            ),
+            -1,
+            false
+          );
+        };
+
+        dot1.value = bounce(-6, 0, 320, 0);
+        dot2.value = bounce(-6, 140, 180, 0);
+        dot3.value = bounce(-6, 280, 40, 0);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [dot1, dot2, dot3]);
 
   const dot1Style = useAnimatedStyle(() => ({ transform: [{ translateY: dot1.value }] }));
