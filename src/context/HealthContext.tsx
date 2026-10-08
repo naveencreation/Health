@@ -2237,7 +2237,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               }
             }
           } catch (subErr) {
-            console.warn(`Error purging subcollection ${sub} during account deletion:`, subErr);
+            console.warn('Error purging subcollection during account deletion:', sub, subErr);
           }
         }
 

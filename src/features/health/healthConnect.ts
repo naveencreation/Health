@@ -100,10 +100,10 @@ export async function getStepsAggregateForDate(dateStr: string) {
       },
     });
 
-    console.log(`[HealthConnect] Aggregate result for ${dateStr}:`, JSON.stringify(result));
+    console.log('[HealthConnect] Aggregate result for:', dateStr, JSON.stringify(result));
     return result;
   } catch (error) {
-    console.error(`[HealthConnect] Failed to read steps aggregate for ${dateStr}:`, error);
+    console.error('[HealthConnect] Failed to read steps aggregate for:', dateStr, error);
     return null;
   }
 }
@@ -129,10 +129,10 @@ export async function getStepsRecordsForDate(dateStr: string) {
       },
     });
 
-    console.log(`[HealthConnect] Records count for ${dateStr}:`, response?.records?.length || 0);
+    console.log('[HealthConnect] Records count for:', dateStr, response?.records?.length || 0);
     return response?.records || [];
   } catch (error) {
-    console.error(`[HealthConnect] Failed to read step records for ${dateStr}:`, error);
+    console.error('[HealthConnect] Failed to read step records for:', dateStr, error);
     return [];
   }
 }

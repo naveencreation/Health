@@ -1,0 +1,24 @@
+# Ignore AI Agent skills and configuration
+.agents/
+.gemini/
+
+# Ignore test coverage reports and build artifacts
+coverage/
+dist/
+build/
+.expo/
+web-build/
+android/
+ios/
+
+# Ignore documentation, templates, and mocks
+.env.example
+*.md
+
+# Ignore scratch & test files
+scratch/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

@@ -166,7 +166,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
           }
         })
         .catch(err => {
-          console.warn(`[StepTrackerScreen] Tier 3 lazy fetch failed for ${selectedDate}:`, err);
+          console.warn('[StepTrackerScreen] Tier 3 lazy fetch failed for:', selectedDate, err);
         });
     }
   }, [selectedDate, isConnected, todayStr, dailyLogs, batchUpdateDailySteps]);
