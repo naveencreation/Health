@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "209376196693",
+    "project_id": "calori-dba00",
+    "storage_bucket": "calori-dba00.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:209376196693:android:27578264942335e9ddbcdc",
+        "android_client_info": {
+          "package_name": "com.calorify.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwEo8ygDTkOTARLX7JLd3RSpqLtqEyvoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
