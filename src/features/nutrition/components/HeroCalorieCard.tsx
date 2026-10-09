@@ -18,6 +18,14 @@ import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
+import {
+  SHORT_DAY_NAMES,
+  FULL_DAY_NAMES,
+  SHORT_MONTHS,
+  getRollingSevenDays,
+  parseDateString,
+  toDateString,
+} from '@/utils/dateUtils';
 
 interface HeroCalorieCardProps {
   onEditGoal?: () => void;
@@ -26,31 +34,6 @@ interface HeroCalorieCardProps {
 const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_TIMELINE = { top: 6, bottom: 6, left: 4, right: 4 };
-
-const SHORT_DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const;
-const FULL_DAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-] as const;
-const MONTH_NAMES = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-] as const;
 
 const GUEST_BASELINE_DAYS = [
   { cals: 1840, carbs: 195, protein: 72, fat: 46 },
@@ -61,22 +44,6 @@ const GUEST_BASELINE_DAYS = [
   { cals: 1780, carbs: 190, protein: 70, fat: 44 },
   { cals: 1820, carbs: 195, protein: 72, fat: 45 },
 ] as const;
-
-// Hoisted pure utility functions (avoids re-allocation on render)
-const parseDateStr = (str: string): Date => {
-  const parts = str.split('-');
-  if (parts.length === 3) {
-    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  }
-  return new Date();
-};
-
-const formatDateStr = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
 
 const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
@@ -106,13 +73,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const calLeft = remainingCalories;
 
   // Real-world today reference & dynamic context tab label
-  const todayStr = useMemo(() => {
-    const t = new Date();
-    const y = t.getFullYear();
-    const m = String(t.getMonth() + 1).padStart(2, '0');
-    const d = String(t.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }, []);
+  const todayStr = useMemo(() => toDateString(), []);
 
   const isToday = selectedDate === todayStr;
   const dayTabLabel = isToday ? 'Today' : 'Day View';
@@ -153,20 +114,16 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const proteinRatio = Math.min(1, Math.max(0, (totalProtein || 0) / targetProtein));
   const fatRatio = Math.min(1, Math.max(0, (totalFat || 0) / targetFat));
 
-  // 7 Days of the active calendar week (SUN to SAT) matching TopDateStrip
+  // 7 Days of the rolling window matching TopDateStrip
   const trendDays = useMemo(() => {
-    const current = parseDateStr(selectedDate);
-    const dayOfWeek = current.getDay(); // 0 is Sunday
-    const sunday = new Date(current);
-    sunday.setDate(current.getDate() - dayOfWeek);
-
+    const rollingDates = getRollingSevenDays(selectedDate, todayStr);
     const isGuest = currentUser?.isGuest;
 
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(sunday);
-      d.setDate(sunday.getDate() + i);
-      const dateStr = formatDateStr(d);
+    for (let i = 0; i < rollingDates.length; i++) {
+      const dateStr = rollingDates[i];
+      const d = parseDateString(dateStr);
+      const dayOfWeek = d.getDay(); // 0 is Sunday
       const isDayToday = dateStr === todayStr;
 
       const log = dailyLogs ? dailyLogs[dateStr] : undefined;
@@ -197,9 +154,9 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
       days.push({
         idx: i,
         dateStr,
-        dayName: SHORT_DAY_NAMES[i],
-        fullDayName: FULL_DAY_NAMES[i],
-        monthName: MONTH_NAMES[d.getMonth()],
+        dayName: SHORT_DAY_NAMES[dayOfWeek],
+        fullDayName: FULL_DAY_NAMES[dayOfWeek],
+        monthName: SHORT_MONTHS[d.getMonth()],
         dayNum: d.getDate(),
         cals,
         carbs,
@@ -215,7 +172,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   // Derived selected day index (Single Source of Truth: selectedDate, adheres to react-state-minimize)
   const selectedDayIdx = useMemo(() => {
     const matchIdx = trendDays.findIndex(d => d.dateStr === selectedDate);
-    return matchIdx !== -1 ? matchIdx : parseDateStr(selectedDate).getDay();
+    return matchIdx !== -1 ? matchIdx : trendDays.length - 1;
   }, [trendDays, selectedDate]);
 
   const currentDay = trendDays[selectedDayIdx] || trendDays[0] || trendDays[trendDays.length - 1];

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,18 @@ import Svg, { Circle } from 'react-native-svg';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import {
+  toDateString,
+  parseDateString,
+  getRollingSevenDays,
+  shiftDateClamped,
+  formatRangeMonthTitle,
+  SHORT_DAY_NAMES,
+  MONTH_NAMES,
+  SHORT_MONTHS,
+  WEEKDAY_INITIALS,
+  pad2,
+} from '@/utils/dateUtils';
 
 interface DayItem {
   dateStr: string;
@@ -24,57 +36,6 @@ interface DayItem {
   progress: number; // 0 to 1
   hasData: boolean;
 }
-
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-const SHORT_MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-const SHORT_DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
-const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-const pad2 = (n: number) => String(n).padStart(2, '0');
-
-const toDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
-const parseDateString = (dateStr: string): Date => {
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-  }
-  return new Date();
-};
 
 export interface TopDateStripProps {
   metric?: 'calories' | 'water' | 'weight' | 'steps';
@@ -88,6 +49,19 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   const { selectedDate, setSelectedDate, shiftDate, dailyLogs } = useDailyLog();
   const { userGoals } = useGoals();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  // Real-world today reference with periodic midnight rollover check
+  const [todayStr, setTodayStr] = useState(() => toDateString(new Date()));
+  useEffect(() => {
+    const checkMidnight = () => {
+      const nowStr = toDateString(new Date());
+      setTodayStr(prev => (prev !== nowStr ? nowStr : prev));
+    };
+    const interval = setInterval(checkMidnight, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isViewingToday = selectedDate === todayStr;
 
   // Calendar Modal State
   const [calendarYear, setCalendarYear] = useState(() =>
@@ -115,11 +89,47 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     : isWeight
       ? Colors.weightTrack
       : isSteps
-        ? Colors.surfaceInset : Colors.borderInset;
+        ? Colors.surfaceInset
+        : Colors.borderInset;
 
-  // Real-world today reference
-  const todayStr = useMemo(() => toDateString(new Date()), []);
-  const isViewingToday = selectedDate === todayStr;
+  // Option C: Controlled Rolling Window with Fixed Today Anchor
+  // windowEnd represents the rightmost day in the 7-day strip, clamped so it NEVER exceeds todayStr.
+  const [windowEnd, setWindowEnd] = useState<string>(() => {
+    const initToday = toDateString(new Date());
+    return selectedDate > initToday ? initToday : selectedDate;
+  });
+
+  // Keep windowEnd in sync if selectedDate moves outside the currently visible 7-day window
+  useEffect(() => {
+    const currentDays = getRollingSevenDays(windowEnd, todayStr);
+    const startStr = currentDays[0];
+    const endStr = currentDays[6];
+    if (selectedDate < startStr || selectedDate > endStr) {
+      const idealEnd = shiftDateClamped(selectedDate, 6, todayStr);
+      setWindowEnd(idealEnd);
+    }
+  }, [selectedDate, windowEnd, todayStr]);
+
+  // Forward navigation boundary: can only go forward if windowEnd is in the past
+  const canGoForward = windowEnd < todayStr;
+
+  const handlePrevWeek = useCallback(() => {
+    const newEnd = shiftDateClamped(windowEnd, -7, todayStr);
+    setWindowEnd(newEnd);
+    shiftDate(-7);
+  }, [windowEnd, todayStr, shiftDate]);
+
+  const handleNextWeek = useCallback(() => {
+    if (!canGoForward) return;
+    const newEnd = shiftDateClamped(windowEnd, 7, todayStr);
+    setWindowEnd(newEnd);
+    shiftDate(7);
+  }, [canGoForward, windowEnd, todayStr, shiftDate]);
+
+  const handleJumpToToday = useCallback(() => {
+    setWindowEnd(todayStr);
+    setSelectedDate(todayStr);
+  }, [todayStr, setSelectedDate]);
 
   // Touch gesture tracking for swipe navigation
   const touchStartX = useRef<number>(0);
@@ -133,30 +143,28 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       const dx = e.nativeEvent.pageX - touchStartX.current;
       if (dx > 48) {
         // Swiped right -> go to previous week
-        shiftDate(-7);
+        handlePrevWeek();
       } else if (dx < -48) {
-        // Swiped left -> go to next week
-        shiftDate(7);
+        // Swiped left -> go to next week (strictly disabled at today boundary)
+        if (canGoForward) {
+          handleNextWeek();
+        }
       }
     },
-    [shiftDate]
+    [handlePrevWeek, handleNextWeek, canGoForward]
   );
 
-  // 7 Days of the currently selected week (SUN to SAT)
+  // 7 Days of the controlled rolling window
   const { weekDays, monthHeaderTitle } = useMemo(() => {
-    const current = parseDateString(selectedDate);
-    const dayOfWeek = current.getDay(); // 0 is Sunday
-    const sunday = new Date(current);
-    sunday.setDate(current.getDate() - dayOfWeek);
-
+    const rollingDates = getRollingSevenDays(windowEnd, todayStr);
     const days: DayItem[] = [];
-    const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(sunday);
-      d.setDate(sunday.getDate() + i);
+    for (let i = 0; i < rollingDates.length; i++) {
+      const dateStr = rollingDates[i];
+      const d = parseDateString(dateStr);
+      const dayOfWeek = d.getDay(); // 0 is SUN, 1 is MON, etc.
+      const dayName = SHORT_DAY_NAMES[dayOfWeek];
 
-      const dateStr = toDateString(d);
       const log = dailyLogs[dateStr];
       let progress = 0;
       if (isWater) {
@@ -185,7 +193,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
 
       days.push({
         dateStr,
-        dayName: dayLabels[i],
+        dayName,
         dayNum: d.getDate(),
         isToday: dateStr === todayStr,
         isSelected: dateStr === selectedDate,
@@ -195,21 +203,10 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       });
     }
 
-    // Determine the month header title
-    const saturday = new Date(sunday);
-    saturday.setDate(sunday.getDate() + 6);
-
-    let title = '';
-    if (sunday.getMonth() === saturday.getMonth()) {
-      title = `${MONTH_NAMES[sunday.getMonth()]} ${sunday.getFullYear()}`;
-    } else if (sunday.getFullYear() === saturday.getFullYear()) {
-      title = `${SHORT_MONTHS[sunday.getMonth()]} – ${SHORT_MONTHS[saturday.getMonth()]} ${sunday.getFullYear()}`;
-    } else {
-      title = `${SHORT_MONTHS[sunday.getMonth()]} ${sunday.getFullYear()} – ${SHORT_MONTHS[saturday.getMonth()]} ${saturday.getFullYear()}`;
-    }
+    const title = formatRangeMonthTitle(rollingDates[0], rollingDates[rollingDates.length - 1]);
 
     return { weekDays: days, monthHeaderTitle: title };
-  }, [selectedDate, dailyLogs, budget, todayStr, isWater, isWeight, isSteps, waterGoal, stepGoal]);
+  }, [windowEnd, todayStr, selectedDate, dailyLogs, budget, isWater, isWeight, isSteps, waterGoal, stepGoal]);
 
   // Open calendar synchronized to currently selected date's month
   const handleOpenCalendar = useCallback(() => {
@@ -218,6 +215,15 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     setCalendarMonth(d.getMonth());
     setIsCalendarOpen(true);
   }, [selectedDate]);
+
+  const todayDate = useMemo(() => parseDateString(todayStr), [todayStr]);
+  const canGoNextMonth = useMemo(() => {
+    if (calendarYear < todayDate.getFullYear()) return true;
+    if (calendarYear === todayDate.getFullYear()) {
+      return calendarMonth < todayDate.getMonth();
+    }
+    return false;
+  }, [calendarYear, calendarMonth, todayDate]);
 
   // Calendar Modal Navigation
   const prevMonth = useCallback(() => {
@@ -231,6 +237,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   }, []);
 
   const nextMonth = useCallback(() => {
+    if (!canGoNextMonth) return;
     setCalendarMonth(m => {
       if (m === 11) {
         setCalendarYear(y => y + 1);
@@ -238,7 +245,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       }
       return m + 1;
     });
-  }, []);
+  }, [canGoNextMonth]);
 
   // Generate days grid for month modal
   const monthGrid = useMemo(() => {
@@ -251,6 +258,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
       isCurrentMonth: boolean;
       isToday: boolean;
       isSelected: boolean;
+      isFuture: boolean;
       hasMeals: boolean;
     }> = [];
 
@@ -262,6 +270,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
         isCurrentMonth: false,
         isToday: false,
         isSelected: false,
+        isFuture: false,
         hasMeals: false,
       });
     }
@@ -269,6 +278,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     // Days in current month
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${calendarYear}-${pad2(calendarMonth + 1)}-${pad2(d)}`;
+      const isFuture = dateStr > todayStr;
       const log = dailyLogs[dateStr];
       const hasMeals = isWater
         ? Boolean(log && typeof log.waterMl === 'number' && log.waterMl > 0)
@@ -282,6 +292,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
         isCurrentMonth: true,
         isToday: dateStr === todayStr,
         isSelected: dateStr === selectedDate,
+        isFuture,
         hasMeals,
       });
     }
@@ -311,7 +322,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
           {!isViewingToday && (
             <Pressable
               style={({ pressed }) => [styles.todayPill, pressed ? styles.btnPressed : null]}
-              onPress={() => setSelectedDate(todayStr)}
+              onPress={handleJumpToToday}
               accessibilityRole="button"
               accessibilityLabel="Return to today"
             >
@@ -338,7 +349,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
           <View style={styles.weekArrowsContainer}>
             <Pressable
               style={({ pressed }) => [styles.arrowCircle, pressed ? styles.btnPressed : null]}
-              onPress={() => shiftDate(-7)}
+              onPress={handlePrevWeek}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Previous week"
@@ -347,13 +358,23 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => [styles.arrowCircle, pressed ? styles.btnPressed : null]}
-              onPress={() => shiftDate(7)}
+              style={({ pressed }) => [
+                styles.arrowCircle,
+                !canGoForward && styles.arrowCircleDisabled,
+                pressed && canGoForward ? styles.btnPressed : null,
+              ]}
+              onPress={handleNextWeek}
+              disabled={!canGoForward}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Next week"
+              accessibilityState={{ disabled: !canGoForward }}
             >
-              <Ionicons name="chevron-forward" size={15} color={Colors.textSlate700} />
+              <Ionicons
+                name="chevron-forward"
+                size={15}
+                color={canGoForward ? Colors.textSlate700 : Colors.textMuted}
+              />
             </Pressable>
           </View>
         </View>
@@ -496,6 +517,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                   style={styles.modalArrowBtn}
                   onPress={prevMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Previous month"
                 >
                   <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
                 </Pressable>
@@ -505,11 +528,19 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                 </Text>
 
                 <Pressable
-                  style={styles.modalArrowBtn}
+                  style={[styles.modalArrowBtn, !canGoNextMonth && styles.modalArrowBtnDisabled]}
                   onPress={nextMonth}
+                  disabled={!canGoNextMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Next month"
+                  accessibilityState={{ disabled: !canGoNextMonth }}
                 >
-                  <Ionicons name="chevron-forward" size={20} color={Colors.textPrimary} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={canGoNextMonth ? Colors.textPrimary : Colors.textMuted}
+                  />
                 </Pressable>
               </View>
 
@@ -517,6 +548,8 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                 style={styles.modalCloseBtn}
                 onPress={() => setIsCalendarOpen(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close calendar"
               >
                 <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
@@ -545,9 +578,14 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                       styles.modalDayCell,
                       cell.isSelected ? styles.modalDayCellSelected : null,
                       cell.isToday && !cell.isSelected ? styles.modalDayCellToday : null,
+                      cell.isFuture ? styles.modalDayCellFuture : null,
                     ]}
+                    disabled={cell.isFuture}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${cell.dayNum}${cell.isFuture ? ', future date, disabled' : ''}`}
+                    accessibilityState={{ disabled: cell.isFuture, selected: cell.isSelected }}
                     onPress={() => {
-                      if (cell.dateStr) {
+                      if (cell.dateStr && !cell.isFuture) {
                         setSelectedDate(cell.dateStr);
                         setIsCalendarOpen(false);
                       }
@@ -558,13 +596,14 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                         styles.modalDayText,
                         cell.isSelected ? styles.modalDayTextSelected : null,
                         cell.isToday && !cell.isSelected ? styles.modalDayTextToday : null,
+                        cell.isFuture ? styles.modalDayTextFuture : null,
                       ]}
                     >
                       {cell.dayNum}
                     </Text>
 
                     {/* Meal activity dot */}
-                    {cell.hasMeals && !cell.isSelected && <View style={styles.modalMealDot} />}
+                    {cell.hasMeals && !cell.isSelected && !cell.isFuture && <View style={styles.modalMealDot} />}
                   </Pressable>
                 );
               })}
@@ -575,9 +614,11 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
               <Pressable
                 style={styles.modalTodayBtn}
                 onPress={() => {
-                  setSelectedDate(todayStr);
+                  handleJumpToToday();
                   setIsCalendarOpen(false);
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Jump to today"
               >
                 <Ionicons name="today-outline" size={16} color={progressColor} />
                 <Text style={[styles.modalTodayBtnText, { color: progressColor }]}>
@@ -669,6 +710,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  arrowCircleDisabled: {
+    opacity: 0.35,
   },
   btnPressed: {
     opacity: 0.88,
@@ -814,6 +858,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.surfaceLow,
   },
+  modalArrowBtnDisabled: {
+    opacity: 0.35,
+  },
   modalMonthTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
@@ -866,6 +913,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: Colors.fatLight,
   },
+  modalDayCellFuture: {
+    opacity: 0.35,
+  },
   modalDayText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
@@ -878,6 +928,9 @@ const styles = StyleSheet.create({
   modalDayTextToday: {
     color: Colors.primaryDark,
     fontFamily: Fonts.urbanist.bold,
+  },
+  modalDayTextFuture: {
+    color: Colors.textMuted,
   },
   modalMealDot: {
     position: 'absolute',

@@ -522,4 +522,27 @@ describe('HealthProvider auth restore', () => {
     expect(result.totalConsumed).toBe(280);
     expect(result.remainingCalories).toBe(1650 - 280);
   });
+
+  test('shiftDate clamps to today and cannot advance into future', async () => {
+    await renderHarness();
+    const today = result.selectedDate;
+
+    await act(async () => {
+      result.shiftDate(7);
+    });
+
+    expect(result.selectedDate).toBe(today);
+
+    await act(async () => {
+      result.shiftDate(-7);
+    });
+
+    expect(result.selectedDate < today).toBe(true);
+
+    await act(async () => {
+      result.setSelectedDate('2099-01-01');
+    });
+
+    expect(result.selectedDate).toBe(today);
+  });
 });

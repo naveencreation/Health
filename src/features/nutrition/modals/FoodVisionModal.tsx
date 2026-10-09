@@ -17,10 +17,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType, FoodItem } from '@/types';
-import { useFoodData, useDailyLog } from '@/context/HealthContext';
+import { useFoodData, useDailyLog, useAuth } from '@/context/HealthContext';
 import { AIService, FoodVisionResult, AIError, AIErrorMapper } from '@/services/ai';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { Monitoring } from '@/services/monitoring';
+import { mealPhotoService } from '@/services/storage/mealPhotoService';
 
 interface FoodVisionModalProps {
   visible: boolean;
@@ -42,6 +43,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
   const insets = useSafeAreaInsets();
   const { addCustomFood } = useFoodData();
   const { addMealItem } = useDailyLog();
+  const { currentUser } = useAuth();
 
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
@@ -183,10 +185,34 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
     }
   }, [visible, initialMealType, resetFlow]);
 
-  const handleConfirmAndLog = () => {
+  const handleConfirmAndLog = async () => {
     if (!analysisResult) return;
 
-    // 1. Optionally save to User-Scoped Custom Foods
+    const mealId = 'meal_' + Date.now();
+    let finalPhotoUri = selectedImageUri || undefined;
+
+    // 1. Optimistic Local Persistence in sandboxed directory
+    if (selectedAsset?.base64 || selectedImageUri) {
+      try {
+        finalPhotoUri = await mealPhotoService.saveMealPhotoLocally(
+          mealId,
+          selectedAsset?.base64 || selectedImageUri || ''
+        );
+      } catch {
+        finalPhotoUri = selectedImageUri || undefined;
+      }
+    }
+
+    // 2. Background user-scoped cloud upload (strictly non-blocking & isolated)
+    if (currentUser?.id && !currentUser?.isGuest && selectedAsset?.base64) {
+      mealPhotoService
+        .uploadMealPhoto(currentUser.id, mealId, selectedAsset.base64)
+        .catch(() => {
+          // Silently handle - local sandboxed photo remains safe in document directory
+        });
+    }
+
+    // 3. Save to User-Scoped Custom Foods or Logged Meal
     let foodItemToLog: FoodItem;
 
     if (saveToCustom) {
@@ -202,11 +228,11 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         fat: analysisResult.fat,
         fiber: analysisResult.fiber,
         icon: '🍱',
-        imageUrl: selectedImageUri || undefined,
+        imageUrl: finalPhotoUri,
       });
     } else {
       foodItemToLog = {
-        id: 'temp_' + Date.now(),
+        id: mealId,
         name: analysisResult.name,
         category: analysisResult.category,
         categoryLabel: analysisResult.categoryLabel,
@@ -218,12 +244,12 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         fat: analysisResult.fat,
         fiber: analysisResult.fiber,
         icon: '🍱',
-        imageUrl: selectedImageUri || undefined,
+        imageUrl: finalPhotoUri,
         isCustom: true,
       };
     }
 
-    // 2. Add to Daily Log under chosen slot with portion multiplier
+    // 4. Add to Daily Log under chosen slot with portion multiplier
     addMealItem(mealSlot, foodItemToLog, portionMultiplier);
 
     setIsLoggedSuccess(true);

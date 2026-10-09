@@ -5,4 +5,7 @@ process.env.NODE_ENV = 'test';
 
 module.exports = {
   preset: 'jest-expo',
+  moduleNameMapper: {
+    '^firebase/storage$': '<rootDir>/src/__mocks__/firebaseStorageMock.js',
+  },
 };

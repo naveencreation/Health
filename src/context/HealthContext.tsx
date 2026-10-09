@@ -7,7 +7,15 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  toDateString,
+  parseDateString,
+  shiftDateClamped,
+  isFutureDate,
+  getRollingSevenDays,
+} from '@/utils/dateUtils';
 import {
   DailyLog,
   FoodItem,
@@ -52,6 +60,7 @@ import {
   synthesizeSessionsFromTotal,
 } from '@/utils/stepHistoryUtils';
 import { Monitoring } from '@/services/monitoring';
+import { mealPhotoService } from '@/services/storage/mealPhotoService';
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -118,12 +127,7 @@ const DEFAULT_GOALS: UserGoals = {
   name: 'User',
 };
 
-export const getTodayDateString = (date = new Date()): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
+export const getTodayDateString = (date?: Date): string => toDateString(date);
 
 /**
  * Computes the current consecutive-day streak from dailyLogs.
@@ -247,7 +251,43 @@ export {
 };
 
 export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
+  const [selectedDate, setSelectedDateState] = useState<string>(getTodayDateString());
+  const todayRef = useRef<string>(getTodayDateString());
+
+  // Strict date ceiling clamp: selectedDate can NEVER exceed today
+  const setSelectedDate = useCallback((action: string | ((prev: string) => string)) => {
+    setSelectedDateState(prev => {
+      const resolved = typeof action === 'function' ? action(prev) : action;
+      const today = getTodayDateString();
+      return resolved > today ? today : resolved;
+    });
+  }, []);
+
+  // Midnight rollover & AppState resume listener
+  useEffect(() => {
+    const handleCheckDate = () => {
+      const currentRealToday = getTodayDateString();
+      if (currentRealToday !== todayRef.current) {
+        const previousToday = todayRef.current;
+        todayRef.current = currentRealToday;
+        // If user was viewing yesterday's date, advance to new Today
+        setSelectedDateState(prev => (prev === previousToday ? currentRealToday : prev));
+      }
+    };
+
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        handleCheckDate();
+      }
+    });
+
+    const interval = setInterval(handleCheckDate, 30000);
+
+    return () => {
+      sub.remove();
+      clearInterval(interval);
+    };
+  }, []);
   const [userGoals, setUserGoals] = useState<UserGoals>(DEFAULT_GOALS);
   const [dailyLogs, setDailyLogs] = useState<Record<string, DailyLog>>({});
   const [customFoods, setCustomFoods] = useState<FoodItem[]>([]);
@@ -326,14 +366,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.warn('Firestore fetch user doc error:', userDocErr);
       }
 
-      // 3. Fetch recent 30 DailyLogs subcollection from Cloud Firestore (Bounded for Cold Start Performance)
+      // 3. Fetch recent 90 DailyLogs subcollection from Cloud Firestore (Bounded for Cold Start Performance)
       const cloudLogs: Record<string, DailyLog> = {};
       try {
         const logsCollectionRef = collection(db, 'users', uid, 'dailyLogs');
-        const boundedQuery = query(logsCollectionRef, orderBy('date', 'desc'), limit(30));
+        const boundedQuery = query(logsCollectionRef, orderBy('date', 'desc'), limit(90));
         const logsSnap = await getDocs(boundedQuery);
+        const todayStr = getTodayDateString();
 
         for (const d of logsSnap.docs) {
+          // Reject any legacy or rogue future-dated entries
+          if (d.id > todayStr) {
+            continue;
+          }
           const rawLog = d.data() as DailyLog;
           const cleansed = cleanDailyLog(rawLog);
           cloudLogs[d.id] = cleansed;
@@ -491,6 +536,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Load persistent data on cold start
   useEffect(() => {
     const loadData = async () => {
+      // Prune local meal photos older than 30 days to enforce storage ceiling
+      mealPhotoService.pruneOldLocalPhotos(30).catch(() => {});
+
       try {
         const todayStr = getTodayDateString();
         const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
@@ -796,19 +844,16 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [dailyLogs, selectedDate]);
 
-  // Shift date helper
-  const shiftDate = useCallback((days: number) => {
-    setSelectedDate(prev => {
-      const parts = prev.split('-');
-      const curr = new Date(
-        parseInt(parts[0], 10),
-        parseInt(parts[1], 10) - 1,
-        parseInt(parts[2], 10)
-      );
-      curr.setDate(curr.getDate() + days);
-      return getTodayDateString(curr);
-    });
-  }, []);
+  // Shift date helper with strict upper bound clamp to today
+  const shiftDate = useCallback(
+    (days: number) => {
+      setSelectedDate(prev => {
+        const today = getTodayDateString();
+        return shiftDateClamped(prev, days, today);
+      });
+    },
+    [setSelectedDate]
+  );
 
   // Group meals by meal slot
   const mealsByType = useMemo(() => {
@@ -873,6 +918,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Actions
   const addMealItem = useCallback(
     (mealType: MealType, food: FoodItem, quantity: number) => {
+      const today = getTodayDateString();
+      const targetDate = selectedDate > today ? today : selectedDate;
+      const isToday = targetDate === today;
+
       const newItem: LoggedMealItem = {
         id: 'meal_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         foodId: food.id,
@@ -886,12 +935,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         fat: Math.round(food.fat * quantity * 10) / 10,
         fiber: Math.round(food.fiber * quantity * 10) / 10,
         imageUrl: food.imageUrl,
-        loggedAt: new Date().toISOString(),
+        loggedAt: isToday ? new Date().toISOString() : `${targetDate}T12:00:00.000Z`,
       };
 
       setDailyLogs(prev => {
-        const existing = prev[selectedDate] || {
-          date: selectedDate,
+        const existing = prev[targetDate] || {
+          date: targetDate,
           meals: [],
           waterMl: 0,
           steps: 0,
@@ -899,7 +948,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
         return {
           ...prev,
-          [selectedDate]: {
+          [targetDate]: {
             ...existing,
             meals: [...existing.meals, newItem],
           },
@@ -916,19 +965,27 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const removeMealItem = useCallback(
     (mealId: string) => {
+      const today = getTodayDateString();
+      const targetDate = selectedDate > today ? today : selectedDate;
+
+      // Free both local sandboxed photo and remote Firebase Storage photo
+      if (mealId) {
+        mealPhotoService.deleteMealPhoto(currentUser?.id, mealId).catch(() => {});
+      }
+
       setDailyLogs(prev => {
-        const existing = prev[selectedDate];
+        const existing = prev[targetDate];
         if (!existing) return prev;
         return {
           ...prev,
-          [selectedDate]: {
+          [targetDate]: {
             ...existing,
             meals: existing.meals.filter(m => m.id !== mealId),
           },
         };
       });
     },
-    [selectedDate]
+    [selectedDate, currentUser?.id]
   );
 
   const updateMealQuantity = useCallback(
@@ -968,9 +1025,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addWater = useCallback(
     (ml: number, beverageType: string = 'water') => {
+      const today = getTodayDateString();
+      const targetDate = selectedDate > today ? today : selectedDate;
+
       setDailyLogs(prev => {
-        const existing = prev[selectedDate] || {
-          date: selectedDate,
+        const existing = prev[targetDate] || {
+          date: targetDate,
           meals: [],
           waterMl: 0,
           steps: 0,
@@ -983,9 +1043,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (ml > 0) {
           const now = new Date();
           const timePart = now.toTimeString().split(' ')[0];
-          const todayStr = getTodayDateString();
           const loggedAt =
-            selectedDate === todayStr ? now.toISOString() : `${selectedDate}T${timePart}.000Z`;
+            targetDate === today ? now.toISOString() : `${targetDate}T${timePart}.000Z`;
 
           const newEntry: WaterLogEntry = {
             id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -1027,7 +1086,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const recalculated = Math.max(0, existing.waterMl - effectiveDeducted);
           return {
             ...prev,
-            [selectedDate]: {
+            [targetDate]: {
               ...existing,
               waterMl: recalculated,
               waterEntries: recalculated === 0 ? [] : updatedEntries,
@@ -1041,7 +1100,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         return {
           ...prev,
-          [selectedDate]: {
+          [targetDate]: {
             ...existing,
             waterMl: updated,
             waterEntries: updatedEntries,
@@ -1287,9 +1346,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       customLoggedAt?: string,
       customId?: string
     ) => {
-      const targetDate = date || selectedDate;
+      const requestedDate = date || selectedDate;
       const now = new Date();
       const todayStr = getTodayDateString(now);
+      const targetDate = requestedDate > todayStr ? todayStr : requestedDate;
       const isToday = targetDate === todayStr;
       const rounded = Math.round(weightKg * 10) / 10;
 
@@ -1688,11 +1748,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ];
 
     const realToday = getTodayDateString();
+    const rollingDates = getRollingSevenDays(selectedDate, realToday);
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(curr);
-      d.setDate(curr.getDate() - i);
-      const dateStr = getTodayDateString(d);
+    for (let i = 0; i < 7; i++) {
+      const dateStr = rollingDates[i];
+      const d = parseDateString(dateStr);
       const log = dailyLogs[dateStr];
       const fallback = isGuest ? baselineDays[i % baselineDays.length] : null;
 
@@ -2092,6 +2152,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await deleteDoc(doc(db, 'users', uid));
         } catch (fsErr) {
           console.warn('Error deleting Firestore user document:', fsErr);
+        }
+
+        // 2b. Purge all user photos in Firebase Storage (zero orphaned storage without Cloud Functions)
+        try {
+          await mealPhotoService.deleteAllUserPhotos(uid);
+        } catch (photoErr) {
+          console.warn('Error purging user photos during account deletion:', photoErr);
         }
 
         // 3. Delete user from Firebase Auth

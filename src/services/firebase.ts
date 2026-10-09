@@ -3,6 +3,7 @@ import { initializeAuth, getAuth, browserLocalPersistence, Auth } from 'firebase
 // @ts-ignore
 import { getReactNativePersistence } from '@firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -54,3 +55,4 @@ try {
 
 export const auth = authInstance;
 export const db = getFirestore(app);
+export const storage = getStorage(app);

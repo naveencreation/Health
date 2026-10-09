@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle, ImageStyle, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { SvgXml } from 'react-native-svg';
@@ -8,6 +8,7 @@ import {
   isLocalAssetAvatar,
   getLocalAssetSource,
   DEFAULT_AVATAR_URL,
+  LOCAL_AVATAR_ASSETS,
 } from '@/data/avatars';
 
 export interface UserAvatarProps {
@@ -20,10 +21,6 @@ export interface UserAvatarProps {
   accessibilityLabel?: string;
 }
 
-const FALLBACK_REMOTE_SOURCE = {
-  uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240',
-};
-
 const UserAvatarComponent: React.FC<UserAvatarProps> = ({
   avatarUrl,
   size = 48,
@@ -33,7 +30,9 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
   borderWidth,
   accessibilityLabel = 'User avatar',
 }) => {
-  // Normalize: if avatarUrl was removed (like svg:accountant) or is undefined, fallback to DEFAULT_AVATAR_URL
+  const [hasRemoteError, setHasRemoteError] = useState(false);
+
+  // Normalize: if avatarUrl is missing, fallback to DEFAULT_AVATAR_URL
   const effectiveUrl =
     !avatarUrl || avatarUrl === 'svg:accountant' ? DEFAULT_AVATAR_URL : avatarUrl;
 
@@ -41,6 +40,8 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
   const svgData = isSvg ? getSvgAvatar(effectiveUrl) : undefined;
   const isLocal = isLocalAssetAvatar(effectiveUrl);
   const localSource = isLocal ? getLocalAssetSource(effectiveUrl) : null;
+  const defaultLocalSource =
+    getLocalAssetSource(DEFAULT_AVATAR_URL) || LOCAL_AVATAR_ASSETS['asset:men'];
 
   const containerStyle = useMemo(
     (): ViewStyle => ({
@@ -140,15 +141,12 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
     );
   }
 
-  // 3. Remote web image URL or fallback to default local asset
-  const defaultLocal = isLocalAssetAvatar(DEFAULT_AVATAR_URL)
-    ? getLocalAssetSource(DEFAULT_AVATAR_URL)
-    : null;
+  // 3. Remote web image URL with offline-first bundled local fallback
+  const isRemote =
+    effectiveUrl && !effectiveUrl.startsWith('asset:') && !effectiveUrl.startsWith('svg:');
 
-  const remoteSource =
-    effectiveUrl && !effectiveUrl.startsWith('asset:') && !effectiveUrl.startsWith('svg:')
-      ? { uri: effectiveUrl }
-      : defaultLocal || FALLBACK_REMOTE_SOURCE;
+  const resolvedSource =
+    isRemote && !hasRemoteError ? { uri: effectiveUrl } : defaultLocalSource;
 
   return (
     <View
@@ -157,13 +155,14 @@ const UserAvatarComponent: React.FC<UserAvatarProps> = ({
       accessibilityLabel={accessibilityLabel}
     >
       <Image
-        source={remoteSource}
+        source={resolvedSource}
         style={[styles.image, imageDimensions, imageStyle]}
         contentFit="cover"
         cachePolicy="memory-disk"
         transition={150}
         accessibilityRole="image"
         accessibilityLabel={accessibilityLabel}
+        onError={() => setHasRemoteError(true)}
       />
     </View>
   );

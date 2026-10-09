@@ -1,17 +1,14 @@
 import { ImageSourcePropType } from 'react-native';
 
 /**
- * Canonical Food Image Registry
- * Every entry points to an authentic 1:1 square WebP asset in assets/foods/.
- * Exactly 64 canonical food images.
+ * 64 authentic 1:1 square WebP food assets in assets/foods/.
+ * Each asset is statically required exactly once for Metro bundler efficiency.
  */
-export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
+const CANONICAL_FOOD_ASSETS = {
   // Breads & Rotis
-  roti_chapati: require('../../assets/foods/chapati.webp'),
   chapati: require('../../assets/foods/chapati.webp'),
   paratha: require('../../assets/foods/paratha.webp'),
   aloo_paratha: require('../../assets/foods/aloo_paratha.webp'),
-  malabar_parotta: require('../../assets/foods/parotta.webp'),
   parotta: require('../../assets/foods/parotta.webp'),
   roti_with_dal: require('../../assets/foods/roti_with_dal.webp'),
   bread_omelette: require('../../assets/foods/bread_omelette.webp'),
@@ -23,13 +20,10 @@ export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
   veg_thali: require('../../assets/foods/veg_thali.webp'),
 
   // South Indian
-  idli_steamed: require('../../assets/foods/idli.webp'),
   idli: require('../../assets/foods/idli.webp'),
-  plain_dosa: require('../../assets/foods/dosa.webp'),
   dosa: require('../../assets/foods/dosa.webp'),
   uttapam: require('../../assets/foods/uttapam.webp'),
   upma: require('../../assets/foods/upma.webp'),
-  ven_pongal: require('../../assets/foods/pongal.webp'),
   pongal: require('../../assets/foods/pongal.webp'),
   curd_rice: require('../../assets/foods/curd_rice.webp'),
   lemon_rice: require('../../assets/foods/lemon_rice.webp'),
@@ -44,18 +38,12 @@ export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
   dal_rice: require('../../assets/foods/dal_rice.webp'),
   chole_rice: require('../../assets/foods/chole_rice.webp'),
   rajma_chawal: require('../../assets/foods/rajma_chawal.webp'),
-  moong_dal_khichdi: require('../../assets/foods/khichdi.webp'),
   khichdi: require('../../assets/foods/khichdi.webp'),
-
-  // Snacks & Breakfast
   poha: require('../../assets/foods/poha.webp'),
 
   // Fruits
-  apple_medium: require('../../assets/foods/apple.webp'),
   apple: require('../../assets/foods/apple.webp'),
-  banana_medium: require('../../assets/foods/banana.webp'),
   banana: require('../../assets/foods/banana.webp'),
-  papaya_cubes: require('../../assets/foods/papaya.webp'),
   papaya: require('../../assets/foods/papaya.webp'),
   mango: require('../../assets/foods/mango.webp'),
   strawberry: require('../../assets/foods/strawberry.webp'),
@@ -76,7 +64,6 @@ export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
   coconut: require('../../assets/foods/coconut.webp'),
 
   // Nuts, Seeds & Dry Fruits
-  raw_almonds: require('../../assets/foods/almonds.webp'),
   almonds: require('../../assets/foods/almonds.webp'),
   cashews: require('../../assets/foods/cashews.webp'),
   walnuts: require('../../assets/foods/walnuts.webp'),
@@ -93,15 +80,131 @@ export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
   dried_apricots: require('../../assets/foods/dried_apricots.webp'),
   dried_cranberries: require('../../assets/foods/dried_cranberries.webp'),
   raisins: require('../../assets/foods/raisins.webp'),
+} as const;
+
+/**
+ * Canonical Food Image Registry.
+ * Preserves 100% backward-compatible keys and aliases for database records.
+ */
+export const LOCAL_FOOD_IMAGES: Record<string, ImageSourcePropType> = {
+  ...CANONICAL_FOOD_ASSETS,
+
+  // Canonical Aliases for legacy food IDs
+  roti_chapati: CANONICAL_FOOD_ASSETS.chapati,
+  malabar_parotta: CANONICAL_FOOD_ASSETS.parotta,
+  idli_steamed: CANONICAL_FOOD_ASSETS.idli,
+  plain_dosa: CANONICAL_FOOD_ASSETS.dosa,
+  ven_pongal: CANONICAL_FOOD_ASSETS.pongal,
+  moong_dal_khichdi: CANONICAL_FOOD_ASSETS.khichdi,
+  apple_medium: CANONICAL_FOOD_ASSETS.apple,
+  banana_medium: CANONICAL_FOOD_ASSETS.banana,
+  papaya_cubes: CANONICAL_FOOD_ASSETS.papaya,
+  raw_almonds: CANONICAL_FOOD_ASSETS.almonds,
 };
+
+export type FoodImageKey = keyof typeof LOCAL_FOOD_IMAGES;
+
+interface FoodNameRule {
+  readonly pattern: RegExp;
+  readonly key: FoodImageKey;
+}
+
+/**
+ * Declarative name matching rules.
+ * Compiled with strict word boundaries (\b) to eliminate substring collisions.
+ * Specific multi-word phrases are prioritized over generic single-word patterns.
+ */
+const FOOD_NAME_RULES: readonly FoodNameRule[] = [
+  // 1. South Indian Specifics
+  { pattern: /\b(curd\s+rice|thayir\s+sadam)\b/i, key: 'curd_rice' },
+  { pattern: /\b(lemon\s+rice|chitranna)\b/i, key: 'lemon_rice' },
+  { pattern: /\b(ven\s+pongal|pongal)\b/i, key: 'pongal' },
+  { pattern: /\b(rava\s+upma|upma)\b/i, key: 'upma' },
+  { pattern: /\buttapams?\b/i, key: 'uttapam' },
+  { pattern: /\b(steamed\s+idlis?|idlis?)\b/i, key: 'idli' },
+  { pattern: /\b(plain\s+dosas?|masala\s+dosas?|dosas?)\b/i, key: 'dosa' },
+
+  // 2. Breads & Combination Dishes
+  { pattern: /\broti\s+with\s+dal\b/i, key: 'roti_with_dal' },
+  { pattern: /\bbread\s+omelette\b/i, key: 'bread_omelette' },
+  { pattern: /\bchole\s+bhature\b/i, key: 'chole_bhature' },
+  { pattern: /\baloo\s+parathas?\b/i, key: 'aloo_paratha' },
+  { pattern: /\b(plain\s+parathas?|parathas?)\b/i, key: 'paratha' },
+  { pattern: /\b(malabar\s+parottas?|parottas?)\b/i, key: 'parotta' },
+  { pattern: /\b(rotis?|chapatis?|phulkas?)\b/i, key: 'chapati' },
+
+  // 3. Dals, Curries & Meals
+  { pattern: /\b(paneer\s+butter\s+masala|paneer\s+makhani)\b/i, key: 'paneer_butter_masala' },
+  { pattern: /\b(chicken\s+curry|chicken\s+gravy)\b/i, key: 'chicken_curry' },
+  { pattern: /\b(veg\s+thali|indian\s+thali)\b/i, key: 'veg_thali' },
+
+  // 4. Rice & Grains Dishes
+  { pattern: /\bchicken\s+biryani\b/i, key: 'chicken_biryani' },
+  { pattern: /\bmutton\s+biryani\b/i, key: 'mutton_biryani' },
+  { pattern: /\bchicken\s+fried\s+rice\b/i, key: 'chicken_fried_rice' },
+  { pattern: /\b(vegetable|veg)\s+fried\s+rice\b/i, key: 'vegetable_fried_rice' },
+  { pattern: /\b(vegetable|veg)\s+pulao\b/i, key: 'vegetable_pulao' },
+  { pattern: /\bjeera\s+rice\b/i, key: 'jeera_rice' },
+  { pattern: /\b(dal\s+rice|dal\s+chawal)\b/i, key: 'dal_rice' },
+  { pattern: /\b(chole\s+rice|chole\s+chawal)\b/i, key: 'chole_rice' },
+  { pattern: /\brajma\s+chawal\b/i, key: 'rajma_chawal' },
+  { pattern: /\b(moong\s+dal\s+khichdi|khichdi)\b/i, key: 'khichdi' },
+  { pattern: /\bpoha\b/i, key: 'poha' },
+
+  // 5. Fresh Fruits (Compound fruit names MUST precede generic words)
+  { pattern: /\bpineapples?\b/i, key: 'pineapple' },
+  { pattern: /\b(sweet\s+limes?|mosambi)\b/i, key: 'sweet_lime' },
+  { pattern: /\bdragon\s*fruits?\b/i, key: 'dragonfruit' },
+  { pattern: /\bwatermelons?\b/i, key: 'watermelon' },
+  { pattern: /\b(muskmelons?|cantaloupes?)\b/i, key: 'muskmelon' },
+  { pattern: /\bjackfruits?\b/i, key: 'jackfruit' },
+  { pattern: /\b(green\s+grapes?|grapes?)\b/i, key: 'green_grapes' },
+  { pattern: /\bstrawberr(y|ies)\b/i, key: 'strawberry' },
+  { pattern: /\b(pomegranates?|anar)\b/i, key: 'pomegranate' },
+  { pattern: /\b(papayas?|papita)\b/i, key: 'papaya' },
+  { pattern: /\bapples?\b/i, key: 'apple' },
+  { pattern: /\bbananas?\b/i, key: 'banana' },
+  { pattern: /\bmango(es)?\b/i, key: 'mango' },
+  { pattern: /\boranges?\b/i, key: 'orange' },
+  { pattern: /\bkiwis?\b/i, key: 'kiwi' },
+  { pattern: /\bguavas?\b/i, key: 'guava' },
+  { pattern: /\bpears?\b/i, key: 'pear' },
+  { pattern: /\b(sapota|chikoo|chiku)\b/i, key: 'sapota' },
+  { pattern: /\b(lychees?|litchis?)\b/i, key: 'lychee' },
+  { pattern: /\bcoconuts?\b/i, key: 'coconut' },
+
+  // 6. Nuts, Seeds & Dry Fruits
+  { pattern: /\b(dried\s+cranberr(y|ies)|cranberr(y|ies))\b/i, key: 'dried_cranberries' },
+  { pattern: /\b(dried\s+apricots?|apricots?|khubani)\b/i, key: 'dried_apricots' },
+  { pattern: /\b(dried\s+figs?|figs?|anjeer)\b/i, key: 'dried_figs' },
+  { pattern: /\bpumpkin\s+seeds?\b/i, key: 'pumpkin_seeds' },
+  { pattern: /\bsunflower\s+seeds?\b/i, key: 'sunflower_seeds' },
+  { pattern: /\bchia(\s+seeds?)?\b/i, key: 'chia_seeds' },
+  { pattern: /\b(flax(\s+seeds?)?|alsi)\b/i, key: 'flax_seeds' },
+  { pattern: /\b(sesame(\s+seeds?)?|til)\b/i, key: 'sesame_seeds' },
+  { pattern: /\b(pine\s+nuts?|chilgoza)\b/i, key: 'pine_nuts' },
+  { pattern: /\b(almonds?|badam)\b/i, key: 'almonds' },
+  { pattern: /\b(cashews?|kaju)\b/i, key: 'cashews' },
+  { pattern: /\b(walnuts?|akhrot)\b/i, key: 'walnuts' },
+  { pattern: /\b(pistachios?|pista)\b/i, key: 'pistachios' },
+  { pattern: /\b(dates?|khajoor)\b/i, key: 'dates' },
+  { pattern: /\b(peanuts?|groundnuts?)\b/i, key: 'peanuts' },
+  { pattern: /\b(raisins?|kismis|kishmish)\b/i, key: 'raisins' },
+];
+
+export interface FoodImageResolvable {
+  id?: string;
+  name?: string;
+  imageUrl?: string | ImageSourcePropType | number | null;
+}
 
 /**
  * Resolves the canonical WebP asset for a food item.
- * Priority: exact ID -> custom user photo -> STRICT, exact dish name match.
+ * Priority: exact ID -> custom user photo -> STRICT, word-boundary dish name match.
  * NEVER forces wrong dish photos onto unrepresented foods (e.g. Appam will never show an Idli photo).
  */
 export function getFoodImageSource(
-  item?: { id?: string; name?: string; imageUrl?: any } | null
+  item?: FoodImageResolvable | null
 ): ImageSourcePropType | undefined {
   if (!item) return undefined;
 
@@ -115,100 +218,15 @@ export function getFoodImageSource(
     return typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl;
   }
 
-  // 3. Strict, exact dish name matching ONLY (no loose multi-dish guessing)
+  // 3. Strict, word-boundary dish name matching ONLY (no false substring collisions)
   const name = (item.name || '').toLowerCase().trim();
   if (!name) return undefined;
 
-  // Specific South Indian dishes
-  if (name === 'idli' || name.includes('steamed idli') || name.startsWith('idli '))
-    return LOCAL_FOOD_IMAGES.idli_steamed;
-  if (name === 'dosa' || name.includes('plain dosa') || name.startsWith('dosa '))
-    return LOCAL_FOOD_IMAGES.plain_dosa;
-  if (name.includes('uttapam')) return LOCAL_FOOD_IMAGES.uttapam;
-  if (name.includes('upma') || name.includes('rava upma')) return LOCAL_FOOD_IMAGES.upma;
-  if (name.includes('pongal') || name.includes('ven pongal')) return LOCAL_FOOD_IMAGES.ven_pongal;
-  if (name.includes('curd rice') || name.includes('thayir sadam'))
-    return LOCAL_FOOD_IMAGES.curd_rice;
-  if (name.includes('lemon rice') || name.includes('chitranna'))
-    return LOCAL_FOOD_IMAGES.lemon_rice;
-
-  // Breads & Rotis
-  if (name.includes('aloo paratha')) return LOCAL_FOOD_IMAGES.aloo_paratha;
-  if (name === 'paratha' || name.includes('plain paratha')) return LOCAL_FOOD_IMAGES.paratha;
-  if (name.includes('parotta') || name.includes('malabar parotta'))
-    return LOCAL_FOOD_IMAGES.malabar_parotta;
-  if (name.includes('roti with dal')) return LOCAL_FOOD_IMAGES.roti_with_dal;
-  if (name.includes('bread omelette')) return LOCAL_FOOD_IMAGES.bread_omelette;
-  if (name.includes('chole bhature')) return LOCAL_FOOD_IMAGES.chole_bhature;
-  if (name.includes('roti') || name.includes('chapati') || name.includes('phulka'))
-    return LOCAL_FOOD_IMAGES.roti_chapati;
-
-  // Dals, Curries & Meals
-  if (name.includes('paneer butter masala') || name.includes('paneer makhani'))
-    return LOCAL_FOOD_IMAGES.paneer_butter_masala;
-  if (name.includes('chicken curry') || name.includes('chicken gravy'))
-    return LOCAL_FOOD_IMAGES.chicken_curry;
-  if (name.includes('veg thali') || name.includes('indian thali'))
-    return LOCAL_FOOD_IMAGES.veg_thali;
-
-  // Rice & Grains
-  if (name.includes('chicken biryani')) return LOCAL_FOOD_IMAGES.chicken_biryani;
-  if (name.includes('mutton biryani')) return LOCAL_FOOD_IMAGES.mutton_biryani;
-  if (name.includes('chicken fried rice')) return LOCAL_FOOD_IMAGES.chicken_fried_rice;
-  if (name.includes('vegetable fried rice') || name.includes('veg fried rice'))
-    return LOCAL_FOOD_IMAGES.vegetable_fried_rice;
-  if (name.includes('vegetable pulao') || name.includes('veg pulao'))
-    return LOCAL_FOOD_IMAGES.vegetable_pulao;
-  if (name.includes('jeera rice')) return LOCAL_FOOD_IMAGES.jeera_rice;
-  if (name.includes('dal rice') || name.includes('dal chawal')) return LOCAL_FOOD_IMAGES.dal_rice;
-  if (name.includes('chole rice') || name.includes('chole chawal'))
-    return LOCAL_FOOD_IMAGES.chole_rice;
-  if (name.includes('rajma chawal')) return LOCAL_FOOD_IMAGES.rajma_chawal;
-  if (name.includes('khichdi') || name.includes('moong dal khichdi'))
-    return LOCAL_FOOD_IMAGES.moong_dal_khichdi;
-  if (name.includes('poha')) return LOCAL_FOOD_IMAGES.poha;
-
-  // Fresh Fruits
-  if (name.includes('apple')) return LOCAL_FOOD_IMAGES.apple_medium;
-  if (name.includes('banana')) return LOCAL_FOOD_IMAGES.banana_medium;
-  if (name.includes('mango')) return LOCAL_FOOD_IMAGES.mango;
-  if (name.includes('strawberry') || name.includes('strawberries'))
-    return LOCAL_FOOD_IMAGES.strawberry;
-  if (name.includes('grape')) return LOCAL_FOOD_IMAGES.green_grapes;
-  if (name.includes('watermelon')) return LOCAL_FOOD_IMAGES.watermelon;
-  if (name.includes('orange')) return LOCAL_FOOD_IMAGES.orange;
-  if (name.includes('kiwi')) return LOCAL_FOOD_IMAGES.kiwi;
-  if (name.includes('guava')) return LOCAL_FOOD_IMAGES.guava;
-  if (name.includes('papaya')) return LOCAL_FOOD_IMAGES.papaya_cubes;
-  if (name.includes('pineapple')) return LOCAL_FOOD_IMAGES.pineapple;
-  if (name.includes('pomegranate') || name.includes('anar')) return LOCAL_FOOD_IMAGES.pomegranate;
-  if (name.includes('dragonfruit') || name.includes('dragon fruit'))
-    return LOCAL_FOOD_IMAGES.dragonfruit;
-  if (name.includes('muskmelon') || name.includes('cantaloupe')) return LOCAL_FOOD_IMAGES.muskmelon;
-  if (name.includes('sweet lime') || name.includes('mosambi')) return LOCAL_FOOD_IMAGES.sweet_lime;
-  if (name.includes('pear')) return LOCAL_FOOD_IMAGES.pear;
-  if (name.includes('jackfruit')) return LOCAL_FOOD_IMAGES.jackfruit;
-  if (name.includes('sapota') || name.includes('chikoo')) return LOCAL_FOOD_IMAGES.sapota;
-  if (name.includes('lychee') || name.includes('litchi')) return LOCAL_FOOD_IMAGES.lychee;
-  if (name.includes('coconut')) return LOCAL_FOOD_IMAGES.coconut;
-
-  // Nuts, Seeds & Dry Fruits
-  if (name.includes('almond') || name.includes('badam')) return LOCAL_FOOD_IMAGES.raw_almonds;
-  if (name.includes('cashew') || name.includes('kaju')) return LOCAL_FOOD_IMAGES.cashews;
-  if (name.includes('walnut') || name.includes('akhrot')) return LOCAL_FOOD_IMAGES.walnuts;
-  if (name.includes('pistachio') || name.includes('pista')) return LOCAL_FOOD_IMAGES.pistachios;
-  if (name.includes('date') || name.includes('khajoor')) return LOCAL_FOOD_IMAGES.dates;
-  if (name.includes('peanut')) return LOCAL_FOOD_IMAGES.peanuts;
-  if (name.includes('chia')) return LOCAL_FOOD_IMAGES.chia_seeds;
-  if (name.includes('flax') || name.includes('alsi')) return LOCAL_FOOD_IMAGES.flax_seeds;
-  if (name.includes('pumpkin seed')) return LOCAL_FOOD_IMAGES.pumpkin_seeds;
-  if (name.includes('sunflower seed')) return LOCAL_FOOD_IMAGES.sunflower_seeds;
-  if (name.includes('sesame') || name.includes('til')) return LOCAL_FOOD_IMAGES.sesame_seeds;
-  if (name.includes('pine nut') || name.includes('chilgoza')) return LOCAL_FOOD_IMAGES.pine_nuts;
-  if (name.includes('fig') || name.includes('anjeer')) return LOCAL_FOOD_IMAGES.dried_figs;
-  if (name.includes('apricot') || name.includes('khubani')) return LOCAL_FOOD_IMAGES.dried_apricots;
-  if (name.includes('cranberr')) return LOCAL_FOOD_IMAGES.dried_cranberries;
-  if (name.includes('raisin') || name.includes('kismis')) return LOCAL_FOOD_IMAGES.raisins;
+  for (let i = 0; i < FOOD_NAME_RULES.length; i++) {
+    if (FOOD_NAME_RULES[i].pattern.test(name)) {
+      return LOCAL_FOOD_IMAGES[FOOD_NAME_RULES[i].key];
+    }
+  }
 
   // When there is no genuine picture, return undefined so a proper fallback is shown.
   return undefined;

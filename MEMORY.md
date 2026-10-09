@@ -1166,6 +1166,77 @@
       - Static analysis: `npx tsc --noEmit` exits with 0 errors.
       - Full automated test suite: 82/82 test suites passing (448/448 tests 100% green).
 
+24. **Image Best Practices & Canonical Asset Registry Hardening**:
+    - **Offline Safe User Avatar (`src/components/common/UserAvatar.tsx`)**:
+      - Eliminated external Unsplash network fallback (`FALLBACK_REMOTE_SOURCE`).
+      - Made default avatar 100% offline-safe using bundled WebP asset (`DEFAULT_AVATAR_URL = 'asset:men'`).
+      - Added dynamic `onError` fallback so broken remote profile URLs cleanly degrade to the bundled offline asset.
+      - Created comprehensive test suite `src/components/common/__tests__/UserAvatar.test.tsx` (4 tests).
+    - **Canonical Food Image Registry (`src/assets/foodImages.ts`)**:
+      - Replaced procedural 90-line `if/else` substring ladder with declarative, precompiled word-boundary regular expressions (`\b`).
+      - Eliminated critical substring collision bugs: `"lentil"` and `"tortilla"` no longer falsely match `"til"` (sesame seeds); `"pearl barley"` and `"spearmint tea"` no longer match `"pear"`; `"grapefruit"` no longer matches `"green_grapes"`; `"pineapple"` is evaluated with word boundaries so it is no longer intercepted by `"apple"`; `"update"` no longer matches `"dates"`.
+      - Deduplicated static `require()` asset bindings across all 64 authentic WebP assets while preserving 100% backward compatibility for all legacy IDs and aliases.
+      - Created comprehensive test suite `src/assets/__tests__/foodImages.test.ts` (16 tests).
+    - **Robust Vector Badge Themed Fallbacks (`src/components/common/FoodIconBadge.tsx`)**:
+      - Replaced procedural keyword checks with precompiled word-boundary rules and structured category fallback mappings.
+      - Fixed keyword collisions: `"veggie"` no longer matches `"egg"`; `"steak"` no longer matches `"tea"`.
+      - Created test suite `src/components/common/__tests__/FoodIconBadge.test.tsx` (9 tests).
+    - **Verification Gate Benchmark**:
+      - Static analysis: `npx tsc --noEmit` exits with 0 errors.
+      - Full automated test suite: 85/85 test suites passing (478/478 tests 100% green).
+
+25. **Secure User Meal Photo Pipeline, Cloud Isolation & Spark Tier Lifecycle Architecture**:
+    - **Cloud-Enforced Isolation (`storage.rules` & `firebase.json`)**:
+      - Created strict Firebase Storage rules where all reads, writes, and deletes under `/users/{userId}/**` strictly require `request.auth.uid == userId`.
+      - Root-level default deny prevents public scraping, file enumeration, or cross-account access.
+      - Enforced payload constraints: maximum 1 MB for meals (standard compressed meal photos are ~100 KB), maximum 1 MB for avatars, MIME restricted to `image/(jpeg|png|webp)`.
+    - **Offline Sandboxing & Gallery Protection (`mealPhotoService.ts`)**:
+      - Installed and integrated `expo-file-system/legacy` for Expo SDK 57 runtime stability.
+      - User-snapped meal photos are saved directly into the app's sandboxed document directory (`FileSystem.documentDirectory + 'meals/'`).
+      - Deleting or moving photos in the phone's gallery roll or OS temp cache cleaning no longer affects logged meal images.
+    - **Non-Blocking Background Uploads & Guest Protection (`FoodVisionModal.tsx`)**:
+      - UI renders local sandboxed photo optimistically with 0ms perceived latency.
+      - If user is authenticated and not guest, an asynchronous background task uploads to `users/${userId}/meals/${mealId}.jpg` via `firebase/storage`.
+      - Client-side auth checks guarantee that `auth.currentUser.uid === userId` before initiating any upload, completely preventing cross-account uploads.
+      - Guest and anonymous users are safely kept in local document storage without touching Firebase.
+    - **Zero Cloud Function Lifecycle Management (Firebase Free Spark Plan Compliant)**:
+      - **Client-Side Immediate Deletion (`HealthContext.tsx`)**: When a meal is deleted via `removeMealItem(mealId)`, `mealPhotoService.deleteMealPhoto(currentUser?.id, mealId)` immediately deletes both the local sandboxed file and the remote Firebase Storage object.
+      - **Automatic Local Disk Pruning (`HealthContext.tsx`)**: On cold start `loadData()`, `mealPhotoService.pruneOldLocalPhotos(30)` cleans files older than 30 days to enforce a local ~15–20 MB ceiling.
+      - **Account Deletion Full Purge (`HealthContext.tsx`)**: In `deleteAccount()`, `mealPhotoService.deleteAllUserPhotos(uid)` lists and purges all cloud photos under `users/{uid}/meals/` before deleting the auth account, leaving 0 orphaned cloud assets without needing any paid Cloud Functions.
+    - **Unit Test Coverage (`src/services/storage/__tests__/mealPhotoService.test.ts`)**:
+      - 13 automated unit tests verifying local sandboxing, directory creation, base64 decoding, cross-account upload rejection, guest bypass, owner-matching deletion, multi-file user purge, and timestamp-based age pruning.
+    - **Benchmark**:
+      - Static analysis: `npx tsc --noEmit` exits with 0 errors.
+      - Full automated test suite: **86/86 test suites passing (491/491 tests 100% green)**.
+
+26. **Controlled Rolling Window with Fixed Today Anchor (Option C) & Strict Future Date Boundaries**:
+    - **Canonical Date Utilities (`src/utils/dateUtils.ts`)**:
+      - Centralized single source of truth for all timezone-safe local date math.
+      - Functions: `toDateString()`, `parseDateString()`, `isFutureDate()`, `shiftDateClamped()`, `getRollingSevenDays()`, `formatRangeMonthTitle()`.
+      - Constants: `SHORT_DAY_NAMES` (`['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']`), `FULL_DAY_NAMES`, `MONTH_NAMES`, `SHORT_MONTHS`, `WEEKDAY_INITIALS`.
+      - Unit tests: `src/utils/__tests__/dateUtils.test.ts` (18/18 tests green).
+    - **State Layer Hardening (`src/context/HealthContext.tsx`)**:
+      - **Strict Date Ceiling Clamp**: `setSelectedDate` guarantees `resolved > today ? today : resolved`. Future dates can never be set in application state.
+      - **Midnight Rollover & AppState Listener**: Listens to `AppState.addEventListener('change')` and a 30s interval to automatically detect real-world midnight transitions, auto-advancing `selectedDate` to the new Today if the user was on the previous day.
+      - **Guarded shiftDate**: `shiftDate` clamps forward shifts to `getTodayDateString()`.
+      - **Firestore Cold-Start Query (90-Day Bounded Limit)**: Firestore `dailyLogs` queries limit to the most recent 90 days (`limit(90)`), while local AsyncStorage retains indefinite history. Rogue cloud documents with future date keys are rejected during hydration.
+      - **Mutation Guards**: `addMealItem`, `removeMealItem`, `addWater`, and `logWeight` reject operations on future dates (`targetDate > today`), stamping timestamps accurately for historical entries.
+      - **Synchronized Analytics**: `weeklyLogs` uses `getRollingSevenDays(selectedDate, realToday)`.
+    - **Top Date Strip Architecture (`src/components/dashboard/TopDateStrip.tsx`)**:
+      - **Controlled Rolling Window**: Anchored by `windowEnd` clamped to `todayStr`. When viewing today, renders exactly `[today - 6, ..., today]`. All 7 pills are past or present—0 future pills.
+      - **Day Format**: Uses standard `SUN, MON, ...` day labels derived from `d.getDay()`.
+      - **Boundary-Aware Navigation**: Right chevron `>` and left-swipe gesture are strictly disabled when `windowEnd >= todayStr`. Left chevron `<` enables continuous browsing into past weeks.
+      - **Contextual "Today" Pill**: Visible only when viewing past dates; tapping jumps directly to `todayStr`.
+      - **Calendar Modal Guard**: Future dates in the month grid are rendered with disabled touches and muted opacity (`opacity: 0.35`). Forward month button `>` is disabled when viewing the current month.
+      - Unit tests: `src/components/dashboard/__tests__/TopDateStrip.test.tsx` (5/5 tests green).
+    - **Hero Calorie Card Synchronization (`src/features/nutrition/components/HeroCalorieCard.tsx`)**:
+      - Synchronized Slide 1 weekly trend curve with `getRollingSevenDays(selectedDate, todayStr)`.
+      - Timeline pills below the chart display `['SUN', 'MON', ...]` (or `'TODAY'`), matching `TopDateStrip`.
+      - Unit tests: `src/features/nutrition/components/__tests__/HeroCalorieCard.test.tsx` (2/2 tests green).
+    - **Verification Gate Benchmark**:
+      - Static analysis: `npx tsc --noEmit` exits with 0 errors.
+      - Full automated test suite: **89/89 test suites passing (517/517 tests 100% green)**.
+
 
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
