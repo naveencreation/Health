@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { WorkoutActivity, StepLogEntry } from '@/types';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface UseMovementReturn {
   date: string;
@@ -46,7 +47,7 @@ export function useMovement(): UseMovementReturn {
 
   const logForDate = dailyLogs?.[selectedDate] || currentLog;
   const steps = logForDate?.steps || 0;
-  const stepGoal = userGoals?.stepGoal || 10000;
+  const stepGoal = userGoals?.stepGoal || BIOMETRIC_DEFAULTS.stepGoal;
 
   const actualStepPercent = useMemo(() => {
     if (stepGoal <= 0) return 0;

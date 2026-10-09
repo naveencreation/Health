@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { WeightLogEntry } from '@/types';
 import { getTodayBMICategory, BMICategoryItem } from '../utils/bmiCalculator';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface UseWeightReturn {
   date: string;
@@ -60,13 +61,19 @@ export function useWeight(): UseWeightReturn {
   const unit: 'kg' | 'lbs' = userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg';
 
   const logForDate = dailyLogs?.[selectedDate] || currentLog;
-  const currentWeightRaw = logForDate?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
+  const currentWeightRaw =
+    logForDate?.weightKg ?? userGoals.currentWeightKg ?? BIOMETRIC_DEFAULTS.currentWeightKg;
   const currentWeightKg = Math.round(currentWeightRaw * 10) / 10;
 
-  const startWeightRaw = userGoals.startWeightKg
-    ? userGoals.startWeightKg
-    : userGoals.currentWeightKg || 68.0;
-  const targetWeightRaw = userGoals.targetWeightKg ? userGoals.targetWeightKg : 65.0;
+  const startWeightRaw =
+    userGoals.startWeightKg ??
+    userGoals.currentWeightKg ??
+    BIOMETRIC_DEFAULTS.startWeightKg ??
+    68.0;
+  const targetWeightRaw =
+    userGoals.targetWeightKg ??
+    BIOMETRIC_DEFAULTS.targetWeightKg ??
+    65.0;
 
   const startWeightKg = Math.round(startWeightRaw * 10) / 10;
   const targetWeightKg = Math.round(targetWeightRaw * 10) / 10;
@@ -126,7 +133,7 @@ export function useWeight(): UseWeightReturn {
   }, [startWeightKg, targetWeightKg, currentWeightKg]);
 
   // BMI and WHO category
-  const safeHeight = userGoals.heightCm ?? 178;
+  const safeHeight = userGoals.heightCm ?? BIOMETRIC_DEFAULTS.heightCm ?? 175;
   const heightM = safeHeight / 100;
   const bmi = useMemo(() => {
     if (heightM <= 0) return 22.0;

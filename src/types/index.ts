@@ -142,3 +142,38 @@ export interface RegisterData {
   gender?: string;
   heightCm?: number;
 }
+
+export interface OnboardingPlanPayload {
+  biometrics: {
+    name?: string;
+    age: number;
+    sex?: 'female' | 'male' | 'prefer_not_to_say';
+    heightCm: number;
+    weightKg: number;
+    targetWeightKg?: number;
+    goal: string;
+    weightUnit?: 'kg' | 'lbs';
+    heightUnit?: 'cm' | 'ft';
+    firstMeal?: {
+      foodName: string;
+      calories: number;
+      proteinG: number;
+      carbsG: number;
+      fatG: number;
+      portionMultiplier: number;
+      mealSlot?: string;
+      loggedAt?: number;
+      photoUri?: string;
+    };
+  };
+  plan: {
+    dailyCalorieBudget: number;
+    targetProteinG: number;
+    targetCarbsG: number;
+    targetFatG: number;
+    targetFiberG?: number;
+    targetWaterMl: number;
+    stepGoal: number;
+    goalDate?: string;
+  };
+}

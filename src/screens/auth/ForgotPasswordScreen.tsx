@@ -51,7 +51,6 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
       await sendPasswordResetEmail(auth, trimmedEmail);
       setIsSent(true);
     } catch (err: any) {
-      console.log('Firebase password reset error:', err.code, err.message);
       if (err.code === 'auth/user-not-found') {
         setErrorMessage('No account found with this email address.');
       } else if (err.code === 'auth/invalid-email') {

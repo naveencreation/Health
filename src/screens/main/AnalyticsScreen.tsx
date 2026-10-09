@@ -15,10 +15,13 @@ import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DailyLog } from '@/types';
-import { calculateStepMetrics } from '@/utils/stepHistoryUtils';
-import { getBeverageConfig } from '@/utils/beverageUtils';
 import { haptics } from '@/utils/haptics';
 import { usePro, ProPaywallModal } from '@/features/subscription';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { computeCalorieDays, computeMacroRatioDays } from '@/features/nutrition/services';
+import { computeMovementAnalytics } from '@/features/movement/services';
+import { computeHydrationAnalytics } from '@/features/hydration/services';
+import { computeWeightAnalytics } from '@/features/weight/services';
 
 // Standardized Report Components
 import {
@@ -91,39 +94,13 @@ const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 const EmptyAnalyticsState: React.FC<{ title: string; message: string }> = ({ title, message }) => (
   <View style={styles.emptyAnalyticsContainer}>
-    <Ionicons name="bar-chart-outline" size={48} color="#E2E8F0" />
+    <Ionicons name="bar-chart-outline" size={48} color={Colors.borderInset} />
     <Text style={styles.emptyAnalyticsTitle}>{title}</Text>
     <Text style={styles.emptyAnalyticsSubtitle}>{message}</Text>
   </View>
 );
 
-/**
- * Extracts aggregate macronutrients and calories safely from a DailyLog.
- */
-function getLogNutrition(log?: DailyLog) {
-  if (!log) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, burnedCalories: 0 };
-  let calories = 0,
-    protein = 0,
-    carbs = 0,
-    fat = 0,
-    fiber = 0;
-  if (Array.isArray(log.meals)) {
-    log.meals.forEach(m => {
-      calories += m.calories || 0;
-      protein += m.protein || 0;
-      carbs += m.carbs || 0;
-      fat += m.fat || 0;
-      fiber += m.fiber || 0;
-    });
-  }
-  let burnedCalories = 0;
-  if (Array.isArray(log.activities)) {
-    log.activities.forEach(a => {
-      burnedCalories += a.caloriesBurned || 0;
-    });
-  }
-  return { calories, protein, carbs, fat, fiber, burnedCalories };
-}
+
 
 const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   scrollRef,
@@ -187,12 +164,12 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   };
 
   // User Goals with clean fallbacks
-  const dailyCalorieGoal = userGoals.dailyCalorieBudget || 2000;
-  const dailyStepGoal = userGoals.stepGoal || 6000;
-  const dailyWaterGoal = userGoals.waterGoalMl || 2500;
-  const userWeightKg = userGoals.currentWeightKg || 70;
-  const userHeightCm = userGoals.heightCm || 175;
-  const weightUnit = userGoals.weightUnit || 'kg';
+  const dailyCalorieGoal = userGoals.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
+  const dailyStepGoal = userGoals.stepGoal || BIOMETRIC_DEFAULTS.stepGoal;
+  const dailyWaterGoal = userGoals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
+  const userWeightKg = userGoals.currentWeightKg || BIOMETRIC_DEFAULTS.currentWeightKg;
+  const userHeightCm = userGoals.heightCm || BIOMETRIC_DEFAULTS.heightCm;
+  const weightUnit: 'kg' | 'lbs' = userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg';
   const unitFactor = weightUnit === 'lbs' ? 2.20462 : 1;
 
   // Active Report Meta configuration
@@ -345,201 +322,23 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // 1. NUTRITION REPORT DATA
   // =========================================================================
   const calorieDays: DayCalorieIntakeData[] = useMemo(() => {
-    return dateRangeInfo.days.map(item => {
-      if ('log' in item) {
-        const nutrition = getLogNutrition(item.log);
-        return {
-          dateStr: item.dateStr,
-          dayNum: item.dayNum,
-          dayName: item.dayName,
-          calories: nutrition.calories,
-          goalCalories: dailyCalorieGoal,
-          burnedCalories: nutrition.burnedCalories,
-        };
-      }
-
-      // Monthly or Yearly aggregated bucket
-      const dates = (item as any).bucketDates || (item as any).monthDates || [];
-      let totalCal = 0;
-      let activeDaysCount = 0;
-
-      dates.forEach((d: string) => {
-        const nutrition = getLogNutrition(dailyLogs[d]);
-        if (nutrition.calories > 0) {
-          totalCal += nutrition.calories;
-          activeDaysCount++;
-        }
-      });
-
-      const avgCal = activeDaysCount > 0 ? Math.round(totalCal / activeDaysCount) : 0;
-      return {
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        calories: avgCal,
-        goalCalories: dailyCalorieGoal,
-      };
-    });
+    return computeCalorieDays(dateRangeInfo.days as any, dailyCalorieGoal, dailyLogs);
   }, [dateRangeInfo.days, dailyCalorieGoal, dailyLogs]);
 
-  // 100% Stacked Macronutrient Distribution Days
   const macroRatioDays: DayMacroRatioData[] = useMemo(() => {
-    // Determine user's target fallback ratio if day has 0 food logged
-    const targetCarbsKcal = (userGoals?.targetCarbs || 225) * 4;
-    const targetProteinKcal = (userGoals?.targetProtein || 100) * 4;
-    const targetFatKcal = (userGoals?.targetFat || 78) * 9;
-    const targetTotalKcal = targetCarbsKcal + targetProteinKcal + targetFatKcal;
-    const defaultCarbsPct =
-      targetTotalKcal > 0 ? Math.round((targetCarbsKcal / targetTotalKcal) * 100) : 45;
-    const defaultProteinPct =
-      targetTotalKcal > 0 ? Math.round((targetProteinKcal / targetTotalKcal) * 100) : 20;
-    const defaultFatPct = Math.max(0, 100 - defaultCarbsPct - defaultProteinPct);
-
-    return dateRangeInfo.days.map(item => {
-      let proteinG = 0;
-      let carbsG = 0;
-      let fatG = 0;
-      let fiberG = 0;
-
-      if ('log' in item) {
-        const nutrition = getLogNutrition(item.log);
-        proteinG = Math.round(nutrition.protein * 10) / 10;
-        carbsG = Math.round(nutrition.carbs * 10) / 10;
-        fatG = Math.round(nutrition.fat * 10) / 10;
-        fiberG = Math.round(nutrition.fiber * 10) / 10;
-      } else {
-        const dates = (item as any).bucketDates || (item as any).monthDates || [];
-        let pSum = 0,
-          cSum = 0,
-          fSum = 0,
-          fibSum = 0,
-          count = 0;
-        dates.forEach((d: string) => {
-          const nutrition = getLogNutrition(dailyLogs[d]);
-          if (nutrition.calories > 0) {
-            pSum += nutrition.protein;
-            cSum += nutrition.carbs;
-            fSum += nutrition.fat;
-            fibSum += nutrition.fiber;
-            count++;
-          }
-        });
-        if (count > 0) {
-          proteinG = Math.round((pSum / count) * 10) / 10;
-          carbsG = Math.round((cSum / count) * 10) / 10;
-          fatG = Math.round((fSum / count) * 10) / 10;
-          fiberG = Math.round((fibSum / count) * 10) / 10;
-        }
-      }
-
-      const cKcal = carbsG * 4;
-      const pKcal = proteinG * 4;
-      const fKcal = fatG * 9;
-      const totalKcal = cKcal + pKcal + fKcal;
-
-      let carbsPct = defaultCarbsPct;
-      let proteinPct = defaultProteinPct;
-      let fatPct = defaultFatPct;
-
-      if (totalKcal > 0) {
-        carbsPct = Math.round((cKcal / totalKcal) * 100);
-        proteinPct = Math.round((pKcal / totalKcal) * 100);
-        fatPct = Math.max(0, 100 - carbsPct - proteinPct);
-      }
-
-      return {
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        carbsPct,
-        proteinPct,
-        fatPct,
-        carbsGrams: carbsG,
-        proteinGrams: proteinG,
-        fatGrams: fatG,
-        fiberGrams: fiberG,
-        carbs: carbsG,
-        protein: proteinG,
-        fat: fatG,
-        fiber: fiberG,
-      };
-    });
+    return computeMacroRatioDays(dateRangeInfo.days as any, userGoals, dailyLogs);
   }, [dateRangeInfo.days, dailyLogs, userGoals]);
 
   // =========================================================================
   // 2. STEP REPORT DATA
   // =========================================================================
   const { stepDays, calorieBurnDays, timeDays, stepSummary } = useMemo(() => {
-    let totalSteps = 0;
-    let totalCalories = 0;
-    let totalDistanceKm = 0;
-    let totalDurationMinutes = 0;
-
-    const sDays: DayStepData[] = [];
-    const cDays: DayCalorieData[] = [];
-    const tDays: DayTimeData[] = [];
-
-    dateRangeInfo.days.forEach(item => {
-      let steps = 0;
-
-      if ('log' in item) {
-        steps = item.log?.steps || 0;
-      } else {
-        const dates = (item as any).bucketDates || (item as any).monthDates || [];
-        let bucketSum = 0;
-        let count = 0;
-        dates.forEach((d: string) => {
-          const s = dailyLogs[d]?.steps;
-          if (s && s > 0) {
-            bucketSum += s;
-            count++;
-          }
-        });
-        steps = count > 0 ? Math.round(bucketSum / count) : 0;
-      }
-
-      totalSteps += steps;
-
-      const metrics = calculateStepMetrics(steps, userWeightKg);
-      totalCalories += metrics.calories;
-      totalDistanceKm += metrics.distanceKm;
-      totalDurationMinutes += metrics.durationMinutes;
-
-      sDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        steps,
-        goalSteps: dailyStepGoal,
-        completionPct: dailyStepGoal > 0 ? Math.round((steps / dailyStepGoal) * 100) : 0,
-      });
-
-      cDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        calories: metrics.calories,
-      });
-
-      tDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        durationMinutes: metrics.durationMinutes,
-      });
-    });
-
-    return {
-      stepDays: sDays,
-      calorieBurnDays: cDays,
-      timeDays: tDays,
-      stepSummary: {
-        totalSteps,
-        totalCalories,
-        totalDistanceKm: Number(totalDistanceKm.toFixed(1)),
-        totalDurationMinutes,
-      },
-    };
+    return computeMovementAnalytics(
+      dateRangeInfo.days as any,
+      dailyLogs,
+      dailyStepGoal,
+      userWeightKg
+    );
   }, [dateRangeInfo.days, dailyLogs, dailyStepGoal, userWeightKg]);
 
   // =========================================================================
@@ -547,122 +346,24 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // =========================================================================
   const { waterCompletionDays, hydrateDays, drinkTypesBreakdown, totalDrinkVolume } =
     useMemo(() => {
-      const cDays: DayCompletionData[] = [];
-      const hDays: DayHydrateData[] = [];
-      const beverageMap: Record<string, number> = {};
-      let grandVolumeMl = 0;
-
-      dateRangeInfo.days.forEach(item => {
-        let ml = 0;
-
-        if ('log' in item) {
-          ml = item.log?.waterMl || 0;
-          item.log?.waterEntries?.forEach(wl => {
-            const bevId = wl.beverageType || 'water';
-            beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
-            grandVolumeMl += wl.amountMl || 0;
-          });
-        } else {
-          const dates = (item as any).bucketDates || (item as any).monthDates || [];
-          let bucketSum = 0;
-          let count = 0;
-          dates.forEach((d: string) => {
-            const w = dailyLogs[d]?.waterMl;
-            if (w && w > 0) {
-              bucketSum += w;
-              count++;
-            }
-            dailyLogs[d]?.waterEntries?.forEach(wl => {
-              const bevId = wl.beverageType || 'water';
-              beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
-              grandVolumeMl += wl.amountMl || 0;
-            });
-          });
-          ml = count > 0 ? Math.round(bucketSum / count) : 0;
-        }
-
-        cDays.push({
-          dateStr: item.dateStr,
-          dayNum: item.dayNum,
-          dayName: item.dayName,
-          intakeMl: ml,
-          goalMl: dailyWaterGoal,
-          completionPct: dailyWaterGoal > 0 ? Math.round((ml / dailyWaterGoal) * 100) : 0,
-        });
-
-        hDays.push({
-          dateStr: item.dateStr,
-          dayNum: item.dayNum,
-          dayName: item.dayName,
-          intakeMl: ml,
-        });
-      });
-
-      const breakdown: DrinkTypeBreakdown[] = Object.keys(beverageMap).map(bevId => {
-        const cfg = getBeverageConfig(bevId);
-        const volumeMl = beverageMap[bevId];
-        return {
-          id: bevId,
-          name: cfg.name,
-          color: cfg.color,
-          amountMl: volumeMl,
-          pct: grandVolumeMl > 0 ? Math.round((volumeMl / grandVolumeMl) * 100) : 0,
-        };
-      });
-
-      breakdown.sort((a, b) => b.amountMl - a.amountMl);
-
-      return {
-        waterCompletionDays: cDays,
-        hydrateDays: hDays,
-        drinkTypesBreakdown: breakdown,
-        totalDrinkVolume: grandVolumeMl,
-      };
+      return computeHydrationAnalytics(
+        dateRangeInfo.days as any,
+        dailyLogs,
+        dailyWaterGoal
+      );
     }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
 
   // =========================================================================
   // 4. WEIGHT REPORT DATA
   // =========================================================================
   const { weightTrendDays, weightSummary } = useMemo(() => {
-    const tDays: DayWeightTrendData[] = [];
-    let latestWeight = userWeightKg;
-
-    dateRangeInfo.days.forEach(item => {
-      let w = userWeightKg;
-
-      if ('log' in item && item.log?.weightKg) {
-        w = item.log.weightKg;
-        latestWeight = w;
-      }
-
-      const displayWeight = Number((w * unitFactor).toFixed(1));
-      tDays.push({
-        dateStr: item.dateStr,
-        dayNum: item.dayNum,
-        dayName: item.dayName,
-        weightKg: w,
-        displayWeight,
-      });
-    });
-
-    const startW = userGoals.startWeightKg || latestWeight;
-    const currentW = latestWeight;
-    const targetW = userGoals.targetWeightKg || 68;
-    const netChange = currentW - startW;
-
-    const summary: WeightSummaryData = {
-      currentWeightKg: Number(currentW.toFixed(1)),
-      startWeightKg: Number(startW.toFixed(1)),
-      targetWeightKg: Number(targetW.toFixed(1)),
-      netChangeKg: Number(netChange.toFixed(1)),
-      avgWeightKg: Number(currentW.toFixed(1)),
-      unit: weightUnit,
-    };
-
-    return {
-      weightTrendDays: tDays,
-      weightSummary: summary,
-    };
+    return computeWeightAnalytics(
+      dateRangeInfo.days as any,
+      userWeightKg,
+      userGoals,
+      weightUnit,
+      unitFactor
+    );
   }, [dateRangeInfo.days, userWeightKg, unitFactor, weightUnit, userGoals]);
 
   // Date Navigation Handlers

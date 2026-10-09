@@ -1147,6 +1147,26 @@
       - Added `AccessibilityInfo.isReduceMotionEnabled()` check to disable infinite bouncing and keep dots resting when reduced motion is preferred.
     - **Verification**: `npx tsc --noEmit` cleanly passed (0 errors); all 72/72 test suites (401/401 tests) passing 100% green.
 
+23. **Codebase Modularization & Architecture Cleanup (Industry-Standard Modular System)**:
+    - **Single-Source Biometric Architecture (`src/constants/biometricDefaults.ts`)**:
+      - Replaced fragmented duplicate constants (`2000` vs `2213`, `1250` vs `2500` mL, `10000` vs `8000` steps) with canonical single source of truth `BIOMETRIC_DEFAULTS`.
+    - **Domain Analytics & Hook Decoupling (`src/features/`)**:
+      - Extracted pure, functional calculations for hydration, movement, nutrition, and weight into `services/*Analytics.ts` modules.
+      - Refactored feature hooks (`useHydration`, `useMovement`, `useNutrition`, `useWeight`) to delegate directly to domain calculation services.
+    - **Code Hygiene & Type Hardening**:
+      - Purged internal `console.log` debugging statements across auth, movement, healthService, healthConnect, and HealthContext.
+      - Introduced strict `OnboardingPlanPayload` in `src/types/index.ts`, replacing all lingering `any` types in HealthContext public methods.
+    - **Declarative Modal Mounting with `<OverlayHost />` (`src/navigation/OverlayHost.tsx`)**:
+      - Centralized rendering of 8 modal sheets and 3 slide-in sub-screens (`WaterTracker`, `WeightTracker`, `StepTracker`) into `<OverlayHost />`.
+      - Reduced `App.tsx` from 843 lines down to ~370 lines by eliminating 12 manual `useState(false)` boolean flags and the manual `BackHandler` ladder.
+    - **Modular Domain Context Architecture (`src/context/`)**:
+      - Extracted dedicated domain modules: `src/context/auth/`, `src/context/goals/`, `src/context/logs/`, and `src/context/food/`.
+      - Connected `HealthContext.tsx` as a composition layer providing 100% backward-compatible hook and helper exports.
+    - **Test Suite Benchmark**:
+      - Static analysis: `npx tsc --noEmit` exits with 0 errors.
+      - Full automated test suite: 82/82 test suites passing (448/448 tests 100% green).
+
+
 
 - **Pure State Updaters & Zero Side-Effects in `setState` (`WelcomeScreen.tsx`)**: In React 18/19 (especially Web & Concurrent Mode), invoking parent callbacks or state setters (`onOnboardingEndRef.current?.()`, `onClose()`) inside `setState(prev => ...)` updaters causes `Cannot update a component while rendering a different component`. Extracted all side-effects out of `setHistory` updater into `popMode()` event handler.
 - **Springs → `withTiming`.** The user preferred simple, fast, predictable timing over spring physics for press feedback (springs felt "unnatural"/bouncy). Press feedback uses `withTiming` (~80–120ms), toast/tooltip ~150–180ms, ruler snap-back 200ms.

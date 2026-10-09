@@ -70,7 +70,6 @@ export async function getStepsForDate(dateStr: string): Promise<{ steps: number;
 
     const aggregateTotal = result?.COUNT_TOTAL ?? 0;
     if (aggregateTotal > 0) {
-      console.log('[healthService] Got aggregate steps for:', dateStr, aggregateTotal);
       return {
         steps: Math.round(aggregateTotal),
         records: records || [],
@@ -80,13 +79,6 @@ export async function getStepsForDate(dateStr: string): Promise<{ steps: number;
     // Fallback to summing raw records if aggregate returns 0
     if (Array.isArray(records) && records.length > 0) {
       const sum = records.reduce((acc, r: any) => acc + (r.count || 0), 0);
-      console.log(
-        '[healthService] Got sum from raw records for:',
-        dateStr,
-        sum,
-        'from records:',
-        records.length
-      );
       return {
         steps: Math.round(sum),
         records,

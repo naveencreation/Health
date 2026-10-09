@@ -20,6 +20,7 @@ import {
   RegisterData,
   WaterLogEntry,
   WeightLogEntry,
+  OnboardingPlanPayload,
 } from '@/types';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
@@ -101,50 +102,20 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
   };
 };
 
+import { HealthSyncService } from '@/services/sync/healthSyncService';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+
 /**
  * Recursively strips any keys with `undefined` values from an object or array.
  * Firestore crashes if any property value is `undefined`.
  */
 export function sanitizeForFirestore<T>(data: T): T {
-  if (data === null || data === undefined) return data;
-  if (Array.isArray(data)) {
-    return data.map(item => sanitizeForFirestore(item)) as unknown as T;
-  }
-  if (typeof data === 'object' && !(data instanceof Date)) {
-    const cleaned: Record<string, any> = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        cleaned[key] = sanitizeForFirestore(value);
-      }
-    }
-    return cleaned as T;
-  }
-  return data;
+  return HealthSyncService.sanitizeForFirestore(data);
 }
 
 const DEFAULT_GOALS: UserGoals = {
-  dailyCalorieBudget: 2213,
-  targetProtein: 90,
-  targetCarbs: 110,
-  targetFat: 70,
-  targetFiber: 30,
-  waterGoalMl: 2500,
-  stepGoal: 10000,
-  currentWeightKg: 68.0,
-  targetWeightKg: 65.0,
-  streakDays: 1,
-  avatarUrl: DEFAULT_AVATAR_URL,
+  ...BIOMETRIC_DEFAULTS,
   name: 'User',
-  age: 24,
-  gender: 'male',
-  goal: 'maintain',
-  weightUnit: 'kg',
-  heightCm: 175,
-  startWeightKg: 68.0,
-  riaTone: 'supportive',
-  waterReminder: true,
-  mealReminder: true,
-  stepReminder: false,
 };
 
 export const getTodayDateString = (date = new Date()): string => {
@@ -182,110 +153,6 @@ export const computeStreak = (logs: Record<string, DailyLog>): number => {
   return Math.max(streak, 1); // minimum streak of 1
 };
 
-// Generate realistic starter log for immediate rich Healthify experience
-const createInitialSampleLog = (dateStr: string): DailyLog => {
-  return {
-    date: dateStr,
-    waterMl: 1250, // 5 glasses
-    steps: 4620,
-    meals: [
-      {
-        id: 'sample_1',
-        foodId: 'idli_steamed',
-        name: 'Steamed Idli (2 pcs)',
-        mealType: 'breakfast',
-        servingUnit: 'plate (2 pcs)',
-        quantity: 1,
-        calories: 130,
-        carbs: 27,
-        protein: 4.2,
-        fat: 0.6,
-        fiber: 1.8,
-        loggedAt: new Date().toISOString(),
-      },
-      {
-        id: 'sample_2',
-        foodId: 'bread_omelette',
-        name: 'Fluffy Bread Omelette',
-        mealType: 'breakfast',
-        servingUnit: '1 sandwich',
-        quantity: 1,
-        calories: 240,
-        carbs: 26,
-        protein: 12.0,
-        fat: 10.0,
-        fiber: 2.0,
-        loggedAt: new Date().toISOString(),
-      },
-      {
-        id: 'sample_3',
-        foodId: 'apple_medium',
-        name: 'Crisp Apple (Medium)',
-        mealType: 'breakfast',
-        servingUnit: 'piece (150g)',
-        quantity: 1,
-        calories: 80,
-        carbs: 20,
-        protein: 0.4,
-        fat: 0.2,
-        fiber: 4.0,
-        loggedAt: new Date().toISOString(),
-      },
-      {
-        id: 'sample_4',
-        foodId: 'roti_chapati',
-        name: 'Whole Wheat Roti / Chapati',
-        mealType: 'lunch',
-        servingUnit: 'piece',
-        quantity: 2,
-        calories: 170,
-        carbs: 32,
-        protein: 6.4,
-        fat: 1.6,
-        fiber: 5.0,
-        loggedAt: new Date().toISOString(),
-      },
-      {
-        id: 'sample_5',
-        foodId: 'paneer_butter_masala',
-        name: 'Paneer Butter Masala',
-        mealType: 'lunch',
-        servingUnit: 'katori (150g)',
-        quantity: 1,
-        calories: 260,
-        carbs: 12,
-        protein: 9.5,
-        fat: 19.5,
-        fiber: 2.0,
-        loggedAt: new Date().toISOString(),
-      },
-      {
-        id: 'sample_6',
-        foodId: 'curd_rice',
-        name: 'Curd Rice (Thayir Sadam)',
-        mealType: 'lunch',
-        servingUnit: 'katori (150g)',
-        quantity: 1,
-        calories: 190,
-        carbs: 28,
-        protein: 5.2,
-        fat: 6.5,
-        fiber: 1.2,
-        loggedAt: new Date().toISOString(),
-      },
-    ],
-    activities: [
-      {
-        id: 'act_1',
-        name: 'Morning Brisk Walk',
-        durationMinutes: 25,
-        caloriesBurned: 120,
-        loggedAt: new Date().toISOString(),
-      },
-    ],
-  };
-};
-
 export interface HealthContextType {
   selectedDate: string;
   setSelectedDate: (date: string) => void;
@@ -316,7 +183,7 @@ export interface HealthContextType {
   addSteps: (stepsCount: number) => void;
   removeStepEntry: (id: string, date?: string) => void;
   batchUpdateDailySteps: (
-    updates: Array<{ dateStr: string; steps: number; records?: any[] }>
+    updates: Array<{ dateStr: string; steps: number; records?: unknown[] }>
   ) => void;
   logWeight: (
     weightKg: number,
@@ -344,72 +211,40 @@ export interface HealthContextType {
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => Promise<void>;
-  applyOnboardingPlan: (data: any) => Promise<void>;
+  applyOnboardingPlan: (data: OnboardingPlanPayload) => Promise<void>;
 }
 
 export const HealthContext = createContext<HealthContextType | undefined>(undefined);
 
-export type AuthContextValue = Pick<
-  HealthContextType,
-  | 'currentUser'
-  | 'isAuthenticated'
-  | 'isAuthLoading'
-  | 'login'
-  | 'register'
-  | 'loginAnonymous'
-  | 'logout'
-  | 'deleteAccount'
-  | 'loginDemo'
-  | 'applyOnboardingPlan'
->;
+import { AuthContext, AuthContextValue, useAuth } from './auth';
+import { GoalsContext, GoalsContextValue, useGoals } from './goals';
+import {
+  DailyLogContext,
+  AnalyticsContext,
+  DailyLogContextValue,
+  AnalyticsContextValue,
+  useDailyLog,
+  useAnalytics,
+} from './logs';
+import { FoodContext, FoodContextValue, useFoodData } from './food';
 
-export type GoalsContextValue = Pick<HealthContextType, 'userGoals' | 'updateGoals'>;
-
-export type DailyLogContextValue = Pick<
-  HealthContextType,
-  | 'selectedDate'
-  | 'setSelectedDate'
-  | 'shiftDate'
-  | 'dailyLogs'
-  | 'currentLog'
-  | 'totalConsumed'
-  | 'totalBurned'
-  | 'remainingCalories'
-  | 'totalCarbs'
-  | 'totalProtein'
-  | 'totalFat'
-  | 'totalFiber'
-  | 'mealsByType'
-  | 'mealCalories'
-  | 'addMealItem'
-  | 'removeMealItem'
-  | 'updateMealQuantity'
-  | 'addWater'
-  | 'removeWaterEntry'
-  | 'updateWaterEntry'
-  | 'resetWater'
-  | 'addWorkout'
-  | 'removeWorkout'
-  | 'addSteps'
-  | 'removeStepEntry'
-  | 'batchUpdateDailySteps'
-  | 'logWeight'
-  | 'updateWeightEntry'
-  | 'deleteWeightEntry'
->;
-
-export type AnalyticsContextValue = Pick<HealthContextType, 'weeklyLogs' | 'dailyLogs'>;
-
-export type FoodContextValue = Pick<
-  HealthContextType,
-  'foodDatabase' | 'addCustomFood' | 'deleteCustomFood'
->;
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-const GoalsContext = createContext<GoalsContextValue | undefined>(undefined);
-const DailyLogContext = createContext<DailyLogContextValue | undefined>(undefined);
-const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined);
-const FoodContext = createContext<FoodContextValue | undefined>(undefined);
+export {
+  AuthContext,
+  AuthContextValue,
+  useAuth,
+  GoalsContext,
+  GoalsContextValue,
+  useGoals,
+  DailyLogContext,
+  AnalyticsContext,
+  DailyLogContextValue,
+  AnalyticsContextValue,
+  useDailyLog,
+  useAnalytics,
+  FoodContext,
+  FoodContextValue,
+  useFoodData,
+};
 
 export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
@@ -740,9 +575,13 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // Initialize today if not present
         if (!parsedLogs[todayStr]) {
-          parsedLogs[todayStr] = isGuest
-            ? createInitialSampleLog(todayStr)
-            : { date: todayStr, meals: [], waterMl: 0, steps: 0, activities: [] };
+          parsedLogs[todayStr] = {
+            date: todayStr,
+            meals: [],
+            waterMl: 0,
+            steps: 0,
+            activities: [],
+          };
         }
 
         setDailyLogs(parsedLogs);
@@ -1404,7 +1243,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const batchUpdateDailySteps = useCallback(
-    (updates: Array<{ dateStr: string; steps: number; records?: any[] }>) => {
+    (updates: Array<{ dateStr: string; steps: number; records?: unknown[] }>) => {
       if (!updates || updates.length === 0) return;
 
       setDailyLogs(prev => {
@@ -1940,7 +1779,6 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           return { success: true };
         } catch (fbErr: any) {
-          console.log('Firebase login error:', fbErr.code, fbErr.message);
           if (
             fbErr.code === 'auth/invalid-credential' ||
             fbErr.code === 'auth/wrong-password' ||
@@ -2145,7 +1983,6 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           return { success: true };
         } catch (fbErr: any) {
-          console.log('Firebase register error:', fbErr.code, fbErr.message);
           if (fbErr.code === 'auth/email-already-in-use') {
             return { success: false, error: 'This email is already registered. Please sign in.' };
           }
@@ -2190,8 +2027,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       await firebaseSignOut(auth);
-    } catch (e) {
-      console.log('Firebase signOut error:', e);
+    } catch {
+      // Ignored
     } finally {
       const todayStr = getTodayDateString();
       const emptyLog: DailyLog = {
@@ -2261,7 +2098,6 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           await deleteUser(fbUser);
         } catch (authErr: any) {
-          console.log('Firebase deleteUser error:', authErr.code, authErr.message);
           isLoggingOutRef.current = false;
           if (authErr.code === 'auth/requires-recent-login') {
             return {
@@ -2359,40 +2195,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const applyOnboardingPlan = useCallback(
-    async (data: {
-      biometrics: {
-        name?: string;
-        age: number;
-        sex?: 'female' | 'male' | 'prefer_not_to_say';
-        heightCm: number;
-        weightKg: number;
-        targetWeightKg?: number;
-        goal: string;
-        weightUnit?: 'kg' | 'lbs';
-        heightUnit?: 'cm' | 'ft';
-        firstMeal?: {
-          foodName: string;
-          calories: number;
-          proteinG: number;
-          carbsG: number;
-          fatG: number;
-          portionMultiplier: number;
-          mealSlot?: string;
-          loggedAt?: number;
-          photoUri?: string;
-        };
-      };
-      plan: {
-        dailyCalorieBudget: number;
-        targetProteinG: number;
-        targetCarbsG: number;
-        targetFatG: number;
-        targetFiberG?: number;
-        targetWaterMl: number;
-        stepGoal: number;
-        goalDate?: string;
-      };
-    }) => {
+    async (data: OnboardingPlanPayload) => {
       try {
         const todayStr = getTodayDateString();
         const uid = auth.currentUser?.uid || currentUser?.id || 'guest';
@@ -2730,16 +2533,4 @@ export const useHealth = () => {
   return context;
 };
 
-const useRequiredContext = <T,>(context: React.Context<T | undefined>, name: string): T => {
-  const value = useContext(context);
-  if (!value) {
-    throw new Error(`${name} must be used within HealthProvider`);
-  }
-  return value;
-};
 
-export const useAuth = () => useRequiredContext(AuthContext, 'useAuth');
-export const useGoals = () => useRequiredContext(GoalsContext, 'useGoals');
-export const useDailyLog = () => useRequiredContext(DailyLogContext, 'useDailyLog');
-export const useAnalytics = () => useRequiredContext(AnalyticsContext, 'useAnalytics');
-export const useFoodData = () => useRequiredContext(FoodContext, 'useFoodData');

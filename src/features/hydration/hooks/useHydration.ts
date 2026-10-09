@@ -1,6 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useDailyLog, useGoals, useAuth } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
+import { BIOMETRIC_DEFAULTS, HYDRATION_DEFAULTS } from '@/constants/biometricDefaults';
+import { ScopedStorage } from '@/services/storage/scopedStorage';
 
 export interface UseHydrationReturn {
   date: string;
@@ -38,11 +40,30 @@ export function useHydration(): UseHydrationReturn {
   } = useDailyLog();
 
   const { userGoals, updateGoals } = useGoals();
-  const [cupSizeMl, setCupSizeState] = useState<number>(250);
+  const authContext = typeof useAuth === 'function' ? useAuth() : undefined;
+  const currentUserId = authContext?.currentUser?.id;
+
+  const [cupSizeMl, setCupSizeState] = useState<number>(HYDRATION_DEFAULTS.defaultCupSizeMl);
+
+  useEffect(() => {
+    let isMounted = true;
+    ScopedStorage.getItem<number>(
+      'water_cup_pref',
+      currentUserId,
+      HYDRATION_DEFAULTS.defaultCupSizeMl
+    ).then(val => {
+      if (isMounted && typeof val === 'number') {
+        setCupSizeState(val);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUserId]);
 
   const logForDate = dailyLogs?.[selectedDate] || currentLog;
   const currentWaterMl = logForDate?.waterMl || 0;
-  const targetWaterMl = userGoals?.waterGoalMl || 2500;
+  const targetWaterMl = userGoals?.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
 
   const percentage = useMemo(() => {
     if (targetWaterMl <= 0) return 0;
@@ -91,9 +112,14 @@ export function useHydration(): UseHydrationReturn {
     [updateGoals]
   );
 
-  const setCupSize = useCallback((cupMl: number) => {
-    setCupSizeState(Math.max(50, cupMl));
-  }, []);
+  const setCupSize = useCallback(
+    (cupMl: number) => {
+      const valid = Math.max(50, cupMl);
+      setCupSizeState(valid);
+      ScopedStorage.setItem('water_cup_pref', valid, currentUserId).catch(() => {});
+    },
+    [currentUserId]
+  );
 
   return {
     date: selectedDate,

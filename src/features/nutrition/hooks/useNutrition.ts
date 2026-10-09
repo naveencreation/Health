@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { LoggedMealItem, MealType, FoodItem } from '@/types';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface UseNutritionReturn {
   date: string;
@@ -66,7 +67,7 @@ export function useNutrition(): UseNutritionReturn {
   const updateGoals = goalsContext?.updateGoals || (() => {});
 
   const logForDate = dailyLogs?.[selectedDate] || currentLog;
-  const calorieBudget = userGoals?.dailyCalorieBudget || 2000;
+  const calorieBudget = userGoals?.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
   const caloriesConsumed = totalConsumed ?? 0;
   const caloriesBurned = totalBurned ?? 0;
   const remainingCalories =
@@ -87,10 +88,10 @@ export function useNutrition(): UseNutritionReturn {
   const consumedFat = totalFat ?? 0;
   const consumedFiber = totalFiber ?? 0;
 
-  const targetCarbs = userGoals?.targetCarbs || 250;
-  const targetProtein = userGoals?.targetProtein || 65;
-  const targetFat = userGoals?.targetFat || 65;
-  const targetFiber = userGoals?.targetFiber || 30;
+  const targetCarbs = userGoals?.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs;
+  const targetProtein = userGoals?.targetProtein || BIOMETRIC_DEFAULTS.targetProtein;
+  const targetFat = userGoals?.targetFat || BIOMETRIC_DEFAULTS.targetFat;
+  const targetFiber = userGoals?.targetFiber || BIOMETRIC_DEFAULTS.targetFiber;
 
   const carbsPercent = useMemo(() => {
     if (targetCarbs <= 0) return 0;

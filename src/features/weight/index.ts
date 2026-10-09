@@ -15,3 +15,4 @@ export * from './modals/LogWeightModal';
 export * from './modals/WeightGoalSettingsModal';
 
 export * from './hooks/useWeight';
+export * from './services';

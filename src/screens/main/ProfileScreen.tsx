@@ -25,6 +25,8 @@ import { MetabolicSummaryScreen, PreferencesScreen, GoalsScreen } from '@/screen
 import { AchievementCenterScreen } from '@/features/gamification';
 import { usePro, ProMembershipCard, ProPaywallModal } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { getTodayBMICategory } from '@/features/weight/utils/bmiCalculator';
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
@@ -129,23 +131,20 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   };
 
   // Derived Biometrics & Health Baseline
-  const weightNum = userGoals.currentWeightKg || 74.2;
-  const targetWeightNum = userGoals.targetWeightKg || 68.0;
+  const weightNum = userGoals.currentWeightKg || BIOMETRIC_DEFAULTS.currentWeightKg;
+  const targetWeightNum = userGoals.targetWeightKg || BIOMETRIC_DEFAULTS.targetWeightKg;
   const startWeight = userGoals.startWeightKg || userGoals.currentWeightKg || weightNum;
-  const heightNum = userGoals.heightCm || 178;
+  const heightNum = userGoals.heightCm || BIOMETRIC_DEFAULTS.heightCm || 175;
   const heightM = heightNum / 100;
   const bmi = (weightNum / (heightM * heightM)).toFixed(1);
   const bmiNum = parseFloat(bmi);
 
-  const getBmiStatus = (val: number) => {
-    if (val < 18.5) return { label: 'Underweight', color: '#3B82F6' };
-    if (val < 25) return { label: 'Healthy Weight', color: Colors.protein };
-    if (val < 30) return { label: 'Overweight', color: '#D97706' };
-    return { label: 'Obese', color: Colors.primary };
+  const bmiCategoryItem = getTodayBMICategory(bmiNum);
+  const bmiStatus = {
+    label: bmiCategoryItem.name === 'Normal' ? 'Healthy Weight' : bmiCategoryItem.name,
+    color: bmiCategoryItem.color,
   };
-
-  const bmiStatus = getBmiStatus(bmiNum);
-  const streakDays = userGoals.streakDays || 7;
+  const streakDays = userGoals.streakDays || BIOMETRIC_DEFAULTS.streakDays || 1;
 
   return (
     <View style={styles.rootContainer}>

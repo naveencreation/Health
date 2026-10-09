@@ -13,5 +13,6 @@ export * from './screens/StepTrackerScreen';
 export * from './screens/StepReportScreen';
 
 export * from './hooks/useMovement';
+export * from './services';
 
 export * from '@/features/health';

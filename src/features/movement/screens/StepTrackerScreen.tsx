@@ -246,8 +246,6 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
         todayCount = await getTodaySteps();
         records = await getTodayStepsRecords();
       }
-
-      console.log('[StepTrackerScreen] Step count received:', todayCount);
       setSteps(todayCount);
       setHealthRecords(records);
 
