@@ -50,6 +50,7 @@ import {
   mapHealthConnectRecordsToStepEntries,
   synthesizeSessionsFromTotal,
 } from '@/utils/stepHistoryUtils';
+import { Monitoring } from '@/services/monitoring';
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -766,6 +767,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
         };
         setCurrentUser(userObj);
+        Monitoring.setUserId(fbUser.uid);
+        Monitoring.logEvent('user_session_start', { isAnonymous: fbUser.isAnonymous });
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
         // Hydrate from cloud if not already hydrated for this user
@@ -774,6 +777,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         // No Firebase user logged in
+        Monitoring.setUserId(null);
         if (!isLoggingOutRef.current) {
           const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH);
           const parsed = savedAuth ? JSON.parse(savedAuth) : null;
@@ -1062,6 +1066,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           },
         };
       });
+      Monitoring.logEvent('meal_logged', {
+        meal_type: mealType,
+        calories: Math.round(newItem.calories),
+      });
       return newItem;
     },
     [selectedDate]
@@ -1201,6 +1209,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           },
         };
       });
+      Monitoring.logEvent('water_logged', { amount_ml: ml });
     },
     [selectedDate]
   );

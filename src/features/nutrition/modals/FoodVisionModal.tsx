@@ -20,6 +20,7 @@ import { MealType, FoodItem } from '@/types';
 import { useFoodData, useDailyLog } from '@/context/HealthContext';
 import { AIService, FoodVisionResult, AIError, AIErrorMapper } from '@/services/ai';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
+import { Monitoring } from '@/services/monitoring';
 
 interface FoodVisionModalProps {
   visible: boolean;
@@ -84,9 +85,16 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
       const mimeType = asset.mimeType || 'image/jpeg';
       const result = await AIService.analyzeFoodImage(asset.base64, mimeType);
       setAnalysisResult(result);
+      Monitoring.logEvent('food_vision_success', {
+        food_name: result.name,
+        calories: result.calories,
+      });
     } catch (err: any) {
       const mapped = AIErrorMapper.fromRawError(err);
       setAnalysisError(mapped);
+      Monitoring.recordError(err, 'AIService.analyzeFoodImage failed', {
+        errorType: mapped.type,
+      });
     } finally {
       setIsAnalyzing(false);
     }

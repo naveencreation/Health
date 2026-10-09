@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 
+import { Monitoring } from '@/services/monitoring';
+
 interface Props {
   children: ReactNode;
 }
@@ -25,6 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an unhandled error:', error, errorInfo);
+    Monitoring.recordError(error, 'React ErrorBoundary Catch', {
+      componentStack: (errorInfo.componentStack || '').slice(0, 1000),
+    });
   }
 
   private handleReload = () => {

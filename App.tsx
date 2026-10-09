@@ -20,6 +20,7 @@ import { Colors } from '@/theme/colors';
 import { MealType } from '@/types';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
+import { Monitoring } from '@/services/monitoring';
 
 // Structured Screens
 import {
@@ -69,9 +70,10 @@ function MainApp() {
   const analyticsScrollRef = useRef<ScrollView>(null);
   const profileScrollRef = useRef<ScrollView>(null);
 
-  // Keep ref in sync with state
+  // Keep ref in sync with state & log screen view
   React.useEffect(() => {
     activeTabRef.current = activeTab;
+    Monitoring.logScreenView(activeTab);
   }, [activeTab]);
 
   // Sync background habit notifications
