@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal, Switch, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { useGoals } from '@/context/HealthContext';
+import { useGoals, useDailyLog } from '@/context/HealthContext';
+import { NotificationService, NotificationScheduler } from '@/services/notifications';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,7 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { userGoals, updateGoals } = useGoals();
+  const { currentLog } = useDailyLog();
   const [reminderInterval, setReminderInterval] = useState('2h');
 
   // Load persisted reminder interval preference
@@ -39,15 +41,37 @@ export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
       .catch(() => {});
   }, []);
 
-  const handleSelectInterval = (val: string) => {
+  const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
+
+  const handleSelectInterval = async (val: string) => {
     setReminderInterval(val);
     AsyncStorage.setItem(REMINDER_INTERVAL_KEY, val).catch(() => {});
+    const minutes = val === '1h' ? 60 : val === '3h' ? 180 : 120;
+    try {
+      const settings = await NotificationService.updateSettings({ waterIntervalMinutes: minutes });
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
   };
 
   const isReminderOn = userGoals.waterReminder ?? true;
 
-  const handleToggleReminder = (val: boolean) => {
+  const handleToggleReminder = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
     updateGoals({ waterReminder: val });
+    try {
+      const settings = await NotificationService.updateSettings({ waterReminder: val });
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
   };
 
   const handleAdjustGoal = () => {

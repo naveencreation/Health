@@ -37,6 +37,7 @@ import {
   PendingMeal,
 } from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
+import { NotificationService } from '@/services/notifications';
 
 export type OnboardingStep =
   | 'name'
@@ -314,6 +315,12 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       if (Platform.OS === 'android') {
         await requestStepsPermission();
       }
+    } catch {
+      // Gracefully continue
+    }
+
+    try {
+      await NotificationService.requestPermission();
     } catch {
       // Gracefully continue
     }

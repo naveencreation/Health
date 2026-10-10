@@ -1,11 +1,25 @@
 import { NotificationService, NotificationSettings } from './notificationService';
+import { NOTIFICATION_CHANNELS } from '@/config/notificationChannels';
+
+export type ReminderType =
+  | 'hydration'
+  | 'meal_breakfast'
+  | 'meal_lunch'
+  | 'meal_dinner'
+  | 'streak_protection'
+  | 'step_check';
 
 export interface ReminderPlan {
-  type: 'hydration' | 'meal_breakfast' | 'meal_lunch' | 'meal_dinner' | 'streak_protection';
+  type: ReminderType;
   title: string;
   body: string;
   hour: number;
   minute: number;
+  channelId: string;
+  data: {
+    route: 'food_vision' | 'water' | 'today';
+    reminderType: ReminderType;
+  };
 }
 
 export const STANDARD_REMINDERS: ReminderPlan[] = [
@@ -15,6 +29,11 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
     body: 'Good morning! Log your breakfast to jumpstart your daily energy.',
     hour: 8,
     minute: 30,
+    channelId: NOTIFICATION_CHANNELS.MEALS.id,
+    data: {
+      route: 'food_vision',
+      reminderType: 'meal_breakfast',
+    },
   },
   {
     type: 'hydration',
@@ -22,6 +41,11 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
     body: 'Time for a fresh glass of water to keep your metabolism performing at its peak.',
     hour: 11,
     minute: 0,
+    channelId: NOTIFICATION_CHANNELS.WATER.id,
+    data: {
+      route: 'water',
+      reminderType: 'hydration',
+    },
   },
   {
     type: 'meal_lunch',
@@ -29,6 +53,11 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
     body: 'Midday meal? Snap a quick photo with Ria AI for effortless macro tracking.',
     hour: 13,
     minute: 0,
+    channelId: NOTIFICATION_CHANNELS.MEALS.id,
+    data: {
+      route: 'food_vision',
+      reminderType: 'meal_lunch',
+    },
   },
   {
     type: 'hydration',
@@ -36,6 +65,23 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
     body: 'Take a quick sip! Reach your daily water goal step by step.',
     hour: 16,
     minute: 0,
+    channelId: NOTIFICATION_CHANNELS.WATER.id,
+    data: {
+      route: 'water',
+      reminderType: 'hydration',
+    },
+  },
+  {
+    type: 'step_check',
+    title: '🚶 Afternoon Movement Check',
+    body: 'Keep your momentum going! Take a quick walk to stay on pace for your daily step goal.',
+    hour: 17,
+    minute: 30,
+    channelId: NOTIFICATION_CHANNELS.STEPS.id,
+    data: {
+      route: 'today',
+      reminderType: 'step_check',
+    },
   },
   {
     type: 'meal_dinner',
@@ -43,6 +89,11 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
     body: 'Dinner is served. Wrap up your nutrition log to see your daily progress.',
     hour: 19,
     minute: 30,
+    channelId: NOTIFICATION_CHANNELS.MEALS.id,
+    data: {
+      route: 'food_vision',
+      reminderType: 'meal_dinner',
+    },
   },
 ];
 
@@ -62,13 +113,15 @@ export class NotificationScheduler {
 
     let scheduledCount = 0;
 
-    // 2. Schedule standard meal & water prompts
+    // 2. Schedule standard meal, water, and step prompts
     for (const reminder of STANDARD_REMINDERS) {
       const isWater = reminder.type === 'hydration';
       const isMeal = reminder.type.startsWith('meal_');
+      const isStep = reminder.type === 'step_check';
 
       if (isWater && !settings.waterReminder) continue;
       if (isMeal && !settings.mealReminder) continue;
+      if (isStep && !settings.stepReminder) continue;
 
       const triggerSeconds = this.calculateSecondsUntil(reminder.hour, reminder.minute);
       if (triggerSeconds > 0) {
@@ -76,6 +129,8 @@ export class NotificationScheduler {
           title: reminder.title,
           body: reminder.body,
           triggerSeconds,
+          channelId: reminder.channelId,
+          data: reminder.data,
         });
         scheduledCount++;
       }
@@ -90,6 +145,11 @@ export class NotificationScheduler {
           title: `🔥 Protect Your ${options.streakDays}-Day Streak!`,
           body: "Don't let today slip away. Log a meal or drink before midnight to keep your flame burning!",
           triggerSeconds: streakSeconds,
+          channelId: NOTIFICATION_CHANNELS.STREAK.id,
+          data: {
+            route: 'today',
+            reminderType: 'streak_protection',
+          },
         });
         scheduledCount++;
       }

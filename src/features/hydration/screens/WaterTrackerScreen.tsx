@@ -14,16 +14,13 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import {
-  TopDateStrip,
-  HeroDropletCard,
-  DailyWaterGoalModal,
-  WaterHistoryCard,
-  CupSizeModal,
-  HydrationSettingsModal,
-  SlideInSubScreen,
-} from '@/components';
-import { HeroDropletCardRef } from '../components/HeroDropletCard';
+import { TopDateStrip } from '@/components/dashboard/TopDateStrip';
+import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
+import { HeroDropletCard, HeroDropletCardRef } from '../components/HeroDropletCard';
+import { WaterHistoryCard } from '../components/WaterHistoryCard';
+import { DailyWaterGoalModal } from '../modals/DailyWaterGoalModal';
+import { CupSizeModal } from '../modals/CupSizeModal';
+import { HydrationSettingsModal } from '../modals/HydrationSettingsModal';
 import { WaterIntakeHistoryScreen } from './WaterIntakeHistoryScreen';
 import { WaterReportScreen } from './WaterReportScreen';
 import { useDailyLog } from '@/context/HealthContext';

@@ -80,6 +80,14 @@
       ],
       "react-native-health-connect",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo.png",
+          "color": "#F47551",
+          "defaultChannel": "reminders-meals"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {

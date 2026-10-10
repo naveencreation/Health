@@ -13,14 +13,11 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import {
-  HeroWeightCard,
-  WeightHistoryCard,
-  WeightHistoryItem,
-  LogWeightModal,
-  WeightGoalSettingsModal,
-  SlideInSubScreen,
-} from '@/components';
+import { HeroWeightCard } from '../components/HeroWeightCard';
+import { WeightHistoryCard, type WeightHistoryItem } from '../components/WeightHistoryCard';
+import { LogWeightModal } from '../modals/LogWeightModal';
+import { WeightGoalSettingsModal } from '../modals/WeightGoalSettingsModal';
+import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
 import { WeightHistoryScreen } from './WeightHistoryScreen';
 import { WeightReportScreen } from './WeightReportScreen';
 import { useDailyLog } from '@/context/HealthContext';

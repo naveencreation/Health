@@ -8,8 +8,7 @@ import {
   ScrollView,
   Platform,
   LayoutAnimation,
-  UIManager,
-  useWindowDimensions,
+    useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,10 +33,6 @@ import {
 } from './StepOutlineIcons';
 import { StepEntryActionPopover } from './StepEntryActionPopover';
 
-// Enable layout animations for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export interface StepHistoryModalProps {
   visible: boolean;

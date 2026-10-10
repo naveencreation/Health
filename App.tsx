@@ -13,11 +13,11 @@ import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
-import { HealthProvider, useAuth, useGoals } from '@/context/HealthContext';
+import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { OverlayProvider, useOverlay, OverlayHost } from '@/navigation';
 import { Colors } from '@/theme/colors';
 import { MealType } from '@/types';
-import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
+import { NotificationService, NotificationScheduler } from '@/services/notifications';
 import { Monitoring } from '@/services/monitoring';
 
 // Structured Screens
@@ -41,6 +41,7 @@ SplashScreen.preventAutoHideAsync();
 
 function MainApp() {
   const { userGoals } = useGoals();
+  const { currentLog } = useDailyLog();
   const { isAuthenticated, isAuthLoading, logout } = useAuth();
   const { openModal, closeModal, activeModal } = useOverlay();
   const [activeTab, setActiveTab] = useState<TabType>('today');
@@ -69,15 +70,38 @@ function MainApp() {
     activeModalRef.current = activeModal;
   }, [activeModal]);
 
-  // Sync background habit notifications
+  // Initialize native notifications & listen for user notification interactions
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    NotificationService.initialize().catch(() => {});
+
+    const subscription = NotificationService.addResponseListener(response => {
+      const route = response.notification.request.content.data?.route;
+      if (route === 'food_vision') {
+        openModal({ type: 'foodVision' });
+      } else if (route === 'water') {
+        openModal({ type: 'waterTracker' });
+      } else if (route === 'today') {
+        setActiveTab('today');
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [openModal]);
+
+  // Sync background habit notifications with real meal logging state
+  const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
   useEffect(() => {
     if (isAuthenticated) {
       NotificationScheduler.syncSchedules({
         streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday: false,
+        hasLoggedMealsToday,
       }).catch(() => {});
     }
-  }, [isAuthenticated, userGoals.streakDays]);
+  }, [isAuthenticated, userGoals.streakDays, hasLoggedMealsToday]);
 
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');

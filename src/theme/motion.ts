@@ -1,4 +1,5 @@
-import { AccessibilityInfo, Easing } from 'react-native';
+import { AccessibilityInfo } from 'react-native';
+import { Easing } from 'react-native-reanimated';
 
 /**
  * Global Motion Design Tokens for Calorify (Pass 8)
@@ -30,7 +31,10 @@ export const MotionDurations = {
   sheet: 280,
 } as const;
 
-const linearFallback = (t: number): number => t;
+const linearFallback = (t: number): number => {
+  'worklet';
+  return t;
+};
 const rawEasing: any = Easing;
 
 export const MotionCurves = {

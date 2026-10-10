@@ -1,6 +1,42 @@
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
+jest.mock('../expoNotifications', () => ({
+  AndroidImportance: {
+    DEFAULT: 3,
+    HIGH: 4,
+  },
+  SchedulableTriggerInputTypes: {
+    TIME_INTERVAL: 'timeInterval',
+  },
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('mock_notif_id_123'),
+  cancelAllScheduledNotificationsAsync: jest.fn().mockResolvedValue(undefined),
+  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+  addNotificationResponseReceivedListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+}));
+
+jest.mock('@/services/notifications/expoNotifications', () => ({
+  AndroidImportance: {
+    DEFAULT: 3,
+    HIGH: 4,
+  },
+  SchedulableTriggerInputTypes: {
+    TIME_INTERVAL: 'timeInterval',
+  },
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('mock_notif_id_123'),
+  cancelAllScheduledNotificationsAsync: jest.fn().mockResolvedValue(undefined),
+  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+  addNotificationResponseReceivedListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+}));
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotificationService } from '../notificationService';
 import { NotificationScheduler } from '../notificationScheduler';
@@ -16,6 +52,7 @@ describe('NotificationService & NotificationScheduler', () => {
     const settings = await NotificationService.getSettings();
     expect(settings.waterReminder).toBe(true);
     expect(settings.mealReminder).toBe(true);
+    expect(settings.stepReminder).toBe(true);
     expect(settings.streakReminder).toBe(true);
   });
 
@@ -41,14 +78,14 @@ describe('NotificationService & NotificationScheduler', () => {
     expect(diff).toBe(3600);
   });
 
-  it('schedules meal and water reminders when both are enabled', async () => {
+  it('schedules meal, water, and step reminders when all are enabled', async () => {
     const res = await NotificationScheduler.syncSchedules({
       streakDays: 3,
       hasLoggedMealsToday: true,
     });
 
-    // Standard reminders has 5 items (3 meals, 2 waters)
-    expect(res.scheduledCount).toBe(5);
+    // Standard reminders has 6 items (3 meals, 2 waters, 1 step)
+    expect(res.scheduledCount).toBe(6);
   });
 
   it('adds a streak protection reminder when user has not logged today', async () => {
@@ -57,8 +94,8 @@ describe('NotificationService & NotificationScheduler', () => {
       hasLoggedMealsToday: false, // Streak is at risk!
     });
 
-    // 5 standard + 1 streak protection = 6
-    expect(res.scheduledCount).toBe(6);
+    // 6 standard + 1 streak protection = 7
+    expect(res.scheduledCount).toBe(7);
   });
 
   it('skips water reminders if waterReminder is disabled in settings', async () => {
@@ -69,7 +106,19 @@ describe('NotificationService & NotificationScheduler', () => {
       hasLoggedMealsToday: true,
     });
 
-    // 3 meals only (water reminders skipped)
-    expect(res.scheduledCount).toBe(3);
+    // 3 meals + 1 step = 4 (water reminders skipped)
+    expect(res.scheduledCount).toBe(4);
+  });
+
+  it('skips step reminders if stepReminder is disabled in settings', async () => {
+    await NotificationService.updateSettings({ stepReminder: false });
+
+    const res = await NotificationScheduler.syncSchedules({
+      streakDays: 3,
+      hasLoggedMealsToday: true,
+    });
+
+    // 3 meals + 2 waters = 5 (step reminders skipped)
+    expect(res.scheduledCount).toBe(5);
   });
 });

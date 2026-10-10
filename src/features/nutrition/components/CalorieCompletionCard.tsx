@@ -7,17 +7,12 @@ import {
   Platform,
   LayoutChangeEvent,
   LayoutAnimation,
-  UIManager,
-} from 'react-native';
+  } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
 import { ChartTypeToggle, ChartType } from '@/components/report/ChartTypeToggle';
 import { ChartTooltipPin } from '@/components/report/ChartTooltipPin';
 
-// Enable LayoutAnimation for Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export interface DayCalorieIntakeData {
   dateStr: string;

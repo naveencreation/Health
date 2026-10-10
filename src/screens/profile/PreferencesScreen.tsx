@@ -12,13 +12,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useAuth, useGoals } from '@/context/HealthContext';
+import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
 import { AIService } from '@/services/ai';
 import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
-import { NotificationService } from '@/services/notifications/notificationService';
-import { NotificationScheduler } from '@/services/notifications/notificationScheduler';
+import { NotificationService, NotificationScheduler } from '@/services/notifications';
+import { NOTIFICATION_CHANNELS } from '@/config/notificationChannels';
 import { usePro, ProPaywallModal } from '@/features/subscription';
 
 const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
@@ -37,6 +37,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 }) => {
   const { currentUser, logout, deleteAccount } = useAuth();
   const { userGoals, updateGoals } = useGoals();
+  const { currentLog } = useDailyLog();
+  const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(
@@ -79,46 +81,89 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     updateGoals({ riaTone: tone });
   };
 
-  const handleToggleWater = (val: boolean) => {
+  const handleToggleWater = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
     setWaterReminder(val);
     updateGoals({ waterReminder: val });
-    NotificationService.updateSettings({ waterReminder: val })
-      .then(settings =>
-        NotificationScheduler.syncSchedules({
-          settings,
-          streakDays: userGoals.streakDays || 0,
-          hasLoggedMealsToday: false,
-        })
-      )
-      .catch(() => {});
+    try {
+      const settings = await NotificationService.updateSettings({ waterReminder: val });
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
   };
 
-  const handleToggleMeal = (val: boolean) => {
+  const handleToggleMeal = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
     setMealReminder(val);
     updateGoals({ mealReminder: val });
-    NotificationService.updateSettings({ mealReminder: val })
-      .then(settings =>
-        NotificationScheduler.syncSchedules({
-          settings,
-          streakDays: userGoals.streakDays || 0,
-          hasLoggedMealsToday: false,
-        })
-      )
-      .catch(() => {});
+    try {
+      const settings = await NotificationService.updateSettings({ mealReminder: val });
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
   };
 
-  const handleToggleStep = (val: boolean) => {
+  const handleToggleStep = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
     setStepReminder(val);
     updateGoals({ stepReminder: val });
-    NotificationService.updateSettings({ stepReminder: val })
-      .then(settings =>
-        NotificationScheduler.syncSchedules({
-          settings,
-          streakDays: userGoals.streakDays || 0,
-          hasLoggedMealsToday: false,
-        })
-      )
-      .catch(() => {});
+    try {
+      const settings = await NotificationService.updateSettings({ stepReminder: val });
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
+  };
+
+  const [isTestingNotif, setIsTestingNotif] = useState(false);
+  const [testNotifSuccess, setTestNotifSuccess] = useState(false);
+
+  const handleSendTestNotification = async () => {
+    try {
+      setIsTestingNotif(true);
+      setTestNotifSuccess(false);
+
+      const granted = await NotificationService.requestPermission();
+      if (!granted) {
+        setIsTestingNotif(false);
+        return;
+      }
+
+      await NotificationService.scheduleNotification({
+        title: '🍳 Lunch Time Reminder (Test)',
+        body: 'Tap here to test 1-tap Food Vision camera launch!',
+        triggerSeconds: 5,
+        channelId: NOTIFICATION_CHANNELS.MEALS.id,
+        data: {
+          route: 'food_vision',
+          reminderType: 'meal_lunch',
+        },
+      });
+
+      setTestNotifSuccess(true);
+      setTimeout(() => {
+        setIsTestingNotif(false);
+      }, 5500);
+      setTimeout(() => {
+        setTestNotifSuccess(false);
+      }, 10000);
+    } catch {
+      setIsTestingNotif(false);
+    }
   };
 
   const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null);
@@ -434,6 +479,51 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               accessibilityLabel="Toggle step milestone alerts"
             />
           </View>
+
+          <View style={styles.divider} />
+
+          {/* Test Notification Trigger */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.testNotifBtn,
+              pressed ? styles.testNotifBtnPressed : null,
+              isTestingNotif ? styles.testNotifBtnActive : null,
+            ]}
+            onPress={handleSendTestNotification}
+            disabled={isTestingNotif}
+            accessibilityRole="button"
+            accessibilityLabel="Send Test Notification in 5 seconds"
+          >
+            <View style={styles.testNotifLeft}>
+              <View
+                style={[
+                  styles.testNotifIconCircle,
+                  testNotifSuccess ? styles.testNotifIconCircleSuccess : null,
+                ]}
+              >
+                <Ionicons
+                  name={testNotifSuccess ? 'checkmark' : 'notifications-outline'}
+                  size={18}
+                  color={testNotifSuccess ? Colors.protein : Colors.primary}
+                />
+              </View>
+              <View style={styles.flex1}>
+                <Text style={styles.testNotifTitle}>
+                  {isTestingNotif
+                    ? 'Firing alert in 5s...'
+                    : testNotifSuccess
+                    ? 'Alert scheduled! (5s)'
+                    : 'Send Test Notification (5s)'}
+                </Text>
+                <Text style={styles.testNotifSubtitle}>
+                  {isTestingNotif
+                    ? 'Lock screen or wait 5s to test banner & camera tap'
+                    : 'Tests foreground alert, sound, and 1-tap Food Vision'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+          </Pressable>
         </View>
 
         {/* 4. Account & Security */}
@@ -990,5 +1080,47 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+  },
+  testNotifBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+  },
+  testNotifBtnPressed: {
+    opacity: 0.7,
+  },
+  testNotifBtnActive: {
+    backgroundColor: '#FFF5F1',
+  },
+  testNotifLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  testNotifIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFF5F1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testNotifIconCircleSuccess: {
+    backgroundColor: Colors.proteinLight,
+  },
+  testNotifTitle: {
+    fontSize: 14,
+    fontFamily: Fonts.poppins.semiBold,
+    color: Colors.textPrimary,
+  },
+  testNotifSubtitle: {
+    fontSize: 11,
+    fontFamily: Fonts.poppins.regular,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
 });
