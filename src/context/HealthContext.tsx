@@ -30,6 +30,7 @@ import {
   WeightLogEntry,
   OnboardingPlanPayload,
 } from '@/types';
+import { NotificationStorage } from '@/services/notifications';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { auth, db } from '@/services/firebase';
@@ -1041,6 +1042,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         let updatedEntries = existing.waterEntries ? [...existing.waterEntries] : [];
 
         if (ml > 0) {
+          NotificationStorage.updateSettings({ lastWaterLoggedAt: Date.now() }, currentUser?.id).catch(() => {});
           const now = new Date();
           const timePart = now.toTimeString().split(' ')[0];
           const loggedAt =

@@ -1285,6 +1285,16 @@
       - `src/features/hydration/screens/WaterTrackerScreen.tsx` similarly updated to import sibling hydration components and dashboard/common components directly.
     - **New Architecture `setLayoutAnimationEnabledExperimental` Purge**: Removed obsolete `UIManager.setLayoutAnimationEnabledExperimental(true)` calls and unused `UIManager` imports from `StepHistoryModal.tsx` and `CalorieCompletionCard.tsx` (a no-op in React Native 0.86 New Architecture).
     - **Verification**: `npx tsc --noEmit` = 0 errors; full test suite = 91/91 test suites (523/523 tests) 100% passing.
+40. **State-Aware Habit Notifications & Scenario Map Specification**:
+    - **Replaced Cancel-All Timer Queue**: Replaced legacy relative timer rescheduling with a state-aware **Planner (`NotificationPlanner`) + Surgical Reconciler (`NotificationReconciler`)** architecture.
+    - **Single Source of Truth**: Notification preferences decoupled from `UserGoals` into dedicated, UID-scoped storage (`@calori_notif_settings_v2_${uid}` in `notificationStorage.ts`).
+    - **Deterministic Identifiers**: Every reminder scheduled with deterministic key (`calori_meal_*`, `calori_water_*`, `calori_steps_*`, `calori_streak_*`, `calori_weight_*`).
+    - **Surgical Mutex Diffing**: Diffs OS pending list without wiping queue; cancels individual slots when logged, updates if drift $\ge 60\text{s}$, untouched remain intact.
+    - **Dynamic State Suppression**: Meals suppressed when logged; water suppressed when daily target met; streak suppressed when any meal logged or streak = 0; weigh-in suppressed when logged; steps alert switches to celebratory *"🎉 Step Goal Crushed!"* when goal $\ge 100\%$.
+    - **Quiet Hours & Collisions**: Strict drop (not clamp) with midnight wraparound (default 22:00–07:00); 30-minute collision priority resolution (`streak > meal > weight > steps > water`).
+    - **UI & Telemetry**: Added `TimePickerModal` and full Reminders section in `PreferencesScreen.tsx` with quiet-hours warning badges. Telemetry logged via `Monitoring.logEvent('notif_reconcile_complete')`.
+    - **Scenario Map Artifact**: Comprehensive 06:00 to 23:00 timeline, decision trees, and debugging test matrix saved in `NOTIFICATIONS_SCENARIO_MAP.md`.
+    - **Verification**: `npx tsc --noEmit` = 0 errors; 37/37 notification and component unit tests 100% passing.
 
 ## Known / pending items
 

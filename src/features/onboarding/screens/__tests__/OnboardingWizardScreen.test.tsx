@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import { OnboardingWizardScreen } from '../OnboardingWizardScreen';
 import * as ImagePicker from 'expo-image-picker';
+import { NotificationStorage } from '@/services/notifications';
 
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
@@ -419,6 +420,12 @@ describe('OnboardingWizardScreen', () => {
       expect(callData.biometrics.firstMeal?.foodName).toBe('2 Rotis with Dal');
       expect(callData.plan.dailyCalorieBudget).toBeGreaterThan(1200);
     });
+
+    const savedSettings = await NotificationStorage.loadSettings();
+    expect(savedSettings.meals.breakfast).toBe('08:30');
+    expect(savedSettings.meals.lunch).toBe('13:00');
+    expect(savedSettings.meals.dinner).toBe('20:00');
+    expect(savedSettings.meals.skipsBreakfast).toBe(false);
   });
 
   it('supports skipping paywall and back navigation between paywall and save_plan', async () => {

@@ -37,7 +37,7 @@ import {
   PendingMeal,
 } from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
-import { NotificationService } from '@/services/notifications';
+import { NotificationService, NotificationStorage } from '@/services/notifications';
 
 export type OnboardingStep =
   | 'name'
@@ -285,6 +285,19 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   );
 
   const handleFinish = async () => {
+    try {
+      await NotificationStorage.updateSettings({
+        meals: {
+          enabled: true,
+          breakfast: mealTimes?.breakfast || '08:30',
+          lunch: mealTimes?.lunch || '13:00',
+          dinner: mealTimes?.dinner || '19:30',
+          skipsBreakfast: Boolean(skipsBreakfast),
+        },
+      });
+    } catch {
+      // Non-blocking fallback
+    }
     await clearOnboardingDraft();
     await onComplete({
       biometrics: {

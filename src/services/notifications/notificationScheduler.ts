@@ -1,4 +1,9 @@
-import { NotificationService, NotificationSettings } from './notificationService';
+import { MealType } from '@/types';
+import { NotificationSettings } from './types';
+import { NotificationStorage } from './storage/notificationStorage';
+import { planNotifications } from './engine/planner';
+import { NotificationReconciler, ReconcileResult } from './engine/reconciler';
+import { NotificationService } from './notificationService';
 import { NOTIFICATION_CHANNELS } from '@/config/notificationChannels';
 
 export type ReminderType =
@@ -97,65 +102,80 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
   },
 ];
 
+export interface SyncSchedulesOptions {
+  settings?: NotificationSettings;
+  streakDays?: number;
+  hasLoggedMealsToday?: boolean;
+  loggedMealSlots?: MealType[];
+  currentWaterMl?: number;
+  targetWaterMl?: number;
+  lastWaterLoggedAt?: number;
+  hasLoggedWeightToday?: boolean;
+  currentSteps?: number;
+  stepGoal?: number;
+  uid?: string;
+  now?: number | Date;
+  reason?: string;
+}
+
 export class NotificationScheduler {
   /**
-   * Reschedules all wellness reminders based on current settings and user status.
+   * State-aware scheduler facade:
+   * 1. Loads current user settings from NotificationStorage
+   * 2. Purely plans scheduled notifications for the horizon
+   * 3. Reconciles planned notifications against pending OS notifications via NotificationReconciler
    */
-  public static async syncSchedules(options: {
-    settings?: NotificationSettings;
-    streakDays: number;
-    hasLoggedMealsToday: boolean;
-  }): Promise<{ scheduledCount: number }> {
-    const settings = options.settings || (await NotificationService.getSettings());
+  public static async syncSchedules(
+    options: SyncSchedulesOptions = {}
+  ): Promise<{ scheduledCount: number; plannedCount: number; reconcileResult: ReconcileResult }> {
+    const settings =
+      options.settings || (await NotificationStorage.loadSettings(options.uid));
 
-    // 1. Clear existing queued notifications
+    // Derive logged meal slots from either explicit slots or hasLoggedMealsToday flag
+    let loggedMealSlots: MealType[] = options.loggedMealSlots || [];
+    if (loggedMealSlots.length === 0 && options.hasLoggedMealsToday) {
+      loggedMealSlots = ['lunch'];
+    }
+
+    const planned = planNotifications({
+      settings,
+      now: options.now,
+      loggedMealsToday: loggedMealSlots,
+      waterStats:
+        options.targetWaterMl !== undefined
+          ? {
+              currentMl: options.currentWaterMl || 0,
+              targetMl: options.targetWaterMl,
+              lastLoggedAt: options.lastWaterLoggedAt,
+            }
+          : undefined,
+      streakDays: options.streakDays,
+      hasLoggedWeightToday: options.hasLoggedWeightToday,
+      stepStats:
+        options.stepGoal !== undefined
+          ? {
+              currentSteps: options.currentSteps || 0,
+              targetSteps: options.stepGoal,
+            }
+          : undefined,
+    });
+
+    const reconcileResult = await NotificationReconciler.reconcile(planned);
+
+    return {
+      scheduledCount: planned.length,
+      plannedCount: planned.length,
+      reconcileResult,
+    };
+  }
+
+  /**
+   * Cancels all scheduled notifications and resets settings.
+   * Allowed ONLY on sign-out and full factory resets.
+   */
+  public static async cancelAllAndReset(uid?: string): Promise<void> {
     await NotificationService.cancelAllScheduledNotifications();
-
-    let scheduledCount = 0;
-
-    // 2. Schedule standard meal, water, and step prompts
-    for (const reminder of STANDARD_REMINDERS) {
-      const isWater = reminder.type === 'hydration';
-      const isMeal = reminder.type.startsWith('meal_');
-      const isStep = reminder.type === 'step_check';
-
-      if (isWater && !settings.waterReminder) continue;
-      if (isMeal && !settings.mealReminder) continue;
-      if (isStep && !settings.stepReminder) continue;
-
-      const triggerSeconds = this.calculateSecondsUntil(reminder.hour, reminder.minute);
-      if (triggerSeconds > 0) {
-        await NotificationService.scheduleNotification({
-          title: reminder.title,
-          body: reminder.body,
-          triggerSeconds,
-          channelId: reminder.channelId,
-          data: reminder.data,
-        });
-        scheduledCount++;
-      }
-    }
-
-    // 3. Schedule Streak Protection prompt
-    if (settings.streakReminder && !options.hasLoggedMealsToday && options.streakDays > 0) {
-      // Prompt at 21:00 (9 PM)
-      const streakSeconds = this.calculateSecondsUntil(21, 0);
-      if (streakSeconds > 0) {
-        await NotificationService.scheduleNotification({
-          title: `🔥 Protect Your ${options.streakDays}-Day Streak!`,
-          body: "Don't let today slip away. Log a meal or drink before midnight to keep your flame burning!",
-          triggerSeconds: streakSeconds,
-          channelId: NOTIFICATION_CHANNELS.STREAK.id,
-          data: {
-            route: 'today',
-            reminderType: 'streak_protection',
-          },
-        });
-        scheduledCount++;
-      }
-    }
-
-    return { scheduledCount };
+    await NotificationStorage.resetSettings(uid);
   }
 
   /**
@@ -170,7 +190,6 @@ export class NotificationScheduler {
     target.setHours(targetHour, targetMinute, 0, 0);
 
     if (target.getTime() <= now.getTime()) {
-      // Already passed today, push to tomorrow
       target.setDate(target.getDate() + 1);
     }
 

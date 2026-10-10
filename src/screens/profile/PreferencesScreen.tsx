@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -17,7 +17,13 @@ import { AIService } from '@/services/ai';
 import { BYOKSetupModal } from '@/components/modals/BYOKSetupModal';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
-import { NotificationService, NotificationScheduler } from '@/services/notifications';
+import { TimePickerModal } from '@/components';
+import {
+  NotificationService,
+  NotificationScheduler,
+  NotificationStorage,
+  isInsideQuietHours,
+} from '@/services/notifications';
 import { NOTIFICATION_CHANNELS } from '@/config/notificationChannels';
 import { usePro, ProPaywallModal } from '@/features/subscription';
 
@@ -44,9 +50,24 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(
     userGoals.riaTone || 'supportive'
   );
-  const [waterReminder, setWaterReminder] = useState(userGoals.waterReminder !== false);
-  const [mealReminder, setMealReminder] = useState(userGoals.mealReminder !== false);
-  const [stepReminder, setStepReminder] = useState(userGoals.stepReminder || false);
+  const [waterReminder, setWaterReminder] = useState(true);
+  const [mealReminder, setMealReminder] = useState(true);
+  const [stepReminder, setStepReminder] = useState(true);
+  const [streakReminder, setStreakReminder] = useState(true);
+  const [weightReminder, setWeightReminder] = useState(false);
+  const [weightTime, setWeightTime] = useState('07:30');
+  const [breakfastTime, setBreakfastTime] = useState('08:30');
+  const [lunchTime, setLunchTime] = useState('13:00');
+  const [dinnerTime, setDinnerTime] = useState('19:30');
+  const [skipsBreakfast, setSkipsBreakfast] = useState(false);
+  const [quietHoursStart, setQuietHoursStart] = useState('22:00');
+  const [quietHoursEnd, setQuietHoursEnd] = useState('07:00');
+  const [timePickerConfig, setTimePickerConfig] = useState<{
+    key: 'breakfast' | 'lunch' | 'dinner' | 'weight' | 'quietStart' | 'quietEnd';
+    title: string;
+    time: string;
+    presets: string[];
+  } | null>(null);
 
   // AI BYOK Configuration States
   const [byokModalVisible, setByokModalVisible] = useState(false);
@@ -70,11 +91,28 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
   useEffect(() => {
     setRiaTone(userGoals.riaTone || 'supportive');
-    setWaterReminder(userGoals.waterReminder !== false);
-    setMealReminder(userGoals.mealReminder !== false);
-    setStepReminder(userGoals.stepReminder || false);
     refreshAIStatus();
   }, [userGoals]);
+
+  // Load notification settings from NotificationStorage (seed from userGoals on first load)
+  useEffect(() => {
+    NotificationStorage.loadSettings(currentUser?.id, userGoals)
+      .then(settings => {
+        setWaterReminder(settings.water.enabled);
+        setMealReminder(settings.meals.enabled);
+        setStepReminder(settings.steps.enabled);
+        setStreakReminder(settings.streak.enabled);
+        setWeightReminder(settings.weight?.enabled ?? false);
+        setWeightTime(settings.weight?.time || '07:30');
+        setBreakfastTime(settings.meals.breakfast);
+        setLunchTime(settings.meals.lunch);
+        setDinnerTime(settings.meals.dinner);
+        setSkipsBreakfast(settings.meals.skipsBreakfast);
+        setQuietHoursStart(settings.quietHours.start);
+        setQuietHoursEnd(settings.quietHours.end);
+      })
+      .catch(() => {});
+  }, [currentUser?.id]);
 
   const handleSelectTone = (tone: 'supportive' | 'focused' | 'scientific') => {
     setRiaTone(tone);
@@ -86,9 +124,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       await NotificationService.requestPermission();
     }
     setWaterReminder(val);
-    updateGoals({ waterReminder: val });
     try {
-      const settings = await NotificationService.updateSettings({ waterReminder: val });
+      const settings = await NotificationStorage.updateSettings(
+        { water: { enabled: val, intervalMinutes: 120 } },
+        currentUser?.id
+      );
       await NotificationScheduler.syncSchedules({
         settings,
         streakDays: userGoals.streakDays || 0,
@@ -102,9 +142,19 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       await NotificationService.requestPermission();
     }
     setMealReminder(val);
-    updateGoals({ mealReminder: val });
     try {
-      const settings = await NotificationService.updateSettings({ mealReminder: val });
+      const settings = await NotificationStorage.updateSettings(
+        {
+          meals: {
+            enabled: val,
+            breakfast: breakfastTime,
+            lunch: lunchTime,
+            dinner: dinnerTime,
+            skipsBreakfast,
+          },
+        },
+        currentUser?.id
+      );
       await NotificationScheduler.syncSchedules({
         settings,
         streakDays: userGoals.streakDays || 0,
@@ -118,9 +168,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       await NotificationService.requestPermission();
     }
     setStepReminder(val);
-    updateGoals({ stepReminder: val });
     try {
-      const settings = await NotificationService.updateSettings({ stepReminder: val });
+      const settings = await NotificationStorage.updateSettings(
+        { steps: { enabled: val } },
+        currentUser?.id
+      );
       await NotificationScheduler.syncSchedules({
         settings,
         streakDays: userGoals.streakDays || 0,
@@ -128,6 +180,149 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       });
     } catch {}
   };
+
+  const handleToggleStreak = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
+    setStreakReminder(val);
+    try {
+      const settings = await NotificationStorage.updateSettings(
+        { streak: { enabled: val } },
+        currentUser?.id
+      );
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
+  };
+
+  const handleToggleWeight = async (val: boolean) => {
+    if (val) {
+      await NotificationService.requestPermission();
+    }
+    setWeightReminder(val);
+    try {
+      const settings = await NotificationStorage.updateSettings(
+        { weight: { enabled: val, time: weightTime } },
+        currentUser?.id
+      );
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
+  };
+
+  const handleToggleSkipBreakfast = async (val: boolean) => {
+    setSkipsBreakfast(val);
+    try {
+      const settings = await NotificationStorage.updateSettings(
+        {
+          meals: {
+            enabled: mealReminder,
+            breakfast: breakfastTime,
+            lunch: lunchTime,
+            dinner: dinnerTime,
+            skipsBreakfast: val,
+          },
+        },
+        currentUser?.id
+      );
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
+  };
+
+  const handleSavePickedTime = async (newTime: string) => {
+    if (!timePickerConfig) return;
+    const { key } = timePickerConfig;
+
+    const updatedMeals = {
+      enabled: mealReminder,
+      breakfast: breakfastTime,
+      lunch: lunchTime,
+      dinner: dinnerTime,
+      skipsBreakfast,
+    };
+    const updatedQuiet = {
+      start: quietHoursStart,
+      end: quietHoursEnd,
+    };
+    const updatedWeight = {
+      enabled: weightReminder,
+      time: weightTime,
+    };
+
+    if (key === 'breakfast') {
+      setBreakfastTime(newTime);
+      updatedMeals.breakfast = newTime;
+    } else if (key === 'lunch') {
+      setLunchTime(newTime);
+      updatedMeals.lunch = newTime;
+    } else if (key === 'dinner') {
+      setDinnerTime(newTime);
+      updatedMeals.dinner = newTime;
+    } else if (key === 'weight') {
+      setWeightTime(newTime);
+      updatedWeight.time = newTime;
+    } else if (key === 'quietStart') {
+      setQuietHoursStart(newTime);
+      updatedQuiet.start = newTime;
+    } else if (key === 'quietEnd') {
+      setQuietHoursEnd(newTime);
+      updatedQuiet.end = newTime;
+    }
+
+    try {
+      const settings = await NotificationStorage.updateSettings(
+        {
+          meals: updatedMeals,
+          quietHours: updatedQuiet,
+          weight: updatedWeight,
+        },
+        currentUser?.id
+      );
+      await NotificationScheduler.syncSchedules({
+        settings,
+        streakDays: userGoals.streakDays || 0,
+        hasLoggedMealsToday,
+      });
+    } catch {}
+  };
+
+  const checkTimeInQuiet = useCallback(
+    (timeStr: string) => {
+      const [h, m] = (timeStr || '12:00').split(':').map(Number);
+      const d = new Date();
+      d.setHours(h || 0, m || 0, 0, 0);
+      return isInsideQuietHours(d, quietHoursStart, quietHoursEnd);
+    },
+    [quietHoursStart, quietHoursEnd]
+  );
+
+  const isBreakfastInQuiet = useMemo(
+    () => checkTimeInQuiet(breakfastTime),
+    [checkTimeInQuiet, breakfastTime]
+  );
+  const isLunchInQuiet = useMemo(
+    () => checkTimeInQuiet(lunchTime),
+    [checkTimeInQuiet, lunchTime]
+  );
+  const isDinnerInQuiet = useMemo(
+    () => checkTimeInQuiet(dinnerTime),
+    [checkTimeInQuiet, dinnerTime]
+  );
+  const isWeightInQuiet = useMemo(
+    () => checkTimeInQuiet(weightTime),
+    [checkTimeInQuiet, weightTime]
+  );
 
   const [isTestingNotif, setIsTestingNotif] = useState(false);
   const [testNotifSuccess, setTestNotifSuccess] = useState(false);
@@ -461,6 +656,121 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             />
           </View>
 
+          {/* Meal Times Configuration */}
+          {mealReminder && (
+            <View style={styles.subSettingsContainer}>
+              {/* Skip Breakfast Switch */}
+              <View style={styles.subRow}>
+                <View style={styles.flex1}>
+                  <Text style={styles.subRowTitle}>Skip Breakfast</Text>
+                  <Text style={styles.subRowDesc}>Never remind for morning breakfast</Text>
+                </View>
+                <Switch
+                  value={skipsBreakfast}
+                  onValueChange={handleToggleSkipBreakfast}
+                  trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+                  thumbColor={skipsBreakfast ? Colors.primary : Colors.surfaceLow}
+                  accessibilityLabel="Toggle skip breakfast"
+                />
+              </View>
+
+              {/* Breakfast Time */}
+              {!skipsBreakfast && (
+                <View style={styles.timePickerRowContainer}>
+                  <View style={styles.subRow}>
+                    <Text style={styles.subRowTitle}>Breakfast Time</Text>
+                    <Pressable
+                      style={styles.timeBadge}
+                      onPress={() =>
+                        setTimePickerConfig({
+                          key: 'breakfast',
+                          title: 'Breakfast Reminder Time',
+                          time: breakfastTime,
+                          presets: ['07:00', '07:30', '08:00', '08:30', '09:00', '09:30'],
+                        })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Change breakfast time from ${breakfastTime}`}
+                    >
+                      <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                      <Text style={styles.timeBadgeText}>{breakfastTime}</Text>
+                    </Pressable>
+                  </View>
+                  {isBreakfastInQuiet && (
+                    <View style={styles.quietWarningBox}>
+                      <Ionicons name="moon-outline" size={14} color="#EA580C" />
+                      <Text style={styles.quietWarningText}>
+                        Breakfast at {breakfastTime} falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd}) and will not fire.
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Lunch Time */}
+              <View style={styles.timePickerRowContainer}>
+                <View style={styles.subRow}>
+                  <Text style={styles.subRowTitle}>Lunch Time</Text>
+                  <Pressable
+                    style={styles.timeBadge}
+                    onPress={() =>
+                      setTimePickerConfig({
+                        key: 'lunch',
+                        title: 'Lunch Reminder Time',
+                        time: lunchTime,
+                        presets: ['12:00', '12:30', '13:00', '13:30', '14:00'],
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Change lunch time from ${lunchTime}`}
+                  >
+                    <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                    <Text style={styles.timeBadgeText}>{lunchTime}</Text>
+                  </Pressable>
+                </View>
+                {isLunchInQuiet && (
+                  <View style={styles.quietWarningBox}>
+                    <Ionicons name="moon-outline" size={14} color="#EA580C" />
+                    <Text style={styles.quietWarningText}>
+                      Lunch at {lunchTime} falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd}) and will not fire.
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Dinner Time */}
+              <View style={styles.timePickerRowContainer}>
+                <View style={styles.subRow}>
+                  <Text style={styles.subRowTitle}>Dinner Time</Text>
+                  <Pressable
+                    style={styles.timeBadge}
+                    onPress={() =>
+                      setTimePickerConfig({
+                        key: 'dinner',
+                        title: 'Dinner Reminder Time',
+                        time: dinnerTime,
+                        presets: ['18:30', '19:00', '19:30', '20:00', '20:30', '21:00'],
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Change dinner time from ${dinnerTime}`}
+                  >
+                    <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                    <Text style={styles.timeBadgeText}>{dinnerTime}</Text>
+                  </Pressable>
+                </View>
+                {isDinnerInQuiet && (
+                  <View style={styles.quietWarningBox}>
+                    <Ionicons name="moon-outline" size={14} color="#EA580C" />
+                    <Text style={styles.quietWarningText}>
+                      Dinner at {dinnerTime} falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd}) and will not fire.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           <View style={styles.divider} />
 
           <View style={styles.switchRow}>
@@ -469,7 +779,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             </View>
             <View style={styles.flex1}>
               <Text style={styles.switchTitle}>Step Milestone Alerts</Text>
-              <Text style={styles.switchDesc}>Celebrate 5k and 10k daily step marks</Text>
+              <Text style={styles.switchDesc}>Daily 17:30 movement and progress check</Text>
             </View>
             <Switch
               value={stepReminder}
@@ -478,6 +788,134 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               thumbColor={stepReminder ? Colors.primary : Colors.surfaceLow}
               accessibilityLabel="Toggle step milestone alerts"
             />
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Morning Weigh-In Alerts Toggle */}
+          <View style={styles.switchRow}>
+            <View style={[styles.switchIconBox, styles.switchIconWeight]}>
+              <Ionicons name="scale-outline" size={18} color="#8B5CF6" />
+            </View>
+            <View style={styles.flex1}>
+              <Text style={styles.switchTitle}>Morning Weigh-In</Text>
+              <Text style={styles.switchDesc}>Consistent daily check-in to track weight trends</Text>
+            </View>
+            <Switch
+              value={weightReminder}
+              onValueChange={handleToggleWeight}
+              trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+              thumbColor={weightReminder ? Colors.primary : Colors.surfaceLow}
+              accessibilityLabel="Toggle morning weigh-in alerts"
+            />
+          </View>
+
+          {weightReminder && (
+            <View style={styles.subSettingsContainer}>
+              <View style={styles.timePickerRowContainer}>
+                <View style={styles.subRow}>
+                  <Text style={styles.subRowTitle}>Weigh-In Time</Text>
+                  <Pressable
+                    style={styles.timeBadge}
+                    onPress={() =>
+                      setTimePickerConfig({
+                        key: 'weight',
+                        title: 'Weigh-In Reminder Time',
+                        time: weightTime,
+                        presets: ['06:30', '07:00', '07:30', '08:00', '08:30'],
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Change weigh-in time from ${weightTime}`}
+                  >
+                    <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                    <Text style={styles.timeBadgeText}>{weightTime}</Text>
+                  </Pressable>
+                </View>
+                {isWeightInQuiet && (
+                  <View style={styles.quietWarningBox}>
+                    <Ionicons name="moon-outline" size={14} color="#EA580C" />
+                    <Text style={styles.quietWarningText}>
+                      Weigh-in at {weightTime} falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd}) and will not fire.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.divider} />
+
+          {/* Streak Protection Alerts Toggle */}
+          <View style={styles.switchRow}>
+            <View style={[styles.switchIconBox, styles.switchIconStreak]}>
+              <Ionicons name="flame-outline" size={18} color="#EA580C" />
+            </View>
+            <View style={styles.flex1}>
+              <Text style={styles.switchTitle}>Streak Protection Alerts</Text>
+              <Text style={styles.switchDesc}>Evening 21:00 reminder when streak is at risk</Text>
+            </View>
+            <Switch
+              value={streakReminder}
+              onValueChange={handleToggleStreak}
+              trackColor={{ false: Colors.borderMedium, true: SWITCH_TRACK_ACTIVE }}
+              thumbColor={streakReminder ? Colors.primary : Colors.surfaceLow}
+              accessibilityLabel="Toggle streak protection alerts"
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Quiet Hours Configuration */}
+          <View style={styles.quietHoursContainer}>
+            <View style={styles.quietHoursHeaderRow}>
+              <Ionicons name="moon" size={16} color={Colors.textSecondary} />
+              <Text style={styles.quietHoursHeaderTitle}>Quiet Hours (Do Not Disturb)</Text>
+            </View>
+            <Text style={styles.quietHoursDesc}>
+              Reminders falling inside this window will not fire to protect your rest.
+            </Text>
+            <View style={styles.quietHoursTimesRow}>
+              <View style={styles.quietHourBlock}>
+                <Text style={styles.quietHourLabel}>STARTS</Text>
+                <Pressable
+                  style={styles.timeBadge}
+                  onPress={() =>
+                    setTimePickerConfig({
+                      key: 'quietStart',
+                      title: 'Quiet Hours Start',
+                      time: quietHoursStart,
+                      presets: ['21:00', '21:30', '22:00', '22:30', '23:00', '00:00'],
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Change quiet hours start from ${quietHoursStart}`}
+                >
+                  <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                  <Text style={styles.timeBadgeText}>{quietHoursStart}</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.quietHourArrow}>→</Text>
+              <View style={styles.quietHourBlock}>
+                <Text style={styles.quietHourLabel}>ENDS</Text>
+                <Pressable
+                  style={styles.timeBadge}
+                  onPress={() =>
+                    setTimePickerConfig({
+                      key: 'quietEnd',
+                      title: 'Quiet Hours End',
+                      time: quietHoursEnd,
+                      presets: ['06:00', '06:30', '07:00', '07:30', '08:00', '08:30'],
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Change quiet hours end from ${quietHoursEnd}`}
+                >
+                  <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                  <Text style={styles.timeBadgeText}>{quietHoursEnd}</Text>
+                </Pressable>
+              </View>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -660,6 +1098,15 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           setConfirmAction(null);
           setDeleteError(null);
         }}
+      />
+
+      <TimePickerModal
+        visible={Boolean(timePickerConfig)}
+        title={timePickerConfig?.title || 'Select Time'}
+        initialTime={timePickerConfig?.time || '12:00'}
+        presets={timePickerConfig?.presets}
+        onSave={handleSavePickedTime}
+        onClose={() => setTimePickerConfig(null)}
       />
     </View>
   );
@@ -974,6 +1421,12 @@ const styles = StyleSheet.create({
   switchIconStep: {
     backgroundColor: Colors.proteinLight,
   },
+  switchIconStreak: {
+    backgroundColor: '#FFEDD5',
+  },
+  switchIconWeight: {
+    backgroundColor: '#EDE9FE',
+  },
   switchIconAccount: {
     backgroundColor: Colors.surfaceInset,
   },
@@ -1122,5 +1575,110 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.poppins.regular,
     color: Colors.textSecondary,
     marginTop: 1,
+  },
+  subSettingsContainer: {
+    backgroundColor: Colors.surfaceLow,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    padding: 12,
+    marginTop: 4,
+    marginBottom: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: Colors.borderWhisper,
+  },
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  subRowTitle: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  subRowDesc: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  timePickerRowContainer: {
+    gap: 6,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.card,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+  },
+  timeBadgeText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: Colors.primary,
+  },
+  quietWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  quietWarningText: {
+    flex: 1,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 11,
+    color: '#C2410C',
+    lineHeight: 15,
+  },
+  quietHoursContainer: {
+    paddingVertical: 8,
+    gap: 6,
+  },
+  quietHoursHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  quietHoursHeaderTitle: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  quietHoursDesc: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+  quietHoursTimesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 16,
+    marginTop: 6,
+  },
+  quietHourBlock: {
+    gap: 4,
+  },
+  quietHourLabel: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 10,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  quietHourArrow: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textMuted,
+    marginTop: 16,
   },
 });

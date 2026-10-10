@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   Platform,
   BackHandler,
   useWindowDimensions,
+  AppState,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -42,7 +43,7 @@ SplashScreen.preventAutoHideAsync();
 function MainApp() {
   const { userGoals } = useGoals();
   const { currentLog } = useDailyLog();
-  const { isAuthenticated, isAuthLoading, logout } = useAuth();
+  const { isAuthenticated, isAuthLoading, logout, currentUser } = useAuth();
   const { openModal, closeModal, activeModal } = useOverlay();
   const [activeTab, setActiveTab] = useState<TabType>('today');
 
@@ -70,18 +71,22 @@ function MainApp() {
     activeModalRef.current = activeModal;
   }, [activeModal]);
 
-  // Initialize native notifications & listen for user notification interactions
+  // Initialize native notifications & listen for user notification interactions (Tap Routing)
   useEffect(() => {
     if (Platform.OS === 'web') return;
 
     NotificationService.initialize().catch(() => {});
 
     const subscription = NotificationService.addResponseListener(response => {
-      const route = response.notification.request.content.data?.route;
+      const data = response.notification.request.content.data;
+      const route = data?.route;
+      const mealSlot = data?.mealSlot as MealType | undefined;
       if (route === 'food_vision') {
-        openModal({ type: 'foodVision' });
+        openModal({ type: 'foodVision', initialMeal: mealSlot });
       } else if (route === 'water') {
         openModal({ type: 'waterTracker' });
+      } else if (route === 'weight') {
+        openModal({ type: 'weightTracker' });
       } else if (route === 'today') {
         setActiveTab('today');
       }
@@ -92,16 +97,72 @@ function MainApp() {
     };
   }, [openModal]);
 
-  // Sync background habit notifications with real meal logging state
-  const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
-  useEffect(() => {
-    if (isAuthenticated) {
+  // Derive logged meal slots and water timestamp for state-aware scheduler
+  const loggedMealSlots = useMemo<MealType[]>(() => {
+    return currentLog?.meals?.map(m => m.mealType) || [];
+  }, [currentLog?.meals]);
+
+  const lastWaterLoggedAt = useMemo<number | undefined>(() => {
+    if (!currentLog?.waterEntries || currentLog.waterEntries.length === 0) return undefined;
+    return Math.max(...currentLog.waterEntries.map(e => new Date(e.loggedAt).getTime()));
+  }, [currentLog?.waterEntries]);
+
+  const hasLoggedWeightToday = useMemo<boolean>(() => {
+    return Boolean(
+      typeof currentLog?.weightKg === 'number' ||
+        (currentLog?.weightEntries && currentLog.weightEntries.length > 0)
+    );
+  }, [currentLog?.weightKg, currentLog?.weightEntries]);
+
+  // Synchronize state-aware habit reminders
+  const syncNotifications = useCallback(
+    (reason: string) => {
+      if (!isAuthenticated) return;
       NotificationScheduler.syncSchedules({
         streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
+        hasLoggedMealsToday: Boolean(currentLog?.meals && currentLog.meals.length > 0),
+        loggedMealSlots,
+        currentWaterMl: currentLog?.waterMl || 0,
+        targetWaterMl: userGoals.waterGoalMl || 2000,
+        lastWaterLoggedAt,
+        hasLoggedWeightToday,
+        currentSteps: currentLog?.steps || 0,
+        stepGoal: userGoals.stepGoal || 10000,
+        uid: currentUser?.id,
+        reason,
       }).catch(() => {});
-    }
-  }, [isAuthenticated, userGoals.streakDays, hasLoggedMealsToday]);
+    },
+    [
+      isAuthenticated,
+      userGoals.streakDays,
+      userGoals.waterGoalMl,
+      userGoals.stepGoal,
+      currentLog?.meals,
+      currentLog?.waterMl,
+      currentLog?.steps,
+      loggedMealSlots,
+      lastWaterLoggedAt,
+      hasLoggedWeightToday,
+      currentUser?.id,
+    ]
+  );
+
+  // Trigger on data changes, login status change, or initial load
+  useEffect(() => {
+    syncNotifications('data_or_auth_change');
+  }, [syncNotifications]);
+
+  // Trigger on AppState change to active (cold start, foregrounding, timezone/date rollover)
+  useEffect(() => {
+    const appStateSub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        syncNotifications('app_state_active');
+      }
+    });
+    return () => {
+      appStateSub.remove();
+    };
+  }, [syncNotifications]);
 
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [authInitialMode, setAuthInitialMode] = useState<'welcome' | 'signin' | 'signup'>('signin');
@@ -342,9 +403,10 @@ function MainApp() {
 
   const handleConfirmSignOut = useCallback(async () => {
     setActiveTab('today');
+    await NotificationScheduler.cancelAllAndReset(currentUser?.id);
     await logout();
     setAuthModalVisible(false);
-  }, [logout]);
+  }, [logout, currentUser?.id]);
 
   const handleSignOutCompleted = useCallback(() => {
     setActiveTab('today');

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Modal, Switch, ScrollView } from 're
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useGoals, useDailyLog } from '@/context/HealthContext';
-import { NotificationService, NotificationScheduler } from '@/services/notifications';
+import { NotificationService, NotificationScheduler, NotificationStorage } from '@/services/notifications';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,56 +20,75 @@ const INTERVAL_OPTIONS = [
   { id: '3h', label: '3 hours' },
 ];
 
-const REMINDER_INTERVAL_KEY = '@calori_water_reminder_interval';
-
 export const HydrationSettingsModal: React.FC<HydrationSettingsModalProps> = ({
   visible,
   onClose,
   onOpenGoalModal,
 }) => {
   const insets = useSafeAreaInsets();
-  const { userGoals, updateGoals } = useGoals();
+  const { userGoals } = useGoals();
   const { currentLog } = useDailyLog();
   const [reminderInterval, setReminderInterval] = useState('2h');
+  const [isReminderOn, setIsReminderOn] = useState(true);
 
-  // Load persisted reminder interval preference
+  // Load persisted reminder preferences directly from NotificationStorage
   useEffect(() => {
-    AsyncStorage.getItem(REMINDER_INTERVAL_KEY)
-      .then(saved => {
-        if (saved) setReminderInterval(saved);
+    NotificationStorage.loadSettings()
+      .then(settings => {
+        setIsReminderOn(settings.water.enabled);
+        setReminderInterval(
+          settings.water.intervalMinutes === 60
+            ? '1h'
+            : settings.water.intervalMinutes === 180
+              ? '3h'
+              : '2h'
+        );
       })
       .catch(() => {});
-  }, []);
+  }, [visible]);
 
   const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
 
   const handleSelectInterval = async (val: string) => {
     setReminderInterval(val);
-    AsyncStorage.setItem(REMINDER_INTERVAL_KEY, val).catch(() => {});
-    const minutes = val === '1h' ? 60 : val === '3h' ? 180 : 120;
+    const minutes: 60 | 120 | 180 = val === '1h' ? 60 : val === '3h' ? 180 : 120;
     try {
-      const settings = await NotificationService.updateSettings({ waterIntervalMinutes: minutes });
+      const settings = await NotificationStorage.updateSettings({
+        water: {
+          enabled: isReminderOn,
+          intervalMinutes: minutes,
+        },
+      });
       await NotificationScheduler.syncSchedules({
         settings,
         streakDays: userGoals.streakDays || 0,
         hasLoggedMealsToday,
+        currentWaterMl: currentLog?.waterMl || 0,
+        targetWaterMl: userGoals.waterGoalMl || 2000,
       });
     } catch {}
   };
-
-  const isReminderOn = userGoals.waterReminder ?? true;
 
   const handleToggleReminder = async (val: boolean) => {
     if (val) {
       await NotificationService.requestPermission();
     }
-    updateGoals({ waterReminder: val });
+    setIsReminderOn(val);
     try {
-      const settings = await NotificationService.updateSettings({ waterReminder: val });
+      const minutes: 60 | 120 | 180 =
+        reminderInterval === '1h' ? 60 : reminderInterval === '3h' ? 180 : 120;
+      const settings = await NotificationStorage.updateSettings({
+        water: {
+          enabled: val,
+          intervalMinutes: minutes,
+        },
+      });
       await NotificationScheduler.syncSchedules({
         settings,
         streakDays: userGoals.streakDays || 0,
         hasLoggedMealsToday,
+        currentWaterMl: currentLog?.waterMl || 0,
+        targetWaterMl: userGoals.waterGoalMl || 2000,
       });
     } catch {}
   };

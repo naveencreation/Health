@@ -14,27 +14,11 @@ import {
   EventSubscription,
 } from './expoNotifications';
 import { setupNotificationChannels } from '@/config/notificationChannels';
+import { NotificationSettings } from './types';
+import { DEFAULT_NOTIFICATION_SETTINGS } from './defaults';
+import { NotificationStorage } from './storage/notificationStorage';
 
-export interface NotificationSettings {
-  waterReminder: boolean;
-  mealReminder: boolean;
-  stepReminder: boolean;
-  streakReminder: boolean;
-  waterIntervalMinutes: number; // e.g., 120 (every 2 hours)
-  quietHoursStart: string; // e.g., "22:00"
-  quietHoursEnd: string; // e.g., "08:00"
-}
-
-export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
-  waterReminder: true,
-  mealReminder: true,
-  stepReminder: true,
-  streakReminder: true,
-  waterIntervalMinutes: 120,
-  quietHoursStart: '22:00',
-  quietHoursEnd: '08:00',
-};
-
+export { NotificationSettings, DEFAULT_NOTIFICATION_SETTINGS };
 export const NOTIFICATION_SETTINGS_STORAGE_KEY = '@calori_notification_settings_v1';
 
 // Configure foreground notification behavior for Expo SDK 57
@@ -79,30 +63,24 @@ export class NotificationService {
   /**
    * Retrieves notification settings from local storage.
    */
-  public static async getSettings(): Promise<NotificationSettings> {
-    try {
-      const raw = await AsyncStorage.getItem(this.storageKey);
-      if (!raw) return { ...DEFAULT_NOTIFICATION_SETTINGS };
-      return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(raw) };
-    } catch {
-      return { ...DEFAULT_NOTIFICATION_SETTINGS };
-    }
+  public static async getSettings(uid?: string): Promise<NotificationSettings> {
+    return NotificationStorage.loadSettings(uid);
   }
 
   /**
    * Updates and saves notification settings.
    */
   public static async updateSettings(
-    updates: Partial<NotificationSettings>
+    updates: Partial<NotificationSettings> & {
+      waterReminder?: boolean;
+      mealReminder?: boolean;
+      stepReminder?: boolean;
+      streakReminder?: boolean;
+      waterIntervalMinutes?: number;
+    },
+    uid?: string
   ): Promise<NotificationSettings> {
-    try {
-      const current = await this.getSettings();
-      const updated = { ...current, ...updates };
-      await AsyncStorage.setItem(this.storageKey, JSON.stringify(updated));
-      return updated;
-    } catch {
-      return { ...DEFAULT_NOTIFICATION_SETTINGS, ...updates };
-    }
+    return NotificationStorage.updateSettings(updates, uid);
   }
 
   /**

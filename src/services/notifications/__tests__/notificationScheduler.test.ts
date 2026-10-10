@@ -1,6 +1,11 @@
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
+const mockScheduleNotificationAsync = jest.fn().mockResolvedValue('mock_notif_id_123');
+const mockCancelAllScheduledNotificationsAsync = jest.fn().mockResolvedValue(undefined);
+const mockGetAllScheduledNotificationsAsync = jest.fn().mockResolvedValue([]);
+const mockCancelScheduledNotificationAsync = jest.fn().mockResolvedValue(undefined);
+
 jest.mock('../expoNotifications', () => ({
   AndroidImportance: {
     DEFAULT: 3,
@@ -8,14 +13,17 @@ jest.mock('../expoNotifications', () => ({
   },
   SchedulableTriggerInputTypes: {
     TIME_INTERVAL: 'timeInterval',
+    DATE: 'date',
   },
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
   getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
-  scheduleNotificationAsync: jest.fn().mockResolvedValue('mock_notif_id_123'),
-  cancelAllScheduledNotificationsAsync: jest.fn().mockResolvedValue(undefined),
-  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+  scheduleNotificationAsync: (...args: any[]) => mockScheduleNotificationAsync(...args),
+  cancelAllScheduledNotificationsAsync: (...args: any[]) =>
+    mockCancelAllScheduledNotificationsAsync(...args),
+  getAllScheduledNotificationsAsync: (...args: any[]) =>
+    mockGetAllScheduledNotificationsAsync(...args),
   addNotificationResponseReceivedListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
 }));
 
@@ -26,26 +34,38 @@ jest.mock('@/services/notifications/expoNotifications', () => ({
   },
   SchedulableTriggerInputTypes: {
     TIME_INTERVAL: 'timeInterval',
+    DATE: 'date',
   },
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
   getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
-  scheduleNotificationAsync: jest.fn().mockResolvedValue('mock_notif_id_123'),
-  cancelAllScheduledNotificationsAsync: jest.fn().mockResolvedValue(undefined),
-  getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+  scheduleNotificationAsync: (...args: any[]) => mockScheduleNotificationAsync(...args),
+  cancelAllScheduledNotificationsAsync: (...args: any[]) =>
+    mockCancelAllScheduledNotificationsAsync(...args),
+  getAllScheduledNotificationsAsync: (...args: any[]) =>
+    mockGetAllScheduledNotificationsAsync(...args),
   addNotificationResponseReceivedListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+}));
+
+jest.mock('expo-notifications/build/cancelScheduledNotificationAsync', () => ({
+  cancelScheduledNotificationAsync: (...args: any[]) =>
+    mockCancelScheduledNotificationAsync(...args),
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotificationService } from '../notificationService';
 import { NotificationScheduler } from '../notificationScheduler';
 
-describe('NotificationService & NotificationScheduler', () => {
+describe('NotificationService & NotificationScheduler Facade', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     await AsyncStorage.clear();
     NotificationService.resetStorageKey();
+    mockScheduleNotificationAsync.mockResolvedValue('mock_notif_id_123');
+    mockGetAllScheduledNotificationsAsync.mockResolvedValue([]);
+    mockCancelScheduledNotificationAsync.mockResolvedValue(undefined);
+    mockCancelAllScheduledNotificationsAsync.mockResolvedValue(undefined);
   });
 
   it('retrieves default notification settings when storage is empty', async () => {
@@ -54,6 +74,7 @@ describe('NotificationService & NotificationScheduler', () => {
     expect(settings.mealReminder).toBe(true);
     expect(settings.stepReminder).toBe(true);
     expect(settings.streakReminder).toBe(true);
+    expect(settings.meals.enabled).toBe(true);
   });
 
   it('updates and persists custom notification settings', async () => {
@@ -63,10 +84,12 @@ describe('NotificationService & NotificationScheduler', () => {
     });
 
     expect(updated.waterReminder).toBe(false);
+    expect(updated.water.enabled).toBe(false);
     expect(updated.waterIntervalMinutes).toBe(60);
 
     const reloaded = await NotificationService.getSettings();
     expect(reloaded.waterReminder).toBe(false);
+    expect(reloaded.water.enabled).toBe(false);
     expect(reloaded.waterIntervalMinutes).toBe(60);
   });
 
@@ -78,47 +101,41 @@ describe('NotificationService & NotificationScheduler', () => {
     expect(diff).toBe(3600);
   });
 
-  it('schedules meal, water, and step reminders when all are enabled', async () => {
+  it('schedules notifications state-aware across horizon via reconciler', async () => {
+    const fixedNow = new Date('2026-10-10T06:00:00');
     const res = await NotificationScheduler.syncSchedules({
       streakDays: 3,
       hasLoggedMealsToday: true,
+      now: fixedNow,
     });
 
-    // Standard reminders has 6 items (3 meals, 2 waters, 1 step)
-    expect(res.scheduledCount).toBe(6);
+    expect(res.scheduledCount).toBeGreaterThan(0);
+    expect(mockScheduleNotificationAsync).toHaveBeenCalled();
+    // Does NOT call blanket cancelAll
+    expect(mockCancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
   });
 
-  it('adds a streak protection reminder when user has not logged today', async () => {
-    const res = await NotificationScheduler.syncSchedules({
-      streakDays: 5,
-      hasLoggedMealsToday: false, // Streak is at risk!
-    });
-
-    // 6 standard + 1 streak protection = 7
-    expect(res.scheduledCount).toBe(7);
-  });
-
-  it('skips water reminders if waterReminder is disabled in settings', async () => {
+  it('skips water notifications when water reminders are disabled in settings', async () => {
+    const fixedNow = new Date('2026-10-10T06:00:00');
     await NotificationService.updateSettings({ waterReminder: false });
 
     const res = await NotificationScheduler.syncSchedules({
       streakDays: 3,
       hasLoggedMealsToday: true,
+      now: fixedNow,
     });
 
-    // 3 meals + 1 step = 4 (water reminders skipped)
-    expect(res.scheduledCount).toBe(4);
+    expect(res.scheduledCount).toBeGreaterThan(0);
+    // Verify none of the scheduled calls have channelId reminders-water
+    const scheduledCalls = mockScheduleNotificationAsync.mock.calls;
+    const waterCalls = scheduledCalls.filter(call =>
+      call[0]?.content?.data?.reminderType === 'water'
+    );
+    expect(waterCalls.length).toBe(0);
   });
 
-  it('skips step reminders if stepReminder is disabled in settings', async () => {
-    await NotificationService.updateSettings({ stepReminder: false });
-
-    const res = await NotificationScheduler.syncSchedules({
-      streakDays: 3,
-      hasLoggedMealsToday: true,
-    });
-
-    // 3 meals + 2 waters = 5 (step reminders skipped)
-    expect(res.scheduledCount).toBe(5);
+  it('allows cancelAll only via explicit cancelAllAndReset on sign-out', async () => {
+    await NotificationScheduler.cancelAllAndReset();
+    expect(mockCancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
   });
 });

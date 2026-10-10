@@ -80,6 +80,7 @@ export { ProfileMetricInspector } from './profile/ProfileMetricInspector';
 export { ErrorBoundary } from './common/ErrorBoundary';
 export { UserAvatar } from './common/UserAvatar';
 export { ConfirmationModal } from './common/ConfirmationModal';
+export { TimePickerModal } from './modals/TimePickerModal';
 export { MarkdownText } from './common/MarkdownText';
 export { ScreenTransitionContainer } from './common/ScreenTransitionContainer';
 export { AnimatedSvgRing } from './common/AnimatedSvgRing';
