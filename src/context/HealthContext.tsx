@@ -1899,7 +1899,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const weightKg = weightUnit === 'lbs' ? Math.round((rawWeight / 2.20462) * 10) / 10 : rawWeight;
 
     const gender = data.gender || baseGoals.gender || 'male';
-    const goal = data.goal || baseGoals.goal || 'maintain';
+    const rawGoal = data.goal || baseGoals.goal || 'maintain';
+
+    // Teen safety guardrail: force maintain goal for ages 13-17
+    const isTeen = userAge >= 13 && userAge <= 17;
+    const goal = isTeen && rawGoal === 'lose' ? 'maintain' : rawGoal;
 
     // Height from user onboarding input or intelligent gender default
     const heightCm = data.heightCm || (gender === 'female' ? 163 : gender === 'other' ? 170 : 175);
@@ -1919,7 +1923,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (goal === 'lose') {
       // 400 kcal deficit for sustainable fat loss (~0.4 - 0.5 kg/week)
-      dailyCalorieBudget = Math.max(1250, tdee - 400);
+      dailyCalorieBudget = tdee - 400;
       targetWeightKg = Math.max(35, Math.round((weightKg - 5) * 10) / 10);
     } else if (goal === 'gain') {
       // 350 kcal surplus for lean muscle hypertrophy
@@ -1931,22 +1935,26 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       targetWeightKg = weightKg;
     }
 
+    // Safety floor: 1200 kcal female, 1500 kcal male, 1350 kcal midpoint
+    const safeFloor = gender === 'female' ? 1200 : gender === 'male' ? 1500 : 1350;
+    dailyCalorieBudget = Math.max(safeFloor, dailyCalorieBudget);
+
     // Macro split calculation:
     // Protein: 1.8g per kg body weight
     const targetProtein = Math.round(weightKg * 1.8);
     const proteinCalories = targetProtein * 4;
 
-    // Fat: 25% of daily calories
-    const targetFat = Math.round((dailyCalorieBudget * 0.25) / 9);
+    // Fat: 28% of total daily calories (9 kcal/g, consistent with onboardingCalculator)
+    const targetFat = Math.round((dailyCalorieBudget * 0.28) / 9);
     const fatCalories = targetFat * 9;
 
     // Carbs: Remaining calories
     const remainingCalories = Math.max(200, dailyCalorieBudget - proteinCalories - fatCalories);
     const targetCarbs = Math.round(remainingCalories / 4);
 
-    // Water goal: ~35ml per kg body weight rounded to nearest 250ml
+    // Water goal: ~35ml per kg body weight rounded to nearest 100ml
     const rawWaterMl = weightKg * 35;
-    const waterGoalMl = Math.max(2000, Math.round(rawWaterMl / 250) * 250);
+    const waterGoalMl = Math.max(2000, Math.round(rawWaterMl / 100) * 100);
 
     return {
       ...baseGoals,

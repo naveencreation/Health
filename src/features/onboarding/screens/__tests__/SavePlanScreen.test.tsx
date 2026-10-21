@@ -64,6 +64,14 @@ jest.mock('../../services/onboardingMigration', () => ({
   migrateOnboardingData: (...args: any[]) => mockMigrateOnboardingData(...args),
 }));
 
+// Mock firebase auth
+jest.mock('@/services/firebase', () => ({
+  auth: {
+    currentUser: { uid: 'mock_uid_123', email: 'test@example.com' },
+  },
+  db: {},
+}));
+
 // Mock useAuth
 const mockRegister = jest.fn();
 const mockLogin = jest.fn();

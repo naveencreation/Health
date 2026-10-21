@@ -37,6 +37,8 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
     'maintenance'
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const isTeen = typeof userGoals.age === 'number' && userGoals.age >= 13 && userGoals.age <= 17;
+  const [teenNotice, setTeenNotice] = useState<string | null>(null);
 
   // Sync state when userGoals changes
   useEffect(() => {
@@ -65,6 +67,11 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   const fatPct = Math.max(0, 100 - proteinPct - carbsPct);
 
   const applyPreset = (preset: 'fat_loss' | 'muscle_gain' | 'maintenance') => {
+    if (isTeen && preset === 'fat_loss') {
+      setTeenNotice('Caloric deficits are disabled for ages 13-17 to support healthy development.');
+      return;
+    }
+    setTeenNotice(null);
     setActivePreset(preset);
     if (preset === 'fat_loss') {
       setCalorieBudget('1650');
@@ -88,8 +95,11 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   };
 
   const handleSave = () => {
+    const rawBudget = parseInt(calorieBudget, 10) || userGoals.dailyCalorieBudget;
+    const safeBudget = isTeen ? Math.max(1600, rawBudget) : rawBudget;
+
     updateGoals({
-      dailyCalorieBudget: parseInt(calorieBudget, 10) || userGoals.dailyCalorieBudget,
+      dailyCalorieBudget: safeBudget,
       targetProtein: parseInt(targetProtein, 10) || userGoals.targetProtein,
       targetCarbs: parseInt(targetCarbs, 10) || userGoals.targetCarbs,
       targetFat: parseInt(targetFat, 10) || userGoals.targetFat,
@@ -173,23 +183,40 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       >
         {/* Goal Presets Row */}
         <Text style={styles.sectionHeader}>Goal Presets</Text>
+        {teenNotice && (
+          <View style={styles.teenNoticeContainer}>
+            <Ionicons name="information-circle" size={16} color={Colors.water} />
+            <Text style={styles.teenNoticeText}>{teenNotice}</Text>
+          </View>
+        )}
         <View style={styles.presetsRow}>
           <Pressable
             style={({ pressed }) => [
               styles.presetCard,
               activePreset === 'fat_loss' ? styles.presetCardActive : null,
+              isTeen ? styles.presetCardDisabled : null,
               pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => applyPreset('fat_loss')}
             accessibilityRole="button"
-            accessibilityState={{ selected: activePreset === 'fat_loss' }}
-            accessibilityLabel="Fat loss preset, 1650 kilocalories"
+            accessibilityState={{ selected: activePreset === 'fat_loss', disabled: isTeen }}
+            accessibilityLabel={
+              isTeen
+                ? 'Fat loss preset disabled for teen users'
+                : 'Fat loss preset, 1650 kilocalories'
+            }
           >
             <View style={[styles.presetIconBox, styles.presetIconFatLoss]}>
-              <Ionicons name="flame" size={16} color={Colors.primary} />
+              <Ionicons
+                name={isTeen ? 'lock-closed' : 'flame'}
+                size={16}
+                color={isTeen ? Colors.textDisabled : Colors.primary}
+              />
             </View>
-            <Text style={styles.presetName}>Fat Loss</Text>
-            <Text style={styles.presetMeta}>1,650 kcal</Text>
+            <Text style={[styles.presetName, isTeen ? styles.presetTextDisabled : null]}>
+              Fat Loss
+            </Text>
+            <Text style={styles.presetMeta}>{isTeen ? 'Locked' : '1,650 kcal'}</Text>
           </Pressable>
 
           <Pressable
@@ -872,5 +899,28 @@ const styles = StyleSheet.create({
   pressedSubtle: {
     opacity: 0.9,
     transform: [{ scale: 0.985 }],
+  },
+  presetCardDisabled: {
+    opacity: 0.5,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  presetTextDisabled: {
+    color: Colors.textDisabled,
+  },
+  teenNoticeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${Colors.water}15`,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    marginBottom: 8,
+  },
+  teenNoticeText: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    color: Colors.water,
+    flex: 1,
   },
 });

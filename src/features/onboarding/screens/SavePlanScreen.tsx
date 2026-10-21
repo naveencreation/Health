@@ -24,6 +24,7 @@ import { useAuth } from '@/context/HealthContext';
 import { CalculatedHealthPlan } from '../services/onboardingCalculator';
 import { OnboardingDraft, PendingMeal } from '../services/onboardingDraft';
 import { migrateOnboardingData } from '../services/onboardingMigration';
+import { auth } from '@/services/firebase';
 
 export interface SavePlanScreenProps {
   name?: string;
@@ -117,11 +118,17 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      // In web or environments with Google client configured:
-      // Gracefully fall back to demo/guest or report configuration
+      // Check if native Google auth is configured
+      const hasGoogleConfig = Boolean(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID);
+      if (!hasGoogleConfig) {
+        setErrorMessage(
+          'Google sign-in is not configured for this build. Please sign up with email or continue as guest.'
+        );
+        return;
+      }
       const res = await loginAnonymous(userName || name || 'Friend');
       if (res.success) {
-        const uid = currentUser?.id || 'google_user_' + Date.now();
+        const uid = auth.currentUser?.uid || currentUser?.id || 'google_user_' + Date.now();
         await handleAuthSuccess(uid, email || 'google_user@calorify.app', false);
       } else {
         setErrorMessage('Google sign-in is momentarily unavailable. Please use email or continue as guest.');
@@ -157,12 +164,15 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
         });
 
         if (res.success) {
-          const uid = currentUser?.id || 'user_' + Date.now();
+          const uid = auth.currentUser?.uid || currentUser?.id || 'user_' + Date.now();
           await handleAuthSuccess(uid, cleanEmail, false);
         } else {
+          const lowerErr = res.error?.toLowerCase() || '';
           const isCollision =
-            res.error?.toLowerCase().includes('already registered') ||
-            res.error?.toLowerCase().includes('email-already-in-use');
+            lowerErr.includes('already registered') ||
+            lowerErr.includes('email-already-in-use') ||
+            lowerErr.includes('already in use') ||
+            lowerErr.includes('already exists');
 
           if (isCollision) {
             setCollisionDetected(true);
@@ -175,7 +185,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
         // Sign-in mode (e.g. following account collision)
         const res = await login(cleanEmail, password);
         if (res.success) {
-          const uid = currentUser?.id || 'user_' + Date.now();
+          const uid = auth.currentUser?.uid || currentUser?.id || 'user_' + Date.now();
           await handleAuthSuccess(uid, cleanEmail, false);
         } else {
           setErrorMessage(res.error || 'Incorrect email or password.');
@@ -196,7 +206,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     try {
       const res = await loginAnonymous(userName || name || 'Friend');
       if (res.success) {
-        const uid = currentUser?.id || 'guest_' + Date.now();
+        const uid = auth.currentUser?.uid || currentUser?.id || 'guest_' + Date.now();
         await handleAuthSuccess(uid, '', true);
       } else {
         setErrorMessage(res.error || 'Could not continue as guest.');
