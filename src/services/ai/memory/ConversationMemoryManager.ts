@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
-import { ChatMessage, ConversationSummary } from '../types/ai.types';
+import { ChatMessage, ConversationRecord, ConversationSummary } from '../types/ai.types';
 import { AI_CONFIG } from '../config/AIConfig';
 
 class ConversationMemoryManagerService {
@@ -11,6 +11,10 @@ class ConversationMemoryManagerService {
 
   private getSummaryKey(userId?: string): string {
     return `@calori_ria_summary_${userId || 'guest'}`;
+  }
+
+  private getConversationsKey(userId?: string): string {
+    return `@calori_ria_conversations_${userId || 'guest'}`;
   }
 
   /**
@@ -164,6 +168,78 @@ class ConversationMemoryManagerService {
       }
     } catch (err) {
       console.warn('ConversationMemoryManager: Failed to clear memory', err);
+    }
+  }
+
+  async loadConversations(userId?: string): Promise<ConversationRecord[]> {
+    try {
+      const raw = await AsyncStorage.getItem(this.getConversationsKey(userId));
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(item => !item.archived) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async loadAllConversations(userId?: string): Promise<ConversationRecord[]> {
+    return this.loadConversationsIncludingArchived(userId);
+  }
+
+  async saveConversation(conversation: ConversationRecord, userId?: string): Promise<void> {
+    try {
+      const existingAll = await this.loadConversationsIncludingArchived(userId);
+      const archived = existingAll.filter(item => item.archived);
+      const active = existingAll.filter(item => !item.archived && item.id !== conversation.id);
+      const next = [conversation, ...active].slice(0, 10).concat(archived);
+      await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));
+    } catch (err) {
+      console.warn('ConversationMemoryManager: Failed to save conversation', err);
+    }
+  }
+
+  async archiveConversation(conversationId: string, userId?: string): Promise<void> {
+    try {
+      const existing = await this.loadConversationsIncludingArchived(userId);
+      const next = existing.map(item =>
+        item.id === conversationId ? { ...item, archived: true } : item
+      );
+      await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));
+    } catch (err) {
+      console.warn('ConversationMemoryManager: Failed to archive conversation', err);
+    }
+  }
+
+  async restoreConversation(conversationId: string, userId?: string): Promise<void> {
+    try {
+      const existing = await this.loadConversationsIncludingArchived(userId);
+      const next = existing.map(item =>
+        item.id === conversationId ? { ...item, archived: false } : item
+      );
+      await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));
+    } catch (err) {
+      console.warn('ConversationMemoryManager: Failed to restore conversation', err);
+    }
+  }
+
+  async deleteConversation(conversationId: string, userId?: string): Promise<void> {
+    try {
+      const existing = await this.loadConversationsIncludingArchived(userId);
+      const next = existing.filter(item => item.id !== conversationId);
+      await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));
+    } catch (err) {
+      console.warn('ConversationMemoryManager: Failed to delete conversation', err);
+    }
+  }
+
+  private async loadConversationsIncludingArchived(userId?: string): Promise<ConversationRecord[]> {
+    try {
+      const raw = await AsyncStorage.getItem(this.getConversationsKey(userId));
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
   }
 }

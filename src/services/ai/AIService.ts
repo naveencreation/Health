@@ -5,6 +5,7 @@ import { AIErrorMapper } from './errors/AIErrorMapper';
 import { AIObservability } from './observability/AIObservability';
 import {
   ChatMessage,
+  ConversationRecord,
   ValidationResult,
   UserNutritionContext,
   FoodVisionResult,
@@ -162,6 +163,30 @@ class AIServiceFacade {
 
   async clearChatHistory(userId?: string): Promise<void> {
     return ConversationMemoryManager.clearAll(userId);
+  }
+
+  async loadConversations(userId?: string): Promise<ConversationRecord[]> {
+    return ConversationMemoryManager.loadConversations(userId);
+  }
+
+  async loadAllConversations(userId?: string): Promise<ConversationRecord[]> {
+    return ConversationMemoryManager.loadAllConversations(userId);
+  }
+
+  async saveConversation(conversation: ConversationRecord, userId?: string): Promise<void> {
+    return ConversationMemoryManager.saveConversation(conversation, userId);
+  }
+
+  async archiveConversation(conversationId: string, userId?: string): Promise<void> {
+    return ConversationMemoryManager.archiveConversation(conversationId, userId);
+  }
+
+  async restoreConversation(conversationId: string, userId?: string): Promise<void> {
+    return ConversationMemoryManager.restoreConversation(conversationId, userId);
+  }
+
+  async deleteConversation(conversationId: string, userId?: string): Promise<void> {
+    return ConversationMemoryManager.deleteConversation(conversationId, userId);
   }
 
   /**

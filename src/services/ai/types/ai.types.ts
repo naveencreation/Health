@@ -10,6 +10,15 @@ export interface ChatMessage {
   isInterrupted?: boolean;
 }
 
+export interface ConversationRecord {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessage[];
+  archived?: boolean;
+}
+
 export type AIErrorType =
   | 'NO_KEY_CONFIGURED'
   | 'INVALID_KEY'

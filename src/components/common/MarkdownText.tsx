@@ -171,7 +171,12 @@ export const MarkdownText: React.FC<MarkdownTextProps> = ({
           const bulletContent = bulletMatch[2];
           return (
             <View key={`bullet_${lineIdx}`} style={styles.bulletRow}>
-              <Text style={[styles.bulletDot, { color: isUser ? '#FFFFFF' : '#F47551' }]}>•</Text>
+              <View
+                style={[
+                  styles.bulletDot,
+                  { backgroundColor: isUser ? '#FFFFFF' : '#F47551' },
+                ]}
+              />
               <Text style={[styles.baseText, baseStyle, styles.bulletContentText]}>
                 {renderInlineTokens(bulletContent, lineIdx)}
               </Text>
@@ -244,9 +249,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#1E293B',
+    includeFontPadding: false,
   },
   paragraphSpacer: {
-    height: 8,
+    height: 10,
   },
   paragraphStart: {
     marginTop: 2,
@@ -285,22 +291,25 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
     lineHeight: 24,
-    marginTop: 8,
-    marginBottom: 4,
+    letterSpacing: -0.2,
+    marginTop: 10,
+    marginBottom: 5,
   },
   heading2: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
     lineHeight: 22,
-    marginTop: 6,
-    marginBottom: 3,
+    letterSpacing: -0.1,
+    marginTop: 8,
+    marginBottom: 4,
   },
   heading3: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
     lineHeight: 20,
-    marginTop: 4,
-    marginBottom: 2,
+    letterSpacing: 0,
+    marginTop: 6,
+    marginBottom: 3,
   },
   headingRia: {
     color: '#0F172A',
@@ -311,13 +320,15 @@ const styles = StyleSheet.create({
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginVertical: 2,
-    paddingLeft: 2,
+    marginVertical: 3,
+    paddingLeft: 1,
   },
   bulletDot: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginRight: 6,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 8,
+    marginRight: 8,
   },
   bulletContentText: {
     flex: 1,
@@ -326,8 +337,8 @@ const styles = StyleSheet.create({
   numberedRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginVertical: 2,
-    paddingLeft: 2,
+    marginVertical: 3,
+    paddingLeft: 1,
   },
   numberPrefixText: {
     fontFamily: Fonts.urbanist.bold,
