@@ -18,9 +18,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { Bot, KeyRound } from 'lucide-react-native';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useAuth, useGoals, useDailyLog } from '@/context/HealthContext';
-import { AIService, ChatMessage, ConversationRecord, UserNutritionContext } from '@/services/ai';
+import { useAuth, useGoals, useDailyLog, useAnalytics } from '@/context/HealthContext';
+import {
+  AIService,
+  ChatMessage,
+  ConversationRecord,
+  UserNutritionContext,
+  MetabolicAdaptiveEngine,
+} from '@/services/ai';
 import { MarkdownText } from '../common/MarkdownText';
+import { RiaCardParser } from '@/services/ai/cards/RiaCardParser';
+import { RiaActionCard } from '@/features/ria/cards/RiaActionCard';
+import {
+  MealCardData,
+  WaterCardData,
+  WeightCardData,
+  SuggestionOption,
+  PlanChangeCardData,
+} from '@/services/ai/types/ai.types';
+import { FoodItem, MealType } from '@/types';
 
 interface RiaChatModalProps {
   visible: boolean;
@@ -164,10 +180,21 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   initialPrompt,
   onOpenBYOKSetup,
 }) => {
-  const { totalConsumed, remainingCalories, totalProtein, totalCarbs, totalFat, currentLog } =
-    useDailyLog();
-  const { userGoals } = useGoals();
+  const {
+    totalConsumed,
+    remainingCalories,
+    totalProtein,
+    totalCarbs,
+    totalFat,
+    currentLog,
+    addMealItem,
+    removeMealItem,
+    addWater,
+    logWeight,
+  } = useDailyLog();
+  const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
+  const { dailyLogs } = useAnalytics();
 
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -402,6 +429,173 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     setShowDeleteConversationConfirm(true);
   };
 
+  const handleConfirmMeal = (messageId: string, cardData: MealCardData) => {
+    const entryIds: string[] = [];
+    const targetSlot: MealType =
+      cardData.slot === 'snack' ? 'snacks' : (cardData.slot as MealType);
+
+    for (const item of cardData.items) {
+      const foodItem: FoodItem = {
+        id: item.id || `food_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        name: item.name,
+        category: 'snacks',
+        categoryLabel: 'Logged Meal',
+        servingUnit: item.unit || 'portion',
+        defaultServingSize: 1,
+        calories: item.kcal,
+        carbs: item.carbs,
+        protein: item.protein,
+        fat: item.fat,
+        fiber: 0,
+        icon: '🍱',
+      };
+      const logged = addMealItem(targetSlot, foodItem, item.qty);
+      if (logged?.id) entryIds.push(logged.id);
+    }
+
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id === messageId && m.card?.type === 'meal') {
+          return {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'logged',
+                loggedAt: Date.now(),
+                undoUntil: Date.now() + 10000,
+                entryIds,
+              },
+            },
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleUndoMeal = (messageId: string, cardData: MealCardData) => {
+    if (cardData.entryIds) {
+      for (const id of cardData.entryIds) {
+        removeMealItem(id);
+      }
+    }
+
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id === messageId && m.card?.type === 'meal') {
+          return {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'proposed',
+                loggedAt: undefined,
+                undoUntil: undefined,
+                entryIds: undefined,
+              },
+            },
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleConfirmWater = (messageId: string, amountMl: number) => {
+    addWater(amountMl);
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id === messageId && m.card?.type === 'water') {
+          return {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'logged',
+                loggedAt: Date.now(),
+              },
+            },
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleConfirmWeight = (messageId: string, cardData: WeightCardData) => {
+    logWeight(cardData.weightKg);
+    updateGoals({ currentWeightKg: cardData.weightKg });
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id === messageId && m.card?.type === 'weight') {
+          return {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'logged',
+                loggedAt: Date.now(),
+              },
+            },
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleApplyPlanChange = (messageId: string, cardData: PlanChangeCardData) => {
+    updateGoals({
+      dailyCalorieBudget: cardData.calories,
+      targetProtein: cardData.protein,
+      targetCarbs: cardData.carbs,
+      targetFat: cardData.fat,
+    });
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id === messageId && m.card?.type === 'plan_change') {
+          return {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'applied',
+              },
+            },
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleLogSuggestionOption = (_messageId: string, option: SuggestionOption) => {
+    const foodItem: FoodItem = {
+      id: `opt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: option.name,
+      category: 'snacks',
+      categoryLabel: 'Suggestion',
+      servingUnit: option.portion || 'portion',
+      defaultServingSize: 1,
+      calories: option.kcal,
+      carbs: option.carbs,
+      protein: option.protein,
+      fat: option.fat,
+      fiber: 0,
+      icon: '🍱',
+    };
+    const hour = new Date().getHours();
+    const slot: MealType =
+      hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : hour < 19 ? 'snacks' : 'dinner';
+    addMealItem(slot, foodItem, 1);
+  };
+
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputQuery).trim();
     if (!text || isStreaming) return;
@@ -429,6 +623,9 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
+      const recentLogs = Object.values(dailyLogs || {});
+      const metabolicInsight = MetabolicAdaptiveEngine.analyzeMetabolism(recentLogs, userGoals);
+
       const telemetryContext: UserNutritionContext = {
         name: firstName,
         riaTone: userGoals.riaTone || 'supportive',
@@ -450,6 +647,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         heightCm: userGoals.heightCm,
         age: userGoals.age,
         gender: userGoals.gender,
+        metabolicInsight,
         loggedMealsToday: currentLog.meals.map(m => ({
           name: m.name,
           mealType: m.mealType,
@@ -471,10 +669,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           currentUser?.id
         );
 
+        const parsed = RiaCardParser.parseMessage(fullResponse, currentLog, userGoals);
+
         const riaMsg: ChatMessage = {
           id: `ria_${Date.now()}`,
           sender: 'ria',
-          text: fullResponse,
+          text: parsed.cleanText || fullResponse,
+          card: parsed.card,
           timestamp: messageTimestamp(),
         };
 
@@ -726,14 +927,33 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                       ) : msg.isError ? (
                         <Text style={[styles.bubbleText, styles.errorMsgText]}>{msg.text}</Text>
                       ) : (
-                        <MarkdownText
-                          content={msg.text}
-                          isUser={!isRia}
-                          baseStyle={[
-                            styles.bubbleText,
-                            isRia ? styles.bubbleTextRia : styles.bubbleTextUser,
-                          ]}
-                        />
+                        <>
+                          {msg.text ? (
+                            <MarkdownText
+                              content={msg.text}
+                              isUser={!isRia}
+                              baseStyle={[
+                                styles.bubbleText,
+                                isRia ? styles.bubbleTextRia : styles.bubbleTextUser,
+                              ]}
+                            />
+                          ) : null}
+
+                          {msg.card ? (
+                            <View style={styles.cardWrapper}>
+                              <RiaActionCard
+                                card={msg.card}
+                                messageId={msg.id}
+                                onConfirmMeal={handleConfirmMeal}
+                                onUndoMeal={handleUndoMeal}
+                                onConfirmWater={handleConfirmWater}
+                                onConfirmWeight={handleConfirmWeight}
+                                onLogSuggestionOption={handleLogSuggestionOption}
+                                onApplyPlanChange={handleApplyPlanChange}
+                              />
+                            </View>
+                          ) : null}
+                        </>
                       )}
                       <Text
                         style={[
@@ -759,7 +979,11 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                   <View style={[styles.bubble, styles.bubbleRia]}>
                     {streamingText ? (
                       <MarkdownText
-                        content={streamingText}
+                        content={
+                          streamingText
+                            .replace(/```(?:ria_action|json:ria_action)[\s\S]*?(?:```|$)/i, '')
+                            .trim() || 'Thinking…'
+                        }
                         isUser={false}
                         baseStyle={[styles.bubbleText, styles.bubbleTextRia]}
                       />
@@ -1900,6 +2124,10 @@ const styles = StyleSheet.create({
   },
   pressedSendBtn: {
     transform: [{ scale: 0.94 }],
+  },
+  cardWrapper: {
+    marginTop: 6,
+    width: '100%',
   },
 });
 

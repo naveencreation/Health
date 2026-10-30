@@ -39,3 +39,27 @@ jest.mock('react-native-reanimated', () => {
     },
   };
 });
+
+// Mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+// Mock Firebase Firestore & Services
+jest.mock('firebase/firestore', () => ({
+  doc: jest.fn(() => ({})),
+  getDoc: jest.fn(() => Promise.resolve({ exists: () => false, data: () => ({}) })),
+  setDoc: jest.fn(() => Promise.resolve()),
+  deleteDoc: jest.fn(() => Promise.resolve()),
+  collection: jest.fn(() => ({})),
+  query: jest.fn(() => ({})),
+  where: jest.fn(() => ({})),
+  getDocs: jest.fn(() => Promise.resolve({ docs: [], empty: true })),
+}));
+
+jest.mock('@/services/firebase', () => ({
+  auth: { currentUser: { uid: 'test_user_123' } },
+  db: {},
+}));
+
+

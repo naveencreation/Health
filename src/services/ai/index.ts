@@ -12,5 +12,7 @@ export { EdgeImagePreprocessor } from './validation/EdgeImagePreprocessor';
 export { GeminiTokenEstimator } from './memory/GeminiTokenEstimator';
 export { TokenBudgetManager } from './memory/TokenBudgetManager';
 export { ConversationMemoryManager } from './memory/ConversationMemoryManager';
+export { FastLoopMemoryExtractor } from './memory/FastLoopMemoryExtractor';
+export { MetabolicAdaptiveEngine } from './context/MetabolicAdaptiveEngine';
 export { AIRateLimiter } from './gateway/AIRateLimiter';
 export { AIObservability } from './observability/AIObservability';

@@ -1,5 +1,6 @@
 import { SecureKeyStorage } from './storage/SecureKeyStorage';
 import { ConversationMemoryManager } from './memory/ConversationMemoryManager';
+import { FastLoopMemoryExtractor } from './memory/FastLoopMemoryExtractor';
 import { GeminiProvider } from './providers/GeminiProvider';
 import { AIErrorMapper } from './errors/AIErrorMapper';
 import { AIObservability } from './observability/AIObservability';
@@ -82,6 +83,24 @@ class AIServiceFacade {
       );
     }
 
+    // Fast-Loop Memory Extractor: Detect dietary preferences/allergies and enrich context in real-time
+    let activeFacts = context.userFacts;
+    if (!activeFacts) {
+      activeFacts = await FastLoopMemoryExtractor.loadFacts(userId);
+    }
+    const { updatedFacts, newlyDiscovered } = FastLoopMemoryExtractor.extractFactsFromText(
+      prompt,
+      activeFacts
+    );
+    if (newlyDiscovered.length > 0) {
+      FastLoopMemoryExtractor.saveFacts(updatedFacts, userId).catch(() => {});
+    }
+
+    const enrichedContext: UserNutritionContext = {
+      ...context,
+      userFacts: updatedFacts,
+    };
+
     // Load active summary if available
     const activeSummary = await ConversationMemoryManager.loadSummary(userId);
     const summaryText = activeSummary?.text || '';
@@ -90,7 +109,7 @@ class AIServiceFacade {
       apiKey,
       prompt,
       history,
-      context,
+      enrichedContext,
       onChunk,
       signal,
       summaryText
