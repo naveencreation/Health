@@ -6,14 +6,11 @@ import {
   Pressable,
   ScrollView,
   Dimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  Platform,
 } from 'react-native';
 import Svg, { Circle, Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { useDailyLog, useGoals, useAnalytics } from '@/context/HealthContext';
-import { useAuth } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { AnimatedSvgRing } from '@/components/common/AnimatedSvgRing';
@@ -23,8 +20,8 @@ import {
   FULL_DAY_NAMES,
   SHORT_MONTHS,
   getRollingSevenDays,
+  getWeekWindowEnd,
   parseDateString,
-  toDateString,
 } from '@/utils/dateUtils';
 
 interface HeroCalorieCardProps {
@@ -32,21 +29,11 @@ interface HeroCalorieCardProps {
 }
 
 const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
-const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 const HIT_SLOP_TIMELINE = { top: 6, bottom: 6, left: 4, right: 4 };
-
-const GUEST_BASELINE_DAYS = [
-  { cals: 1840, carbs: 195, protein: 72, fat: 46 },
-  { cals: 1720, carbs: 180, protein: 68, fat: 42 },
-  { cals: 1950, carbs: 210, protein: 78, fat: 50 },
-  { cals: 1680, carbs: 175, protein: 65, fat: 40 },
-  { cals: 1890, carbs: 200, protein: 74, fat: 48 },
-  { cals: 1780, carbs: 190, protein: 70, fat: 44 },
-  { cals: 1820, carbs: 195, protein: 72, fat: 45 },
-] as const;
 
 const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }) => {
   const {
+    todayStr,
     selectedDate,
     setSelectedDate,
     dailyLogs,
@@ -58,8 +45,6 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
     totalFat,
   } = useDailyLog();
   const { userGoals } = useGoals();
-  const { weeklyLogs } = useAnalytics();
-  const { currentUser } = useAuth();
 
   const scrollRef = useRef<ScrollView>(null);
   const initialWidth =
@@ -67,13 +52,10 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const [cardWidth, setCardWidth] = useState(initialWidth);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  const budget = userGoals.dailyCalorieBudget || 2000;
+  const budget = userGoals.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
   const eaten = totalConsumed ?? 0;
   const burned = totalBurned ?? 0;
   const calLeft = remainingCalories;
-
-  // Real-world today reference & dynamic context tab label
-  const todayStr = useMemo(() => toDateString(), []);
 
   const isToday = selectedDate === todayStr;
   const dayTabLabel = isToday ? 'Today' : 'Day View';
@@ -82,9 +64,11 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const goalLabel = (() => {
     switch (userGoals.goal) {
       case 'lose':
+      case 'lose_weight':
         return 'Weight Loss';
       case 'gain':
-        return 'Muscle Hypertrophy';
+      case 'gain_muscle':
+        return 'Muscle Gain';
       case 'maintain':
       default:
         return 'Daily Goal';
@@ -94,10 +78,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   // Dial specs (Slide 0)
   const dialSize = 120;
   const strokeWidth = 10;
-  const radius = (dialSize - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const progressRatio = Math.min(1, Math.max(0, eaten / budget));
-  const strokeDashoffset = circumference - circumference * progressRatio;
+  // Allowance matches the "kcal left" number: budget + burned
+  const progressRatio = Math.min(1, Math.max(0, eaten / (budget + burned)));
 
   // Brand-aligned dial stroke color
   const dialStrokeColor = useMemo(() => {
@@ -106,18 +88,17 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   }, [calLeft]);
 
   // Macro progress ratios (Slide 0)
-  const targetCarbs = userGoals.targetCarbs || 110;
-  const targetProtein = userGoals.targetProtein || 90;
-  const targetFat = userGoals.targetFat || 70;
+  const targetCarbs = userGoals.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs;
+  const targetProtein = userGoals.targetProtein || BIOMETRIC_DEFAULTS.targetProtein;
+  const targetFat = userGoals.targetFat || BIOMETRIC_DEFAULTS.targetFat;
 
   const carbRatio = Math.min(1, Math.max(0, (totalCarbs || 0) / targetCarbs));
   const proteinRatio = Math.min(1, Math.max(0, (totalProtein || 0) / targetProtein));
   const fatRatio = Math.min(1, Math.max(0, (totalFat || 0) / targetFat));
 
-  // 7 Days of the rolling window matching TopDateStrip
+  // Same 7-day page as TopDateStrip, so tapping a day never shifts the chart
   const trendDays = useMemo(() => {
-    const rollingDates = getRollingSevenDays(selectedDate, todayStr);
-    const isGuest = currentUser?.isGuest;
+    const rollingDates = getRollingSevenDays(getWeekWindowEnd(selectedDate, todayStr), todayStr);
 
     const days = [];
     for (let i = 0; i < rollingDates.length; i++) {
@@ -126,30 +107,12 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
       const dayOfWeek = d.getDay(); // 0 is Sunday
       const isDayToday = dateStr === todayStr;
 
-      const log = dailyLogs ? dailyLogs[dateStr] : undefined;
-      const fallback = isGuest ? GUEST_BASELINE_DAYS[i % GUEST_BASELINE_DAYS.length] : null;
-
-      const hasMeals = log && Array.isArray(log.meals) && log.meals.length > 0;
-      const cals = hasMeals
-        ? log.meals.reduce((sum, m) => sum + m.calories, 0)
-        : fallback
-          ? fallback.cals
-          : 0;
-      const carbs = hasMeals
-        ? Math.round(log.meals.reduce((sum, m) => sum + m.carbs, 0))
-        : fallback
-          ? fallback.carbs
-          : 0;
-      const protein = hasMeals
-        ? Math.round(log.meals.reduce((sum, m) => sum + m.protein, 0))
-        : fallback
-          ? fallback.protein
-          : 0;
-      const fat = hasMeals
-        ? Math.round(log.meals.reduce((sum, m) => sum + m.fat, 0))
-        : fallback
-          ? fallback.fat
-          : 0;
+      const meals = dailyLogs?.[dateStr]?.meals;
+      const list = Array.isArray(meals) ? meals : [];
+      const cals = list.reduce((sum, m) => sum + m.calories, 0);
+      const carbs = Math.round(list.reduce((sum, m) => sum + m.carbs, 0));
+      const protein = Math.round(list.reduce((sum, m) => sum + m.protein, 0));
+      const fat = Math.round(list.reduce((sum, m) => sum + m.fat, 0));
 
       days.push({
         idx: i,
@@ -167,7 +130,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
     }
 
     return days;
-  }, [selectedDate, dailyLogs, todayStr, currentUser]);
+  }, [selectedDate, dailyLogs, todayStr]);
 
   // Derived selected day index (Single Source of Truth: selectedDate, adheres to react-state-minimize)
   const selectedDayIdx = useMemo(() => {
@@ -248,14 +211,6 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
     scrollRef.current?.scrollTo({ x: index * cardWidth, animated: true });
   };
 
-  const handleScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / cardWidth);
-    if (index !== activeSlide && (index === 0 || index === 1)) {
-      setActiveSlide(index);
-    }
-  };
-
   return (
     <View
       style={styles.card}
@@ -270,7 +225,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
       <View style={styles.cardTopHeader}>
         <View style={styles.titleRow}>
           <Text style={styles.goalTitle}>
-            {activeSlide === 0 ? `${goalLabel} : ${budget} Cal` : 'Weekly Diet Journey'}
+            {activeSlide === 0 ? `${goalLabel}: ${budget.toLocaleString()} kcal` : 'Weekly Diet Journey'}
           </Text>
           {activeSlide === 0 && onEditGoal ? (
             <Pressable
@@ -331,19 +286,8 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
         </View>
       </View>
 
-      {/* 2. Horizontal Paging ScrollView */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        nestedScrollEnabled
-        onMomentumScrollEnd={handleScrollEnd}
-        decelerationRate="fast"
-        snapToInterval={cardWidth}
-        snapToAlignment="center"
-        scrollEventThrottle={16}
-      >
+      {/* 2. Slides switch only via the tabs: a swipe here fought the page scroll and the date strip */}
+      <ScrollView ref={scrollRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}>
         {/* SLIDE 0: Today's Calorie & Macro Budget */}
         <View style={[styles.slide, { width: cardWidth }]}>
           {/* Middle Body: Eaten & Burned (Left) + Circular Dial (Right) */}
@@ -357,12 +301,12 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                   <Ionicons
                     name="restaurant-outline"
                     size={13}
-                    color="#0284C7"
+                    color={Colors.primary}
                     style={styles.metricIcon}
                   />
                 </View>
                 <Text style={styles.metricValueText}>
-                  {eaten} <Text style={styles.metricUnit}>Cal</Text>
+                  {eaten} <Text style={styles.metricUnit}>kcal</Text>
                 </Text>
               </View>
 
@@ -370,10 +314,10 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               <View style={[styles.metricBlock, styles.metricBlockBurned]}>
                 <View style={styles.metricLabelRow}>
                   <Text style={styles.metricLabel}>Burned</Text>
-                  <Ionicons name="flame" size={13} color="#EA580C" style={styles.metricIcon} />
+                  <Ionicons name="flame" size={13} color={Colors.burn} style={styles.metricIcon} />
                 </View>
                 <Text style={styles.metricValueText}>
-                  {burned} <Text style={styles.metricUnit}>Cal</Text>
+                  {burned} <Text style={styles.metricUnit}>kcal</Text>
                 </Text>
               </View>
             </View>
@@ -390,7 +334,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
               <View style={styles.dialCenterContent}>
                 <Text style={styles.calLeftNumber}>{Math.abs(calLeft).toLocaleString()}</Text>
-                <Text style={styles.calLeftLabel}>{calLeft < 0 ? 'Cal over' : 'Cal left'}</Text>
+                <Text style={styles.calLeftLabel}>{calLeft < 0 ? 'kcal over' : 'kcal left'}</Text>
               </View>
             </View>
           </View>
@@ -404,7 +348,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 progress={carbRatio}
                 fillColor={Colors.carbs}
                 height={6}
-                trackColor="#FEF3C7"
+                trackColor={Colors.carbsLight}
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs}g
@@ -418,7 +362,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 progress={proteinRatio}
                 fillColor={Colors.protein}
                 height={6}
-                trackColor="#DCFCE7"
+                trackColor={Colors.proteinLight}
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein}g
@@ -432,7 +376,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 progress={fatRatio}
                 fillColor={Colors.fat}
                 height={6}
-                trackColor="#FFEDD5"
+                trackColor={Colors.fatLight}
               />
               <Text style={styles.macroRatioText}>
                 <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat}g
@@ -447,6 +391,12 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
           <View style={styles.journeySubheaderRow}>
             <Text style={styles.avgIntakeLabel}>
               Avg: <Text style={styles.avgIntakeBold}>{avgCals.toLocaleString()} kcal/day</Text>
+            </Text>
+            {/* The macro pills below are for this day, not the average */}
+            <Text style={styles.daySelectedLabel}>
+              {currentDay.isToday
+                ? 'Today'
+                : `${currentDay.fullDayName}, ${currentDay.dayNum} ${currentDay.monthName}`}
             </Text>
           </View>
 
@@ -508,7 +458,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 y1={activePt.y}
                 x2={activePt.x}
                 y2={chartHeight}
-                stroke="#0F172A"
+                stroke={Colors.textPrimary}
                 strokeDasharray="3 3"
                 strokeWidth={1}
                 opacity={0.25}
@@ -534,7 +484,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 cx={activePt.x}
                 cy={activePt.y}
                 r={4.5}
-                fill="#FFFFFF"
+                fill={Colors.card}
                 stroke={Colors.primary}
                 strokeWidth={2.5}
               />
@@ -572,8 +522,13 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
               </View>
             )}
 
-            {/* Interactive Touch Columns */}
-            <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            {/* Interactive Touch Columns (hidden from screen readers: the timeline below has the same buttons) */}
+            <View
+              style={StyleSheet.absoluteFill}
+              pointerEvents="box-none"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               {trendDays.map((day, i) => {
                 const colWidth = usableWidth / 6;
                 const colLeft = horizontalPadding + (i - 0.5) * colWidth;

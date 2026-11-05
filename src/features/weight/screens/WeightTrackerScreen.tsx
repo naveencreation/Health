@@ -20,7 +20,7 @@ import { WeightGoalSettingsModal } from '../modals/WeightGoalSettingsModal';
 import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
 import { WeightHistoryScreen } from './WeightHistoryScreen';
 import { WeightReportScreen } from './WeightReportScreen';
-import { useDailyLog } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
@@ -36,6 +36,8 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const { selectedDate, dailyLogs, logWeight, deleteWeightEntry } = useDailyLog();
+  const { userGoals } = useGoals();
+  const isLbs = userGoals.weightUnit === 'lbs';
 
   const [isLogModalVisible, setIsLogModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
@@ -124,7 +126,7 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
   const handleUndoDelete = useCallback(() => {
     if (!undoToast) return;
     const { entry } = undoToast;
-    logWeight(entry.weightKg, entry.date, entry.note);
+    logWeight(entry.weightKg, entry.date, entry.note, entry.loggedAt, entry.id);
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
@@ -249,13 +251,16 @@ export const WeightTrackerScreen: React.FC<WeightTrackerScreenProps> = ({
             <View style={styles.toastLeft}>
               <Ionicons name="trash-outline" size={18} color="#94A3B8" />
               <Text style={styles.toastText}>
-                Deleted {undoToast.entry.weightKg.toFixed(1)} kg entry
+                Deleted {(undoToast.entry.weightKg * (isLbs ? 2.20462 : 1)).toFixed(1)}{' '}
+                {isLbs ? 'lbs' : 'kg'} entry
               </Text>
             </View>
             <Pressable
               style={({ pressed }) => [styles.undoBtn, pressed && styles.undoBtnPressed]}
               onPress={handleUndoDelete}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Undo weight deletion"
             >
               <Text style={styles.undoBtnText}>Undo</Text>
             </Pressable>

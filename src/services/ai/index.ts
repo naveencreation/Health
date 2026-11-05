@@ -1,7 +1,6 @@
 export * from './AIService';
 export * from './types/ai.types';
 export { SecureKeyStorage } from './storage/SecureKeyStorage';
-export { ChatHistoryStorage } from './storage/ChatHistoryStorage';
 export { NutritionContextBuilder } from './context/NutritionContextBuilder';
 export { GeminiProvider, GEMINI_MODEL, DEFAULT_GEMINI_MODEL } from './providers/GeminiProvider';
 export { AI_CONFIG } from './config/AIConfig';

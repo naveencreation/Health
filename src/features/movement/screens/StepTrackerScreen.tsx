@@ -47,7 +47,7 @@ export interface StepTrackerScreenProps {
 
 export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, onOpenSettings }) => {
   const insets = useSafeAreaInsets();
-  const { currentLog, dailyLogs, selectedDate, addSteps, removeStepEntry, batchUpdateDailySteps } =
+  const { currentLog, dailyLogs, selectedDate, removeStepEntry, batchUpdateDailySteps } =
     useDailyLog();
   const { userGoals } = useGoals();
 
@@ -250,9 +250,6 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
       setHealthRecords(records);
 
       if (todayCount > 0) {
-        if (todayCount !== (currentLog?.steps || 0)) {
-          addSteps(todayCount - (currentLog?.steps || 0));
-        }
         if (backfilledCount > 0) {
           setMessage(
             `✓ Connected! Backfilled past ${backfilledCount} days & synced ${todayCount.toLocaleString()} steps`
@@ -273,7 +270,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
     } finally {
       setLoading(false);
     }
-  }, [currentLog?.steps, addSteps, batchUpdateDailySteps, dailyLogs]);
+  }, [batchUpdateDailySteps, dailyLogs]);
 
   return (
     <View style={styles.container}>

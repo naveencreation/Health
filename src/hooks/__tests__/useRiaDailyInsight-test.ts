@@ -66,6 +66,9 @@ const params = (
   currentLog: overrides.currentLog || log,
   totalProtein: overrides.totalProtein ?? 20,
   remainingCalories: overrides.remainingCalories ?? 1800,
+  totalConsumed: 400,
+  totalCarbs: 50,
+  totalFat: 15,
 });
 
 describe('useRiaDailyInsight', () => {
@@ -96,6 +99,11 @@ describe('useRiaDailyInsight', () => {
 
     expect(result.current).toBe('Cached coach insight');
     expect(AIService.getDailyInsight).toHaveBeenCalledTimes(1);
+    expect((AIService.getDailyInsight as jest.Mock).mock.calls[0][0]).toMatchObject({
+      consumedCalories: 400,
+      consumedCarbs: 50,
+      consumedFat: 15,
+    });
   });
 
   test('does not request again for water or step-only changes', async () => {

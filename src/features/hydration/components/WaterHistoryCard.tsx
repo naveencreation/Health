@@ -554,6 +554,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                 style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
                 onPress={() => setIsViewAllModalOpen(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
               >
                 <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
@@ -590,6 +592,8 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
                       style={({ pressed }) => [styles.menuTriggerBtn, pressed && styles.btnPressed]}
                       onPress={e => handleOpenActionMenu(entry, e)}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Options for ${entry.amountMl} mL entry`}
                     >
                       <Ionicons name="ellipsis-vertical" size={16} color={Colors.textSecondary} />
                     </Pressable>

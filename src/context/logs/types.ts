@@ -9,6 +9,8 @@ import {
 } from '@/types';
 
 export interface DailyLogContextValue {
+  /** Local YYYY-MM-DD for the real today; updates at midnight and on app resume. */
+  todayStr: string;
   selectedDate: string;
   setSelectedDate: (date: string) => void;
   shiftDate: (days: number) => void;
@@ -26,7 +28,7 @@ export interface DailyLogContextValue {
   addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => LoggedMealItem;
   removeMealItem: (mealId: string) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
-  addWater: (ml: number, beverageType?: string) => void;
+  addWater: (ml: number, beverageType?: string, date?: string) => void;
   removeWaterEntry: (id: string, date?: string) => void;
   updateWaterEntry: (id: string, updates: Partial<WaterLogEntry>, date?: string) => void;
   resetWater: () => void;

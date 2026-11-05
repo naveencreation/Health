@@ -6,10 +6,8 @@ export { ForgotPasswordScreen } from './auth/ForgotPasswordScreen';
 
 // Onboarding Screens (modularized in features/onboarding)
 export {
-  AgeSelectionScreen,
   HeightSelectionScreen,
   HeightUnit,
-  GenderSelectionScreen,
   GoalSelectionScreen,
   WeightSelectionScreen,
   OnboardingWizardScreen,

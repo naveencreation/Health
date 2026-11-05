@@ -122,6 +122,9 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
               <Pressable
                 style={[styles.unitTab, unit === 'kg' && styles.unitTabActive]}
                 onPress={() => setUnit('kg')}
+                accessibilityRole="tab"
+                accessibilityLabel="Kilograms"
+                accessibilityState={{ selected: unit === 'kg' }}
               >
                 <Text style={[styles.unitTabText, unit === 'kg' && styles.unitTabTextActive]}>
                   Kilograms (kg)
@@ -130,6 +133,9 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
               <Pressable
                 style={[styles.unitTab, unit === 'lbs' && styles.unitTabActive]}
                 onPress={() => setUnit('lbs')}
+                accessibilityRole="tab"
+                accessibilityLabel="Pounds"
+                accessibilityState={{ selected: unit === 'lbs' }}
               >
                 <Text style={[styles.unitTabText, unit === 'lbs' && styles.unitTabTextActive]}>
                   Pounds (lbs)
@@ -144,12 +150,16 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepStart(-1.0)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease starting weight by 1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>-1</Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepStart(-0.1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease starting weight by 0.1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>-0.1</Text>
                 </Pressable>
@@ -162,12 +172,16 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepStart(0.1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase starting weight by 0.1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>+0.1</Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepStart(1.0)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase starting weight by 1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>+1</Text>
                 </Pressable>
@@ -181,12 +195,16 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepGoal(-1.0)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease goal weight by 1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>-1</Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepGoal(-0.1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease goal weight by 0.1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>-0.1</Text>
                 </Pressable>
@@ -199,12 +217,16 @@ export const WeightGoalSettingsModal: React.FC<WeightGoalSettingsModalProps> = (
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepGoal(0.1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase goal weight by 0.1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>+0.1</Text>
                 </Pressable>
                 <Pressable
                   style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                   onPress={() => handleStepGoal(1.0)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase goal weight by 1 ${unit}`}
                 >
                   <Text style={styles.stepperBtnText}>+1</Text>
                 </Pressable>
@@ -262,7 +284,7 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 24,
     maxHeight: '90%',
-    shadowColor: '#000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 16,

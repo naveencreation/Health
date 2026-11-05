@@ -53,6 +53,11 @@ jest.mock('@/screens', () => {
   };
 });
 
+jest.mock('@/screens/profile', () => {
+  const { Text } = require('react-native');
+  return { GoalsScreen: () => <Text testID="screen-goals">GoalsScreen</Text> };
+});
+
 describe('OverlayHost', () => {
   const HostWrapper: React.FC<{ onTrigger?: (overlay: ReturnType<typeof useOverlay>) => void }> = ({
     onTrigger,

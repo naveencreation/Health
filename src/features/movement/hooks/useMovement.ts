@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { WorkoutActivity, StepLogEntry } from '@/types';
-import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { BIOMETRIC_DEFAULTS, KCAL_PER_STEP } from '@/constants/biometricDefaults';
 
 export interface UseMovementReturn {
   date: string;
@@ -67,7 +67,7 @@ export function useMovement(): UseMovementReturn {
   }, [steps]);
 
   const stepBurnKcal = useMemo(() => {
-    return Math.round(steps * 0.04);
+    return Math.round(steps * KCAL_PER_STEP);
   }, [steps]);
 
   const activeMinutes = useMemo(() => {

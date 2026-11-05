@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, { useAnimatedStyle, interpolate, SharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,6 @@ interface HeaderProps {
   onNotificationsPress?: () => void;
   onAvatarPress?: () => void;
   onSignInPress?: () => void;
-  onSignOutPress?: () => void;
   scrollY?: SharedValue<number>;
   isScrolled?: boolean;
 }
@@ -34,13 +33,6 @@ const SHORT_MONTHS = [
   'Nov',
   'Dec',
 ];
-const pad2 = (n: number) => String(n).padStart(2, '0');
-const toDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = pad2(date.getMonth() + 1);
-  const d = pad2(date.getDate());
-  return `${y}-${m}-${d}`;
-};
 
 const HIT_SLOP_6 = { top: 6, bottom: 6, left: 6, right: 6 };
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -50,17 +42,14 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   onNotificationsPress,
   onAvatarPress,
   onSignInPress,
-  onSignOutPress,
   scrollY,
   isScrolled,
 }) => {
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
   const { isPro } = usePro();
-  const { selectedDate, remainingCalories } = useDailyLog();
-  const [hasUnreadNotification, setHasUnreadNotification] = useState(true);
+  const { todayStr, selectedDate, remainingCalories } = useDailyLog();
 
-  const todayStr = useMemo(() => toDateString(new Date()), []);
   const isViewingToday = selectedDate === todayStr;
 
   const formattedDate = useMemo(() => {
@@ -118,7 +107,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               onPress={onAvatarPress}
               hitSlop={HIT_SLOP_6}
               accessibilityRole="button"
-              accessibilityLabel="Open profile"
+              accessibilityLabel="Change avatar"
             >
               <UserAvatar avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL} size={51} />
             </Pressable>
@@ -203,7 +192,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             onPress={onSearchPress}
             hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
-            accessibilityLabel="Search foods and diary"
+            accessibilityLabel="Search and log food"
           >
             <Ionicons name="search-outline" size={18} color={Colors.iconNavy} />
           </Pressable>
@@ -213,18 +202,12 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               styles.circleButton,
               pressed ? styles.circleButtonPressed : null,
             ]}
-            onPress={() => {
-              setHasUnreadNotification(false);
-              if (onNotificationsPress) {
-                onNotificationsPress();
-              }
-            }}
+            onPress={onNotificationsPress}
             hitSlop={HIT_SLOP_8}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
           >
             <Ionicons name="notifications-outline" size={18} color={Colors.iconNavy} />
-            {hasUnreadNotification ? <View style={styles.notificationDot} /> : null}
           </Pressable>
         </View>
       </View>
@@ -431,17 +414,6 @@ const styles = StyleSheet.create({
   circleButtonPressed: {
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
-  },
-  notificationDot: {
-    position: 'absolute',
-    top: 7,
-    right: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: Colors.badgeOrange,
-    borderWidth: 1,
-    borderColor: Colors.card,
   },
   guestBanner: {
     flexDirection: 'row',

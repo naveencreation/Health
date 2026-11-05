@@ -1,4 +1,5 @@
 import React from 'react';
+import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
 import { View, Text, StyleSheet } from 'react-native';
 import { Fonts } from '@/theme/typography';
 import {
@@ -28,7 +29,7 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
     typeof totalDurationMinutes === 'number' ? totalDurationMinutes : Math.round(totalSteps / 100);
 
   const calories =
-    typeof totalCalories === 'number' ? totalCalories : Math.round(totalSteps * 0.04);
+    typeof totalCalories === 'number' ? totalCalories : Math.round(totalSteps * KCAL_PER_STEP);
 
   const distance =
     typeof totalDistanceKm === 'number'

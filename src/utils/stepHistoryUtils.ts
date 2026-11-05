@@ -1,4 +1,5 @@
 import { StepLogEntry } from '@/types';
+import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
 
 /**
  * Format a YYYY-MM-DD date string into the friendly date header matching the reference:
@@ -88,7 +89,7 @@ export function formatIntervalRange(startTime?: string, endTime?: string): strin
  * Calculate calories and distance from step count
  */
 export function calculateStepMetrics(steps: number, durationMinutes?: number) {
-  const calories = Math.round(steps * 0.04);
+  const calories = Math.round(steps * KCAL_PER_STEP);
   const distanceKm = Math.round(steps * 0.00076 * 10) / 10;
   // Estimate ~100 steps per minute if duration not provided
   const duration = durationMinutes ?? Math.max(1, Math.round(steps / 100));

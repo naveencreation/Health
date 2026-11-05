@@ -24,7 +24,7 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({ onOpenUpdateModa
 
   // 1. Current Weight resolution: check today's logged weight first, then fallback to goal's currentWeightKg, then default 68.0
   const currentWeightRaw = currentLog?.weightKg ?? userGoals.currentWeightKg ?? 68.0;
-  const currentWeight = Math.round(currentWeightRaw * 10) / 10;
+  const currentWeight = Math.round(currentWeightRaw * 100) / 100;
 
   // 2. Starting weight and goal weight resolution (unified with user goals)
   const startWeightRaw = userGoals.startWeightKg
@@ -153,7 +153,12 @@ export const HeroWeightCard: React.FC<HeroWeightCardProps> = ({ onOpenUpdateModa
       </View>
 
       {/* 3. Chunky Capsule Progress Bar */}
-      <View style={styles.progressTrack}>
+      <View
+        style={styles.progressTrack}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Progress to goal weight"
+        accessibilityValue={{ min: 0, max: 100, now: progressPct }}
+      >
         <Animated.View style={[styles.progressFill, animatedBarStyle]} />
       </View>
 

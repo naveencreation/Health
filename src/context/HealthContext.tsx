@@ -28,6 +28,7 @@ import {
   RegisterData,
   WaterLogEntry,
   WeightLogEntry,
+  StepLogEntry,
   OnboardingPlanPayload,
 } from '@/types';
 import { NotificationStorage } from '@/services/notifications';
@@ -54,9 +55,11 @@ import {
   query,
   orderBy,
   limit,
+  deleteField,
 } from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
 import {
+  calculateStepMetrics,
   mapHealthConnectRecordsToStepEntries,
   synthesizeSessionsFromTotal,
 } from '@/utils/stepHistoryUtils';
@@ -113,7 +116,7 @@ export const cleanDailyLog = (log?: DailyLog): DailyLog => {
 };
 
 import { HealthSyncService } from '@/services/sync/healthSyncService';
-import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { BIOMETRIC_DEFAULTS, KCAL_PER_STEP } from '@/constants/biometricDefaults';
 
 /**
  * Recursively strips any keys with `undefined` values from an object or array.
@@ -179,7 +182,7 @@ export interface HealthContextType {
   addMealItem: (mealType: MealType, food: FoodItem, quantity: number) => LoggedMealItem;
   removeMealItem: (mealId: string) => void;
   updateMealQuantity: (mealId: string, quantity: number) => void;
-  addWater: (ml: number, beverageType?: string) => void;
+  addWater: (ml: number, beverageType?: string, date?: string) => void;
   removeWaterEntry: (id: string, date?: string) => void;
   updateWaterEntry: (id: string, updates: Partial<WaterLogEntry>, date?: string) => void;
   resetWater: () => void;
@@ -253,7 +256,8 @@ export {
 
 export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedDate, setSelectedDateState] = useState<string>(getTodayDateString());
-  const todayRef = useRef<string>(getTodayDateString());
+  const [todayStr, setTodayStr] = useState<string>(getTodayDateString());
+  const todayRef = useRef<string>(todayStr);
 
   // Strict date ceiling clamp: selectedDate can NEVER exceed today
   const setSelectedDate = useCallback((action: string | ((prev: string) => string)) => {
@@ -271,6 +275,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (currentRealToday !== todayRef.current) {
         const previousToday = todayRef.current;
         todayRef.current = currentRealToday;
+        setTodayStr(currentRealToday);
         // If user was viewing yesterday's date, advance to new Today
         setSelectedDateState(prev => (prev === previousToday ? currentRealToday : prev));
       }
@@ -727,6 +732,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 ...(Array.isArray(log.weightEntries) ? { weightEntries: log.weightEntries } : {}),
                 ...(Array.isArray(log.stepEntries) ? { stepEntries: log.stepEntries } : {}),
               });
+              // All weigh-ins deleted: merge:true would keep the old cloud weightKg and revive it
+              const clearsWeight =
+                typeof log.weightKg !== 'number' &&
+                Array.isArray(log.weightEntries) &&
+                log.weightEntries.length === 0;
+              if (clearsWeight) Object.assign(payload, { weightKg: deleteField() });
               setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, {
                 merge: true,
               })
@@ -837,6 +848,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const currentLog = useMemo((): DailyLog => {
     const raw = dailyLogs[selectedDate];
     return {
+      ...raw,
       date: raw?.date || selectedDate,
       meals: Array.isArray(raw?.meals) ? raw.meals : [],
       waterMl: typeof raw?.waterMl === 'number' ? raw.waterMl : 0,
@@ -903,17 +915,18 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return Math.round(currentLog.meals.reduce((sum, item) => sum + item.fiber, 0));
   }, [currentLog.meals]);
 
-  // Steps burned calories estimate (~0.04 kcal per step) + logged workouts
+  // Steps burned calories estimate + logged workouts
   const totalBurned = useMemo(() => {
     const activities = Array.isArray(currentLog?.activities) ? currentLog.activities : [];
     const workoutBurn = activities.reduce((sum, act) => sum + (act.caloriesBurned || 0), 0);
-    const stepBurn = Math.round((currentLog?.steps || 0) * 0.04);
+    const stepBurn = Math.round((currentLog?.steps || 0) * KCAL_PER_STEP);
     return workoutBurn + stepBurn;
   }, [currentLog?.activities, currentLog?.steps]);
 
   // Healthify formula: Remaining = Goal - Consumed + Burned
   const remainingCalories = useMemo(() => {
-    return userGoals.dailyCalorieBudget - totalConsumed + totalBurned;
+    const budget = userGoals.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
+    return budget - totalConsumed + totalBurned;
   }, [userGoals.dailyCalorieBudget, totalConsumed, totalBurned]);
 
   // Actions
@@ -936,7 +949,17 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         fat: Math.round(food.fat * quantity * 10) / 10,
         fiber: Math.round(food.fiber * quantity * 10) / 10,
         imageUrl: food.imageUrl,
-        loggedAt: isToday ? new Date().toISOString() : `${targetDate}T12:00:00.000Z`,
+        // Past days: local noon (no Z), so the timestamp stays on targetDate in every timezone
+        loggedAt: isToday
+          ? new Date().toISOString()
+          : new Date(`${targetDate}T12:00:00`).toISOString(),
+        baseNutrition: {
+          calories: food.calories || 0,
+          carbs: food.carbs || 0,
+          protein: food.protein || 0,
+          fat: food.fat || 0,
+          fiber: food.fiber || 0,
+        },
       };
 
       setDailyLogs(prev => {
@@ -991,21 +1014,26 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const updateMealQuantity = useCallback(
     (mealId: string, quantity: number) => {
+      const today = getTodayDateString();
+      const targetDate = selectedDate > today ? today : selectedDate;
       setDailyLogs(prev => {
-        const existing = prev[selectedDate];
+        const existing = prev[targetDate];
         if (!existing) return prev;
         return {
           ...prev,
-          [selectedDate]: {
+          [targetDate]: {
             ...existing,
             meals: existing.meals.map(item => {
               if (item.id !== mealId) return item;
+              // Prefer log-time per-unit values; older items fall back to catalog, then derived
               const originalFood = foodDatabase.find(f => f.id === item.foodId);
-              const baseCals = originalFood ? originalFood.calories : item.calories / item.quantity;
-              const baseCarbs = originalFood ? originalFood.carbs : item.carbs / item.quantity;
-              const baseProt = originalFood ? originalFood.protein : item.protein / item.quantity;
-              const baseFat = originalFood ? originalFood.fat : item.fat / item.quantity;
-              const baseFib = originalFood ? originalFood.fiber : item.fiber / item.quantity;
+              const base = item.baseNutrition ?? originalFood;
+              const q = item.quantity || 1;
+              const baseCals = base ? base.calories : item.calories / q;
+              const baseCarbs = base ? base.carbs : item.carbs / q;
+              const baseProt = base ? base.protein : item.protein / q;
+              const baseFat = base ? base.fat : item.fat / q;
+              const baseFib = base ? base.fiber || 0 : (item.fiber || 0) / q;
 
               return {
                 ...item,
@@ -1025,9 +1053,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 
   const addWater = useCallback(
-    (ml: number, beverageType: string = 'water') => {
+    (ml: number, beverageType: string = 'water', date?: string) => {
       const today = getTodayDateString();
-      const targetDate = selectedDate > today ? today : selectedDate;
+      const requested = date || selectedDate;
+      const targetDate = requested > today ? today : requested;
 
       setDailyLogs(prev => {
         const existing = prev[targetDate] || {
@@ -1178,13 +1207,16 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
         }
 
+        const old = entries.find(e => e.id === id);
         const updatedEntries = entries.map(e => (e.id === id ? { ...e, ...updates } : e));
-        const recalculatedWater = updatedEntries.reduce((sum, e) => sum + (e.amountMl || 0), 0);
+        // Apply only the edit's delta so water logged without an entry isn't dropped
+        const delta =
+          old && updates.amountMl !== undefined ? updates.amountMl - (old.amountMl || 0) : 0;
         return {
           ...prev,
           [targetDate]: {
             ...existing,
-            waterMl: recalculatedWater,
+            waterMl: Math.max(0, existing.waterMl + delta),
             waterEntries: updatedEntries,
           },
         };
@@ -1256,19 +1288,42 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addSteps = useCallback(
     (count: number) => {
+      const today = getTodayDateString();
+      const targetDate = selectedDate > today ? today : selectedDate;
       setDailyLogs(prev => {
-        const existing = prev[selectedDate] || {
-          date: selectedDate,
+        const existing = prev[targetDate] || {
+          date: targetDate,
           meals: [],
           waterMl: 0,
           steps: 0,
           activities: [],
         };
+        const steps = Math.max(0, existing.steps + count);
+        // Manual steps live in one 'manual' entry so a Health Connect sync can keep them
+        const entries = existing.stepEntries || [];
+        const prevManual = entries.find(e => e.source === 'manual')?.steps ?? 0;
+        const manualSteps = Math.min(steps, Math.max(0, prevManual + count));
+        const m = calculateStepMetrics(manualSteps);
+        const manual: StepLogEntry[] =
+          manualSteps > 0
+            ? [
+                {
+                  id: `manual_${targetDate}`,
+                  steps: manualSteps,
+                  durationMinutes: m.durationMinutes,
+                  caloriesBurned: m.calories,
+                  distanceKm: m.distanceKm,
+                  loggedAt: new Date().toISOString(),
+                  source: 'manual',
+                },
+              ]
+            : [];
         return {
           ...prev,
-          [selectedDate]: {
+          [targetDate]: {
             ...existing,
-            steps: Math.max(0, existing.steps + count),
+            steps,
+            stepEntries: [...manual, ...entries.filter(e => e.source !== 'manual')],
           },
         };
       });
@@ -1320,17 +1375,20 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             activities: [],
           };
 
-          let stepEntries = existing.stepEntries;
+          // Health Connect owns the synced part; manual entries are kept and added on top
+          const manual = (existing.stepEntries || []).filter(e => e.source === 'manual');
+          const manualSteps = manual.reduce((sum, e) => sum + e.steps, 0);
+          let synced = (existing.stepEntries || []).filter(e => e.source !== 'manual');
           if (records && records.length > 0) {
-            stepEntries = mapHealthConnectRecordsToStepEntries(records);
-          } else if (steps > 0 && (!stepEntries || stepEntries.length === 0)) {
-            stepEntries = synthesizeSessionsFromTotal(steps, dateStr);
+            synced = mapHealthConnectRecordsToStepEntries(records);
+          } else if (steps > 0 && synced.length === 0) {
+            synced = synthesizeSessionsFromTotal(steps, dateStr);
           }
 
           nextLogs[dateStr] = {
             ...existing,
-            steps,
-            stepEntries,
+            steps: steps + manualSteps,
+            stepEntries: [...manual, ...synced],
           };
         });
 
@@ -1353,7 +1411,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const todayStr = getTodayDateString(now);
       const targetDate = requestedDate > todayStr ? todayStr : requestedDate;
       const isToday = targetDate === todayStr;
-      const rounded = Math.round(weightKg * 10) / 10;
+      const rounded = Math.round(weightKg * 100) / 100;
 
       let defaultLoggedAt: string;
       let defaultTimestampNum: number;
@@ -1800,7 +1858,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         log && Array.isArray(log.activities)
           ? log.activities.reduce((sum, a) => sum + a.caloriesBurned, 0)
           : 0;
-      const stepBurn = steps > 0 ? Math.round(steps * 0.04) : fallback ? fallback.burn : 0;
+      const stepBurn = steps > 0 ? Math.round(steps * KCAL_PER_STEP) : fallback ? fallback.burn : 0;
       const burned = stepBurn + workoutBurn;
 
       results.push({
@@ -2508,6 +2566,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const dailyLogValue = useMemo<DailyLogContextValue>(
     () => ({
+      todayStr,
       selectedDate,
       setSelectedDate,
       shiftDate,
@@ -2539,6 +2598,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteWeightEntry,
     }),
     [
+      todayStr,
       selectedDate,
       shiftDate,
       dailyLogs,

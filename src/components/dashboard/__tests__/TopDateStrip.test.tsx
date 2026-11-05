@@ -45,6 +45,7 @@ describe('TopDateStrip (Option C: Controlled Rolling Window)', () => {
   test('renders 7 rolling days ending at today when viewing today', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       shiftDate: mockShiftDate,
       dailyLogs: {},
@@ -78,6 +79,7 @@ describe('TopDateStrip (Option C: Controlled Rolling Window)', () => {
 
     mockUseDailyLog.mockReturnValue({
       selectedDate: pastDateStr,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       shiftDate: mockShiftDate,
       dailyLogs: {},
@@ -95,6 +97,7 @@ describe('TopDateStrip (Option C: Controlled Rolling Window)', () => {
   test('allows navigating backwards to previous weeks', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       shiftDate: mockShiftDate,
       dailyLogs: {},
@@ -112,6 +115,7 @@ describe('TopDateStrip (Option C: Controlled Rolling Window)', () => {
   test('allows selecting a past date pill within the 7-day strip', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       shiftDate: mockShiftDate,
       dailyLogs: {},
@@ -135,6 +139,7 @@ describe('TopDateStrip (Option C: Controlled Rolling Window)', () => {
   test('calendar modal disables future days and forward month button', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       shiftDate: mockShiftDate,
       dailyLogs: {},

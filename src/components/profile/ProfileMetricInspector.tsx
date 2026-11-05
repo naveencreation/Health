@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
 import { StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -329,7 +330,7 @@ export const ProfileMetricInspector: React.FC<ProfileMetricInspectorProps> = ({
             <Ionicons name="flame-outline" size={16} color="#F47551" />
             <Text style={styles.contextSummaryText}>
               Estimated daily movement burn:{' '}
-              <Text style={styles.boldText}>~{Math.round(Number(stepGoal) * 0.04)} kcal</Text>
+              <Text style={styles.boldText}>~{Math.round(Number(stepGoal) * KCAL_PER_STEP)} kcal</Text>
             </Text>
           </View>
         </View>

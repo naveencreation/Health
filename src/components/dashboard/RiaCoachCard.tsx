@@ -53,7 +53,15 @@ interface RiaCoachCardProps {
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
 
 const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
-  const { totalProtein, remainingCalories, currentLog, selectedDate } = useDailyLog();
+  const {
+    totalProtein,
+    totalConsumed,
+    totalCarbs,
+    totalFat,
+    remainingCalories,
+    currentLog,
+    selectedDate,
+  } = useDailyLog();
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
@@ -64,6 +72,9 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
     currentLog,
     totalProtein,
     remainingCalories,
+    totalConsumed,
+    totalCarbs,
+    totalFat,
   });
 
   // Default personalized insight based on live user data
@@ -138,7 +149,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
         <Pressable
           style={({ pressed }) => [styles.bubbleCard, pressed ? styles.bubbleCardPressed : null]}
-          onPress={() => (onOpenChat ? onOpenChat(activeMessage) : null)}
+          onPress={() => onOpenChat?.(`Tell me more about this tip: ${activeMessage}`)}
           accessibilityRole="button"
           accessibilityLabel="Ask Ria about this insight"
         >

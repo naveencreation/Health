@@ -60,3 +60,9 @@ yarn-error.*
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Generated / local tooling
+coverage/
+.idea/
+scratch/
+.agents/

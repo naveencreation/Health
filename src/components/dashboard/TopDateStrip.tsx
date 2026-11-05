@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,22 +6,20 @@ import {
   Pressable,
   Modal,
   GestureResponderEvent,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { BIOMETRIC_DEFAULTS, KCAL_PER_STEP } from '@/constants/biometricDefaults';
 import {
-  toDateString,
   parseDateString,
   getRollingSevenDays,
-  shiftDateClamped,
+  getWeekWindowEnd,
   formatRangeMonthTitle,
   SHORT_DAY_NAMES,
   MONTH_NAMES,
-  SHORT_MONTHS,
   WEEKDAY_INITIALS,
   pad2,
 } from '@/utils/dateUtils';
@@ -46,20 +44,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   metric = 'calories',
   style,
 }) => {
-  const { selectedDate, setSelectedDate, shiftDate, dailyLogs } = useDailyLog();
+  const { todayStr, selectedDate, setSelectedDate, shiftDate, dailyLogs } = useDailyLog();
   const { userGoals } = useGoals();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
-  // Real-world today reference with periodic midnight rollover check
-  const [todayStr, setTodayStr] = useState(() => toDateString(new Date()));
-  useEffect(() => {
-    const checkMidnight = () => {
-      const nowStr = toDateString(new Date());
-      setTodayStr(prev => (prev !== nowStr ? nowStr : prev));
-    };
-    const interval = setInterval(checkMidnight, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   const isViewingToday = selectedDate === todayStr;
 
@@ -74,9 +61,9 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
   const isWater = metric === 'water';
   const isWeight = metric === 'weight';
   const isSteps = metric === 'steps';
-  const budget = userGoals.dailyCalorieBudget || 2000;
-  const waterGoal = userGoals.waterGoalMl || 2000;
-  const stepGoal = userGoals.stepGoal || 10000;
+  const budget = userGoals.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
+  const waterGoal = userGoals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
+  const stepGoal = userGoals.stepGoal || BIOMETRIC_DEFAULTS.stepGoal;
   const progressColor = isWater
     ? Colors.water
     : isWeight
@@ -92,55 +79,34 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
         ? Colors.surfaceInset
         : Colors.borderInset;
 
-  // Option C: Controlled Rolling Window with Fixed Today Anchor
-  // windowEnd represents the rightmost day in the 7-day strip, clamped so it NEVER exceeds todayStr.
-  const [windowEnd, setWindowEnd] = useState<string>(() => {
-    const initToday = toDateString(new Date());
-    return selectedDate > initToday ? initToday : selectedDate;
-  });
-
-  // Keep windowEnd in sync if selectedDate moves outside the currently visible 7-day window
-  useEffect(() => {
-    const currentDays = getRollingSevenDays(windowEnd, todayStr);
-    const startStr = currentDays[0];
-    const endStr = currentDays[6];
-    if (selectedDate < startStr || selectedDate > endStr) {
-      const idealEnd = shiftDateClamped(selectedDate, 6, todayStr);
-      setWindowEnd(idealEnd);
-    }
-  }, [selectedDate, windowEnd, todayStr]);
-
-  // Forward navigation boundary: can only go forward if windowEnd is in the past
+  // The visible week is derived from selectedDate (same page as HeroCalorieCard), so the
+  // week arrows move the selected day by 7 to keep the strip and the page on the same day.
+  const windowEnd = getWeekWindowEnd(selectedDate, todayStr);
   const canGoForward = windowEnd < todayStr;
 
-  const handlePrevWeek = useCallback(() => {
-    const newEnd = shiftDateClamped(windowEnd, -7, todayStr);
-    setWindowEnd(newEnd);
-    shiftDate(-7);
-  }, [windowEnd, todayStr, shiftDate]);
+  const handlePrevWeek = useCallback(() => shiftDate(-7), [shiftDate]);
 
   const handleNextWeek = useCallback(() => {
-    if (!canGoForward) return;
-    const newEnd = shiftDateClamped(windowEnd, 7, todayStr);
-    setWindowEnd(newEnd);
-    shiftDate(7);
-  }, [canGoForward, windowEnd, todayStr, shiftDate]);
+    if (canGoForward) shiftDate(7);
+  }, [canGoForward, shiftDate]);
 
   const handleJumpToToday = useCallback(() => {
-    setWindowEnd(todayStr);
     setSelectedDate(todayStr);
   }, [todayStr, setSelectedDate]);
 
   // Touch gesture tracking for swipe navigation
-  const touchStartX = useRef<number>(0);
+  const touchStart = useRef({ x: 0, y: 0 });
 
   const onTouchStart = useCallback((e: GestureResponderEvent) => {
-    touchStartX.current = e.nativeEvent.pageX;
+    touchStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
   }, []);
 
   const onTouchEnd = useCallback(
     (e: GestureResponderEvent) => {
-      const dx = e.nativeEvent.pageX - touchStartX.current;
+      const dx = e.nativeEvent.pageX - touchStart.current.x;
+      const dy = e.nativeEvent.pageY - touchStart.current.y;
+      // Only a mostly-horizontal swipe changes week; a diagonal page scroll does not
+      if (Math.abs(dx) < 2 * Math.abs(dy)) return;
       if (dx > 48) {
         // Swiped right -> go to previous week
         handlePrevWeek();
@@ -181,7 +147,12 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
           log && Array.isArray(log.meals)
             ? log.meals.reduce((sum, item) => sum + item.calories, 0)
             : 0;
-        progress = Math.min(1, Math.max(0, cals / budget));
+        // Same allowance as the hero dial: budget + workouts + step burn
+        const workoutBurn = Array.isArray(log?.activities)
+          ? log.activities.reduce((sum, a) => sum + (a.caloriesBurned || 0), 0)
+          : 0;
+        const burned = workoutBurn + Math.round((log?.steps || 0) * KCAL_PER_STEP);
+        progress = Math.min(1, Math.max(0, cals / (budget + burned)));
       }
 
       const hasData = Boolean(
@@ -225,27 +196,33 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
     return false;
   }, [calendarYear, calendarMonth, todayDate]);
 
+  // Earliest browsable month: the oldest logged day (or the selected day if older)
+  const earliestMonth = useMemo(() => {
+    const oldest = Object.keys(dailyLogs).reduce((min, d) => (d < min ? d : min), selectedDate);
+    return oldest.slice(0, 7);
+  }, [dailyLogs, selectedDate]);
+  const canGoPrevMonth = `${calendarYear}-${pad2(calendarMonth + 1)}` > earliestMonth;
+
   // Calendar Modal Navigation
   const prevMonth = useCallback(() => {
-    setCalendarMonth(m => {
-      if (m === 0) {
-        setCalendarYear(y => y - 1);
-        return 11;
-      }
-      return m - 1;
-    });
-  }, []);
+    if (!canGoPrevMonth) return;
+    if (calendarMonth === 0) {
+      setCalendarYear(calendarYear - 1);
+      setCalendarMonth(11);
+    } else {
+      setCalendarMonth(calendarMonth - 1);
+    }
+  }, [canGoPrevMonth, calendarMonth, calendarYear]);
 
   const nextMonth = useCallback(() => {
     if (!canGoNextMonth) return;
-    setCalendarMonth(m => {
-      if (m === 11) {
-        setCalendarYear(y => y + 1);
-        return 0;
-      }
-      return m + 1;
-    });
-  }, [canGoNextMonth]);
+    if (calendarMonth === 11) {
+      setCalendarYear(calendarYear + 1);
+      setCalendarMonth(0);
+    } else {
+      setCalendarMonth(calendarMonth + 1);
+    }
+  }, [canGoNextMonth, calendarMonth, calendarYear]);
 
   // Generate days grid for month modal
   const monthGrid = useMemo(() => {
@@ -514,13 +491,19 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
             <View style={styles.modalHeader}>
               <View style={styles.modalNavRow}>
                 <Pressable
-                  style={styles.modalArrowBtn}
+                  style={[styles.modalArrowBtn, !canGoPrevMonth && styles.modalArrowBtnDisabled]}
                   onPress={prevMonth}
+                  disabled={!canGoPrevMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel="Previous month"
+                  accessibilityState={{ disabled: !canGoPrevMonth }}
                 >
-                  <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+                  <Ionicons
+                    name="chevron-back"
+                    size={20}
+                    color={canGoPrevMonth ? Colors.textPrimary : Colors.textMuted}
+                  />
                 </Pressable>
 
                 <Text style={styles.modalMonthTitle}>
@@ -582,7 +565,7 @@ export const TopDateStripComponent: React.FC<TopDateStripProps> = ({
                     ]}
                     disabled={cell.isFuture}
                     accessibilityRole="button"
-                    accessibilityLabel={`${cell.dayNum}${cell.isFuture ? ', future date, disabled' : ''}`}
+                    accessibilityLabel={`${cell.dayNum} ${MONTH_NAMES[calendarMonth]} ${calendarYear}${cell.isFuture ? ', future date' : ''}${cell.hasMeals ? ', has entries' : ''}`}
                     accessibilityState={{ disabled: cell.isFuture, selected: cell.isSelected }}
                     onPress={() => {
                       if (cell.dateStr && !cell.isFuture) {

@@ -24,32 +24,4 @@ export class HealthSyncService {
     }
     return data;
   }
-
-  /**
-   * Helper to create debounced runners for cloud synchronization.
-   */
-  public static createDebouncedTask<Args extends any[]>(
-    task: (...args: Args) => void | Promise<void>,
-    delayMs: number = 1000
-  ): {
-    trigger: (...args: Args) => void;
-    cancel: () => void;
-  } {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    return {
-      trigger: (...args: Args) => {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(() => {
-          timer = null;
-          task(...args);
-        }, delayMs);
-      },
-      cancel: () => {
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-      },
-    };
-  }
 }

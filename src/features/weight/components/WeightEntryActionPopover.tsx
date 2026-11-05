@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Pressable, Modal, useWindowDimensions } from 'r
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 
 export interface WeightEntryActionPopoverProps {
   visible: boolean;
@@ -115,7 +116,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingVertical: 4,
-    shadowColor: '#000',
+    shadowColor: Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,

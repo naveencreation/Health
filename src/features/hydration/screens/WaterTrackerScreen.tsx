@@ -50,6 +50,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
   const [undoToast, setUndoToast] = useState<{
     amount: number;
     beverage: string;
+    date: string;
   } | null>(null);
   const undoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -139,7 +140,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
-    setUndoToast({ amount, beverage });
+    setUndoToast({ amount, beverage, date: selectedDate });
     undoTimeoutRef.current = setTimeout(() => {
       setUndoToast(null);
     }, 4500);
@@ -150,7 +151,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
-    addWater(-undoToast.amount, undoToast.beverage);
+    addWater(-undoToast.amount, undoToast.beverage, undoToast.date);
     setUndoToast(null);
   };
 

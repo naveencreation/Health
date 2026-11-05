@@ -45,23 +45,6 @@ export interface StepHistoryModalProps {
   onOpenReport?: () => void;
 }
 
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
 function pad2(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
@@ -116,12 +99,6 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
     dateStr: '',
     positionY: 200,
   });
-
-  // Calendar picker state
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
 
   const toggleDateExpanded = useCallback((date: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -178,7 +155,6 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
     const datesSet = new Set<string>();
 
     if (anchorDate) datesSet.add(anchorDate);
-    if (selectedCalendarDate) datesSet.add(selectedCalendarDate);
 
     // Add all dates from dailyLogs that have steps or stepEntries
     if (dailyLogs) {
@@ -245,37 +221,14 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
         totalDistance: dayTotalDistance,
       };
     });
-  }, [anchorDate, selectedCalendarDate, dailyLogs, propEntries, propTotalSteps, deletedEntryIds]);
+  }, [anchorDate, dailyLogs, propEntries, propTotalSteps, deletedEntryIds]);
 
-  // Filter out completely empty dates unless explicitly picked in calendar
+  // Filter out completely empty dates
   const activeDays = useMemo(() => {
     return daysData.filter(
-      day => day.entries.length > 0 || day.totalSteps > 0 || day.dateStr === selectedCalendarDate
+      day => day.entries.length > 0 || day.totalSteps > 0
     );
-  }, [daysData, selectedCalendarDate]);
-
-  // Calendar modal calculations
-  const monthGrid = useMemo(() => {
-    const firstDayOfWeek = new Date(calendarYear, calendarMonth, 1).getDay();
-    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-    const cells: Array<{ dayNum?: number; dateStr?: string; hasSteps?: boolean }> = [];
-
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      cells.push({});
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dStr = `${calendarYear}-${pad2(calendarMonth + 1)}-${pad2(d)}`;
-      const hasSteps = Boolean(
-        dailyLogs[dStr]?.steps ||
-        (dailyLogs[dStr]?.stepEntries && dailyLogs[dStr].stepEntries!.length > 0) ||
-        dStr === anchorDate
-      );
-      cells.push({ dayNum: d, dateStr: dStr, hasSteps });
-    }
-
-    return cells;
-  }, [calendarYear, calendarMonth, dailyLogs, anchorDate]);
+  }, [daysData]);
 
   return (
     <Modal
@@ -532,109 +485,6 @@ const StepHistoryModalContent: React.FC<Omit<StepHistoryModalProps, 'visible'>> 
             onClose={handleClosePopover}
           />
 
-          {/* Interactive Month Calendar Picker Modal */}
-          <Modal
-            visible={isCalendarOpen}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setIsCalendarOpen(false)}
-          >
-            <Pressable style={styles.modalOverlay} onPress={() => setIsCalendarOpen(false)}>
-              <Pressable style={styles.calendarModalCard} onPress={e => e.stopPropagation()}>
-                {/* Calendar Month Header */}
-                <View style={styles.calendarHeaderRow}>
-                  <View style={styles.calendarNavRow}>
-                    <Pressable
-                      style={styles.calNavArrow}
-                      onPress={() => {
-                        if (calendarMonth === 0) {
-                          setCalendarMonth(11);
-                          setCalendarYear(y => y - 1);
-                        } else {
-                          setCalendarMonth(m => m - 1);
-                        }
-                      }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
-                    </Pressable>
-
-                    <Text style={styles.calendarMonthTitle}>
-                      {MONTH_NAMES[calendarMonth]} {calendarYear}
-                    </Text>
-
-                    <Pressable
-                      style={styles.calNavArrow}
-                      onPress={() => {
-                        if (calendarMonth === 11) {
-                          setCalendarMonth(0);
-                          setCalendarYear(y => y + 1);
-                        } else {
-                          setCalendarMonth(m => m + 1);
-                        }
-                      }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons name="chevron-forward" size={20} color={Colors.textPrimary} />
-                    </Pressable>
-                  </View>
-
-                  <Pressable
-                    style={styles.calCloseBtn}
-                    onPress={() => setIsCalendarOpen(false)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons name="close" size={20} color={Colors.textSecondary} />
-                  </Pressable>
-                </View>
-
-                {/* Weekday Initials */}
-                <View style={styles.calendarWeekdaysRow}>
-                  {WEEKDAY_INITIALS.map((initial, idx) => (
-                    <Text key={idx} style={styles.calendarWeekdayText}>
-                      {initial}
-                    </Text>
-                  ))}
-                </View>
-
-                {/* Days Grid */}
-                <View style={styles.calendarGrid}>
-                  {monthGrid.map((cell, idx) => {
-                    if (!cell.dayNum || !cell.dateStr) {
-                      return <View key={`empty_${idx}`} style={styles.calendarEmptyCell} />;
-                    }
-
-                    const isSelected = cell.dateStr === selectedCalendarDate;
-
-                    return (
-                      <Pressable
-                        key={cell.dateStr}
-                        style={[
-                          styles.calendarDayCell,
-                          isSelected && styles.calendarDayCellSelected,
-                        ]}
-                        onPress={() => {
-                          setSelectedCalendarDate(cell.dateStr!);
-                          setIsCalendarOpen(false);
-                        }}
-                      >
-                        <Text
-                          style={[
-                            styles.calendarDayText,
-                            isSelected && styles.calendarDayTextSelected,
-                          ]}
-                        >
-                          {cell.dayNum}
-                        </Text>
-                        {cell.hasSteps && !isSelected && <View style={styles.calendarStepDot} />}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </Pressable>
-            </Pressable>
-          </Modal>
-
           {/* Dedicated Full-Screen Step Report Sub-Screen */}
           {isReportVisible && (
             <SlideInSubScreen
@@ -874,98 +724,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,
-  },
-  // Calendar Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlayScrim,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  calendarModalCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    padding: 18,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  calendarHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  calendarNavRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  calNavArrow: {
-    padding: 4,
-  },
-  calendarMonthTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-  calCloseBtn: {
-    padding: 4,
-  },
-  calendarWeekdaysRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  calendarWeekdayText: {
-    width: 36,
-    textAlign: 'center',
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textMuted,
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  calendarEmptyCell: {
-    width: 36,
-    height: 36,
-    marginVertical: 3,
-  },
-  calendarDayCell: {
-    width: 36,
-    height: 36,
-    marginVertical: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-  },
-  calendarDayCellSelected: {
-    backgroundColor: Colors.steps,
-  },
-  calendarDayText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textPrimary,
-  },
-  calendarDayTextSelected: {
-    color: Colors.onPrimary,
-    fontFamily: Fonts.urbanist.semiBold,
-  },
-  calendarStepDot: {
-    position: 'absolute',
-    bottom: 3,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.steps,
   },
 });

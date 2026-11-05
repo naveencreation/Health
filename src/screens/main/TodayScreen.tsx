@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   ScrollView,
-  RefreshControl,
   View,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -14,15 +13,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Header, TopDateStrip, HeroCalorieCard, MealSection } from '@/components';
 import { MealType } from '@/types';
+import { Colors } from '@/theme/colors';
 
 interface TodayScreenProps {
   onAddFood: (mealType: MealType) => void;
-  onOpenRiaChat: () => void;
+  onEditGoal?: () => void;
   onSearchPress?: () => void;
   onNotificationsPress?: () => void;
   onAvatarPress?: () => void;
   onSignInPress?: () => void;
-  onSignOutPress?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
@@ -30,29 +29,19 @@ interface TodayScreenProps {
 
 const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onAddFood,
-  onOpenRiaChat,
+  onEditGoal,
   onSearchPress,
   onNotificationsPress,
   onAvatarPress,
   onSignInPress,
-  onSignOutPress,
   scrollRef,
   initialScrollOffset = 0,
   onScrollPositionChange,
 }) => {
-  const [refreshing, setRefreshing] = useState(false);
-
   // Scroll tracking for in-place morphing header
   const scrollY = useSharedValue(0);
   const isScrolledSV = useSharedValue(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 750);
-  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -95,7 +84,6 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         onNotificationsPress={onNotificationsPress}
         onAvatarPress={onAvatarPress}
         onSignInPress={onSignInPress}
-        onSignOutPress={onSignOutPress}
       />
 
       {/* Main Scroll Content */}
@@ -108,20 +96,12 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
         onScroll={handleScroll}
         onMomentumScrollEnd={handleScrollEnd}
         onScrollEndDrag={handleScrollEnd}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#F47551"
-            colors={['#F47551', '#CDE26D']}
-          />
-        }
       >
         {/* 1. Client's Exact 7-Day Date Selector Strip */}
         <TopDateStrip />
 
         {/* 2. Hero Calorie Card */}
-        <HeroCalorieCard />
+        <HeroCalorieCard onEditGoal={onEditGoal} />
 
         {/* 3. Meals Section (Breakfast, Lunch, Dinner, Snacks) */}
         <MealSection onAddFood={onAddFood} />
@@ -135,11 +115,11 @@ export const TodayScreen = React.memo(TodayScreenComponent);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   scroll: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   scrollContent: {
     paddingBottom: 32,

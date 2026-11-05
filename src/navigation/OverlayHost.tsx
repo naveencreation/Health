@@ -21,6 +21,7 @@ import {
 
 // Subscreens
 import { WaterTrackerScreen, WeightTrackerScreen, StepTrackerScreen } from '@/screens';
+import { GoalsScreen } from '@/screens/profile';
 
 export interface OverlayHostProps {
   screenWidth: number;
@@ -124,6 +125,7 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth, onConfirm
       {/* 7. Ria AI Chat Modal */}
       <RiaChatModal
         visible={isOpen('riaChat')}
+        initialPrompt={activeModal?.type === 'riaChat' ? activeModal.prompt : undefined}
         onClose={closeModal}
         onOpenBYOKSetup={() => openModal({ type: 'byokSetup' })}
       />
@@ -177,6 +179,18 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth, onConfirm
           zIndex={200}
         >
           <StepTrackerScreen onBack={() => handleStartClosingSubScreen('stepTracker')} />
+        </SlideInSubScreen>
+      )}
+
+      {/* 12. Slide-In Sub-Screen: Goals (opened from the Today hero card pencil) */}
+      {(isOpen('goals') || closingSubScreen === 'goals') && (
+        <SlideInSubScreen
+          screenWidth={boundedWidth}
+          isClosing={closingSubScreen === 'goals'}
+          onClosed={handleSubScreenClosed}
+          zIndex={200}
+        >
+          <GoalsScreen onBack={() => handleStartClosingSubScreen('goals')} />
         </SlideInSubScreen>
       )}
     </>

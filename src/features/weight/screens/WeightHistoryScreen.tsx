@@ -461,7 +461,7 @@ export const WeightHistoryScreen: React.FC<WeightHistoryScreenProps> = ({
                         onPress={e => handleOpenMenu(entry, e)}
                         hitSlop={HIT_SLOP_10}
                         accessibilityRole="button"
-                        accessibilityLabel={`Options for ${entry.weightKg} ${unit} entry`}
+                        accessibilityLabel={`Options for ${displayWeight} ${unit} entry`}
                       >
                         <Ionicons name={ActionIcons.moreVertical} size={IconSizes.secondary} color={Colors.textSecondary} />
                       </Pressable>

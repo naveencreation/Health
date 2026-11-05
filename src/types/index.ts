@@ -37,6 +37,8 @@ export interface LoggedMealItem {
   fiber: number;
   loggedAt: string; // ISO string
   imageUrl?: string;
+  /** Nutrition for quantity 1, saved at log time so quantity edits don't compound rounding. */
+  baseNutrition?: { calories: number; carbs: number; protein: number; fat: number; fiber: number };
 }
 
 export interface WorkoutActivity {

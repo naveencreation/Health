@@ -10,6 +10,9 @@ interface RiaDailyInsightParams {
   currentLog: DailyLog;
   totalProtein: number;
   remainingCalories: number;
+  totalConsumed: number;
+  totalCarbs: number;
+  totalFat: number;
 }
 
 interface CachedInsight {
@@ -29,6 +32,9 @@ export const useRiaDailyInsight = ({
   currentLog,
   totalProtein,
   remainingCalories,
+  totalConsumed,
+  totalCarbs,
+  totalFat,
 }: RiaDailyInsightParams): string | null => {
   const [insight, setInsight] = useState<string | null>(null);
   const requestVersionRef = useRef(0);
@@ -95,13 +101,13 @@ export const useRiaDailyInsight = ({
           riaTone: userGoals.riaTone || 'supportive',
           dailyCalorieBudget: userGoals.dailyCalorieBudget,
           remainingCalories,
-          consumedCalories: userGoals.dailyCalorieBudget - remainingCalories,
+          consumedCalories: totalConsumed,
           targetProtein: userGoals.targetProtein,
           consumedProtein: totalProtein,
           targetCarbs: userGoals.targetCarbs,
-          consumedCarbs: 0,
+          consumedCarbs: totalCarbs,
           targetFat: userGoals.targetFat,
-          consumedFat: 0,
+          consumedFat: totalFat,
           targetWaterMl: userGoals.waterGoalMl,
           consumedWaterMl: currentLog.waterMl,
           stepGoal: userGoals.stepGoal,

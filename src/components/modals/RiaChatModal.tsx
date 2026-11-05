@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { Bot, KeyRound } from 'lucide-react-native';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals, useDailyLog, useAnalytics } from '@/context/HealthContext';
@@ -901,9 +900,9 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                       ) : msg.id.startsWith('ria_connect_') ? (
                         <View style={styles.connectionCard}>
                           <View style={styles.connectionIconWrap}>
-                            <Bot size={27} color={Colors.textSecondary} strokeWidth={1.8} />
+                            <Ionicons name="hardware-chip-outline" size={27} color={Colors.textSecondary} />
                             <View style={styles.connectionKeyBadge}>
-                              <KeyRound size={13} color={Colors.warningDark} strokeWidth={2} />
+                              <Ionicons name="key-outline" size={13} color={Colors.warningDark} />
                             </View>
                           </View>
                           <View style={styles.connectionCopy}>

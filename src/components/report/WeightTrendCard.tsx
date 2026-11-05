@@ -274,7 +274,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${day.dayName}: ${hasLog ? day.displayWeight + ' ' + unit : 'No log'}`}
+                    accessibilityLabel={`${day.dayName}: ${hasLog ? `${Number(day.displayWeight).toFixed(1)} ${unit}` : 'No log'}`}
                   >
                     {/* Floating Pin directly above selected bar */}
                     {isSelected && (
@@ -391,6 +391,8 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                     key={`line_touch_${d.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${d.dayName}: ${d.displayWeight != null ? `${Number(d.displayWeight).toFixed(1)} ${unit}` : 'No log'}`}
                   />
                 ))}
               </View>

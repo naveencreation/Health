@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  RefreshControl,
   Pressable,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -29,7 +28,7 @@ import {
 } from '@/components';
 
 export interface TrackerScreenProps {
-  onOpenRiaChat?: () => void;
+  onOpenRiaChat?: (prompt?: string) => void;
   onOpenWaterTracker?: () => void;
   onOpenWeightTracker?: () => void;
   onOpenStepTracker?: () => void;
@@ -55,13 +54,6 @@ const SHORT_MONTHS = [
   'Nov',
   'Dec',
 ];
-const pad2 = (n: number) => String(n).padStart(2, '0');
-const toDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = pad2(date.getMonth() + 1);
-  const d = pad2(date.getDate());
-  return `${y}-${m}-${d}`;
-};
 
 const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
   onOpenRiaChat,
@@ -74,15 +66,7 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
   initialScrollOffset = 0,
   onScrollPositionChange,
 }) => {
-  const [refreshing, setRefreshing] = useState(false);
   const scrollY = useSharedValue(0);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 750);
-  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -120,8 +104,8 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
     transform: [{ translateY: interpolate(scrollY.value, [20, 50], [4, 0], 'clamp') }],
   }));
 
-  const { selectedDate } = useDailyLog();
-  const todayStr = useMemo(() => toDateString(new Date()), []);
+  // Context todayStr rolls over at midnight and on resume
+  const { selectedDate, todayStr } = useDailyLog();
   const isViewingToday = selectedDate === todayStr;
 
   const formattedDate = useMemo(() => {
@@ -142,10 +126,6 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
     }
     return selectedDate;
   }, [selectedDate, isViewingToday]);
-
-  const handleRiaChat = useCallback(() => {
-    onOpenRiaChat?.();
-  }, [onOpenRiaChat]);
 
   return (
     <View style={styles.rootContainer}>
@@ -206,20 +186,12 @@ const TrackerScreenComponent: React.FC<TrackerScreenProps> = ({
         onScroll={handleScroll}
         onMomentumScrollEnd={handleScrollEnd}
         onScrollEndDrag={handleScrollEnd}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#F47551"
-            colors={['#F47551', '#CDE26D']}
-          />
-        }
       >
         {/* 1. Date Selector Strip */}
         <TopDateStrip />
 
         {/* 2. Top Deck: Ria AI Coach Assistant */}
-        <RiaCoachCard onOpenChat={handleRiaChat} />
+        <RiaCoachCard onOpenChat={onOpenRiaChat} />
 
         {/* 3. Water Tracker Droplet Card */}
         <WaterTracker onPressHeader={onOpenWaterTracker} />
@@ -242,10 +214,10 @@ export const TrackerScreen = React.memo(TrackerScreenComponent);
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   headerContainer: {
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 10,
@@ -264,7 +236,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 34,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
     textAlignVertical: 'center',
@@ -284,16 +256,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
     includeFontPadding: false,
   },
   circleBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -303,7 +275,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   content: {
     paddingBottom: 110, // Full clearance above floating bottom navigation bar

@@ -7,12 +7,12 @@ export type ActiveModal =
   | { type: 'byokSetup' }
   | { type: 'notifications' }
   | { type: 'avatarPicker' }
-  | { type: 'riaChat' }
-  | { type: 'auth'; mode?: 'welcome' | 'signin' | 'signup' }
+  | { type: 'riaChat'; prompt?: string }
   | { type: 'signOutConfirm' }
   | { type: 'waterTracker' }
   | { type: 'weightTracker' }
-  | { type: 'stepTracker' };
+  | { type: 'stepTracker' }
+  | { type: 'goals' };
 
 export type ActiveModalType = ActiveModal['type'];
 

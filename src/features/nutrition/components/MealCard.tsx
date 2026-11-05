@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo } from 'react-native';
+import { View, Text, StyleSheet, Pressable, AccessibilityInfo } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,6 +14,7 @@ import { MotionDurations, MotionCurves } from '@/theme/motion';
 import { LoggedMealItem, MealType } from '@/types';
 import { useNutrition } from '../hooks/useNutrition';
 import { AnimatedProgressBar } from '@/components/common/AnimatedProgressBar';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
 
 interface MealCardProps {
   mealType: MealType;
@@ -24,7 +25,6 @@ interface MealCardProps {
   iconFallback: string;
   items: LoggedMealItem[];
   onAddPress: (mealType: MealType) => void;
-  isDimmed?: boolean;
 }
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -39,9 +39,9 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   iconFallback,
   items,
   onAddPress,
-  isDimmed = false,
 }) => {
   const { removeMealItem, updateMealQuantity } = useNutrition();
+  const [pendingDelete, setPendingDelete] = useState<LoggedMealItem | null>(null);
   const [isExpanded, setIsExpanded] = useState(true);
   const [imgError, setImgError] = useState(false);
   const [contentHeight, setContentHeight] = useState<number>(0);
@@ -119,7 +119,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
   const totalFat = Math.round(items.reduce((sum, item) => sum + (item.fat || 0), 0) * 10) / 10;
 
   // Meal progress calculation (Single average target vs range)
-  const targetCals = recommendedCals || 500;
+  const targetCals = recommendedCals;
   const mealProgress = Math.min(1, Math.max(0, totalMealCals / targetCals));
   const isOverBudget = totalMealCals > targetCals;
 
@@ -128,7 +128,6 @@ const MealCardComponent: React.FC<MealCardProps> = ({
       style={[
         styles.card,
         hasItems ? styles.cardActive : null,
-        isDimmed && !hasItems ? styles.dimmedCard : null,
       ]}
     >
       {/* 1. Header Row - Fully Tappable with isolated Plus Action Button */}
@@ -165,13 +164,13 @@ const MealCardComponent: React.FC<MealCardProps> = ({
           {/* Title, Animated Chevron, Target Subtitle & Clean Progress Bar */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
-              <Text style={styles.mealTitle}>{hasItems ? title.replace('Add ', '') : title}</Text>
+              <Text style={styles.mealTitle}>{title}</Text>
               {hasItems ? (
                 <Animated.View style={[styles.chevronPill, chevronAnimatedStyle]}>
                   <Ionicons
                     name="chevron-down"
                     size={13}
-                    color="#475569"
+                    color={Colors.textSlate600}
                   />
                 </Animated.View>
               ) : null}
@@ -180,7 +179,7 @@ const MealCardComponent: React.FC<MealCardProps> = ({
             {/* Contextual Target / Consumed Subtitle */}
             <Text style={styles.recommendedText}>
               {hasItems
-                ? `${totalMealCals} / ${targetCals} kcal • ${isOverBudget ? 'Above target' : 'On track'}`
+                ? `${totalMealCals} / ${targetCals} kcal • ${isOverBudget ? 'Above target' : `${targetCals - totalMealCals} left`}`
                 : `Target: ${targetCals} kcal • Tap to log`}
             </Text>
 
@@ -207,7 +206,6 @@ const MealCardComponent: React.FC<MealCardProps> = ({
         <Pressable
           style={({ pressed }) => [
             styles.addButtonCircle,
-            isDimmed && !hasItems ? styles.dimmedAddButton : null,
             pressed ? styles.pressedAddButton : null,
           ]}
           onPress={() => onAddPress(mealType)}
@@ -249,25 +247,26 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                   <View style={styles.foodActions}>
                     {/* Capsule Stepper */}
                     <View style={styles.stepperCapsule}>
+                      {/* 0.5 is the floor; removing an item is only done through the X */}
                       <Pressable
                         style={({ pressed }) => [
                           styles.stepperBtn,
+                          item.quantity <= 0.5 ? styles.stepperBtnDisabled : null,
                           pressed ? styles.pressedSubtle : null,
                         ]}
                         hitSlop={HIT_SLOP_8}
+                        disabled={item.quantity <= 0.5}
                         onPress={() => {
-                          if (item.quantity > 1) {
-                            updateMealQuantity(item.id, item.quantity - 1);
-                          } else if (item.quantity === 1) {
-                            updateMealQuantity(item.id, 0.5);
-                          } else {
-                            removeMealItem(item.id);
-                          }
+                          updateMealQuantity(
+                            item.id,
+                            item.quantity > 1 ? Math.round((item.quantity - 1) * 10) / 10 : 0.5
+                          );
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel="Decrease quantity"
+                        accessibilityLabel={`Decrease ${item.name} quantity`}
+                        accessibilityState={{ disabled: item.quantity <= 0.5 }}
                       >
-                        <Ionicons name="remove" size={16} color="#475569" />
+                        <Ionicons name="remove" size={16} color={Colors.textSlate600} />
                       </Pressable>
 
                       <Text style={styles.stepperQty}>{item.quantity}</Text>
@@ -286,9 +285,9 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                           }
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel="Increase quantity"
+                        accessibilityLabel={`Increase ${item.name} quantity`}
                       >
-                        <Ionicons name="add" size={16} color="#475569" />
+                        <Ionicons name="add" size={16} color={Colors.textSlate600} />
                       </Pressable>
                     </View>
 
@@ -304,11 +303,11 @@ const MealCardComponent: React.FC<MealCardProps> = ({
                         pressed ? styles.pressedSubtle : null,
                       ]}
                       hitSlop={HIT_SLOP_10}
-                      onPress={() => removeMealItem(item.id)}
+                      onPress={() => setPendingDelete(item)}
                       accessibilityRole="button"
                       accessibilityLabel={`Remove ${item.name}`}
                     >
-                      <Ionicons name="close" size={16} color="#94A3B8" />
+                      <Ionicons name="close" size={16} color={Colors.textMuted} />
                     </Pressable>
                   </View>
                 </View>
@@ -339,13 +338,32 @@ const MealCardComponent: React.FC<MealCardProps> = ({
           </Animated.View>
         </Animated.View>
       ) : null}
+
+      <ConfirmationModal
+        visible={pendingDelete !== null}
+        title="Remove food?"
+        message={
+          pendingDelete
+            ? `${pendingDelete.name} (${pendingDelete.calories} kcal) will be removed from ${title}.`
+            : ''
+        }
+        confirmText="Remove"
+        cancelText="Keep"
+        confirmStyle="destructive"
+        iconName="trash-outline"
+        onConfirm={() => {
+          if (pendingDelete) removeMealItem(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: 'rgba(15, 23, 42, 0.06)',
     borderRadius: 10,
@@ -361,9 +379,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSubtle,
     elevation: 0,
     shadowOpacity: 0,
-  },
-  dimmedCard: {
-    opacity: 0.75,
   },
   headerRow: {
     flexDirection: 'row',
@@ -487,8 +502,8 @@ const styles = StyleSheet.create({
     elevation: 0,
     shadowOpacity: 0,
   },
-  dimmedAddButton: {
-    opacity: 0.65,
+  stepperBtnDisabled: {
+    opacity: 0.35,
   },
   itemsContainer: {
     marginTop: 12,

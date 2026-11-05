@@ -22,6 +22,13 @@ const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   const { userGoals, updateGoals } = useGoals();
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    },
+    []
+  );
 
   const [calorieBudget, setCalorieBudget] = useState(String(userGoals.dailyCalorieBudget || 1950));
   const [targetProtein, setTargetProtein] = useState(String(userGoals.targetProtein || 90));
@@ -111,7 +118,8 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       heightCm: parseFloat(userHeightCm) || userGoals.heightCm,
     });
     setSavedSuccess(true);
-    setTimeout(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
       setSavedSuccess(false);
       onBack();
     }, 800);

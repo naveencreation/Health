@@ -147,7 +147,12 @@ const WeightTrackerCardComponent: React.FC<WeightTrackerCardProps> = ({
         </View>
 
         {/* 2. Chunky Orange Capsule Progress Bar */}
-        <View style={styles.progressTrack}>
+        <View
+          style={styles.progressTrack}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Progress to goal weight"
+          accessibilityValue={{ min: 0, max: 100, now: progressPercent }}
+        >
           <Animated.View style={[styles.progressFill, animatedBarStyle]} />
         </View>
 

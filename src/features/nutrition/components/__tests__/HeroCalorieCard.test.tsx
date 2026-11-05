@@ -53,6 +53,7 @@ describe('HeroCalorieCard (Rolling 7-Day Synchronization)', () => {
   test('renders 7 rolling days without any future dates when viewing today', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       dailyLogs: {},
       totalConsumed: 1600,
@@ -63,11 +64,11 @@ describe('HeroCalorieCard (Rolling 7-Day Synchronization)', () => {
       totalFat: 45,
     });
 
-    const { getByText, queryByText } = await render(<HeroCalorieCard />);
+    const { getByText, getAllByText, queryByText } = await render(<HeroCalorieCard />);
 
     // Slide 0 dial elements
     expect(getByText('600')).toBeTruthy();
-    expect(getByText('Cal left')).toBeTruthy();
+    expect(getByText('kcal left')).toBeTruthy();
 
     // Timeline must include TODAY for today's pill
     expect(getByText('TODAY')).toBeTruthy();
@@ -80,12 +81,13 @@ describe('HeroCalorieCard (Rolling 7-Day Synchronization)', () => {
     expect(getByText(yesterdayName)).toBeTruthy();
 
     // Verify day view header reflects Today
-    expect(getByText('Today')).toBeTruthy();
+    expect(getAllByText('Today')).toHaveLength(2); // segment tab + weekly day label
   });
 
   test('allows selecting past dates from the timeline', async () => {
     mockUseDailyLog.mockReturnValue({
       selectedDate: realToday,
+      todayStr: realToday,
       setSelectedDate: mockSetSelectedDate,
       dailyLogs: {},
       totalConsumed: 1200,

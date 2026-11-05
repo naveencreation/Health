@@ -1,4 +1,5 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
+import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
 import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMovement } from '../hooks/useMovement';
@@ -44,7 +45,7 @@ export const HeroStepCard = forwardRef<HeroStepCardRef, HeroStepCardProps>(
     const distanceKm =
       typeof propSteps === 'number' ? (currentSteps * 0.00076).toFixed(1) : hookDistanceKm;
     const stepBurnKcal =
-      typeof propSteps === 'number' ? Math.round(currentSteps * 0.04) : hookStepBurnKcal;
+      typeof propSteps === 'number' ? Math.round(currentSteps * KCAL_PER_STEP) : hookStepBurnKcal;
     const activeMinutes =
       typeof propSteps === 'number' ? Math.round(currentSteps / 100) : hookActiveMinutes;
 

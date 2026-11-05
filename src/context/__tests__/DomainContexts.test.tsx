@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import { HealthProvider } from '../HealthContext';
 import { useAuth } from '../auth';
 import { useGoals } from '../goals';
@@ -107,6 +107,33 @@ describe('Domain Context Hooks within HealthProvider', () => {
     expect(typeof result.current.addMealItem).toBe('function');
     expect(typeof result.current.addWater).toBe('function');
     expect(typeof result.current.addSteps).toBe('function');
+  });
+
+  test('meal quantity edits do not drift for foods outside the catalog', async () => {
+    const { result } = await renderHook(() => useDailyLog(), { wrapper });
+    const food = {
+      id: 'scanned_not_in_catalog',
+      name: 'Scanned bar',
+      category: 'snacks',
+      categoryLabel: 'Snack',
+      servingUnit: '1 bar',
+      defaultServingSize: 1,
+      calories: 155,
+      protein: 7,
+      carbs: 20,
+      fat: 5,
+      fiber: 3,
+      icon: 'x',
+    } as any;
+    let id = '';
+    await act(async () => {
+      id = result.current.addMealItem('snacks', food, 1).id;
+    });
+    await act(async () => result.current.updateMealQuantity(id, 0.5));
+    await act(async () => result.current.updateMealQuantity(id, 1));
+    const item = result.current.currentLog.meals.find(m => m.id === id);
+    expect(item?.calories).toBe(155); // old derivation gave 156 (78 / 0.5)
+    expect(item?.protein).toBe(7);
   });
 
   test('useAnalytics provides weeklyLogs and dailyLogs', async () => {

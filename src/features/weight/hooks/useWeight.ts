@@ -63,7 +63,7 @@ export function useWeight(): UseWeightReturn {
   const logForDate = dailyLogs?.[selectedDate] || currentLog;
   const currentWeightRaw =
     logForDate?.weightKg ?? userGoals.currentWeightKg ?? BIOMETRIC_DEFAULTS.currentWeightKg;
-  const currentWeightKg = Math.round(currentWeightRaw * 10) / 10;
+  const currentWeightKg = Math.round(currentWeightRaw * 100) / 100;
 
   const startWeightRaw =
     userGoals.startWeightKg ??

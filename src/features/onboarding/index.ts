@@ -8,8 +8,6 @@ export * from './screens/NameInputScreen';
 export * from './screens/GoalSelectionScreen';
 export * from './screens/StrugglesScreen';
 export * from './screens/AboutYouScreen';
-export * from './screens/AgeSelectionScreen';
-export { GenderSelectionScreen } from './screens/GenderSelectionScreen';
 export * from './screens/HeightSelectionScreen';
 export * from './screens/WeightSelectionScreen';
 export * from './screens/TargetWeightScreen';

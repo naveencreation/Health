@@ -72,7 +72,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
   onDelete,
 }) => {
   const insets = useSafeAreaInsets();
-  const { dailyLogs, logWeight, updateWeightEntry, deleteWeightEntry, currentLog } = useDailyLog();
+  const { dailyLogs, selectedDate, logWeight, updateWeightEntry, deleteWeightEntry, currentLog } =
+    useDailyLog();
   const { userGoals, updateGoals } = useGoals();
 
   const todayStr = useMemo(() => getTodayDateString(new Date()), []);
@@ -82,9 +83,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     return getTodayDateString(d);
   }, []);
 
-  const [activeDate, setActiveDate] = useState<string>(() => {
-    return targetDate || getTodayDateString(new Date());
-  });
+  const [activeDate, setActiveDate] = useState<string>(() => targetDate || selectedDate);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [calendarYear, setCalendarYear] = useState<number>(() => new Date().getFullYear());
@@ -160,7 +159,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     setWeightKg(startingKg);
     setUnit(userGoals.weightUnit || 'kg');
 
-    const initialDate = targetDate || getTodayDateString(new Date());
+    const initialDate = targetDate || selectedDate;
     setActiveDate(initialDate);
 
     const [y, m] = initialDate.split('-').map(Number);
@@ -193,6 +192,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
     initialWeight,
     initialNote,
     targetDate,
+    selectedDate,
     currentLog?.weightKg,
     userGoals.currentWeightKg,
     userGoals.weightUnit,
@@ -486,6 +486,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             <Pressable
               style={[styles.dateChip, activeDate === todayStr && styles.dateChipActive]}
               onPress={() => handleDateSelect(todayStr)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeDate === todayStr }}
             >
               <Text
                 style={[styles.dateChipText, activeDate === todayStr && styles.dateChipTextActive]}
@@ -498,6 +500,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             <Pressable
               style={[styles.dateChip, activeDate === yesterdayStr && styles.dateChipActive]}
               onPress={() => handleDateSelect(yesterdayStr)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeDate === yesterdayStr }}
             >
               <Text
                 style={[
@@ -513,6 +517,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             <Pressable
               style={[styles.dateChip, isCustomDate && styles.dateChipActive]}
               onPress={() => setIsDatePickerOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Pick another date, ${customDateChipLabel}`}
+              accessibilityState={{ selected: isCustomDate }}
             >
               <Ionicons name={ActionIcons.calendar} size={IconSizes.compact} color={isCustomDate ? Colors.weight : Colors.textSecondary} style={{ marginRight: 5 }} />
               <Text style={[styles.dateChipText, isCustomDate && styles.dateChipTextActive]}>
@@ -530,6 +537,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Pressable
                 style={[styles.unitTab, unit === 'kg' && styles.unitTabActive]}
                 onPress={() => handleToggleUnit('kg')}
+                accessibilityRole="tab"
+                accessibilityLabel="Kilograms"
+                accessibilityState={{ selected: unit === 'kg' }}
               >
                 <Text style={[styles.unitTabText, unit === 'kg' && styles.unitTabTextActive]}>
                   kg
@@ -538,6 +548,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Pressable
                 style={[styles.unitTab, unit === 'lbs' && styles.unitTabActive]}
                 onPress={() => handleToggleUnit('lbs')}
+                accessibilityRole="tab"
+                accessibilityLabel="Pounds"
+                accessibilityState={{ selected: unit === 'lbs' }}
               >
                 <Text style={[styles.unitTabText, unit === 'lbs' && styles.unitTabTextActive]}>
                   lbs
@@ -550,6 +563,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <View style={styles.manualInputRow}>
                 <TextInput
                   style={[styles.manualInput, isKeyboardOpen && styles.manualInputCompact]}
+                  accessibilityLabel={`Weight in ${unit}`}
                   value={manualText}
                   onChangeText={handleManualTextChange}
                   keyboardType="decimal-pad"
@@ -567,6 +581,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                     setIsManualInput(false);
                     Keyboard.dismiss();
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Done typing weight"
                 >
                   <Ionicons name="checkmark" size={18} color={Colors.onPrimary} />
                 </Pressable>
@@ -610,12 +626,16 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   <Pressable
                     style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                     onPress={() => handleStep(-1.0)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Decrease by 1 ${unit}`}
                   >
                     <Text style={styles.stepperBtnLabel}>-1.0</Text>
                   </Pressable>
                   <Pressable
                     style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                     onPress={() => handleStep(-0.1)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Decrease by 0.1 ${unit}`}
                   >
                     <Text style={styles.stepperBtnLabel}>-0.1</Text>
                   </Pressable>
@@ -627,12 +647,16 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   <Pressable
                     style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                     onPress={() => handleStep(0.1)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Increase by 0.1 ${unit}`}
                   >
                     <Text style={styles.stepperBtnLabel}>+0.1</Text>
                   </Pressable>
                   <Pressable
                     style={({ pressed }) => [styles.stepperBtn, pressed && styles.btnPressed]}
                     onPress={() => handleStep(1.0)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Increase by 1 ${unit}`}
                   >
                     <Text style={styles.stepperBtnLabel}>+1.0</Text>
                   </Pressable>
@@ -652,6 +676,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                     key={tag}
                     style={[styles.tagPill, isSelected && styles.tagPillActive]}
                     onPress={() => setSelectedTag(isSelected ? '' : tag)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
                   >
                     <Text style={[styles.tagPillText, isSelected && styles.tagPillTextActive]}>
                       {tag}
@@ -666,6 +692,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               <Ionicons name={ActionIcons.edit} size={IconSizes.secondary} color={Colors.textMuted} style={{ marginRight: 8 }} />
               <TextInput
                 style={styles.noteTextInput}
+                accessibilityLabel="Personal note"
                 placeholder="Add personal note (e.g. after morning run)..."
                 placeholderTextColor={Colors.textMuted}
                 value={customNote}
@@ -716,6 +743,8 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   style={({ pressed }) => [styles.pickerNavBtn, pressed && styles.btnPressed]}
                   onPress={prevMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Previous month"
                 >
                   <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
                 </Pressable>
@@ -731,6 +760,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                   onPress={nextMonth}
                   disabled={isCurrentOrFutureMonth}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Next month"
+                  accessibilityState={{ disabled: isCurrentOrFutureMonth }}
                 >
                   <Ionicons
                     name="chevron-forward"
@@ -766,6 +798,9 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
                         cell.isFuture && styles.pickerDayCellDisabled,
                       ]}
                       disabled={cell.isFuture}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${MONTH_NAMES[calendarMonth]} ${cell.dayNum}, ${calendarYear}${cell.isToday ? ', today' : ''}${cell.hasLoggedWeight ? ', weight logged' : ''}`}
+                      accessibilityState={{ selected: cell.isSelected, disabled: cell.isFuture }}
                       onPress={() => {
                         if (cell.dateStr) {
                           handleDateSelect(cell.dateStr);
@@ -792,7 +827,11 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
               </View>
 
               {/* Cancel Button */}
-              <Pressable style={styles.pickerCloseBtn} onPress={() => setIsDatePickerOpen(false)}>
+              <Pressable
+                style={styles.pickerCloseBtn}
+                onPress={() => setIsDatePickerOpen(false)}
+                accessibilityRole="button"
+              >
                 <Text style={styles.pickerCloseBtnText}>Close</Text>
               </Pressable>
             </Pressable>

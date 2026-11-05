@@ -87,8 +87,9 @@ export async function getStepsForDate(dateStr: string): Promise<{ steps: number;
 
     return { steps: 0, records: [] };
   } catch (error) {
+    // Rethrow: callers already catch, and a 0 here would overwrite the day's real steps
     console.error('[healthService] Error fetching steps for:', dateStr, error);
-    return { steps: 0, records: [] };
+    throw error;
   }
 }
 

@@ -331,9 +331,10 @@ function MainApp() {
   const handleGlobalSearchPress = useCallback(() => {
     const hour = new Date().getHours();
     let slot: MealType = 'lunch';
-    if (hour < 11) slot = 'breakfast';
-    else if (hour < 16) slot = 'lunch';
-    else if (hour < 19) slot = 'snacks';
+    // Same windows as Ria's resolveContextualMealSlot: 04-11 breakfast, 11-16 lunch, 16-19 snacks
+    if (hour >= 4 && hour < 11) slot = 'breakfast';
+    else if (hour >= 11 && hour < 16) slot = 'lunch';
+    else if (hour >= 16 && hour < 19) slot = 'snacks';
     else slot = 'dinner';
     handleOpenFoodLogger(slot);
   }, [handleOpenFoodLogger]);
@@ -397,8 +398,8 @@ function MainApp() {
     setAuthModalVisible(true);
   }, []);
 
-  const handleSignOutPress = useCallback(() => {
-    openModal({ type: 'signOutConfirm' });
+  const handleOpenGoals = useCallback(() => {
+    openModal({ type: 'goals' });
   }, [openModal]);
 
   const handleConfirmSignOut = useCallback(async () => {
@@ -413,7 +414,10 @@ function MainApp() {
     setAuthModalVisible(false);
   }, []);
 
-  const handleOpenRiaChat = useCallback(() => openModal({ type: 'riaChat' }), [openModal]);
+  const handleOpenRiaChat = useCallback(
+    (prompt?: string) => openModal({ type: 'riaChat', prompt }),
+    [openModal]
+  );
   const handleOpenNotifications = useCallback(() => openModal({ type: 'notifications' }), [openModal]);
   const handleOpenAvatarModal = useCallback(() => openModal({ type: 'avatarPicker' }), [openModal]);
   const handleOpenFoodVision = useCallback(() => openModal({ type: 'foodVision' }), [openModal]);
@@ -495,12 +499,11 @@ function MainApp() {
                 initialScrollOffset={scrollOffsetsRef.current.today}
                 onScrollPositionChange={saveTodayScrollOffset}
                 onAddFood={handleOpenFoodLogger}
-                onOpenRiaChat={handleOpenRiaChat}
+                onEditGoal={handleOpenGoals}
                 onSearchPress={handleGlobalSearchPress}
                 onNotificationsPress={handleOpenNotifications}
                 onAvatarPress={handleOpenAvatarModal}
                 onSignInPress={handleOpenSignIn}
-                onSignOutPress={handleSignOutPress}
               />
             )}
 

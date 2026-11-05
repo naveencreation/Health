@@ -120,6 +120,22 @@ export const getRollingSevenDays = (
 };
 
 /**
+ * Last day of the 7-day page that holds selectedDateStr. Pages are anchored at today
+ * (today-6..today, today-13..today-7, ...) so tapping a day inside a page never moves it.
+ */
+export const getWeekWindowEnd = (
+  selectedDateStr: string,
+  todayStr: string = toDateString()
+): string => {
+  if (selectedDateStr >= todayStr) return todayStr;
+  const msPerDay = 86400000;
+  const daysBack = Math.round(
+    (parseDateString(todayStr).getTime() - parseDateString(selectedDateStr).getTime()) / msPerDay
+  );
+  return shiftDateClamped(todayStr, -7 * Math.floor(daysBack / 7), todayStr);
+};
+
+/**
  * Generates a human-friendly header title for a range of dates.
  * e.g. "October 2026" or "Sep – Oct 2026" or "Dec 2026 – Jan 2027"
  */

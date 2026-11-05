@@ -358,7 +358,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
     }
-    addWater(undoToast.entry.amountMl, undoToast.entry.beverageType);
+    addWater(undoToast.entry.amountMl, undoToast.entry.beverageType, undoToast.date);
     setUndoToast(null);
   };
 
@@ -512,7 +512,12 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
 
             <View style={styles.editHeaderRow}>
               <Text style={styles.editModalTitle}>Edit Water Entry</Text>
-              <Pressable style={styles.editCloseBtn} onPress={() => setEditingEntry(null)}>
+              <Pressable
+                style={styles.editCloseBtn}
+                onPress={() => setEditingEntry(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
                 <Ionicons name="close" size={20} color={Colors.textSecondary} />
               </Pressable>
             </View>
@@ -522,6 +527,8 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               <Pressable
                 style={styles.stepperBtn}
                 onPress={() => setEditVolume(v => Math.max(50, v - 50))}
+                accessibilityRole="button"
+                accessibilityLabel="Decrease by 50 mL"
               >
                 <Ionicons name="remove" size={20} color={Colors.water} />
               </Pressable>
@@ -532,6 +539,8 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
               <Pressable
                 style={styles.stepperBtn}
                 onPress={() => setEditVolume(v => Math.min(3000, v + 50))}
+                accessibilityRole="button"
+                accessibilityLabel="Increase by 50 mL"
               >
                 <Ionicons name="add" size={20} color={Colors.water} />
               </Pressable>
@@ -544,6 +553,9 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
                   key={`edit_preset_${preset}`}
                   style={[styles.presetChip, editVolume === preset && styles.presetChipActive]}
                   onPress={() => setEditVolume(preset)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${preset} mL`}
+                  accessibilityState={{ selected: editVolume === preset }}
                 >
                   <Text
                     style={[
@@ -601,6 +613,7 @@ export const WaterIntakeHistoryScreen: React.FC<WaterIntakeHistoryScreenProps> =
             <Pressable
               style={({ pressed }) => [styles.saveEditBtn, pressed && styles.btnPressed]}
               onPress={handleSaveEdit}
+              accessibilityRole="button"
             >
               <Text style={styles.saveEditBtnText}>Save Changes</Text>
             </Pressable>

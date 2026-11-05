@@ -49,36 +49,4 @@ describe('HealthSyncService', () => {
       expect((result as any).createdAt).toBeInstanceOf(Date);
     });
   });
-
-  describe('createDebouncedTask', () => {
-    jest.useFakeTimers();
-
-    it('debounces multiple triggers into a single invocation', () => {
-      const mockFn = jest.fn();
-      const debounced = HealthSyncService.createDebouncedTask(mockFn, 500);
-
-      debounced.trigger('a');
-      debounced.trigger('b');
-      debounced.trigger('c');
-
-      expect(mockFn).not.toHaveBeenCalled();
-
-      jest.advanceTimersByTime(500);
-
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      expect(mockFn).toHaveBeenCalledWith('c');
-    });
-
-    it('cancels pending executions cleanly', () => {
-      const mockFn = jest.fn();
-      const debounced = HealthSyncService.createDebouncedTask(mockFn, 500);
-
-      debounced.trigger('test');
-      debounced.cancel();
-
-      jest.advanceTimersByTime(600);
-
-      expect(mockFn).not.toHaveBeenCalled();
-    });
-  });
 });

@@ -336,6 +336,38 @@ describe('HealthProvider state reducers', () => {
     expect(result.currentLog.waterMl).toBe(0);
   });
 
+  test('Health Connect sync keeps manually added steps', async () => {
+    const day = result.selectedDate;
+    await act(async () => {
+      result.addSteps(1000);
+    });
+    await act(async () => {
+      result.batchUpdateDailySteps([{ dateStr: day, steps: 5000 }]);
+    });
+    expect(result.dailyLogs[day].steps).toBe(6000);
+    await act(async () => {
+      result.batchUpdateDailySteps([{ dateStr: day, steps: 7000 }]);
+    });
+    expect(result.dailyLogs[day].steps).toBe(8000);
+  });
+
+  test('addWater with an explicit date writes to that day', async () => {
+    await act(async () => {
+      result.addWater(200, 'water', '2020-01-01');
+    });
+    expect(result.dailyLogs['2020-01-01'].waterMl).toBe(200);
+    expect(result.currentLog.waterMl).toBe(0);
+  });
+
+  test('logWeight keeps 0.01 kg so a lbs entry round-trips', async () => {
+    const kg = Math.round((150 / 2.20462) * 100) / 100;
+    await act(async () => {
+      result.logWeight(kg);
+    });
+    const saved = result.dailyLogs[result.selectedDate].weightKg!;
+    expect((saved * 2.20462).toFixed(1)).toBe('150.0');
+  });
+
   test('addWorkout and removeWorkout drive totalBurned', async () => {
     await act(async () => {
       result.addWorkout('Morning Run', 30, 200);

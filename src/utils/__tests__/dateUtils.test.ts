@@ -5,6 +5,7 @@ import {
   isFutureDate,
   shiftDateClamped,
   getRollingSevenDays,
+  getWeekWindowEnd,
   formatRangeMonthTitle,
 } from '../dateUtils';
 
@@ -123,6 +124,25 @@ describe('dateUtils', () => {
 
     it('formats multi-year range title across new year boundary', () => {
       expect(formatRangeMonthTitle('2026-12-28', '2027-01-03')).toBe('Dec 2026 – Jan 2027');
+    });
+  });
+
+  describe('getWeekWindowEnd', () => {
+    const today = '2026-11-05';
+    it('keeps the current page for any day in the last 7', () => {
+      expect(getWeekWindowEnd(today, today)).toBe(today);
+      expect(getWeekWindowEnd('2026-10-30', today)).toBe(today);
+    });
+    it('pages back in whole weeks anchored at today', () => {
+      expect(getWeekWindowEnd('2026-10-29', today)).toBe('2026-10-29');
+      expect(getWeekWindowEnd('2026-10-23', today)).toBe('2026-10-29');
+      expect(getWeekWindowEnd('2026-10-22', today)).toBe('2026-10-22');
+    });
+    it('clamps future dates to today', () => {
+      expect(getWeekWindowEnd('2026-11-09', today)).toBe(today);
+    });
+    it('is stable across a DST change', () => {
+      expect(getWeekWindowEnd('2026-03-02', '2026-03-09')).toBe('2026-03-02');
     });
   });
 });

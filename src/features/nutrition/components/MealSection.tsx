@@ -4,6 +4,7 @@ import { MealCard } from './MealCard';
 import { MealType } from '@/types';
 import { useNutrition } from '../hooks/useNutrition';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 
 const MEAL_ICONS = {
   breakfast: require('../../../../assets/meals/breakfast.webp'),
@@ -18,12 +19,14 @@ interface MealSectionProps {
 }
 
 const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = 'Daily Meals' }) => {
-  const { mealsByType, calorieBudget: budget } = useNutrition();
+  const { mealsByType, calorieBudget, caloriesBurned, date } = useNutrition();
+  // Split the same allowance the hero card uses: budget + burned
+  const allowance = calorieBudget + caloriesBurned;
   const recommended = {
-    breakfast: Math.round(budget * 0.25),
-    lunch: Math.round(budget * 0.35),
-    snacks: Math.round(budget * 0.12),
-    dinner: Math.round(budget * 0.28),
+    breakfast: Math.round(allowance * 0.25),
+    lunch: Math.round(allowance * 0.35),
+    snacks: Math.round(allowance * 0.12),
+    dinner: Math.round(allowance * 0.28),
   };
 
   return (
@@ -33,9 +36,10 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = '
 
       {/* Breakfast */}
       <MealCard
+        key={`${date}-breakfast`}
         mealType="breakfast"
         title="Breakfast"
-        recommendedCals={recommended.breakfast || 588}
+        recommendedCals={recommended.breakfast}
         imageSource={MEAL_ICONS.breakfast}
         iconFallback="🍳"
         items={mealsByType.breakfast}
@@ -44,9 +48,10 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = '
 
       {/* Lunch */}
       <MealCard
+        key={`${date}-lunch`}
         mealType="lunch"
         title="Lunch"
-        recommendedCals={recommended.lunch || 822}
+        recommendedCals={recommended.lunch}
         imageSource={MEAL_ICONS.lunch}
         iconFallback="🥗"
         items={mealsByType.lunch}
@@ -55,21 +60,22 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = '
 
       {/* Dinner */}
       <MealCard
+        key={`${date}-dinner`}
         mealType="dinner"
         title="Dinner"
-        recommendedCals={recommended.dinner || 560}
+        recommendedCals={recommended.dinner}
         imageSource={MEAL_ICONS.dinner}
         iconFallback="🍲"
         items={mealsByType.dinner}
         onAddPress={onAddFood}
-        isDimmed={false}
       />
 
       {/* Snacks */}
       <MealCard
+        key={`${date}-snacks`}
         mealType="snacks"
         title="Snacks"
-        recommendedCals={recommended.snacks || 240}
+        recommendedCals={recommended.snacks}
         imageSource={MEAL_ICONS.snacks}
         iconFallback="🍎"
         items={mealsByType.snacks}
@@ -89,7 +95,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.4,
     paddingHorizontal: 16,
     marginBottom: 12,
