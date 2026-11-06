@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,6 +8,8 @@ import {
   Switch,
   ActivityIndicator,
   Platform,
+  TextInput,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -23,9 +25,11 @@ import {
   NotificationScheduler,
   NotificationStorage,
   isInsideQuietHours,
+  buildSyncOptions,
 } from '@/services/notifications';
 import { NOTIFICATION_CHANNELS } from '@/config/notificationChannels';
 import { usePro, ProPaywallModal } from '@/features/subscription';
+import { PLAN_NAMES } from '@/services/payments/paymentService';
 
 const SWITCH_TRACK_ACTIVE = `${Colors.primary}80`;
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -43,9 +47,13 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 }) => {
   const { currentUser, logout, deleteAccount } = useAuth();
   const { userGoals, updateGoals } = useGoals();
-  const { currentLog } = useDailyLog();
-  const hasLoggedMealsToday = Boolean(currentLog?.meals && currentLog.meals.length > 0);
+  const { dailyLogs, todayStr } = useDailyLog();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [logoutUnsynced, setLogoutUnsynced] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  // Email accounts must re-enter their password before deletion
+  const needsPassword = Boolean(currentUser?.email) && !currentUser?.isGuest;
 
   const [riaTone, setRiaTone] = useState<'supportive' | 'focused' | 'scientific'>(
     userGoals.riaTone || 'supportive'
@@ -68,6 +76,34 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     time: string;
     presets: string[];
   } | null>(null);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [quietError, setQuietError] = useState<string | null>(null);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+
+  // Serialized: each save reads then writes storage, so overlapping taps would drop changes
+  const saveReminders = (updates: Parameters<typeof NotificationStorage.updateSettings>[0]) => {
+    const run = saveQueue.current
+      .then(async () => {
+        const settings = await NotificationStorage.updateSettings(updates, currentUser?.id);
+        await NotificationScheduler.syncSchedules({
+          ...buildSyncOptions(dailyLogs[todayStr], userGoals, currentUser?.id),
+          settings,
+        });
+      })
+      .catch(() => {});
+    saveQueue.current = run;
+    return run;
+  };
+
+  // Turning a reminder on needs OS permission; the switch stays off when it is denied
+  const canChange = async (enabling: boolean) => {
+    if (!settingsLoaded) return false;
+    if (!enabling || Platform.OS === 'web') return true;
+    const granted = await NotificationService.requestPermission();
+    setPermissionDenied(!granted);
+    return granted;
+  };
 
   // AI BYOK Configuration States
   const [byokModalVisible, setByokModalVisible] = useState(false);
@@ -110,8 +146,20 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         setSkipsBreakfast(settings.meals.skipsBreakfast);
         setQuietHoursStart(settings.quietHours.start);
         setQuietHoursEnd(settings.quietHours.end);
+        const anyOn =
+          settings.water.enabled ||
+          settings.meals.enabled ||
+          settings.steps.enabled ||
+          settings.streak.enabled ||
+          settings.weight?.enabled;
+        if (anyOn && Platform.OS !== 'web') {
+          NotificationService.getPermissionStatus()
+            .then(granted => setPermissionDenied(!granted))
+            .catch(() => {});
+        }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setSettingsLoaded(true));
   }, [currentUser?.id]);
 
   const handleSelectTone = (tone: 'supportive' | 'focused' | 'scientific') => {
@@ -120,129 +168,62 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   };
 
   const handleToggleWater = async (val: boolean) => {
-    if (val) {
-      await NotificationService.requestPermission();
-    }
+    if (!(await canChange(val))) return;
     setWaterReminder(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        { water: { enabled: val, intervalMinutes: 120 } },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    // Flag only, so the interval chosen in Hydration settings is kept
+    await saveReminders({ waterReminder: val });
   };
 
   const handleToggleMeal = async (val: boolean) => {
-    if (val) {
-      await NotificationService.requestPermission();
-    }
+    if (!(await canChange(val))) return;
     setMealReminder(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        {
-          meals: {
-            enabled: val,
-            breakfast: breakfastTime,
-            lunch: lunchTime,
-            dinner: dinnerTime,
-            skipsBreakfast,
-          },
-        },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({ mealReminder: val });
   };
 
   const handleToggleStep = async (val: boolean) => {
-    if (val) {
-      await NotificationService.requestPermission();
-    }
+    if (!(await canChange(val))) return;
     setStepReminder(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        { steps: { enabled: val } },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({ stepReminder: val });
   };
 
   const handleToggleStreak = async (val: boolean) => {
-    if (val) {
-      await NotificationService.requestPermission();
-    }
+    if (!(await canChange(val))) return;
     setStreakReminder(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        { streak: { enabled: val } },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({ streakReminder: val });
   };
 
   const handleToggleWeight = async (val: boolean) => {
-    if (val) {
-      await NotificationService.requestPermission();
-    }
+    if (!(await canChange(val))) return;
     setWeightReminder(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        { weight: { enabled: val, time: weightTime } },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({ weight: { enabled: val, time: weightTime } });
   };
 
   const handleToggleSkipBreakfast = async (val: boolean) => {
+    if (!settingsLoaded) return;
     setSkipsBreakfast(val);
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        {
-          meals: {
-            enabled: mealReminder,
-            breakfast: breakfastTime,
-            lunch: lunchTime,
-            dinner: dinnerTime,
-            skipsBreakfast: val,
-          },
-        },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({
+      meals: {
+        enabled: mealReminder,
+        breakfast: breakfastTime,
+        lunch: lunchTime,
+        dinner: dinnerTime,
+        skipsBreakfast: val,
+      },
+    });
   };
 
   const handleSavePickedTime = async (newTime: string) => {
-    if (!timePickerConfig) return;
+    if (!timePickerConfig || !settingsLoaded) return;
     const { key } = timePickerConfig;
+    // Equal start and end would make quiet hours a zero-length window
+    if (
+      (key === 'quietStart' && newTime === quietHoursEnd) ||
+      (key === 'quietEnd' && newTime === quietHoursStart)
+    ) {
+      setQuietError('Quiet hours need different start and end times.');
+      return;
+    }
+    if (key === 'quietStart' || key === 'quietEnd') setQuietError(null);
 
     const updatedMeals = {
       enabled: mealReminder,
@@ -280,21 +261,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       updatedQuiet.end = newTime;
     }
 
-    try {
-      const settings = await NotificationStorage.updateSettings(
-        {
-          meals: updatedMeals,
-          quietHours: updatedQuiet,
-          weight: updatedWeight,
-        },
-        currentUser?.id
-      );
-      await NotificationScheduler.syncSchedules({
-        settings,
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday,
-      });
-    } catch {}
+    await saveReminders({
+      meals: updatedMeals,
+      quietHours: updatedQuiet,
+      weight: updatedWeight,
+    });
   };
 
   const checkTimeInQuiet = useCallback(
@@ -323,22 +294,29 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
     () => checkTimeInQuiet(weightTime),
     [checkTimeInQuiet, weightTime]
   );
+  // Fixed planner times for steps (17:30) and streak (21:00)
+  const isStepInQuiet = checkTimeInQuiet('17:30');
+  const isStreakInQuiet = checkTimeInQuiet('21:00');
 
   const [isTestingNotif, setIsTestingNotif] = useState(false);
   const [testNotifSuccess, setTestNotifSuccess] = useState(false);
+  const [testNotifFailed, setTestNotifFailed] = useState(false);
 
   const handleSendTestNotification = async () => {
     try {
       setIsTestingNotif(true);
       setTestNotifSuccess(false);
+      setTestNotifFailed(false);
 
       const granted = await NotificationService.requestPermission();
       if (!granted) {
+        if (Platform.OS !== 'web') setPermissionDenied(true);
+        setTestNotifFailed(true);
         setIsTestingNotif(false);
         return;
       }
 
-      await NotificationService.scheduleNotification({
+      const id = await NotificationService.scheduleNotification({
         title: '🍳 Lunch Time Reminder (Test)',
         body: 'Tap here to test 1-tap Food Vision camera launch!',
         triggerSeconds: 5,
@@ -348,6 +326,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           reminderType: 'meal_lunch',
         },
       });
+      if (!id) {
+        setTestNotifFailed(true);
+        setIsTestingNotif(false);
+        return;
+      }
 
       setTestNotifSuccess(true);
       setTimeout(() => {
@@ -357,6 +340,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         setTestNotifSuccess(false);
       }, 10000);
     } catch {
+      setTestNotifFailed(true);
       setIsTestingNotif(false);
     }
   };
@@ -372,21 +356,35 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
   const handleDeletePress = () => {
     setConfirmAction('delete');
     setDeleteError(null);
+    setDeletePassword('');
   };
 
   const handleExecuteLogout = async () => {
-    await logout();
+    setIsSigningOut(true);
+    // Second tap after an unsynced warning signs out anyway
+    const done = await logout(logoutUnsynced);
+    setIsSigningOut(false);
+    if (!done) {
+      setLogoutUnsynced(true);
+      return;
+    }
+    setLogoutUnsynced(false);
     setConfirmAction(null);
     onBack();
     if (onSignOut) onSignOut();
   };
 
   const handleExecuteDelete = async () => {
+    if (needsPassword && !deletePassword) {
+      setDeleteError('Enter your password to confirm.');
+      return;
+    }
     setIsDeleting(true);
     setDeleteError(null);
-    const res = await deleteAccount();
+    const res = await deleteAccount(needsPassword ? deletePassword : undefined);
     setIsDeleting(false);
     if (res.success) {
+      setDeletePassword('');
       setConfirmAction(null);
       onBack();
       if (onSignOut) onSignOut();
@@ -439,9 +437,9 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => handleSelectTone('supportive')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: riaTone === 'supportive' }}
-            accessibilityLabel="Warm and encouraging tone: Celebrates streaks, offers gentle reminders, positive reinforcement"
+            accessibilityRole="radio"
+            accessibilityState={{ checked: riaTone === 'supportive' }}
+            accessibilityLabel="Warm and encouraging tone: Ria celebrates your wins and coaches with positive reinforcement"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconSupportive]}>
               <Ionicons name="sparkles" size={16} color={Colors.warningDark} />
@@ -449,7 +447,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Warm & Encouraging</Text>
               <Text style={styles.personalityDesc}>
-                Celebrates streaks, offers gentle reminders, positive reinforcement.
+                Ria celebrates your wins and coaches with positive reinforcement.
               </Text>
             </View>
             {riaTone === 'supportive' ? (
@@ -466,9 +464,9 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => handleSelectTone('focused')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: riaTone === 'focused' }}
-            accessibilityLabel="Disciplined and direct tone: Firm accountability, timely notifications, straightforward calorie targets"
+            accessibilityRole="radio"
+            accessibilityState={{ checked: riaTone === 'focused' }}
+            accessibilityLabel="Disciplined and direct tone: Ria gives firm accountability and straightforward calorie targets"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconFocused]}>
               <Ionicons name="flame" size={16} color={Colors.primary} />
@@ -476,7 +474,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <View style={styles.flex1}>
               <Text style={styles.personalityTitle}>Disciplined & Direct</Text>
               <Text style={styles.personalityDesc}>
-                Firm accountability, timely notifications, straightforward calorie targets.
+                Ria gives firm accountability and straightforward calorie targets.
               </Text>
             </View>
             {riaTone === 'focused' ? (
@@ -493,8 +491,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               pressed ? styles.pressedSubtle : null,
             ]}
             onPress={() => handleSelectTone('scientific')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: riaTone === 'scientific' }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: riaTone === 'scientific' }}
             accessibilityLabel="Nutritional scientist tone: Deep analytical focus on glycemic response, micronutrients, recovery"
           >
             <View style={[styles.personalityIconBox, styles.personalityIconScientific]}>
@@ -559,10 +557,13 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 <Text style={styles.byokKeyChipLabel}>Key:</Text>
                 <Text style={styles.byokKeyChipValue}>{maskedApiKey}</Text>
               </View>
-              <View style={styles.byokSecureTag}>
-                <Ionicons name="shield-checkmark" size={11} color={Colors.protein} />
-                <Text style={styles.byokSecureText}>Encrypted</Text>
-              </View>
+              {/* Web keeps the key in plain localStorage, so no encryption claim there */}
+              {Platform.OS !== 'web' ? (
+                <View style={styles.byokSecureTag}>
+                  <Ionicons name="shield-checkmark" size={11} color={Colors.success} />
+                  <Text style={styles.byokSecureText}>Encrypted</Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -602,7 +603,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               <Text style={styles.accountLabel}>Membership Status</Text>
               <Text style={styles.accountValue}>
                 {isPro
-                  ? `Calorify Pro (${activePlanId === 'pro_annual' ? 'Annual VIP' : activePlanId === 'pro_lifetime' ? 'Lifetime' : 'Monthly'})`
+                  ? `Calorify Pro (${activePlanId ? PLAN_NAMES[activePlanId] : 'Active'})`
                   : 'Free Tier (Standard)'}
               </Text>
             </View>
@@ -620,6 +621,20 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         {/* 3. Notification Reminders */}
         <Text style={styles.sectionHeader}>Reminders & Alerts</Text>
         <View style={styles.card}>
+          {permissionDenied ? (
+            <Pressable
+              style={styles.quietWarningBox}
+              onPress={() => Linking.openSettings().catch(() => {})}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications are blocked, so reminders cannot fire. Open system settings to allow them."
+            >
+              <Ionicons name="notifications-off-outline" size={14} color={Colors.dangerDark} />
+              <Text style={styles.quietWarningText}>
+                Notifications are blocked, so reminders cannot fire. Tap to open settings.
+              </Text>
+              <Ionicons name="open-outline" size={14} color={Colors.dangerDark} />
+            </Pressable>
+          ) : null}
           <View style={styles.switchRow}>
             <View style={[styles.switchIconBox, styles.switchIconWater]}>
               <Ionicons name="water-outline" size={18} color={Colors.water} />
@@ -789,6 +804,15 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               accessibilityLabel="Toggle step milestone alerts"
             />
           </View>
+          {stepReminder && isStepInQuiet ? (
+            <View style={styles.quietWarningBox}>
+              <Ionicons name="moon-outline" size={14} color="#EA580C" />
+              <Text style={styles.quietWarningText}>
+                The 17:30 step check falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd})
+                and will not fire.
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.divider} />
 
@@ -863,6 +887,15 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
               accessibilityLabel="Toggle streak protection alerts"
             />
           </View>
+          {streakReminder && isStreakInQuiet ? (
+            <View style={styles.quietWarningBox}>
+              <Ionicons name="moon-outline" size={14} color="#EA580C" />
+              <Text style={styles.quietWarningText}>
+                The 21:00 streak alert falls inside Quiet Hours ({quietHoursStart} – {quietHoursEnd})
+                and will not fire.
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.divider} />
 
@@ -916,6 +949,11 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 </Pressable>
               </View>
             </View>
+            {quietError ? (
+              <Text style={styles.quietWarningText} accessibilityLiveRegion="polite">
+                {quietError}
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.divider} />
@@ -942,7 +980,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                 <Ionicons
                   name={testNotifSuccess ? 'checkmark' : 'notifications-outline'}
                   size={18}
-                  color={testNotifSuccess ? Colors.protein : Colors.primary}
+                  color={testNotifSuccess ? Colors.success : Colors.primary}
                 />
               </View>
               <View style={styles.flex1}>
@@ -951,11 +989,17 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
                     ? 'Firing alert in 5s...'
                     : testNotifSuccess
                     ? 'Alert scheduled! (5s)'
+                    : testNotifFailed
+                    ? 'Test alert could not be sent'
                     : 'Send Test Notification (5s)'}
                 </Text>
                 <Text style={styles.testNotifSubtitle}>
                   {isTestingNotif
                     ? 'Lock screen or wait 5s to test banner & camera tap'
+                    : testNotifFailed
+                    ? Platform.OS === 'web'
+                      ? 'Notifications are not available on web'
+                      : 'Allow notifications for Calorify, then try again'
                     : 'Tests foreground alert, sound, and 1-tap Food Vision'}
                 </Text>
               </View>
@@ -974,8 +1018,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
             <View style={styles.flex1}>
               <Text style={styles.accountLabel}>Signed In As</Text>
               <Text style={styles.accountValue} numberOfLines={1}>
-                {currentUser?.email ||
-                  (currentUser?.isGuest ? 'Guest Explorer' : 'user@calori.fit')}
+                {currentUser?.email || (currentUser?.isGuest ? 'Guest (this device only)' : 'No email on file')}
               </Text>
             </View>
             <View style={[styles.statusTag, currentUser?.isGuest ? styles.statusTagGuest : null]}>
@@ -992,18 +1035,23 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 
           <View style={styles.divider} />
 
-          <View style={styles.accountRow}>
-            <View style={[styles.switchIconBox, styles.switchIconBackup]}>
-              <Ionicons name="cloud-done-outline" size={18} color={Colors.fiber} />
-            </View>
-            <View style={styles.flex1}>
-              <Text style={styles.accountLabel}>Cloud Backup</Text>
-              <Text style={styles.accountValue}>Auto-synced with Calorify Cloud</Text>
-            </View>
-            <Ionicons name="checkmark-circle" size={18} color={Colors.fiber} />
-          </View>
+          {/* Guests never sync, so the backup row would be false for them */}
+          {!currentUser?.isGuest ? (
+            <>
+              <View style={styles.accountRow}>
+                <View style={[styles.switchIconBox, styles.switchIconBackup]}>
+                  <Ionicons name="cloud-done-outline" size={18} color={Colors.success} />
+                </View>
+                <View style={styles.flex1}>
+                  <Text style={styles.accountLabel}>Cloud Backup</Text>
+                  <Text style={styles.accountValue}>Auto-synced with Calorify Cloud</Text>
+                </View>
+                <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+              </View>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
+            </>
+          ) : null}
 
           {/* Sign In or Sign Out Button */}
           {currentUser?.isGuest ? (
@@ -1064,6 +1112,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
           setByokModalVisible(false);
           refreshAIStatus();
         }}
+        onKeyConfigured={refreshAIStatus}
       />
 
       <ProPaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
@@ -1071,13 +1120,21 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
       <ConfirmationModal
         visible={confirmAction === 'logout'}
         title="Sign Out of Calorify?"
-        message="Your offline meal logs and streak will remain safe on this device."
-        confirmText="Sign Out"
+        message={
+          logoutUnsynced
+            ? "Some recent changes haven't reached the cloud yet. Connect to the internet and try again, or sign out anyway and lose them."
+            : 'Your logs are saved to your account and load again when you sign back in. They are removed from this device.'
+        }
+        confirmText={logoutUnsynced ? 'Sign Out Anyway' : 'Sign Out'}
         cancelText="Cancel"
         confirmStyle="destructive"
         iconName="log-out-outline"
+        isLoading={isSigningOut}
         onConfirm={handleExecuteLogout}
-        onCancel={() => setConfirmAction(null)}
+        onCancel={() => {
+          setConfirmAction(null);
+          setLogoutUnsynced(false);
+        }}
       />
 
       <ConfirmationModal
@@ -1085,8 +1142,8 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         title="Delete Account Permanently?"
         message={
           deleteError
-            ? `Error: ${deleteError}\n\nPlease try again or contact support.`
-            : 'This will irreversibly erase your entire nutrition profile, personal weight metrics, and streak history.'
+            ? deleteError
+            : 'This permanently erases your account, logs, weight history, custom foods, Ria chats and streak, in the cloud and on this device.'
         }
         confirmText="Delete Permanently"
         cancelText="Cancel"
@@ -1097,8 +1154,24 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
         onCancel={() => {
           setConfirmAction(null);
           setDeleteError(null);
+          setDeletePassword('');
         }}
-      />
+      >
+        {needsPassword && (
+          <TextInput
+            style={styles.deletePasswordInput}
+            value={deletePassword}
+            onChangeText={setDeletePassword}
+            placeholder="Password"
+            placeholderTextColor={Colors.textMuted}
+            secureTextEntry
+            autoCapitalize="none"
+            autoComplete="current-password"
+            editable={!isDeleting}
+            accessibilityLabel="Password, required to delete your account"
+          />
+        )}
+      </ConfirmationModal>
 
       <TimePickerModal
         visible={Boolean(timePickerConfig)}
@@ -1113,6 +1186,19 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
+  deletePasswordInput: {
+    alignSelf: 'stretch',
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    color: Colors.textPrimary,
+  },
   rootContainer: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -1305,7 +1391,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   statusPillActive: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.successLight,
   },
   statusPillInactive: {
     backgroundColor: Colors.surfaceInset,
@@ -1316,7 +1402,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusDotActive: {
-    backgroundColor: Colors.protein,
+    backgroundColor: Colors.success,
   },
   statusDotInactive: {
     backgroundColor: Colors.textMuted,
@@ -1365,7 +1451,7 @@ const styles = StyleSheet.create({
   byokSecureText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 10,
-    color: Colors.fiber,
+    color: Colors.success,
   },
   byokActionBtn: {
     flexDirection: 'row',
@@ -1419,10 +1505,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryLight,
   },
   switchIconStep: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.successLight,
   },
   switchIconStreak: {
-    backgroundColor: '#FFEDD5',
+    backgroundColor: Colors.primaryLight,
   },
   switchIconWeight: {
     backgroundColor: '#EDE9FE',
@@ -1431,7 +1517,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceInset,
   },
   switchIconBackup: {
-    backgroundColor: Colors.fiberLight,
+    backgroundColor: Colors.successLight,
   },
   switchTitle: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -1461,7 +1547,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   statusTag: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.successLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -1546,7 +1632,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   testNotifBtnActive: {
-    backgroundColor: '#FFF5F1',
+    backgroundColor: Colors.burnLight,
   },
   testNotifLeft: {
     flexDirection: 'row',
@@ -1558,21 +1644,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFF5F1',
+    backgroundColor: Colors.burnLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   testNotifIconCircleSuccess: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.successLight,
   },
   testNotifTitle: {
     fontSize: 14,
-    fontFamily: Fonts.poppins.semiBold,
+    fontFamily: Fonts.urbanist.semiBold,
     color: Colors.textPrimary,
   },
   testNotifSubtitle: {
     fontSize: 11,
-    fontFamily: Fonts.poppins.regular,
+    fontFamily: Fonts.urbanist.regular,
     color: Colors.textSecondary,
     marginTop: 1,
   },
@@ -1626,18 +1712,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
   },
   quietWarningText: {
     flex: 1,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#C2410C',
+    color: Colors.primaryDeep,
     lineHeight: 15,
   },
   quietHoursContainer: {

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 
 export interface DrinkTypeBreakdown {
   id: string;
@@ -14,7 +15,7 @@ export interface DrinkTypeBreakdown {
 interface DrinkTypesCardProps {
   breakdown: DrinkTypeBreakdown[];
   totalIntakeMl: number;
-  centerPct?: number;
+  centerPct: number;
   centerLabel?: string;
 }
 
@@ -23,47 +24,33 @@ const STROKE_WIDTH = 13;
 const RADIUS = (DONUT_SIZE - STROKE_WIDTH) / 2; // 56.5
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // ~355.0
 
-// Template sample breakdown matching the reference design
-export const DEFAULT_SAMPLE_BREAKDOWN: DrinkTypeBreakdown[] = [
-  { id: 'water', name: 'Water', color: '#0284C7', amountMl: 1250, pct: 50 },
-  { id: 'juice', name: 'Juice', color: '#F97316', amountMl: 375, pct: 15 },
-  { id: 'coffee', name: 'Coffee', color: '#78350F', amountMl: 300, pct: 12 },
-  { id: 'tea', name: 'Tea', color: '#EA580C', amountMl: 200, pct: 8 },
-  { id: 'beer', name: 'Beer', color: '#F59E0B', amountMl: 125, pct: 5 },
-  { id: 'soda', name: 'Soda', color: '#F43F5E', amountMl: 100, pct: 4 },
-  { id: 'wine', name: 'Wine', color: '#9333EA', amountMl: 75, pct: 3 },
-  { id: 'carbonated', name: 'Carbon', color: '#FF5722', amountMl: 75, pct: 3 },
-];
-
 export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
   breakdown,
   totalIntakeMl,
-  centerPct = 100,
-  centerLabel = 'Water Intake',
+  centerPct,
+  centerLabel = 'of daily goal',
 }) => {
-  // If no drinks logged in period, fallback to template reference breakdown for beautiful preview
-  const activeBreakdown = useMemo(() => {
-    if (!breakdown || breakdown.length === 0 || totalIntakeMl === 0) {
-      return DEFAULT_SAMPLE_BREAKDOWN;
-    }
-    return breakdown;
-  }, [breakdown, totalIntakeMl]);
+  const activeBreakdown = useMemo(
+    () => (totalIntakeMl > 0 && breakdown ? breakdown : []),
+    [breakdown, totalIntakeMl]
+  );
 
   // Compute SVG stroke-dasharray and rotation angle for each arc segment
   const arcSegments = useMemo(() => {
     let accumulatedAngle = 0;
     return activeBreakdown.map(item => {
       // Add slight 0.2px overlap to prevent any sub-pixel rendering gaps
-      const segmentLength = Math.max(0.5, (item.pct / 100) * CIRCUMFERENCE + 0.2);
+      const share = item.amountMl / totalIntakeMl;
+      const segmentLength = Math.max(0.5, share * CIRCUMFERENCE + 0.2);
       const rotationAngle = accumulatedAngle - 90;
-      accumulatedAngle += (item.pct / 100) * 360;
+      accumulatedAngle += share * 360;
       return {
         ...item,
         segmentLength,
         rotationAngle,
       };
     });
-  }, [activeBreakdown]);
+  }, [activeBreakdown, totalIntakeMl]);
 
   // Split into 2 columns for the legend grid
   const half = Math.ceil(activeBreakdown.length / 2);
@@ -76,7 +63,9 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
       <Text style={styles.cardTitle}>Drink Types</Text>
       <View style={styles.headerDivider} />
 
-      {/* 2. Donut Chart + 2-Column Legend Grid */}
+      {activeBreakdown.length === 0 ? (
+        <Text style={styles.emptyText}>No drinks logged in this period.</Text>
+      ) : (
       <View style={styles.contentRow}>
         {/* Left: Donut Chart */}
         <View style={styles.donutContainer}>
@@ -143,6 +132,7 @@ export const DrinkTypesCard: React.FC<DrinkTypesCardProps> = ({
           </View>
         </View>
       </View>
+      )}
     </View>
   );
 };
@@ -166,6 +156,13 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.2,
     marginBottom: 12,
+  },
+  emptyText: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: 24,
   },
   headerDivider: {
     height: 1,

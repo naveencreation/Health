@@ -23,7 +23,7 @@ describe('StepTimeDurationCard', () => {
     { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', durationMinutes: 52 },
     { dateStr: '2026-09-17', dayNum: 17, dayName: 'T', durationMinutes: 50 },
     { dateStr: '2026-09-18', dayNum: 18, dayName: 'W', durationMinutes: 56 },
-    { dateStr: '2026-09-19', dayNum: 19, dayName: 'T', durationMinutes: 68 },
+    { dateStr: '2026-09-19', dayNum: 19, dayName: 'Thursday 19', durationMinutes: 68 },
     { dateStr: '2026-09-20', dayNum: 20, dayName: 'F', durationMinutes: 54 },
     { dateStr: '2026-09-21', dayNum: 21, dayName: 'S', durationMinutes: 58 },
     { dateStr: '2026-09-22', dayNum: 22, dayName: 'S', durationMinutes: 46 },
@@ -83,7 +83,7 @@ describe('StepTimeDurationCard', () => {
       <StepTimeDurationCard days={sampleDays} selectedIndex={0} onSelectDay={handleSelectDay} />
     );
 
-    const targetBar = getByLabelText('Day 19: 1h 8m');
+    const targetBar = getByLabelText('Thursday 19: 1h 8m');
     fireEvent.press(targetBar);
     expect(handleSelectDay).toHaveBeenCalledWith(3);
   });
@@ -95,6 +95,6 @@ describe('StepTimeDurationCard', () => {
 
     const lineToggleBtn = getByLabelText('Show Line Chart view');
     fireEvent.press(lineToggleBtn);
-    expect(getByLabelText('Day 19: 1h 8m')).toBeTruthy();
+    expect(getByLabelText('Thursday 19: 1h 8m')).toBeTruthy();
   });
 });

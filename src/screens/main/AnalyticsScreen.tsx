@@ -16,6 +16,7 @@ import { Colors } from '@/theme/colors';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
 import { DailyLog } from '@/types';
 import { haptics } from '@/utils/haptics';
+import { parseDateString } from '@/utils/dateUtils';
 import { usePro, ProPaywallModal } from '@/features/subscription';
 import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import { computeCalorieDays, computeMacroRatioDays } from '@/features/nutrition/services';
@@ -92,6 +93,25 @@ const FULL_MONTH_NAMES = [
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
+// Index of the bucket holding today: weekday (Mon=0), week of month (0-4) or month (0-11)
+const currentBucketIndex = (tf: ReportTimeframe, now = new Date()) =>
+  tf === 'weekly'
+    ? (now.getDay() + 6) % 7
+    : tf === 'monthly'
+    ? Math.min(4, Math.floor((now.getDate() - 1) / 7))
+    : now.getMonth();
+
+const TIMEFRAME_LABEL: Record<ReportTimeframe, string> = {
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  yearly: 'Yearly',
+};
+const PERIOD_NOUN: Record<ReportTimeframe, string> = {
+  weekly: 'days',
+  monthly: 'weeks',
+  yearly: 'months',
+};
+
 const EmptyAnalyticsState: React.FC<{ title: string; message: string }> = ({ title, message }) => (
   <View style={styles.emptyAnalyticsContainer}>
     <Ionicons name="bar-chart-outline" size={48} color={Colors.borderInset} />
@@ -108,7 +128,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   onScrollPositionChange,
 }) => {
   const insets = useSafeAreaInsets();
-  const { dailyLogs } = useDailyLog();
+  const { dailyLogs, todayStr } = useDailyLog();
   const { userGoals } = useGoals();
 
   // Active Report Category (defaults to Nutrition)
@@ -123,12 +143,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
 
-  // Default day index (Mon=0..Sun=6)
-  const defaultDayIndex = useMemo(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  }, []);
+  const defaultDayIndex = currentBucketIndex('weekly');
 
   // Independent Selected Day Index per chart so clicking one chart does not affect others
   // 1. Nutrition
@@ -179,7 +194,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   // Compute Active Period Date Range & Days
   const dateRangeInfo = useMemo(() => {
-    const now = new Date();
+    // From context todayStr so the range rebuilds when the day rolls over
+    const now = parseDateString(todayStr);
 
     // 1. WEEKLY (Mon - Sun, 7 days)
     if (timeframe === 'weekly') {
@@ -215,7 +231,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         return {
           dateStr,
           dayNum: d.getDate(),
-          dayName: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+          // Spoken by screen readers on the chart columns
+          dayName: `${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i]} ${d.getDate()}`,
           log,
         };
       });
@@ -262,7 +279,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         return {
           dateStr: bucketDates[0],
           dayNum: bucket.name,
-          dayName: `W${idx + 1}`,
+          dayName: `Week ${idx + 1}, days ${bucket.name}`,
           bucketDates,
         };
       });
@@ -293,8 +310,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
       return {
         dateStr: monthDates[0],
-        dayNum: monthIdx + 1,
-        dayName: name,
+        dayNum: name,
+        dayName: FULL_MONTH_NAMES[monthIdx],
         monthDates,
       };
     });
@@ -305,7 +322,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       allDates,
       canGoForward: periodOffset < 0,
     };
-  }, [timeframe, periodOffset, dailyLogs]);
+  }, [timeframe, periodOffset, dailyLogs, todayStr]);
 
   // Safe selected indices within bounds for each independent chart
   const maxDayIndex = Math.max(0, dateRangeInfo.days.length - 1);
@@ -333,13 +350,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   // 2. STEP REPORT DATA
   // =========================================================================
   const { stepDays, calorieBurnDays, timeDays, stepSummary } = useMemo(() => {
-    return computeMovementAnalytics(
-      dateRangeInfo.days as any,
-      dailyLogs,
-      dailyStepGoal,
-      userWeightKg
-    );
-  }, [dateRangeInfo.days, dailyLogs, dailyStepGoal, userWeightKg]);
+    return computeMovementAnalytics(dateRangeInfo.days as any, dailyLogs, dailyStepGoal);
+  }, [dateRangeInfo.days, dailyLogs, dailyStepGoal]);
 
   // =========================================================================
   // 3. WATER REPORT DATA
@@ -353,18 +365,27 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       );
     }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
 
+  // Average goal completion over days with water logged (donut centre)
+  const waterAvgCompletion = useMemo(() => {
+    const logged = waterCompletionDays.filter(d => d.intakeMl > 0);
+    return logged.length > 0
+      ? Math.round(logged.reduce((s, d) => s + d.completionPct, 0) / logged.length)
+      : 0;
+  }, [waterCompletionDays]);
+
   // =========================================================================
   // 4. WEIGHT REPORT DATA
   // =========================================================================
   const { weightTrendDays, weightSummary } = useMemo(() => {
     return computeWeightAnalytics(
       dateRangeInfo.days as any,
+      dailyLogs,
       userWeightKg,
       userGoals,
       weightUnit,
       unitFactor
     );
-  }, [dateRangeInfo.days, userWeightKg, unitFactor, weightUnit, userGoals]);
+  }, [dateRangeInfo.days, dailyLogs, userWeightKg, unitFactor, weightUnit, userGoals]);
 
   // Date Navigation Handlers
   const handlePrevPeriod = () => setPeriodOffset(prev => prev - 1);
@@ -376,6 +397,9 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
 
   // Plain-Language Insight Summary for Active Category
   const activeReportInsight = useMemo(() => {
+    const noun = PERIOD_NOUN[timeframe];
+    // Buckets that have started (future days/weeks/months can't have met a goal yet)
+    const elapsed = (list: { dateStr: string }[]) => list.filter(d => d.dateStr <= todayStr).length;
     if (activeReport === 'nutrition') {
       const loggedDays = calorieDays.filter(d => d.calories > 0);
       if (loggedDays.length === 0) return null;
@@ -385,13 +409,13 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
       const diff = avgCals - dailyCalorieGoal;
       const onTrack = Math.abs(diff) <= 120;
       return {
-        badge: 'Weekly Nutrition Insight',
+        badge: `${TIMEFRAME_LABEL[timeframe]} Nutrition Insight`,
         headline: `You averaged ${avgCals.toLocaleString()} kcal per day`,
         subline: onTrack
-          ? `Consistent pacing: within ${Math.abs(diff)} kcal of your ${dailyCalorieGoal.toLocaleString()} kcal target.`
+          ? `Consistent pacing: within ${Math.abs(diff)} kcal of your ${dailyCalorieGoal.toLocaleString()} kcal base budget.`
           : diff > 0
-          ? `${diff} kcal above daily budget (${dailyCalorieGoal.toLocaleString()} kcal). Consider lighter snacks.`
-          : `${Math.abs(diff)} kcal below daily budget (${dailyCalorieGoal.toLocaleString()} kcal). Ensure adequate protein intake.`,
+          ? `${diff} kcal above your base budget (${dailyCalorieGoal.toLocaleString()} kcal, before exercise). Consider lighter snacks.`
+          : `${Math.abs(diff)} kcal below your base budget (${dailyCalorieGoal.toLocaleString()} kcal, before exercise). Ensure adequate protein intake.`,
         accentColor: Colors.primary,
         iconName: 'sparkles' as const,
       };
@@ -409,7 +433,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         headline: `Averaging ${avgSteps.toLocaleString()} steps per day`,
         subline:
           diff >= 0
-            ? `Achieved daily step goal on ${stepDays.filter(d => d.steps >= dailyStepGoal).length} of ${stepDays.length} days.`
+            ? `Achieved daily step goal on ${stepDays.filter(d => d.steps >= dailyStepGoal).length} of ${elapsed(stepDays)} ${noun}.`
             : `${Math.abs(diff).toLocaleString()} steps below your ${dailyStepGoal.toLocaleString()} goal. A 15-minute evening walk can close the gap.`,
         accentColor: Colors.steps,
         iconName: 'footsteps-outline' as const,
@@ -428,7 +452,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         headline: `Averaging ${avgWater.toLocaleString()} mL daily intake`,
         subline:
           diff >= 0
-            ? `Well hydrated! Goal achieved on ${waterCompletionDays.filter(d => d.intakeMl >= dailyWaterGoal).length} of ${waterCompletionDays.length} days.`
+            ? `Well hydrated! Goal achieved on ${waterCompletionDays.filter(d => d.intakeMl >= dailyWaterGoal).length} of ${elapsed(waterCompletionDays)} ${noun}.`
             : `${Math.abs(diff)} mL below your ${dailyWaterGoal.toLocaleString()} mL target. Keep a water bottle nearby.`,
         accentColor: Colors.water,
         iconName: 'water-outline' as const,
@@ -436,18 +460,26 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     }
 
     if (activeReport === 'weight') {
+      // No weigh-ins in this period: show nothing rather than a made-up trajectory
+      if (weightSummary.avgWeightKg === null) return null;
       const currentW = weightSummary.currentWeightKg ?? userWeightKg;
-      const delta = weightSummary.netChangeKg ?? 0;
-      const isLoss = delta < 0;
+      const delta = weightSummary.netChangeKg;
+      const u = weightSummary.unit;
+      const fmt = (kg: number) => (kg * unitFactor).toFixed(1);
+      const target = weightSummary.targetWeightKg;
+      const towardTarget =
+        target !== undefined &&
+        delta !== null &&
+        Math.abs(currentW - target) < Math.abs(currentW - delta - target);
       return {
         badge: 'Weight Trajectory',
-        headline: `Current: ${currentW.toFixed(1)} ${weightSummary.unit}`,
+        headline: `Current: ${fmt(currentW)} ${u}`,
         subline:
-          delta === 0
-            ? 'Weight holding steady throughout this tracking period.'
-            : isLoss
-            ? `Net change of ${Math.abs(delta).toFixed(1)} ${weightSummary.unit} toward your target weight.`
-            : `Net change of +${delta.toFixed(1)} ${weightSummary.unit} this period.`,
+          delta === null
+            ? 'Only one weigh-in this period. Log again to see your trend.'
+            : Math.abs(delta) < 0.05
+            ? 'Weight holding steady throughout this period.'
+            : `${delta < 0 ? 'Down' : 'Up'} ${fmt(Math.abs(delta))} ${u} this period${towardTarget ? ', toward your goal' : ''}.`,
         accentColor: Colors.weight,
         iconName: 'scale-outline' as const,
       };
@@ -463,6 +495,10 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     waterCompletionDays,
     dailyWaterGoal,
     weightSummary,
+    unitFactor,
+    userWeightKg,
+    timeframe,
+    todayStr,
   ]);
 
   const handleChangeTimeframe = async (newTimeframe: ReportTimeframe) => {
@@ -473,16 +509,17 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     }
     await haptics.selection();
     if (newTimeframe !== timeframe) {
+      const idx = currentBucketIndex(newTimeframe);
       setTimeframe(newTimeframe);
       setPeriodOffset(0);
-      setSelectedCalorieIndex(0);
-      setSelectedMacroRatioIndex(0);
-      setSelectedStepIndex(0);
-      setSelectedStepCalorieIndex(0);
-      setSelectedStepTimeIndex(0);
-      setSelectedWaterIndex(0);
-      setSelectedHydrateVolumeIndex(0);
-      setSelectedWeightIndex(0);
+      setSelectedCalorieIndex(idx);
+      setSelectedMacroRatioIndex(idx);
+      setSelectedStepIndex(idx);
+      setSelectedStepCalorieIndex(idx);
+      setSelectedStepTimeIndex(idx);
+      setSelectedWaterIndex(idx);
+      setSelectedHydrateVolumeIndex(idx);
+      setSelectedWeightIndex(idx);
     }
   };
 
@@ -510,7 +547,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             <Text style={styles.capsuleTitle} numberOfLines={1}>
               {activeReportMeta.title}
             </Text>
-            <Ionicons name="chevron-down" size={14} color="#64748B" style={styles.capsuleChevron} />
+            <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} style={styles.capsuleChevron} />
           </Pressable>
         </View>
       </View>
@@ -528,7 +565,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 key={tab}
                 style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
                 onPress={() => handleChangeTimeframe(tab)}
-                accessibilityRole="button"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
                 accessibilityLabel={
                   isLocked
                     ? `${displayLabel} timeframe (Calorify Pro required)`
@@ -545,7 +583,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                     <Ionicons
                       name="lock-closed"
                       size={10}
-                      color="#94A3B8"
+                      color={Colors.textMuted}
                       style={{ marginLeft: 3 }}
                     />
                   )}
@@ -564,7 +602,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Previous time period"
           >
-            <Ionicons name="chevron-back" size={18} color="#0F172A" />
+            <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
           </Pressable>
 
           <Text style={styles.dateRangeText} numberOfLines={1}>
@@ -586,7 +624,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={dateRangeInfo.canGoForward ? '#0F172A' : 'rgba(15, 23, 42, 0.2)'}
+              color={dateRangeInfo.canGoForward ? Colors.textPrimary : Colors.borderInset}
             />
           </Pressable>
         </View>
@@ -631,6 +669,12 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           </View>
         )}
 
+        {timeframe !== 'weekly' && (
+          <Text style={styles.averagesNote}>
+            {`Each bar shows the daily average for that ${timeframe === 'monthly' ? 'week' : 'month'}, counting only logged days.`}
+          </Text>
+        )}
+
         {/* NUTRITION & CALORIES REPORT */}
         {activeReport === 'nutrition' && (
           calorieDays.some(d => d.calories > 0) ? (
@@ -647,25 +691,27 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 selectedIndex={safeMacroRatioIndex}
                 onSelectDay={setSelectedMacroRatioIndex}
                 targets={{
-                  protein: userGoals?.targetProtein || 140,
-                  carbs: userGoals?.targetCarbs || 220,
-                  fat: userGoals?.targetFat || 65,
-                  fiber: userGoals?.targetFiber || 30,
+                  protein: userGoals?.targetProtein || BIOMETRIC_DEFAULTS.targetProtein,
+                  carbs: userGoals?.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs,
+                  fat: userGoals?.targetFat || BIOMETRIC_DEFAULTS.targetFat,
+                  fiber: userGoals?.targetFiber || BIOMETRIC_DEFAULTS.targetFiber,
                 }}
               />
             </>
           ) : (
             <EmptyAnalyticsState 
               title="Awaiting Data" 
-              message="Nutrition trends will appear here after you log meals for 3-7 days. Switch to the Today tab to log food." 
+              message="Nutrition trends appear here once you log a meal in this period. Log food on the Today tab." 
             />
           )
         )}
 
         {/* STEP ACTIVITY REPORT */}
         {activeReport === 'steps' && (
+          stepDays.some(d => d.steps > 0) ? (
           <>
             <StepTotalSummaryCard
+              subtitle="Total steps this period"
               totalSteps={stepSummary.totalSteps}
               totalCalories={stepSummary.totalCalories}
               totalDistanceKm={stepSummary.totalDistanceKm}
@@ -691,6 +737,12 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
               onSelectDay={setSelectedStepTimeIndex}
             />
           </>
+          ) : (
+            <EmptyAnalyticsState
+              title="Awaiting Data"
+              message="Activity trends appear here once you have steps in this period. Log steps on the Track tab."
+            />
+          )
         )}
 
         {/* HYDRATION INTAKE REPORT */}
@@ -709,12 +761,16 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                 onSelectDay={setSelectedHydrateVolumeIndex}
               />
   
-              <DrinkTypesCard breakdown={drinkTypesBreakdown} totalIntakeMl={totalDrinkVolume} />
+              <DrinkTypesCard
+                breakdown={drinkTypesBreakdown}
+                totalIntakeMl={totalDrinkVolume}
+                centerPct={waterAvgCompletion}
+              />
             </>
           ) : (
             <EmptyAnalyticsState 
               title="Awaiting Data" 
-              message="Hydration trends will appear here after you log your drinks. Switch to the Today tab to log water." 
+              message="Hydration trends appear here once you log a drink in this period. Log water on the Track tab." 
             />
           )
         )}
@@ -724,13 +780,20 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           <>
             <WeightSummaryCard data={weightSummary} />
 
-            <WeightTrendCard
-              days={weightTrendDays}
-              selectedIndex={safeWeightIndex}
-              onSelectDay={setSelectedWeightIndex}
-              unit={weightUnit}
-              targetWeightKg={userGoals.targetWeightKg}
-            />
+            {weightTrendDays.some(d => d.weightKg !== null) ? (
+              <WeightTrendCard
+                days={weightTrendDays}
+                selectedIndex={safeWeightIndex}
+                onSelectDay={setSelectedWeightIndex}
+                unit={weightUnit}
+                targetWeightKg={userGoals.targetWeightKg}
+              />
+            ) : (
+              <EmptyAnalyticsState
+                title="No weigh-ins"
+                message="Your weight trend appears here once you log your weight in this period. Log it on the Track tab."
+              />
+            )}
 
             <BMIGaugeCard weightKg={userWeightKg} heightCm={userHeightCm} unit={weightUnit} />
           </>
@@ -759,15 +822,22 @@ export const AnalyticsScreen = React.memo(AnalyticsScreenComponent);
 export const AnalyticsTab = AnalyticsScreen;
 
 const styles = StyleSheet.create({
+  averagesNote: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+  },
   rootContainer: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   headerContainer: {
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 8,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     minHeight: 56,
     justifyContent: 'center',
   },
@@ -781,7 +851,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 34,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
     textAlignVertical: 'center',
@@ -789,18 +859,18 @@ const styles = StyleSheet.create({
   reportCapsuleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingVertical: 6,
     paddingLeft: 7,
     paddingRight: 10,
     borderRadius: 12,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
     maxWidth: 220,
     ...Platform.select({
       ios: {
-        shadowColor: '#0F172A',
+        shadowColor: Colors.shadowColor,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.06,
         shadowRadius: 3,
@@ -822,7 +892,7 @@ const styles = StyleSheet.create({
   capsuleTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.1,
     flexShrink: 1,
   },
@@ -836,7 +906,7 @@ const styles = StyleSheet.create({
   controlsBar: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   timeframeSegmentContainer: {
     flexDirection: 'row',
@@ -859,7 +929,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timeframeTabActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.borderWhisper,
     shadowOpacity: 0,
@@ -868,12 +938,12 @@ const styles = StyleSheet.create({
   timeframeTabText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   timeframeTabTextActive: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   dateNavigator: {
     flexDirection: 'row',
@@ -886,11 +956,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
   navArrowDisabled: {
     opacity: 0.35,
@@ -899,7 +969,7 @@ const styles = StyleSheet.create({
   dateRangeText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginHorizontal: 14,
     letterSpacing: -0.2,
   },
@@ -913,34 +983,34 @@ const styles = StyleSheet.create({
   emptyAnalyticsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 32,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.border,
   },
   emptyAnalyticsTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginTop: 16,
   },
   emptyAnalyticsSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 14,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
   },
   insightSummaryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+    borderColor: Colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -965,13 +1035,13 @@ const styles = StyleSheet.create({
   insightHeadlineText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     marginBottom: 2,
   },
   insightSublineText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
     lineHeight: 17,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
 });

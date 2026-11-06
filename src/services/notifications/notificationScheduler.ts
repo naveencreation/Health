@@ -1,4 +1,5 @@
-import { MealType } from '@/types';
+import { MealType, DailyLog, UserGoals } from '@/types';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import { NotificationSettings } from './types';
 import { NotificationStorage } from './storage/notificationStorage';
 import { planNotifications } from './engine/planner';
@@ -117,6 +118,26 @@ export interface SyncSchedulesOptions {
   now?: number | Date;
   reason?: string;
 }
+
+/** Full planner context from today's log; every syncSchedules caller passes this, not a subset */
+export const buildSyncOptions = (
+  log: DailyLog | undefined,
+  goals: Pick<UserGoals, 'streakDays' | 'waterGoalMl' | 'stepGoal'>,
+  uid?: string
+): SyncSchedulesOptions => ({
+  streakDays: goals.streakDays || 0,
+  hasLoggedMealsToday: Boolean(log?.meals?.length),
+  loggedMealSlots: log?.meals?.map(m => m.mealType) || [],
+  currentWaterMl: log?.waterMl || 0,
+  targetWaterMl: goals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl,
+  lastWaterLoggedAt: log?.waterEntries?.length
+    ? Math.max(...log.waterEntries.map(e => new Date(e.loggedAt).getTime()))
+    : undefined,
+  hasLoggedWeightToday: typeof log?.weightKg === 'number' || Boolean(log?.weightEntries?.length),
+  currentSteps: log?.steps || 0,
+  stepGoal: goals.stepGoal || BIOMETRIC_DEFAULTS.stepGoal,
+  uid,
+});
 
 export class NotificationScheduler {
   /**

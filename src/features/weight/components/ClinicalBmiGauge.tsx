@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 
 interface ClinicalBmiGaugeProps {
   bmi: string;
@@ -9,11 +10,13 @@ interface ClinicalBmiGaugeProps {
 }
 
 export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStatus, heightCm }) => {
-  const bmiNum = parseFloat(bmi) || 24.5;
+  const bmiNum = parseFloat(bmi);
+  // No height on file: show the scale without a reading
+  const hasBmi = !Number.isNaN(bmiNum);
   // Standard scale: 15 to 40
   const minBmi = 15;
   const maxBmi = 40;
-  const clampedBmi = Math.max(minBmi, Math.min(maxBmi, bmiNum));
+  const clampedBmi = hasBmi ? Math.max(minBmi, Math.min(maxBmi, bmiNum)) : minBmi;
   const thumbPercent = ((clampedBmi - minBmi) / (maxBmi - minBmi)) * 100;
 
   const getStatusTextStyle = (label?: string) => {
@@ -44,8 +47,12 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStat
     <View
       style={styles.gaugeContainer}
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: minBmi, max: maxBmi, now: clampedBmi }}
-      accessibilityLabel={`Current BMI is ${bmi}, categorized as ${bmiStatus.label.replace(' 🟢', '')}`}
+      accessibilityValue={hasBmi ? { min: minBmi, max: maxBmi, now: clampedBmi } : undefined}
+      accessibilityLabel={
+        hasBmi
+          ? `Current BMI is ${bmi}, categorized as ${bmiStatus.label.replace(' 🟢', '')}`
+          : 'BMI unavailable. Add your height in Goals.'
+      }
     >
       {/* Title */}
       <Text style={styles.title}>Current BMI</Text>
@@ -70,20 +77,22 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStat
           <View style={[styles.barSegment, styles.segLightBlue]} />
           {/* 18.5 - 25: Vibrant Healthy Green */}
           <View style={[styles.barSegment, styles.segGreen]} />
-          {/* 25 - 31: Amber / Yellow */}
+          {/* 25 - 30: Amber / Yellow */}
           <View style={[styles.barSegment, styles.segYellow]} />
-          {/* 31 - 35: Warm Tangerine */}
+          {/* 30 - 35: Warm Tangerine */}
           <View style={[styles.barSegment, styles.segOrange]} />
           {/* 35 - 40: Crimson Red */}
           <View style={[styles.barSegment, styles.segRed]} />
         </View>
 
         {/* Dynamic Indicator Thumb */}
-        <View style={[styles.thumbAnchor, { left: `${thumbPercent}%` }]}>
-          <View style={[styles.thumbOuter, getThumbBorderStyle(bmiStatus.label)]}>
-            <View style={[styles.thumbInner, getThumbBgStyle(bmiStatus.label)]} />
+        {hasBmi ? (
+          <View style={[styles.thumbAnchor, { left: `${thumbPercent}%` }]}>
+            <View style={[styles.thumbOuter, getThumbBorderStyle(bmiStatus.label)]}>
+              <View style={[styles.thumbInner, getThumbBgStyle(bmiStatus.label)]} />
+            </View>
           </View>
-        </View>
+        ) : null}
       </View>
 
       {/* Tick Labels Row */}
@@ -92,7 +101,7 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStat
         <Text style={styles.tickText}>16</Text>
         <Text style={styles.tickText}>18.5</Text>
         <Text style={styles.tickText}>25</Text>
-        <Text style={styles.tickText}>31</Text>
+        <Text style={styles.tickText}>30</Text>
         <Text style={styles.tickText}>35</Text>
         <Text style={styles.tickText}>40</Text>
       </View>
@@ -100,8 +109,14 @@ export const ClinicalBmiGauge: React.FC<ClinicalBmiGaugeProps> = ({ bmi, bmiStat
       {/* Context info */}
       <View style={styles.contextRow}>
         <Text style={styles.contextText}>
-          Based on height <Text style={styles.boldText}>{heightCm} cm</Text> • Normal range: 18.5 –
-          24.9
+          {hasBmi ? (
+            <>
+              Based on height <Text style={styles.boldText}>{heightCm} cm</Text> • Normal range:
+              18.5 – 24.9
+            </>
+          ) : (
+            'Add your height in Goals to see your BMI.'
+          )}
         </Text>
       </View>
     </View>
@@ -123,7 +138,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   valueRow: {
     flexDirection: 'row',
@@ -135,7 +150,7 @@ const styles = StyleSheet.create({
   bigValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
   statusBadge: {
@@ -150,13 +165,13 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
   },
   statusNormal: {
-    color: '#67BD6E',
+    color: Colors.success,
   },
   statusOver: {
-    color: '#F59E0B',
+    color: Colors.warning,
   },
   statusObese: {
-    color: '#EF4444',
+    color: Colors.danger,
   },
   barContainer: {
     position: 'relative',
@@ -179,23 +194,23 @@ const styles = StyleSheet.create({
   },
   segLightBlue: {
     flex: 2.5,
-    backgroundColor: '#38BDF8',
+    backgroundColor: Colors.waterSecondary,
   },
   segGreen: {
     flex: 6.5,
-    backgroundColor: '#67BD6E',
+    backgroundColor: Colors.success,
   },
   segYellow: {
-    flex: 6,
-    backgroundColor: '#F8D558',
+    flex: 5,
+    backgroundColor: Colors.carbs,
   },
   segOrange: {
-    flex: 4,
-    backgroundColor: '#F47551',
+    flex: 5,
+    backgroundColor: Colors.primary,
   },
   segRed: {
     flex: 5,
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
   thumbAnchor: {
     position: 'absolute',
@@ -221,13 +236,13 @@ const styles = StyleSheet.create({
     borderColor: '#3B82F6',
   },
   thumbBorderNormal: {
-    borderColor: '#67BD6E',
+    borderColor: Colors.success,
   },
   thumbBorderOver: {
-    borderColor: '#F59E0B',
+    borderColor: Colors.warning,
   },
   thumbBorderObese: {
-    borderColor: '#EF4444',
+    borderColor: Colors.danger,
   },
   thumbInner: {
     width: 8,
@@ -238,13 +253,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
   },
   thumbBgNormal: {
-    backgroundColor: '#67BD6E',
+    backgroundColor: Colors.success,
   },
   thumbBgOver: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: Colors.warning,
   },
   thumbBgObese: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
   ticksRow: {
     flexDirection: 'row',
@@ -255,18 +270,18 @@ const styles = StyleSheet.create({
   tickText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
   },
   contextRow: {
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: Colors.surfaceLow,
   },
   contextText: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   boldText: {
     fontFamily: Fonts.urbanist.semiBold,

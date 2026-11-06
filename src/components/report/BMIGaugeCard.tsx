@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface BMICategory {
   id: string;
@@ -54,7 +56,7 @@ export const BMI_CATEGORIES: BMICategory[] = [
     id: 'normal',
     name: 'Normal',
     rangeLabel: 'BMI 18.5 - 24.9',
-    color: '#22C55E',
+    color: Colors.success,
     minBMI: 18.5,
     maxBMI: 25.0,
     span: 6.5,
@@ -151,10 +153,19 @@ export interface BMIGaugeCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// Dark or white pill text, whichever contrasts more with the category colour (WCAG luminance)
+export const pillTextColor = (hex: string): string => {
+  const [r, g, b] = [1, 3, 5].map(i => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? Colors.textPrimary : Colors.onPrimary;
+};
+
 export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({ weightKg, heightCm, style }) => {
   // Safe fallbacks matching clinical defaults across the app
-  const safeWeight = typeof weightKg === 'number' && weightKg > 0 ? weightKg : 72.5;
-  const safeHeight = typeof heightCm === 'number' && heightCm > 0 ? heightCm : 178;
+  const safeWeight = typeof weightKg === 'number' && weightKg > 0 ? weightKg : BIOMETRIC_DEFAULTS.currentWeightKg;
+  const safeHeight = typeof heightCm === 'number' && heightCm > 0 ? heightCm : (BIOMETRIC_DEFAULTS.heightCm ?? 175);
 
   // Standard WHO BMI formula: weight (kg) / [height (m)]^2
   const heightM = safeHeight / 100;
@@ -169,27 +180,25 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({ weightKg, heightCm, 
 
   // React Native Animated value for silky smooth 60fps GPU native needle physics
   const needleAnim = useRef(new Animated.Value(START_ANGLE)).current;
-  const isReducedMotion = useRef(false);
-
+  // Check reduced motion before animating, so the first render respects it too
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
-      isReducedMotion.current = enabled;
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled().then(reduced => {
+      if (cancelled) return;
+      if (reduced) {
+        needleAnim.setValue(targetAngle);
+        return;
+      }
+      Animated.spring(needleAnim, {
+        toValue: targetAngle,
+        friction: 7,
+        tension: 45,
+        useNativeDriver: true,
+      }).start();
     });
-  }, []);
-
-  useEffect(() => {
-    if (isReducedMotion.current) {
-      needleAnim.setValue(targetAngle);
-      return;
-    }
-
-    // Natural precision instrument spring physics with native driver
-    Animated.spring(needleAnim, {
-      toValue: targetAngle,
-      friction: 7,
-      tension: 45,
-      useNativeDriver: true,
-    }).start();
+    return () => {
+      cancelled = true;
+    };
   }, [targetAngle, needleAnim]);
 
   // Interpolate angle to rotation degrees
@@ -263,12 +272,18 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({ weightKg, heightCm, 
   }, []);
 
   return (
-    <View style={[styles.cardContainer, style]}>
+    <View
+      style={[styles.cardContainer, style]}
+      accessible
+      accessibilityLabel={`Body mass index ${calculatedBMI}, ${activeCategory.name}`}
+    >
       {/* 1. Header Row: Title & Active Status Pill */}
       <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>BMI (kg/m2)</Text>
+        <Text style={styles.headerTitle}>BMI (kg/m²)</Text>
         <View style={[styles.statusPill, { backgroundColor: activeCategory.color }]}>
-          <Text style={styles.statusPillText}>{activeCategory.name}</Text>
+          <Text style={[styles.statusPillText, { color: pillTextColor(activeCategory.color) }]}>
+          {activeCategory.name}
+        </Text>
         </View>
       </View>
 
@@ -375,7 +390,7 @@ export const BMIGaugeCard: React.FC<BMIGaugeCardProps> = ({ weightKg, heightCm, 
         {/* 5. Center Readout Display nestled between gauge arc ends */}
         <View style={styles.centerReadoutContainer} pointerEvents="none">
           <Text style={styles.centerBMINumber}>{calculatedBMI.toFixed(1)}</Text>
-          <Text style={styles.centerBMILabel}>BMI (kg/m2)</Text>
+          <Text style={styles.centerBMILabel}>BMI (kg/m²)</Text>
         </View>
       </View>
 

@@ -38,7 +38,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
           style={({ pressed }) => [styles.gridCard, pressed ? styles.cardPressed : null]}
           onPress={onOpenAwards}
           accessibilityRole="button"
-          accessibilityLabel={`Awards, ${streakDays} streak milestones`}
+          accessibilityLabel={`Awards, ${streakDays} day streak`}
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconAwards]}>
@@ -46,7 +46,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Awards</Text>
-              <Text style={styles.cardSubtitle}>{streakDays} streak milestones</Text>
+              <Text style={styles.cardSubtitle}>{streakDays}-day streak</Text>
             </View>
           </View>
         </Pressable>
@@ -59,7 +59,7 @@ export const ProfileQuickNavGrid: React.FC<ProfileQuickNavGridProps> = ({
         >
           <View style={styles.cardContent}>
             <View style={[styles.iconContainer, styles.iconSummary]}>
-              <Ionicons name="calendar-outline" size={20} color={Colors.protein} />
+              <Ionicons name="calendar-outline" size={20} color={Colors.steps} />
             </View>
             <View style={styles.textStack}>
               <Text style={styles.cardTitle}>Summary</Text>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
   gridCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
@@ -154,10 +154,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.fatLight,
   },
   iconSummary: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.stepsLight,
   },
   iconPreferences: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
   },
   iconGoals: {
     backgroundColor: '#F3E8FF',
@@ -168,13 +168,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
   cardSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
 });

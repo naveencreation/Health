@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable, LayoutChangeEvent } from 'react-nati
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
@@ -32,7 +34,7 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  activeColor = '#F97316',
+  activeColor = Colors.steps,
   defaultChartType = 'bar',
   periodDailyAvgMinutes,
 }) => {
@@ -51,8 +53,10 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
     if (typeof periodDailyAvgMinutes === 'number') {
       return Math.round(periodDailyAvgMinutes);
     }
-    const count = Math.max(1, days.length);
-    const sum = days.reduce((acc, d) => acc + (d.durationMinutes || 0), 0);
+    // Average over active days only; empty and future days would drag it down
+    const active = days.filter(d => (d.durationMinutes || 0) > 0);
+    const count = Math.max(1, active.length);
+    const sum = active.reduce((acc, d) => acc + d.durationMinutes, 0);
     return Math.round(sum / count);
   }, [days, periodDailyAvgMinutes]);
 
@@ -133,14 +137,18 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
     return { x, y, val: d.durationMinutes };
   });
 
+  // The line stops at today: future days have no data yet
+  const todayStr = toDateString();
+  const pastPoints = points.filter((_, i) => days[i].dateStr <= todayStr);
+
   const linePath =
-    points.length > 0
-      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+    pastPoints.length > 0
+      ? pastPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
       : '';
 
   const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+    pastPoints.length > 0
+      ? `${linePath} L ${pastPoints[pastPoints.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${pastPoints[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
       : '';
 
   const selectedPoint = points[selectedIndex];
@@ -216,7 +224,7 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                 const isSelected = idx === selectedIndex;
                 const barHeight =
                   day.durationMinutes <= 0
-                    ? 8
+                    ? 0
                     : Math.max(12, (Math.min(day.durationMinutes, maxY) / maxY) * USABLE_HEIGHT);
 
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD + 2);
@@ -227,8 +235,9 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                     key={`bar_time_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${formatDurationDisplay(day.durationMinutes)}`}
+                    accessibilityLabel={`${day.dayName}: ${formatDurationDisplay(day.durationMinutes)}`}
                   >
                     {/* Floating Tooltip Pin for Selected Bar */}
                     {isSelected && (
@@ -248,7 +257,7 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                         {
                           width: barWidth,
                           height: barHeight,
-                          backgroundColor: isSelected ? activeColor : '#FED7AA',
+                          backgroundColor: isSelected ? activeColor : Colors.stepsTrack,
                           borderTopLeftRadius: barWidth / 2,
                           borderTopRightRadius: barWidth / 2,
                         },
@@ -285,7 +294,7 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                   />
 
                   {/* Nodes on Line */}
-                  {points.map((p, i) => (
+                  {points.map((p, i) => days[i].dateStr > todayStr ? null : (
                     <Circle
                       key={`time_node_${i}`}
                       cx={p.x}
@@ -325,8 +334,9 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                     key={`line_time_touch_${day.dateStr}_${idx}`}
                     style={styles.lineColTouch}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${formatDurationDisplay(day.durationMinutes)}`}
+                    accessibilityLabel={`${day.dayName}: ${formatDurationDisplay(day.durationMinutes)}`}
                   />
                 ))}
               </View>
@@ -346,6 +356,8 @@ export const StepTimeDurationCard: React.FC<StepTimeDurationCardProps> = ({
                 key={`x_time_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
               >
                 <Text

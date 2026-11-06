@@ -59,5 +59,10 @@ describe('hydrationAnalytics', () => {
     const res = computeHydrationAnalytics(days, dailyLogs, 2500);
     expect(res.waterCompletionDays[0].intakeMl).toBe(2500);
     expect(res.waterCompletionDays[0].completionPct).toBe(100);
+    // Logs without entries still show up as water, not as an empty donut
+    expect(res.totalDrinkVolume).toBe(5000);
+    expect(res.drinkTypesBreakdown).toEqual([
+      expect.objectContaining({ id: 'water', amountMl: 5000, pct: 100 }),
+    ]);
   });
 });

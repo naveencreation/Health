@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,11 +8,26 @@ import {
   Pressable,
   Platform,
   KeyboardAvoidingView,
+  BackHandler,
+  AccessibilityInfo,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useGoals } from '@/context/HealthContext';
+import { useGoals, useDailyLog } from '@/context/HealthContext';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
+import {
+  toGoalsForm,
+  validateGoalsForm,
+  planFor,
+  toGoalType,
+  balancedCarbs,
+  parseDecimal,
+  isTeenAge,
+  type GoalsField,
+  type GoalsFormValues,
+} from '@/features/onboarding/services/goalsForm';
+import type { GoalType } from '@/features/onboarding/services/onboardingCalculator';
 
 interface GoalsScreenProps {
   onBack: () => void;
@@ -30,94 +45,101 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
     []
   );
 
-  const [calorieBudget, setCalorieBudget] = useState(String(userGoals.dailyCalorieBudget || 1950));
-  const [targetProtein, setTargetProtein] = useState(String(userGoals.targetProtein || 90));
-  const [targetCarbs, setTargetCarbs] = useState(String(userGoals.targetCarbs || 160));
-  const [targetFat, setTargetFat] = useState(String(userGoals.targetFat || 50));
-  const [targetFiber, setTargetFiber] = useState(String(userGoals.targetFiber || 30));
-  const [waterGoal, setWaterGoal] = useState(String(userGoals.waterGoalMl || 2500));
-  const [stepGoal, setStepGoal] = useState(String(userGoals.stepGoal || 10000));
-  const [currentWeight, setCurrentWeight] = useState(String(userGoals.currentWeightKg || 74.2));
-  const [targetWeight, setTargetWeight] = useState(String(userGoals.targetWeightKg || 68.0));
-  const [userHeightCm, setUserHeightCm] = useState(String(userGoals.heightCm || 175));
-  const [activePreset, setActivePreset] = useState<'fat_loss' | 'muscle_gain' | 'maintenance'>(
-    'maintenance'
-  );
+  const { logWeight, todayStr } = useDailyLog();
+  const unit = userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg';
+  const [form, setForm] = useState<GoalsFormValues>(() => toGoalsForm(userGoals, unit));
+  const [dirty, setDirty] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [activePreset, setActivePreset] = useState<GoalType>(() => toGoalType(userGoals.goal));
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const isTeen = typeof userGoals.age === 'number' && userGoals.age >= 13 && userGoals.age <= 17;
+  const isTeen = isTeenAge(userGoals.age);
   const [teenNotice, setTeenNotice] = useState<string | null>(null);
 
-  // Sync state when userGoals changes
+  // Pick up outside changes (sync, weigh-ins) only while there are no unsaved edits
   useEffect(() => {
-    setCalorieBudget(String(userGoals.dailyCalorieBudget || 1950));
-    setTargetProtein(String(userGoals.targetProtein || 90));
-    setTargetCarbs(String(userGoals.targetCarbs || 160));
-    setTargetFat(String(userGoals.targetFat || 50));
-    setTargetFiber(String(userGoals.targetFiber || 30));
-    setWaterGoal(String(userGoals.waterGoalMl || 2500));
-    setStepGoal(String(userGoals.stepGoal || 10000));
-    setCurrentWeight(String(userGoals.currentWeightKg || 74.2));
-    setTargetWeight(String(userGoals.targetWeightKg || 68.0));
-    setUserHeightCm(String(userGoals.heightCm || 175));
-  }, [userGoals]);
+    if (!dirty) setForm(toGoalsForm(userGoals, unit));
+  }, [userGoals, unit, dirty]);
+
+  const edit = (key: GoalsField) => (text: string) => {
+    setForm(f => ({ ...f, [key]: text }));
+    setDirty(true);
+  };
+
+  // Presets come from the user's own biometrics, so their macros add up to their budget
+  const presets = useMemo(
+    () => ({
+      lose_weight: planFor(userGoals, 'lose_weight'),
+      maintain: planFor(userGoals, 'maintain'),
+      gain_muscle: planFor(userGoals, 'gain_muscle'),
+    }),
+    [userGoals]
+  );
+
+  const { errors, goals: validGoals } = validateGoalsForm(form, {
+    unit,
+    gender: userGoals.gender,
+    age: userGoals.age,
+  });
 
   // Live macro math
-  const pGrams = parseInt(targetProtein, 10) || 0;
-  const cGrams = parseInt(targetCarbs, 10) || 0;
-  const fGrams = parseInt(targetFat, 10) || 0;
-  const computedMacroCals = pGrams * 4 + cGrams * 4 + fGrams * 9;
-  const currentBudget = parseInt(calorieBudget, 10) || 1950;
-  const macroDiff = computedMacroCals - currentBudget;
+  const pGrams = parseDecimal(form.protein) || 0;
+  const cGrams = parseDecimal(form.carbs) || 0;
+  const fGrams = parseDecimal(form.fat) || 0;
+  const computedMacroCals = Math.round(pGrams * 4 + cGrams * 4 + fGrams * 9);
+  const proteinPct = computedMacroCals ? Math.round(((pGrams * 4) / computedMacroCals) * 100) : 0;
+  const carbsPct = computedMacroCals ? Math.round(((cGrams * 4) / computedMacroCals) * 100) : 0;
+  const fatPct = computedMacroCals ? Math.max(0, 100 - proteinPct - carbsPct) : 0;
 
-  const proteinPct = Math.round(((pGrams * 4) / (computedMacroCals || 1)) * 100);
-  const carbsPct = Math.round(((cGrams * 4) / (computedMacroCals || 1)) * 100);
-  const fatPct = Math.max(0, 100 - proteinPct - carbsPct);
-
-  const applyPreset = (preset: 'fat_loss' | 'muscle_gain' | 'maintenance') => {
-    if (isTeen && preset === 'fat_loss') {
+  const applyPreset = (preset: GoalType) => {
+    if (isTeen && preset === 'lose_weight') {
       setTeenNotice('Caloric deficits are disabled for ages 13-17 to support healthy development.');
       return;
     }
     setTeenNotice(null);
     setActivePreset(preset);
-    if (preset === 'fat_loss') {
-      setCalorieBudget('1650');
-      setTargetProtein('90');
-      setTargetCarbs('160');
-      setTargetFat('40');
-      setTargetFiber('30');
-    } else if (preset === 'muscle_gain') {
-      setCalorieBudget('2300');
-      setTargetProtein('130');
-      setTargetCarbs('260');
-      setTargetFat('60');
-      setTargetFiber('35');
-    } else {
-      setCalorieBudget('1950');
-      setTargetProtein('75');
-      setTargetCarbs('220');
-      setTargetFat('50');
-      setTargetFiber('30');
-    }
+    const plan = presets[preset];
+    setForm(f => ({
+      ...f,
+      budget: String(plan.dailyCalorieBudget),
+      protein: String(plan.targetProteinG),
+      carbs: String(plan.targetCarbsG),
+      fat: String(plan.targetFatG),
+      fiber: String(plan.targetFiberG),
+    }));
+    setDirty(true);
+  };
+
+  const balanceCarbs = () => {
+    setForm(f => ({
+      ...f,
+      carbs: String(
+        balancedCarbs(
+          parseDecimal(f.budget) || 0,
+          parseDecimal(f.protein) || 0,
+          parseDecimal(f.fat) || 0
+        )
+      ),
+    }));
+    setDirty(true);
   };
 
   const handleSave = () => {
-    const rawBudget = parseInt(calorieBudget, 10) || userGoals.dailyCalorieBudget;
-    const safeBudget = isTeen ? Math.max(1600, rawBudget) : rawBudget;
-
-    updateGoals({
-      dailyCalorieBudget: safeBudget,
-      targetProtein: parseInt(targetProtein, 10) || userGoals.targetProtein,
-      targetCarbs: parseInt(targetCarbs, 10) || userGoals.targetCarbs,
-      targetFat: parseInt(targetFat, 10) || userGoals.targetFat,
-      targetFiber: parseInt(targetFiber, 10) || userGoals.targetFiber,
-      waterGoalMl: parseInt(waterGoal, 10) || userGoals.waterGoalMl,
-      stepGoal: parseInt(stepGoal, 10) || userGoals.stepGoal,
-      currentWeightKg: parseFloat(currentWeight) || userGoals.currentWeightKg,
-      targetWeightKg: parseFloat(targetWeight) || userGoals.targetWeightKg,
-      heightCm: parseFloat(userHeightCm) || userGoals.heightCm,
-    });
+    if (!validGoals) {
+      setShowErrors(true);
+      AccessibilityInfo.announceForAccessibility('Some goals need fixing before saving');
+      return;
+    }
+    const { currentWeightKg, ...rest } = validGoals;
+    updateGoals({ ...rest, goal: activePreset });
+    // Weight goes through the weight log so it gets an entry like any other weigh-in
+    if (Math.abs(currentWeightKg - userGoals.currentWeightKg) >= 0.05) {
+      logWeight(currentWeightKg, todayStr);
+    }
+    setDirty(false);
+    setShowErrors(false);
     setSavedSuccess(true);
+    AccessibilityInfo.announceForAccessibility('Goals saved');
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       setSavedSuccess(false);
@@ -125,17 +147,47 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
     }, 800);
   };
 
+  const handleBack = () => (dirty ? setConfirmDiscard(true) : onBack());
+
+  // Android back asks before discarding edits; registered after the parent's handler, so it runs first
+  useEffect(() => {
+    if (!dirty) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setConfirmDiscard(true);
+      return true;
+    });
+    return () => sub.remove();
+  }, [dirty]);
+
+  const fieldError = (key: GoalsField) =>
+    showErrors && errors[key] ? <Text style={styles.fieldError}>{errors[key]}</Text> : null;
+
   return (
     <KeyboardAvoidingView
       style={styles.rootContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <ConfirmationModal
+        visible={confirmDiscard}
+        title="Discard changes?"
+        message="Your edits to these goals haven't been saved."
+        confirmText="Discard"
+        cancelText="Keep Editing"
+        confirmStyle="destructive"
+        iconName="alert-circle-outline"
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          setDirty(false);
+          onBack();
+        }}
+        onCancel={() => setConfirmDiscard(false)}
+      />
       {/* 1. Unified Top Navigation Header */}
       <View style={styles.headerContainer}>
         <View style={styles.headerMainRow}>
           <Pressable
             style={({ pressed }) => [styles.headerBackBtn, pressed ? styles.btnPressed : null]}
-            onPress={onBack}
+            onPress={handleBack}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
             accessibilityLabel="Go back to profile"
@@ -197,21 +249,21 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <Text style={styles.teenNoticeText}>{teenNotice}</Text>
           </View>
         )}
-        <View style={styles.presetsRow}>
+        <View style={styles.presetsRow} accessibilityRole="radiogroup">
           <Pressable
             style={({ pressed }) => [
               styles.presetCard,
-              activePreset === 'fat_loss' ? styles.presetCardActive : null,
+              activePreset === 'lose_weight' ? styles.presetCardActive : null,
               isTeen ? styles.presetCardDisabled : null,
               pressed ? styles.pressedSubtle : null,
             ]}
-            onPress={() => applyPreset('fat_loss')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activePreset === 'fat_loss', disabled: isTeen }}
+            onPress={() => applyPreset('lose_weight')}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: activePreset === 'lose_weight', disabled: isTeen }}
             accessibilityLabel={
               isTeen
                 ? 'Fat loss preset disabled for teen users'
-                : 'Fat loss preset, 1650 kilocalories'
+                : `Fat loss preset, ${presets.lose_weight.dailyCalorieBudget} kilocalories`
             }
           >
             <View style={[styles.presetIconBox, styles.presetIconFatLoss]}>
@@ -224,43 +276,49 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <Text style={[styles.presetName, isTeen ? styles.presetTextDisabled : null]}>
               Fat Loss
             </Text>
-            <Text style={styles.presetMeta}>{isTeen ? 'Locked' : '1,650 kcal'}</Text>
+            <Text style={styles.presetMeta}>
+              {isTeen ? 'Locked' : `${presets.lose_weight.dailyCalorieBudget.toLocaleString()} kcal`}
+            </Text>
           </Pressable>
 
           <Pressable
             style={({ pressed }) => [
               styles.presetCard,
-              activePreset === 'muscle_gain' ? styles.presetCardActive : null,
+              activePreset === 'gain_muscle' ? styles.presetCardActive : null,
               pressed ? styles.pressedSubtle : null,
             ]}
-            onPress={() => applyPreset('muscle_gain')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activePreset === 'muscle_gain' }}
-            accessibilityLabel="Muscle gain preset, 2300 kilocalories"
+            onPress={() => applyPreset('gain_muscle')}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: activePreset === 'gain_muscle' }}
+            accessibilityLabel={`Muscle gain preset, ${presets.gain_muscle.dailyCalorieBudget} kilocalories`}
           >
             <View style={[styles.presetIconBox, styles.presetIconMuscle]}>
               <Ionicons name="barbell" size={16} color={Colors.protein} />
             </View>
             <Text style={styles.presetName}>Muscle Gain</Text>
-            <Text style={styles.presetMeta}>2,300 kcal</Text>
+            <Text style={styles.presetMeta}>
+              {`${presets.gain_muscle.dailyCalorieBudget.toLocaleString()} kcal`}
+            </Text>
           </Pressable>
 
           <Pressable
             style={({ pressed }) => [
               styles.presetCard,
-              activePreset === 'maintenance' ? styles.presetCardActive : null,
+              activePreset === 'maintain' ? styles.presetCardActive : null,
               pressed ? styles.pressedSubtle : null,
             ]}
-            onPress={() => applyPreset('maintenance')}
-            accessibilityRole="button"
-            accessibilityState={{ selected: activePreset === 'maintenance' }}
-            accessibilityLabel="Maintenance preset, 1950 kilocalories"
+            onPress={() => applyPreset('maintain')}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: activePreset === 'maintain' }}
+            accessibilityLabel={`Maintenance preset, ${presets.maintain.dailyCalorieBudget} kilocalories`}
           >
             <View style={[styles.presetIconBox, styles.presetIconMaintain]}>
               <Ionicons name="shield-checkmark" size={16} color={Colors.water} />
             </View>
             <Text style={styles.presetName}>Maintain</Text>
-            <Text style={styles.presetMeta}>1,950 kcal</Text>
+            <Text style={styles.presetMeta}>
+              {`${presets.maintain.dailyCalorieBudget.toLocaleString()} kcal`}
+            </Text>
           </Pressable>
         </View>
 
@@ -300,13 +358,18 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             </View>
           </View>
 
-          {Math.abs(macroDiff) > 50 ? (
+          {errors.macros ? (
             <View style={styles.diffWarning}>
               <Ionicons name="information-circle-outline" size={14} color={Colors.warningDark} />
-              <Text style={styles.diffWarningText}>
-                Macros sum to {computedMacroCals} kcal (
-                {macroDiff > 0 ? `+${macroDiff}` : macroDiff} vs budget)
-              </Text>
+              <Text style={styles.diffWarningText}>{errors.macros}</Text>
+              <Pressable
+                onPress={balanceCarbs}
+                hitSlop={HIT_SLOP_10}
+                accessibilityRole="button"
+                accessibilityLabel="Adjust carbs to match the calorie budget"
+              >
+                <Text style={styles.balanceBtnText}>Fit carbs</Text>
+              </Pressable>
             </View>
           ) : null}
         </View>
@@ -325,8 +388,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={calorieBudget}
-              onChangeText={setCalorieBudget}
+              value={form.budget}
+              onChangeText={edit('budget')}
+              editable={!savedSuccess}
               placeholder="2000"
               autoComplete="off"
               importantForAutofill="no"
@@ -335,6 +399,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>kcal</Text>
           </View>
+          {fieldError('budget')}
 
           <View style={styles.fieldDivider} />
 
@@ -349,8 +414,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={targetProtein}
-              onChangeText={setTargetProtein}
+              value={form.protein}
+              onChangeText={edit('protein')}
+              editable={!savedSuccess}
               placeholder="90"
               autoComplete="off"
               importantForAutofill="no"
@@ -359,6 +425,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>g</Text>
           </View>
+          {fieldError('protein')}
 
           <View style={styles.fieldDivider} />
 
@@ -373,8 +440,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={targetCarbs}
-              onChangeText={setTargetCarbs}
+              value={form.carbs}
+              onChangeText={edit('carbs')}
+              editable={!savedSuccess}
               placeholder="150"
               autoComplete="off"
               importantForAutofill="no"
@@ -383,6 +451,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>g</Text>
           </View>
+          {fieldError('carbs')}
 
           <View style={styles.fieldDivider} />
 
@@ -397,8 +466,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={targetFat}
-              onChangeText={setTargetFat}
+              value={form.fat}
+              onChangeText={edit('fat')}
+              editable={!savedSuccess}
               placeholder="50"
               autoComplete="off"
               importantForAutofill="no"
@@ -407,6 +477,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>g</Text>
           </View>
+          {fieldError('fat')}
 
           <View style={styles.fieldDivider} />
 
@@ -421,8 +492,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={targetFiber}
-              onChangeText={setTargetFiber}
+              value={form.fiber}
+              onChangeText={edit('fiber')}
+              editable={!savedSuccess}
               placeholder="30"
               autoComplete="off"
               importantForAutofill="no"
@@ -431,6 +503,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>g</Text>
           </View>
+          {fieldError('fiber')}
         </View>
 
         {/* Activity & Habits Section */}
@@ -447,8 +520,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={waterGoal}
-              onChangeText={setWaterGoal}
+              value={form.water}
+              onChangeText={edit('water')}
+              editable={!savedSuccess}
               placeholder="2500"
               autoComplete="off"
               importantForAutofill="no"
@@ -457,6 +531,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>ml</Text>
           </View>
+          {fieldError('water')}
 
           <View style={styles.fieldDivider} />
 
@@ -471,8 +546,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={stepGoal}
-              onChangeText={setStepGoal}
+              value={form.steps}
+              onChangeText={edit('steps')}
+              editable={!savedSuccess}
               placeholder="10000"
               autoComplete="off"
               importantForAutofill="no"
@@ -481,6 +557,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>steps</Text>
           </View>
+          {fieldError('steps')}
         </View>
 
         {/* Body Metrics Section */}
@@ -497,16 +574,18 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="decimal-pad"
-              value={currentWeight}
-              onChangeText={setCurrentWeight}
+              value={form.weight}
+              onChangeText={edit('weight')}
+              editable={!savedSuccess}
               placeholder="74.2"
               autoComplete="off"
               importantForAutofill="no"
               underlineColorAndroid="transparent"
-              accessibilityLabel="Current weight in kilograms"
+              accessibilityLabel={`Current weight in ${unit === 'lbs' ? 'pounds' : 'kilograms'}`}
             />
-            <Text style={styles.fieldUnit}>kg</Text>
+            <Text style={styles.fieldUnit}>{unit}</Text>
           </View>
+          {fieldError('weight')}
 
           <View style={styles.fieldDivider} />
 
@@ -521,16 +600,18 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="decimal-pad"
-              value={targetWeight}
-              onChangeText={setTargetWeight}
+              value={form.target}
+              onChangeText={edit('target')}
+              editable={!savedSuccess}
               placeholder="68.0"
               autoComplete="off"
               importantForAutofill="no"
               underlineColorAndroid="transparent"
-              accessibilityLabel="Target weight in kilograms"
+              accessibilityLabel={`Target weight in ${unit === 'lbs' ? 'pounds' : 'kilograms'}`}
             />
-            <Text style={styles.fieldUnit}>kg</Text>
+            <Text style={styles.fieldUnit}>{unit}</Text>
           </View>
+          {fieldError('target')}
 
           <View style={styles.fieldDivider} />
 
@@ -545,8 +626,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <TextInput
               style={styles.fieldInput}
               keyboardType="numeric"
-              value={userHeightCm}
-              onChangeText={setUserHeightCm}
+              value={form.height}
+              onChangeText={edit('height')}
+              editable={!savedSuccess}
               placeholder="175"
               autoComplete="off"
               importantForAutofill="no"
@@ -555,6 +637,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             />
             <Text style={styles.fieldUnit}>cm</Text>
           </View>
+          {fieldError('height')}
         </View>
 
         {/* Primary Save Button at Bottom */}
@@ -817,6 +900,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.carbsDark,
     flex: 1,
+  },
+  balanceBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    color: Colors.carbsDark,
+    textDecorationLine: 'underline',
+  },
+  fieldError: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    color: Colors.dangerDark,
+    marginTop: -4,
+    marginBottom: 8,
+    marginLeft: 48,
   },
   inputCard: {
     backgroundColor: Colors.card,

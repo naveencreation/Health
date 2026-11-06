@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from '
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
@@ -31,7 +33,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  activeColor = '#0284C7',
+  activeColor = Colors.water,
   defaultChartType = 'line',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -78,20 +80,24 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
     return { x, y, ml: clampedMl };
   });
 
+  // The line stops at today: future days have no data yet
+  const todayStr = toDateString();
+  const pastPoints = points.filter((_, i) => days[i].dateStr <= todayStr);
+
   const linePath =
-    points.length > 0
-      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+    pastPoints.length > 0
+      ? pastPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
       : '';
 
   const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+    pastPoints.length > 0
+      ? `${linePath} L ${pastPoints[pastPoints.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${pastPoints[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
       : '';
 
   const selectedPoint = points[selectedIndex];
 
   const formatYTick = (ml: number) => {
-    if (ml === 0) return '0%'; // Matches template screenshot
+    if (ml === 0) return '0';
     const liters = ml / 1000;
     return Number.isInteger(liters) ? `${liters}L` : `${liters.toFixed(1)}L`;
   };
@@ -148,7 +154,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
                   />
 
                   {/* Nodes on Line */}
-                  {points.map((p, i) => (
+                  {points.map((p, i) => days[i].dateStr > todayStr ? null : (
                     <Circle
                       key={`node_hydrate_${i}`}
                       cx={p.x}
@@ -188,8 +194,9 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
                     key={`hydrate_touch_${day.dateStr}_${idx}`}
                     style={styles.lineColTouch}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.intakeMl} mL`}
+                    accessibilityLabel={`${day.dayName}: ${day.intakeMl} mL`}
                   />
                 ))}
               </View>
@@ -201,7 +208,7 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
                 const isSelected = idx === selectedIndex;
                 const clampedMl = Math.max(0, Math.min(maxTickMl, day.intakeMl));
                 const barHeight =
-                  clampedMl === 0 ? 10 : Math.max(14, (clampedMl / maxTickMl) * USABLE_HEIGHT);
+                  clampedMl === 0 ? 0 : Math.max(14, (clampedMl / maxTickMl) * USABLE_HEIGHT);
 
                 // Position the floating pin above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD - 2);
@@ -211,8 +218,9 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
                     key={`bar_hydrate_day_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.intakeMl} mL`}
+                    accessibilityLabel={`${day.dayName}: ${day.intakeMl} mL`}
                   >
                     {/* Floating Pin for Selected Bar */}
                     {isSelected && (
@@ -255,6 +263,8 @@ export const HydrateVolumeCard: React.FC<HydrateVolumeCardProps> = ({
                 key={`x_hydrate_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
               >
                 <Text
@@ -339,6 +349,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
+    // Bars start on the axis baseline, like line mode
+    paddingBottom: BOTTOM_PAD,
   },
   dayColTouchable: {
     flex: 1,

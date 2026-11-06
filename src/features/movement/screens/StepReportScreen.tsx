@@ -136,7 +136,8 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
         return {
           dateStr,
           dayNum: d.getDate(),
-          dayName: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+          // Spoken by screen readers on the chart columns
+          dayName: `${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i]} ${d.getDate()}`,
           steps,
           goalSteps: dailyStepGoal,
           completionPct,
@@ -190,7 +191,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
         return {
           dateStr: `w_${idx + 1}`,
           dayNum: `W${idx + 1}`,
-          dayName: bucket.name,
+          dayName: `Week ${idx + 1}, days ${bucket.name}`,
           steps: avgDailySteps,
           goalSteps: dailyStepGoal,
           completionPct,
@@ -227,7 +228,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
       return {
         dateStr: `m_${m + 1}`,
         dayNum: MONTH_NAMES[m],
-        dayName: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][m],
+        dayName: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m],
         steps: avgDailySteps,
         goalSteps: dailyStepGoal,
         completionPct,

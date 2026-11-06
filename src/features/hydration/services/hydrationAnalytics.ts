@@ -23,16 +23,27 @@ export function computeHydrationAnalytics(
   const beverageMap: Record<string, number> = {};
   let grandVolumeMl = 0;
 
+  const addDrinks = (log?: DailyLog) => {
+    if (!log) return;
+    let entriesMl = 0;
+    log.waterEntries?.forEach(wl => {
+      const bevId = wl.beverageType || 'water';
+      beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
+      entriesMl += wl.amountMl || 0;
+    });
+    // waterMl not covered by entries (older logs, merged totals) counts as plain water,
+    // so the donut agrees with the completion charts
+    const untracked = Math.max(0, (log.waterMl || 0) - entriesMl);
+    if (untracked > 0) beverageMap.water = (beverageMap.water || 0) + untracked;
+    grandVolumeMl += entriesMl + untracked;
+  };
+
   days.forEach(item => {
     let ml = 0;
 
     if ('log' in item) {
       ml = item.log?.waterMl || 0;
-      item.log?.waterEntries?.forEach(wl => {
-        const bevId = wl.beverageType || 'water';
-        beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
-        grandVolumeMl += wl.amountMl || 0;
-      });
+      addDrinks(item.log);
     } else {
       const dates = item.bucketDates || item.monthDates || [];
       let bucketSum = 0;
@@ -43,11 +54,7 @@ export function computeHydrationAnalytics(
           bucketSum += w;
           count++;
         }
-        dailyLogs[d]?.waterEntries?.forEach(wl => {
-          const bevId = wl.beverageType || 'water';
-          beverageMap[bevId] = (beverageMap[bevId] || 0) + (wl.amountMl || 0);
-          grandVolumeMl += wl.amountMl || 0;
-        });
+        addDrinks(dailyLogs[d]);
       });
       ml = count > 0 ? Math.round(bucketSum / count) : 0;
     }

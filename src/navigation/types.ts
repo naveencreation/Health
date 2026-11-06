@@ -8,7 +8,6 @@ export type ActiveModal =
   | { type: 'notifications' }
   | { type: 'avatarPicker' }
   | { type: 'riaChat'; prompt?: string }
-  | { type: 'signOutConfirm' }
   | { type: 'waterTracker' }
   | { type: 'weightTracker' }
   | { type: 'stepTracker' }

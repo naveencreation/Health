@@ -6,7 +6,6 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -25,6 +24,8 @@ export interface ConfirmationModalProps {
   isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
+  /** Extra content between the message and the buttons (e.g. a password field) */
+  children?: React.ReactNode;
 }
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -40,6 +41,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isLoading = false,
   onConfirm,
   onCancel,
+  children,
 }) => {
   const isDestructive = confirmStyle === 'destructive';
   const defaultIconColor = isDestructive ? '#DC2626' : Colors.primary;
@@ -76,6 +78,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           {/* Heading and Message */}
           <Text style={styles.dialogTitle}>{title}</Text>
           <Text style={styles.dialogMessage}>{message}</Text>
+          {children}
 
           {/* Action Buttons */}
           <View style={styles.actionCol}>
@@ -137,16 +140,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 12,
-    ...(Platform.OS === 'web'
-      ? {
-          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.25)',
-        }
-      : {}),
+    elevation: 0,
   },
   iconCircle: {
     width: 56,

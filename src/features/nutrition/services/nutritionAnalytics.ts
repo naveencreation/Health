@@ -1,6 +1,5 @@
 import { DailyLog, UserGoals } from '@/types';
 import { DayCalorieIntakeData, DayMacroRatioData } from '@/components/report';
-import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface DayBucketItem {
   dateStr: string;
@@ -100,16 +99,6 @@ export function computeMacroRatioDays(
   userGoals: UserGoals,
   dailyLogs: Record<string, DailyLog>
 ): DayMacroRatioData[] {
-  const targetCarbsKcal = (userGoals?.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs) * 4;
-  const targetProteinKcal = (userGoals?.targetProtein || BIOMETRIC_DEFAULTS.targetProtein) * 4;
-  const targetFatKcal = (userGoals?.targetFat || BIOMETRIC_DEFAULTS.targetFat) * 9;
-  const targetTotalKcal = targetCarbsKcal + targetProteinKcal + targetFatKcal;
-  const defaultCarbsPct =
-    targetTotalKcal > 0 ? Math.round((targetCarbsKcal / targetTotalKcal) * 100) : 45;
-  const defaultProteinPct =
-    targetTotalKcal > 0 ? Math.round((targetProteinKcal / targetTotalKcal) * 100) : 20;
-  const defaultFatPct = Math.max(0, 100 - defaultCarbsPct - defaultProteinPct);
-
   return days.map(item => {
     let proteinG = 0;
     let carbsG = 0;
@@ -152,9 +141,9 @@ export function computeMacroRatioDays(
     const fKcal = fatG * 9;
     const totalKcal = cKcal + pKcal + fKcal;
 
-    let carbsPct = defaultCarbsPct;
-    let proteinPct = defaultProteinPct;
-    let fatPct = defaultFatPct;
+    let carbsPct = 0;
+    let proteinPct = 0;
+    let fatPct = 0;
 
     if (totalKcal > 0) {
       carbsPct = Math.round((cKcal / totalKcal) * 100);

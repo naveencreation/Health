@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from '
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
@@ -34,7 +36,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  activeColor = '#0284C7',
+  activeColor = Colors.water,
   defaultChartType = 'bar',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -64,14 +66,18 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
     return { x, y, pct: clampedPct };
   });
 
+  // The line stops at today: future days have no data yet
+  const todayStr = toDateString();
+  const pastPoints = points.filter((_, i) => days[i].dateStr <= todayStr);
+
   const linePath =
-    points.length > 0
-      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+    pastPoints.length > 0
+      ? pastPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
       : '';
 
   const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+    pastPoints.length > 0
+      ? `${linePath} L ${pastPoints[pastPoints.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${pastPoints[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
       : '';
 
   const selectedPoint = points[selectedIndex];
@@ -108,7 +114,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                 const isSelected = idx === selectedIndex;
                 const clampedPct = Math.max(0, Math.min(100, day.completionPct));
                 const barHeight =
-                  clampedPct === 0 ? 10 : Math.max(14, (clampedPct / 100) * USABLE_HEIGHT);
+                  clampedPct === 0 ? 0 : Math.max(14, (clampedPct / 100) * USABLE_HEIGHT);
 
                 // Position the floating pin above the selected bar
                 const pinBottom = Math.min(CHART_HEIGHT - 38, barHeight + BOTTOM_PAD - 2);
@@ -118,8 +124,9 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                     key={`bar_day_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.completionPct}% completion`}
+                    accessibilityLabel={`${day.dayName}: ${day.intakeMl} mL, ${day.completionPct}% of goal`}
                   >
                     {/* Floating Pin for Selected Bar */}
                     {isSelected && (
@@ -170,7 +177,7 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                   />
 
                   {/* Nodes on Line */}
-                  {points.map((p, i) => (
+                  {points.map((p, i) => days[i].dateStr > todayStr ? null : (
                     <Circle
                       key={`node_${i}`}
                       cx={p.x}
@@ -206,8 +213,9 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                     key={`line_touch_${day.dateStr}_${idx}`}
                     style={styles.lineColTouch}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.completionPct}% completion`}
+                    accessibilityLabel={`${day.dayName}: ${day.intakeMl} mL, ${day.completionPct}% of goal`}
                   />
                 ))}
               </View>
@@ -227,6 +235,8 @@ export const DrinkCompletionCard: React.FC<DrinkCompletionCardProps> = ({
                 key={`x_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
               >
                 <Text
@@ -311,6 +321,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
+    // Bars start on the axis baseline, like line mode
+    paddingBottom: BOTTOM_PAD,
   },
   dayColTouchable: {
     flex: 1,

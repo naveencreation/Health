@@ -15,7 +15,6 @@ import {
   NotificationModal,
   AvatarPickerModal,
   RiaChatModal,
-  ConfirmationModal,
   SlideInSubScreen,
 } from '@/components';
 
@@ -25,10 +24,9 @@ import { GoalsScreen } from '@/screens/profile';
 
 export interface OverlayHostProps {
   screenWidth: number;
-  onConfirmSignOut?: () => void;
 }
 
-export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth, onConfirmSignOut }) => {
+export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
   const { activeModal, closeModal, openModal, isOpen } = useOverlay();
   const { userGoals, updateGoals } = useGoals();
 
@@ -128,22 +126,6 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth, onConfirm
         initialPrompt={activeModal?.type === 'riaChat' ? activeModal.prompt : undefined}
         onClose={closeModal}
         onOpenBYOKSetup={() => openModal({ type: 'byokSetup' })}
-      />
-
-      {/* 8. Sign Out Confirmation Modal */}
-      <ConfirmationModal
-        visible={isOpen('signOutConfirm')}
-        title="Sign Out of Calorify?"
-        message="You will need to sign back in to access your daily meal logs, streaks, and personalized coaching."
-        confirmText="Sign Out"
-        cancelText="Cancel"
-        confirmStyle="destructive"
-        iconName="log-out-outline"
-        onConfirm={() => {
-          closeModal();
-          onConfirmSignOut?.();
-        }}
-        onCancel={closeModal}
       />
 
       {/* 9. Slide-In Sub-Screen: Water Tracker */}

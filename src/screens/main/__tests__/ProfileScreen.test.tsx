@@ -1,10 +1,15 @@
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 import { ProfileScreen } from '../ProfileScreen';
+import { PreferencesScreen, GoalsScreen } from '@/screens/profile';
 import { useAuth, useGoals } from '@/context/HealthContext';
 import { usePro } from '@/features/subscription';
 
@@ -32,6 +37,7 @@ jest.mock('@/services/ai/storage/SecureKeyStorage', () => ({
     getApiKey: jest.fn(),
     saveApiKey: jest.fn(),
     isKeyConfigured: jest.fn().mockResolvedValue(false),
+    hasApiKey: jest.fn().mockResolvedValue(false),
   },
 }));
 
@@ -161,7 +167,7 @@ describe('ProfileScreen Integration', () => {
   it('opens AchievementCenterScreen when user taps Awards in quick navigation', async () => {
     const { getByRole, findByText } = await render(<ProfileScreen />);
 
-    const awardsBtn = getByRole('button', { name: /Awards, 14 streak milestones/i });
+    const awardsBtn = getByRole('button', { name: /Awards, 14 day streak/i });
     fireEvent.press(awardsBtn);
 
     const achievementsTitle = await findByText('Achievements');
@@ -175,8 +181,69 @@ describe('ProfileScreen Integration', () => {
     fireEvent.press(upgradeBtn);
 
     const paywallHeadline = await findByText(
-      'Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.'
+      'Experience the full power of AI nutrition scanning and deep metabolic analytics.'
     );
     expect(paywallHeadline).toBeTruthy();
+  });
+
+  it('keeps the user signed in when edits have not synced, then signs out on confirm', async () => {
+    const logout = jest.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    (useAuth as jest.Mock).mockReturnValue({
+      currentUser: mockCurrentUser,
+      logout,
+      deleteAccount: jest.fn(),
+    });
+    const { getByRole, findByRole } = await render(<PreferencesScreen onBack={jest.fn()} />);
+
+    await fireEvent.press(getByRole('button', { name: 'Sign out of Calorify' }));
+    await act(async () => {
+      await fireEvent.press(await findByRole('button', { name: 'Sign Out' }));
+    });
+    expect(logout).toHaveBeenLastCalledWith(false);
+
+    await act(async () => {
+      await fireEvent.press(await findByRole('button', { name: 'Sign Out Anyway' }));
+    });
+    expect(logout).toHaveBeenLastCalledWith(true);
+  });
+
+  it('blocks saving goals below the safe calorie floor', async () => {
+    const updateGoals = jest.fn();
+    (useGoals as jest.Mock).mockReturnValue({ userGoals: mockUserGoals, updateGoals });
+    const { getByLabelText, getAllByRole, findByText } = await render(
+      <GoalsScreen onBack={jest.fn()} />
+    );
+
+    await fireEvent.changeText(getByLabelText('Daily calorie budget in kilocalories'), '900');
+    await fireEvent.press(getAllByRole('button', { name: 'Save nutrition and activity goals' })[0]);
+
+    expect(updateGoals).not.toHaveBeenCalled();
+    expect(await findByText('At least 1350 kcal for safety')).toBeTruthy();
+  });
+
+  it('requires the password before deleting an email account', async () => {
+    const deleteAccount = jest.fn().mockResolvedValue({ success: true });
+    (useAuth as jest.Mock).mockReturnValue({
+      currentUser: mockCurrentUser,
+      logout: jest.fn(),
+      deleteAccount,
+    });
+    const { getByRole, findByRole, getByLabelText, findByText } = await render(
+      <PreferencesScreen onBack={jest.fn()} />
+    );
+
+    await fireEvent.press(await findByRole('button', { name: 'Delete Account Permanently' }));
+    const confirm = (await findByRole('button', { name: 'Delete Permanently' }));
+    await act(async () => {
+      await fireEvent.press(confirm);
+    });
+    expect(deleteAccount).not.toHaveBeenCalled();
+    expect(await findByText('Enter your password to confirm.')).toBeTruthy();
+
+    await fireEvent.changeText(getByLabelText('Password, required to delete your account'), 'secret-pw');
+    await act(async () => {
+      await fireEvent.press(getByRole('button', { name: 'Delete Permanently' }));
+    });
+    expect(deleteAccount).toHaveBeenCalledWith('secret-pw');
   });
 });

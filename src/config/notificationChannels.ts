@@ -48,6 +48,14 @@ export const NOTIFICATION_CHANNELS = {
     vibrationPattern: [0, 200],
     lightColor: '#EA580C',
   },
+  WEIGHT: {
+    id: 'reminders-weight',
+    name: 'Weigh-In Reminders',
+    description: 'Morning reminders to log your weight.',
+    importance: AndroidImportance.DEFAULT,
+    vibrationPattern: [0, 200],
+    lightColor: '#8B5CF6',
+  },
 } as const;
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -12,7 +12,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { SubscriptionPlanId, SUBSCRIPTION_PACKAGES } from '@/services/payments/paymentService';
+import {
+  SubscriptionPlanId,
+  SUBSCRIPTION_PACKAGES,
+  PLAN_NAMES,
+  formatExpiry,
+} from '@/services/payments/paymentService';
 import { usePro } from '../hooks/usePro';
 import { haptics } from '@/utils/haptics';
 
@@ -38,11 +43,6 @@ const PRO_BENEFITS = [
     title: 'Deep Metabolic Trends',
     description: 'Consolidated 30-day, monthly, and annual nutrition & energy expenditure graphs.',
   },
-  {
-    icon: 'cloud-done',
-    title: 'Priority Cloud Backup',
-    description: 'End-to-end encrypted backup and instant synchronization across all your devices.',
-  },
 ];
 
 export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
@@ -50,7 +50,8 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   onClose,
   highlightFeature,
 }) => {
-  const { purchasePlan, restorePurchases } = usePro();
+  const { isPro, activePlanId, expiresAt, purchasePlan, restorePurchases } = usePro();
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>('pro_annual');
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
@@ -61,6 +62,10 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
       setPurchaseSuccess(false);
       setStatusMessage(null);
     }
+    // A pending auto-close must not fire after the sheet is gone or reopened
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
   }, [visible]);
 
   const handleSelectPlan = async (id: SubscriptionPlanId) => {
@@ -93,7 +98,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
       const res = await restorePurchases();
       if (res.restored) {
         setStatusMessage('Subscription restored successfully!');
-        setTimeout(() => onClose(), 1200);
+        closeTimer.current = setTimeout(() => onClose(), 1200);
       } else {
         setStatusMessage('No active subscription found to restore.');
       }
@@ -145,7 +150,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               <Text style={styles.celebrationHeadline}>Welcome to Calorify Pro!</Text>
               <Text style={styles.celebrationTagline}>
                 {selectedPlan.trialDays
-                  ? `Your ${selectedPlan.trialDays}-day free trial is now active. Billed on ${new Date(Date.now() + 7 * 86400000).toLocaleDateString()} unless canceled.`
+                  ? `Your ${selectedPlan.trialDays}-day free trial is now active. Billed on ${new Date(Date.now() + selectedPlan.trialDays * 86400000).toLocaleDateString()} unless canceled.`
                   : 'Your unlimited VIP membership is now fully active.'}
               </Text>
 
@@ -181,15 +186,6 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                   </View>
                 </View>
 
-                <View style={styles.unlockedRow}>
-                  <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color={Colors.success} />
-                  </View>
-                  <View style={styles.unlockedTextWrap}>
-                    <Text style={styles.unlockedTitle}>Streak Freeze Protection</Text>
-                    <Text style={styles.unlockedDesc}>Automatic streak recovery keeps your consistency intact.</Text>
-                  </View>
-                </View>
               </View>
 
               <Pressable
@@ -203,6 +199,45 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               >
                 <Text style={styles.exploreBtnText}>Explore Pro Features</Text>
                 <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
+              </Pressable>
+            </ScrollView>
+          </View>
+        ) : isPro ? (
+          <View style={styles.celebrationWrapper} testID="pro-status-view">
+            <View style={styles.topBar}>
+              <Pressable
+                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
+                onPress={onClose}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <Ionicons name="close" size={20} color={Colors.textPrimary} />
+              </Pressable>
+            </View>
+            <ScrollView
+              contentContainerStyle={styles.celebrationScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.celebrationBadgeCircle}>
+                <Ionicons name="star" size={42} color={Colors.warningDark} />
+              </View>
+              <Text style={styles.celebrationHeadline}>Calorify Pro is active</Text>
+              <Text style={styles.celebrationTagline}>
+                {activePlanId ? `${PLAN_NAMES[activePlanId]} plan • ` : ''}
+                {formatExpiry(expiresAt)}
+              </Text>
+              <Text style={styles.termsNote}>
+                To change or cancel, use subscriptions in your Google Play Store or App Store
+                settings.
+              </Text>
+              <Pressable
+                style={({ pressed }) => [styles.exploreBtn, pressed && styles.btnPressed]}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Done"
+              >
+                <Text style={styles.exploreBtnText}>Done</Text>
               </Pressable>
             </ScrollView>
           </View>
@@ -235,8 +270,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
           {/* Headline & Subtitle */}
           <Text style={styles.headline}>Unlock Calorify Pro</Text>
           <Text style={styles.subtitle}>
-            Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak
-            protection.
+            Experience the full power of AI nutrition scanning and deep metabolic analytics.
           </Text>
 
           {highlightFeature && (
@@ -397,11 +431,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warning,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 6,
+    elevation: 0,
   },
   headline: {
     fontFamily: Fonts.urbanist.bold,
@@ -624,11 +654,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
+    elevation: 0,
   },
   celebrationPill: {
     backgroundColor: Colors.carbsLight,
@@ -646,7 +672,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   celebrationHeadline: {
-    fontFamily: Fonts.kurale,
+    fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     color: Colors.textPrimary,
     textAlign: 'center',
@@ -711,11 +737,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    elevation: 0,
   },
   exploreBtnText: {
     fontFamily: Fonts.urbanist.bold,

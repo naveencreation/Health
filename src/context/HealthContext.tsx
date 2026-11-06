@@ -31,7 +31,8 @@ import {
   StepLogEntry,
   OnboardingPlanPayload,
 } from '@/types';
-import { NotificationStorage } from '@/services/notifications';
+import { NotificationStorage, NotificationScheduler } from '@/services/notifications';
+import { ScopedStorage } from '@/services/storage/scopedStorage';
 import { INITIAL_FOOD_DATABASE } from '@/data/foodDatabase';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { auth, db } from '@/services/firebase';
@@ -43,6 +44,8 @@ import {
   onAuthStateChanged,
   updateProfile,
   deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import {
   doc,
@@ -58,6 +61,7 @@ import {
   deleteField,
 } from 'firebase/firestore';
 import { SecureKeyStorage } from '@/services/ai/storage/SecureKeyStorage';
+import { PaymentService } from '@/services/payments/paymentService';
 import {
   calculateStepMetrics,
   mapHealthConnectRecordsToStepEntries,
@@ -134,31 +138,28 @@ const DEFAULT_GOALS: UserGoals = {
 export const getTodayDateString = (date?: Date): string => toDateString(date);
 
 /**
- * Computes the current consecutive-day streak from dailyLogs.
- * A day counts as "active" if it has ≥1 meal, any water > 0, or any steps > 0.
- * Starts from today and walks backwards until a gap is found.
- * Pure function — no side-effects. Bounded to max 30 days for performance.
+ * Consecutive days with something the user logged: a meal, water, a weigh-in or a workout.
+ * Steps alone don't count, since Health Connect syncs them without the user doing anything.
+ * An empty today doesn't break the streak until the day is over. 0 when nothing is logged.
  */
-export const computeStreak = (logs: Record<string, DailyLog>): number => {
-  let streak = 0;
-  const today = new Date();
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const dateStr = getTodayDateString(d);
-    const log = logs[dateStr];
-    const isActive =
+export const computeStreak = (logs: Record<string, DailyLog>, now: Date = new Date()): number => {
+  const isActive = (log?: DailyLog) =>
+    Boolean(
       log &&
-      ((Array.isArray(log.meals) && log.meals.length > 0) ||
-        (typeof log.waterMl === 'number' && log.waterMl > 0) ||
-        (typeof log.steps === 'number' && log.steps > 0));
-    if (isActive) {
-      streak++;
-    } else {
-      break;
-    }
+        ((log.meals?.length ?? 0) > 0 ||
+          (log.waterMl ?? 0) > 0 ||
+          (log.weightEntries?.length ?? 0) > 0 ||
+          (log.activities?.length ?? 0) > 0)
+    );
+  const d = new Date(now);
+  if (!isActive(logs[getTodayDateString(d)])) d.setDate(d.getDate() - 1);
+  let streak = 0;
+  // Ends at the first gap; logs are finite, so this terminates
+  while (isActive(logs[getTodayDateString(d)])) {
+    streak++;
+    d.setDate(d.getDate() - 1);
   }
-  return Math.max(streak, 1); // minimum streak of 1
+  return streak;
 };
 
 export interface HealthContextType {
@@ -216,8 +217,8 @@ export interface HealthContextType {
   login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   loginAnonymous: (guestName?: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
-  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
+  logout: (force?: boolean) => Promise<boolean>;
+  deleteAccount: (password?: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => Promise<void>;
   applyOnboardingPlan: (data: OnboardingPlanPayload) => Promise<void>;
 }
@@ -309,6 +310,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const firestoreLogDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firestoreGoalsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSyncedLogsRef = useRef<Record<string, string>>({});
+  const flushLogsRef = useRef<(() => Promise<boolean>) | null>(null);
 
   // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
   const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
@@ -701,58 +703,61 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       clearTimeout(firestoreLogDebounceRef.current);
     }
 
-    firestoreLogDebounceRef.current = setTimeout(() => {
+    // Syncs every date that differs from the last confirmed cloud copy; resolves true when all landed
+    const flush = async (): Promise<boolean> => {
       if (
-        !isLoggingOutRef.current &&
-        !isHydratingRef.current &&
-        auth.currentUser &&
-        !currentUser?.isGuest &&
-        hydratedUidRef.current === auth.currentUser.uid
+        isLoggingOutRef.current ||
+        isHydratingRef.current ||
+        !auth.currentUser ||
+        currentUser?.isGuest ||
+        hydratedUidRef.current !== auth.currentUser.uid
       ) {
-        const datesToSync = new Set<string>([selectedDate]);
-        for (const dateKey of Object.keys(dailyLogs)) {
-          const serialized = JSON.stringify(dailyLogs[dateKey]);
-          if (lastSyncedLogsRef.current[dateKey] !== serialized) {
-            datesToSync.add(dateKey);
-          }
-        }
-
-        datesToSync.forEach(dKey => {
-          const log = dailyLogs[dKey];
-          if (log) {
-            try {
-              const payload = sanitizeForFirestore({
-                date: dKey,
-                waterMl: typeof log.waterMl === 'number' ? Math.max(0, log.waterMl) : 0,
-                steps: typeof log.steps === 'number' ? Math.max(0, log.steps) : 0,
-                meals: Array.isArray(log.meals) ? log.meals : [],
-                activities: Array.isArray(log.activities) ? log.activities : [],
-                ...(Array.isArray(log.waterEntries) ? { waterEntries: log.waterEntries } : {}),
-                ...(typeof log.weightKg === 'number' ? { weightKg: log.weightKg } : {}),
-                ...(Array.isArray(log.weightEntries) ? { weightEntries: log.weightEntries } : {}),
-                ...(Array.isArray(log.stepEntries) ? { stepEntries: log.stepEntries } : {}),
-              });
-              // All weigh-ins deleted: merge:true would keep the old cloud weightKg and revive it
-              const clearsWeight =
-                typeof log.weightKg !== 'number' &&
-                Array.isArray(log.weightEntries) &&
-                log.weightEntries.length === 0;
-              if (clearsWeight) Object.assign(payload, { weightKg: deleteField() });
-              setDoc(doc(db, 'users', auth.currentUser!.uid, 'dailyLogs', dKey), payload, {
-                merge: true,
-              })
-                .then(() => {
-                  lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
-                })
-                .catch(err => {
-                  if (__DEV__) console.warn('dailyLogs setDoc async error:', err);
-                });
-            } catch (err) {
-              if (__DEV__) console.warn('dailyLogs setDoc sync error:', err);
-            }
-          }
-        });
+        return true;
       }
+      const uid = auth.currentUser.uid;
+      const datesToSync = new Set<string>([selectedDate]);
+      for (const dateKey of Object.keys(dailyLogs)) {
+        const serialized = JSON.stringify(dailyLogs[dateKey]);
+        if (lastSyncedLogsRef.current[dateKey] !== serialized) {
+          datesToSync.add(dateKey);
+        }
+      }
+
+      const writes = [...datesToSync].map(async dKey => {
+        const log = dailyLogs[dKey];
+        if (!log) return true;
+        try {
+          const payload = sanitizeForFirestore({
+            date: dKey,
+            waterMl: typeof log.waterMl === 'number' ? Math.max(0, log.waterMl) : 0,
+            steps: typeof log.steps === 'number' ? Math.max(0, log.steps) : 0,
+            meals: Array.isArray(log.meals) ? log.meals : [],
+            activities: Array.isArray(log.activities) ? log.activities : [],
+            ...(Array.isArray(log.waterEntries) ? { waterEntries: log.waterEntries } : {}),
+            ...(typeof log.weightKg === 'number' ? { weightKg: log.weightKg } : {}),
+            ...(Array.isArray(log.weightEntries) ? { weightEntries: log.weightEntries } : {}),
+            ...(Array.isArray(log.stepEntries) ? { stepEntries: log.stepEntries } : {}),
+          });
+          // All weigh-ins deleted: merge:true would keep the old cloud weightKg and revive it
+          const clearsWeight =
+            typeof log.weightKg !== 'number' &&
+            Array.isArray(log.weightEntries) &&
+            log.weightEntries.length === 0;
+          if (clearsWeight) Object.assign(payload, { weightKg: deleteField() });
+          await setDoc(doc(db, 'users', uid, 'dailyLogs', dKey), payload, { merge: true });
+          lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
+          return true;
+        } catch (err) {
+          if (__DEV__) console.warn('dailyLogs setDoc error:', err);
+          return false;
+        }
+      });
+      return (await Promise.all(writes)).every(Boolean);
+    };
+    flushLogsRef.current = flush;
+
+    firestoreLogDebounceRef.current = setTimeout(() => {
+      flush();
     }, 1000);
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
 
@@ -837,7 +842,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (newStreak !== userGoalsRef.current.streakDays) {
       setUserGoals(prev => ({ ...prev, streakDays: newStreak }));
     }
-  }, [dailyLogs, isLoaded]);
+    // todayStr: a day passing with no log can end the streak
+  }, [dailyLogs, isLoaded, todayStr]);
 
   // Combined food database
   const foodDatabase = useMemo(() => {
@@ -2040,6 +2046,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
       try {
         const normalizedEmail = data.email.toLowerCase().trim();
+        // Entitlement keys follow auth.currentUser, so read the guest's Pro before the switch
+        const guestEntitlement = await PaymentService.getEntitlement();
         try {
           const userCredential = await createUserWithEmailAndPassword(
             auth,
@@ -2047,6 +2055,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             data.password
           );
           const fbUser = userCredential.user;
+          if (guestEntitlement.isPro) await PaymentService.saveEntitlement(guestEntitlement);
 
           await updateProfile(fbUser, { displayName: data.name }).catch(() => {});
 
@@ -2144,7 +2153,15 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     [userGoals, updateGoals]
   );
 
-  const logout = useCallback(async (): Promise<void> => {
+  // Returns false (and stays signed in) when recent edits could not reach the cloud, unless forced
+  const logout = useCallback(async (force = false): Promise<boolean> => {
+    if (firestoreLogDebounceRef.current) clearTimeout(firestoreLogDebounceRef.current);
+    const synced = await Promise.race([
+      flushLogsRef.current ? flushLogsRef.current() : Promise.resolve(true),
+      new Promise<boolean>(resolve => setTimeout(() => resolve(false), 5000)),
+    ]);
+    if (!synced && !force) return false;
+
     isLoggingOutRef.current = true;
     hydratedUidRef.current = null;
 
@@ -2152,6 +2169,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     SecureKeyStorage.invalidateCache();
 
     const uid = auth.currentUser?.uid;
+    // Reminders are per user; nothing reconciles them once signed out
+    await NotificationScheduler.cancelAllAndReset(uid).catch(() => {});
 
     try {
       await firebaseSignOut(auth);
@@ -2185,13 +2204,37 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLoggingOutRef.current = false;
       }, 500);
     }
+    return true;
   }, []);
 
-  const deleteAccount = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+  const deleteAccount = useCallback(async (password?: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      const fbUser = auth.currentUser;
+      // Reauthenticate before touching data: a stale login would fail deleteUser after the purge
+      if (fbUser?.email && !fbUser.isAnonymous) {
+        if (!password) return { success: false, error: 'Enter your password to confirm.' };
+        try {
+          await reauthenticateWithCredential(
+            fbUser,
+            EmailAuthProvider.credential(fbUser.email, password)
+          );
+        } catch (reauthErr: any) {
+          const wrong =
+            reauthErr?.code === 'auth/wrong-password' ||
+            reauthErr?.code === 'auth/invalid-credential';
+          return {
+            success: false,
+            error: wrong
+              ? 'Incorrect password.'
+              : 'Could not verify your password. Check your connection and try again.',
+          };
+        }
+      }
+
       isLoggingOutRef.current = true;
       hydratedUidRef.current = null;
-      const fbUser = auth.currentUser;
+      if (firestoreLogDebounceRef.current) clearTimeout(firestoreLogDebounceRef.current);
+      if (firestoreGoalsDebounceRef.current) clearTimeout(firestoreGoalsDebounceRef.current);
       if (fbUser) {
         const uid = fbUser.uid;
 
@@ -2229,6 +2272,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.warn('Error purging user photos during account deletion:', photoErr);
         }
 
+        // 2c. Remove the Gemini key while the uid still resolves to this user
+        await SecureKeyStorage.removeApiKey(uid).catch(() => {});
+
         // 3. Delete user from Firebase Auth
         try {
           await deleteUser(fbUser);
@@ -2247,15 +2293,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
         }
 
-        // 4. Clear user-scoped offline storage and keys
+        // 4. Clear user-scoped offline storage: logs, goals, foods, Ria memory, scoped settings, reminders
         try {
-          await AsyncStorage.removeItem(getUserLogsKey(uid));
-          await AsyncStorage.removeItem(getUserGoalsKey(uid));
-          await AsyncStorage.removeItem(getUserCustomFoodsKey(uid));
+          await AsyncStorage.multiRemove([
+            getUserLogsKey(uid),
+            getUserGoalsKey(uid),
+            getUserCustomFoodsKey(uid),
+            ...['ria_chat', 'ria_summary', 'ria_conversations', 'ria_user_facts'].map(
+              k => `@calori_${k}_${uid}`
+            ),
+          ]);
+          await ScopedStorage.clearUserScope(uid);
         } catch (e) {}
-
-        // 5. Purge any stored Gemini API key
-        await SecureKeyStorage.removeApiKey().catch(() => {});
+        await NotificationScheduler.cancelAllAndReset(uid).catch(() => {});
       }
 
       // 4. Clear local state and cache
@@ -2270,6 +2320,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentUser(null);
       setUserGoals(DEFAULT_GOALS);
       setDailyLogs({ [todayStr]: emptyLog });
+      setCustomFoods([]);
       setSelectedDate(todayStr);
       try {
         await AsyncStorage.multiRemove([
@@ -2353,6 +2404,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           age: data.biometrics.age,
           gender: data.biometrics.sex || 'male',
           goal: data.biometrics.goal || 'maintain',
+          ...(data.biometrics.activityLevel ? { activityLevel: data.biometrics.activityLevel } : {}),
+          ...(data.biometrics.pace ? { pace: data.biometrics.pace } : {}),
           weightUnit: data.biometrics.weightUnit || 'kg',
           streakDays: 1,
         };

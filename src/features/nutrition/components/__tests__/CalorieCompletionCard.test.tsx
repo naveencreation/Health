@@ -25,7 +25,7 @@ describe('CalorieCompletionCard', () => {
     );
 
     // Title
-    expect(getByText('Calorie (kcal)')).toBeTruthy();
+    expect(getByText('Calories (kcal)')).toBeTruthy();
 
     // Legends
     expect(getByText('Selected')).toBeTruthy();

@@ -57,25 +57,29 @@ function safeDecode(input: string): string {
 class SecureKeyStorageService {
   private inMemoryCache: string | null = null;
   private isLoaded = false;
+  // Storage key the cache was loaded for; a sign-in without a sign-out changes it
+  private cachedFor: string | null = null;
 
   /**
    * Retrieves the user's Gemini API key securely.
    * Leverages in-memory caching to avoid continuous bridge overhead.
    */
   async getApiKey(): Promise<string | null> {
-    if (this.isLoaded && this.inMemoryCache !== null) {
+    const storageKey = getStorageKey();
+    if (this.isLoaded && this.cachedFor === storageKey && this.inMemoryCache !== null) {
       return this.inMemoryCache;
     }
+    this.inMemoryCache = null;
 
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          this.inMemoryCache = window.localStorage.getItem(getStorageKey());
+          this.inMemoryCache = window.localStorage.getItem(storageKey);
         }
       } else {
         const isAvailable = await SecureStore.isAvailableAsync();
         if (isAvailable) {
-          this.inMemoryCache = await SecureStore.getItemAsync(getStorageKey());
+          this.inMemoryCache = await SecureStore.getItemAsync(storageKey);
         }
       }
     } catch (error) {
@@ -84,6 +88,7 @@ class SecureKeyStorageService {
     }
 
     this.isLoaded = true;
+    this.cachedFor = storageKey;
     return this.inMemoryCache;
   }
 
@@ -97,6 +102,7 @@ class SecureKeyStorageService {
     cleanedKey = cleanedKey.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim();
     this.inMemoryCache = cleanedKey;
     this.isLoaded = true;
+    this.cachedFor = getStorageKey();
 
     try {
       if (Platform.OS === 'web') {
@@ -117,17 +123,17 @@ class SecureKeyStorageService {
   /**
    * Completely removes the API key from device storage and purges any legacy cloud field.
    */
-  async removeApiKey(): Promise<void> {
+  async removeApiKey(uid?: string): Promise<void> {
     this.inMemoryCache = null;
     this.isLoaded = true;
 
     try {
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem(getStorageKey());
+          window.localStorage.removeItem(getStorageKey(uid));
         }
       } else {
-        await SecureStore.deleteItemAsync(getStorageKey());
+        await SecureStore.deleteItemAsync(getStorageKey(uid));
       }
     } catch (error) {
       console.warn('SecureKeyStorage: Error removing API key', error);
@@ -135,10 +141,10 @@ class SecureKeyStorageService {
 
     // Ensure any legacy cloud key is deleted
     try {
-      const uid = auth.currentUser?.uid;
-      if (uid) {
+      const cloudUid = uid || auth.currentUser?.uid;
+      if (cloudUid) {
         await setDoc(
-          doc(db, 'users', uid),
+          doc(db, 'users', cloudUid),
           { geminiKeyObfuscated: deleteField() },
           { merge: true }
         );
@@ -173,6 +179,7 @@ class SecureKeyStorageService {
   invalidateCache(): void {
     this.inMemoryCache = null;
     this.isLoaded = false;
+    this.cachedFor = null;
   }
 
   /**

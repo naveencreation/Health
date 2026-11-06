@@ -204,8 +204,36 @@ describe('computeStreak', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  test('returns a minimum streak of 1 for empty logs', () => {
-    expect(computeStreak({})).toBe(1);
+  test('returns 0 when nothing is logged', () => {
+    expect(computeStreak({})).toBe(0);
+  });
+
+  test('keeps the streak while today is still empty', () => {
+    expect(
+      computeStreak({
+        '2026-09-22': activeLog('2026-09-22'),
+        '2026-09-21': activeLog('2026-09-21'),
+      })
+    ).toBe(2);
+  });
+
+  test('does not count synced steps alone', () => {
+    expect(
+      computeStreak({
+        '2026-09-23': { date: '2026-09-23', meals: [], waterMl: 0, steps: 9000, activities: [] },
+      })
+    ).toBe(0);
+  });
+
+  test('is not capped at 30 days', () => {
+    const logs: Record<string, DailyLog> = {};
+    for (let i = 0; i < 45; i++) {
+      const d = new Date('2026-09-23T12:00:00');
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      logs[key] = activeLog(key);
+    }
+    expect(computeStreak(logs)).toBe(45);
   });
 
   test('counts consecutive active days', () => {

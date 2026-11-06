@@ -54,8 +54,8 @@ describe('BMIGaugeCard', () => {
         <BMIGaugeCard weightKg={72.5} heightCm={178} />
       );
 
-      // Header title and central label both display "BMI (kg/m2)"
-      const bmiLabels = getAllByText('BMI (kg/m2)');
+      // Header title and central label both display "BMI (kg/m²)"
+      const bmiLabels = getAllByText('BMI (kg/m²)');
       expect(bmiLabels.length).toBeGreaterThanOrEqual(2);
 
       // Status pill and category row both display Normal
@@ -76,9 +76,10 @@ describe('BMIGaugeCard', () => {
         <BMIGaugeCard weightKg={null} heightCm={178} />
       );
 
+      // Falls back to BIOMETRIC_DEFAULTS weight (68 kg) => 68 / 1.78^2 = 21.5
       const normalElements = getAllByText('Normal');
       expect(normalElements.length).toBe(2);
-      expect(getByText('22.9')).toBeTruthy();
+      expect(getByText('21.5')).toBeTruthy();
     });
 
     test('renders overweight status correctly when weight reflects BMI >= 25', async () => {

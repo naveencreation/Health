@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, Platform, ViewStyle, StyleProp, AccessibilityInfo } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -27,6 +27,10 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
   style,
 }) => {
   const translateX = useSharedValue(screenWidth);
+  // Latest onClosed without restarting the close animation when the parent re-renders
+  const onClosedRef = useRef(onClosed);
+  onClosedRef.current = onClosed;
+  const fireClosed = useCallback(() => onClosedRef.current(), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,7 +65,7 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
         .then(reduced => {
           if (reduced) {
             translateX.value = screenWidth;
-            onClosed();
+            fireClosed();
           } else {
             translateX.value = withTiming(
               screenWidth,
@@ -71,7 +75,7 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
               },
               finished => {
                 if (finished) {
-                  runOnJS(onClosed)();
+                  runOnJS(fireClosed)();
                 }
               }
             );
@@ -86,13 +90,13 @@ export const SlideInSubScreen: React.FC<SlideInSubScreenProps> = ({
             },
             finished => {
               if (finished) {
-                runOnJS(onClosed)();
+                runOnJS(fireClosed)();
               }
             }
           );
         });
     }
-  }, [isClosing, screenWidth, translateX, onClosed]);
+  }, [isClosing, screenWidth, translateX, fireClosed]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],

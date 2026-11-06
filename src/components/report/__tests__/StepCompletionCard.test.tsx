@@ -47,7 +47,7 @@ describe('StepCompletionCard', () => {
     {
       dateStr: '2026-09-19',
       dayNum: 19,
-      dayName: 'T',
+      dayName: 'Thursday 19',
       steps: 6800,
       goalSteps: 6000,
       completionPct: 113,
@@ -90,7 +90,7 @@ describe('StepCompletionCard', () => {
     );
 
     // Title
-    expect(getByText('Step')).toBeTruthy();
+    expect(getByText('Steps')).toBeTruthy();
 
     // Legends
     expect(getByText('Selected')).toBeTruthy();
@@ -131,7 +131,7 @@ describe('StepCompletionCard', () => {
       />
     );
 
-    fireEvent.press(getByLabelText('Day 19: 6,800 steps'));
+    fireEvent.press(getByLabelText('Thursday 19: 6,800 steps'));
     expect(handleSelectDay).toHaveBeenCalledWith(3);
   });
 

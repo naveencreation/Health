@@ -1,4 +1,4 @@
-import { UserGoals } from '@/types';
+import { DailyLog, UserGoals } from '@/types';
 import { DayWeightTrendData, WeightSummaryData } from '@/components/report';
 import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import { DayBucketItem } from '@/features/nutrition/services/nutritionAnalytics';
@@ -8,48 +8,60 @@ export interface WeightAnalyticsResult {
   weightSummary: WeightSummaryData;
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 /**
- * Computes weight tracking trend points, unit conversions, and delta metrics.
+ * Computes weight trend points and period metrics from real weigh-ins only.
+ * Days/buckets without a weigh-in are null (the chart shows "No entry").
  */
 export function computeWeightAnalytics(
   days: DayBucketItem[],
+  dailyLogs: Record<string, DailyLog>,
   userWeightKg: number = BIOMETRIC_DEFAULTS.currentWeightKg,
   userGoals?: UserGoals | null,
   weightUnit: 'kg' | 'lbs' = 'kg',
   unitFactor: number = 1
 ): WeightAnalyticsResult {
-  const tDays: DayWeightTrendData[] = [];
-  let latestWeight = userWeightKg;
+  const weighIns: number[] = []; // every weigh-in in the period, oldest first
+  let periodEnd = '';
 
-  days.forEach(item => {
-    let w = userWeightKg;
-
-    if ('log' in item && item.log?.weightKg) {
-      w = item.log.weightKg;
-      latestWeight = w;
-    }
-
-    const displayWeight = Number((w * unitFactor).toFixed(1));
-    tDays.push({
+  const tDays: DayWeightTrendData[] = days.map(item => {
+    const dates = 'log' in item ? [item.dateStr] : item.bucketDates || item.monthDates || [];
+    const ws: number[] = [];
+    dates.forEach(d => {
+      const w = (item.log && d === item.dateStr ? item.log : dailyLogs[d])?.weightKg;
+      if (typeof w === 'number' && w > 0) ws.push(w);
+      if (d > periodEnd) periodEnd = d;
+    });
+    weighIns.push(...ws);
+    const w = ws.length > 0 ? ws.reduce((a, b) => a + b, 0) / ws.length : null;
+    return {
       dateStr: item.dateStr,
       dayNum: item.dayNum,
       dayName: item.dayName,
       weightKg: w,
-      displayWeight,
-    });
+      displayWeight: w === null ? null : Number((w * unitFactor).toFixed(1)),
+    };
   });
 
-  const startW = userGoals?.startWeightKg || latestWeight;
-  const currentW = latestWeight;
-  const targetW = userGoals?.targetWeightKg || BIOMETRIC_DEFAULTS.currentWeightKg;
-  const netChange = currentW - startW;
+  // Current = latest weigh-in on or before the period end, else the profile weight
+  let currentW = weighIns.length > 0 ? weighIns[weighIns.length - 1] : null;
+  if (currentW === null) {
+    const prior = Object.keys(dailyLogs)
+      .filter(d => d <= periodEnd && (dailyLogs[d]?.weightKg ?? 0) > 0)
+      .sort()
+      .pop();
+    currentW = prior ? dailyLogs[prior].weightKg! : userWeightKg;
+  }
 
   const summary: WeightSummaryData = {
-    currentWeightKg: Number(currentW.toFixed(1)),
-    startWeightKg: Number(startW.toFixed(1)),
-    targetWeightKg: Number(targetW.toFixed(1)),
-    netChangeKg: Number(netChange.toFixed(1)),
-    avgWeightKg: Number(currentW.toFixed(1)),
+    currentWeightKg: round2(currentW),
+    startWeightKg: userGoals?.startWeightKg ? round2(userGoals.startWeightKg) : undefined,
+    targetWeightKg: userGoals?.targetWeightKg ? round2(userGoals.targetWeightKg) : undefined,
+    // Change within this period: last weigh-in minus first
+    netChangeKg: weighIns.length >= 2 ? round2(weighIns[weighIns.length - 1] - weighIns[0]) : null,
+    avgWeightKg:
+      weighIns.length > 0 ? round2(weighIns.reduce((a, b) => a + b, 0) / weighIns.length) : null,
     unit: weightUnit,
   };
 

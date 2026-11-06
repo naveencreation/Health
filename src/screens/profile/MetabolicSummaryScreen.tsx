@@ -4,6 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useGoals } from '@/context/HealthContext';
+import { planFor, LBS_PER_KG } from '@/features/onboarding/services/goalsForm';
+
+const ACTIVITY_LABEL: Record<string, string> = {
+  sedentary: 'Sedentary',
+  lightly_active: 'Lightly active',
+  moderately_active: 'Moderately active',
+  very_active: 'Very active',
+};
 
 interface MetabolicSummaryScreenProps {
   onBack: () => void;
@@ -18,19 +26,23 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
 }) => {
   const { userGoals } = useGoals();
 
-  const weightNum = userGoals.currentWeightKg || 74.2;
-  const targetWeightNum = userGoals.targetWeightKg || 68.0;
-  const heightNum = userGoals.heightCm || 178;
-  const userAge = userGoals.age || 24;
-  const genderConstant =
-    userGoals.gender === 'female' ? -161 : userGoals.gender === 'other' ? -78 : 5;
-
-  // Mifflin-St Jeor formula
-  const bmrEst = Math.round(10 * weightNum + 6.25 * heightNum - 5 * userAge + genderConstant);
-  const tdeeEst = Math.round(bmrEst * 1.375); // Light activity
-  const currentBudget = userGoals.dailyCalorieBudget || 1950;
-  const dailyDeficit = Math.max(0, tdeeEst - currentBudget);
-  const weeklyFatLossKg = ((dailyDeficit * 7) / 7700).toFixed(2); // ~7700 kcal per kg of fat
+  // Same formula and activity level as the onboarding plan
+  const plan = planFor(userGoals);
+  const bmrEst = plan.bmr;
+  const tdeeEst = plan.tdee;
+  const currentBudget = userGoals.dailyCalorieBudget;
+  const balance = tdeeEst - currentBudget; // > 0 deficit, < 0 surplus
+  const isSurplus = balance < 0;
+  const dailyGap = Math.abs(balance);
+  const weeklyKg = ((dailyGap * 7) / 7700).toFixed(2); // ~7700 kcal per kg of body weight
+  const isLbs = userGoals.weightUnit === 'lbs';
+  const fmtWeight = (kg?: number) =>
+    kg ? `${(Math.round((isLbs ? kg * LBS_PER_KG : kg) * 10) / 10).toFixed(1)} ${isLbs ? 'lbs' : 'kg'}` : 'Not set';
+  const sexLabel =
+    userGoals.gender === 'female' ? 'Female' : userGoals.gender === 'male' ? 'Male' : 'Not specified';
+  const activityLabel = userGoals.activityLevel
+    ? ACTIVITY_LABEL[userGoals.activityLevel]
+    : 'Moderately active (assumed)';
 
   return (
     <View style={styles.rootContainer}>
@@ -99,7 +111,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             accessibilityLabel={`Total daily energy expenditure: ${tdeeEst} kilocalories burn per day`}
           >
             <View style={[styles.statIconBox, styles.statIconTdee]}>
-              <Ionicons name="flash" size={20} color={Colors.protein} />
+              <Ionicons name="flash" size={20} color={Colors.steps} />
             </View>
             <Text style={[styles.statVal, styles.statValTdee]}>{tdeeEst}</Text>
             <Text style={styles.statLabel}>TDEE (kcal/day)</Text>
@@ -111,14 +123,14 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
         <View
           style={styles.engineCard}
           accessible={true}
-          accessibilityLabel={`Energy balance: ${tdeeEst} burn minus ${currentBudget} budget equals ${dailyDeficit} daily caloric deficit. Projected fat loss approximately ${weeklyFatLossKg} kg per week`}
+          accessibilityLabel={`Energy balance: ${tdeeEst} burn minus ${currentBudget} budget, a daily ${isSurplus ? 'surplus' : 'deficit'} of ${dailyGap} kilocalories. About ${weeklyKg} kilograms ${isSurplus ? 'gained' : 'lost'} per week`}
         >
           <View style={styles.engineHeader}>
             <View style={styles.engineIconBox}>
               <Ionicons name="analytics" size={18} color={Colors.primary} />
             </View>
             <View style={styles.flex1}>
-              <Text style={styles.engineTitle}>Energy Balance & Deficit</Text>
+              <Text style={styles.engineTitle}>Energy Balance</Text>
               <Text style={styles.engineSubtitle}>
                 Calculated from diet target vs total daily expenditure
               </Text>
@@ -138,17 +150,29 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
             <Text style={styles.formulaSign}>=</Text>
             <View style={styles.formulaCol}>
               <Text style={[styles.formulaNumber, styles.formulaNumberDeficit]}>
-                {dailyDeficit}
+                {isSurplus ? `+${dailyGap}` : dailyGap}
               </Text>
-              <Text style={styles.formulaKey}>Daily Deficit</Text>
+              <Text style={styles.formulaKey}>{isSurplus ? 'Daily Surplus' : 'Daily Deficit'}</Text>
             </View>
           </View>
 
           <View style={styles.fatLossBanner}>
-            <Ionicons name="trending-down" size={20} color={Colors.primary} />
+            <Ionicons
+              name={isSurplus ? 'trending-up' : dailyGap === 0 ? 'remove' : 'trending-down'}
+              size={20}
+              color={Colors.primary}
+            />
             <Text style={styles.fatLossText}>
-              Projected fat loss: <Text style={styles.boldText}>~{weeklyFatLossKg} kg / week</Text>{' '}
-              ({Math.round(dailyDeficit * 7).toLocaleString()} kcal weekly deficit).
+              {dailyGap === 0 ? (
+                'Your budget matches your daily burn, so your weight should hold steady.'
+              ) : (
+                <>
+                  {isSurplus ? 'Projected gain: ' : 'Projected loss: '}
+                  <Text style={styles.boldText}>~{weeklyKg} kg / week</Text> (
+                  {Math.round(dailyGap * 7).toLocaleString()} kcal weekly{' '}
+                  {isSurplus ? 'surplus' : 'deficit'}).
+                </>
+              )}
             </Text>
           </View>
         </View>
@@ -161,7 +185,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
               <Ionicons name="scale-outline" size={18} color="#64748B" />
               <Text style={styles.detailLabel}>Current Weight</Text>
             </View>
-            <Text style={styles.detailValue}>{weightNum} kg</Text>
+            <Text style={styles.detailValue}>{fmtWeight(userGoals.currentWeightKg)}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -171,7 +195,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
               <Ionicons name="flag-outline" size={18} color="#64748B" />
               <Text style={styles.detailLabel}>Target Goal Weight</Text>
             </View>
-            <Text style={styles.detailValue}>{targetWeightNum} kg</Text>
+            <Text style={styles.detailValue}>{fmtWeight(userGoals.targetWeightKg)}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -181,7 +205,39 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
               <Ionicons name="body-outline" size={18} color="#64748B" />
               <Text style={styles.detailLabel}>Recorded Height</Text>
             </View>
-            <Text style={styles.detailValue}>{heightNum} cm</Text>
+            <Text style={styles.detailValue}>
+              {userGoals.heightCm ? `${Math.round(userGoals.heightCm)} cm` : 'Not set'}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailLeft}>
+              <Ionicons name="calendar-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.detailLabel}>Age</Text>
+            </View>
+            <Text style={styles.detailValue}>{userGoals.age ?? 'Not set'}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailLeft}>
+              <Ionicons name="person-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.detailLabel}>Sex</Text>
+            </View>
+            <Text style={styles.detailValue}>{sexLabel}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailLeft}>
+              <Ionicons name="walk-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.detailLabel}>Activity Level</Text>
+            </View>
+            <Text style={styles.detailValue}>{activityLabel}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -203,7 +259,7 @@ export const MetabolicSummaryScreen: React.FC<MetabolicSummaryScreenProps> = ({
           <Text style={styles.explainerText}>
             Basal Metabolic Rate (BMR) represents the calories your body requires at complete rest
             to sustain vital organ functions. Total Daily Energy Expenditure (TDEE) accounts for
-            lifestyle and light physical activity.
+            your activity level on top of that.
           </Text>
         </View>
       </ScrollView>
@@ -236,7 +292,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -249,7 +305,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -275,7 +331,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
     lineHeight: 28,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -283,7 +339,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
     includeFontPadding: false,
   },
@@ -303,7 +359,7 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
@@ -325,17 +381,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.fatLight,
   },
   statIconTdee: {
-    backgroundColor: Colors.proteinLight,
+    backgroundColor: Colors.stepsLight,
   },
   statVal: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 26,
     lineHeight: 32,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
   },
   statValTdee: {
-    color: '#15803D',
+    color: Colors.stepsDark,
   },
   statLabel: {
     fontFamily: Fonts.urbanist.semiBold,
@@ -346,11 +402,11 @@ const styles = StyleSheet.create({
   statSub: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     marginTop: 1,
   },
   engineCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 18,
@@ -376,20 +432,20 @@ const styles = StyleSheet.create({
   engineTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   engineSubtitle: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
   },
   engineFormulaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
     borderRadius: 8,
     borderCurve: 'continuous',
     paddingVertical: 14,
@@ -402,7 +458,7 @@ const styles = StyleSheet.create({
   formulaNumber: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 17,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   formulaNumberDeficit: {
     color: Colors.primaryDark,
@@ -410,14 +466,14 @@ const styles = StyleSheet.create({
   formulaKey: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 3,
     textAlign: 'center',
   },
   formulaSign: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#94A3B8',
+    color: Colors.textMuted,
     paddingHorizontal: 4,
   },
   fatLossBanner: {
@@ -429,7 +485,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFD5C6',
+    borderColor: Colors.burnBorder,
   },
   fatLossText: {
     fontFamily: Fonts.urbanist.regular,
@@ -444,12 +500,12 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
   detailsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
@@ -477,7 +533,7 @@ const styles = StyleSheet.create({
   detailValue: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   divider: {
     height: 1,
@@ -486,13 +542,13 @@ const styles = StyleSheet.create({
   explainerCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   explainerIconBox: {
     marginTop: 1,
@@ -502,7 +558,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 18,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   flex1: {
     flex: 1,

@@ -17,19 +17,19 @@ export interface MovementAnalyticsResult {
   stepSummary: StepSummaryData;
 }
 
+// 0 steps means 0 minutes, not the 1-minute floor calculateStepMetrics applies
+const metricsFor = (steps: number) => calculateStepMetrics(steps, steps > 0 ? undefined : 0);
+
 /**
  * Computes step metrics, completion percentages, calorie burn, and duration trends.
+ * Monthly/yearly bars are averages per logged day; the summary totals are real sums.
  */
 export function computeMovementAnalytics(
   days: DayBucketItem[],
   dailyLogs: Record<string, DailyLog>,
-  dailyStepGoal: number,
-  userWeightKg: number
+  dailyStepGoal: number
 ): MovementAnalyticsResult {
   let totalSteps = 0;
-  let totalCalories = 0;
-  let totalDistanceKm = 0;
-  let totalDurationMinutes = 0;
 
   const stepDays: DayStepData[] = [];
   const calorieBurnDays: DayCalorieData[] = [];
@@ -40,6 +40,7 @@ export function computeMovementAnalytics(
 
     if ('log' in item) {
       steps = item.log?.steps || 0;
+      totalSteps += steps;
     } else {
       const dates = item.bucketDates || item.monthDates || [];
       let bucketSum = 0;
@@ -52,14 +53,10 @@ export function computeMovementAnalytics(
         }
       });
       steps = count > 0 ? Math.round(bucketSum / count) : 0;
+      totalSteps += bucketSum;
     }
 
-    totalSteps += steps;
-
-    const metrics = calculateStepMetrics(steps, userWeightKg);
-    totalCalories += metrics.calories;
-    totalDistanceKm += metrics.distanceKm;
-    totalDurationMinutes += metrics.durationMinutes;
+    const metrics = metricsFor(steps);
 
     stepDays.push({
       dateStr: item.dateStr,
@@ -85,15 +82,17 @@ export function computeMovementAnalytics(
     });
   });
 
+  const totals = metricsFor(totalSteps);
+
   return {
     stepDays,
     calorieBurnDays,
     timeDays,
     stepSummary: {
       totalSteps,
-      totalCalories,
-      totalDistanceKm: Number(totalDistanceKm.toFixed(1)),
-      totalDurationMinutes,
+      totalCalories: totals.calories,
+      totalDistanceKm: totals.distanceKm,
+      totalDurationMinutes: totals.durationMinutes,
     },
   };
 }

@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Platform,
   LayoutChangeEvent,
-  LayoutAnimation,
   } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from '@/components/report/ChartTypeToggle';
 import { ChartTooltipPin } from '@/components/report/ChartTooltipPin';
 
@@ -42,11 +42,6 @@ const BASELINE_Y = TOP_PAD + USABLE_HEIGHT;
 // Bar corner radius — architectural rounded-shoulder, matches DESIGN.md
 const BAR_CORNER_RADIUS = 10;
 
-const triggerLayoutAnim = () => {
-  if (Platform.OS !== 'web' && typeof jest === 'undefined') {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  }
-};
 
 /**
  * Rounded-shoulder bar using Q (quadratic bezier) corner arcs.
@@ -72,7 +67,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
   selectedIndex,
   onSelectDay,
   calorieGoal = 2500,
-  activeColor = '#8DBE3B',
+  activeColor = Colors.primary,
   defaultChartType = 'bar',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -86,20 +81,15 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
   };
 
   const handleSelectDay = (index: number) => {
-    triggerLayoutAnim();
     onSelectDay(index);
   };
 
   const handleToggleChartType = (type: ChartType) => {
-    triggerLayoutAnim();
     setChartType(type);
   };
 
   // Today reference date string for distinguishing future days
-  const todayStr = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  }, []);
+  const todayStr = toDateString();
 
   // Adaptive Y-Axis Scale
   const { maxY, yTicks } = useMemo<{ maxY: number; yTicks: number[] }>(() => {
@@ -123,8 +113,9 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
       ceiling = 3000;
       step = 500;
     } else {
-      ceiling = Math.ceil(highest / 500) * 500;
-      step = Math.round(ceiling / 6);
+      // Whole-500 steps; the top tick always equals the ceiling
+      step = 500 * Math.ceil(highest / 3000);
+      ceiling = Math.ceil(highest / step) * step;
     }
 
     // Only render positive ticks (> 0) to match reference image (500, 1000, 1500, 2000, 2500, 3000)
@@ -187,16 +178,18 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
 
   // Smooth Bezier Curve Path for Line Mode
   const { linePath, fillPath } = useMemo(() => {
-    if (chartCoordinates.length === 0) return { linePath: '', fillPath: '' };
-    if (chartCoordinates.length === 1) {
-      const p = chartCoordinates[0];
+    // The line stops at today: future days have no data yet
+    const pts = chartCoordinates.filter(c => !c.isFuture);
+    if (pts.length === 0) return { linePath: '', fillPath: '' };
+    if (pts.length === 1) {
+      const p = pts[0];
       return { linePath: `M ${p.x} ${p.y}`, fillPath: '' };
     }
 
-    let d = `M ${chartCoordinates[0].x} ${chartCoordinates[0].y}`;
-    for (let i = 0; i < chartCoordinates.length - 1; i++) {
-      const curr = chartCoordinates[i];
-      const next = chartCoordinates[i + 1];
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
       const cpX1 = curr.x + (next.x - curr.x) / 2;
       const cpY1 = curr.y;
       const cpX2 = curr.x + (next.x - curr.x) / 2;
@@ -204,8 +197,8 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
       d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
     }
 
-    const last = chartCoordinates[chartCoordinates.length - 1];
-    const first = chartCoordinates[0];
+    const last = pts[pts.length - 1];
+    const first = pts[0];
     const fill = `${d} L ${last.x} ${BASELINE_Y} L ${first.x} ${BASELINE_Y} Z`;
 
     return { linePath: d, fillPath: fill };
@@ -217,12 +210,11 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
     <View style={styles.cardContainer}>
       {/* 1. Header: Title + Squircle Toggle */}
       <View style={styles.headerRow}>
-        <Text style={styles.cardTitle}>Calorie (kcal)</Text>
+        <Text style={styles.cardTitle}>Calories (kcal)</Text>
         <ChartTypeToggle
           chartType={chartType}
           onChange={handleToggleChartType}
           activeColor={activeColor}
-          activeIconColor="#0F172A"
         />
       </View>
 
@@ -278,7 +270,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
                 y1={goalY}
                 x2={canvasWidth}
                 y2={goalY}
-                stroke="#A3D95B"
+                stroke={Colors.primaryMuted}
                 strokeWidth={1.8}
                 strokeDasharray="8, 6"
               />
@@ -300,7 +292,7 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
                             : '#E2E8F0'
                           : isSelected
                             ? activeColor
-                            : '#CEE89F'
+                            : Colors.primaryMuted
                       }
                     />
                   );
@@ -436,9 +428,10 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
                     height: CHART_HEIGHT,
                   }}
                   onPress={() => handleSelectDay(idx)}
+                  accessibilityState={{ selected: idx === safeIndex }}
                   hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Day ${days[idx]?.dayNum || idx + 1}: ${coord.calories} kcal`}
+                  accessibilityLabel={`${days[idx]?.dayName ?? ''}: ${coord.isFuture ? 'no data yet' : `${coord.calories} kcal`}`}
                 />
               );
             })}
@@ -458,6 +451,8 @@ export const CalorieCompletionCard: React.FC<CalorieCompletionCardProps> = ({
                 key={`xlabel_${idx}`}
                 style={styles.xAxisLabelCol}
                 onPress={() => handleSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
               >
                 <Text
                   style={[
@@ -549,7 +544,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 0,
     borderWidth: 1.5,
-    borderColor: '#A3D95B',
+    borderColor: Colors.primaryMuted,
     borderStyle: 'dashed',
   },
   chartWrapper: {

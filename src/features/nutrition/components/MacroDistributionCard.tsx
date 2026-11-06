@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Platform,
-  LayoutAnimation,
   LayoutChangeEvent,
 } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from '@/components/report/ChartTypeToggle';
 import { ChartTooltipPin } from '@/components/report/ChartTooltipPin';
 
@@ -69,42 +70,37 @@ const MACRO_CONFIGS: Record<MacroType, MacroMeta> = {
   protein: {
     key: 'protein',
     label: 'Protein',
-    color: '#F97316', // Energetic Coral / Orange
+    color: Colors.protein,
     targetKey: 'protein',
-    defaultTarget: 140,
+    defaultTarget: BIOMETRIC_DEFAULTS.targetProtein,
     unit: 'g',
   },
   carbs: {
     key: 'carbs',
     label: 'Carbs',
-    color: '#3B82F6', // Electric Cerulean Blue
+    color: Colors.carbs,
     targetKey: 'carbs',
-    defaultTarget: 220,
+    defaultTarget: BIOMETRIC_DEFAULTS.targetCarbs,
     unit: 'g',
   },
   fat: {
     key: 'fat',
     label: 'Fat',
-    color: '#EC4899', // Rose Pink
+    color: Colors.fat,
     targetKey: 'fat',
-    defaultTarget: 65,
+    defaultTarget: BIOMETRIC_DEFAULTS.targetFat,
     unit: 'g',
   },
   fiber: {
     key: 'fiber',
     label: 'Fiber',
-    color: '#10B981', // Emerald Green
+    color: Colors.fiber,
     targetKey: 'fiber',
-    defaultTarget: 30,
+    defaultTarget: BIOMETRIC_DEFAULTS.targetFiber,
     unit: 'g',
   },
 };
 
-const triggerLayoutAnim = () => {
-  if (Platform.OS !== 'web') {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  }
-};
 
 /**
  * Builds an SVG path with continuous rounded top corners (Q-arc)
@@ -173,26 +169,20 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
   };
 
   const handleSelectDay = (index: number) => {
-    triggerLayoutAnim();
     onSelectDay(index);
   };
 
   const handleToggleChartType = (type: ChartType) => {
-    triggerLayoutAnim();
     setChartType(type);
   };
 
   const handleSelectMacro = (macroKey: MacroType) => {
-    triggerLayoutAnim();
     setSelectedMacro(macroKey);
     setDropdownOpen(false);
   };
 
   // Today reference date string for distinguishing future days
-  const todayStr = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  }, []);
+  const todayStr = toDateString();
 
   // Adaptive Y-Axis Scale based on goal and max logged grams
   const { maxY, yTicks } = useMemo<{ maxY: number; yTicks: number[] }>(() => {
@@ -287,16 +277,18 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
 
   // Smooth Bezier Curve Path for Line Mode
   const { linePath, fillPath } = useMemo(() => {
-    if (chartCoordinates.length === 0) return { linePath: '', fillPath: '' };
-    if (chartCoordinates.length === 1) {
-      const p = chartCoordinates[0];
+    // The line stops at today: future days have no data yet
+    const pts = chartCoordinates.filter(c => !c.isFuture);
+    if (pts.length === 0) return { linePath: '', fillPath: '' };
+    if (pts.length === 1) {
+      const p = pts[0];
       return { linePath: `M ${p.x} ${p.y}`, fillPath: '' };
     }
 
-    let d = `M ${chartCoordinates[0].x} ${chartCoordinates[0].y}`;
-    for (let i = 0; i < chartCoordinates.length - 1; i++) {
-      const curr = chartCoordinates[i];
-      const next = chartCoordinates[i + 1];
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
       const cpX1 = curr.x + (next.x - curr.x) / 2;
       const cpY1 = curr.y;
       const cpX2 = curr.x + (next.x - curr.x) / 2;
@@ -304,8 +296,8 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
       d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
     }
 
-    const last = chartCoordinates[chartCoordinates.length - 1];
-    const first = chartCoordinates[0];
+    const last = pts[pts.length - 1];
+    const first = pts[0];
     const fill = `${d} L ${last.x} ${BASELINE_Y} L ${first.x} ${BASELINE_Y} Z`;
 
     return { linePath: d, fillPath: fill };
@@ -333,7 +325,6 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
             <Pressable
               style={[styles.dropdownTrigger, dropdownOpen && styles.dropdownTriggerActive]}
               onPress={() => {
-                triggerLayoutAnim();
                 setDropdownOpen(!dropdownOpen);
               }}
               accessibilityRole="button"
@@ -604,9 +595,10 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
                     height: CHART_HEIGHT,
                   }}
                   onPress={() => handleSelectDay(idx)}
+                  accessibilityState={{ selected: idx === safeIndex }}
                   hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Day ${days[idx]?.dayNum || idx + 1}: ${formatMacroValue(coord.grams)} ${activeConfig.unit}`}
+                  accessibilityLabel={`${days[idx]?.dayName ?? ''}: ${coord.isFuture ? 'no data yet' : `${formatMacroValue(coord.grams)} ${activeConfig.unit}`}`}
                 />
               );
             })}
@@ -626,6 +618,8 @@ export const MacroDistributionCard: React.FC<MacroDistributionCardProps> = ({
                 key={`xlabel_${idx}`}
                 style={styles.xAxisLabelCol}
                 onPress={() => handleSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
               >
                 <Text
                   style={[

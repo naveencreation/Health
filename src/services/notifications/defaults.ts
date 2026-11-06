@@ -45,7 +45,7 @@ export const NOTIFICATION_CHANNELS_MAP: Record<ReminderType, string> = {
   water: NOTIFICATION_CHANNELS.WATER.id,
   steps: NOTIFICATION_CHANNELS.STEPS.id,
   streak: NOTIFICATION_CHANNELS.STREAK.id,
-  weight: NOTIFICATION_CHANNELS.STEPS.id,
+  weight: NOTIFICATION_CHANNELS.WEIGHT.id,
 };
 
 export const REMINDER_PRIORITY: Record<ReminderType, number> = {

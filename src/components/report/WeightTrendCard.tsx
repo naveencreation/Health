@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from '
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
 
@@ -35,7 +36,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
   onSelectDay,
   targetWeightKg,
   unit = 'kg',
-  activeColor = '#F43F5E',
+  activeColor = Colors.weight,
   defaultChartType = 'line',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -65,48 +66,17 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
     return list;
   }, [days, targetWeightDisplay]);
 
-  // Compute adaptive Y-Axis starting at 0 up to 100 (or higher multiple of 20) matching reference
-  const { maxY, yTicks } = useMemo(() => {
-    const maxLogged = validWeights.length > 0 ? Math.max(...validWeights) : 75;
-    const target = targetWeightDisplay || 75;
-    const highest = Math.max(maxLogged, target);
-
-    let ceiling = 100;
-    let step = 20;
-
-    if (unit === 'lbs') {
-      if (highest > 240) {
-        ceiling = Math.ceil(highest / 50) * 50;
-        step = ceiling / 5;
-      } else if (highest > 190) {
-        ceiling = 250;
-        step = 50;
-      } else {
-        ceiling = 200;
-        step = 40;
-      }
-    } else {
-      // kg mode: default 100 with step 20 (matching reference [100, 80, 60, 40, 20, 0])
-      if (highest > 95) {
-        ceiling = Math.ceil(highest / 20) * 20;
-        step = ceiling / 5;
-      } else {
-        ceiling = 100;
-        step = 20;
-      }
-    }
-
-    const ticks = [
-      ceiling,
-      Math.round(ceiling - step),
-      Math.round(ceiling - step * 2),
-      Math.round(ceiling - step * 3),
-      Math.round(ceiling - step * 4),
-      0,
-    ];
-
-    return { maxY: ceiling, yTicks: ticks };
-  }, [validWeights, targetWeightDisplay, unit]);
+  // Zoomed Y-axis (5 whole-number steps around the data) so a 1 kg change is visible
+  const { minY, maxY, yTicks } = useMemo(() => {
+    const vals = validWeights.length > 0 ? validWeights : [unit === 'lbs' ? 165 : 75];
+    const lo = Math.min(...vals);
+    const hi = Math.max(...vals);
+    const step = Math.max(1, Math.ceil((hi - lo) / 3));
+    // One step of headroom below the lowest value so the smallest bar is never empty
+    const min = Math.max(0, Math.floor(lo / step) * step - step);
+    const ticks = [5, 4, 3, 2, 1, 0].map(i => min + step * i);
+    return { minY: min, maxY: min + step * 5, yTicks: ticks };
+  }, [validWeights, unit]);
 
   const numDays = Math.max(1, days.length);
   const colWidth = canvasWidth > 0 ? canvasWidth / numDays : 0;
@@ -115,7 +85,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
 
   // Y coordinate calculation helper (0 is at baseline, maxY is at TOP_PAD)
   const getYCoordinate = (val: number): number => {
-    const normalized = Math.max(0, Math.min(1, val / maxY));
+    const normalized = Math.max(0, Math.min(1, (val - minY) / (maxY - minY)));
     return CHART_HEIGHT - BOTTOM_PAD - normalized * USABLE_HEIGHT;
   };
 
@@ -158,7 +128,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
         weight: d.displayWeight,
       };
     });
-  }, [days, canvasWidth, colWidth, maxY]);
+  }, [days, canvasWidth, colWidth, minY, maxY]);
 
   // Construct SVG Path for Line & Area
   const { linePath, areaPath } = useMemo(() => {
@@ -263,7 +233,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                 const isSelected = idx === selectedIndex;
                 const hasLog = day.displayWeight !== null && day.displayWeight > 0;
                 const barHeight = hasLog
-                  ? Math.max(16, (day.displayWeight! / maxY) * USABLE_HEIGHT)
+                  ? Math.max(16, ((day.displayWeight! - minY) / (maxY - minY)) * USABLE_HEIGHT)
                   : 0;
 
                 const pinBottom = barHeight + BOTTOM_PAD - 2;
@@ -273,6 +243,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                     key={`weight_bar_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
                     accessibilityLabel={`${day.dayName}: ${hasLog ? `${Number(day.displayWeight).toFixed(1)} ${unit}` : 'No log'}`}
                   >
@@ -282,7 +253,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                         <ChartTooltipPin
                           valueText={hasLog ? `${day.displayWeight!.toFixed(1)}` : 'No entry'}
                           unitText={hasLog ? unit : undefined}
-                          activeColor={hasLog ? activeColor : '#94A3B8'}
+                          activeColor={hasLog ? activeColor : Colors.textMuted}
                         />
                       </View>
                     )}
@@ -295,7 +266,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                           {
                             width: barWidth,
                             height: barHeight,
-                            backgroundColor: isSelected ? activeColor : '#FFAA94',
+                            backgroundColor: isSelected ? activeColor : Colors.weightBorder,
                             borderTopLeftRadius: barWidth / 2,
                             borderTopRightRadius: barWidth / 2,
                             borderBottomLeftRadius: 0,
@@ -367,7 +338,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                   style={[
                     styles.floatingPinContainer,
                     {
-                      left: selectedPoint.x - 21,
+                      left: Math.max(0, Math.min(canvasWidth - 42, selectedPoint.x - 21)),
                       bottom: CHART_HEIGHT - selectedPoint.y + 4,
                     },
                   ]}
@@ -379,7 +350,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                         : 'No entry'
                     }
                     unitText={selectedPoint.hasLog ? unit : undefined}
-                    activeColor={selectedPoint.hasLog ? activeColor : '#94A3B8'}
+                    activeColor={selectedPoint.hasLog ? activeColor : Colors.textMuted}
                   />
                 </View>
               )}
@@ -391,6 +362,7 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                     key={`line_touch_${d.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
                     accessibilityLabel={`${d.dayName}: ${d.displayWeight != null ? `${Number(d.displayWeight).toFixed(1)} ${unit}` : 'No log'}`}
                   />
@@ -412,6 +384,8 @@ export const WeightTrendCard: React.FC<WeightTrendCardProps> = ({
                 key={`label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
               >
                 <Text style={[styles.dayNumText, isSelected && styles.dayNumTextSelected]}>
                   {day.dayNum}

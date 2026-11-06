@@ -4,7 +4,7 @@ jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AchievementEvaluator } from '../AchievementEvaluator';
 import { GamificationEvaluationInput } from '../achievementRules';
-import { UserGoals } from '@/types';
+import { UserGoals, DailyLog } from '@/types';
 
 const defaultGoals: UserGoals = {
   name: 'Tester',
@@ -127,5 +127,32 @@ describe('AchievementEvaluator', () => {
 
     expect(waterBadge?.isUnlocked).toBe(true);
     expect(stepBadge?.isUnlocked).toBe(true);
+  });
+
+  it('keeps badges per user and awards Precision Eater for finished days only', async () => {
+    const day = (date: string): DailyLog =>
+      ({ date, meals: [{ calories: 2000 }], waterMl: 0, steps: 0, activities: [] }) as any;
+    const n = new Date();
+    const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    const precision = (r: Awaited<ReturnType<typeof AchievementEvaluator.evaluate>>) =>
+      r.allAchievements.find(a => a.definition.id === 'calorie_budget_balanced')?.isUnlocked;
+
+    const todayOnly = await AchievementEvaluator.evaluate(
+      { dailyLogs: { [today]: day(today) }, userGoals: defaultGoals, consecutiveDaysLogged: 0 },
+      'user_a'
+    );
+    expect(precision(todayOnly)).toBe(false);
+
+    const withPast = await AchievementEvaluator.evaluate(
+      { dailyLogs: { '2020-01-01': day('2020-01-01') }, userGoals: defaultGoals, consecutiveDaysLogged: 0 },
+      'user_a'
+    );
+    expect(precision(withPast)).toBe(true);
+
+    const other = await AchievementEvaluator.evaluate(
+      { dailyLogs: {}, userGoals: defaultGoals, consecutiveDaysLogged: 0 },
+      'user_b'
+    );
+    expect(other.totalUnlockedCount).toBe(0);
   });
 });

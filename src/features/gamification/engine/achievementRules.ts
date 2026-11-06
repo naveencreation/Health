@@ -1,4 +1,6 @@
 import { DailyLog, UserGoals } from '@/types';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
+import { toDateString } from '@/utils/dateUtils';
 
 export type BadgeTier = 'bronze' | 'silver' | 'gold' | 'diamond';
 export type BadgeCategory = 'nutrition' | 'hydration' | 'movement' | 'consistency';
@@ -121,7 +123,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     iconName: 'water',
     maxProgress: 1,
     evaluate: ({ dailyLogs, currentLog, userGoals }) => {
-      const target = userGoals.waterGoalMl || 2000;
+      const target = userGoals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
       const metGoal = allLogs.some(l => (l.waterMl || 0) >= target);
@@ -142,7 +144,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     iconName: 'water',
     maxProgress: 3,
     evaluate: ({ dailyLogs, currentLog, userGoals }) => {
-      const target = userGoals.waterGoalMl || 2000;
+      const target = userGoals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
       const allLogs = Object.values(dailyLogs);
       if (currentLog && !dailyLogs[currentLog.date]) allLogs.push(currentLog);
       const daysMet = allLogs.filter(l => (l.waterMl || 0) >= target).length;
@@ -205,15 +207,15 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     category: 'nutrition',
     iconName: 'restaurant',
     maxProgress: 1,
-    evaluate: ({ dailyLogs, currentLog, userGoals }) => {
-      const target = userGoals.dailyCalorieBudget || 2000;
+    evaluate: ({ dailyLogs, userGoals }) => {
+      const target = userGoals.dailyCalorieBudget || BIOMETRIC_DEFAULTS.dailyCalorieBudget;
       const lower = target * 0.9;
       const upper = target * 1.1;
 
-      const allLogs = Object.values(dailyLogs);
-      if (currentLog) allLogs.push(currentLog);
-
-      const hitTarget = allLogs.some(l => {
+      // Finished days only: today can still go over budget
+      const today = toDateString();
+      const hitTarget = Object.entries(dailyLogs).some(([date, l]) => {
+        if (date >= today) return false;
         const cals = (l.meals || []).reduce((acc, m) => acc + (m.calories || 0), 0);
         return cals >= lower && cals <= upper;
       });
@@ -235,7 +237,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     iconName: 'barbell',
     maxProgress: 1,
     evaluate: ({ dailyLogs, currentLog, userGoals }) => {
-      const targetProtein = userGoals.targetProtein || 120;
+      const targetProtein = userGoals.targetProtein || BIOMETRIC_DEFAULTS.targetProtein;
       const allLogs = Object.values(dailyLogs);
       if (currentLog) allLogs.push(currentLog);
 

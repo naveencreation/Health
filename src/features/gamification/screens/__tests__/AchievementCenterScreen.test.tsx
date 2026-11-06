@@ -32,6 +32,7 @@ const mockUserGoals = {
 };
 
 jest.mock('@/context/HealthContext', () => ({
+  useAuth: () => ({ currentUser: { id: 'test_user_123' } }),
   useDailyLog: () => ({
     dailyLogs: mockDailyLogs,
     currentLog: mockCurrentLog,

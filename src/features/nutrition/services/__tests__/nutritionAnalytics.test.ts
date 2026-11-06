@@ -151,7 +151,7 @@ describe('nutritionAnalytics', () => {
       expect((res[0].carbsPct ?? 0) + (res[0].proteinPct ?? 0) + (res[0].fatPct ?? 0)).toBe(100);
     });
 
-    it('falls back gracefully to target macro ratios when no food logged', () => {
+    it('reports zero ratios (no invented data) when no food logged', () => {
       const days: DayBucketItem[] = [
         {
           dateStr: '2026-03-30',
@@ -163,9 +163,9 @@ describe('nutritionAnalytics', () => {
 
       const res = computeMacroRatioDays(days, defaultGoals, {});
       expect(res).toHaveLength(1);
-      expect((res[0].carbsPct ?? 0) + (res[0].proteinPct ?? 0) + (res[0].fatPct ?? 0)).toBe(100);
-      expect(res[0].carbsPct).toBeGreaterThan(0);
-      expect(res[0].proteinPct).toBeGreaterThan(0);
+      expect(res[0].carbsPct).toBe(0);
+      expect(res[0].proteinPct).toBe(0);
+      expect(res[0].fatPct).toBe(0);
     });
   });
 });

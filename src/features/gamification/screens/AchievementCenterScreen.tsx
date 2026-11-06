@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { useAuth, useDailyLog, useGoals } from '@/context/HealthContext';
 import { AchievementBadge } from '../components/AchievementBadge';
 import { StreakFlameBadge } from '../components/StreakFlameBadge';
 import { CelebrationModal } from '../components/CelebrationModal';
@@ -33,6 +33,7 @@ const CATEGORY_TABS: Array<{ id: FilterCategory; label: string }> = [
 export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = ({ onBack }) => {
   const { dailyLogs, currentLog } = useDailyLog();
   const { userGoals } = useGoals();
+  const uid = useAuth().currentUser?.id;
 
   const [loading, setLoading] = useState(true);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
@@ -46,12 +47,15 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
 
     async function loadAchievements() {
       try {
-        const result = await AchievementEvaluator.evaluate({
-          dailyLogs,
-          currentLog,
-          userGoals,
-          consecutiveDaysLogged: userGoals.streakDays || 0,
-        });
+        const result = await AchievementEvaluator.evaluate(
+          {
+            dailyLogs,
+            currentLog,
+            userGoals,
+            consecutiveDaysLogged: userGoals.streakDays || 0,
+          },
+          uid
+        );
 
         if (isMounted) {
           setEvaluation(result);
@@ -72,7 +76,7 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
     return () => {
       isMounted = false;
     };
-  }, [dailyLogs, currentLog, userGoals]);
+  }, [dailyLogs, currentLog, userGoals, uid]);
 
   const filteredAchievements = useMemo(() => {
     if (!evaluation) return [];

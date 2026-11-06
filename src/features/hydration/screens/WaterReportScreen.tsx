@@ -118,7 +118,8 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         return {
           dateStr,
           dayNum: d.getDate(),
-          dayName: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+          // Spoken by screen readers on the chart columns
+          dayName: `${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i]} ${d.getDate()}`,
           intakeMl,
           goalMl: dailyWaterGoal,
           completionPct,
@@ -172,7 +173,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
         return {
           dateStr: `w_${idx + 1}`,
           dayNum: `W${idx + 1}`,
-          dayName: bucket.name,
+          dayName: `Week ${idx + 1}, days ${bucket.name}`,
           intakeMl: avgDailyMl,
           goalMl: dailyWaterGoal,
           completionPct,
@@ -209,7 +210,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
       return {
         dateStr: `m_${m + 1}`,
         dayNum: MONTH_NAMES[m],
-        dayName: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][m],
+        dayName: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m],
         intakeMl: avgDailyMl,
         goalMl: dailyWaterGoal,
         completionPct,

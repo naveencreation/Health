@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,7 +18,11 @@ import { HealthProvider, useAuth, useGoals, useDailyLog } from '@/context/Health
 import { OverlayProvider, useOverlay, OverlayHost } from '@/navigation';
 import { Colors } from '@/theme/colors';
 import { MealType } from '@/types';
-import { NotificationService, NotificationScheduler } from '@/services/notifications';
+import {
+  NotificationService,
+  NotificationScheduler,
+  buildSyncOptions,
+} from '@/services/notifications';
 import { Monitoring } from '@/services/monitoring';
 
 // Structured Screens
@@ -42,8 +46,8 @@ SplashScreen.preventAutoHideAsync();
 
 function MainApp() {
   const { userGoals } = useGoals();
-  const { currentLog } = useDailyLog();
-  const { isAuthenticated, isAuthLoading, logout, currentUser } = useAuth();
+  const { dailyLogs, todayStr } = useDailyLog();
+  const { isAuthenticated, isAuthLoading, currentUser } = useAuth();
   const { openModal, closeModal, activeModal } = useOverlay();
   const [activeTab, setActiveTab] = useState<TabType>('today');
 
@@ -97,54 +101,18 @@ function MainApp() {
     };
   }, [openModal]);
 
-  // Derive logged meal slots and water timestamp for state-aware scheduler
-  const loggedMealSlots = useMemo<MealType[]>(() => {
-    return currentLog?.meals?.map(m => m.mealType) || [];
-  }, [currentLog?.meals]);
-
-  const lastWaterLoggedAt = useMemo<number | undefined>(() => {
-    if (!currentLog?.waterEntries || currentLog.waterEntries.length === 0) return undefined;
-    return Math.max(...currentLog.waterEntries.map(e => new Date(e.loggedAt).getTime()));
-  }, [currentLog?.waterEntries]);
-
-  const hasLoggedWeightToday = useMemo<boolean>(() => {
-    return Boolean(
-      typeof currentLog?.weightKg === 'number' ||
-        (currentLog?.weightEntries && currentLog.weightEntries.length > 0)
-    );
-  }, [currentLog?.weightKg, currentLog?.weightEntries]);
-
-  // Synchronize state-aware habit reminders
+  // Plan reminders from today's log, not the date being browsed
+  const todayLog = dailyLogs[todayStr];
+  const { streakDays, waterGoalMl, stepGoal } = userGoals;
   const syncNotifications = useCallback(
     (reason: string) => {
       if (!isAuthenticated) return;
       NotificationScheduler.syncSchedules({
-        streakDays: userGoals.streakDays || 0,
-        hasLoggedMealsToday: Boolean(currentLog?.meals && currentLog.meals.length > 0),
-        loggedMealSlots,
-        currentWaterMl: currentLog?.waterMl || 0,
-        targetWaterMl: userGoals.waterGoalMl || 2000,
-        lastWaterLoggedAt,
-        hasLoggedWeightToday,
-        currentSteps: currentLog?.steps || 0,
-        stepGoal: userGoals.stepGoal || 10000,
-        uid: currentUser?.id,
+        ...buildSyncOptions(todayLog, { streakDays, waterGoalMl, stepGoal }, currentUser?.id),
         reason,
       }).catch(() => {});
     },
-    [
-      isAuthenticated,
-      userGoals.streakDays,
-      userGoals.waterGoalMl,
-      userGoals.stepGoal,
-      currentLog?.meals,
-      currentLog?.waterMl,
-      currentLog?.steps,
-      loggedMealSlots,
-      lastWaterLoggedAt,
-      hasLoggedWeightToday,
-      currentUser?.id,
-    ]
+    [isAuthenticated, todayLog, streakDays, waterGoalMl, stepGoal, currentUser?.id]
   );
 
   // Trigger on data changes, login status change, or initial load
@@ -402,13 +370,6 @@ function MainApp() {
     openModal({ type: 'goals' });
   }, [openModal]);
 
-  const handleConfirmSignOut = useCallback(async () => {
-    setActiveTab('today');
-    await NotificationScheduler.cancelAllAndReset(currentUser?.id);
-    await logout();
-    setAuthModalVisible(false);
-  }, [logout, currentUser?.id]);
-
   const handleSignOutCompleted = useCallback(() => {
     setActiveTab('today');
     setAuthModalVisible(false);
@@ -542,7 +503,6 @@ function MainApp() {
             {/* Declarative Overlay & Sub-screen host mounted within contentArea */}
             <OverlayHost
               screenWidth={screenWidth}
-              onConfirmSignOut={handleConfirmSignOut}
             />
           </View>
 

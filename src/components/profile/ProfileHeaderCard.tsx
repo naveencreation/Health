@@ -92,7 +92,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
 
         <View style={styles.identityInfo}>
           <Text style={styles.userName} numberOfLines={1}>
-            {name || (isGuest ? 'Guest Explorer' : 'Calorify Member')}
+            {name || (isGuest ? 'Guest' : 'Calorify Member')}
           </Text>
           {email && email !== name ? (
             <Text style={styles.userEmail} numberOfLines={1}>
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 18,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   pressedSubtle: {
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   identityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
@@ -201,14 +201,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.textPrimary,
     width: 22,
     height: 22,
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.card,
   },
   identityInfo: {
     flex: 1,
@@ -216,13 +216,13 @@ const styles = StyleSheet.create({
   userName: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 16,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   userEmail: {
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 1,
     includeFontPadding: false,
   },
@@ -250,13 +250,13 @@ const styles = StyleSheet.create({
   upgradeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.stepsLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: Colors.primaryLight,
     gap: 4,
   },
   upgradeBadgeText: {
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   guestBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.surfaceContainer,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   guestBadgeText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   streakPill: {
     flexDirection: 'row',

@@ -9,7 +9,6 @@ import {
   BackHandler,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -25,7 +24,6 @@ import { MetabolicSummaryScreen, PreferencesScreen, GoalsScreen } from '@/screen
 import { AchievementCenterScreen } from '@/features/gamification';
 import { usePro, ProMembershipCard, ProPaywallModal } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
-import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import { getTodayBMICategory } from '@/features/weight/utils/bmiCalculator';
 
 const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
@@ -60,10 +58,12 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const [paywallVisible, setPaywallVisible] = useState(false);
 
   const handleOpenSubView = useCallback(
-    (view: Exclude<ProfileSubView, 'main'>) => {
+    (view: Exclude<ProfileSubView, 'main'>, nested = false) => {
       if (closingView) return;
       setNavStack(prev => {
         if (prev[prev.length - 1] === view) return prev;
+        // A fast second tap on the base screen must not stack another sub-screen
+        if (!nested && prev.length > 0) return prev;
         return [...prev, view];
       });
     },
@@ -118,7 +118,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         return (
           <MetabolicSummaryScreen
             onBack={handleBack}
-            onOpenGoals={() => handleOpenSubView('goals')}
+            onOpenGoals={() => handleOpenSubView('goals', true)}
           />
         );
       case 'preferences':
@@ -130,26 +130,31 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  // Derived Biometrics & Health Baseline
-  const weightNum = userGoals.currentWeightKg || BIOMETRIC_DEFAULTS.currentWeightKg;
-  const targetWeightNum = userGoals.targetWeightKg || BIOMETRIC_DEFAULTS.targetWeightKg;
-  const startWeight = userGoals.startWeightKg || userGoals.currentWeightKg || weightNum;
-  const heightNum = userGoals.heightCm || BIOMETRIC_DEFAULTS.heightCm || 175;
-  const heightM = heightNum / 100;
-  const bmi = (weightNum / (heightM * heightM)).toFixed(1);
-  const bmiNum = parseFloat(bmi);
+  // Derived biometrics; BMI only when a height is on file (no invented 175 cm)
+  const weightNum = userGoals.currentWeightKg;
+  const targetWeightNum = userGoals.targetWeightKg || weightNum;
+  const startWeight = userGoals.startWeightKg || weightNum;
+  const heightNum = userGoals.heightCm;
+  const bmiNum = heightNum && weightNum ? weightNum / (heightNum / 100) ** 2 : NaN;
+  const bmi = Number.isNaN(bmiNum) ? '--' : bmiNum.toFixed(1);
 
-  const bmiCategoryItem = getTodayBMICategory(bmiNum);
-  const bmiStatus = {
-    label: bmiCategoryItem.name === 'Normal' ? 'Healthy Weight' : bmiCategoryItem.name,
-    color: bmiCategoryItem.color,
-  };
-  const streakDays = userGoals.streakDays || BIOMETRIC_DEFAULTS.streakDays || 1;
+  const bmiCategoryItem = getTodayBMICategory(Number.isNaN(bmiNum) ? 22 : bmiNum);
+  const bmiStatus = Number.isNaN(bmiNum)
+    ? { label: 'Height needed', color: Colors.textMuted }
+    : {
+        label: bmiCategoryItem.name === 'Normal' ? 'Healthy Weight' : bmiCategoryItem.name,
+        color: bmiCategoryItem.color,
+      };
+  const streakDays = userGoals.streakDays ?? 0;
+  // The base screen stays mounted under sub-screens; keep screen readers out of it
+  const baseA11y = navStack.length
+    ? { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const }
+    : {};
 
   return (
     <View style={styles.rootContainer}>
       {/* 0. Dedicated Profile & Account Top App Bar - Completely blended with background */}
-      <View style={styles.headerContainer}>
+      <View style={styles.headerContainer} {...baseA11y}>
         <View style={styles.headerMainRow}>
           {/* Title: Clean static header title */}
           <View style={styles.headerTitleContainer}>
@@ -179,11 +184,12 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         showsVerticalScrollIndicator={false}
         onMomentumScrollEnd={handleScrollEnd}
         onScrollEndDrag={handleScrollEnd}
+        {...baseA11y}
       >
         {/* 1. User Identity Card (Avatar + Name + Status + Streak) */}
         <ProfileHeaderCard
           name={currentUser?.name || userGoals.name || ''}
-          email={currentUser?.email || (currentUser?.isGuest ? 'guest.user@calori.fit' : '')}
+          email={currentUser?.email || ''}
           avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
           onEditAvatar={() => setAvatarPickerVisible(true)}
           isGuest={currentUser?.isGuest}
@@ -215,7 +221,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         <ProfileMetricInspector
           bmi={bmi}
           bmiStatus={bmiStatus}
-          heightCm={heightNum}
+          heightCm={heightNum ?? '--'}
           weightNum={weightNum}
           targetWeightNum={targetWeightNum}
           startWeight={startWeight}
@@ -225,6 +231,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
           targetFat={userGoals.targetFat}
           stepGoal={userGoals.stepGoal}
           waterGoal={userGoals.waterGoalMl}
+          weightUnit={userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg'}
           onOpenGoalsModal={() => handleOpenSubView('goals')}
         />
       </ScrollView>
@@ -285,7 +292,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.bold,
     fontSize: 28,
     lineHeight: 34,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
   },
@@ -293,7 +300,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

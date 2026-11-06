@@ -2,6 +2,7 @@ import React from 'react';
 import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
 import { View, Text, StyleSheet } from 'react-native';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
 import {
   FootstepsOutlineSvg,
   ClockOutlineSvg,
@@ -48,10 +49,10 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
 
   return (
     <View style={styles.cardContainer}>
-      {/* 1. Top Section: Purple Dual Footsteps, Big Number, Subtitle */}
+      {/* 1. Top Section: Footsteps, Big Number, Subtitle */}
       <View style={styles.topSection}>
         <View style={styles.topNumberRow}>
-          <FootstepsOutlineSvg size={30} color="#8B5CF6" strokeWidth={1.8} />
+          <FootstepsOutlineSvg size={30} color={Colors.steps} strokeWidth={1.8} />
           <Text style={styles.bigNumberText}>{totalSteps.toLocaleString('en-US')}</Text>
         </View>
         <Text style={styles.subtitleText}>{subtitle}</Text>
@@ -64,7 +65,7 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
       <View style={styles.bottomMetricsRow}>
         {/* Column 1: Time */}
         <View style={styles.metricCol}>
-          <ClockOutlineSvg size={24} color="#F97316" strokeWidth={1.8} />
+          <ClockOutlineSvg size={24} color={Colors.stepsDark} strokeWidth={1.8} />
           <Text style={styles.metricValueText}>{formatDuration(duration)}</Text>
           <Text style={styles.metricLabelText}>time</Text>
         </View>
@@ -74,7 +75,7 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
 
         {/* Column 2: Active Calories */}
         <View style={styles.metricCol}>
-          <FlameOutlineSvg size={24} color="#EF4444" strokeWidth={1.8} />
+          <FlameOutlineSvg size={24} color={Colors.primary} strokeWidth={1.8} />
           <Text style={styles.metricValueText}>{calories.toLocaleString('en-US')}</Text>
           <Text style={styles.metricLabelText}>kcal</Text>
         </View>
@@ -84,7 +85,7 @@ export const StepTotalSummaryCard: React.FC<StepTotalSummaryCardProps> = ({
 
         {/* Column 3: Distance */}
         <View style={styles.metricCol}>
-          <LocationPinOutlineSvg size={24} color="#22C55E" strokeWidth={1.8} />
+          <LocationPinOutlineSvg size={24} color={Colors.stepsSecondary} strokeWidth={1.8} />
           <Text style={styles.metricValueText}>{distance.toFixed(2)}</Text>
           <Text style={styles.metricLabelText}>km</Text>
         </View>

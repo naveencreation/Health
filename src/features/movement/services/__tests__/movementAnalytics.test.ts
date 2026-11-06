@@ -16,7 +16,7 @@ describe('movementAnalytics', () => {
       },
     ];
 
-    const res = computeMovementAnalytics(days, {}, 10000, 70);
+    const res = computeMovementAnalytics(days, {}, 10000);
     expect(res.stepDays).toHaveLength(1);
     expect(res.stepDays[0].steps).toBe(10000);
     expect(res.stepDays[0].goalSteps).toBe(10000);
@@ -25,7 +25,8 @@ describe('movementAnalytics', () => {
     expect(res.stepSummary.totalSteps).toBe(10000);
     expect(res.stepSummary.totalCalories).toBeGreaterThan(0);
     expect(res.stepSummary.totalDistanceKm).toBeGreaterThan(0);
-    expect(res.stepSummary.totalDurationMinutes).toBeGreaterThan(0);
+    expect(res.stepSummary.totalDurationMinutes).toBe(100); // ~100 steps/min, not body weight
+    expect(res.timeDays[0].durationMinutes).toBe(100);
   });
 
   it('aggregates step counts over bucket dates and averages them', () => {
@@ -43,9 +44,16 @@ describe('movementAnalytics', () => {
       },
     ];
 
-    const res = computeMovementAnalytics(days, dailyLogs, 10000, 70);
+    const res = computeMovementAnalytics(days, dailyLogs, 10000);
     expect(res.stepDays[0].steps).toBe(7000); // (6000 + 8000) / 2
     expect(res.stepDays[0].completionPct).toBe(70);
-    expect(res.stepSummary.totalSteps).toBe(7000);
+    expect(res.stepSummary.totalSteps).toBe(14000); // real sum, not the bucket average
+  });
+
+  it('reports zero duration for days without steps', () => {
+    const days: DayBucketItem[] = [{ dateStr: '2026-03-31', dayNum: 31, dayName: 'Tue', log: undefined }];
+    const res = computeMovementAnalytics(days, {}, 10000);
+    expect(res.timeDays[0].durationMinutes).toBe(0);
+    expect(res.stepSummary.totalDurationMinutes).toBe(0);
   });
 });

@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
-import { Colors, ControlRadii } from '../../theme';
+import { Colors } from '@/theme/colors';
+import { ControlRadii } from '@/theme/controls';
 
 export type ChartType = 'bar' | 'line';
+
+// 34x32 buttons + slop reach the 48dp touch target
+const HIT_SLOP = { top: 8, bottom: 8, left: 4, right: 4 };
 
 interface ChartTypeToggleProps {
   chartType: ChartType;
@@ -15,15 +19,13 @@ interface ChartTypeToggleProps {
 export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
   chartType,
   onChange,
-  activeColor = '#8DBE3B',
+  activeColor = Colors.primary,
   activeIconColor,
 }) => {
   const isBar = chartType === 'bar';
   const isLine = chartType === 'line';
 
-  // In the design, active lime-green button uses dark charcoal (#0F172A) icon for high contrast
-  const resolvedActiveIcon =
-    activeIconColor || (activeColor.toLowerCase() === '#8dbe3b' ? '#0F172A' : '#FFFFFF');
+  const resolvedActiveIcon = activeIconColor || Colors.onPrimary;
 
   return (
     <View style={styles.toggleContainer}>
@@ -35,8 +37,10 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
           pressed ? styles.btnPressed : null,
         ]}
         onPress={() => onChange('bar')}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel="Show Bar Chart view"
+        accessibilityState={{ selected: isBar }}
       >
         <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
           <Rect
@@ -45,7 +49,7 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
             width="3.2"
             height="6.5"
             rx="1.2"
-            fill={isBar ? resolvedActiveIcon : '#94A3B8'}
+            fill={isBar ? resolvedActiveIcon : Colors.textMuted}
           />
           <Rect
             x="6.4"
@@ -53,7 +57,7 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
             width="3.2"
             height="11.5"
             rx="1.2"
-            fill={isBar ? resolvedActiveIcon : '#94A3B8'}
+            fill={isBar ? resolvedActiveIcon : Colors.textMuted}
           />
           <Rect
             x="10.8"
@@ -61,7 +65,7 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
             width="3.2"
             height="9"
             rx="1.2"
-            fill={isBar ? resolvedActiveIcon : '#94A3B8'}
+            fill={isBar ? resolvedActiveIcon : Colors.textMuted}
           />
         </Svg>
       </Pressable>
@@ -74,21 +78,23 @@ export const ChartTypeToggle: React.FC<ChartTypeToggleProps> = ({
           pressed ? styles.btnPressed : null,
         ]}
         onPress={() => onChange('line')}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel="Show Line Chart view"
+        accessibilityState={{ selected: isLine }}
       >
         <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
           <Path
             d="M2.5 10.5L6.5 5.5L10 8.5L13.5 3.5"
-            stroke={isLine ? resolvedActiveIcon : '#94A3B8'}
+            stroke={isLine ? resolvedActiveIcon : Colors.textMuted}
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <Circle cx="2.5" cy="10.5" r="1.6" fill={isLine ? resolvedActiveIcon : '#94A3B8'} />
-          <Circle cx="6.5" cy="5.5" r="1.6" fill={isLine ? resolvedActiveIcon : '#94A3B8'} />
-          <Circle cx="10" cy="8.5" r="1.6" fill={isLine ? resolvedActiveIcon : '#94A3B8'} />
-          <Circle cx="13.5" cy="3.5" r="1.6" fill={isLine ? resolvedActiveIcon : '#94A3B8'} />
+          <Circle cx="2.5" cy="10.5" r="1.6" fill={isLine ? resolvedActiveIcon : Colors.textMuted} />
+          <Circle cx="6.5" cy="5.5" r="1.6" fill={isLine ? resolvedActiveIcon : Colors.textMuted} />
+          <Circle cx="10" cy="8.5" r="1.6" fill={isLine ? resolvedActiveIcon : Colors.textMuted} />
+          <Circle cx="13.5" cy="3.5" r="1.6" fill={isLine ? resolvedActiveIcon : Colors.textMuted} />
         </Svg>
       </Pressable>
     </View>
@@ -118,11 +124,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   toggleBtnActive: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });
 

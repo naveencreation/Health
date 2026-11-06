@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ScopedStorage } from '@/services/storage/scopedStorage';
 import {
   ACHIEVEMENTS,
   AchievementDefinition,
@@ -24,29 +25,18 @@ export interface EvaluationResult {
   totalAchievementsCount: number;
 }
 
+// Per user (@calori_<uid|guest>_unlocked_achievements_v1), so accounts on one device don't share badges
+const keyFor = (uid?: string) => ScopedStorage.getKey(ACHIEVEMENTS_STORAGE_KEY, uid);
+
 export class AchievementEvaluator {
-  private static storageKey = ACHIEVEMENTS_STORAGE_KEY;
-
-  /**
-   * Set a custom storage key (e.g. scoped to UID).
-   */
-  public static setStorageKey(key: string) {
-    this.storageKey = key;
-  }
-
-  /**
-   * Reset to default storage key.
-   */
-  public static resetStorageKey() {
-    this.storageKey = ACHIEVEMENTS_STORAGE_KEY;
-  }
-
   /**
    * Loads previously persisted unlocked achievement records.
    */
-  public static async getUnlockedRecords(): Promise<Record<string, UnlockedAchievementRecord>> {
+  public static async getUnlockedRecords(
+    uid?: string
+  ): Promise<Record<string, UnlockedAchievementRecord>> {
     try {
-      const raw = await AsyncStorage.getItem(this.storageKey);
+      const raw = await AsyncStorage.getItem(keyFor(uid));
       if (!raw) return {};
       return JSON.parse(raw);
     } catch {
@@ -58,10 +48,11 @@ export class AchievementEvaluator {
    * Saves unlocked achievement records.
    */
   public static async saveUnlockedRecords(
-    records: Record<string, UnlockedAchievementRecord>
+    records: Record<string, UnlockedAchievementRecord>,
+    uid?: string
   ): Promise<void> {
     try {
-      await AsyncStorage.setItem(this.storageKey, JSON.stringify(records));
+      await AsyncStorage.setItem(keyFor(uid), JSON.stringify(records));
     } catch (e) {
       console.warn('[AchievementEvaluator] Failed to save unlocked records', e);
     }
@@ -71,8 +62,11 @@ export class AchievementEvaluator {
    * Evaluates all achievement rules against current state, updates storage if new badges are earned,
    * and returns the complete evaluation report including any newly unlocked achievements.
    */
-  public static async evaluate(input: GamificationEvaluationInput): Promise<EvaluationResult> {
-    const unlockedMap = await this.getUnlockedRecords();
+  public static async evaluate(
+    input: GamificationEvaluationInput,
+    uid?: string
+  ): Promise<EvaluationResult> {
+    const unlockedMap = await this.getUnlockedRecords(uid);
     const nowIso = new Date().toISOString();
 
     const evaluatedList: EvaluatedAchievement[] = [];
@@ -117,7 +111,7 @@ export class AchievementEvaluator {
     }
 
     if (updatedRecords) {
-      await this.saveUnlockedRecords(unlockedMap);
+      await this.saveUnlockedRecords(unlockedMap, uid);
     }
 
     const totalUnlockedCount = evaluatedList.filter(a => a.isUnlocked).length;
@@ -133,9 +127,9 @@ export class AchievementEvaluator {
   /**
    * Clears all unlocked achievements (useful for account logout or testing).
    */
-  public static async clearRecords(): Promise<void> {
+  public static async clearRecords(uid?: string): Promise<void> {
     try {
-      await AsyncStorage.removeItem(this.storageKey);
+      await AsyncStorage.removeItem(keyFor(uid));
     } catch {}
   }
 }

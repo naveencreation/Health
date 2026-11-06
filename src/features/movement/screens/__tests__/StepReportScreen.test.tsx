@@ -80,7 +80,7 @@ describe('StepReportScreen', () => {
     expect(getByText('Yearly')).toBeTruthy();
 
     // Step chart card
-    expect(getByText('Step')).toBeTruthy();
+    expect(getByText('Steps')).toBeTruthy();
     expect(getAllByText('Selected').length).toBeGreaterThanOrEqual(1);
     expect(getByText('Step Goal')).toBeTruthy();
 

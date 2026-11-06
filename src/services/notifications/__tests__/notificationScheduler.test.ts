@@ -55,7 +55,7 @@ jest.mock('expo-notifications/build/cancelScheduledNotificationAsync', () => ({
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotificationService } from '../notificationService';
-import { NotificationScheduler } from '../notificationScheduler';
+import { NotificationScheduler, buildSyncOptions } from '../notificationScheduler';
 
 describe('NotificationService & NotificationScheduler Facade', () => {
   beforeEach(async () => {
@@ -137,5 +137,30 @@ describe('NotificationService & NotificationScheduler Facade', () => {
   it('allows cancelAll only via explicit cancelAllAndReset on sign-out', async () => {
     await NotificationScheduler.cancelAllAndReset();
     expect(mockCancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('builds the full planner context from a log', () => {
+    const log = {
+      date: '2026-11-06',
+      meals: [{ mealType: 'lunch' }],
+      waterMl: 750,
+      waterEntries: [{ loggedAt: '2026-11-06T09:00:00' }, { loggedAt: '2026-11-06T11:00:00' }],
+      steps: 4200,
+      weightEntries: [{ id: 'w1' }],
+    } as any;
+    const opts = buildSyncOptions(log, { streakDays: 3, waterGoalMl: 0, stepGoal: 9000 }, 'u1');
+    expect(opts).toMatchObject({
+      streakDays: 3,
+      hasLoggedMealsToday: true,
+      loggedMealSlots: ['lunch'],
+      currentWaterMl: 750,
+      targetWaterMl: 2500,
+      lastWaterLoggedAt: new Date('2026-11-06T11:00:00').getTime(),
+      hasLoggedWeightToday: true,
+      currentSteps: 4200,
+      stepGoal: 9000,
+      uid: 'u1',
+    });
+    expect(buildSyncOptions(undefined, { streakDays: 0, waterGoalMl: 0, stepGoal: 0 }).hasLoggedMealsToday).toBe(false);
   });
 });

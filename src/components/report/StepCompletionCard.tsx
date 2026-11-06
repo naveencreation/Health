@@ -3,8 +3,11 @@ import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from '
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { Fonts } from '@/theme/typography';
+import { Colors } from '@/theme/colors';
+import { toDateString } from '@/utils/dateUtils';
 import { ChartTypeToggle, ChartType } from './ChartTypeToggle';
 import { ChartTooltipPin } from './ChartTooltipPin';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 
 export interface DayStepData {
   dateStr: string;
@@ -34,8 +37,8 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
   days,
   selectedIndex,
   onSelectDay,
-  stepGoal = 6000,
-  activeColor = '#F97316',
+  stepGoal = BIOMETRIC_DEFAULTS.stepGoal,
+  activeColor = Colors.steps,
   defaultChartType = 'bar',
 }) => {
   const [chartType, setChartType] = useState<ChartType>(defaultChartType);
@@ -50,7 +53,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
 
   // Adaptive Y-Axis calculation (matching 7000 down to 1000 or custom)
   const { maxY, yTicks, stepGoalDisplay } = useMemo(() => {
-    const goal = stepGoal && stepGoal > 0 ? stepGoal : 6000;
+    const goal = stepGoal && stepGoal > 0 ? stepGoal : BIOMETRIC_DEFAULTS.stepGoal;
     const maxLogged = days.length > 0 ? Math.max(...days.map(d => d.steps || 0)) : 0;
     const highest = Math.max(goal, maxLogged);
 
@@ -67,13 +70,14 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
       ceiling = 12000;
       step = 2000;
     } else {
-      ceiling = Math.ceil(highest / 2000) * 2000;
-      step = Math.round(ceiling / 6);
+      // Multiple of 6000 so all 6 steps are whole thousands
+      ceiling = Math.ceil(highest / 6000) * 6000;
+      step = ceiling / 6;
     }
 
+    // Ticks always end at 0: bars are scaled from 0
     const ticks: number[] = [];
-    const minTick = ceiling >= 7000 && step === 1000 ? 1000 : 0;
-    for (let v = ceiling; v >= minTick; v -= step) {
+    for (let v = ceiling; v >= 0; v -= step) {
       ticks.push(Math.round(v));
     }
 
@@ -104,14 +108,18 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
     return { x, y, steps: d.steps };
   });
 
+  // The line stops at today: future days have no data yet
+  const todayStr = toDateString();
+  const pastPoints = points.filter((_, i) => days[i].dateStr <= todayStr);
+
   const linePath =
-    points.length > 0
-      ? points.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
+    pastPoints.length > 0
+      ? pastPoints.reduce((acc, p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`), '')
       : '';
 
   const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${points[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
+    pastPoints.length > 0
+      ? `${linePath} L ${pastPoints[pastPoints.length - 1].x} ${CHART_HEIGHT - BOTTOM_PAD} L ${pastPoints[0].x} ${CHART_HEIGHT - BOTTOM_PAD} Z`
       : '';
 
   const selectedPoint = points[selectedIndex];
@@ -120,7 +128,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
     <View style={styles.cardContainer}>
       {/* 1. Card Header Row: Title & View Mode Toggle */}
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Step</Text>
+        <Text style={styles.cardTitle}>Steps</Text>
         <ChartTypeToggle chartType={chartType} onChange={setChartType} activeColor={activeColor} />
       </View>
 
@@ -186,7 +194,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                 const isSelected = idx === selectedIndex;
                 const barHeight =
                   day.steps <= 0
-                    ? 8
+                    ? 0
                     : Math.max(12, (Math.min(day.steps, maxY) / maxY) * USABLE_HEIGHT);
 
                 // Tooltip position directly above the selected bar
@@ -197,8 +205,9 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                     key={`bar_day_${day.dateStr}_${idx}`}
                     style={styles.dayColTouchable}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.steps.toLocaleString()} steps`}
+                    accessibilityLabel={`${day.dayName}: ${day.steps.toLocaleString()} steps`}
                   >
                     {/* Floating Tooltip Pin for Selected Bar */}
                     {isSelected && (
@@ -218,7 +227,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                         {
                           width: barWidth,
                           height: barHeight,
-                          backgroundColor: isSelected ? activeColor : '#FED7AA',
+                          backgroundColor: isSelected ? activeColor : Colors.stepsTrack,
                           borderTopLeftRadius: barWidth / 2,
                           borderTopRightRadius: barWidth / 2,
                         },
@@ -255,7 +264,7 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                   />
 
                   {/* Nodes on Line */}
-                  {points.map((p, i) => (
+                  {points.map((p, i) => days[i].dateStr > todayStr ? null : (
                     <Circle
                       key={`node_${i}`}
                       cx={p.x}
@@ -295,8 +304,9 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                     key={`line_touch_${day.dateStr}_${idx}`}
                     style={styles.lineColTouch}
                     onPress={() => onSelectDay(idx)}
+                    accessibilityState={{ selected: idx === selectedIndex }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Day ${day.dayNum}: ${day.steps.toLocaleString()} steps`}
+                    accessibilityLabel={`${day.dayName}: ${day.steps.toLocaleString()} steps`}
                   />
                 ))}
               </View>
@@ -316,6 +326,8 @@ export const StepCompletionCard: React.FC<StepCompletionCardProps> = ({
                 key={`x_label_${day.dateStr}_${idx}`}
                 style={styles.xLabelCol}
                 onPress={() => onSelectDay(idx)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${day.dayName}`}
                 hitSlop={{ top: 6, bottom: 8, left: 4, right: 4 }}
               >
                 <Text

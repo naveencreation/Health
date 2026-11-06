@@ -114,7 +114,7 @@ describe('AnalyticsScreen Integration', () => {
   it('triggers Pro paywall modal when tapping Monthly on Free tier', async () => {
     const { getByRole, findByText } = await render(<AnalyticsScreen />);
 
-    const monthlyTab = getByRole('button', {
+    const monthlyTab = getByRole('tab', {
       name: /Monthly timeframe \(Calorify Pro required\)/i,
     });
     await act(async () => {
@@ -122,7 +122,7 @@ describe('AnalyticsScreen Integration', () => {
     });
 
     const paywallNotice = await findByText(
-      'Experience the full power of AI nutrition scanning, deep metabolic analytics, and streak protection.'
+      'Experience the full power of AI nutrition scanning and deep metabolic analytics.'
     );
     expect(paywallNotice).toBeTruthy();
   });
@@ -135,7 +135,7 @@ describe('AnalyticsScreen Integration', () => {
 
     const { getByRole, queryByText } = await render(<AnalyticsScreen />);
 
-    const monthlyTab = getByRole('button', { name: 'Monthly timeframe' });
+    const monthlyTab = getByRole('tab', { name: 'Monthly timeframe' });
     fireEvent.press(monthlyTab);
 
     // Paywall should not be open

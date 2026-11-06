@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
-  Alert,
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { AIService, ValidationResult } from '@/services/ai';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
+import { ConfirmationModal } from '@/components/common/ConfirmationModal';
 
 interface BYOKSetupModalProps {
   visible: boolean;
@@ -38,6 +38,16 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
   const [maskedKey, setMaskedKey] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Alert.alert has no buttons on web, so disconnect confirms in-app on every platform
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+
+  // A typed key must not linger in state after the sheet closes
+  const handleClose = () => {
+    setApiKeyInput('');
+    setShowKey(false);
+    setConfirmDisconnect(false);
+    onClose();
+  };
 
   useEffect(() => {
     if (visible) {
@@ -120,7 +130,11 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
       }
       const result = await AIService.validateAndSaveKey(storedKey);
       if (result.isValid) {
-        setSuccessMessage(`Connection healthy! Responded in ${result.latencyMs ?? 120}ms.`);
+        setSuccessMessage(
+          result.latencyMs
+            ? `Connection healthy! Responded in ${result.latencyMs}ms.`
+            : 'Connection healthy!'
+        );
       } else {
         setValidationError(
           result.error?.message || 'Key verification failed. Please enter a new key.'
@@ -133,27 +147,17 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
     }
   };
 
-  const handleDisconnect = async () => {
-    Alert.alert(
-      'Disconnect Gemini Key?',
-      'AI features will revert to offline fallback until you reconnect a key.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disconnect',
-          style: 'destructive',
-          onPress: async () => {
-            await AIService.disconnectKey();
-            setIsConnected(false);
-            setMaskedKey('');
-            setApiKeyInput('');
-            setSuccessMessage(null);
-            setValidationError(null);
-            if (onKeyConfigured) onKeyConfigured();
-          },
-        },
-      ]
-    );
+  const handleDisconnect = () => setConfirmDisconnect(true);
+
+  const handleConfirmDisconnect = async () => {
+    await AIService.disconnectKey();
+    setConfirmDisconnect(false);
+    setIsConnected(false);
+    setMaskedKey('');
+    setApiKeyInput('');
+    setSuccessMessage(null);
+    setValidationError(null);
+    if (onKeyConfigured) onKeyConfigured();
   };
 
   const handleOpenGoogleAIStudio = () => {
@@ -161,11 +165,11 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
       <View style={styles.modalOverlay}>
         <Pressable
           style={styles.backdropPressable}
-          onPress={onClose}
+          onPress={handleClose}
           accessibilityRole="button"
           accessibilityLabel="Dismiss AI Setup Sheet"
         />
@@ -196,7 +200,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 
               <Pressable
                 style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
-                onPress={onClose}
+                onPress={handleClose}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
@@ -222,7 +226,11 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                   style={styles.shieldIcon}
                 />
                 <View style={styles.privacyTextContainer}>
-                  <Text style={styles.privacyTitle}>100% Device-Encrypted Privacy</Text>
+                  <Text style={styles.privacyTitle}>
+                    {Platform.OS === 'web'
+                      ? 'Stored only in this browser'
+                      : 'Stored encrypted on this device only'}
+                  </Text>
                 </View>
               </View>
 
@@ -337,11 +345,13 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               <Pressable
                 style={({ pressed }) => [
                   styles.primaryConnectBtn,
-                  !apiKeyInput.trim() && !isConnected ? styles.disabledBtn : null,
+                  !apiKeyInput.trim() ? styles.disabledBtn : null,
                   pressed ? styles.btnPressed : null,
                 ]}
                 onPress={handleValidateAndConnect}
-                disabled={isValidating || (!apiKeyInput.trim() && !isConnected)}
+                disabled={isValidating || !apiKeyInput.trim()}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: isValidating || !apiKeyInput.trim() }}
               >
                 {isValidating ? (
                   <View style={styles.btnRow}>
@@ -378,6 +388,16 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
           </View>
         </KeyboardAvoidingView>
       </View>
+      <ConfirmationModal
+        visible={confirmDisconnect}
+        title="Disconnect Gemini Key?"
+        message="Ria and food photo analysis stop working until you connect a key again."
+        confirmText="Disconnect"
+        confirmStyle="destructive"
+        iconName="key-outline"
+        onConfirm={handleConfirmDisconnect}
+        onCancel={() => setConfirmDisconnect(false)}
+      />
     </Modal>
   );
 };
@@ -414,11 +434,7 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     borderWidth: 1,
     borderColor: 'rgba(244, 117, 81, 0.15)',
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
+    elevation: 0,
     ...(Platform.OS === 'web'
       ? {
           borderLeftWidth: 1,

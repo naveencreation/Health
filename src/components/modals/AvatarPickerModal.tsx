@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -19,6 +20,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onClose,
   onSelectAvatar,
 }) => {
+  const insets = useSafeAreaInsets();
   const sanitizeUrl = (url?: string) => {
     if (!url) return DEFAULT_AVATAR_URL;
     const exists = AVATAR_PRESETS.some(a => a.url === url);
@@ -178,7 +180,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           </ScrollView>
 
           {/* Sticky Bottom Confirmation Bar */}
-          <View style={styles.bottomBar}>
+          <View style={[styles.bottomBar, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>
             <Pressable
               style={({ pressed }) => [
                 styles.confirmBtn,
@@ -227,29 +229,25 @@ const styles = StyleSheet.create({
     maxWidth: 480,
     height: '84%',
     maxHeight: 700,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderCurve: 'continuous',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 16,
+    elevation: 0,
     zIndex: 10000,
   },
   handleContainer: {
     alignItems: 'center',
     paddingTop: 10,
     paddingBottom: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   dragHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderMedium,
   },
   header: {
     flexDirection: 'row',
@@ -258,9 +256,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 6,
     paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.borderLight,
   },
   closeBtn: {
     width: 38,
@@ -299,7 +297,7 @@ const styles = StyleSheet.create({
   // Hero Live Preview Card
   heroPreviewCard: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.surfaceLow,
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 12,
@@ -308,7 +306,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   heroAvatarRing: {
     position: 'relative',
@@ -317,7 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     padding: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -331,7 +329,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.card,
   },
   heroAvatarName: {
     fontFamily: Fonts.urbanist.bold,
@@ -350,7 +348,7 @@ const styles = StyleSheet.create({
   },
   avatarGridCard: {
     width: '31.3%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     paddingVertical: 12,
@@ -391,7 +389,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: Colors.card,
   },
   gridAvatarName: {
     fontFamily: Fonts.urbanist.medium,
@@ -407,12 +405,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: Colors.borderLight,
   },
   confirmBtn: {
     flexDirection: 'row',
@@ -435,22 +432,22 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
 
   // Preset Colors
-  borderMen: { borderColor: '#1E293B' },
+  borderMen: { borderColor: Colors.inverseSurface },
   borderWomen: { borderColor: '#EA580C' },
   borderBoy: { borderColor: '#3B82F6' },
-  borderGirl: { borderColor: '#F43F5E' },
+  borderGirl: { borderColor: Colors.weight },
   borderGrandpa: { borderColor: '#475569' },
-  borderGrandma: { borderColor: '#059669' },
+  borderGrandma: { borderColor: Colors.fiber },
   borderDefault: { borderColor: Colors.primary },
-  bgMen: { backgroundColor: '#1E293B' },
+  bgMen: { backgroundColor: Colors.inverseSurface },
   bgWomen: { backgroundColor: '#EA580C' },
   bgBoy: { backgroundColor: '#3B82F6' },
-  bgGirl: { backgroundColor: '#F43F5E' },
+  bgGirl: { backgroundColor: Colors.weight },
   bgGrandpa: { backgroundColor: '#475569' },
-  bgGrandma: { backgroundColor: '#059669' },
+  bgGrandma: { backgroundColor: Colors.fiber },
   bgDefault: { backgroundColor: Colors.primary },
 });

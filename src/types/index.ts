@@ -107,6 +107,9 @@ export interface UserGoals {
   heightCm?: number;
   startWeightKg?: number;
   riaTone?: 'supportive' | 'focused' | 'scientific';
+  /** From onboarding; lets Profile rebuild the plan the budget came from */
+  activityLevel?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
+  pace?: 'gentle' | 'steady' | 'faster';
   waterReminder?: boolean;
   mealReminder?: boolean;
   stepReminder?: boolean;
@@ -154,6 +157,8 @@ export interface OnboardingPlanPayload {
     weightKg: number;
     targetWeightKg?: number;
     goal: string;
+    activityLevel?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
+    pace?: 'gentle' | 'steady' | 'faster';
     weightUnit?: 'kg' | 'lbs';
     heightUnit?: 'cm' | 'ft';
     firstMeal?: {

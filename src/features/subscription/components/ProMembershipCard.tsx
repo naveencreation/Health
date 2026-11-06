@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { usePro } from '../hooks/usePro';
+import { formatExpiry } from '@/services/payments/paymentService';
 import { haptics } from '@/utils/haptics';
 
 export interface ProMembershipCardProps {
@@ -60,9 +61,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
 
         <View style={styles.bottomRow}>
           <Text style={styles.expiryText}>
-            {expiresAt
-              ? `Renews on ${new Date(expiresAt).toLocaleDateString()}`
-              : 'Unlimited Access'}
+            {formatExpiry(expiresAt)}
           </Text>
           <Pressable
             style={({ pressed }) => [styles.manageBtn, pressed && styles.btnPressed]}
@@ -92,7 +91,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
             </View>
           </View>
           <Text style={styles.tagline}>
-            AI food vision, adaptive calorie coaching, streak freeze & advanced trends.
+            AI food vision, adaptive calorie coaching & advanced trends.
           </Text>
         </View>
       </View>
@@ -117,18 +116,18 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     gap: 12,
     shadowOpacity: 0,
     elevation: 0,
   },
   cardPro: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
     gap: 12,
   },
   topRow: {
@@ -140,17 +139,17 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.warningLight,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: Colors.carbsBorder,
   },
   proIconBadge: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.warningLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -166,19 +165,19 @@ const styles = StyleSheet.create({
   headline: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   proTitle: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
-    color: '#0F172A',
+    color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
   proSubtitle: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   tagline: {
     fontFamily: Fonts.urbanist.regular,
@@ -187,7 +186,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   trialPill: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: Colors.warningLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   activePill: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: Colors.successLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -207,7 +206,7 @@ const styles = StyleSheet.create({
   activePillText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 9,
-    color: '#15803D',
+    color: Colors.successDark,
     letterSpacing: 0.3,
   },
   upgradeBtn: {
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
   upgradeBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.onPrimary,
   },
   dividerPro: {
     height: 1,
@@ -237,7 +236,7 @@ const styles = StyleSheet.create({
   expiryText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   manageBtn: {
     flexDirection: 'row',
@@ -249,7 +248,7 @@ const styles = StyleSheet.create({
   manageBtnText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: '#0F172A',
+    color: Colors.textPrimary,
   },
   btnPressed: {
     opacity: 0.85,

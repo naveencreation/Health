@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { auth } from '@/services/firebase';
+import { ScopedStorage } from '@/services/storage/scopedStorage';
 import { haptics } from '@/utils/haptics';
 
 export type SubscriptionPlanId = 'pro_monthly' | 'pro_annual' | 'pro_lifetime';
@@ -51,6 +53,20 @@ export const SUBSCRIPTION_PACKAGES: SubscriptionPackage[] = [
   },
 ];
 
+export const PLAN_NAMES: Record<SubscriptionPlanId, string> = {
+  pro_monthly: 'Monthly',
+  pro_annual: 'Annual',
+  pro_lifetime: 'Lifetime',
+};
+
+/** expiresAt can be 'lifetime', which is not a date, so it is checked first */
+export const formatExpiry = (expiresAt?: string): string =>
+  expiresAt === 'lifetime'
+    ? 'Lifetime access'
+    : expiresAt
+      ? `Renews on ${new Date(expiresAt).toLocaleDateString()}`
+      : 'Active';
+
 export const PAYMENT_STORAGE_KEY = '@calori_subscription_entitlement_v1';
 
 export type EntitlementListener = (state: EntitlementState) => void;
@@ -65,6 +81,11 @@ export class PaymentService {
 
   public static resetStorageKey() {
     this.storageKey = PAYMENT_STORAGE_KEY;
+  }
+
+  // Per-user key, read at call time, so Pro never carries over to another account on the device
+  private static get key(): string {
+    return ScopedStorage.getKey(this.storageKey, auth.currentUser?.uid);
   }
 
   /**
@@ -92,7 +113,7 @@ export class PaymentService {
    */
   public static async getEntitlement(): Promise<EntitlementState> {
     try {
-      const raw = await AsyncStorage.getItem(this.storageKey);
+      const raw = await AsyncStorage.getItem(this.key);
       if (!raw) {
         return { isPro: false };
       }
@@ -119,7 +140,7 @@ export class PaymentService {
    */
   public static async saveEntitlement(state: EntitlementState): Promise<void> {
     try {
-      await AsyncStorage.setItem(this.storageKey, JSON.stringify(state));
+      await AsyncStorage.setItem(this.key, JSON.stringify(state));
       this.notifyListeners(state);
     } catch (e) {
       console.warn('[PaymentService] Failed to save entitlement', e);
@@ -136,17 +157,22 @@ export class PaymentService {
       await haptics.impactMedium();
 
       const now = new Date();
+      // The paid period starts after the free trial
+      const start = new Date(now);
+      start.setDate(
+        start.getDate() + (SUBSCRIPTION_PACKAGES.find(p => p.id === planId)?.trialDays ?? 0)
+      );
       let expiresAt: string;
 
       if (planId === 'pro_lifetime') {
         expiresAt = 'lifetime';
       } else if (planId === 'pro_annual') {
-        const nextYear = new Date(now);
-        nextYear.setFullYear(now.getFullYear() + 1);
+        const nextYear = new Date(start);
+        nextYear.setFullYear(start.getFullYear() + 1);
         expiresAt = nextYear.toISOString();
       } else {
-        const nextMonth = new Date(now);
-        nextMonth.setMonth(now.getMonth() + 1);
+        const nextMonth = new Date(start);
+        nextMonth.setMonth(start.getMonth() + 1);
         expiresAt = nextMonth.toISOString();
       }
 
@@ -189,7 +215,7 @@ export class PaymentService {
    */
   public static async revoke(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(this.storageKey);
+      await AsyncStorage.removeItem(this.key);
       this.notifyListeners({ isPro: false });
     } catch {}
   }

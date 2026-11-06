@@ -23,7 +23,7 @@ describe('StepCalorieBurnCard', () => {
     { dateStr: '2026-09-16', dayNum: 16, dayName: 'M', calories: 208 },
     { dateStr: '2026-09-17', dayNum: 17, dayName: 'T', calories: 201 },
     { dateStr: '2026-09-18', dayNum: 18, dayName: 'W', calories: 224 },
-    { dateStr: '2026-09-19', dayNum: 19, dayName: 'T', calories: 272 },
+    { dateStr: '2026-09-19', dayNum: 19, dayName: 'Thursday 19', calories: 272 },
     { dateStr: '2026-09-20', dayNum: 20, dayName: 'F', calories: 216 },
     { dateStr: '2026-09-21', dayNum: 21, dayName: 'S', calories: 232 },
     { dateStr: '2026-09-22', dayNum: 22, dayName: 'S', calories: 184 },
@@ -80,7 +80,7 @@ describe('StepCalorieBurnCard', () => {
       <StepCalorieBurnCard days={sampleDays} selectedIndex={1} onSelectDay={handleSelectDay} />
     );
 
-    fireEvent.press(getByLabelText('Day 19: 272 kcal'));
+    fireEvent.press(getByLabelText('Thursday 19: 272 kcal'));
     expect(handleSelectDay).toHaveBeenCalledWith(3);
   });
 });
