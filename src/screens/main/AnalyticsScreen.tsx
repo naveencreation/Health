@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
-  Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -14,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
-import { DailyLog } from '@/types';
 import { haptics } from '@/utils/haptics';
 import { parseDateString } from '@/utils/dateUtils';
 import { usePro, ProPaywallModal } from '@/features/subscription';
@@ -23,35 +21,17 @@ import { computeCalorieDays, computeMacroRatioDays } from '@/features/nutrition/
 import { computeMovementAnalytics } from '@/features/movement/services';
 import { computeHydrationAnalytics } from '@/features/hydration/services';
 import { computeWeightAnalytics } from '@/features/weight/services';
-
-// Standardized Report Components
+import { getTodayBMICategory } from '@/features/weight/utils/bmiCalculator';
+import { summarizeSeries, SeriesSummary } from '@/services/insights/seriesSummary';
 import {
-  ReportPickerModal,
-  ReportCategory,
-  REPORT_CATEGORIES,
-  CalorieCompletionCard,
-  DayCalorieIntakeData,
-  MacroDistributionCard,
-  DayMacroRatioData,
-  StepCompletionCard,
-  DayStepData,
-  StepCalorieBurnCard,
-  DayCalorieData,
-  StepTimeDurationCard,
-  DayTimeData,
-  StepTotalSummaryCard,
-  DrinkCompletionCard,
-  DayCompletionData,
-  HydrateVolumeCard,
-  DayHydrateData,
-  DrinkTypesCard,
-  DrinkTypeBreakdown,
-  WeightSummaryCard,
-  WeightSummaryData,
-  WeightTrendCard,
-  DayWeightTrendData,
-  BMIGaugeCard,
-} from '@/components/report';
+  InsightBarChart,
+  InsightLineChart,
+  InsightStatRow,
+  InsightStat,
+  InsightSectionHeader,
+  InsightSplitBar,
+  InsightBmiScale,
+} from '@/components/report/InsightCharts';
 
 export interface AnalyticsScreenProps {
   scrollRef?: React.RefObject<ScrollView | null>;
@@ -60,6 +40,14 @@ export interface AnalyticsScreenProps {
 }
 
 export type ReportTimeframe = 'weekly' | 'monthly' | 'yearly';
+type ReportId = 'nutrition' | 'steps' | 'water' | 'weight';
+
+const REPORT_TABS: { id: ReportId; title: string; color: string }[] = [
+  { id: 'nutrition', title: 'Calories', color: Colors.primary },
+  { id: 'steps', title: 'Steps', color: Colors.steps },
+  { id: 'water', title: 'Water', color: Colors.water },
+  { id: 'weight', title: 'Weight', color: Colors.weight },
+];
 
 const MONTH_NAMES = [
   'Jan',
@@ -91,6 +79,8 @@ const FULL_MONTH_NAMES = [
   'December',
 ];
 
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 // Index of the bucket holding today: weekday (Mon=0), week of month (0-4) or month (0-11)
@@ -98,13 +88,13 @@ const currentBucketIndex = (tf: ReportTimeframe, now = new Date()) =>
   tf === 'weekly'
     ? (now.getDay() + 6) % 7
     : tf === 'monthly'
-    ? Math.min(4, Math.floor((now.getDate() - 1) / 7))
-    : now.getMonth();
+      ? Math.min(4, Math.floor((now.getDate() - 1) / 7))
+      : now.getMonth();
 
 const TIMEFRAME_LABEL: Record<ReportTimeframe, string> = {
-  weekly: 'Weekly',
-  monthly: 'Monthly',
-  yearly: 'Yearly',
+  weekly: 'Week',
+  monthly: 'Month',
+  yearly: 'Year',
 };
 const PERIOD_NOUN: Record<ReportTimeframe, string> = {
   weekly: 'days',
@@ -112,15 +102,68 @@ const PERIOD_NOUN: Record<ReportTimeframe, string> = {
   yearly: 'months',
 };
 
-const EmptyAnalyticsState: React.FC<{ title: string; message: string }> = ({ title, message }) => (
-  <View style={styles.emptyAnalyticsContainer}>
-    <Ionicons name="bar-chart-outline" size={48} color={Colors.borderInset} />
-    <Text style={styles.emptyAnalyticsTitle}>{title}</Text>
-    <Text style={styles.emptyAnalyticsSubtitle}>{message}</Text>
-  </View>
-);
+const fmt = (n: number) => Math.round(n).toLocaleString();
+const fmtDuration = (min: number) =>
+  min >= 60 ? `${Math.floor(min / 60)}h ${Math.round(min % 60)}m` : `${Math.round(min)}m`;
 
+interface Hero {
+  label: string;
+  value: string;
+  unit: string;
+  strong: string;
+  rest: string;
+  insight?: string;
+  isEmpty?: boolean;
+}
 
+// Average-vs-goal summary for calories (goal is a ceiling), steps and water (goal is a floor)
+const goalHero = (
+  s: SeriesSummary | null,
+  goal: number,
+  unit: string,
+  ceiling: boolean,
+  noun: string
+): Hero => {
+  if (!s) {
+    return {
+      label: 'Average per day',
+      value: '0',
+      unit,
+      strong: '',
+      rest: `Your goal is ${fmt(goal)} ${unit} a day`,
+      isEmpty: true,
+    };
+  }
+  const gap = fmt(Math.abs(s.diff));
+  return {
+    label: 'Average per day',
+    value: fmt(s.avg),
+    unit,
+    strong:
+      s.diff === 0
+        ? 'Right on'
+        : s.diff > 0
+          ? `${gap} over`
+          : `${gap} ${ceiling ? 'under' : 'short of'}`,
+    rest: ` your ${fmt(goal)} ${unit} goal`,
+    insight: ceiling
+      ? `${s.hits} of ${s.elapsed} ${noun} on target.`
+      : `Goal hit ${s.hits} of ${s.elapsed} ${noun}.`,
+  };
+};
+
+// "1,640 kcal · 210 under goal" for the selected bar
+const goalReadout = (v: number, goal: number, unit: string, ceiling: boolean) => {
+  if (v <= 0) return { value: 'Nothing logged', note: '' };
+  const d = v - goal;
+  const note =
+    d === 0
+      ? 'on goal'
+      : d > 0
+        ? `${fmt(d)} over goal`
+        : `${fmt(-d)} ${ceiling ? 'under goal' : 'short'}`;
+  return { value: `${fmt(v)} ${unit}`, note };
+};
 
 const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   scrollRef,
@@ -131,9 +174,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const { dailyLogs, todayStr } = useDailyLog();
   const { userGoals } = useGoals();
 
-  // Active Report Category (defaults to Nutrition)
-  const [activeReport, setActiveReport] = useState<ReportCategory>('nutrition');
-  const [reportPickerVisible, setReportPickerVisible] = useState(false);
+  const [activeReport, setActiveReport] = useState<ReportId>('nutrition');
 
   // Pro Subscription State
   const { isPro } = usePro();
@@ -143,25 +184,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const [timeframe, setTimeframe] = useState<ReportTimeframe>('weekly');
   const [periodOffset, setPeriodOffset] = useState<number>(0);
 
-  const defaultDayIndex = currentBucketIndex('weekly');
-
-  // Independent Selected Day Index per chart so clicking one chart does not affect others
-  // 1. Nutrition
-  const [selectedCalorieIndex, setSelectedCalorieIndex] = useState<number>(defaultDayIndex);
-  const [selectedMacroRatioIndex, setSelectedMacroRatioIndex] = useState<number>(defaultDayIndex);
-
-  // 2. Step Activity (Step count, Calorie burn, Active duration)
-  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(defaultDayIndex);
-  const [selectedStepCalorieIndex, setSelectedStepCalorieIndex] = useState<number>(defaultDayIndex);
-  const [selectedStepTimeIndex, setSelectedStepTimeIndex] = useState<number>(defaultDayIndex);
-
-  // 3. Hydration Intake (Completion & Volume)
-  const [selectedWaterIndex, setSelectedWaterIndex] = useState<number>(defaultDayIndex);
-  const [selectedHydrateVolumeIndex, setSelectedHydrateVolumeIndex] =
-    useState<number>(defaultDayIndex);
-
-  // 4. Weight & Body Trend
-  const [selectedWeightIndex, setSelectedWeightIndex] = useState<number>(defaultDayIndex);
+  // One selected bucket drives the chart and the readout above it
+  const [selectedIndex, setSelectedIndex] = useState<number>(() => currentBucketIndex('weekly'));
 
   // Preserve scroll offset if mounted from tab switch
   useEffect(() => {
@@ -183,14 +207,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
   const dailyStepGoal = userGoals.stepGoal || BIOMETRIC_DEFAULTS.stepGoal;
   const dailyWaterGoal = userGoals.waterGoalMl || BIOMETRIC_DEFAULTS.waterGoalMl;
   const userWeightKg = userGoals.currentWeightKg || BIOMETRIC_DEFAULTS.currentWeightKg;
-  const userHeightCm = userGoals.heightCm || BIOMETRIC_DEFAULTS.heightCm;
   const weightUnit: 'kg' | 'lbs' = userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg';
   const unitFactor = weightUnit === 'lbs' ? 2.20462 : 1;
-
-  // Active Report Meta configuration
-  const activeReportMeta = useMemo(() => {
-    return REPORT_CATEGORIES.find(c => c.id === activeReport) || REPORT_CATEGORIES[0];
-  }, [activeReport]);
 
   // Compute Active Period Date Range & Days
   const dateRangeInfo = useMemo(() => {
@@ -232,7 +250,9 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           dateStr,
           dayNum: d.getDate(),
           // Spoken by screen readers on the chart columns
-          dayName: `${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i]} ${d.getDate()}`,
+          dayName: `${WEEKDAYS[i]} ${d.getDate()}`,
+          axisLabel: WEEKDAYS[i][0],
+          readoutLabel: `${WEEKDAYS[i].slice(0, 3)}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`,
           log,
         };
       });
@@ -280,6 +300,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           dateStr: bucketDates[0],
           dayNum: bucket.name,
           dayName: `Week ${idx + 1}, days ${bucket.name}`,
+          axisLabel: bucket.name,
+          readoutLabel: `${MONTH_NAMES[monthIdx]} ${bucket.name.replace('-', '–')}`,
           bucketDates,
         };
       });
@@ -312,6 +334,8 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         dateStr: monthDates[0],
         dayNum: name,
         dayName: FULL_MONTH_NAMES[monthIdx],
+        axisLabel: name[0],
+        readoutLabel: `${FULL_MONTH_NAMES[monthIdx]} ${targetYear}`,
         monthDates,
       };
     });
@@ -324,58 +348,30 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     };
   }, [timeframe, periodOffset, dailyLogs, todayStr]);
 
-  // Safe selected indices within bounds for each independent chart
-  const maxDayIndex = Math.max(0, dateRangeInfo.days.length - 1);
-  const safeCalorieIndex = Math.min(selectedCalorieIndex, maxDayIndex);
-  const safeMacroRatioIndex = Math.min(selectedMacroRatioIndex, maxDayIndex);
-  const safeStepIndex = Math.min(selectedStepIndex, maxDayIndex);
-  const safeStepCalorieIndex = Math.min(selectedStepCalorieIndex, maxDayIndex);
-  const safeStepTimeIndex = Math.min(selectedStepTimeIndex, maxDayIndex);
-  const safeWaterIndex = Math.min(selectedWaterIndex, maxDayIndex);
-  const safeHydrateVolumeIndex = Math.min(selectedHydrateVolumeIndex, maxDayIndex);
-  const safeWeightIndex = Math.min(selectedWeightIndex, maxDayIndex);
+  const sel = Math.min(selectedIndex, Math.max(0, dateRangeInfo.days.length - 1));
+  const axisLabels = dateRangeInfo.days.map(d => d.axisLabel);
+  const noun = PERIOD_NOUN[timeframe];
+  const periodWord = TIMEFRAME_LABEL[timeframe].toLowerCase();
 
   // =========================================================================
-  // 1. NUTRITION REPORT DATA
+  // REPORT DATA (pure services, unchanged)
   // =========================================================================
-  const calorieDays: DayCalorieIntakeData[] = useMemo(() => {
+  const calorieDays = useMemo(() => {
     return computeCalorieDays(dateRangeInfo.days as any, dailyCalorieGoal, dailyLogs);
   }, [dateRangeInfo.days, dailyCalorieGoal, dailyLogs]);
 
-  const macroRatioDays: DayMacroRatioData[] = useMemo(() => {
+  const macroRatioDays = useMemo(() => {
     return computeMacroRatioDays(dateRangeInfo.days as any, userGoals, dailyLogs);
   }, [dateRangeInfo.days, dailyLogs, userGoals]);
 
-  // =========================================================================
-  // 2. STEP REPORT DATA
-  // =========================================================================
-  const { stepDays, calorieBurnDays, timeDays, stepSummary } = useMemo(() => {
+  const { stepDays, stepSummary } = useMemo(() => {
     return computeMovementAnalytics(dateRangeInfo.days as any, dailyLogs, dailyStepGoal);
   }, [dateRangeInfo.days, dailyLogs, dailyStepGoal]);
 
-  // =========================================================================
-  // 3. WATER REPORT DATA
-  // =========================================================================
-  const { waterCompletionDays, hydrateDays, drinkTypesBreakdown, totalDrinkVolume } =
-    useMemo(() => {
-      return computeHydrationAnalytics(
-        dateRangeInfo.days as any,
-        dailyLogs,
-        dailyWaterGoal
-      );
-    }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
+  const { waterCompletionDays, drinkTypesBreakdown, totalDrinkVolume } = useMemo(() => {
+    return computeHydrationAnalytics(dateRangeInfo.days as any, dailyLogs, dailyWaterGoal);
+  }, [dateRangeInfo.days, dailyLogs, dailyWaterGoal]);
 
-  // Average goal completion over days with water logged (donut centre)
-  const waterAvgCompletion = useMemo(() => {
-    const logged = waterCompletionDays.filter(d => d.intakeMl > 0);
-    return logged.length > 0
-      ? Math.round(logged.reduce((s, d) => s + d.completionPct, 0) / logged.length)
-      : 0;
-  }, [waterCompletionDays]);
-
-  // =========================================================================
-  // 4. WEIGHT REPORT DATA
-  // =========================================================================
   const { weightTrendDays, weightSummary } = useMemo(() => {
     return computeWeightAnalytics(
       dateRangeInfo.days as any,
@@ -395,112 +391,6 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     }
   };
 
-  // Plain-Language Insight Summary for Active Category
-  const activeReportInsight = useMemo(() => {
-    const noun = PERIOD_NOUN[timeframe];
-    // Buckets that have started (future days/weeks/months can't have met a goal yet)
-    const elapsed = (list: { dateStr: string }[]) => list.filter(d => d.dateStr <= todayStr).length;
-    if (activeReport === 'nutrition') {
-      const loggedDays = calorieDays.filter(d => d.calories > 0);
-      if (loggedDays.length === 0) return null;
-      const avgCals = Math.round(
-        loggedDays.reduce((sum, d) => sum + d.calories, 0) / loggedDays.length
-      );
-      const diff = avgCals - dailyCalorieGoal;
-      const onTrack = Math.abs(diff) <= 120;
-      return {
-        badge: `${TIMEFRAME_LABEL[timeframe]} Nutrition Insight`,
-        headline: `You averaged ${avgCals.toLocaleString()} kcal per day`,
-        subline: onTrack
-          ? `Consistent pacing: within ${Math.abs(diff)} kcal of your ${dailyCalorieGoal.toLocaleString()} kcal base budget.`
-          : diff > 0
-          ? `${diff} kcal above your base budget (${dailyCalorieGoal.toLocaleString()} kcal, before exercise). Consider lighter snacks.`
-          : `${Math.abs(diff)} kcal below your base budget (${dailyCalorieGoal.toLocaleString()} kcal, before exercise). Ensure adequate protein intake.`,
-        accentColor: Colors.primary,
-        iconName: 'sparkles' as const,
-      };
-    }
-
-    if (activeReport === 'steps') {
-      const loggedDays = stepDays.filter(d => d.steps > 0);
-      if (loggedDays.length === 0) return null;
-      const avgSteps = Math.round(
-        loggedDays.reduce((sum, d) => sum + d.steps, 0) / loggedDays.length
-      );
-      const diff = avgSteps - dailyStepGoal;
-      return {
-        badge: 'Movement Cadence',
-        headline: `Averaging ${avgSteps.toLocaleString()} steps per day`,
-        subline:
-          diff >= 0
-            ? `Achieved daily step goal on ${stepDays.filter(d => d.steps >= dailyStepGoal).length} of ${elapsed(stepDays)} ${noun}.`
-            : `${Math.abs(diff).toLocaleString()} steps below your ${dailyStepGoal.toLocaleString()} goal. A 15-minute evening walk can close the gap.`,
-        accentColor: Colors.steps,
-        iconName: 'footsteps-outline' as const,
-      };
-    }
-
-    if (activeReport === 'water') {
-      const loggedDays = waterCompletionDays.filter(d => d.intakeMl > 0);
-      if (loggedDays.length === 0) return null;
-      const avgWater = Math.round(
-        loggedDays.reduce((sum, d) => sum + d.intakeMl, 0) / loggedDays.length
-      );
-      const diff = avgWater - dailyWaterGoal;
-      return {
-        badge: 'Hydration Consistency',
-        headline: `Averaging ${avgWater.toLocaleString()} mL daily intake`,
-        subline:
-          diff >= 0
-            ? `Well hydrated! Goal achieved on ${waterCompletionDays.filter(d => d.intakeMl >= dailyWaterGoal).length} of ${elapsed(waterCompletionDays)} ${noun}.`
-            : `${Math.abs(diff)} mL below your ${dailyWaterGoal.toLocaleString()} mL target. Keep a water bottle nearby.`,
-        accentColor: Colors.water,
-        iconName: 'water-outline' as const,
-      };
-    }
-
-    if (activeReport === 'weight') {
-      // No weigh-ins in this period: show nothing rather than a made-up trajectory
-      if (weightSummary.avgWeightKg === null) return null;
-      const currentW = weightSummary.currentWeightKg ?? userWeightKg;
-      const delta = weightSummary.netChangeKg;
-      const u = weightSummary.unit;
-      const fmt = (kg: number) => (kg * unitFactor).toFixed(1);
-      const target = weightSummary.targetWeightKg;
-      const towardTarget =
-        target !== undefined &&
-        delta !== null &&
-        Math.abs(currentW - target) < Math.abs(currentW - delta - target);
-      return {
-        badge: 'Weight Trajectory',
-        headline: `Current: ${fmt(currentW)} ${u}`,
-        subline:
-          delta === null
-            ? 'Only one weigh-in this period. Log again to see your trend.'
-            : Math.abs(delta) < 0.05
-            ? 'Weight holding steady throughout this period.'
-            : `${delta < 0 ? 'Down' : 'Up'} ${fmt(Math.abs(delta))} ${u} this period${towardTarget ? ', toward your goal' : ''}.`,
-        accentColor: Colors.weight,
-        iconName: 'scale-outline' as const,
-      };
-    }
-
-    return null;
-  }, [
-    activeReport,
-    calorieDays,
-    dailyCalorieGoal,
-    stepDays,
-    dailyStepGoal,
-    waterCompletionDays,
-    dailyWaterGoal,
-    weightSummary,
-    unitFactor,
-    userWeightKg,
-    timeframe,
-    todayStr,
-  ]);
-
   const handleChangeTimeframe = async (newTimeframe: ReportTimeframe) => {
     if (newTimeframe !== 'weekly' && !isPro) {
       await haptics.impactLight();
@@ -509,94 +399,409 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
     }
     await haptics.selection();
     if (newTimeframe !== timeframe) {
-      const idx = currentBucketIndex(newTimeframe);
       setTimeframe(newTimeframe);
       setPeriodOffset(0);
-      setSelectedCalorieIndex(idx);
-      setSelectedMacroRatioIndex(idx);
-      setSelectedStepIndex(idx);
-      setSelectedStepCalorieIndex(idx);
-      setSelectedStepTimeIndex(idx);
-      setSelectedWaterIndex(idx);
-      setSelectedHydrateVolumeIndex(idx);
-      setSelectedWeightIndex(idx);
+      setSelectedIndex(currentBucketIndex(newTimeframe));
     }
   };
 
+  const handleSelect = (i: number) => {
+    haptics.selection();
+    setSelectedIndex(i);
+  };
+
+  const handleSelectReport = (id: ReportId) => {
+    if (id === activeReport) return;
+    haptics.selection();
+    setActiveReport(id);
+  };
+
+  // =========================================================================
+  // ACTIVE REPORT VIEW MODEL
+  // =========================================================================
+  const tab = REPORT_TABS.find(t => t.id === activeReport) ?? REPORT_TABS[0];
+  const avgSuffix = timeframe === 'weekly' ? '' : ' · daily avg';
+  const readoutLabel = `${dateRangeInfo.days[sel]?.readoutLabel ?? ''}${avgSuffix}`;
+
+  let hero: Hero;
+  let readout: { value: string; note: string };
+  let stats: InsightStat[] = [];
+  let empty: { title: string; message: string } | null = null;
+  let chart: React.ReactNode;
+  let secondary: React.ReactNode = null;
+
+  const barChart = (values: number[], goal: number, unit: string, goalLabel: string) => (
+    <InsightBarChart
+      values={values}
+      labels={axisLabels}
+      a11yLabels={values.map(
+        (v, i) =>
+          `${dateRangeInfo.days[i].dayName}, ${v > 0 ? `${fmt(v)} ${unit}` : 'nothing logged'}`
+      )}
+      selectedIndex={sel}
+      onSelect={handleSelect}
+      color={tab.color}
+      goal={goal}
+      goalLabel={goalLabel}
+    />
+  );
+
+  if (activeReport === 'nutrition') {
+    const values = calorieDays.map(d => d.calories);
+    const s = summarizeSeries(
+      calorieDays.map(d => ({ dateStr: d.dateStr, value: d.calories })),
+      dailyCalorieGoal,
+      todayStr,
+      'band'
+    );
+    hero = goalHero(s, dailyCalorieGoal, 'kcal', true, noun);
+    readout = goalReadout(values[sel] ?? 0, dailyCalorieGoal, 'kcal', true);
+    chart = barChart(values, dailyCalorieGoal, 'kcal', `Goal\n${fmt(dailyCalorieGoal)}`);
+    if (!s) {
+      empty = {
+        title: `No meals logged this ${periodWord}`,
+        message: 'Log food from Today to see your calorie trend.',
+      };
+    } else {
+      stats = [
+        { label: 'On target', value: String(s.hits), unit: `of ${s.elapsed}` },
+        { label: 'Highest', value: fmt(s.max) },
+        { label: 'Lowest', value: fmt(s.min) },
+      ];
+      const logged = macroRatioDays.filter(
+        d => (d.proteinGrams ?? 0) + (d.carbsGrams ?? 0) + (d.fatGrams ?? 0) > 0
+      );
+      const avg = (k: 'proteinGrams' | 'carbsGrams' | 'fatGrams') =>
+        logged.length ? Math.round(logged.reduce((t, d) => t + (d[k] ?? 0), 0) / logged.length) : 0;
+      const macros = [
+        {
+          name: 'Protein',
+          grams: avg('proteinGrams'),
+          kcalPerG: 4,
+          target: userGoals.targetProtein || BIOMETRIC_DEFAULTS.targetProtein,
+          color: Colors.protein,
+          track: Colors.proteinLight,
+        },
+        {
+          name: 'Carbs',
+          grams: avg('carbsGrams'),
+          kcalPerG: 4,
+          target: userGoals.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs,
+          color: Colors.carbs,
+          track: Colors.carbsLight,
+        },
+        {
+          name: 'Fat',
+          grams: avg('fatGrams'),
+          kcalPerG: 9,
+          target: userGoals.targetFat || BIOMETRIC_DEFAULTS.targetFat,
+          color: Colors.fat,
+          track: Colors.fatLight,
+        },
+      ];
+      const macroKcal = macros.reduce((t, m) => t + m.grams * m.kcalPerG, 0) || 1;
+      const proteinGap = macros[0].target - macros[0].grams;
+      secondary = (
+        <View style={styles.section}>
+          <InsightSectionHeader title="Macros" caption="Avg per day" />
+          <InsightSplitBar
+            segments={macros.map(m => ({ weight: m.grams * m.kcalPerG, color: m.color }))}
+          />
+          {macros.map(m => (
+            <View
+              key={m.name}
+              style={styles.macroRow}
+              accessible
+              accessibilityLabel={`${m.name}: ${m.grams} of ${m.target} grams`}
+            >
+              <View style={styles.macroLine}>
+                <View style={[styles.dot, { backgroundColor: m.color }]} />
+                <Text style={styles.macroName}>
+                  {m.name}
+                  <Text style={styles.muted}>
+                    {`  ${Math.round(((m.grams * m.kcalPerG) / macroKcal) * 100)}%`}
+                  </Text>
+                </Text>
+                <Text style={styles.macroValue}>
+                  {`${m.grams} g`}
+                  <Text style={styles.muted}>{` / ${m.target} g`}</Text>
+                </Text>
+              </View>
+              <View style={[styles.progressTrack, { backgroundColor: m.track }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(100, (m.grams / Math.max(1, m.target)) * 100)}%`,
+                      backgroundColor: m.color,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          ))}
+          <Text style={styles.sectionNote}>
+            {proteinGap > 0
+              ? `Protein is your gap: ${proteinGap} g short of target on average.`
+              : 'Protein target met on average.'}
+          </Text>
+        </View>
+      );
+    }
+  } else if (activeReport === 'steps') {
+    const values = stepDays.map(d => d.steps);
+    const s = summarizeSeries(
+      stepDays.map(d => ({ dateStr: d.dateStr, value: d.steps })),
+      dailyStepGoal,
+      todayStr,
+      'floor'
+    );
+    hero = goalHero(s, dailyStepGoal, 'steps', false, noun);
+    readout = goalReadout(values[sel] ?? 0, dailyStepGoal, 'steps', false);
+    chart = barChart(
+      values,
+      dailyStepGoal,
+      'steps',
+      `Goal\n${dailyStepGoal >= 1000 ? `${Math.round(dailyStepGoal / 100) / 10}k` : dailyStepGoal}`
+    );
+    if (!s) {
+      empty = {
+        title: `No steps this ${periodWord}`,
+        message: 'Add steps from Today, or sync them from Health Connect.',
+      };
+    } else {
+      secondary = (
+        <View style={styles.section}>
+          <InsightSectionHeader title="Activity" caption={`${TIMEFRAME_LABEL[timeframe]} total`} />
+          <InsightStatRow
+            columns={2}
+            stats={[
+              { label: 'Distance', value: stepSummary.totalDistanceKm.toFixed(1), unit: 'km' },
+              { label: 'Active time', value: fmtDuration(stepSummary.totalDurationMinutes) },
+              { label: 'Burned', value: fmt(stepSummary.totalCalories), unit: 'kcal' },
+              { label: 'Steps', value: fmt(stepSummary.totalSteps) },
+            ]}
+          />
+        </View>
+      );
+    }
+  } else if (activeReport === 'water') {
+    const values = waterCompletionDays.map(d => d.intakeMl);
+    const s = summarizeSeries(
+      waterCompletionDays.map(d => ({ dateStr: d.dateStr, value: d.intakeMl })),
+      dailyWaterGoal,
+      todayStr,
+      'floor'
+    );
+    hero = goalHero(s, dailyWaterGoal, 'mL', false, noun);
+    readout = goalReadout(values[sel] ?? 0, dailyWaterGoal, 'mL', false);
+    chart = barChart(values, dailyWaterGoal, 'mL', `Goal\n${fmt(dailyWaterGoal)}`);
+    if (!s) {
+      empty = {
+        title: `No drinks logged this ${periodWord}`,
+        message: 'Log water from Today to see your hydration trend.',
+      };
+    } else {
+      stats = [
+        { label: 'Goal days', value: String(s.hits), unit: `of ${s.elapsed}` },
+        { label: 'Best', value: fmt(s.max), unit: 'mL' },
+        { label: 'Total', value: fmt(totalDrinkVolume), unit: 'mL' },
+      ];
+      const drinks = drinkTypesBreakdown
+        .filter(d => d.amountMl > 0)
+        .sort((a, b) => b.amountMl - a.amountMl);
+      if (drinks.length > 0) {
+        secondary = (
+          <View style={styles.section}>
+            <InsightSectionHeader title="What you drank" caption={`This ${periodWord}`} />
+            <InsightSplitBar segments={drinks.map(d => ({ weight: d.amountMl, color: d.color }))} />
+            <View>
+              {drinks.map((d, i) => (
+                <View
+                  key={d.id}
+                  style={[styles.listRow, i < drinks.length - 1 && styles.listRowDivided]}
+                  accessible
+                  accessibilityLabel={`${d.name}: ${fmt(d.amountMl)} millilitres, ${d.pct}%`}
+                >
+                  <View style={[styles.dot, { backgroundColor: d.color }]} />
+                  <Text style={styles.listName}>{d.name}</Text>
+                  <Text style={styles.listValue}>{`${fmt(d.amountMl)} mL`}</Text>
+                  <Text style={styles.listPct}>{`${d.pct}%`}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        );
+      }
+    }
+  } else {
+    const u = weightSummary.unit;
+    const w = (kg: number) => (kg * unitFactor).toFixed(1);
+    const values = weightTrendDays.map(d => d.displayWeight);
+    const logged = values.filter((v): v is number => v !== null);
+    const cur = weightSummary.currentWeightKg;
+    const net = weightSummary.netChangeKg;
+    const target = weightSummary.targetWeightKg;
+    const selW = values[sel];
+    readout =
+      selW == null
+        ? { value: 'No weigh-in', note: '' }
+        : { value: `${selW.toFixed(1)} ${u}`, note: '' };
+
+    if (cur === null || logged.length === 0) {
+      hero = {
+        label: 'Latest',
+        value: '–',
+        unit: u,
+        strong: '',
+        rest: `No weigh-ins this ${periodWord}`,
+        isEmpty: true,
+      };
+      empty = {
+        title: `No weigh-ins this ${periodWord}`,
+        message: 'Log your weight from Today to see your trend.',
+      };
+    } else {
+      const steady = net !== null && Math.abs(net) < 0.05;
+      hero = {
+        label: 'Latest',
+        value: w(cur),
+        unit: u,
+        strong:
+          net === null ? '' : steady ? 'Steady' : `${net < 0 ? '▼' : '▲'} ${w(Math.abs(net))} ${u}`,
+        rest: net === null ? 'One weigh-in this period' : ` this ${periodWord}`,
+        insight:
+          target === undefined
+            ? undefined
+            : Math.abs(cur - target) < 0.05
+              ? 'You are at your goal weight.'
+              : `${w(Math.abs(cur - target))} ${u} to your ${w(target)} ${u} goal.`,
+      };
+      const elapsed = weightTrendDays.filter(d => d.dateStr <= todayStr).length;
+      stats = [
+        {
+          label: 'Start',
+          value: weightSummary.startWeightKg !== undefined ? w(weightSummary.startWeightKg) : '–',
+          unit: u,
+        },
+        { label: 'Lowest', value: Math.min(...logged).toFixed(1), unit: u },
+        { label: 'Logged', value: String(logged.length), unit: `of ${elapsed}` },
+      ];
+    }
+    chart = (
+      <InsightLineChart
+        values={values}
+        labels={axisLabels}
+        a11yLabels={values.map(
+          (v, i) =>
+            `${dateRangeInfo.days[i].dayName}, ${v === null ? 'no weigh-in' : `${v.toFixed(1)} ${u}`}`
+        )}
+        selectedIndex={sel}
+        onSelect={handleSelect}
+        color={Colors.weight}
+        fill={Colors.weightLight}
+      />
+    );
+
+    // No height on file: ask for it instead of silently assuming one
+    const heightCm = userGoals.heightCm;
+    const bmi = heightCm ? Number((userWeightKg / (heightCm / 100) ** 2).toFixed(1)) : null;
+    const category = bmi !== null ? getTodayBMICategory(bmi) : null;
+    secondary = (
+      <View style={styles.section}>
+        <InsightSectionHeader
+          title="BMI"
+          caption={heightCm ? `Height ${heightCm} cm` : undefined}
+        />
+        {bmi !== null && category ? (
+          <>
+            <View
+              style={styles.bmiRow}
+              accessible
+              accessibilityLabel={`BMI ${bmi}, ${category.name}`}
+            >
+              <Text style={styles.bmiValue}>{bmi}</Text>
+              <View style={styles.bmiPill}>
+                <View style={[styles.dot, { backgroundColor: category.color }]} />
+                <Text style={styles.bmiPillText}>{category.name}</Text>
+              </View>
+            </View>
+            <InsightBmiScale bmi={bmi} />
+          </>
+        ) : (
+          <Text style={styles.sectionNote}>Add your height in Profile to see your BMI.</Text>
+        )}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.rootContainer}>
-      {/* 1. Header with Screen Title and Dropdown Capsule */}
+      {/* Header: title + timeframe, metric tabs, period navigator */}
       <View style={styles.headerContainer}>
-        <View style={styles.headerMainRow}>
-          <Text style={styles.headerTitle}>Insights</Text>
-
-          {/* Report Selector Capsule Button */}
-          <Pressable
-            style={({ pressed }) => [styles.reportCapsuleBtn, pressed && styles.btnPressed]}
-            onPress={() => setReportPickerVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`Active report: ${activeReportMeta.title}. Tap to change report.`}
-          >
-            <View style={[styles.capsuleIconWrap, { backgroundColor: activeReportMeta.iconBg }]}>
-              <Ionicons
-                name={activeReportMeta.iconName}
-                size={15}
-                color={activeReportMeta.iconColor}
-              />
-            </View>
-            <Text style={styles.capsuleTitle} numberOfLines={1}>
-              {activeReportMeta.title}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={Colors.textSecondary} style={styles.capsuleChevron} />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* 2. Unified Controls Bar: Timeframe Segment & Date Range Navigator */}
-      <View style={styles.controlsBar}>
-        {/* Timeframe Switcher Tabs */}
-        <View style={styles.timeframeSegmentContainer}>
-          {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tab => {
-            const isActive = timeframe === tab;
-            const isLocked = !isPro && tab !== 'weekly';
-            const displayLabel = tab.charAt(0).toUpperCase() + tab.slice(1);
-            return (
-              <Pressable
-                key={tab}
-                style={[styles.timeframeTab, isActive && styles.timeframeTabActive]}
-                onPress={() => handleChangeTimeframe(tab)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={
-                  isLocked
-                    ? `${displayLabel} timeframe (Calorify Pro required)`
-                    : `${displayLabel} timeframe`
-                }
-              >
-                <View style={styles.tabContentRow}>
-                  <Text
-                    style={[styles.timeframeTabText, isActive && styles.timeframeTabTextActive]}
-                  >
+        <View style={styles.titleRow}>
+          <Text style={styles.headerTitle} accessibilityRole="header">
+            Insights
+          </Text>
+          <View style={styles.segment}>
+            {(['weekly', 'monthly', 'yearly'] as ReportTimeframe[]).map(tf => {
+              const isActive = timeframe === tf;
+              const isLocked = !isPro && tf !== 'weekly';
+              const displayLabel = TIMEFRAME_LABEL[tf];
+              return (
+                <Pressable
+                  key={tf}
+                  style={({ pressed }) => [
+                    styles.segmentTab,
+                    isActive && styles.segmentTabActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => handleChangeTimeframe(tf)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={
+                    isLocked
+                      ? `${displayLabel} timeframe (Calorify Pro required)`
+                      : `${displayLabel} timeframe`
+                  }
+                >
+                  <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
                     {displayLabel}
                   </Text>
                   {isLocked && (
-                    <Ionicons
-                      name="lock-closed"
-                      size={10}
-                      color={Colors.textMuted}
-                      style={{ marginLeft: 3 }}
-                    />
+                    <Ionicons name="lock-closed" size={10} color={Colors.textSecondary} />
                   )}
-                </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {REPORT_TABS.map(t => {
+            const isActive = t.id === activeReport;
+            return (
+              <Pressable
+                key={t.id}
+                style={({ pressed }) => [
+                  styles.tab,
+                  isActive && { borderBottomColor: t.color },
+                  pressed && styles.pressed,
+                ]}
+                onPress={() => handleSelectReport(t.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={`${t.title} report`}
+              >
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{t.title}</Text>
               </Pressable>
             );
           })}
         </View>
 
-        {/* Date Range Navigator */}
-        <View style={styles.dateNavigator}>
+        <View style={styles.dateRow}>
           <Pressable
-            style={({ pressed }) => [styles.navArrowBtn, pressed && styles.btnPressed]}
+            style={({ pressed }) => [styles.navArrowBtn, pressed && styles.pressed]}
             onPress={handlePrevPeriod}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
@@ -604,33 +809,30 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
           >
             <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
           </Pressable>
-
           <Text style={styles.dateRangeText} numberOfLines={1}>
             {dateRangeInfo.label}
           </Text>
-
           <Pressable
             style={({ pressed }) => [
               styles.navArrowBtn,
-              !dateRangeInfo.canGoForward && styles.navArrowDisabled,
-              pressed && dateRangeInfo.canGoForward && styles.btnPressed,
+              pressed && dateRangeInfo.canGoForward && styles.pressed,
             ]}
             onPress={handleNextPeriod}
             disabled={!dateRangeInfo.canGoForward}
             hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
             accessibilityLabel="Next time period"
+            accessibilityState={{ disabled: !dateRangeInfo.canGoForward }}
           >
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={dateRangeInfo.canGoForward ? Colors.textPrimary : Colors.borderInset}
+              color={dateRangeInfo.canGoForward ? Colors.textPrimary : Colors.borderMedium}
             />
           </Pressable>
         </View>
       </View>
 
-      {/* 3. Main Scrollable Content */}
       <ScrollView
         ref={scrollRef}
         style={styles.scrollArea}
@@ -642,173 +844,54 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* Plain-Language Insight Summary Card */}
-        {activeReportInsight && (
-          <View style={styles.insightSummaryCard}>
-            <View style={styles.insightHeaderRow}>
-              <View
-                style={[
-                  styles.insightIconBadge,
-                  { backgroundColor: `${activeReportInsight.accentColor}18` },
-                ]}
-              >
-                <Ionicons
-                  name={activeReportInsight.iconName}
-                  size={14}
-                  color={activeReportInsight.accentColor}
-                />
-              </View>
-              <Text
-                style={[styles.insightBadgeText, { color: activeReportInsight.accentColor }]}
-              >
-                {activeReportInsight.badge.toUpperCase()}
-              </Text>
+        {/* Hero: the one number for this period */}
+        <View style={styles.hero} accessible>
+          <Text style={styles.heroLabel}>{hero.label}</Text>
+          <View style={styles.heroValueRow}>
+            <Text style={[styles.heroValue, hero.isEmpty && styles.heroValueEmpty]}>
+              {hero.value}
+            </Text>
+            <Text style={styles.heroUnit}>{hero.unit}</Text>
+          </View>
+          <Text style={styles.heroDelta}>
+            {hero.strong ? <Text style={styles.heroDeltaStrong}>{hero.strong}</Text> : null}
+            {hero.rest}
+          </Text>
+          {hero.insight ? <Text style={styles.heroInsight}>{hero.insight}</Text> : null}
+        </View>
+
+        {/* Embedded chart, with the selected bucket read out above it */}
+        <View style={styles.chartSection}>
+          {empty ? (
+            <View style={styles.emptyBlock}>
+              <Ionicons name="bar-chart-outline" size={32} color={Colors.borderMedium} />
+              <Text style={styles.emptyTitle}>{empty.title}</Text>
+              <Text style={styles.emptyMessage}>{empty.message}</Text>
             </View>
-            <Text style={styles.insightHeadlineText}>{activeReportInsight.headline}</Text>
-            <Text style={styles.insightSublineText}>{activeReportInsight.subline}</Text>
+          ) : (
+            <>
+              <View style={styles.readoutRow} accessibilityLiveRegion="polite">
+                <Text style={styles.readoutLabel}>{readoutLabel}</Text>
+                <Text style={styles.readoutValue}>
+                  {readout.value}
+                  {readout.note ? <Text style={styles.muted}>{` · ${readout.note}`}</Text> : null}
+                </Text>
+              </View>
+              {chart}
+            </>
+          )}
+        </View>
+
+        {stats.length > 0 && (
+          <View style={styles.statsBlock}>
+            <InsightStatRow stats={stats} />
           </View>
         )}
 
-        {timeframe !== 'weekly' && (
-          <Text style={styles.averagesNote}>
-            {`Each bar shows the daily average for that ${timeframe === 'monthly' ? 'week' : 'month'}, counting only logged days.`}
-          </Text>
-        )}
-
-        {/* NUTRITION & CALORIES REPORT */}
-        {activeReport === 'nutrition' && (
-          calorieDays.some(d => d.calories > 0) ? (
-            <>
-              <CalorieCompletionCard
-                days={calorieDays}
-                selectedIndex={safeCalorieIndex}
-                onSelectDay={setSelectedCalorieIndex}
-                calorieGoal={dailyCalorieGoal}
-              />
-  
-              <MacroDistributionCard
-                days={macroRatioDays}
-                selectedIndex={safeMacroRatioIndex}
-                onSelectDay={setSelectedMacroRatioIndex}
-                targets={{
-                  protein: userGoals?.targetProtein || BIOMETRIC_DEFAULTS.targetProtein,
-                  carbs: userGoals?.targetCarbs || BIOMETRIC_DEFAULTS.targetCarbs,
-                  fat: userGoals?.targetFat || BIOMETRIC_DEFAULTS.targetFat,
-                  fiber: userGoals?.targetFiber || BIOMETRIC_DEFAULTS.targetFiber,
-                }}
-              />
-            </>
-          ) : (
-            <EmptyAnalyticsState 
-              title="Awaiting Data" 
-              message="Nutrition trends appear here once you log a meal in this period. Log food on the Today tab." 
-            />
-          )
-        )}
-
-        {/* STEP ACTIVITY REPORT */}
-        {activeReport === 'steps' && (
-          stepDays.some(d => d.steps > 0) ? (
-          <>
-            <StepTotalSummaryCard
-              subtitle="Total steps this period"
-              totalSteps={stepSummary.totalSteps}
-              totalCalories={stepSummary.totalCalories}
-              totalDistanceKm={stepSummary.totalDistanceKm}
-              totalDurationMinutes={stepSummary.totalDurationMinutes}
-            />
-
-            <StepCompletionCard
-              days={stepDays}
-              selectedIndex={safeStepIndex}
-              onSelectDay={setSelectedStepIndex}
-              stepGoal={dailyStepGoal}
-            />
-
-            <StepCalorieBurnCard
-              days={calorieBurnDays}
-              selectedIndex={safeStepCalorieIndex}
-              onSelectDay={setSelectedStepCalorieIndex}
-            />
-
-            <StepTimeDurationCard
-              days={timeDays}
-              selectedIndex={safeStepTimeIndex}
-              onSelectDay={setSelectedStepTimeIndex}
-            />
-          </>
-          ) : (
-            <EmptyAnalyticsState
-              title="Awaiting Data"
-              message="Activity trends appear here once you have steps in this period. Log steps on the Track tab."
-            />
-          )
-        )}
-
-        {/* HYDRATION INTAKE REPORT */}
-        {activeReport === 'water' && (
-          waterCompletionDays.some(d => d.intakeMl > 0) ? (
-            <>
-              <DrinkCompletionCard
-                days={waterCompletionDays}
-                selectedIndex={safeWaterIndex}
-                onSelectDay={setSelectedWaterIndex}
-              />
-  
-              <HydrateVolumeCard
-                days={hydrateDays}
-                selectedIndex={safeHydrateVolumeIndex}
-                onSelectDay={setSelectedHydrateVolumeIndex}
-              />
-  
-              <DrinkTypesCard
-                breakdown={drinkTypesBreakdown}
-                totalIntakeMl={totalDrinkVolume}
-                centerPct={waterAvgCompletion}
-              />
-            </>
-          ) : (
-            <EmptyAnalyticsState 
-              title="Awaiting Data" 
-              message="Hydration trends appear here once you log a drink in this period. Log water on the Track tab." 
-            />
-          )
-        )}
-
-        {/* WEIGHT & BODY REPORT */}
-        {activeReport === 'weight' && (
-          <>
-            <WeightSummaryCard data={weightSummary} />
-
-            {weightTrendDays.some(d => d.weightKg !== null) ? (
-              <WeightTrendCard
-                days={weightTrendDays}
-                selectedIndex={safeWeightIndex}
-                onSelectDay={setSelectedWeightIndex}
-                unit={weightUnit}
-                targetWeightKg={userGoals.targetWeightKg}
-              />
-            ) : (
-              <EmptyAnalyticsState
-                title="No weigh-ins"
-                message="Your weight trend appears here once you log your weight in this period. Log it on the Track tab."
-              />
-            )}
-
-            <BMIGaugeCard weightKg={userWeightKg} heightCm={userHeightCm} unit={weightUnit} />
-          </>
-        )}
+        {secondary}
       </ScrollView>
 
-      {/* 4. Report Selector Bottom Sheet Modal */}
-      <ReportPickerModal
-        visible={reportPickerVisible}
-        activeReport={activeReport}
-        onSelectReport={setActiveReport}
-        onClose={() => setReportPickerVisible(false)}
-      />
-
-      {/* 5. Pro Paywall for Deep Trends */}
+      {/* Pro Paywall for Deep Trends */}
       <ProPaywallModal
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
@@ -822,13 +905,6 @@ export const AnalyticsScreen = React.memo(AnalyticsScreenComponent);
 export const AnalyticsTab = AnalyticsScreen;
 
 const styles = StyleSheet.create({
-  averagesNote: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.textSecondary,
-    marginBottom: 12,
-  },
   rootContainer: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -836,16 +912,13 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 8,
     backgroundColor: Colors.background,
-    minHeight: 56,
-    justifyContent: 'center',
   },
-  headerMainRow: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 42,
+    minHeight: 44,
   },
   headerTitle: {
     fontFamily: Fonts.urbanist.bold,
@@ -854,123 +927,82 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: -0.5,
     includeFontPadding: false,
-    textAlignVertical: 'center',
   },
-  reportCapsuleBtn: {
+  pressed: {
+    opacity: 0.7,
+  },
+  segment: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    paddingVertical: 6,
-    paddingLeft: 7,
-    paddingRight: 10,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    maxWidth: 220,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-  capsuleIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-  },
-  capsuleTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: Colors.textPrimary,
-    letterSpacing: -0.1,
-    flexShrink: 1,
-  },
-  capsuleChevron: {
-    marginLeft: 4,
-  },
-  btnPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
-  },
-  controlsBar: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: Colors.background,
-  },
-  timeframeSegmentContainer: {
-    flexDirection: 'row',
+    padding: 2,
     backgroundColor: Colors.surfaceContainer,
-    borderRadius: 12,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    padding: 3,
   },
-  timeframeTab: {
-    flex: 1,
-    paddingVertical: 7,
+  segmentTab: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 3,
+    minHeight: 36,
+    paddingHorizontal: 10,
     borderRadius: 8,
     borderCurve: 'continuous',
-  },
-  tabContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeframeTabActive: {
-    backgroundColor: Colors.card,
     borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  segmentTabActive: {
+    backgroundColor: Colors.card,
     borderColor: Colors.borderWhisper,
-    shadowOpacity: 0,
     elevation: 0,
   },
-  timeframeTabText: {
+  segmentText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.textSecondary,
   },
-  timeframeTabTextActive: {
+  segmentTextActive: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
     color: Colors.textPrimary,
   },
-  dateNavigator: {
+  tabs: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderMedium,
+  },
+  tab: {
+    minHeight: 44,
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginBottom: -StyleSheet.hairlineWidth,
+  },
+  tabText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    color: Colors.textSecondary,
+  },
+  tabTextActive: {
+    fontFamily: Fonts.urbanist.bold,
+    color: Colors.textPrimary,
+  },
+  dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    marginTop: 6,
+    justifyContent: 'space-between',
+    paddingVertical: 6,
   },
   navArrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.card,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-  },
-  navArrowDisabled: {
-    opacity: 0.35,
-    backgroundColor: 'transparent',
   },
   dateRangeText: {
+    flexShrink: 1,
     fontFamily: Fonts.urbanist.bold,
     fontSize: 14,
     color: Colors.textPrimary,
-    marginHorizontal: 14,
     letterSpacing: -0.2,
   },
   scrollArea: {
@@ -978,70 +1010,200 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingTop: 8,
   },
-  emptyAnalyticsContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 32,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  hero: {
+    gap: 4,
   },
-  emptyAnalyticsTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-    marginTop: 16,
-  },
-  emptyAnalyticsSubtitle: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
+  heroLabel: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
   },
-  insightSummaryCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    marginBottom: 12,
-  },
-  insightHeaderRow: {
+  heroValueRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    alignItems: 'baseline',
+    gap: 6,
   },
-  insightIconBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  heroValue: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 44,
+    lineHeight: 50,
+    letterSpacing: -1,
+    color: Colors.textPrimary,
+    fontVariant: ['tabular-nums'],
   },
-  insightBadgeText: {
+  heroValueEmpty: {
+    color: Colors.borderMedium,
+  },
+  heroUnit: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 17,
+    color: Colors.textSecondary,
+  },
+  heroDelta: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    color: Colors.textSecondary,
+  },
+  heroDeltaStrong: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    letterSpacing: 0.6,
+    color: Colors.textPrimary,
   },
-  insightHeadlineText: {
+  heroInsight: {
+    marginTop: 8,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+  },
+  chartSection: {
+    marginTop: 28,
+  },
+  readoutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 8,
+    marginBottom: 14,
+  },
+  readoutLabel: {
+    flexShrink: 1,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  readoutValue: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 15,
     color: Colors.textPrimary,
-    marginBottom: 2,
   },
-  insightSublineText: {
+  muted: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    lineHeight: 17,
     color: Colors.textSecondary,
+  },
+  emptyBlock: {
+    minHeight: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderMedium,
+  },
+  emptyTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  statsBlock: {
+    marginTop: 24,
+  },
+  section: {
+    marginTop: 32,
+    gap: 14,
+  },
+  sectionNote: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    elevation: 0,
+  },
+  macroRow: {
+    gap: 6,
+  },
+  macroLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  macroName: {
+    flex: 1,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  macroValue: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 44,
+  },
+  listRowDivided: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.borderMedium,
+  },
+  listName: {
+    flex: 1,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  listValue: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  listPct: {
+    width: 40,
+    textAlign: 'right',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  bmiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bmiValue: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 32,
+    letterSpacing: -0.5,
+    color: Colors.textPrimary,
+  },
+  bmiPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 26,
+    paddingHorizontal: 10,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    elevation: 0,
+  },
+  bmiPillText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: Colors.textPrimary,
   },
 });

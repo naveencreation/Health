@@ -33,11 +33,3 @@ export {
   DayMacroRatioData,
   MacroDistributionCardProps,
 } from '@/features/nutrition/components/MacroDistributionCard';
-
-// Report Picker Modal
-export {
-  ReportPickerModal,
-  ReportCategory,
-  REPORT_CATEGORIES,
-  ReportPickerModalProps,
-} from './ReportPickerModal';

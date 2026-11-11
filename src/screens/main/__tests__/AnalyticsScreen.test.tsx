@@ -106,16 +106,16 @@ describe('AnalyticsScreen Integration', () => {
     const { getByText } = await render(<AnalyticsScreen />);
 
     expect(getByText('Insights')).toBeTruthy();
-    expect(getByText('Weekly')).toBeTruthy();
-    expect(getByText('Monthly')).toBeTruthy();
-    expect(getByText('Yearly')).toBeTruthy();
+    expect(getByText('Week')).toBeTruthy();
+    expect(getByText('Month')).toBeTruthy();
+    expect(getByText('Year')).toBeTruthy();
   });
 
   it('triggers Pro paywall modal when tapping Monthly on Free tier', async () => {
     const { getByRole, findByText } = await render(<AnalyticsScreen />);
 
     const monthlyTab = getByRole('tab', {
-      name: /Monthly timeframe \(Calorify Pro required\)/i,
+      name: /Month timeframe \(Calorify Pro required\)/i,
     });
     await act(async () => {
       fireEvent.press(monthlyTab);
@@ -135,10 +135,46 @@ describe('AnalyticsScreen Integration', () => {
 
     const { getByRole, queryByText } = await render(<AnalyticsScreen />);
 
-    const monthlyTab = getByRole('tab', { name: 'Monthly timeframe' });
+    const monthlyTab = getByRole('tab', { name: 'Month timeframe' });
     fireEvent.press(monthlyTab);
 
     // Paywall should not be open
     expect(queryByText('Unlock Calorify Pro')).toBeNull();
+  });
+
+  it('shows the week average and reads out the tapped day', async () => {
+    (useDailyLog as jest.Mock).mockReturnValue({
+      todayStr: '2026-11-11',
+      dailyLogs: {
+        '2026-11-09': {
+          meals: [{ name: 'Dal', calories: 1600, protein: 60, carbs: 200, fat: 50 }],
+        },
+        '2026-11-11': {
+          meals: [{ name: 'Rice', calories: 2000, protein: 70, carbs: 260, fat: 60 }],
+        },
+      },
+    });
+    const screen = await render(<AnalyticsScreen />);
+
+    expect(screen.getByText('1,800')).toBeTruthy();
+    expect(screen.getByText('1 of 3 days on target.')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Wednesday 11, 2,000 kcal'));
+    expect(screen.getByText('Wed, Nov 11')).toBeTruthy();
+    expect(screen.getByText('2,000 kcal · 200 under goal')).toBeTruthy();
+  });
+
+  it('switches report with the inline tabs and points empty states at Today', async () => {
+    (useDailyLog as jest.Mock).mockReturnValue({
+      todayStr: '2026-11-11',
+      dailyLogs: mockDailyLogs,
+    });
+    const screen = await render(<AnalyticsScreen />);
+
+    expect(screen.getByText('No meals logged this week')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('tab', { name: 'Steps report' }));
+    expect(screen.getByText('No steps this week')).toBeTruthy();
+    expect(screen.getByText(/sync them from Health Connect/)).toBeTruthy();
+    expect(screen.queryByText(/Track tab/)).toBeNull();
   });
 });
