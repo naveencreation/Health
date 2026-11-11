@@ -47,7 +47,7 @@ describe('BottomNavBar Component', () => {
     );
 
     expect(getByText('Today')).toBeTruthy();
-    expect(getByText('Track')).toBeTruthy();
+    expect(getByText('Ria')).toBeTruthy();
     expect(getByText('Insights')).toBeTruthy();
     expect(getByText('Profile')).toBeTruthy();
     expect(await findByTestId('center-scan-fab')).toBeTruthy();
@@ -55,10 +55,10 @@ describe('BottomNavBar Component', () => {
 
   it('indicates the active tab via accessibility state', async () => {
     const { getByRole } = await render(
-      <BottomNavBar activeTab="tracker" onTabChange={jest.fn()} />
+      <BottomNavBar activeTab="ria" onTabChange={jest.fn()} />
     );
 
-    const trackTab = getByRole('tab', { name: 'Health Trackers and Biometrics' });
+    const trackTab = getByRole('tab', { name: 'Ria, nutrition coach' });
     expect(trackTab.props.accessibilityState).toEqual({ selected: true });
 
     const todayTab = getByRole('tab', { name: 'Today' });
@@ -71,9 +71,9 @@ describe('BottomNavBar Component', () => {
       <BottomNavBar activeTab="today" onTabChange={handleTabChange} />
     );
 
-    fireEvent.press(getByText('Track'));
+    fireEvent.press(getByText('Ria'));
     await waitFor(() => {
-      expect(handleTabChange).toHaveBeenCalledWith('tracker');
+      expect(handleTabChange).toHaveBeenCalledWith('ria');
     });
 
     fireEvent.press(getByText('Insights'));

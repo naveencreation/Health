@@ -18,6 +18,7 @@ import { StepLogEntry } from '@/types';
 import { TopDateStrip } from '@/components/dashboard/TopDateStrip';
 import { HeroStepCard } from '../components/HeroStepCard';
 import { StepHistoryCard } from '../components/StepHistoryCard';
+import { MovementTrackerCard } from '../components/MovementTrackerCard';
 import { HealthConnectSyncCard } from '../components/HealthConnectSyncCard';
 import {
   connectHealth,
@@ -318,6 +319,9 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
             goalSteps={stepGoal}
             onOpenGoalModal={onOpenSettings}
           />
+
+          {/* Manual steps and workout logging (moved here from the old Track tab) */}
+          <MovementTrackerCard />
 
           {/* Step History Card with Outline Vector Icons */}
           <StepHistoryCard

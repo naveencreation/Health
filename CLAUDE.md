@@ -83,7 +83,7 @@ npx eas-cli build -p android --profile preview   # internal APK (append --local 
 
 ### Navigation (no router)
 The app has no React Navigation and no expo-router.
-- `App.tsx` keeps `activeTab` (`today | tracker | analytics | profile`) in state and mounts only the active tab. Scroll offsets are kept in refs. While the user is unauthenticated or onboarding, `WelcomeScreen` renders in place of the tabs.
+- `App.tsx` keeps `activeTab` (`today | ria | analytics | profile`) in state and mounts only the active tab. The `ria` tab renders `RiaChatModal` (the name predates it becoming a tab). Scroll offsets are kept in refs. While the user is unauthenticated or onboarding, `WelcomeScreen` renders in place of the tabs.
 - Modals and full-screen tracker sub-screens open through `useOverlay().openModal({ type, ... })` (`src/navigation/OverlayContext.tsx`). The `ActiveModal` union in `src/navigation/types.ts` lists them, and `src/navigation/OverlayHost.tsx` renders them. To add an overlay, add a union member and render it in `OverlayHost`.
   - Only one overlay can be open at a time.
   - Android back closes the overlay; with no overlay open, back returns to the Today tab.

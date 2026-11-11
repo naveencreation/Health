@@ -48,10 +48,17 @@ export const RiaSuggestionCardView: React.FC<RiaSuggestionCardViewProps> = ({
                 </Text>
               </View>
 
-              {onLogOption ? (
+              {data.loggedOptions?.includes(opt.name) ? (
+                <View style={styles.loggedBadge} accessibilityLabel={`${opt.name} logged`}>
+                  <Ionicons name="checkmark" size={14} color={Colors.textSecondary} />
+                  <Text style={styles.loggedText}>Logged</Text>
+                </View>
+              ) : onLogOption ? (
                 <Pressable
                   style={({ pressed }) => [styles.addBtn, pressed ? styles.btnPressed : null]}
                   onPress={() => onLogOption(opt)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Log ${opt.name}`}
                 >
                   <Ionicons name="add" size={16} color="#FFFFFF" />
                   <Text style={styles.addBtnText}>Log</Text>
@@ -152,5 +159,17 @@ const styles = StyleSheet.create({
   },
   btnPressed: {
     opacity: 0.85,
+  },
+  loggedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  loggedText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
 });

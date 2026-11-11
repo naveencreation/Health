@@ -1,6 +1,7 @@
 // Dashboard Primitives
 export { TopDateStrip } from './dashboard/TopDateStrip';
 export { RiaCoachCard } from './dashboard/RiaCoachCard';
+export { TodayMetricGrid } from './dashboard/TodayMetricGrid';
 
 // Hydration Components & Modals (Domain Package)
 export {

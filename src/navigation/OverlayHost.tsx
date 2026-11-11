@@ -14,7 +14,6 @@ import {
   BYOKSetupModal,
   NotificationModal,
   AvatarPickerModal,
-  RiaChatModal,
   SlideInSubScreen,
 } from '@/components';
 
@@ -118,14 +117,6 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
         currentAvatarUrl={userGoals?.avatarUrl || DEFAULT_AVATAR_URL}
         onClose={closeModal}
         onSelectAvatar={newUrl => updateGoals({ avatarUrl: newUrl })}
-      />
-
-      {/* 7. Ria AI Chat Modal */}
-      <RiaChatModal
-        visible={isOpen('riaChat')}
-        initialPrompt={activeModal?.type === 'riaChat' ? activeModal.prompt : undefined}
-        onClose={closeModal}
-        onOpenBYOKSetup={() => openModal({ type: 'byokSetup' })}
       />
 
       {/* 9. Slide-In Sub-Screen: Water Tracker */}

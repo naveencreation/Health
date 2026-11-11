@@ -78,9 +78,9 @@ describe('OverlayContext', () => {
 
     // Open a modal
     await act(async () => {
-      result.current.openModal({ type: 'riaChat' });
+      result.current.openModal({ type: 'notifications' });
     });
-    expect(result.current.isOpen('riaChat')).toBe(true);
+    expect(result.current.isOpen('notifications')).toBe(true);
 
     // Back press should consume the event and close modal
     let handled = false;

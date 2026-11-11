@@ -15,7 +15,6 @@ export {
 
 // Main App Screens
 export { TodayScreen } from './main/TodayScreen';
-export { TrackerScreen, TrackerScreen as TrackerTab } from './main/TrackerScreen';
 export { AnalyticsScreen, AnalyticsTab } from './main/AnalyticsScreen';
 export { ProfileScreen, ProfileTab } from './main/ProfileScreen';
 // Hydration Screens (modularized in features/hydration)

@@ -1,12 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import Svg, { Circle, Path, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useDailyLog, useGoals } from '@/context/HealthContext';
@@ -60,24 +53,9 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
   const isToday = selectedDate === todayStr;
   const dayTabLabel = isToday ? 'Today' : 'Day View';
 
-  // Format goal title based on user's goal
-  const goalLabel = (() => {
-    switch (userGoals.goal) {
-      case 'lose':
-      case 'lose_weight':
-        return 'Weight Loss';
-      case 'gain':
-      case 'gain_muscle':
-        return 'Muscle Gain';
-      case 'maintain':
-      default:
-        return 'Daily Goal';
-    }
-  })();
-
-  // Dial specs (Slide 0)
-  const dialSize = 120;
-  const strokeWidth = 10;
+  // Dial specs (Slide 0): as large as fits between the Eaten and Burned columns
+  const dialSize = Math.max(120, Math.min(150, cardWidth - 40 - 140));
+  const strokeWidth = 12;
   // Allowance matches the "kcal left" number: budget + burned
   const progressRatio = Math.min(1, Math.max(0, eaten / (budget + burned)));
 
@@ -147,7 +125,6 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
     const sum = activeDays.reduce((acc, d) => acc + d.cals, 0);
     return Math.round(sum / activeDays.length);
   }, [trendDays, eaten]);
-
 
   // Chart Canvas Dimensions (20px horizontal padding on card)
   const chartWidth = Math.max(240, cardWidth - 40);
@@ -221,22 +198,27 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
         }
       }}
     >
-      {/* 1. Shared Card Top Header: Dynamic Title + Segment Switcher */}
+      {/* 1. Header: title + tappable goal, then the Today | Week switch */}
       <View style={styles.cardTopHeader}>
         <View style={styles.titleRow}>
           <Text style={styles.goalTitle}>
-            {activeSlide === 0 ? `${goalLabel}: ${budget.toLocaleString()} kcal` : 'Weekly Diet Journey'}
+            {activeSlide === 0 ? 'Calories' : 'Weekly Diet Journey'}
           </Text>
-          {activeSlide === 0 && onEditGoal ? (
-            <Pressable
-              onPress={onEditGoal}
-              style={({ pressed }) => [styles.editBtn, pressed ? styles.pressedBtnSubtle : null]}
-              hitSlop={HIT_SLOP_6}
-              accessibilityRole="button"
-              accessibilityLabel="Edit calorie budget"
-            >
-              <Ionicons name="pencil-outline" size={15} color={Colors.iconNavy} />
-            </Pressable>
+          {activeSlide === 0 ? (
+            onEditGoal ? (
+              <Pressable
+                onPress={onEditGoal}
+                style={({ pressed }) => [styles.editBtn, pressed ? styles.pressedBtnSubtle : null]}
+                hitSlop={HIT_SLOP_6}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit calorie goal, ${budget.toLocaleString()} kcal`}
+              >
+                <Text style={styles.goalText}>Goal {budget.toLocaleString()} kcal</Text>
+                <Ionicons name="pencil-outline" size={14} color={Colors.textSecondary} />
+              </Pressable>
+            ) : (
+              <Text style={styles.goalText}>Goal {budget.toLocaleString()} kcal</Text>
+            )
           ) : null}
         </View>
 
@@ -280,62 +262,59 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 activeSlide === 1 ? styles.segmentBtnTextActive : null,
               ]}
             >
-              Weekly Trend
+              Week
             </Text>
           </Pressable>
         </View>
       </View>
 
       {/* 2. Slides switch only via the tabs: a swipe here fought the page scroll and the date strip */}
-      <ScrollView ref={scrollRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {/* SLIDE 0: Today's Calorie & Macro Budget */}
         <View style={[styles.slide, { width: cardWidth }]}>
-          {/* Middle Body: Eaten & Burned (Left) + Circular Dial (Right) */}
+          {/* Middle Body: Eaten | dial | Burned */}
           <View style={styles.metricsBody}>
-            {/* Left Column: Eaten & Burned */}
-            <View style={styles.leftMetricsCol}>
-              {/* Eaten */}
-              <View style={styles.metricBlock}>
-                <View style={styles.metricLabelRow}>
-                  <Text style={styles.metricLabel}>Eaten</Text>
-                  <Ionicons
-                    name="restaurant-outline"
-                    size={13}
-                    color={Colors.primary}
-                    style={styles.metricIcon}
-                  />
-                </View>
-                <Text style={styles.metricValueText}>
-                  {eaten} <Text style={styles.metricUnit}>kcal</Text>
-                </Text>
-              </View>
-
-              {/* Burned */}
-              <View style={[styles.metricBlock, styles.metricBlockBurned]}>
-                <View style={styles.metricLabelRow}>
-                  <Text style={styles.metricLabel}>Burned</Text>
-                  <Ionicons name="flame" size={13} color={Colors.burn} style={styles.metricIcon} />
-                </View>
-                <Text style={styles.metricValueText}>
-                  {burned} <Text style={styles.metricUnit}>kcal</Text>
-                </Text>
-              </View>
+            <View style={styles.sideMetric}>
+              <Text style={styles.metricLabel}>Eaten</Text>
+              <Text style={styles.metricValueText} numberOfLines={1} adjustsFontSizeToFit>
+                {eaten.toLocaleString()}
+              </Text>
+              <Text style={styles.metricUnit}>kcal</Text>
             </View>
 
-            {/* Right Column: Hero "Cal left" Progress Dial */}
             <View style={styles.dialContainer}>
               <AnimatedSvgRing
                 size={dialSize}
                 strokeWidth={strokeWidth}
                 progress={progressRatio}
                 strokeColor={dialStrokeColor}
-                backgroundColor="rgba(15, 23, 42, 0.08)"
+                backgroundColor={Colors.primaryLight}
               />
 
               <View style={styles.dialCenterContent}>
-                <Text style={styles.calLeftNumber}>{Math.abs(calLeft).toLocaleString()}</Text>
+                <Text
+                  style={[styles.calLeftNumber, dialSize < 140 && styles.calLeftNumberSmall]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {Math.abs(calLeft).toLocaleString()}
+                </Text>
                 <Text style={styles.calLeftLabel}>{calLeft < 0 ? 'kcal over' : 'kcal left'}</Text>
               </View>
+            </View>
+
+            <View style={styles.sideMetric}>
+              <Text style={styles.metricLabel}>Burned</Text>
+              <Text style={styles.metricValueText} numberOfLines={1} adjustsFontSizeToFit>
+                {burned.toLocaleString()}
+              </Text>
+              <Text style={styles.metricUnit}>kcal</Text>
             </View>
           </View>
 
@@ -351,7 +330,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 trackColor={Colors.carbsLight}
               />
               <Text style={styles.macroRatioText}>
-                <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs}g
+                <Text style={styles.macroBoldVal}>{totalCarbs}</Text> / {targetCarbs} g
               </Text>
             </View>
 
@@ -365,7 +344,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 trackColor={Colors.proteinLight}
               />
               <Text style={styles.macroRatioText}>
-                <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein}g
+                <Text style={styles.macroBoldVal}>{totalProtein}</Text> / {targetProtein} g
               </Text>
             </View>
 
@@ -379,7 +358,7 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
                 trackColor={Colors.fatLight}
               />
               <Text style={styles.macroRatioText}>
-                <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat}g
+                <Text style={styles.macroBoldVal}>{totalFat}</Text> / {targetFat} g
               </Text>
             </View>
           </View>
@@ -603,34 +582,40 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 10,
     borderCurve: 'continuous',
-    paddingTop: 18,
-    paddingBottom: 18,
+    paddingTop: 20,
+    paddingBottom: 20,
     borderWidth: 1,
     borderColor: Colors.borderWhisper,
     elevation: 0,
     shadowOpacity: 0,
   },
   cardTopHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 20,
+    gap: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    flex: 1,
+    justifyContent: 'space-between',
+    gap: 8,
   },
   goalTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
+    fontSize: 18,
     color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
+  goalText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
   editBtn: {
-    padding: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
   },
   pressedBtnSubtle: {
     opacity: 0.88,
@@ -638,6 +623,7 @@ const styles = StyleSheet.create({
   },
   // Segment Switcher Pill
   segmentPill: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     backgroundColor: Colors.surfaceInset,
     borderRadius: 12,
@@ -675,34 +661,23 @@ const styles = StyleSheet.create({
   // Slide 0: Metrics Body
   metricsBody: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  leftMetricsCol: {
+  sideMetric: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  metricBlock: {},
-  metricBlockBurned: {
-    marginTop: 12,
-  },
-  metricIcon: {
-    marginLeft: 4,
-  },
-  metricLabelRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    gap: 2,
   },
   metricLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textSlate600,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
   metricValueText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 22,
+    lineHeight: 28,
     color: Colors.textPrimary,
   },
   metricUnit: {
@@ -716,21 +691,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dialCenterContent: {
-    position: 'absolute',
+    ...StyleSheet.absoluteFill,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   calLeftNumber: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 21,
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 34,
+    lineHeight: 40,
+    letterSpacing: -0.8,
     color: Colors.textPrimary,
-    lineHeight: 25,
+  },
+  calLeftNumberSmall: {
+    fontSize: 28,
+    lineHeight: 34,
   },
   calLeftLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 1,
   },
   // Slide 0: Macros Row
   macrosRow: {
@@ -742,19 +722,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   macroName: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textSlate600,
-    marginBottom: 5,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    marginBottom: 8,
   },
   macroRatioText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
     color: Colors.textSecondary,
-    marginTop: 4,
+    marginTop: 6,
   },
   macroBoldVal: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     color: Colors.textPrimary,
   },
   // Slide 1: Option A Subheader

@@ -11,7 +11,7 @@ import Animated, {
   useAnimatedScrollHandler,
   runOnJS,
 } from 'react-native-reanimated';
-import { Header, TopDateStrip, HeroCalorieCard, MealSection } from '@/components';
+import { Header, TopDateStrip, HeroCalorieCard, MealSection, TodayMetricGrid } from '@/components';
 import { MealType } from '@/types';
 import { Colors } from '@/theme/colors';
 
@@ -22,6 +22,9 @@ interface TodayScreenProps {
   onNotificationsPress?: () => void;
   onAvatarPress?: () => void;
   onSignInPress?: () => void;
+  onOpenWaterTracker?: () => void;
+  onOpenWeightTracker?: () => void;
+  onOpenStepTracker?: () => void;
   scrollRef?: React.RefObject<ScrollView | null>;
   initialScrollOffset?: number;
   onScrollPositionChange?: (offset: number) => void;
@@ -34,6 +37,9 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
   onNotificationsPress,
   onAvatarPress,
   onSignInPress,
+  onOpenWaterTracker,
+  onOpenWeightTracker,
+  onOpenStepTracker,
   scrollRef,
   initialScrollOffset = 0,
   onScrollPositionChange,
@@ -105,6 +111,14 @@ const TodayScreenComponent: React.FC<TodayScreenProps> = ({
 
         {/* 3. Meals Section (Breakfast, Lunch, Dinner, Snacks) */}
         <MealSection onAddFood={onAddFood} />
+
+        {/* 4. Water, weight, BMI and steps at a glance */}
+        <TodayMetricGrid
+          onOpenWater={onOpenWaterTracker}
+          onOpenWeight={onOpenWeightTracker}
+          onOpenSteps={onOpenStepTracker}
+          onEditGoal={onEditGoal}
+        />
       </Animated.ScrollView>
     </View>
   );

@@ -3,21 +3,22 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   Pressable,
   ScrollView,
   TextInput,
   AppState,
+  BackHandler,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals, useDailyLog, useAnalytics } from '@/context/HealthContext';
+import { useOptionalOverlay } from '@/navigation/OverlayContext';
+import { BIOMETRIC_DEFAULTS } from '@/constants/biometricDefaults';
 import {
   AIService,
   ChatMessage,
@@ -37,10 +38,8 @@ import {
 } from '@/services/ai/types/ai.types';
 import { FoodItem, MealType } from '@/types';
 
+// Rendered as the Ria tab (App mounts it only while that tab is active)
 interface RiaChatModalProps {
-  visible: boolean;
-  onClose: () => void;
-  initialPrompt?: string;
   onOpenBYOKSetup?: () => void;
 }
 
@@ -55,7 +54,40 @@ const FALLBACK_ACTIONS: ContextualAction[] = [
   { label: 'Plan a high-protein dinner', prompt: 'Plan a high-protein dinner', icon: 'restaurant-outline' as const },
   { label: 'Fit biryani into today', prompt: 'Can I fit biryani into today’s calories?', icon: 'pie-chart-outline' as const },
   { label: 'Find a snack under 120 kcal', prompt: 'Find me a snack under 120 calories', icon: 'cafe-outline' as const },
+  { label: 'How did my week go?', prompt: 'How did my week go?', icon: 'bar-chart-outline' as const },
 ].map((action, index) => ({ ...action, id: `fallback_${index}` }));
+
+// Icon badge colours for the "Try asking" cards, in FALLBACK_ACTIONS order
+const STARTER_TINTS = [
+  { bg: Colors.primaryLight, fg: Colors.primaryDeep },
+  { bg: Colors.carbsLight, fg: Colors.carbsDark },
+  { bg: Colors.waterTrack, fg: Colors.water },
+  { bg: Colors.surfaceContainer, fg: Colors.textSlate600 },
+];
+
+const RIA_FEATURES: {
+  title: string;
+  body: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+}[] = [
+  {
+    title: 'Log by chatting',
+    body: '“Two rotis and dal” becomes a meal entry you confirm.',
+    icon: 'chatbubble-ellipses-outline',
+  },
+  {
+    title: 'Ask before you eat',
+    body: '“Can I fit biryani today?” gets an answer from your numbers.',
+    icon: 'pie-chart-outline',
+  },
+  {
+    title: 'Plans that fit',
+    body: 'Meal ideas sized to the calories and protein you have left.',
+    icon: 'restaurant-outline',
+  },
+];
+
+const RIA_AVATAR = require('../../../assets/ria_avatar.webp');
 
 type SuggestionContext = {
   remainingCalories: number;
@@ -128,6 +160,12 @@ const getContextualActions = (
 
 /** Store an absolute time so restored conversations retain truthful metadata. */
 const messageTimestamp = () => new Date().toISOString();
+// Event-time ids; a module helper keeps the React Compiler purity rule from flagging handlers
+const newId = (prefix: string) => `${prefix}_${Date.now()}`;
+
+// Identifies a chat across saves; older chats all start with the same 'welcome_msg' id
+const firstUserMessageId = (messages: ChatMessage[]): string | undefined =>
+  messages.find(message => message.sender === 'user')?.id;
 
 const conversationTitle = (messages: ChatMessage[]): string => {
   const firstUserMessage = messages.find(message => message.sender === 'user');
@@ -173,12 +211,7 @@ const formatConversationDate = (timestamp: string): string => {
   return date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
-  visible,
-  onClose,
-  initialPrompt,
-  onOpenBYOKSetup,
-}) => {
+const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup }) => {
   const {
     totalConsumed,
     remainingCalories,
@@ -190,12 +223,14 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     removeMealItem,
     addWater,
     logWeight,
+    selectedDate,
+    setSelectedDate,
+    todayStr,
   } = useDailyLog();
   const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
   const { dailyLogs } = useAnalytics();
 
-  const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -264,17 +299,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   }, []);
 
   useEffect(() => {
-    if (visible) {
-      checkKeyStatus();
-      loadHistory();
-      loadConversationHistory();
-    } else {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      setIsStreaming(false);
-      setStreamingText('');
-    }
+    loadHistory();
+    loadConversationHistory();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState.match(/inactive|background/) && abortControllerRef.current) {
@@ -286,14 +312,41 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
 
     return () => {
       subscription.remove();
+      // Leaving the tab unmounts the chat; stop a reply that is still streaming
+      abortControllerRef.current?.abort();
     };
-  }, [visible]);
+  }, []);
 
+  // Re-check the key whenever no overlay is open, e.g. after the Gemini setup sheet closes
+  const activeOverlay = useOptionalOverlay()?.activeModal ?? null;
   useEffect(() => {
-    if (visible && initialPrompt) {
-      handleSendMessage(initialPrompt);
-    }
-  }, [visible, initialPrompt]);
+    if (activeOverlay === null) checkKeyStatus();
+  }, [activeOverlay]);
+
+  // Ria has no date strip: her numbers and the cards she logs are always for today,
+  // even if the Today tab was left on another day
+  useEffect(() => {
+    if (selectedDate !== todayStr) setSelectedDate(todayStr);
+  }, [selectedDate, todayStr, setSelectedDate]);
+
+  // Android back closes Ria's own sheets first; otherwise App's handler switches to Today
+  const hasOpenSheet =
+    showConversationHistory || showNewConversationConfirm || conversationActionTarget !== null;
+  useEffect(() => {
+    if (!hasOpenSheet) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (conversationActionTarget) {
+        setShowDeleteConversationConfirm(false);
+        setConversationActionTarget(null);
+      } else if (showConversationHistory) {
+        setShowConversationHistory(false);
+      } else {
+        setShowNewConversationConfirm(false);
+      }
+      return true;
+    });
+    return () => subscription.remove();
+  }, [hasOpenSheet, conversationActionTarget, showConversationHistory]);
 
   const checkKeyStatus = async () => {
     const configured = await AIService.isKeyConfigured();
@@ -302,18 +355,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
 
   const loadHistory = async () => {
     const saved = await AIService.loadChatHistory(currentUser?.id);
-    if (saved && saved.length > 0) {
-      setMessages(saved);
-    } else {
-      setMessages([
-        {
-          id: 'welcome_msg',
-          sender: 'ria',
-          text: `Hi ${firstName}! 👋 I am Ria, your AI Nutrition Coach. You have ${remainingCalories} kcal remaining today with ${totalProtein}g protein logged. What would you like to plan, calculate, or ask?`,
-          timestamp: messageTimestamp(),
-        },
-      ]);
-    }
+    setMessages(saved && saved.length > 0 ? saved : []);
   };
 
   const loadConversationHistory = async () => {
@@ -334,7 +376,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     }
     if (streamingText) {
       const partialMsg: ChatMessage = {
-        id: `ria_${Date.now()}`,
+        id: newId('ria'),
         sender: 'ria',
         text: streamingText + ' [stopped]',
         timestamp: messageTimestamp(),
@@ -360,17 +402,29 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     setShowNewConversationConfirm(true);
   };
 
-  const confirmNewConversation = async () => {
+  // Saves the open chat to history. A chat reopened from history keeps its record,
+  // so it isn't stored twice.
+  const saveCurrentConversation = async () => {
     const now = messageTimestamp();
-    const archivedConversation: ConversationRecord = {
-      id: `conversation_${Date.now()}`,
-      title: conversationTitle(messages),
-      createdAt: messages[0]?.timestamp || now,
-      updatedAt: messages[messages.length - 1]?.timestamp || now,
-      messages,
-    };
-    await AIService.saveConversation(archivedConversation, currentUser?.id);
-          await loadConversationHistory();
+    const currentId = firstUserMessageId(messages);
+    const existing = currentId
+      ? conversations.find(c => firstUserMessageId(c.messages) === currentId)
+      : undefined;
+    await AIService.saveConversation(
+      {
+        id: existing?.id ?? newId('conversation'),
+        title: existing?.title ?? conversationTitle(messages),
+        createdAt: existing?.createdAt ?? (messages[0]?.timestamp || now),
+        updatedAt: messages[messages.length - 1]?.timestamp || now,
+        messages,
+      },
+      currentUser?.id
+    );
+    await loadConversationHistory();
+  };
+
+  const confirmNewConversation = async () => {
+    await saveCurrentConversation();
     await AIService.clearChatHistory(currentUser?.id);
     setShowNewConversationConfirm(false);
     await loadHistory();
@@ -379,18 +433,14 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
   };
 
   const openConversation = async (conversation: ConversationRecord) => {
+    // Already open: keep the live messages (they may be newer than the saved copy)
+    const currentId = firstUserMessageId(messages);
+    if (currentId && currentId === firstUserMessageId(conversation.messages)) {
+      setShowConversationHistory(false);
+      return;
+    }
     if (messages.some(message => message.sender === 'user')) {
-      const now = messageTimestamp();
-      await AIService.saveConversation(
-        {
-          id: `conversation_${Date.now()}`,
-          title: conversationTitle(messages),
-          createdAt: messages[0]?.timestamp || now,
-          updatedAt: messages[messages.length - 1]?.timestamp || now,
-          messages,
-        },
-        currentUser?.id
-      );
+      await saveCurrentConversation();
     }
 
     await AIService.saveChatHistory(conversation.messages, currentUser?.id);
@@ -428,6 +478,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     setShowDeleteConversationConfirm(true);
   };
 
+  // Card state is saved with the chat, so coming back to the tab can't offer "Log" again
+  const updateMessage = (messageId: string, update: (message: ChatMessage) => ChatMessage) => {
+    const next = messages.map(m => (m.id === messageId ? update(m) : m));
+    setMessages(next);
+    AIService.saveChatHistory(next, currentUser?.id);
+  };
+
   const handleConfirmMeal = (messageId: string, cardData: MealCardData) => {
     const entryIds: string[] = [];
     const targetSlot: MealType =
@@ -452,25 +509,17 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       if (logged?.id) entryIds.push(logged.id);
     }
 
-    setMessages(prev =>
-      prev.map(m => {
-        if (m.id === messageId && m.card?.type === 'meal') {
-          return {
+    const loggedAt = Date.now();
+    updateMessage(messageId, m =>
+      m.card?.type === 'meal'
+        ? {
             ...m,
             card: {
               ...m.card,
-              data: {
-                ...m.card.data,
-                state: 'logged',
-                loggedAt: Date.now(),
-                undoUntil: Date.now() + 10000,
-                entryIds,
-              },
+              data: { ...m.card.data, state: 'logged', loggedAt, undoUntil: loggedAt + 10000, entryIds },
             },
-          };
-        }
-        return m;
-      })
+          }
+        : m
     );
   };
 
@@ -481,10 +530,9 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       }
     }
 
-    setMessages(prev =>
-      prev.map(m => {
-        if (m.id === messageId && m.card?.type === 'meal') {
-          return {
+    updateMessage(messageId, m =>
+      m.card?.type === 'meal'
+        ? {
             ...m,
             card: {
               ...m.card,
@@ -496,55 +544,42 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                 entryIds: undefined,
               },
             },
-          };
-        }
-        return m;
-      })
+          }
+        : m
     );
   };
 
   const handleConfirmWater = (messageId: string, amountMl: number) => {
     addWater(amountMl);
-    setMessages(prev =>
-      prev.map(m => {
-        if (m.id === messageId && m.card?.type === 'water') {
-          return {
+    const loggedAt = Date.now();
+    updateMessage(messageId, m =>
+      m.card?.type === 'water'
+        ? { ...m, card: { ...m.card, data: { ...m.card.data, state: 'logged', loggedAt } } }
+        : m
+    );
+  };
+
+  // A negative addWater removes the newest water entries, i.e. the one this card logged
+  const handleUndoWater = (messageId: string, cardData: WaterCardData) => {
+    addWater(-cardData.amountMl);
+    updateMessage(messageId, m =>
+      m.card?.type === 'water'
+        ? {
             ...m,
-            card: {
-              ...m.card,
-              data: {
-                ...m.card.data,
-                state: 'logged',
-                loggedAt: Date.now(),
-              },
-            },
-          };
-        }
-        return m;
-      })
+            card: { ...m.card, data: { ...m.card.data, state: 'proposed', loggedAt: undefined } },
+          }
+        : m
     );
   };
 
   const handleConfirmWeight = (messageId: string, cardData: WeightCardData) => {
     logWeight(cardData.weightKg);
     updateGoals({ currentWeightKg: cardData.weightKg });
-    setMessages(prev =>
-      prev.map(m => {
-        if (m.id === messageId && m.card?.type === 'weight') {
-          return {
-            ...m,
-            card: {
-              ...m.card,
-              data: {
-                ...m.card.data,
-                state: 'logged',
-                loggedAt: Date.now(),
-              },
-            },
-          };
-        }
-        return m;
-      })
+    const loggedAt = Date.now();
+    updateMessage(messageId, m =>
+      m.card?.type === 'weight'
+        ? { ...m, card: { ...m.card, data: { ...m.card.data, state: 'logged', loggedAt } } }
+        : m
     );
   };
 
@@ -555,26 +590,14 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
       targetCarbs: cardData.carbs,
       targetFat: cardData.fat,
     });
-    setMessages(prev =>
-      prev.map(m => {
-        if (m.id === messageId && m.card?.type === 'plan_change') {
-          return {
-            ...m,
-            card: {
-              ...m.card,
-              data: {
-                ...m.card.data,
-                state: 'applied',
-              },
-            },
-          };
-        }
-        return m;
-      })
+    updateMessage(messageId, m =>
+      m.card?.type === 'plan_change'
+        ? { ...m, card: { ...m.card, data: { ...m.card.data, state: 'applied' } } }
+        : m
     );
   };
 
-  const handleLogSuggestionOption = (_messageId: string, option: SuggestionOption) => {
+  const handleLogSuggestionOption = (messageId: string, option: SuggestionOption) => {
     const foodItem: FoodItem = {
       id: `opt_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       name: option.name,
@@ -593,6 +616,20 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     const slot: MealType =
       hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : hour < 19 ? 'snacks' : 'dinner';
     addMealItem(slot, foodItem, 1);
+    updateMessage(messageId, m =>
+      m.card?.type === 'suggestion'
+        ? {
+            ...m,
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                loggedOptions: [...(m.card.data.loggedOptions ?? []), option.name],
+              },
+            },
+          }
+        : m
+    );
   };
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -600,7 +637,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     if (!text || isStreaming) return;
 
     const userMsg: ChatMessage = {
-      id: `user_${Date.now()}`,
+      id: newId('user'),
       sender: 'user',
       text,
       timestamp: messageTimestamp(),
@@ -616,6 +653,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
     setHasApiKey(keyAvailable);
 
     if (keyAvailable) {
+      AIService.saveChatHistory(newMessages, currentUser?.id);
       // 1. LIVE GEMINI 3.5 FLASH STREAMING
       setIsStreaming(true);
       setStreamingText('');
@@ -671,7 +709,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         const parsed = RiaCardParser.parseMessage(fullResponse, currentLog, userGoals);
 
         const riaMsg: ChatMessage = {
-          id: `ria_${Date.now()}`,
+          id: newId('ria'),
           sender: 'ria',
           text: parsed.cleanText || fullResponse,
           card: parsed.card,
@@ -690,7 +728,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         }
 
         const errorMsg: ChatMessage = {
-          id: `ria_err_${Date.now()}`,
+          id: newId('ria_err'),
           sender: 'ria',
           text:
             err?.userMessage ||
@@ -707,237 +745,265 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         scrollToBottom();
       }
     } else {
-      const connectionMsg: ChatMessage = {
-        id: `ria_connect_${Date.now()}`,
-        sender: 'ria',
-        text: 'Connect Gemini to start chatting with Ria. Your nutrition tracking still works without a connection.',
-        timestamp: messageTimestamp(),
-        isError: true,
-      };
-
-      setMessages(prev => [...prev, connectionMsg]);
-      scrollToBottom();
+      // The connect screen takes over; put the text back so it isn't lost
+      setMessages(messages);
+      setInputQuery(text);
     }
   };
 
   const canSend = inputQuery.trim().length > 0 && !isStreaming;
+  const hasUserMessages = messages.some(message => message.sender === 'user');
+  const isNewChat = !hasUserMessages && !isStreaming;
+  // Chats saved before the Ria tab start with a canned welcome bubble; the new-chat view replaces it
+  const timeline = messages.filter(message => message.id !== 'welcome_msg');
+  const recentConversations = conversations.filter(c => !c.archived).slice(0, 2);
+  const proteinTarget = userGoals.targetProtein || BIOMETRIC_DEFAULTS.targetProtein;
+  const isOver = remainingCalories < 0;
+  const caloriesLeft = Math.round(Math.abs(remainingCalories)).toLocaleString();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.modalBackdrop}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+  // Key check still running: render nothing rather than flash the chat before the connect screen
+  if (hasApiKey === null) return <View style={styles.screen} />;
+
+  // No Gemini key yet: explain Ria and offer setup instead of a chat that can't answer
+  if (hasApiKey === false) {
+    return (
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.connectContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.sheetContainer, keyboardHeight > 0 ? styles.sheetContainerKeyboard : null]}>
-          <View style={[styles.container, { paddingTop: insets.top }]}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Pressable
-                onPress={onClose}
-                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close Ria chat"
-              >
-                <Ionicons name="close" size={24} color={Colors.textPrimary} />
-              </Pressable>
+        <Image source={RIA_AVATAR} style={styles.connectAvatar} contentFit="cover" />
+        <Text style={styles.connectTitle} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+          Meet Ria, your nutrition coach
+        </Text>
+        <Text style={styles.connectBody}>
+          Ria knows your goals and what you ate today, so her answers fit your day.
+        </Text>
 
-              <View style={styles.headerProfile}>
-                <Image
-                  source={require('../../../assets/ria_avatar.webp')}
-                  style={styles.headerAvatar}
-                />
-                <View style={styles.headerTextGroup}>
-                  <Text style={styles.headerName}>Ria AI Coach</Text>
-                  <Pressable
-                    style={styles.headerStatusRow}
-                    onPress={() => {
-                      if (!hasApiKey && onOpenBYOKSetup) {
-                        onClose();
-                        onOpenBYOKSetup();
-                      }
-                    }}
-                    disabled={hasApiKey !== false}
-                    accessibilityRole={hasApiKey === false ? 'button' : undefined}
-                    accessibilityLabel={hasApiKey === false ? 'Connect Gemini to chat with Ria' : undefined}
-                  >
-                    <View style={[styles.onlineDot, hasApiKey === false ? styles.offlineDot : null]} />
-                    <Text style={styles.headerSub}>
-                      {hasApiKey === true
-                        ? 'Live coaching'
-                        : hasApiKey === false
-                          ? 'Connect Gemini to chat'
-                          : 'Checking connection…'}
-                    </Text>
-                  </Pressable>
-                </View>
+        <View style={styles.featureList}>
+          {RIA_FEATURES.map(feature => (
+            <View key={feature.title} style={styles.featureRow}>
+              <View style={styles.featureIcon}>
+                <Ionicons name={feature.icon} size={18} color={Colors.textPrimary} />
               </View>
-
-              <View style={styles.headerActions}>
-                <Pressable
-                  onPress={() => setShowConversationHistory(true)}
-                  style={({ pressed }) => [
-                    styles.headerActionBtn,
-                    pressed ? styles.pressedCloseBtn : null,
-                  ]}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open conversation history"
-                >
-                  <Ionicons name="time-outline" size={18} color={Colors.textSecondary} />
-                </Pressable>
-                <Pressable
-                  onPress={handleNewConversation}
-                  style={({ pressed }) => [
-                    styles.headerActionBtn,
-                    pressed ? styles.pressedCloseBtn : null,
-                  ]}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Start a new conversation"
-                >
-                  <Ionicons name="add" size={22} color={Colors.textSecondary} />
-                </Pressable>
+              <View style={styles.featureCopy}>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureBody}>{feature.body}</Text>
               </View>
             </View>
+          ))}
+        </View>
 
-            {/* Conversation timeline */}
-            <View style={styles.timelineShell}>
-              <ScrollView
-                ref={scrollViewRef}
-                style={styles.chatArea}
-                contentContainerStyle={styles.chatContent}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-                contentInsetAdjustmentBehavior="automatic"
-                scrollEventThrottle={16}
-                onScroll={event => {
-                  const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-                  const distanceFromLatest =
-                    contentSize.height - (contentOffset.y + layoutMeasurement.height);
-                  setShowScrollToLatest(distanceFromLatest > 120);
-                }}
-                onContentSizeChange={() => {
-                  if (isStreaming || keyboardHeight > 0) {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }
-                }}
-              >
-                {messages.length > 0 && !Number.isNaN(new Date(messages[0].timestamp).getTime()) ? (
-                  <View style={styles.dateDivider}>
-                    <View style={styles.dateDividerLine} />
-                    <Text style={styles.dateDividerLabel}>
-                      {formatConversationDate(messages[0].timestamp)}
-                    </Text>
-                    <View style={styles.dateDividerLine} />
+        <View style={styles.connectSpacer} />
+        <View style={styles.connectCard}>
+          <Text style={styles.connectCardTitle}>Connect Gemini to start</Text>
+          <Text style={styles.connectCardBody}>
+            Ria runs on Google Gemini with your own API key. Setup takes about a minute.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [styles.primaryBtn, pressed ? styles.primaryBtnPressed : null]}
+            onPress={onOpenBYOKSetup}
+            accessibilityRole="button"
+            accessibilityLabel="Connect Gemini"
+          >
+            <Text style={styles.primaryBtnText}>Connect Gemini</Text>
+          </Pressable>
+          <View style={styles.keyNote}>
+            <Ionicons name="lock-closed-outline" size={14} color={Colors.textSecondary} />
+            <Text style={styles.keyNoteText}>Your key is stored only on this device.</Text>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.screen}>
+      {/* 'padding' on Android too: with edge-to-edge the window may not resize for the keyboard,
+          and KeyboardAvoidingView adds no padding when it already has */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        {/* Header */}
+        <View style={styles.header}>
+          <Image source={RIA_AVATAR} style={styles.headerAvatar} contentFit="cover" />
+          <View style={styles.headerTextGroup}>
+            <Text style={styles.headerName} accessibilityRole="header">
+              Ria
+            </Text>
+            <Text style={styles.headerSub} numberOfLines={1}>
+              Your nutrition coach
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setShowConversationHistory(true)}
+            style={({ pressed }) => [styles.headerActionBtn, pressed ? styles.pressedCloseBtn : null]}
+            accessibilityRole="button"
+            accessibilityLabel="Chat history"
+          >
+            <Ionicons name="time-outline" size={20} color={Colors.textPrimary} />
+          </Pressable>
+          <Pressable
+            onPress={handleNewConversation}
+            style={({ pressed }) => [styles.headerActionBtn, pressed ? styles.pressedCloseBtn : null]}
+            accessibilityRole="button"
+            accessibilityLabel="New chat"
+          >
+            <Ionicons name="create-outline" size={20} color={Colors.textPrimary} />
+          </Pressable>
+        </View>
+
+        {/* What Ria knows about today */}
+        {hasUserMessages ? (
+          <View
+            style={styles.todayStrip}
+            accessible
+            accessibilityLabel={`Today: ${caloriesLeft} kcal ${isOver ? 'over' : 'left'}, protein ${Math.round(totalProtein)} of ${proteinTarget} grams`}
+          >
+            <Ionicons name="today-outline" size={16} color={Colors.textSecondary} />
+            <Text style={styles.todayStripText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              <Text style={styles.todayStripValue}>{caloriesLeft}</Text> kcal{' '}
+              {isOver ? 'over' : 'left'}
+            </Text>
+            <View style={styles.todayStripDivider} />
+            <Text style={styles.todayStripText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              Protein <Text style={styles.todayStripValue}>{Math.round(totalProtein)}</Text>/
+              {proteinTarget} g
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Conversation timeline, or the new-chat screen */}
+        <View style={styles.timelineShell}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.flex}
+            contentContainerStyle={isNewChat ? styles.newChatContent : styles.chatContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            scrollEventThrottle={16}
+            onScroll={event => {
+              const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+              const distanceFromLatest =
+                contentSize.height - (contentOffset.y + layoutMeasurement.height);
+              setShowScrollToLatest(!isNewChat && distanceFromLatest > 120);
+            }}
+            onContentSizeChange={() => {
+              if (isStreaming || keyboardHeight > 0) {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }
+            }}
+          >
+            {isNewChat ? (
+              <>
+                <View style={styles.greetingBlock}>
+                  <Text style={styles.greetingTitle} maxFontSizeMultiplier={1.3}>
+                    {greeting}, {firstName}
+                  </Text>
+                  <Text style={styles.greetingBody}>
+                    {isOver ? 'You’re ' : 'You have '}
+                    <Text style={styles.greetingStrong}>{caloriesLeft} kcal</Text>
+                    {isOver ? ' over today.' : ' left today.'} Ask me anything, or tell me what
+                    you ate.
+                  </Text>
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle} accessibilityRole="header">
+                    Try asking
+                  </Text>
+                  <View style={styles.starterGrid}>
+                    {FALLBACK_ACTIONS.map((action, index) => {
+                      const tint = STARTER_TINTS[index % STARTER_TINTS.length];
+                      return (
+                        <Pressable
+                          key={action.id}
+                          style={({ pressed }) => [
+                            styles.starterCard,
+                            pressed ? styles.starterCardPressed : null,
+                          ]}
+                          onPress={() => handleSendMessage(action.prompt)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ask Ria: ${action.label}`}
+                        >
+                          <View style={[styles.starterIcon, { backgroundColor: tint.bg }]}>
+                            <Ionicons name={action.icon} size={18} color={tint.fg} />
+                          </View>
+                          <Text style={styles.starterText}>{action.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {recentConversations.length > 0 ? (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionTitle} accessibilityRole="header">
+                        Recent
+                      </Text>
+                      <Pressable
+                        onPress={() => setShowConversationHistory(true)}
+                        style={styles.seeAllBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel="See all conversations"
+                      >
+                        <Text style={styles.seeAllText}>See all</Text>
+                      </Pressable>
+                    </View>
+                    <View style={styles.recentList}>
+                      {recentConversations.map((conversation, index) => (
+                        <Pressable
+                          key={conversation.id}
+                          style={({ pressed }) => [
+                            styles.recentRow,
+                            index > 0 ? styles.recentRowDivider : null,
+                            pressed ? styles.recentRowPressed : null,
+                          ]}
+                          onPress={() => openConversation(conversation)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open conversation ${conversation.title}`}
+                        >
+                          <View style={styles.recentCopy}>
+                            <Text style={styles.recentTitle} numberOfLines={1}>
+                              {conversation.title}
+                            </Text>
+                            <Text style={styles.recentDate}>
+                              {formatConversationDate(conversation.updatedAt)}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                        </Pressable>
+                      ))}
+                    </View>
                   </View>
                 ) : null}
-              {messages.map((msg, index) => {
-                const isRia = msg.sender === 'ria';
-                const isGrouped = index > 0 && messages[index - 1]?.sender === msg.sender;
-                const isWelcome = msg.id === 'welcome_msg';
-                return (
-                  <View
-                    key={msg.id}
-                    style={[
-                      styles.messageRow,
-                      isRia ? styles.messageRowRia : styles.messageRowUser,
-                      isGrouped ? styles.messageRowGrouped : null,
-                    ]}
-                  >
-                    {isRia && !isGrouped ? (
-                      <Image
-                        source={require('../../../assets/ria_avatar.webp')}
-                        style={styles.bubbleAvatar}
-                        contentFit="cover"
-                      />
-                    ) : isRia ? (
-                      <View style={styles.bubbleAvatarSpacer} />
-                    ) : null}
-                    <View
-                      style={[
-                        styles.bubble,
-                        isRia ? styles.bubbleRia : styles.bubbleUser,
-                         isGrouped ? styles.bubbleGrouped : null,
-                        msg.isError ? styles.bubbleError : null,
-                        msg.id.startsWith('ria_connect_') ? styles.bubbleConnection : null,
-                        isWelcome ? styles.bubbleWelcome : null,
-                      ]}
-                    >
-                      {isWelcome ? (
-                        <View style={styles.welcomeContent}>
-                          <Text style={styles.welcomeEyebrow}>RIA AI COACH</Text>
-                          <Text style={styles.welcomeTitle}>Let’s make today easier</Text>
-                          <Text style={styles.welcomeBody}>
-                            Hi {firstName}! I can help you plan meals, understand your nutrition, and stay consistent with your goals.
-                          </Text>
-                          <View style={styles.welcomeMetrics}>
-                            <View style={styles.welcomeMetric}>
-                              <Ionicons name="flame-outline" size={15} color={Colors.primary} />
-                              <View>
-                                <Text style={styles.welcomeMetricValue}>{remainingCalories} kcal</Text>
-                                <Text style={styles.welcomeMetricLabel}>remaining today</Text>
-                              </View>
-                            </View>
-                            <View style={styles.welcomeMetric}>
-                              <Ionicons name="nutrition-outline" size={15} color={Colors.proteinDark} />
-                              <View>
-                                <Text style={styles.welcomeMetricValue}>{totalProtein} g</Text>
-                                <Text style={styles.welcomeMetricLabel}>protein logged</Text>
-                              </View>
-                            </View>
-                          </View>
-                          <Text style={styles.welcomePrompt}>What would you like to work on?</Text>
-                        </View>
-                      ) : msg.id.startsWith('ria_connect_') ? (
-                        <View style={styles.connectionCard}>
-                          <View style={styles.connectionIconWrap}>
-                            <Ionicons name="hardware-chip-outline" size={27} color={Colors.textSecondary} />
-                            <View style={styles.connectionKeyBadge}>
-                              <Ionicons name="key-outline" size={13} color={Colors.warningDark} />
-                            </View>
-                          </View>
-                          <View style={styles.connectionCopy}>
-                            <Text style={styles.connectionTitle}>Connect Gemini to chat</Text>
-                            <Text style={styles.connectionBody}>{msg.text}</Text>
-                            {onOpenBYOKSetup ? (
-                              <Pressable
-                                style={styles.connectionAction}
-                                onPress={() => {
-                                  onClose();
-                                  onOpenBYOKSetup();
-                                }}
-                                accessibilityRole="button"
-                                accessibilityLabel="Connect Gemini"
-                              >
-                                <Text style={styles.connectionActionText}>Connect Gemini</Text>
-                              </Pressable>
-                            ) : null}
-                          </View>
-                        </View>
-                      ) : msg.isError ? (
-                        <Text style={[styles.bubbleText, styles.errorMsgText]}>{msg.text}</Text>
-                      ) : (
+              </>
+            ) : (
+              <>
+                {timeline.length > 0 &&
+                !Number.isNaN(new Date(timeline[0].timestamp).getTime()) ? (
+                  <Text style={styles.dateLabel}>
+                    {formatConversationDate(timeline[0].timestamp)}
+                  </Text>
+                ) : null}
+
+                {timeline.map(msg => {
+                  const isRia = msg.sender === 'ria';
+                  return (
+                    <View key={msg.id} style={isRia ? styles.riaMessage : styles.userBubble}>
+                      {msg.isError ? (
+                        <Text style={[styles.messageText, styles.errorMsgText]}>{msg.text}</Text>
+                      ) : isRia ? (
                         <>
                           {msg.text ? (
                             <MarkdownText
                               content={msg.text}
-                              isUser={!isRia}
-                              baseStyle={[
-                                styles.bubbleText,
-                                isRia ? styles.bubbleTextRia : styles.bubbleTextUser,
-                              ]}
+                              isUser={false}
+                              baseStyle={[styles.messageText, styles.messageTextRia]}
                             />
                           ) : null}
-
                           {msg.card ? (
                             <View style={styles.cardWrapper}>
                               <RiaActionCard
@@ -946,6 +1012,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                                 onConfirmMeal={handleConfirmMeal}
                                 onUndoMeal={handleUndoMeal}
                                 onConfirmWater={handleConfirmWater}
+                                onUndoWater={handleUndoWater}
                                 onConfirmWeight={handleConfirmWeight}
                                 onLogSuggestionOption={handleLogSuggestionOption}
                                 onApplyPlanChange={handleApplyPlanChange}
@@ -953,29 +1020,19 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                             </View>
                           ) : null}
                         </>
+                      ) : (
+                        <Text style={[styles.messageText, styles.messageTextUser]}>{msg.text}</Text>
                       )}
-                      <Text
-                        style={[
-                          styles.timestamp,
-                          isRia ? styles.timestampRia : styles.timestampUser,
-                        ]}
-                      >
+                      <Text style={[styles.timestamp, isRia ? null : styles.timestampUser]}>
                         {formatMessageTime(msg.timestamp)}
                       </Text>
                     </View>
-                  </View>
-                );
-              })}
+                  );
+                })}
 
-              {/* Live Streaming Response Bubble */}
-              {isStreaming ? (
-                <View style={[styles.messageRow, styles.messageRowRia]}>
-                  <Image
-                    source={require('../../../assets/ria_avatar.webp')}
-                    style={styles.bubbleAvatar}
-                    contentFit="cover"
-                  />
-                  <View style={[styles.bubble, styles.bubbleRia]}>
+                {/* Live streaming reply */}
+                {isStreaming ? (
+                  <View style={styles.riaMessage}>
                     {streamingText ? (
                       <MarkdownText
                         content={
@@ -984,7 +1041,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                             .trim() || 'Thinking…'
                         }
                         isUser={false}
-                        baseStyle={[styles.bubbleText, styles.bubbleTextRia]}
+                        baseStyle={[styles.messageText, styles.messageTextRia]}
                       />
                     ) : null}
                     <View style={styles.streamingIndicatorRow}>
@@ -994,114 +1051,109 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                       </Text>
                     </View>
                   </View>
-                </View>
-              ) : null}
-              </ScrollView>
-              {showScrollToLatest ? (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.scrollLatestButton,
-                    pressed ? styles.pressedScrollLatestButton : null,
-                  ]}
-                  onPress={scrollToBottom}
-                  accessibilityRole="button"
-                  accessibilityLabel="Scroll to latest message"
-                >
-                  <Ionicons name="chevron-down" size={18} color={Colors.textPrimary} />
-                </Pressable>
-              ) : null}
-            </View>
-
-            {/* Stop Generation Button when Streaming */}
-            {isStreaming ? (
-              <View style={styles.stopGeneratingRow}>
-                <Pressable style={styles.stopBtn} onPress={handleStopGenerating}>
-                  <Ionicons name="stop-circle-outline" size={15} color={Colors.textSecondary} />
-                  <Text style={styles.stopBtnText}>Stop</Text>
-                </Pressable>
-              </View>
-            ) : null}
-
-            {/* Quick Suggestion Chips */}
-            {!isStreaming && inputQuery.length === 0 ? (
-              <View style={styles.quickChipsWrapper}>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.quickChipsScroll}
-                >
-                  {contextualActions.map(chip => (
-                    <Pressable
-                      key={chip.label}
-                      style={({ pressed }) => [
-                        styles.quickChip,
-                        pressed ? styles.pressedQuickChip : null,
-                      ]}
-                      onPress={() => handleSendMessage(chip.prompt)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Ask Ria: ${chip.label}`}
-                    >
-                      <Ionicons name={chip.icon} size={14} color={Colors.primaryDark} />
-                      <Text style={styles.quickChipText}>{chip.label}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null}
-
-            {/* Composer */}
-            <View
-              style={[
-                styles.inputBar,
-                {
-                  paddingBottom:
-                    keyboardHeight > 0
-                      ? 10
-                      : Platform.OS === 'ios'
-                        ? Math.max(insets.bottom, 14)
-                        : 12,
-                },
+                ) : null}
+              </>
+            )}
+          </ScrollView>
+          {showScrollToLatest ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.scrollLatestButton,
+                pressed ? styles.pressedScrollLatestButton : null,
               ]}
+              onPress={scrollToBottom}
+              accessibilityRole="button"
+              accessibilityLabel="Scroll to latest message"
             >
-              <View style={[styles.composerSurface, isInputFocused ? styles.composerSurfaceFocused : null]}>
-                <View style={styles.composerField}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Ask Ria about food, training, or your goals…"
-                    placeholderTextColor={Colors.textMuted}
-                    value={inputQuery}
-                    onChangeText={setInputQuery}
-                    onSubmitEditing={() => handleSendMessage()}
-                    returnKeyType="send"
-                    editable={!isStreaming}
-                    multiline={true}
-                    selectionColor={Colors.primary}
-                    textAlignVertical="center"
-                    onFocus={() => {
-                      setIsInputFocused(true);
-                      setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                      }, 80);
-                    }}
-                    onBlur={() => setIsInputFocused(false)}
-                  />
-                </View>
-              </View>
+              <Ionicons name="chevron-down" size={18} color={Colors.textPrimary} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* Stop generating */}
+        {isStreaming ? (
+          <View style={styles.stopGeneratingRow}>
+            <Pressable
+              style={({ pressed }) => [styles.stopBtn, pressed ? styles.pressedCloseBtn : null]}
+              onPress={handleStopGenerating}
+              accessibilityRole="button"
+              accessibilityLabel="Stop Ria's reply"
+            >
+              <Ionicons name="stop-circle-outline" size={16} color={Colors.textSecondary} />
+              <Text style={styles.stopBtnText}>Stop</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* Follow-up suggestions (the new-chat view has its own starters) */}
+        {!isNewChat && !isStreaming && inputQuery.length === 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickChipsWrapper}
+            contentContainerStyle={styles.quickChipsScroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            {contextualActions.map(chip => (
               <Pressable
-                style={({ pressed }) => [
-                  styles.sendBtn,
-                  canSend ? styles.sendBtnActive : null,
-                  pressed && canSend ? styles.pressedSendBtn : null,
-                ]}
-                onPress={() => handleSendMessage()}
-                disabled={!canSend}
+                key={chip.id}
+                style={({ pressed }) => [styles.quickChip, pressed ? styles.pressedQuickChip : null]}
+                onPress={() => handleSendMessage(chip.prompt)}
                 accessibilityRole="button"
-                accessibilityState={{ disabled: !canSend }}
-                accessibilityLabel="Send message to Ria"
+                accessibilityLabel={`Ask Ria: ${chip.label}`}
               >
-                <Ionicons name="arrow-up" size={19} color="#FFFFFF" />
+                <Text style={styles.quickChipText}>{chip.label}</Text>
               </Pressable>
-            </View>
+            ))}
+          </ScrollView>
+        ) : null}
+
+        {/* Composer */}
+        <View style={[styles.inputBar, keyboardHeight > 0 ? styles.inputBarKeyboard : null]}>
+          <View
+            style={[styles.composerSurface, isInputFocused ? styles.composerSurfaceFocused : null]}
+          >
+            <TextInput
+              style={styles.textInput}
+              placeholder="Ask Ria or log a meal"
+              placeholderTextColor={Colors.textMuted}
+              value={inputQuery}
+              onChangeText={setInputQuery}
+              onSubmitEditing={() => handleSendMessage()}
+              returnKeyType="send"
+              editable={!isStreaming}
+              multiline
+              maxFontSizeMultiplier={1.3}
+              selectionColor={Colors.primary}
+              cursorColor={Colors.primaryDeep}
+              textAlignVertical="center"
+              accessibilityLabel="Message Ria"
+              onFocus={() => {
+                setIsInputFocused(true);
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }, 80);
+              }}
+              onBlur={() => setIsInputFocused(false)}
+            />
+            <Pressable
+              style={({ pressed }) => [
+                styles.sendBtn,
+                canSend ? styles.sendBtnActive : null,
+                pressed && canSend ? styles.pressedSendBtn : null,
+              ]}
+              onPress={() => handleSendMessage()}
+              disabled={!canSend}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canSend }}
+              accessibilityLabel="Send message to Ria"
+            >
+              <Ionicons
+                name="arrow-up"
+                size={20}
+                color={canSend ? Colors.onPrimary : Colors.textSecondary}
+              />
+            </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -1133,7 +1185,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
         </View>
       ) : null}
       {showConversationHistory ? (
-        <View style={styles.historyOverlay}>
+        // The screen doesn't shrink for the keyboard (Android edge-to-edge, iOS), so lift the sheet above it
+        <View
+          style={[
+            styles.historyOverlay,
+            keyboardHeight > 0 ? { paddingBottom: keyboardHeight + 12 } : null,
+          ]}
+        >
           <Pressable
             style={styles.confirmBackdrop}
             onPress={() => setShowConversationHistory(false)}
@@ -1188,6 +1246,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
                 style={styles.historyList}
                 contentContainerStyle={styles.historyListContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
               >
                 {visibleConversations.map(conversation => (
                   <Pressable
@@ -1305,80 +1364,549 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({
           </View>
         </View>
       ) : null}
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
+  screen: {
     flex: 1,
     backgroundColor: Colors.background,
-    alignItems: 'center',
   },
-  sheetContainer: {
-    width: '100%',
-    maxWidth: 480,
-    alignSelf: 'center',
-    flex: 1,
-    backgroundColor: Colors.background,
-    overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? {
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: '#E2E8F0',
-        }
-      : {}),
-  },
-  sheetContainerKeyboard: {
+  flex: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
+  // --- No key: connect screen ---
+  connectContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 20,
   },
-  header: {
-    minHeight: 64,
+  connectAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderCurve: 'continuous',
+    marginBottom: 16,
+  },
+  connectTitle: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 30,
+    lineHeight: 36,
+    letterSpacing: -0.7,
+    color: Colors.textPrimary,
+    marginBottom: 10,
+  },
+  connectBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.textSlate600,
+  },
+  featureList: {
+    marginTop: 24,
+    gap: 18,
+  },
+  featureRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderInset,
+    alignItems: 'flex-start',
+    gap: 14,
   },
-  closeBtn: {
+  featureIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  headerActions: {
+  featureCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  featureTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
+    lineHeight: 20,
+    color: Colors.textPrimary,
+  },
+  featureBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  // Pushes the connect card to the bottom on tall screens, keeps a gap on short ones
+  connectSpacer: {
+    flexGrow: 1,
+    minHeight: 28,
+  },
+  connectCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    padding: 16,
+    gap: 12,
+  },
+  connectCardTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 17,
+    lineHeight: 22,
+    color: Colors.textPrimary,
+  },
+  connectCardBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  primaryBtn: {
+    minHeight: 48,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.primaryDeep,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBtnPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
+  },
+  primaryBtnText: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    color: Colors.onPrimary,
+  },
+  keyNote: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  headerActionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  keyNoteText: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  // --- Header ---
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
+  },
+  headerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+  },
+  headerTextGroup: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerName: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: -0.3,
+    color: Colors.textPrimary,
+  },
+  headerSub: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+  headerActionBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderWhisper,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
+    elevation: 0,
   },
   pressedCloseBtn: {
     opacity: 0.88,
+    transform: [{ scale: 0.97 }],
+  },
+  todayStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderWhisper,
+  },
+  todayStripText: {
+    flexShrink: 1,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSlate600,
+  },
+  todayStripValue: {
+    fontFamily: Fonts.urbanist.bold,
+    color: Colors.textPrimary,
+  },
+  todayStripDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: Colors.borderSubtle,
+  },
+  // --- Timeline / new chat ---
+  timelineShell: {
+    flex: 1,
+    position: 'relative',
+  },
+  newChatContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+    gap: 24,
+  },
+  chatContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    gap: 16,
+  },
+  greetingBlock: {
+    gap: 6,
+  },
+  greetingTitle: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.6,
+    color: Colors.textPrimary,
+  },
+  greetingBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.textSlate600,
+  },
+  greetingStrong: {
+    fontFamily: Fonts.urbanist.bold,
+    color: Colors.textPrimary,
+  },
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    lineHeight: 22,
+    color: Colors.textPrimary,
+  },
+  // Two cards per row at any phone width: each grows from a 40% basis to fill the row
+  starterGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  starterCard: {
+    flexGrow: 1,
+    flexBasis: '40%',
+    minHeight: 108,
+    padding: 14,
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderWhisper,
+  },
+  starterCardPressed: {
+    backgroundColor: Colors.cardHover,
     transform: [{ scale: 0.985 }],
+  },
+  starterIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starterText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    lineHeight: 19,
+    color: Colors.textPrimary,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  seeAllBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingLeft: 12,
+  },
+  seeAllText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    color: Colors.primaryDeep,
+  },
+  recentList: {
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderWhisper,
+    overflow: 'hidden',
+  },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 60,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  recentRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderWhisper,
+  },
+  recentRowPressed: {
+    backgroundColor: Colors.cardHover,
+  },
+  recentCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  recentTitle: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    lineHeight: 19,
+    color: Colors.textPrimary,
+  },
+  recentDate: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.textSecondary,
+  },
+  dateLabel: {
+    alignSelf: 'center',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  // Ria replies read as plain text at full width; only the user's turns are bubbles
+  riaMessage: {
+    alignSelf: 'stretch',
+    paddingRight: 8,
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    maxWidth: '82%',
+    backgroundColor: Colors.primaryLight,
+    borderRadius: 18,
+    borderBottomRightRadius: 4,
+    borderCurve: 'continuous',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  messageText: {
+    fontSize: 15,
+    lineHeight: 22,
+    includeFontPadding: false,
+  },
+  messageTextRia: {
+    fontFamily: Fonts.urbanist.medium,
+    color: Colors.textPrimary,
+  },
+  messageTextUser: {
+    fontFamily: Fonts.urbanist.medium,
+    color: Colors.textPrimary,
+  },
+  errorMsgText: {
+    fontFamily: Fonts.urbanist.medium,
+    color: '#DC2626',
+  },
+  cardWrapper: {
+    marginTop: 10,
+    width: '100%',
+  },
+  timestamp: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 11,
+    lineHeight: 14,
+    marginTop: 4,
+    color: Colors.textSecondary,
+  },
+  timestampUser: {
+    textAlign: 'right',
+    color: Colors.textSlate600,
+  },
+  streamingIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  streamingStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
+  },
+  streamingLabel: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  scrollLatestButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 0,
+  },
+  pressedScrollLatestButton: {
+    transform: [{ scale: 0.95 }],
+    opacity: 0.88,
+  },
+  stopGeneratingRow: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  stopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    borderRadius: 18,
+    borderCurve: 'continuous',
+  },
+  stopBtnText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  // --- Suggestions + composer ---
+  quickChipsWrapper: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  quickChipsScroll: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  quickChip: {
+    minHeight: 36,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    borderRadius: 18,
+    borderCurve: 'continuous',
+  },
+  pressedQuickChip: {
+    backgroundColor: Colors.cardHover,
+    transform: [{ scale: 0.98 }],
+  },
+  quickChipText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  inputBar: {
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    paddingBottom: 12,
+  },
+  inputBarKeyboard: {
+    paddingBottom: 8,
+  },
+  composerSurface: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    minHeight: 52,
+    paddingLeft: 16,
+    paddingRight: 4,
+    paddingVertical: 4,
+    backgroundColor: Colors.card,
+    borderRadius: 26,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+  },
+  composerSurfaceFocused: {
+    borderColor: Colors.primary,
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    paddingHorizontal: 0,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 20,
+    color: Colors.textPrimary,
+    includeFontPadding: false,
+    ...(Platform.OS === 'web'
+      ? ({
+          outlineStyle: 'none',
+          outlineWidth: 0,
+        } as any)
+      : {}),
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 0,
+  },
+  sendBtnActive: {
+    backgroundColor: Colors.primaryDeep,
+  },
+  pressedSendBtn: {
+    transform: [{ scale: 0.94 }],
   },
   confirmOverlay: {
     ...StyleSheet.absoluteFill,
@@ -1463,6 +1991,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 390,
     maxHeight: '72%',
+    flexShrink: 1,
     borderRadius: 16,
     borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
@@ -1543,6 +2072,7 @@ const styles = StyleSheet.create({
   },
   historyList: {
     flexGrow: 0,
+    flexShrink: 1,
   },
   historyListContent: {
     paddingTop: 8,
@@ -1679,454 +2209,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderTopWidth: 1,
     borderTopColor: Colors.borderInset,
-  },
-  headerProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  headerAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    borderWidth: 1.5,
-    borderColor: '#F47551',
-  },
-  headerTextGroup: {
-    justifyContent: 'center',
-  },
-  headerName: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    lineHeight: 20,
-    color: Colors.textPrimary,
-  },
-  onlineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderCurve: 'continuous',
-    backgroundColor: '#10B981',
-  },
-  offlineDot: {
-    backgroundColor: '#94A3B8',
-  },
-  headerSub: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    lineHeight: 15,
-    color: Colors.textSecondary,
-  },
-  headerStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 1,
-  },
-  chatArea: {
-    flex: 1,
-  },
-  timelineShell: {
-    flex: 1,
-    position: 'relative',
-  },
-  chatContent: {
-    paddingHorizontal: 16,
-    paddingTop: 18,
-    paddingBottom: 20,
-    gap: 16,
-  },
-  dateDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 2,
-    marginBottom: 2,
-  },
-  dateDividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderInset,
-  },
-  dateDividerLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10,
-    lineHeight: 14,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-  },
-  scrollLatestButton: {
-    position: 'absolute',
-    right: 16,
-    bottom: 14,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  pressedScrollLatestButton: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.88,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-  },
-  messageRowRia: {
-    justifyContent: 'flex-start',
-    marginRight: 40,
-  },
-  messageRowUser: {
-    justifyContent: 'flex-end',
-    marginLeft: 40,
-  },
-  messageRowGrouped: {
-    marginTop: -8,
-  },
-  bubbleAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    marginBottom: 4,
-  },
-  bubbleAvatarSpacer: {
-    width: 28,
-    height: 28,
-  },
-  bubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    maxWidth: '88%',
-  },
-  bubbleRia: {
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(244, 117, 81, 0.15)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  bubbleUser: {
-    backgroundColor: '#F47551',
-    borderBottomRightRadius: 4,
-  },
-  bubbleGrouped: {
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-  },
-  bubbleError: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-  },
-  bubbleConnection: {
-    backgroundColor: '#FFF7ED',
-    borderColor: '#FED7AA',
-  },
-  bubbleWelcome: {
-    backgroundColor: '#FFFCF9',
-    borderColor: '#FFDCCF',
-    paddingVertical: 16,
-  },
-  welcomeContent: {
-    gap: 7,
-  },
-  welcomeEyebrow: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    lineHeight: 13,
-    letterSpacing: 1.1,
-    color: Colors.primary,
-  },
-  welcomeTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 18,
-    lineHeight: 23,
-    letterSpacing: -0.2,
-    color: Colors.textPrimary,
-  },
-  welcomeBody: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 19,
-    color: Colors.textSecondary,
-  },
-  welcomeMetrics: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  welcomeMetric: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    minHeight: 48,
-    paddingHorizontal: 9,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-  },
-  welcomeMetricValue: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
-    lineHeight: 15,
-    color: Colors.textPrimary,
-  },
-  welcomeMetricLabel: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 10,
-    lineHeight: 13,
-    color: Colors.textMuted,
-  },
-  welcomePrompt: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  connectionCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  connectionIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    backgroundColor: '#FFEDD5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  connectionKeyBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-  },
-  connectionCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  connectionTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    lineHeight: 17,
-    color: Colors.primaryDeep,
-  },
-  connectionBody: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 17,
-    color: '#9A3412',
-  },
-  connectionAction: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.primary,
-  },
-  connectionActionText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    color: Colors.onPrimary,
-  },
-  errorMsgText: {
-    color: '#DC2626',
-  },
-  bubbleText: {
-    fontSize: 14,
-    lineHeight: 20,
-    includeFontPadding: false,
-  },
-  bubbleTextRia: {
-    fontFamily: Fonts.urbanist.regular,
-    color: '#1E293B',
-  },
-  bubbleTextUser: {
-    fontFamily: Fonts.urbanist.medium,
-    color: '#FFFFFF',
-  },
-  timestamp: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 10,
-    marginTop: 4,
-    textAlign: 'right',
-  },
-  timestampRia: {
-    color: '#94A3B8',
-  },
-  timestampUser: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  streamingIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-  },
-  streamingStatusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-  },
-  streamingLabel: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textSecondary,
-  },
-  stopGeneratingRow: {
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  stopBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    gap: 6,
-  },
-  stopBtnText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textSecondary,
-  },
-  quickChipsWrapper: {
-    paddingTop: 8,
-    paddingBottom: 7,
-    backgroundColor: Colors.background,
-  },
-  quickChipsScroll: {
-    paddingHorizontal: 16,
-    paddingRight: 24,
-    gap: 8,
-  },
-  quickChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF8F5',
-    borderWidth: 1,
-    borderColor: '#FFD5C6',
-    paddingHorizontal: 12,
-    height: 36,
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    gap: 6,
-  },
-  pressedQuickChip: {
-    backgroundColor: '#FFEDE6',
-    transform: [{ scale: 0.98 }],
-  },
-  quickChipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: '#9A3412',
-  },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 2,
-    backgroundColor: Colors.background,
-    gap: 8,
-  },
-  composerSurface: {
-    flex: 1,
-    minHeight: 58,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    padding: 5,
-  },
-  composerSurfaceFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: '#FFFFFF',
-  },
-  composerField: {
-    flex: 1,
-    minHeight: 48,
-    maxHeight: 120,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  textInput: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 0,
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    lineHeight: 18,
-    color: '#0F172A',
-    minHeight: 48,
-    maxHeight: 120,
-    ...(Platform.OS === 'web'
-      ? ({
-          outlineStyle: 'none',
-          outlineWidth: 0,
-        } as any)
-      : {}),
-  },
-  sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderCurve: 'continuous',
-    backgroundColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  sendBtnActive: {
-    backgroundColor: '#F47551',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  pressedSendBtn: {
-    transform: [{ scale: 0.94 }],
-  },
-  cardWrapper: {
-    marginTop: 6,
-    width: '100%',
   },
 });
 

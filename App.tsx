@@ -7,6 +7,7 @@ import {
   BackHandler,
   useWindowDimensions,
   AppState,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -26,21 +27,10 @@ import {
 import { Monitoring } from '@/services/monitoring';
 
 // Structured Screens
-import {
-  WelcomeScreen,
-  TodayScreen,
-  TrackerScreen,
-  AnalyticsScreen,
-  ProfileScreen,
-} from '@/screens';
+import { WelcomeScreen, TodayScreen, AnalyticsScreen, ProfileScreen } from '@/screens';
 
 // Components & Navigation
-import {
-  BottomNavBar,
-  TabType,
-  ErrorBoundary,
-  AppLoadingScreen,
-} from '@/components';
+import { BottomNavBar, TabType, ErrorBoundary, AppLoadingScreen, RiaChatModal } from '@/components';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -56,12 +46,11 @@ function MainApp() {
   const activeModalRef = useRef(activeModal);
   const scrollOffsetsRef = useRef<Record<TabType, number>>({
     today: 0,
-    tracker: 0,
+    ria: 0,
     analytics: 0,
     profile: 0,
   });
   const todayScrollRef = useRef<ScrollView>(null);
-  const trackerScrollRef = useRef<ScrollView>(null);
   const analyticsScrollRef = useRef<ScrollView>(null);
   const profileScrollRef = useRef<ScrollView>(null);
 
@@ -74,6 +63,22 @@ function MainApp() {
   useEffect(() => {
     activeModalRef.current = activeModal;
   }, [activeModal]);
+
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Initialize native notifications & listen for user notification interactions (Tap Routing)
   useEffect(() => {
@@ -312,8 +317,6 @@ function MainApp() {
       closeModal();
       if (tab === 'today' && activeTabRef.current === 'today') {
         todayScrollRef.current?.scrollTo({ y: 0, animated: true });
-      } else if (tab === 'tracker' && activeTabRef.current === 'tracker') {
-        trackerScrollRef.current?.scrollTo({ y: 0, animated: true });
       } else if (tab === 'analytics' && activeTabRef.current === 'analytics') {
         analyticsScrollRef.current?.scrollTo({ y: 0, animated: true });
       } else if (tab === 'profile' && activeTabRef.current === 'profile') {
@@ -329,10 +332,6 @@ function MainApp() {
   }, []);
   const saveTodayScrollOffset = useCallback(
     (offset: number) => saveScrollOffset('today', offset),
-    [saveScrollOffset]
-  );
-  const saveTrackerScrollOffset = useCallback(
-    (offset: number) => saveScrollOffset('tracker', offset),
     [saveScrollOffset]
   );
   const saveAnalyticsScrollOffset = useCallback(
@@ -375,15 +374,21 @@ function MainApp() {
     setAuthModalVisible(false);
   }, []);
 
-  const handleOpenRiaChat = useCallback(
-    (prompt?: string) => openModal({ type: 'riaChat', prompt }),
+  const handleOpenBYOKSetup = useCallback(() => openModal({ type: 'byokSetup' }), [openModal]);
+  const handleOpenNotifications = useCallback(
+    () => openModal({ type: 'notifications' }),
     [openModal]
   );
-  const handleOpenNotifications = useCallback(() => openModal({ type: 'notifications' }), [openModal]);
   const handleOpenAvatarModal = useCallback(() => openModal({ type: 'avatarPicker' }), [openModal]);
   const handleOpenFoodVision = useCallback(() => openModal({ type: 'foodVision' }), [openModal]);
-  const handleOpenWaterTracker = useCallback(() => openModal({ type: 'waterTracker' }), [openModal]);
-  const handleOpenWeightTracker = useCallback(() => openModal({ type: 'weightTracker' }), [openModal]);
+  const handleOpenWaterTracker = useCallback(
+    () => openModal({ type: 'waterTracker' }),
+    [openModal]
+  );
+  const handleOpenWeightTracker = useCallback(
+    () => openModal({ type: 'weightTracker' }),
+    [openModal]
+  );
   const handleOpenStepTracker = useCallback(() => openModal({ type: 'stepTracker' }), [openModal]);
 
   const handleCloseAuthModal = useCallback(() => setAuthModalVisible(false), []);
@@ -465,22 +470,13 @@ function MainApp() {
                 onNotificationsPress={handleOpenNotifications}
                 onAvatarPress={handleOpenAvatarModal}
                 onSignInPress={handleOpenSignIn}
-              />
-            )}
-
-            {activeTab === 'tracker' && (
-              <TrackerScreen
-                scrollRef={trackerScrollRef}
-                initialScrollOffset={scrollOffsetsRef.current.tracker}
-                onScrollPositionChange={saveTrackerScrollOffset}
-                onOpenRiaChat={handleOpenRiaChat}
                 onOpenWaterTracker={handleOpenWaterTracker}
                 onOpenWeightTracker={handleOpenWeightTracker}
                 onOpenStepTracker={handleOpenStepTracker}
-                onSearchPress={handleGlobalSearchPress}
-                onNotificationsPress={handleOpenNotifications}
               />
             )}
+
+            {activeTab === 'ria' && <RiaChatModal onOpenBYOKSetup={handleOpenBYOKSetup} />}
 
             {activeTab === 'analytics' && (
               <AnalyticsScreen
@@ -501,17 +497,17 @@ function MainApp() {
             )}
 
             {/* Declarative Overlay & Sub-screen host mounted within contentArea */}
-            <OverlayHost
-              screenWidth={screenWidth}
-            />
+            <OverlayHost screenWidth={screenWidth} />
           </View>
 
-          {/* Bottom Navigation */}
-          <BottomNavBar
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            onOpenFoodVision={handleOpenFoodVision}
-          />
+          {/* Bottom Navigation: hidden while typing to Ria so the composer sits on the keyboard */}
+          {activeTab === 'ria' && isKeyboardVisible ? null : (
+            <BottomNavBar
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              onOpenFoodVision={handleOpenFoodVision}
+            />
+          )}
         </SafeAreaView>
       </View>
     );

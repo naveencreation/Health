@@ -71,6 +71,9 @@ jest.mock('@/components/dashboard/TopDateStrip', () => ({
   },
 }));
 
+// Covered by its own test; this file's Reanimated mock has no Easing
+jest.mock('../../components/MovementTrackerCard', () => ({ MovementTrackerCard: () => null }));
+
 jest.mock('@/features/health', () => ({
   connectHealth: jest.fn(),
   getTodaySteps: jest.fn(),

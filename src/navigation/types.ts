@@ -7,7 +7,6 @@ export type ActiveModal =
   | { type: 'byokSetup' }
   | { type: 'notifications' }
   | { type: 'avatarPicker' }
-  | { type: 'riaChat'; prompt?: string }
   | { type: 'waterTracker' }
   | { type: 'weightTracker' }
   | { type: 'stepTracker' }

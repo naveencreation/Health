@@ -7,7 +7,7 @@ import { Fonts } from '@/theme/typography';
 import { IconSizes, ActionIcons } from '@/theme/icons';
 import { haptics } from '@/utils/haptics';
 
-export type TabType = 'today' | 'tracker' | 'analytics' | 'profile';
+export type TabType = 'today' | 'ria' | 'analytics' | 'profile';
 
 export const BASE_BAR_HEIGHT = 64;
 
@@ -65,21 +65,21 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           </Text>
         </Pressable>
 
-        {/* Tab 2: Health Trackers & Biometrics (heart-pulse -> pulse) */}
+        {/* Tab 2: Ria AI coach */}
         <Pressable
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
-          onPress={() => handleTabPress('tracker')}
+          onPress={() => handleTabPress('ria')}
           accessibilityRole="tab"
-          accessibilityLabel="Health Trackers and Biometrics"
-          accessibilityState={{ selected: activeTab === 'tracker' }}
+          accessibilityLabel="Ria, nutrition coach"
+          accessibilityState={{ selected: activeTab === 'ria' }}
         >
           <Ionicons
-            name={activeTab === 'tracker' ? ActionIcons.navTrackActive : ActionIcons.navTrack}
+            name={activeTab === 'ria' ? 'sparkles' : 'sparkles-outline'}
             size={IconSizes.standard}
-            color={activeTab === 'tracker' ? Colors.textPrimary : Colors.textMuted}
+            color={activeTab === 'ria' ? Colors.textPrimary : Colors.textMuted}
           />
-          <Text style={[styles.tabLabel, activeTab === 'tracker' ? styles.tabLabelActive : null]}>
-            Track
+          <Text style={[styles.tabLabel, activeTab === 'ria' ? styles.tabLabelActive : null]}>
+            Ria
           </Text>
         </Pressable>
 
@@ -105,7 +105,9 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           accessibilityState={{ selected: activeTab === 'analytics' }}
         >
           <Ionicons
-            name={activeTab === 'analytics' ? ActionIcons.navInsightsActive : ActionIcons.navInsights}
+            name={
+              activeTab === 'analytics' ? ActionIcons.navInsightsActive : ActionIcons.navInsights
+            }
             size={IconSizes.standard}
             color={activeTab === 'analytics' ? Colors.textPrimary : Colors.textMuted}
           />

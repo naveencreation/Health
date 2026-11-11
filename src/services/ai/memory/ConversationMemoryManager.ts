@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase';
 import { ChatMessage, ConversationRecord, ConversationSummary } from '../types/ai.types';
 import { AI_CONFIG } from '../config/AIConfig';
+import { HealthSyncService } from '@/services/sync/healthSyncService';
 
 class ConversationMemoryManagerService {
   private getChatKey(userId?: string): string {
@@ -87,7 +88,8 @@ class ConversationMemoryManagerService {
         setDoc(
           doc(db, 'users', syncUid, 'chatHistory', 'recent'),
           {
-            messages: trimmed,
+            // Card states carry optional fields; Firestore rejects undefined values
+            messages: HealthSyncService.sanitizeForFirestore(trimmed),
             updatedAt: new Date().toISOString(),
           },
           { merge: true }
@@ -189,7 +191,8 @@ class ConversationMemoryManagerService {
   async saveConversation(conversation: ConversationRecord, userId?: string): Promise<void> {
     try {
       const existingAll = await this.loadConversationsIncludingArchived(userId);
-      const archived = existingAll.filter(item => item.archived);
+      // Saving a reopened archived chat makes it active again instead of keeping two copies
+      const archived = existingAll.filter(item => item.archived && item.id !== conversation.id);
       const active = existingAll.filter(item => !item.archived && item.id !== conversation.id);
       const next = [conversation, ...active].slice(0, 10).concat(archived);
       await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));

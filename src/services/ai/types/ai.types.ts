@@ -255,6 +255,7 @@ export interface SuggestionOption {
 
 export interface SuggestionCardData {
   options: SuggestionOption[];
+  loggedOptions?: string[]; // names of options already logged from this card
 }
 
 export interface WaterCardData {

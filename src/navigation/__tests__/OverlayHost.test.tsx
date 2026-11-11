@@ -35,8 +35,6 @@ jest.mock('@/components', () => {
       visible ? <Text testID="modal-notifications">NotificationModal</Text> : null,
     AvatarPickerModal: ({ visible }: any) =>
       visible ? <Text testID="modal-avatar">AvatarPickerModal</Text> : null,
-    RiaChatModal: ({ visible }: any) =>
-      visible ? <Text testID="modal-ria">RiaChatModal</Text> : null,
     ConfirmationModal: ({ visible, title }: any) =>
       visible ? <Text testID="modal-confirm">{title}</Text> : null,
     SlideInSubScreen: ({ children }: any) => <View testID="slide-in-container">{children}</View>,
