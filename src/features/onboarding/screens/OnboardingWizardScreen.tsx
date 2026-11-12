@@ -359,7 +359,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
             setName(val);
             pushStep('goal');
           }}
-          onSkip={onSkip}
           sectionIndex={0}
           totalSections={4}
           sectionProgress={0.2}

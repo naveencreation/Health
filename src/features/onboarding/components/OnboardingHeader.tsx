@@ -65,68 +65,30 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
   return (
     <View style={styles.wrapper} testID={testID}>
       <View style={styles.headerBar}>
-        {/* Left: Back Button */}
-        <View style={styles.leftContainer}>
-          {onBack ? (
-            <Pressable
-              style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
-              onPress={onBack}
-              hitSlop={HIT_SLOP}
-              accessibilityRole="button"
-              accessibilityLabel={backAccessibilityLabel}
-              testID={`${testID}-back`}
-            >
-              <Ionicons name="arrow-back" size={20} color="#1C274C" />
-            </Pressable>
-          ) : null}
-        </View>
+        {onBack ? (
+          <Pressable
+            style={({ pressed }) => [styles.backButton, pressed ? styles.btnPressedSubtle : null]}
+            onPress={onBack}
+            hitSlop={HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel={backAccessibilityLabel}
+            testID={`${testID}-back`}
+          >
+            <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
+          </Pressable>
+        ) : null}
 
-        {/* Center: Official Calorify Brand Logo with Flame Badge & Typography (Dead-Centered) */}
-        <View style={styles.centerContainer} pointerEvents="box-none">
-          <View style={styles.logoRow}>
-            <View style={styles.logoIconBadge}>
-              <Ionicons name="flame" size={18} color="#FFFFFF" />
-            </View>
-            <Text style={styles.logoText}>Calorify</Text>
-          </View>
-        </View>
-
-        {/* Right: Custom Right Element, onSkip CTA, or Legacy Step Indicator */}
-        <View style={styles.rightContainer}>
-          {rightElement ? (
-            rightElement
-          ) : onSkip ? (
-            <Pressable
-              onPress={onSkip}
-              hitSlop={HIT_SLOP}
-              accessibilityRole="button"
-              accessibilityLabel="Skip this step"
-              testID={`${testID}-skip`}
-              style={({ pressed }) => [styles.skipButton, pressed ? styles.btnPressedSubtle : null]}
-            >
-              <Text style={styles.skipButtonText}>Skip</Text>
-            </Pressable>
-          ) : stepText && !showProgressBar ? (
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepIndicatorText}>{stepText}</Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-
-      {/* Section Progress Bar */}
-      {showProgressBar && sectionIndex !== undefined ? (
-        <View
-          style={styles.progressContainer}
-          accessibilityRole="progressbar"
-          accessibilityLabel={
-            activeSection
-              ? `Section ${sectionIndex + 1} of ${totalSections}: ${activeSection.label}`
-              : `Section ${sectionIndex + 1} of ${totalSections}`
-          }
-          testID={`${testID}-progress`}
-        >
-          <View style={styles.segmentTrackRow}>
+        {showProgressBar && sectionIndex !== undefined ? (
+          <View
+            style={styles.progressContainer}
+            accessibilityRole="progressbar"
+            accessibilityLabel={
+              activeSection
+                ? `Section ${sectionIndex + 1} of ${totalSections}: ${activeSection.label}`
+                : `Section ${sectionIndex + 1} of ${totalSections}`
+            }
+            testID={`${testID}-progress`}
+          >
             {Array.from({ length: totalSections }).map((_, index) => {
               const isCompleted = index < sectionIndex;
               const isActive = index === sectionIndex;
@@ -142,18 +104,34 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
                   style={styles.segmentBackground}
                   testID={`${testID}-segment-${index}`}
                 >
-                  <View
-                    style={[
-                      styles.segmentFill,
-                      { width: progressPct as any },
-                    ]}
-                  />
+                  <View style={[styles.segmentFill, { width: progressPct as any }]} />
                 </View>
               );
             })}
           </View>
-        </View>
-      ) : null}
+        ) : (
+          <View style={styles.spacer} />
+        )}
+
+        {rightElement ? (
+          rightElement
+        ) : onSkip ? (
+          <Pressable
+            onPress={onSkip}
+            hitSlop={HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel="Skip this step"
+            testID={`${testID}-skip`}
+            style={({ pressed }) => [styles.skipButton, pressed ? styles.btnPressedSubtle : null]}
+          >
+            <Text style={styles.skipButtonText}>Skip</Text>
+          </Pressable>
+        ) : stepText && !showProgressBar ? (
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepIndicatorText}>{stepText}</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 };
@@ -164,118 +142,71 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   headerBar: {
-    height: 48,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    position: 'relative',
+    paddingHorizontal: 16,
     width: '100%',
   },
-  leftContainer: {
-    minWidth: 44,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surfaceLow,
+    backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
+    elevation: 0,
   },
   btnPressedSubtle: {
     opacity: 0.88,
-    backgroundColor: Colors.surfaceContainer,
     transform: [{ scale: 0.985 }],
   },
-  centerContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoIconBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  logoText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 20,
-    color: '#0F172A',
-    letterSpacing: -0.4,
-  },
-  rightContainer: {
-    minWidth: 44,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    zIndex: 2,
+  spacer: {
+    flex: 1,
   },
   stepBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.borderLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.borderInset,
   },
   stepIndicatorText: {
     fontFamily: Fonts.urbanist.medium,
     fontSize: 12,
-    color: '#64748B',
+    color: Colors.textSecondary,
   },
   skipButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   skipButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
+    color: Colors.textSecondary,
   },
   progressContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 8,
-    width: '100%',
-  },
-  segmentTrackRow: {
+    flex: 1,
+    marginHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    width: '100%',
+    gap: 5,
   },
   segmentBackground: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#E2E8F0',
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: Colors.borderInset,
     overflow: 'hidden',
   },
   segmentFill: {
     height: '100%',
     backgroundColor: Colors.primary,
-    borderRadius: 2,
+    borderRadius: 3,
   },
 });

@@ -7,13 +7,13 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 describe('OnboardingHeader', () => {
-  it('renders Calorify wordmark and triggers onBack', async () => {
+  it('triggers onBack and has no wordmark', async () => {
     const onBack = jest.fn();
-    const { getByText, getByTestId } = await render(
+    const { queryByText, getByTestId } = await render(
       <OnboardingHeader onBack={onBack} testID="header" />
     );
 
-    expect(getByText('Calorify')).toBeTruthy();
+    expect(queryByText('Calorify')).toBeNull();
 
     const backBtn = getByTestId('header-back');
     fireEvent.press(backBtn);
@@ -21,9 +21,7 @@ describe('OnboardingHeader', () => {
   });
 
   it('renders section progress bar with 4 segments when sectionIndex is provided', async () => {
-    const { getByTestId } = await render(
-      <OnboardingHeader sectionIndex={1} testID="header" />
-    );
+    const { getByTestId } = await render(<OnboardingHeader sectionIndex={1} testID="header" />);
 
     expect(getByTestId('header-progress')).toBeTruthy();
     expect(getByTestId('header-segment-0')).toBeTruthy();
@@ -33,9 +31,7 @@ describe('OnboardingHeader', () => {
   });
 
   it('includes human-readable section label in accessibilityLabel', async () => {
-    const { getByTestId } = await render(
-      <OnboardingHeader sectionIndex={0} testID="header" />
-    );
+    const { getByTestId } = await render(<OnboardingHeader sectionIndex={0} testID="header" />);
 
     const progressBar = getByTestId('header-progress');
     expect(progressBar.props.accessibilityLabel).toBe(
@@ -44,9 +40,7 @@ describe('OnboardingHeader', () => {
   });
 
   it('renders legacy stepText badge when sectionIndex is not provided', async () => {
-    const { getByText } = await render(
-      <OnboardingHeader stepText="Step 2 of 7" />
-    );
+    const { getByText } = await render(<OnboardingHeader stepText="Step 2 of 7" />);
 
     expect(getByText('Step 2 of 7')).toBeTruthy();
   });
