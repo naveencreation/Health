@@ -66,9 +66,10 @@ export class AIErrorMapper {
 
     // 2. Rate Limits & Quotas
     if (status === 429 || searchStr.includes('RESOURCE_EXHAUSTED') || searchStr.includes('QUOTA')) {
+      // Per-minute 429s also say RESOURCE_EXHAUSTED and "quota"; only a daily cap needs a new key
       if (
-        searchStr.includes('QUOTA') ||
-        searchStr.includes('RESOURCE_EXHAUSTED') ||
+        searchStr.includes('PERDAY') ||
+        searchStr.includes('PER DAY') ||
         searchStr.includes('DAILY')
       ) {
         return this.createError(

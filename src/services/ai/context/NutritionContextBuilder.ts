@@ -91,6 +91,7 @@ Whenever the user asks you to log food, water, weight, or when you suggest meals
   "assumption": "Optional note"
 }
 \`\`\`
+  Each item's kcal, protein, carbs and fat are totals for its qty (e.g. 2 roti = 240 kcal), not per unit.
 
 • Suggest Meals:
 \`\`\`ria_action

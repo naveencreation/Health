@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,8 +27,8 @@ import {
   MetabolicAdaptiveEngine,
 } from '@/services/ai';
 import { MarkdownText } from '../common/MarkdownText';
-import { RiaCardParser } from '@/services/ai/cards/RiaCardParser';
-import { RiaActionCard } from '@/features/ria/cards/RiaActionCard';
+import { RiaCardParser, resolveContextualMealSlot } from '@/services/ai/cards/RiaCardParser';
+import { RiaActionCard, RiaActionCardProps } from '@/features/ria/cards/RiaActionCard';
 import {
   MealCardData,
   WaterCardData,
@@ -51,10 +51,26 @@ type ContextualAction = {
 };
 
 const FALLBACK_ACTIONS: ContextualAction[] = [
-  { label: 'Plan a high-protein dinner', prompt: 'Plan a high-protein dinner', icon: 'restaurant-outline' as const },
-  { label: 'Fit biryani into today', prompt: 'Can I fit biryani into today’s calories?', icon: 'pie-chart-outline' as const },
-  { label: 'Find a snack under 120 kcal', prompt: 'Find me a snack under 120 calories', icon: 'cafe-outline' as const },
-  { label: 'How did my week go?', prompt: 'How did my week go?', icon: 'bar-chart-outline' as const },
+  {
+    label: 'Plan a high-protein dinner',
+    prompt: 'Plan a high-protein dinner',
+    icon: 'restaurant-outline' as const,
+  },
+  {
+    label: 'Fit biryani into today',
+    prompt: 'Can I fit biryani into today’s calories?',
+    icon: 'pie-chart-outline' as const,
+  },
+  {
+    label: 'Find a snack under 120 kcal',
+    prompt: 'Find me a snack under 120 calories',
+    icon: 'cafe-outline' as const,
+  },
+  {
+    label: 'How did my week go?',
+    prompt: 'How did my week go?',
+    icon: 'bar-chart-outline' as const,
+  },
 ].map((action, index) => ({ ...action, id: `fallback_${index}` }));
 
 // Icon badge colours for the "Try asking" cards, in FALLBACK_ACTIONS order
@@ -109,49 +125,139 @@ const getContextualActions = (
 
   if (conversationText.includes('biryani')) {
     return [
-      { id: 'biryani_portion', label: 'How much should I eat?', prompt: 'How much biryani should I eat?', icon: 'restaurant-outline' },
-      { id: 'biryani_lighter', label: 'Make this meal lighter', prompt: 'How can I make this biryani meal lighter?', icon: 'options-outline' },
-      { id: 'biryani_log', label: 'Log this meal', prompt: 'Help me estimate and log this biryani meal', icon: 'add-circle-outline' },
+      {
+        id: 'biryani_portion',
+        label: 'How much should I eat?',
+        prompt: 'How much biryani should I eat?',
+        icon: 'restaurant-outline',
+      },
+      {
+        id: 'biryani_lighter',
+        label: 'Make this meal lighter',
+        prompt: 'How can I make this biryani meal lighter?',
+        icon: 'options-outline',
+      },
+      {
+        id: 'biryani_log',
+        label: 'Log this meal',
+        prompt: 'Help me estimate and log this biryani meal',
+        icon: 'add-circle-outline',
+      },
     ];
   }
 
   if (conversationText.includes('snack') || conversationText.includes('hunger')) {
     return [
-      { id: 'snack_protein', label: 'Show a protein snack', prompt: 'Show me a filling high-protein snack', icon: 'nutrition-outline' },
-      { id: 'snack_sweet', label: 'Something sweet', prompt: 'Suggest a healthy sweet snack under 150 calories', icon: 'ice-cream-outline' },
-      { id: 'snack_log', label: 'Log a snack', prompt: 'Help me estimate and log my snack', icon: 'add-circle-outline' },
+      {
+        id: 'snack_protein',
+        label: 'Show a protein snack',
+        prompt: 'Show me a filling high-protein snack',
+        icon: 'nutrition-outline',
+      },
+      {
+        id: 'snack_sweet',
+        label: 'Something sweet',
+        prompt: 'Suggest a healthy sweet snack under 150 calories',
+        icon: 'ice-cream-outline',
+      },
+      {
+        id: 'snack_log',
+        label: 'Log a snack',
+        prompt: 'Help me estimate and log my snack',
+        icon: 'add-circle-outline',
+      },
     ];
   }
 
   if (conversationText.includes('water') || conversationText.includes('hydration')) {
     return [
-      { id: 'water_now', label: 'How much should I drink?', prompt: 'How much water should I drink right now?', icon: 'water-outline' },
-      { id: 'water_goal', label: 'Check my water goal', prompt: 'How am I doing against my water goal today?', icon: 'analytics-outline' },
-      { id: 'water_log', label: 'Log a glass', prompt: 'Help me log a glass of water', icon: 'add-circle-outline' },
+      {
+        id: 'water_now',
+        label: 'How much should I drink?',
+        prompt: 'How much water should I drink right now?',
+        icon: 'water-outline',
+      },
+      {
+        id: 'water_goal',
+        label: 'Check my water goal',
+        prompt: 'How am I doing against my water goal today?',
+        icon: 'analytics-outline',
+      },
+      {
+        id: 'water_log',
+        label: 'Log a glass',
+        prompt: 'Help me log a glass of water',
+        icon: 'add-circle-outline',
+      },
     ];
   }
 
   if (conversationText.includes('protein') || proteinGap >= 20) {
     return [
-      { id: 'protein_dinner', label: 'Add protein to dinner', prompt: 'How can I add more protein to dinner?', icon: 'restaurant-outline' },
-      { id: 'protein_snack', label: 'Find a protein snack', prompt: 'Find me a high-protein snack', icon: 'nutrition-outline' },
-      { id: 'protein_target', label: 'Check my protein target', prompt: 'How much protein do I still need today?', icon: 'analytics-outline' },
+      {
+        id: 'protein_dinner',
+        label: 'Add protein to dinner',
+        prompt: 'How can I add more protein to dinner?',
+        icon: 'restaurant-outline',
+      },
+      {
+        id: 'protein_snack',
+        label: 'Find a protein snack',
+        prompt: 'Find me a high-protein snack',
+        icon: 'nutrition-outline',
+      },
+      {
+        id: 'protein_target',
+        label: 'Check my protein target',
+        prompt: 'How much protein do I still need today?',
+        icon: 'analytics-outline',
+      },
     ];
   }
 
   if (context.remainingCalories > 0 && context.remainingCalories <= 550) {
     return [
-      { id: 'remaining_meal', label: `Use my ${context.remainingCalories} kcal`, prompt: `What can I eat with ${context.remainingCalories} calories remaining?`, icon: 'pie-chart-outline' },
-      { id: 'remaining_dinner', label: 'Plan a light meal', prompt: 'Plan a light meal that fits my remaining calories', icon: 'restaurant-outline' },
-      { id: 'remaining_snack', label: 'Find a small snack', prompt: 'Find a snack that fits my remaining calories', icon: 'cafe-outline' },
+      {
+        id: 'remaining_meal',
+        label: `Use my ${context.remainingCalories} kcal`,
+        prompt: `What can I eat with ${context.remainingCalories} calories remaining?`,
+        icon: 'pie-chart-outline',
+      },
+      {
+        id: 'remaining_dinner',
+        label: 'Plan a light meal',
+        prompt: 'Plan a light meal that fits my remaining calories',
+        icon: 'restaurant-outline',
+      },
+      {
+        id: 'remaining_snack',
+        label: 'Find a small snack',
+        prompt: 'Find a snack that fits my remaining calories',
+        icon: 'cafe-outline',
+      },
     ];
   }
 
   if (context.currentHour >= 18) {
     return [
-      { id: 'evening_dinner', label: 'Plan a light dinner', prompt: 'Plan a balanced light dinner for tonight', icon: 'restaurant-outline' },
-      { id: 'evening_review', label: 'Review today', prompt: 'Give me a quick review of my nutrition today', icon: 'analytics-outline' },
-      { id: 'evening_snack', label: 'Find an evening snack', prompt: 'Suggest a healthy evening snack', icon: 'cafe-outline' },
+      {
+        id: 'evening_dinner',
+        label: 'Plan a light dinner',
+        prompt: 'Plan a balanced light dinner for tonight',
+        icon: 'restaurant-outline',
+      },
+      {
+        id: 'evening_review',
+        label: 'Review today',
+        prompt: 'Give me a quick review of my nutrition today',
+        icon: 'analytics-outline',
+      },
+      {
+        id: 'evening_snack',
+        label: 'Find an evening snack',
+        prompt: 'Suggest a healthy evening snack',
+        icon: 'cafe-outline',
+      },
     ];
   }
 
@@ -162,6 +268,7 @@ const getContextualActions = (
 const messageTimestamp = () => new Date().toISOString();
 // Event-time ids; a module helper keeps the React Compiler purity rule from flagging handlers
 const newId = (prefix: string) => `${prefix}_${Date.now()}`;
+const currentMinute = () => Math.floor(Date.now() / 60_000);
 
 // Identifies a chat across saves; older chats all start with the same 'welcome_msg' id
 const firstUserMessageId = (messages: ChatMessage[]): string | undefined =>
@@ -211,6 +318,50 @@ const formatConversationDate = (timestamp: string): string => {
   return date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
+const RIA_ACTION_BLOCK = /```(?:ria_action|json:ria_action)[\s\S]*?(?:```|$)/i;
+
+type CardHandlers = Omit<RiaActionCardProps, 'card' | 'messageId' | 'testID'>;
+
+// Memoized so a streamed token re-renders only the live bubble, not every past message.
+// `minute` refreshes the relative timestamps.
+const MessageRow = React.memo(function MessageRow({
+  msg,
+  handlers,
+}: {
+  msg: ChatMessage;
+  handlers: CardHandlers;
+  minute: number;
+}) {
+  const isRia = msg.sender === 'ria';
+  return (
+    <View style={isRia ? styles.riaMessage : styles.userBubble}>
+      {msg.isError ? (
+        <Text style={[styles.messageText, styles.errorMsgText]}>{msg.text}</Text>
+      ) : isRia ? (
+        <>
+          {msg.text ? (
+            <MarkdownText
+              content={msg.text}
+              isUser={false}
+              baseStyle={[styles.messageText, styles.messageTextRia]}
+            />
+          ) : null}
+          {msg.card ? (
+            <View style={styles.cardWrapper}>
+              <RiaActionCard card={msg.card} messageId={msg.id} {...handlers} />
+            </View>
+          ) : null}
+        </>
+      ) : (
+        <Text style={[styles.messageText, styles.messageTextUser]}>{msg.text}</Text>
+      )}
+      <Text style={[styles.timestamp, isRia ? null : styles.timestampUser]}>
+        {formatMessageTime(msg.timestamp)}
+      </Text>
+    </View>
+  );
+});
+
 const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup }) => {
   const {
     totalConsumed,
@@ -233,6 +384,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
 
   const scrollViewRef = useRef<ScrollView>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Follow new content only while the user is at the bottom, so reading back isn't yanked down
+  const atBottomRef = useRef(true);
+  // Set synchronously, so a double tap can't start two replies before isStreaming renders
+  const sendingRef = useRef(false);
 
   const [inputQuery, setInputQuery] = useState('');
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -245,7 +400,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
   const [showNewConversationConfirm, setShowNewConversationConfirm] = useState(false);
   const [showConversationHistory, setShowConversationHistory] = useState(false);
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
-  const [conversationActionTarget, setConversationActionTarget] = useState<ConversationRecord | null>(null);
+  const [conversationActionTarget, setConversationActionTarget] =
+    useState<ConversationRecord | null>(null);
   const [showDeleteConversationConfirm, setShowDeleteConversationConfirm] = useState(false);
   const [historyTab, setHistoryTab] = useState<'recent' | 'archived'>('recent');
   const [historySearch, setHistorySearch] = useState('');
@@ -364,6 +520,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
   };
 
   const scrollToBottom = () => {
+    atBottomRef.current = true;
     setShowScrollToLatest(false);
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -374,11 +531,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    if (streamingText) {
+    // An unfinished card block would show as raw JSON, so keep only the prose
+    const partialText = streamingText.replace(RIA_ACTION_BLOCK, '').trim();
+    if (partialText) {
       const partialMsg: ChatMessage = {
         id: newId('ria'),
         sender: 'ria',
-        text: streamingText + ' [stopped]',
+        text: partialText + ' [stopped]',
         timestamp: messageTimestamp(),
       };
       setMessages(prev => {
@@ -423,7 +582,15 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
     await loadConversationHistory();
   };
 
+  // A reply still streaming would land in the next chat, so drop it when switching
+  const cancelStream = () => {
+    abortControllerRef.current?.abort();
+    setIsStreaming(false);
+    setStreamingText('');
+  };
+
   const confirmNewConversation = async () => {
+    cancelStream();
     await saveCurrentConversation();
     await AIService.clearChatHistory(currentUser?.id);
     setShowNewConversationConfirm(false);
@@ -439,14 +606,18 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
       setShowConversationHistory(false);
       return;
     }
+    cancelStream();
     if (messages.some(message => message.sender === 'user')) {
       await saveCurrentConversation();
     }
 
+    // The memory summary belongs to the chat being left; keeping it would mix chats in the prompt
+    await AIService.clearChatHistory(currentUser?.id);
     await AIService.saveChatHistory(conversation.messages, currentUser?.id);
     setMessages(conversation.messages);
     setInputQuery('');
     setShowConversationHistory(false);
+    atBottomRef.current = true;
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 60);
   };
 
@@ -487,8 +658,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
 
   const handleConfirmMeal = (messageId: string, cardData: MealCardData) => {
     const entryIds: string[] = [];
-    const targetSlot: MealType =
-      cardData.slot === 'snack' ? 'snacks' : (cardData.slot as MealType);
+    const targetSlot: MealType = cardData.slot === 'snack' ? 'snacks' : (cardData.slot as MealType);
 
     for (const item of cardData.items) {
       const foodItem: FoodItem = {
@@ -496,7 +666,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
         name: item.name,
         category: 'snacks',
         categoryLabel: 'Logged Meal',
-        servingUnit: item.unit || 'portion',
+        servingUnit: `${item.qty} ${item.unit || 'portion'}`,
         defaultServingSize: 1,
         calories: item.kcal,
         carbs: item.carbs,
@@ -505,7 +675,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
         fiber: 0,
         icon: '🍱',
       };
-      const logged = addMealItem(targetSlot, foodItem, item.qty);
+      // item.kcal and macros are totals for item.qty, so log one serving of that total (TD-H1)
+      const logged = addMealItem(targetSlot, foodItem, 1);
       if (logged?.id) entryIds.push(logged.id);
     }
 
@@ -516,7 +687,13 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
             ...m,
             card: {
               ...m.card,
-              data: { ...m.card.data, state: 'logged', loggedAt, undoUntil: loggedAt + 10000, entryIds },
+              data: {
+                ...m.card.data,
+                state: 'logged',
+                loggedAt,
+                undoUntil: loggedAt + 10000,
+                entryIds,
+              },
             },
           }
         : m
@@ -552,9 +729,22 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
   const handleConfirmWater = (messageId: string, amountMl: number) => {
     addWater(amountMl);
     const loggedAt = Date.now();
+    // Undo removes the newest water entry, so it is only safe right after logging
+    const undoUntil = loggedAt + 10000;
     updateMessage(messageId, m =>
       m.card?.type === 'water'
-        ? { ...m, card: { ...m.card, data: { ...m.card.data, state: 'logged', loggedAt } } }
+        ? {
+            ...m,
+            card: { ...m.card, data: { ...m.card.data, state: 'logged', loggedAt, undoUntil } },
+          }
+        : m
+    );
+  };
+
+  const handleDismissCard = (messageId: string) => {
+    updateMessage(messageId, m =>
+      m.card?.type === 'meal' || m.card?.type === 'weight' || m.card?.type === 'plan_change'
+        ? ({ ...m, card: { ...m.card, data: { ...m.card.data, state: 'dismissed' } } } as typeof m)
         : m
     );
   };
@@ -566,7 +756,15 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
       m.card?.type === 'water'
         ? {
             ...m,
-            card: { ...m.card, data: { ...m.card.data, state: 'proposed', loggedAt: undefined } },
+            card: {
+              ...m.card,
+              data: {
+                ...m.card.data,
+                state: 'proposed',
+                loggedAt: undefined,
+                undoUntil: undefined,
+              },
+            },
           }
         : m
     );
@@ -612,9 +810,9 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
       fiber: 0,
       icon: '🍱',
     };
-    const hour = new Date().getHours();
-    const slot: MealType =
-      hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : hour < 19 ? 'snacks' : 'dinner';
+    // Same rule the card uses to name the meal
+    const cardSlot = resolveContextualMealSlot();
+    const slot: MealType = cardSlot === 'snack' ? 'snacks' : cardSlot;
     addMealItem(slot, foodItem, 1);
     updateMessage(messageId, m =>
       m.card?.type === 'suggestion'
@@ -632,10 +830,64 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
     );
   };
 
+  // Memoized rows keep these across renders, so they forward to the newest closures (fresh state)
+  const latestHandlersRef = useRef<CardHandlers>({});
+  useLayoutEffect(() => {
+    latestHandlersRef.current = {
+      onConfirmMeal: handleConfirmMeal,
+      onUndoMeal: handleUndoMeal,
+      onDismissMeal: handleDismissCard,
+      onConfirmWater: handleConfirmWater,
+      onUndoWater: handleUndoWater,
+      onConfirmWeight: handleConfirmWeight,
+      onDismissWeight: handleDismissCard,
+      onLogSuggestionOption: handleLogSuggestionOption,
+      onApplyPlanChange: handleApplyPlanChange,
+      onDismissPlanChange: handleDismissCard,
+    };
+  });
+  const lastTapRef = useRef({ key: '', at: 0 });
+  const cardHandlers = useMemo<CardHandlers>(() => {
+    const h = latestHandlersRef;
+    // A double tap lands before the card re-renders as logged, which would log twice
+    // shortcut: drops a repeat of the same action within 600 ms; move to per-card pending state if it misfires
+    const once = (key: string, run: () => void) => {
+      const now = Date.now();
+      if (lastTapRef.current.key === key && now - lastTapRef.current.at < 600) return;
+      lastTapRef.current = { key, at: now };
+      run();
+    };
+    return {
+      onConfirmMeal: (id, data) => once(`meal:${id}`, () => h.current.onConfirmMeal?.(id, data)),
+      onUndoMeal: (id, data) => once(`undo:${id}`, () => h.current.onUndoMeal?.(id, data)),
+      onDismissMeal: (id, data) => h.current.onDismissMeal?.(id, data),
+      onConfirmWater: (id, ml, data) =>
+        once(`water:${id}`, () => h.current.onConfirmWater?.(id, ml, data)),
+      onUndoWater: (id, data) => once(`undo:${id}`, () => h.current.onUndoWater?.(id, data)),
+      onConfirmWeight: (id, data) =>
+        once(`weight:${id}`, () => h.current.onConfirmWeight?.(id, data)),
+      onDismissWeight: (id, data) => h.current.onDismissWeight?.(id, data),
+      onLogSuggestionOption: (id, opt) =>
+        once(`opt:${id}:${opt.name}`, () => h.current.onLogSuggestionOption?.(id, opt)),
+      onApplyPlanChange: (id, data) =>
+        once(`plan:${id}`, () => h.current.onApplyPlanChange?.(id, data)),
+      onDismissPlanChange: (id, data) => h.current.onDismissPlanChange?.(id, data),
+    };
+  }, []);
+  const minute = currentMinute();
+
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputQuery).trim();
-    if (!text || isStreaming) return;
+    if (!text || isStreaming || sendingRef.current) return;
+    sendingRef.current = true;
+    try {
+      await sendMessage(text);
+    } finally {
+      sendingRef.current = false;
+    }
+  };
 
+  const sendMessage = async (text: string) => {
     const userMsg: ChatMessage = {
       id: newId('user'),
       sender: 'user',
@@ -698,10 +950,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           text,
           messages,
           telemetryContext,
-          chunk => {
-            setStreamingText(chunk);
-            scrollToBottom();
-          },
+          // Following the reply is handled by onContentSizeChange, which respects scroll-up
+          setStreamingText,
           controller.signal,
           currentUser?.id
         );
@@ -837,7 +1087,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           </View>
           <Pressable
             onPress={() => setShowConversationHistory(true)}
-            style={({ pressed }) => [styles.headerActionBtn, pressed ? styles.pressedCloseBtn : null]}
+            style={({ pressed }) => [
+              styles.headerActionBtn,
+              pressed ? styles.pressedCloseBtn : null,
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Chat history"
           >
@@ -845,7 +1098,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           </Pressable>
           <Pressable
             onPress={handleNewConversation}
-            style={({ pressed }) => [styles.headerActionBtn, pressed ? styles.pressedCloseBtn : null]}
+            style={({ pressed }) => [
+              styles.headerActionBtn,
+              pressed ? styles.pressedCloseBtn : null,
+            ]}
             accessibilityRole="button"
             accessibilityLabel="New chat"
           >
@@ -887,11 +1143,12 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
               const distanceFromLatest =
                 contentSize.height - (contentOffset.y + layoutMeasurement.height);
-              setShowScrollToLatest(!isNewChat && distanceFromLatest > 120);
+              atBottomRef.current = distanceFromLatest <= 120;
+              setShowScrollToLatest(!isNewChat && !atBottomRef.current);
             }}
             onContentSizeChange={() => {
-              if (isStreaming || keyboardHeight > 0) {
-                scrollViewRef.current?.scrollToEnd({ animated: true });
+              if (!isNewChat && atBottomRef.current) {
+                scrollViewRef.current?.scrollToEnd({ animated: !isStreaming });
               }
             }}
           >
@@ -904,8 +1161,8 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
                   <Text style={styles.greetingBody}>
                     {isOver ? 'You’re ' : 'You have '}
                     <Text style={styles.greetingStrong}>{caloriesLeft} kcal</Text>
-                    {isOver ? ' over today.' : ' left today.'} Ask me anything, or tell me what
-                    you ate.
+                    {isOver ? ' over today.' : ' left today.'} Ask me anything, or tell me what you
+                    ate.
                   </Text>
                 </View>
 
@@ -982,64 +1239,22 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               </>
             ) : (
               <>
-                {timeline.length > 0 &&
-                !Number.isNaN(new Date(timeline[0].timestamp).getTime()) ? (
+                {timeline.length > 0 && !Number.isNaN(new Date(timeline[0].timestamp).getTime()) ? (
                   <Text style={styles.dateLabel}>
                     {formatConversationDate(timeline[0].timestamp)}
                   </Text>
                 ) : null}
 
-                {timeline.map(msg => {
-                  const isRia = msg.sender === 'ria';
-                  return (
-                    <View key={msg.id} style={isRia ? styles.riaMessage : styles.userBubble}>
-                      {msg.isError ? (
-                        <Text style={[styles.messageText, styles.errorMsgText]}>{msg.text}</Text>
-                      ) : isRia ? (
-                        <>
-                          {msg.text ? (
-                            <MarkdownText
-                              content={msg.text}
-                              isUser={false}
-                              baseStyle={[styles.messageText, styles.messageTextRia]}
-                            />
-                          ) : null}
-                          {msg.card ? (
-                            <View style={styles.cardWrapper}>
-                              <RiaActionCard
-                                card={msg.card}
-                                messageId={msg.id}
-                                onConfirmMeal={handleConfirmMeal}
-                                onUndoMeal={handleUndoMeal}
-                                onConfirmWater={handleConfirmWater}
-                                onUndoWater={handleUndoWater}
-                                onConfirmWeight={handleConfirmWeight}
-                                onLogSuggestionOption={handleLogSuggestionOption}
-                                onApplyPlanChange={handleApplyPlanChange}
-                              />
-                            </View>
-                          ) : null}
-                        </>
-                      ) : (
-                        <Text style={[styles.messageText, styles.messageTextUser]}>{msg.text}</Text>
-                      )}
-                      <Text style={[styles.timestamp, isRia ? null : styles.timestampUser]}>
-                        {formatMessageTime(msg.timestamp)}
-                      </Text>
-                    </View>
-                  );
-                })}
+                {timeline.map(msg => (
+                  <MessageRow key={msg.id} msg={msg} handlers={cardHandlers} minute={minute} />
+                ))}
 
                 {/* Live streaming reply */}
                 {isStreaming ? (
                   <View style={styles.riaMessage}>
                     {streamingText ? (
                       <MarkdownText
-                        content={
-                          streamingText
-                            .replace(/```(?:ria_action|json:ria_action)[\s\S]*?(?:```|$)/i, '')
-                            .trim() || 'Thinking…'
-                        }
+                        content={streamingText.replace(RIA_ACTION_BLOCK, '').trim() || 'Thinking…'}
                         isUser={false}
                         baseStyle={[styles.messageText, styles.messageTextRia]}
                       />
@@ -1097,7 +1312,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
             {contextualActions.map(chip => (
               <Pressable
                 key={chip.id}
-                style={({ pressed }) => [styles.quickChip, pressed ? styles.pressedQuickChip : null]}
+                style={({ pressed }) => [
+                  styles.quickChip,
+                  pressed ? styles.pressedQuickChip : null,
+                ]}
                 onPress={() => handleSendMessage(chip.prompt)}
                 accessibilityRole="button"
                 accessibilityLabel={`Ask Ria: ${chip.label}`}
@@ -1121,7 +1339,6 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               onChangeText={setInputQuery}
               onSubmitEditing={() => handleSendMessage()}
               returnKeyType="send"
-              editable={!isStreaming}
               multiline
               maxFontSizeMultiplier={1.3}
               selectionColor={Colors.primary}
@@ -1214,18 +1431,34 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
             </View>
             <View style={styles.historyTabs}>
               <Pressable
-                style={[styles.historyTab, historyTab === 'recent' ? styles.historyTabActive : null]}
+                style={[
+                  styles.historyTab,
+                  historyTab === 'recent' ? styles.historyTabActive : null,
+                ]}
                 onPress={() => setHistoryTab('recent')}
               >
-                <Text style={[styles.historyTabText, historyTab === 'recent' ? styles.historyTabTextActive : null]}>
+                <Text
+                  style={[
+                    styles.historyTabText,
+                    historyTab === 'recent' ? styles.historyTabTextActive : null,
+                  ]}
+                >
                   Recent
                 </Text>
               </Pressable>
               <Pressable
-                style={[styles.historyTab, historyTab === 'archived' ? styles.historyTabActive : null]}
+                style={[
+                  styles.historyTab,
+                  historyTab === 'archived' ? styles.historyTabActive : null,
+                ]}
                 onPress={() => setHistoryTab('archived')}
               >
-                <Text style={[styles.historyTabText, historyTab === 'archived' ? styles.historyTabTextActive : null]}>
+                <Text
+                  style={[
+                    styles.historyTabText,
+                    historyTab === 'archived' ? styles.historyTabTextActive : null,
+                  ]}
+                >
                   Archived
                 </Text>
               </Pressable>
@@ -1260,7 +1493,11 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
                     accessibilityLabel={`Open conversation ${conversation.title}`}
                   >
                     <View style={styles.historyItemIcon}>
-                      <Ionicons name="chatbubble-ellipses-outline" size={17} color={Colors.primary} />
+                      <Ionicons
+                        name="chatbubble-ellipses-outline"
+                        size={17}
+                        color={Colors.primary}
+                      />
                     </View>
                     <View style={styles.historyItemCopy}>
                       <Text style={styles.historyItemTitle} numberOfLines={1}>
@@ -1289,10 +1526,16 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               <View style={styles.historyEmpty}>
                 <Ionicons name="time-outline" size={28} color={Colors.textMuted} />
                 <Text style={styles.historyEmptyTitle}>
-                  {historySearch ? 'No matching conversations' : historyTab === 'archived' ? 'No archived conversations' : 'No previous conversations'}
+                  {historySearch
+                    ? 'No matching conversations'
+                    : historyTab === 'archived'
+                      ? 'No archived conversations'
+                      : 'No previous conversations'}
                 </Text>
                 <Text style={styles.historyEmptyBody}>
-                  {historySearch ? 'Try a different search term.' : 'Start a new chat and it will appear here.'}
+                  {historySearch
+                    ? 'Try a different search term.'
+                    : 'Start a new chat and it will appear here.'}
                 </Text>
               </View>
             )}
@@ -1335,15 +1578,21 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               <>
                 <Pressable
                   style={styles.historyActionRow}
-                  onPress={conversationActionTarget.archived ? restoreConversation : archiveConversation}
+                  onPress={
+                    conversationActionTarget.archived ? restoreConversation : archiveConversation
+                  }
                 >
                   <Ionicons
-                    name={conversationActionTarget.archived ? 'arrow-undo-outline' : 'archive-outline'}
+                    name={
+                      conversationActionTarget.archived ? 'arrow-undo-outline' : 'archive-outline'
+                    }
                     size={19}
                     color={Colors.textSecondary}
                   />
                   <Text style={styles.historyActionText}>
-                    {conversationActionTarget.archived ? 'Restore conversation' : 'Archive conversation'}
+                    {conversationActionTarget.archived
+                      ? 'Restore conversation'
+                      : 'Archive conversation'}
                   </Text>
                 </Pressable>
                 <Pressable style={styles.historyActionRow} onPress={requestDeleteConversation}>
@@ -2057,9 +2306,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     color: Colors.textPrimary,
-    ...(Platform.OS === 'web'
-      ? ({ outlineStyle: 'none', outlineWidth: 0 } as any)
-      : {}),
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as any) : {}),
   },
   historyClose: {
     width: 30,

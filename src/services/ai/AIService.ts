@@ -84,10 +84,11 @@ class AIServiceFacade {
     }
 
     // Fast-Loop Memory Extractor: Detect dietary preferences/allergies and enrich context in real-time
-    let activeFacts = context.userFacts;
-    if (!activeFacts) {
-      activeFacts = await FastLoopMemoryExtractor.loadFacts(userId);
-    }
+    // Loaded together: each may wait on a Firestore read before the first token
+    const [activeFacts, activeSummary] = await Promise.all([
+      context.userFacts ?? FastLoopMemoryExtractor.loadFacts(userId),
+      ConversationMemoryManager.loadSummary(userId),
+    ]);
     const { updatedFacts, newlyDiscovered } = FastLoopMemoryExtractor.extractFactsFromText(
       prompt,
       activeFacts
@@ -101,8 +102,6 @@ class AIServiceFacade {
       userFacts: updatedFacts,
     };
 
-    // Load active summary if available
-    const activeSummary = await ConversationMemoryManager.loadSummary(userId);
     const summaryText = activeSummary?.text || '';
 
     const completedText = await GeminiProvider.streamChat(

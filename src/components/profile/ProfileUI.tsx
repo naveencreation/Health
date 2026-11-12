@@ -190,7 +190,7 @@ export const ProfileButton: React.FC<{
       {loading ? (
         <ActivityIndicator size="small" color={textColor} />
       ) : (
-        <Text style={[styles.buttonText, { color: textColor }]}>{label}</Text>
+        <Text style={[styles.buttonText, { color: textColor }]} maxFontSizeMultiplier={1.3}>{label}</Text>
       )}
     </Pressable>
   );

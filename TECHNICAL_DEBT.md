@@ -34,7 +34,7 @@ The validation dossiers, the dependency and impact analysis, and the prioritized
 
 | ID | Issue | Evidence | Impact | Re-checked |
 |---|---|---|---|---|
-| TD-H1 | **The Ria meal card shows one total and logs another.** The card view sums `item.kcal`, but confirming calls `addMealItem(slot, food{calories:item.kcal}, item.qty)`, which multiplies by qty | `src/features/ria/cards/RiaMealCardView.tsx:36`, `src/components/modals/RiaChatModal.tsx:432-452`, `HealthContext.addMealItem` | With qty ≠ 1, the logged calories and macros differ from what the user confirmed. The prompt contract (`NutritionContextBuilder.ts:89`) does not say whether `kcal` is per unit or a total | ✔ |
+| TD-H1 | **Resolved 2026-11-12: `kcal` is a total for the qty; the chat logs each item once and the prompt says so.** ~~The Ria meal card shows one total and logs another.~~ The card view sums `item.kcal`, but confirming calls `addMealItem(slot, food{calories:item.kcal}, item.qty)`, which multiplies by qty | `src/features/ria/cards/RiaMealCardView.tsx:36`, `src/components/modals/RiaChatModal.tsx:432-452`, `HealthContext.addMealItem` | With qty ≠ 1, the logged calories and macros differ from what the user confirmed. The prompt contract (`NutritionContextBuilder.ts:89`) does not say whether `kcal` is per unit or a total | ✔ |
 | TD-H2 | **A confirmed Ria card can be confirmed again.** Card "logged" state is not persisted with the message | `RiaChatModal.tsx` | Reopening the chat allows double logging | |
 | TD-H3 | **Firestore has no rule for `users/{uid}/riaMemory/facts`.** Reads and writes are denied by default, and the errors are swallowed | `firestore.rules` (only `dailyLogs`, `customFoods`, `chatHistory` exist under `users/{uid}`); `FastLoopMemoryExtractor.ts` ~190/214 | The cloud sync of Ria facts is dead code; the feature works only locally | ✔ |
 | TD-H4 | **The rules always reject the onboarding profile migration.** The payload adds keys that are not in `isValidUserDoc`'s `hasOnly` list (`isGuest`, `sex`, `weightKg`, `struggles`, `targetWeightKg`, `units`, …). It rewrites `createdAt`, and it is not sanitized for `undefined` | `src/features/onboarding/services/onboardingMigration.ts` ~90-145, `firestore.rules` ~85-90, ~177-179 | The onboarding questionnaire answers never reach the cloud, and the failure is silent. There are three independent causes: the disallowed keys; `createdAt`, which is immutable because `register` already wrote it; and `undefined` fields, which the SDK rejects on the client (`ignoreUndefinedProperties` is not set). The calorie goals do reach the cloud later through the goals sync. Nothing reads the questionnaire locally either (TD-M38). MEMORY.md says this write works | ✔ |
@@ -206,7 +206,7 @@ These need an owner's decision; the code doesn't settle them.
 6. What is the timestamp convention: local wall-clock or UTC? (TD-M11)
 7. Is anonymous auth enabled in the console, and is `EXPO_PUBLIC_GOOGLE_CLIENT_ID` set in production? (TD-H14, TD-M19)
 8. Should Analytics link to the Water, Weight and Step report screens? There is currently no route to them from Analytics.
-9. Is the Ria meal-card `kcal` per unit or a total? (TD-H1)
+9. Is the Ria meal-card `kcal` per unit or a total? (TD-H1) Decided 2026-11-12: a total.
 10. Should guest data carry over into an account at sign-up, and is anonymous auth meant to be a real account? (TD-C2, TD-H14, TD-M39)
 11. Should reminder settings survive sign-out? (TD-L16)
 12. Where should the onboarding questionnaire answers live, and should anything use them? (TD-H4, TD-M38)

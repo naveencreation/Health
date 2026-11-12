@@ -76,7 +76,7 @@ export const RiaActionCard: React.FC<RiaActionCardProps> = ({
       return (
         <RiaWaterCardView
           data={card.data}
-          onConfirm={(ml) => onConfirmWater?.(messageId, ml, card.data)}
+          onConfirm={ml => onConfirmWater?.(messageId, ml, card.data)}
           onUndo={() => onUndoWater?.(messageId, card.data)}
           onDismiss={onDismissWater ? () => onDismissWater(messageId, card.data) : undefined}
           testID={`${testID}-water`}
@@ -94,18 +94,13 @@ export const RiaActionCard: React.FC<RiaActionCardProps> = ({
       );
 
     case 'day_review':
-      return (
-        <RiaDayReviewCardView
-          data={card.data}
-          testID={`${testID}-day-review`}
-        />
-      );
+      return <RiaDayReviewCardView data={card.data} testID={`${testID}-day-review`} />;
 
     case 'suggestion':
       return (
         <RiaSuggestionCardView
           data={card.data}
-          onLogOption={(opt) => onLogSuggestionOption?.(messageId, opt)}
+          onLogOption={opt => onLogSuggestionOption?.(messageId, opt)}
           testID={`${testID}-suggestion`}
         />
       );
@@ -115,25 +110,21 @@ export const RiaActionCard: React.FC<RiaActionCardProps> = ({
         <RiaPlanChangeCardView
           data={card.data}
           onApply={() => onApplyPlanChange?.(messageId, card.data)}
-          onDismiss={onDismissPlanChange ? () => onDismissPlanChange(messageId, card.data) : undefined}
+          onDismiss={
+            onDismissPlanChange ? () => onDismissPlanChange(messageId, card.data) : undefined
+          }
           testID={`${testID}-plan-change`}
         />
       );
 
     case 'visual_macro_split':
       return (
-        <RiaMacroVisualizerCardView
-          data={card.data}
-          testID={`${testID}-visual-macro-split`}
-        />
+        <RiaMacroVisualizerCardView data={card.data} testID={`${testID}-visual-macro-split`} />
       );
 
     case 'plate_distribution':
       return (
-        <RiaPlateDistributionCardView
-          data={card.data}
-          testID={`${testID}-plate-distribution`}
-        />
+        <RiaPlateDistributionCardView data={card.data} testID={`${testID}-plate-distribution`} />
       );
 
     default:

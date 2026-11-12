@@ -1,16 +1,16 @@
 /**
- * RiaSuggestionCardView.tsx
- *
- * Spec-driven Suggestion Options card for Ria AI.
- * Displays up to 3 interactive food option pills that the user can 1-tap log.
+ * Ria's meal ideas: a pick-one list. Log adds the idea to the meal for the current
+ * time of day, which the header names.
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
+import { Fonts } from '@/theme/typography';
 import { SuggestionCardData, SuggestionOption } from '@/services/ai/types/ai.types';
+import { resolveContextualMealSlot } from '@/services/ai/cards/RiaCardParser';
+import { CardHeader, CardShell, SmallButton, fmt, slotLabel, CardText as Text } from './RiaCardUI';
 
 export interface RiaSuggestionCardViewProps {
   data: SuggestionCardData;
@@ -23,153 +23,72 @@ export const RiaSuggestionCardView: React.FC<RiaSuggestionCardViewProps> = ({
   onLogOption,
   testID = 'ria-suggestion-card',
 }) => {
+  const meal = slotLabel(resolveContextualMealSlot());
   return (
-    <View style={styles.outerShell} testID={testID}>
-      <View style={styles.innerCore}>
-        <View style={styles.headerRow}>
-          <Ionicons name="sparkles" size={14} color={Colors.primary} />
-          <Text style={styles.headerTitle}>Curated Meal Suggestions</Text>
-        </View>
-
-        <View style={styles.optionsList}>
-          {data.options.map((opt, index) => (
-            <View key={index} style={styles.optionRow}>
-              <View style={styles.optionInfo}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.optionName}>{opt.name}</Text>
-                  {opt.tag ? (
-                    <View style={styles.tagBadge}>
-                      <Text style={styles.tagText}>{opt.tag}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={styles.optionMeta}>
-                  {opt.kcal} kcal · {opt.protein}g P · {opt.carbs}g C · {opt.fat}g F
+    <CardShell testID={testID}>
+      <CardHeader
+        icon="sparkles"
+        tone="ria"
+        title={`${meal} ideas`}
+        subtitle={onLogOption ? `Tap Log to add to ${meal}` : undefined}
+      />
+      <View>
+        {data.options.map((opt, i) => {
+          const logged = data.loggedOptions?.includes(opt.name);
+          return (
+            <View key={`${opt.name}_${i}`} style={[styles.row, i > 0 && styles.rowDivider]}>
+              <View style={styles.body}>
+                <Text style={styles.name}>
+                  {opt.name}
+                  {opt.tag ? <Text style={styles.tag}>{`  ${opt.tag}  `}</Text> : null}
+                </Text>
+                <Text style={styles.meta}>
+                  {`${fmt(opt.kcal)} kcal · ${Math.round(opt.protein)} g protein${opt.portion ? ` · ${opt.portion}` : ''}`}
                 </Text>
               </View>
-
-              {data.loggedOptions?.includes(opt.name) ? (
-                <View style={styles.loggedBadge} accessibilityLabel={`${opt.name} logged`}>
-                  <Ionicons name="checkmark" size={14} color={Colors.textSecondary} />
+              {logged ? (
+                <View style={styles.logged} accessible accessibilityLabel={`${opt.name} logged`}>
+                  <Ionicons name="checkmark" size={16} color={Colors.primaryDeep} />
                   <Text style={styles.loggedText}>Logged</Text>
                 </View>
               ) : onLogOption ? (
-                <Pressable
-                  style={({ pressed }) => [styles.addBtn, pressed ? styles.btnPressed : null]}
+                <SmallButton
+                  label="Log"
                   onPress={() => onLogOption(opt)}
-                  accessibilityRole="button"
                   accessibilityLabel={`Log ${opt.name}`}
-                >
-                  <Ionicons name="add" size={16} color="#FFFFFF" />
-                  <Text style={styles.addBtnText}>Log</Text>
-                </Pressable>
+                />
               ) : null}
             </View>
-          ))}
-        </View>
+          );
+        })}
       </View>
-    </View>
+    </CardShell>
   );
 };
 
 const styles = StyleSheet.create({
-  outerShell: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 18,
-    padding: 3,
-    marginVertical: 6,
-  },
-  innerCore: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  headerTitle: {
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  rowDivider: { borderTopWidth: 1, borderTopColor: Colors.borderWhisper },
+  body: { flex: 1, minWidth: 0 },
+  name: { fontFamily: Fonts.urbanist.bold, fontSize: 14, color: Colors.textPrimary },
+  tag: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.primaryDark,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  optionsList: {
-    gap: 8,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FAF9F6',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  optionInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  optionName: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  tagBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 9,
-    color: '#166534',
-  },
-  optionMeta: {
-    fontFamily: Fonts.urbanist.regular,
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSlate600,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  meta: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
-  addBtn: {
+  logged: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    minHeight: 36,
+    paddingHorizontal: 6,
   },
-  addBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: '#FFFFFF',
-  },
-  btnPressed: {
-    opacity: 0.85,
-  },
-  loggedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  loggedText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
+  loggedText: { fontFamily: Fonts.urbanist.bold, fontSize: 13, color: Colors.primaryDeep },
 });

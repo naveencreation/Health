@@ -1,16 +1,13 @@
 /**
- * RiaWeightCardView.tsx
- *
- * Spec-driven Weight entry card for Ria AI.
- * Shows new weigh-in, delta from previous weight,
- * sanity confirmation check if jump > 3 kg, and 1-tap save.
+ * Ria's weigh-in proposal: the new weight, the change since the last entry in words
+ * (neutral, since a gain can be the goal) and a check for jumps over 3 kg.
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Fonts } from '@/theme/typography';
+import { View } from 'react-native';
+import { ProfileButton } from '@/components/profile/ProfileUI';
 import { WeightCardData } from '@/services/ai/types/ai.types';
+import { BigValue, CardHeader, CardNotice, CardShell, CollapsedCard, ui } from './RiaCardUI';
 
 export interface RiaWeightCardViewProps {
   data: WeightCardData;
@@ -19,145 +16,70 @@ export interface RiaWeightCardViewProps {
   testID?: string;
 }
 
+const kg = (n: number) => n.toFixed(1);
+
 export const RiaWeightCardView: React.FC<RiaWeightCardViewProps> = ({
   data,
   onConfirm,
   onDismiss,
   testID = 'ria-weight-card',
 }) => {
-  const [isLogged, setIsLogged] = useState(data.state === 'logged');
+  const [shown, setShown] = useState(false);
+  const weight = kg(data.weightKg);
 
-  const handleConfirm = () => {
-    setIsLogged(true);
-    onConfirm?.();
-  };
+  if (data.state === 'dismissed' && !shown) {
+    return (
+      <CollapsedCard
+        text={`Weigh-in ${weight} kg not saved`}
+        onShow={onConfirm ? () => setShown(true) : undefined}
+        testID={testID}
+      />
+    );
+  }
 
-  const deltaFormatted =
-    data.deltaKg !== undefined
-      ? `${data.deltaKg > 0 ? '+' : ''}${data.deltaKg.toFixed(1)} kg`
-      : null;
+  const delta =
+    data.deltaKg ??
+    (data.previousWeightKg !== undefined ? data.weightKg - data.previousWeightKg : undefined);
+  const change =
+    delta === undefined
+      ? 'Adds to your weight log'
+      : Math.abs(delta) < 0.05
+        ? 'Same as your last entry'
+        : `${kg(Math.abs(delta))} kg ${delta < 0 ? 'down' : 'up'} since last entry`;
+  const logged = data.state === 'logged';
 
   return (
-    <View style={styles.outerShell} testID={testID}>
-      <View style={styles.innerCore}>
-        <View style={styles.contentRow}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="scale-outline" size={18} color="#4F46E5" />
-          </View>
-          <View style={styles.textGroup}>
-            <Text style={styles.titleText}>Log Weigh-in: {data.weightKg} kg</Text>
-            <Text style={styles.subtitleText}>
-              {deltaFormatted ? `${deltaFormatted} since last entry` : 'Track your body weight'}
-            </Text>
-          </View>
-
-          {isLogged ? (
-            <View style={styles.savedBadge}>
-              <Ionicons name="checkmark-circle" size={14} color="#166534" />
-              <Text style={styles.savedText}>Saved</Text>
-            </View>
-          ) : (
-            <Pressable style={styles.confirmBtn} onPress={handleConfirm}>
-              <Text style={styles.confirmBtnText}>Confirm</Text>
-            </Pressable>
-          )}
+    <CardShell testID={testID} accessibilityLabel={`Weigh-in ${weight} kg`}>
+      <CardHeader
+        icon="scale-outline"
+        tone="weight"
+        title="Weigh-in"
+        subtitle={logged ? 'Saved to your weight log' : change}
+        subtitleDone={logged}
+        right={<BigValue value={weight} unit="kg" />}
+      />
+      {!logged && data.needsSanityConfirm ? (
+        <CardNotice
+          kind="warn"
+          text={
+            data.previousWeightKg !== undefined
+              ? `That's a big change from ${kg(data.previousWeightKg)} kg. Check the number before saving.`
+              : "That's a big change from your last entry. Check the number before saving."
+          }
+        />
+      ) : null}
+      {!logged && onConfirm ? (
+        <View style={ui.buttons}>
+          <ProfileButton
+            label={data.needsSanityConfirm ? `Save ${weight} kg` : 'Save weigh-in'}
+            variant="primary"
+            onPress={onConfirm}
+            accessibilityLabel={`Save weigh-in, ${weight} kilograms`}
+            style={ui.mainButton}
+          />
+          {onDismiss ? <ProfileButton label="Not now" onPress={onDismiss} /> : null}
         </View>
-
-        {data.needsSanityConfirm && !isLogged ? (
-          <View style={styles.warningBox}>
-            <Ionicons name="alert-circle-outline" size={13} color="#B45309" />
-            <Text style={styles.warningText}>
-              Large change detected ({deltaFormatted}). Tap confirm if accurate.
-            </Text>
-          </View>
-        ) : null}
-      </View>
-    </View>
+      ) : null}
+    </CardShell>
   );
 };
-
-const styles = StyleSheet.create({
-  outerShell: {
-    backgroundColor: '#EEF2FF',
-    borderRadius: 18,
-    padding: 3,
-    marginVertical: 6,
-  },
-  innerCore: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  textGroup: {
-    flex: 1,
-  },
-  titleText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: '#0F172A',
-  },
-  subtitleText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1,
-  },
-  confirmBtn: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  confirmBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: '#FFFFFF',
-  },
-  savedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  savedText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: '#166534',
-  },
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-    backgroundColor: '#FFFBEB',
-    padding: 6,
-    borderRadius: 8,
-  },
-  warningText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 10,
-    color: '#92400E',
-    flex: 1,
-  },
-});

@@ -59,10 +59,22 @@ describe('AIErrorMapper.fromRawError', () => {
     expect(error.type).toBe('INVALID_KEY');
   });
 
-  test('maps 429 quota to QUOTA_EXCEEDED', () => {
-    const error = AIErrorMapper.fromRawError({ statusCode: 429, message: 'quota exceeded' });
+  test('maps a daily 429 quota to QUOTA_EXCEEDED', () => {
+    const error = AIErrorMapper.fromRawError({
+      statusCode: 429,
+      message: 'RESOURCE_EXHAUSTED: quota exceeded, GenerateRequestsPerDayPerProjectPerModel',
+    });
     expect(error.type).toBe('QUOTA_EXCEEDED');
     expect(error.retryable).toBe(false);
+  });
+
+  test('maps a per-minute 429 quota to a retryable RATE_LIMIT', () => {
+    const error = AIErrorMapper.fromRawError({
+      statusCode: 429,
+      message: 'RESOURCE_EXHAUSTED: quota exceeded, GenerateRequestsPerMinutePerProjectPerModel',
+    });
+    expect(error.type).toBe('RATE_LIMIT');
+    expect(error.retryable).toBe(true);
   });
 
   test('maps 429 rate limit to RATE_LIMIT with retry', () => {

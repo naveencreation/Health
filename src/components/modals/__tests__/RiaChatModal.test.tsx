@@ -49,6 +49,7 @@ jest.mock('@/services/ai', () => ({
 const mockAI = jest.requireMock('@/services/ai').AIService as Record<string, jest.Mock>;
 jest.mock('@/services/ai/cards/RiaCardParser', () => ({
   RiaCardParser: { parseMessage: jest.fn() },
+  resolveContextualMealSlot: () => 'snack',
 }));
 
 // Stub card: buttons that call the chat's real handlers
@@ -58,9 +59,14 @@ jest.mock('@/features/ria/cards/RiaActionCard', () => {
     RiaActionCard: ({ card, messageId, ...p }: any) => {
       if (card.type === 'meal')
         return (
-          <Pressable testID="log-meal" onPress={() => p.onConfirmMeal(messageId, card.data)}>
-            <Text>meal</Text>
-          </Pressable>
+          <>
+            <Pressable testID="log-meal" onPress={() => p.onConfirmMeal(messageId, card.data)}>
+              <Text>meal</Text>
+            </Pressable>
+            <Pressable testID="dismiss-meal" onPress={() => p.onDismissMeal(messageId, card.data)}>
+              <Text>not now</Text>
+            </Pressable>
+          </>
         );
       if (card.type === 'water')
         return (
@@ -99,7 +105,16 @@ const chat: ChatMessage[] = [
         slot: 'lunch',
         state: 'proposed',
         items: [
-          { name: 'Dal', qty: 1, unit: 'katori', kcal: 150, protein: 9, carbs: 20, fat: 4, source: 'estimate' },
+          {
+            name: 'Dal',
+            qty: 1,
+            unit: 'katori',
+            kcal: 150,
+            protein: 9,
+            carbs: 20,
+            fat: 4,
+            source: 'estimate',
+          },
         ],
       },
     },
@@ -136,7 +151,8 @@ const lastSaved = (): ChatMessage[] => {
   const calls = mockAI.saveChatHistory.mock.calls as unknown as [ChatMessage[]][];
   return calls[calls.length - 1][0];
 };
-const card = (messages: ChatMessage[], id: string) => messages.find(m => m.id === id)!.card!.data as any;
+const card = (messages: ChatMessage[], id: string) =>
+  messages.find(m => m.id === id)!.card!.data as any;
 
 describe('RiaChatModal (Ria tab)', () => {
   beforeEach(() => {
@@ -162,9 +178,23 @@ describe('RiaChatModal (Ria tab)', () => {
     await fireEvent.press(await screen.findByTestId('log-meal'));
 
     expect(mockAddMealItem).toHaveBeenCalledTimes(1);
+    // kcal is the total for the qty, so the item is logged once (TD-H1)
+    expect(mockAddMealItem).toHaveBeenCalledWith(
+      'lunch',
+      expect.objectContaining({ calories: 150, servingUnit: '1 katori' }),
+      1
+    );
     const saved = card(lastSaved(), 'ria_meal');
     expect(saved.state).toBe('logged');
     expect(saved.entryIds).toEqual(['meal_entry_1']);
+  });
+
+  it('Not now saves the meal card as dismissed without logging', async () => {
+    const screen = await render(<RiaChatModal />);
+    await fireEvent.press(await screen.findByTestId('dismiss-meal'));
+
+    expect(mockAddMealItem).not.toHaveBeenCalled();
+    expect(card(lastSaved(), 'ria_meal').state).toBe('dismissed');
   });
 
   it('water Undo removes the water and saves the card as not logged', async () => {
@@ -179,7 +209,7 @@ describe('RiaChatModal (Ria tab)', () => {
     const screen = await render(<RiaChatModal />);
     await fireEvent.press(await screen.findByTestId('log-option'));
 
-    expect(mockAddMealItem).toHaveBeenCalledTimes(1);
+    expect(mockAddMealItem).toHaveBeenCalledWith('snacks', expect.anything(), 1);
     expect(card(lastSaved(), 'ria_snack').loggedOptions).toEqual(['Greek yogurt']);
   });
 

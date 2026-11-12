@@ -5,6 +5,8 @@ import {
   FoodVisionResult,
   AIError,
 } from '../types/ai.types';
+import { Platform } from 'react-native';
+import { fetch as expoFetch } from 'expo/fetch';
 import { NutritionContextBuilder } from '../context/NutritionContextBuilder';
 import { AI_CONFIG } from '../config/AIConfig';
 import { AIErrorMapper } from '../errors/AIErrorMapper';
@@ -43,13 +45,14 @@ export class GeminiProvider {
   private static async fetchWithRetry(
     url: string,
     options: RequestInit,
-    maxRetries: number = AI_CONFIG.RETRY.MAX_ATTEMPTS
+    maxRetries: number = AI_CONFIG.RETRY.MAX_ATTEMPTS,
+    fetcher: typeof fetch = fetch
   ): Promise<Response> {
     let attempt = 0;
 
     while (true) {
       try {
-        const response = await fetch(url, options);
+        const response = await fetcher(url, options);
 
         // If not a retryable status code (429 rate limit or 500/503 server error), return directly
         if (
@@ -59,7 +62,11 @@ export class GeminiProvider {
           return response;
         }
 
-        if (attempt >= maxRetries) {
+        // A daily quota won't clear in seconds, so show it now instead of after the backoff
+        if (
+          attempt >= maxRetries ||
+          (response.status === 429 && /per ?day|daily/i.test(await response.clone().text()))
+        ) {
           return response;
         }
       } catch (err: any) {
@@ -78,7 +85,16 @@ export class GeminiProvider {
         AI_CONFIG.RETRY.BASE_DELAY_MS * Math.pow(2, attempt) + jitter,
         AI_CONFIG.RETRY.MAX_DELAY_MS
       );
-      await new Promise(res => setTimeout(res, delay));
+      await new Promise<void>((res, rej) => {
+        const signal = options.signal;
+        if (signal?.aborted)
+          return rej(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+        const t = setTimeout(res, delay);
+        signal?.addEventListener('abort', () => {
+          clearTimeout(t);
+          rej(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+        });
+      });
     }
   }
 
@@ -258,6 +274,17 @@ export class GeminiProvider {
 
     const endpoint = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
 
+    // A hung request would keep the chat in "thinking" forever: abort after a stretch with no bytes
+    const requestCtrl = new AbortController();
+    const forwardAbort = () => requestCtrl.abort();
+    signal?.addEventListener('abort', forwardAbort);
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => requestCtrl.abort(), AI_CONFIG.TIMEOUT.TOTAL_REQUEST_TIMEOUT_MS);
+    };
+    resetIdle();
+
     try {
       const response = await this.fetchWithRetry(
         endpoint,
@@ -277,9 +304,11 @@ export class GeminiProvider {
               maxOutputTokens: AI_CONFIG.TOKEN_BUDGET.RESERVED_OUTPUT_CHAT,
             },
           }),
-          signal,
+          signal: requestCtrl.signal,
         },
-        AI_CONFIG.RETRY.MAX_ATTEMPTS
+        AI_CONFIG.RETRY.MAX_ATTEMPTS,
+        // RN's fetch has no response.body reader, so native would wait for the whole reply
+        Platform.OS === 'web' ? fetch : (expoFetch as unknown as typeof fetch)
       );
 
       if (!response.ok) {
@@ -300,13 +329,14 @@ export class GeminiProvider {
         let buffer = '';
 
         while (true) {
-          if (signal?.aborted) {
+          if (requestCtrl.signal.aborted) {
             reader.cancel();
             break;
           }
 
           const { done, value } = await reader.read();
           if (done) break;
+          resetIdle();
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
@@ -356,6 +386,14 @@ export class GeminiProvider {
         }
       }
 
+      // A stop or timeout mid-stream must not resolve as a finished reply
+      if (signal?.aborted) {
+        throw AIErrorMapper.createError('STREAM_CANCELLED', 'Reply stopped.');
+      }
+      if (requestCtrl.signal.aborted) {
+        throw AIErrorMapper.createError('TIMEOUT', 'Gemini stopped responding.');
+      }
+
       // Output Validation
       const outputResult = AIOutputValidator.validateChatResponse(accumulatedText);
       const finalText =
@@ -380,6 +418,9 @@ export class GeminiProvider {
         errorCode: parsedErr.type,
       });
       throw parsedErr;
+    } finally {
+      clearTimeout(idleTimer);
+      signal?.removeEventListener('abort', forwardAbort);
     }
   }
 
