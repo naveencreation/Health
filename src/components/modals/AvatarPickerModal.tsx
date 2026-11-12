@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,12 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { AVATAR_PRESETS, DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { UserAvatar } from '@/components/common/UserAvatar';
+import {
+  ProfileButton,
+  SheetHeader,
+  sheetStyles,
+  sheetSurface,
+} from '@/components/profile/ProfileUI';
 
 interface AvatarPickerModalProps {
   visible: boolean;
@@ -14,6 +20,9 @@ interface AvatarPickerModalProps {
   onSelectAvatar: (url: string) => void;
 }
 
+const sanitizeUrl = (url?: string) =>
+  url && AVATAR_PRESETS.some(a => a.url === url) ? url : DEFAULT_AVATAR_URL;
+
 export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   visible,
   currentAvatarUrl = DEFAULT_AVATAR_URL,
@@ -21,183 +30,76 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onSelectAvatar,
 }) => {
   const insets = useSafeAreaInsets();
-  const sanitizeUrl = (url?: string) => {
-    if (!url) return DEFAULT_AVATAR_URL;
-    const exists = AVATAR_PRESETS.some(a => a.url === url);
-    return exists ? url : DEFAULT_AVATAR_URL;
-  };
-
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState(sanitizeUrl(currentAvatarUrl));
 
-  // Synchronize when modal opens
+  // Start from the saved avatar every time the sheet opens
   React.useEffect(() => {
-    if (visible) {
-      setSelectedAvatarUrl(sanitizeUrl(currentAvatarUrl));
-    }
+    if (visible) setSelectedAvatarUrl(sanitizeUrl(currentAvatarUrl));
   }, [visible, currentAvatarUrl]);
-
-  // Find currently selected preset details for hero preview
-  const activePreset = useMemo(() => {
-    return AVATAR_PRESETS.find(a => a.url === selectedAvatarUrl) || AVATAR_PRESETS[0];
-  }, [selectedAvatarUrl]);
 
   const handleConfirm = () => {
     onSelectAvatar(selectedAvatarUrl);
     onClose();
   };
 
-  const getPresetBorder = (id?: string) => {
-    switch (id) {
-      case 'avatar_men':
-        return styles.borderMen;
-      case 'avatar_women':
-        return styles.borderWomen;
-      case 'avatar_boy':
-        return styles.borderBoy;
-      case 'avatar_girl':
-        return styles.borderGirl;
-      case 'avatar_grandpa':
-        return styles.borderGrandpa;
-      case 'avatar_grandma':
-        return styles.borderGrandma;
-      default:
-        return styles.borderDefault;
-    }
-  };
-
-  const getPresetBg = (id?: string) => {
-    switch (id) {
-      case 'avatar_men':
-        return styles.bgMen;
-      case 'avatar_women':
-        return styles.bgWomen;
-      case 'avatar_boy':
-        return styles.bgBoy;
-      case 'avatar_girl':
-        return styles.bgGirl;
-      case 'avatar_grandpa':
-        return styles.bgGrandpa;
-      case 'avatar_grandma':
-        return styles.bgGrandma;
-      default:
-        return styles.bgDefault;
-    }
-  };
-
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.modalBackdrop}>
-        {/* Click outside to dismiss backdrop */}
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={sheetStyles.scrim}>
         <Pressable
-          style={styles.backdropDismiss}
+          style={sheetStyles.backdrop}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss avatar picker modal backdrop"
+          accessibilityLabel="Dismiss avatar picker"
         />
-
-        {/* Mobile-Constrained Bottom Sheet Container */}
-        <View style={styles.sheetContainer}>
-          {/* Top Grab Handle */}
-          <View style={styles.handleContainer}>
-            <View style={styles.dragHandle} />
-          </View>
-
-          {/* Header Bar */}
-          <View style={styles.header}>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedCloseBtn : null]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel="Close avatar picker"
-            >
-              <Ionicons name="close" size={20} color={Colors.textPrimary} />
-            </Pressable>
-
-            <View style={styles.headerTitleCenter}>
-              <Text style={styles.headerTitle}>Select Avatar</Text>
-              <Text style={styles.headerSubtitle}>Choose your persona</Text>
-            </View>
-
-            <View style={styles.headerSpacer} />
-          </View>
+        <View style={sheetSurface} accessibilityViewIsModal>
+          <View style={sheetStyles.handle} />
+          <SheetHeader
+            title="Choose avatar"
+            subtitle="Shown on your profile"
+            onClose={onClose}
+            closeLabel="Close avatar picker"
+          />
 
           <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[sheetStyles.body, styles.grid]}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
           >
-            {/* Hero Live Preview Card */}
-            <View style={styles.heroPreviewCard}>
-              <View style={[styles.heroAvatarRing, getPresetBorder(activePreset?.id)]}>
-                <UserAvatar avatarUrl={selectedAvatarUrl} size={72} />
-                <View style={[styles.heroCheckBadge, getPresetBg(activePreset?.id)]}>
-                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                </View>
-              </View>
-
-              <Text style={styles.heroAvatarName}>{activePreset?.name || 'Selected Avatar'}</Text>
-            </View>
-
-            {/* 3-Column Compact Avatar Grid (Curated Avatars) */}
-            <View style={styles.gridContainer}>
-              {AVATAR_PRESETS.map(item => {
-                const isSelected = selectedAvatarUrl === item.url;
-                return (
-                  <Pressable
-                    key={item.id}
-                    style={({ pressed }) => [
-                      styles.avatarGridCard,
-                      isSelected ? styles.avatarGridCardActive : null,
-                      isSelected ? getPresetBorder(item.id) : null,
-                      pressed ? styles.pressedGridCard : null,
-                    ]}
-                    onPress={() => setSelectedAvatarUrl(item.url)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={`Select ${item.name} avatar`}
-                  >
-                    <View
-                      style={[
-                        styles.avatarThumbWrapper,
-                        isSelected ? getPresetBorder(item.id) : null,
-                      ]}
-                    >
-                      <UserAvatar avatarUrl={item.url} size={56} />
-                      {isSelected ? (
-                        <View style={[styles.selectedOverlayBadge, getPresetBg(item.id)]}>
-                          <Ionicons name="checkmark" size={11} color="#FFFFFF" />
-                        </View>
-                      ) : null}
+            {AVATAR_PRESETS.map(item => {
+              const isSelected = selectedAvatarUrl === item.url;
+              return (
+                <Pressable
+                  key={item.id}
+                  style={({ pressed }) => [
+                    styles.cell,
+                    isSelected && styles.cellSelected,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setSelectedAvatarUrl(item.url)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`Select ${item.name} avatar`}
+                >
+                  <UserAvatar avatarUrl={item.url} size={60} />
+                  <Text style={styles.name} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  {isSelected ? (
+                    <View style={styles.check}>
+                      <Ionicons name="checkmark" size={13} color={Colors.textInverse} />
                     </View>
-
-                    <Text style={styles.gridAvatarName} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
-          {/* Sticky Bottom Confirmation Bar */}
-          <View style={[styles.bottomBar, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.confirmBtn,
-                pressed ? styles.pressedConfirmBtn : null,
-              ]}
+          <View style={[sheetStyles.footer, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>
+            <ProfileButton
+              label="Use this avatar"
+              variant="primary"
               onPress={handleConfirm}
-              accessibilityRole="button"
-              accessibilityLabel="Use this avatar"
-            >
-              <Ionicons
-                name="checkmark-sharp"
-                size={18}
-                color="#FFFFFF"
-                style={styles.confirmIcon}
-              />
-              <Text style={styles.confirmBtnText}>Use This Avatar</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -206,248 +108,48 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    justifyContent: 'flex-end',
+  scroll: { flexGrow: 0 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  cell: {
+    // three per row: a fourth (4 × 30%) never fits, and grow fills the leftover gap
+    flexBasis: '30%',
+    flexGrow: 1,
     alignItems: 'center',
-    zIndex: 9999,
-  },
-  backdropDismiss: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sheetContainer: {
-    width: '100%',
-    maxWidth: 480,
-    height: '84%',
-    maxHeight: 700,
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    elevation: 0,
-    zIndex: 10000,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
-    backgroundColor: Colors.card,
-  },
-  dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.borderMedium,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 6,
+    gap: 8,
+    paddingTop: 14,
     paddingBottom: 12,
+    paddingHorizontal: 6,
     backgroundColor: Colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.surfaceContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressedCloseBtn: {
-    opacity: 0.88,
-    backgroundColor: Colors.surfaceContainer,
-    transform: [{ scale: 0.985 }],
-  },
-  headerSpacer: {
-    width: 38,
-  },
-  headerTitleCenter: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  headerSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 1,
-  },
-  scrollContent: {
-    paddingBottom: 90,
-  },
-
-  // Hero Live Preview Card
-  heroPreviewCard: {
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceLow,
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
     borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: Colors.borderInset,
+    borderColor: Colors.borderSubtle,
+    elevation: 0,
   },
-  heroAvatarRing: {
-    position: 'relative',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    padding: 3,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+  cellSelected: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surfaceLow,
+    paddingTop: 13,
+    paddingBottom: 11,
+    paddingHorizontal: 5,
   },
-  heroCheckBadge: {
+  pressed: { opacity: 0.85 },
+  name: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  check: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    top: 8,
+    right: 8,
     width: 22,
     height: 22,
     borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.card,
-  },
-  heroAvatarName: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: Colors.textPrimary,
-    marginTop: 8,
-  },
-
-  // Grid
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 14,
-    gap: 8,
-    justifyContent: 'flex-start',
-  },
-  avatarGridCard: {
-    width: '31.3%',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    marginBottom: 8,
-  },
-  avatarGridCardActive: {
-    backgroundColor: '#FFFBF9',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  pressedGridCard: {
-    opacity: 0.94,
-    transform: [{ scale: 0.97 }],
-  },
-  avatarThumbWrapper: {
-    position: 'relative',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2.5,
-    borderColor: 'transparent',
-    padding: 2,
-    marginBottom: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedOverlayBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.card,
-  },
-  gridAvatarName: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-
-  // Bottom Sticky Bar
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.card,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  confirmBtn: {
-    flexDirection: 'row',
     backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 0,
-    shadowOpacity: 0,
   },
-  pressedConfirmBtn: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  confirmIcon: {
-    marginRight: 6,
-  },
-  confirmBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: Colors.onPrimary,
-  },
-
-  // Preset Colors
-  borderMen: { borderColor: Colors.inverseSurface },
-  borderWomen: { borderColor: '#EA580C' },
-  borderBoy: { borderColor: '#3B82F6' },
-  borderGirl: { borderColor: Colors.weight },
-  borderGrandpa: { borderColor: '#475569' },
-  borderGrandma: { borderColor: Colors.fiber },
-  borderDefault: { borderColor: Colors.primary },
-  bgMen: { backgroundColor: Colors.inverseSurface },
-  bgWomen: { backgroundColor: '#EA580C' },
-  bgBoy: { backgroundColor: '#3B82F6' },
-  bgGirl: { backgroundColor: Colors.weight },
-  bgGrandpa: { backgroundColor: '#475569' },
-  bgGrandma: { backgroundColor: Colors.fiber },
-  bgDefault: { backgroundColor: Colors.primary },
 });

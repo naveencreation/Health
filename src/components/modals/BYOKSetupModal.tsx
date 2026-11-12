@@ -17,8 +17,17 @@ import * as Clipboard from 'expo-clipboard';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { AIService, ValidationResult } from '@/services/ai';
-import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
+import {
+  ProfileButton,
+  SettingsRow,
+  SettingsSection,
+  SheetHeader,
+  SheetNotice,
+  profileCard,
+  sheetStyles,
+  sheetSurface,
+} from '@/components/profile/ProfileUI';
 
 interface BYOKSetupModalProps {
   visible: boolean;
@@ -164,11 +173,15 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
     Linking.openURL('https://aistudio.google.com/apikey');
   };
 
+  const typed = apiKeyInput.trim().length > 0;
+  // Connected with nothing typed: the footer offers Disconnect; otherwise it verifies the typed key
+  const showDisconnect = isConnected && !typed;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
+      <View style={sheetStyles.scrim}>
         <Pressable
-          style={styles.backdropPressable}
+          style={sheetStyles.backdrop}
           onPress={handleClose}
           accessibilityRole="button"
           accessibilityLabel="Dismiss AI Setup Sheet"
@@ -176,124 +189,58 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
-          style={styles.keyboardContainer}
+          style={styles.keyboard}
         >
-          <View style={styles.sheetContainer}>
-            {/* Drag Handle */}
-            <View style={styles.dragHandle} />
-
-            {/* Header */}
-            <View style={styles.headerRow}>
-              <View style={styles.headerTitleBox}>
-                <View style={styles.badgeRow}>
-                  <View style={styles.sparkleIcon}>
-                    <GeminiIcon size={12} />
-                  </View>
-                  <Text style={styles.badgeText}>BRING YOUR OWN KEY (BYOK)</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                  <GeminiIcon size={24} />
-                  <Text style={styles.sheetTitle}>Connect Gemini AI</Text>
-                </View>
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed ? styles.pressedSubtle : null]}
-                onPress={handleClose}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <Ionicons name="close" size={20} color={Colors.textSecondary} />
-              </Pressable>
-            </View>
+          <View style={[sheetSurface, styles.sheet]} accessibilityViewIsModal>
+            <View style={sheetStyles.handle} />
+            <SheetHeader
+              title={isConnected ? 'Gemini key' : 'Connect Gemini'}
+              subtitle={
+                isConnected
+                  ? 'Ria and food photos are on'
+                  : 'Your own key powers Ria and food photos'
+              }
+              onClose={handleClose}
+            />
 
             <ScrollView
-              style={styles.scrollContent}
-              contentContainerStyle={[styles.scrollInner, { paddingBottom: 100 }]}
+              style={styles.scroll}
+              contentContainerStyle={sheetStyles.body}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={false}
-              contentInsetAdjustmentBehavior="automatic"
             >
-              {/* Privacy Guarantee Card */}
-              <View style={styles.privacyCard}>
-                <Ionicons
-                  name="shield-checkmark"
-                  size={15}
-                  color={Colors.fiber}
-                  style={styles.shieldIcon}
-                />
-                <View style={styles.privacyTextContainer}>
-                  <Text style={styles.privacyTitle}>
-                    {Platform.OS === 'web'
-                      ? 'Stored only in this browser'
-                      : 'Stored encrypted on this device only'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Status Display: Connected vs Unconnected */}
               {isConnected ? (
-                <View style={styles.connectedCard}>
-                  <View style={styles.statusHeader}>
-                    <View style={styles.greenDot} />
-                    <Text style={styles.statusTitle}>Gemini AI Active</Text>
-                    <View style={styles.modelTag}>
-                      <Text style={styles.modelTagText}>Active</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.maskedRow}>
-                    <Ionicons name="key-outline" size={15} color={Colors.textSecondary} />
-                    <Text style={styles.maskedKeyText}>{maskedKey || 'Key Configured'}</Text>
-                  </View>
-
-                  <View style={styles.connectedActionRow}>
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.testBtn,
-                        pressed ? styles.pressedSubtle : null,
-                      ]}
-                      onPress={handleTestExistingConnection}
-                      disabled={isValidating}
-                    >
-                      {isValidating ? (
+                <SettingsSection title="Status">
+                  <SettingsRow
+                    icon="checkmark"
+                    iconColor={Colors.primary}
+                    iconBackground={Colors.primaryLight}
+                    title="Connected"
+                    subtitle={maskedKey ? `Key ${maskedKey}` : 'Key saved on this device'}
+                  />
+                  <SettingsRow
+                    icon="refresh-outline"
+                    title="Test connection"
+                    subtitle="Sends one small request to Google"
+                    onPress={handleTestExistingConnection}
+                    disabled={isValidating}
+                    trailing={
+                      isValidating && !typed ? (
                         <ActivityIndicator size="small" color={Colors.primary} />
-                      ) : (
-                        <>
-                          <Ionicons name="refresh-outline" size={14} color={Colors.textSlate600} />
-                          <Text style={styles.testBtnText}>Test Connection</Text>
-                        </>
-                      )}
-                    </Pressable>
-
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.disconnectBtn,
-                        pressed ? styles.pressedSubtle : null,
-                      ]}
-                      onPress={handleDisconnect}
-                    >
-                      <Ionicons name="trash-outline" size={14} color={Colors.dangerDark} />
-                      <Text style={styles.disconnectBtnText}>Disconnect</Text>
-                    </Pressable>
-                  </View>
-                </View>
+                      ) : undefined
+                    }
+                  />
+                </SettingsSection>
               ) : null}
 
-              {/* Input Form */}
-              <Text style={styles.inputSectionLabel}>
-                {isConnected ? 'Replace API Key' : 'Enter Your Google Gemini Key'}
-              </Text>
-
-              <View style={styles.inputCard}>
-                <View style={styles.inputRow}>
-                  <Ionicons name="key-outline" size={18} color={Colors.textMuted} style={styles.inputIcon} />
+              <View>
+                <Text style={styles.label}>{isConnected ? 'Replace key' : 'Gemini API key'}</Text>
+                <View style={[profileCard, styles.inputCard]}>
+                  <Ionicons name="key-outline" size={18} color={Colors.textSecondary} />
                   <TextInput
-                    style={styles.keyTextInput}
-                    placeholder="Paste AIzaSy... key"
+                    style={styles.input}
+                    placeholder={isConnected ? 'Paste a new key' : 'Paste your key'}
                     placeholderTextColor={Colors.textMuted}
                     value={apiKeyInput}
                     onChangeText={text => {
@@ -303,94 +250,85 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     secureTextEntry={!showKey}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    editable={!isValidating}
+                    accessibilityLabel={isConnected ? 'Replace Gemini API key' : 'Gemini API key'}
                   />
-
-                  {apiKeyInput.length > 0 ? (
+                  {typed ? (
                     <Pressable
-                      style={styles.inputActionIcon}
+                      style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
                       onPress={() => setShowKey(!showKey)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showKey ? 'Hide key' : 'Show key'}
                     >
                       <Ionicons
                         name={showKey ? 'eye-off-outline' : 'eye-outline'}
                         size={18}
-                        color={Colors.textSecondary}
+                        color={Colors.textSlate700}
                       />
                     </Pressable>
                   ) : (
-                    <Pressable style={styles.pastePill} onPress={handlePaste}>
-                      <Ionicons name="clipboard-outline" size={12} color={Colors.textSecondary} />
-                      <Text style={styles.pastePillText}>Paste</Text>
+                    <Pressable
+                      style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+                      onPress={handlePaste}
+                      accessibilityRole="button"
+                      accessibilityLabel="Paste key from clipboard"
+                    >
+                      <Ionicons name="clipboard-outline" size={16} color={Colors.textSlate700} />
+                      <Text style={styles.chipText}>Paste</Text>
                     </Pressable>
                   )}
                 </View>
-              </View>
-
-              {/* Validation Feedback */}
-              {validationError ? (
-                <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle" size={16} color={Colors.dangerDark} />
-                  <Text style={styles.errorText}>{validationError}</Text>
-                </View>
-              ) : null}
-
-              {successMessage ? (
-                <View style={styles.successBox}>
-                  <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-                  <Text style={styles.successText}>{successMessage}</Text>
-                </View>
-              ) : null}
-
-              {/* Action Button */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.primaryConnectBtn,
-                  !apiKeyInput.trim() ? styles.disabledBtn : null,
-                  pressed ? styles.btnPressed : null,
-                ]}
-                onPress={handleValidateAndConnect}
-                disabled={isValidating || !apiKeyInput.trim()}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: isValidating || !apiKeyInput.trim() }}
-              >
-                {isValidating ? (
-                  <View style={styles.btnRow}>
-                    <ActivityIndicator size="small" color={Colors.onPrimary} />
-                    <Text style={styles.btnText}>Verifying with Google...</Text>
-                  </View>
-                ) : (
-                  <View style={styles.btnRow}>
-                    <Ionicons name="sparkles" size={16} color={Colors.onPrimary} />
-                    <Text style={styles.btnText}>
-                      {isConnected ? 'Update & Verify Key' : 'Validate & Connect'}
+                {validationError ? <SheetNotice kind="error" text={validationError} /> : null}
+                {successMessage ? <SheetNotice kind="ok" text={successMessage} /> : null}
+                {!isConnected ? (
+                  <View style={styles.privacy}>
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={16}
+                      color={Colors.textSecondary}
+                      style={styles.privacyIcon}
+                    />
+                    <Text style={styles.privacyText}>
+                      {Platform.OS === 'web'
+                        ? 'Stored only in this browser. It goes straight to Google, never to Calorify.'
+                        : 'Stored encrypted on this phone only. It goes straight to Google, never to Calorify.'}
                     </Text>
                   </View>
-                )}
-              </Pressable>
+                ) : null}
+              </View>
 
-              {/* Google AI Studio Guide CTA */}
-              <Pressable
-                style={({ pressed }) => [styles.helperBox, pressed ? styles.pressedSubtle : null]}
-                onPress={handleOpenGoogleAIStudio}
-              >
-                <View style={styles.helperIcon}>
-                  <Ionicons name="help-circle-outline" size={18} color={Colors.textSlate600} />
-                </View>
-                <View style={styles.helperTextCol}>
-                  <Text style={styles.helperTitle}>How do I get a free Gemini API key?</Text>
-                  <Text style={styles.helperSubtitle}>
-                    Tap to open Google AI Studio and generate a free personal key in 30 seconds.
-                  </Text>
-                </View>
-                <Ionicons name="open-outline" size={15} color={Colors.textMuted} />
-              </Pressable>
+              {!isConnected ? (
+                <SettingsSection title="Need a key?">
+                  <SettingsRow
+                    icon="help-circle-outline"
+                    title="Get a free key"
+                    subtitle="Opens Google AI Studio, takes about a minute"
+                    onPress={handleOpenGoogleAIStudio}
+                    trailing={<Ionicons name="open-outline" size={16} color={Colors.textMuted} />}
+                  />
+                </SettingsSection>
+              ) : null}
             </ScrollView>
+
+            <View style={[sheetStyles.footer, styles.footer]}>
+              {showDisconnect ? (
+                <ProfileButton label="Disconnect key" variant="danger" onPress={handleDisconnect} />
+              ) : (
+                <ProfileButton
+                  label={isConnected ? 'Verify and replace' : 'Verify and connect'}
+                  variant="primary"
+                  onPress={handleValidateAndConnect}
+                  disabled={!typed}
+                  loading={isValidating}
+                />
+              )}
+            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
       <ConfirmationModal
         visible={confirmDisconnect}
-        title="Disconnect Gemini Key?"
+        title="Disconnect Gemini key?"
         message="Ria and food photo analysis stop working until you connect a key again."
         confirmText="Disconnect"
         confirmStyle="destructive"
@@ -403,375 +341,56 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlayScrim,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  backdropPressable: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  keyboardContainer: {
-    width: '100%',
-    maxWidth: 480,
-    alignSelf: 'center',
-    maxHeight: '90%',
-  },
-  sheetContainer: {
-    width: '100%',
-    maxWidth: 480,
-    alignSelf: 'center',
-    backgroundColor: Colors.background,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderCurve: 'continuous',
-    paddingTop: 10,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-    borderWidth: 1,
-    borderColor: 'rgba(244, 117, 81, 0.15)',
-    elevation: 0,
-    ...(Platform.OS === 'web'
-      ? {
-          borderLeftWidth: 1,
-          borderRightWidth: 1,
-          borderColor: Colors.borderInset,
-        }
-      : {}),
-  },
-  dragHandle: {
-    width: 42,
-    height: 5,
-    backgroundColor: Colors.borderMedium,
-    borderRadius: 3,
-    borderCurve: 'continuous',
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  headerTitleBox: {
-    flex: 1,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 3,
-  },
-  sparkleIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.surfaceInset,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 10,
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  sheetTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 20,
-    color: Colors.textPrimary,
-  },
-  closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.surfaceInset,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressedSubtle: {
-    opacity: 0.88,
-    transform: [{ scale: 0.98 }],
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-  },
-  scrollInner: {
-    paddingBottom: 20,
-  },
-  privacyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceLow,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    marginBottom: 14,
-    gap: 8,
-  },
-  shieldIcon: {},
-  privacyTextContainer: {
-    flex: 1,
-  },
-  privacyTitle: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSlate600,
-  },
-  connectedCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderWhisper,
-    marginBottom: 16,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    gap: 8,
-  },
-  greenDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.success,
-  },
-  statusTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    flex: 1,
-  },
-  modelTag: {
-    backgroundColor: Colors.surfaceInset,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-  },
-  modelTagText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 10,
-    color: Colors.textSecondary,
-  },
-  maskedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.surfaceLow,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.surfaceInset,
-    marginBottom: 10,
-  },
-  maskedKeyText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 12,
-    color: Colors.textSlate700,
-  },
-  connectedActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  testBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceLow,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    gap: 6,
-  },
-  testBtnText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSlate600,
-  },
-  disconnectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceLow,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    gap: 5,
-  },
-  disconnectBtnText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.dangerDark,
-  },
-  inputSectionLabel: {
+  keyboard: { width: '100%', maxWidth: 480, alignSelf: 'center', maxHeight: '90%' },
+  sheet: { maxHeight: '100%' },
+  scroll: { flexGrow: 0 },
+  label: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
-    color: Colors.textSlate600,
-    marginBottom: 10,
+    color: Colors.textSecondary,
+    marginHorizontal: 4,
+    marginBottom: 8,
   },
   inputCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginBottom: 12,
-  },
-  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingLeft: 14,
+    paddingRight: 6,
   },
-  inputIcon: {
-    marginRight: 8,
-  },
-  keyTextInput: {
+  input: {
     flex: 1,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 13,
+    minWidth: 0,
+    height: 44,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
     color: Colors.textPrimary,
-    paddingVertical: 10,
   },
-  inputActionIcon: {
-    padding: 6,
-  },
-  pastePill: {
+  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  chip: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceInset,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderCurve: 'continuous',
-    gap: 4,
-  },
-  pastePillText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textSlate600,
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.errorLight,
-    padding: 10,
+    gap: 6,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderCurve: 'continuous',
-    marginBottom: 12,
-    gap: 8,
-  },
-  errorText: {
-    flex: 1,
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    color: Colors.dangerDark,
-  },
-  successBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.proteinLight,
-    padding: 10,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    marginBottom: 12,
-    gap: 8,
-  },
-  successText: {
-    flex: 1,
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.success,
-  },
-  primaryConnectBtn: {
-    backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  disabledBtn: {
-    backgroundColor: Colors.borderMedium,
-    shadowOpacity: 0,
-  },
-  btnPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.9,
-  },
-  btnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  btnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: Colors.onPrimary,
-  },
-  helperBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceLow,
-    padding: 13,
-    borderRadius: 10,
-    borderCurve: 'continuous',
+    backgroundColor: Colors.surfaceContainer,
     borderWidth: 1,
-    borderColor: Colors.borderInset,
-    gap: 10,
+    borderColor: Colors.borderSubtle,
   },
-  helperIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.surfaceInset,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  helperTextCol: {
+  chipText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textSlate700 },
+  pressed: { opacity: 0.85 },
+  privacy: { flexDirection: 'row', gap: 6, marginTop: 8, marginHorizontal: 4 },
+  privacyIcon: { marginTop: 2 },
+  privacyText: {
     flex: 1,
-  },
-  helperTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: Colors.textSlate800,
-    marginBottom: 2,
-  },
-  helperSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
+    fontSize: 13,
+    lineHeight: 19,
     color: Colors.textSecondary,
-    lineHeight: 15,
   },
+  footer: { paddingBottom: Platform.OS === 'ios' ? 32 : 20 },
 });
+

@@ -1,15 +1,8 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Modal,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, View, Text, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
-import { Fonts } from '@/theme/typography';
+import { ProfileButton, dialogCard, sheetStyles } from '@/components/profile/ProfileUI';
 
 export interface ConfirmationModalProps {
   visible: boolean;
@@ -44,72 +37,48 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   children,
 }) => {
   const isDestructive = confirmStyle === 'destructive';
-  const defaultIconColor = isDestructive ? '#DC2626' : Colors.primary;
-  const defaultIconBgColor = isDestructive ? '#FEF2F2' : '#FFF7ED';
-
-  const resolvedIconColor = iconColor || defaultIconColor;
-  const resolvedIconBgColor = iconBgColor || defaultIconBgColor;
+  const dismiss = () => {
+    if (!isLoading) onCancel();
+  };
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={() => {
-        if (!isLoading) onCancel();
-      }}
-    >
-      <View style={styles.modalOverlay}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={dismiss}>
+      <View style={sheetStyles.centeredScrim}>
         <Pressable
-          style={styles.backdropPressable}
-          onPress={() => {
-            if (!isLoading) onCancel();
-          }}
+          style={sheetStyles.backdrop}
+          onPress={dismiss}
           accessibilityRole="button"
           accessibilityLabel="Dismiss confirmation"
         />
 
-        <View style={styles.dialogCard}>
-          {/* Icon Badge */}
-          <View style={[styles.iconCircle, { backgroundColor: resolvedIconBgColor }]}>
-            <Ionicons name={iconName} size={28} color={resolvedIconColor} />
+        <View style={[dialogCard, styles.card]} accessibilityViewIsModal>
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: iconBgColor || (isDestructive ? Colors.errorLight : Colors.primaryLight) },
+            ]}
+          >
+            <Ionicons
+              name={iconName}
+              size={26}
+              color={iconColor || (isDestructive ? Colors.dangerDark : Colors.primary)}
+            />
           </View>
 
-          {/* Heading and Message */}
-          <Text style={styles.dialogTitle}>{title}</Text>
-          <Text style={styles.dialogMessage}>{message}</Text>
-          {children}
+          <Text style={[sheetStyles.dialogTitle, styles.title]} accessibilityRole="header">
+            {title}
+          </Text>
+          <Text style={sheetStyles.dialogMessage}>{message}</Text>
+          {children ? <View style={styles.extra}>{children}</View> : null}
 
-          {/* Action Buttons */}
-          <View style={styles.actionCol}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.confirmBtn,
-                isDestructive ? styles.confirmBtnDestructive : styles.confirmBtnPrimary,
-                pressed ? styles.pressedButton : null,
-                isLoading ? styles.disabledButton : null,
-              ]}
+          <View style={styles.actions}>
+            <ProfileButton
+              label={confirmText}
+              variant={isDestructive ? 'danger' : 'primary'}
               onPress={onConfirm}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel={confirmText}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.confirmBtnText}>{confirmText}</Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [styles.cancelBtn, pressed ? styles.cancelBtnPressed : null]}
-              onPress={onCancel}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel={cancelText}
-            >
-              <Text style={styles.cancelBtnText}>{cancelText}</Text>
-            </Pressable>
+              loading={isLoading}
+            />
+            <ProfileButton label={cancelText} onPress={onCancel} disabled={isLoading} />
           </View>
         </View>
       </View>
@@ -118,107 +87,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  backdropPressable: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  dialogCard: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    padding: 24,
-    alignItems: 'center',
-    elevation: 0,
-  },
+  card: { alignItems: 'center' },
   iconCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  dialogTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 19,
-    color: '#0F172A',
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.3,
-  },
-  dialogMessage: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-    paddingHorizontal: 6,
-  },
-  actionCol: {
-    width: '100%',
-    gap: 10,
-  },
-  confirmBtn: {
-    width: '100%',
-    height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
     elevation: 0,
-    shadowOpacity: 0,
   },
-  confirmBtnPrimary: {
-    backgroundColor: Colors.primary,
-  },
-  confirmBtnDestructive: {
-    backgroundColor: '#DC2626',
-  },
-  confirmBtnText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15,
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  cancelBtn: {
-    width: '100%',
-    height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: Colors.borderInset,
-  },
-  cancelBtnPressed: {
-    backgroundColor: Colors.surfaceLow,
-    borderColor: Colors.borderMedium,
-    transform: [{ scale: 0.985 }],
-  },
-  cancelBtnText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 15,
-    color: '#475569',
-  },
-  pressedButton: {
-    opacity: 0.92,
-    transform: [{ scale: 0.985 }],
-  },
-  disabledButton: {
-    opacity: 0.65,
-  },
+  title: { marginTop: 16 },
+  extra: { alignSelf: 'stretch', marginTop: 16 },
+  actions: { alignSelf: 'stretch', gap: 10, marginTop: 20 },
 });

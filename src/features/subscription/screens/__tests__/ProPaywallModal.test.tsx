@@ -43,7 +43,7 @@ describe('ProPaywallModal', () => {
       <ProPaywallModal visible={true} onClose={onClose} highlightFeature="Food Vision" />
     );
 
-    expect(getByText('Unlock Calorify Pro')).toBeTruthy();
+    expect(getByText("You're on the free plan")).toBeTruthy();
     expect(getByText('Unlocks: Food Vision')).toBeTruthy();
     expect(getByText('Annual Plan')).toBeTruthy();
     expect(getByText('Monthly Plan')).toBeTruthy();
@@ -59,7 +59,7 @@ describe('ProPaywallModal', () => {
 
     const { getByRole, getByText } = await render(<ProPaywallModal visible={true} onClose={onClose} />);
 
-    const purchaseBtn = getByRole('button', { name: 'Unlock Calorify Pro' });
+    const purchaseBtn = getByRole('button', { name: 'Start 7-day free trial' });
     fireEvent.press(purchaseBtn);
 
     await waitFor(() => {
@@ -67,7 +67,7 @@ describe('ProPaywallModal', () => {
       expect(getByText('Welcome to Calorify Pro!')).toBeTruthy();
     });
 
-    const exploreBtn = getByRole('button', { name: 'Explore Pro Features' });
+    const exploreBtn = getByRole('button', { name: 'Explore Pro features' });
     fireEvent.press(exploreBtn);
 
     await waitFor(() => {

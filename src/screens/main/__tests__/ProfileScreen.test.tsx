@@ -181,7 +181,7 @@ describe('ProfileScreen Integration', () => {
     fireEvent.press(upgradeBtn);
 
     const paywallHeadline = await findByText(
-      'Experience the full power of AI nutrition scanning and deep metabolic analytics.'
+      "You're on the free plan"
     );
     expect(paywallHeadline).toBeTruthy();
   });
@@ -197,12 +197,12 @@ describe('ProfileScreen Integration', () => {
 
     await fireEvent.press(getByRole('button', { name: 'Sign out of Calorify' }));
     await act(async () => {
-      await fireEvent.press(await findByRole('button', { name: 'Sign Out' }));
+      await fireEvent.press(await findByRole('button', { name: 'Sign out' }));
     });
     expect(logout).toHaveBeenLastCalledWith(false);
 
     await act(async () => {
-      await fireEvent.press(await findByRole('button', { name: 'Sign Out Anyway' }));
+      await fireEvent.press(await findByRole('button', { name: 'Sign out anyway' }));
     });
     expect(logout).toHaveBeenLastCalledWith(true);
   });
@@ -233,7 +233,7 @@ describe('ProfileScreen Integration', () => {
     );
 
     await fireEvent.press(await findByRole('button', { name: 'Delete Account Permanently' }));
-    const confirm = (await findByRole('button', { name: 'Delete Permanently' }));
+    const confirm = (await findByRole('button', { name: 'Delete permanently' }));
     await act(async () => {
       await fireEvent.press(confirm);
     });
@@ -242,7 +242,7 @@ describe('ProfileScreen Integration', () => {
 
     await fireEvent.changeText(getByLabelText('Password, required to delete your account'), 'secret-pw');
     await act(async () => {
-      await fireEvent.press(getByRole('button', { name: 'Delete Permanently' }));
+      await fireEvent.press(getByRole('button', { name: 'Delete permanently' }));
     });
     expect(deleteAccount).toHaveBeenCalledWith('secret-pw');
   });

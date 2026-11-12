@@ -11,6 +11,7 @@ import {
   SettingsSection,
   SettingsRow,
   ProfileButton,
+  SheetNotice,
   profileScreenStyles,
 } from '@/components/profile/ProfileUI';
 
@@ -180,7 +181,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
             ? "Some recent changes haven't reached the cloud yet. Connect to the internet and try again, or sign out anyway and lose them."
             : 'Your logs are saved to your account and load again when you sign back in. They are removed from this device.')
         }
-        confirmText={logoutUnsynced ? 'Sign Out Anyway' : 'Sign Out'}
+        confirmText={logoutUnsynced ? 'Sign out anyway' : 'Sign out'}
         cancelText="Cancel"
         confirmStyle="destructive"
         iconName="log-out-outline"
@@ -196,8 +197,8 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
       <ConfirmationModal
         visible={confirmAction === 'delete'}
         title="Delete account permanently?"
-        message={deleteError ? `${deleteError}\n\n${deleteMessage}` : deleteMessage}
-        confirmText="Delete Permanently"
+        message={deleteMessage}
+        confirmText="Delete permanently"
         cancelText="Cancel"
         confirmStyle="destructive"
         iconName="trash-outline"
@@ -209,14 +210,10 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
           setDeletePassword('');
         }}
       >
-        {deleteError ? (
-          <Text style={styles.error} accessibilityRole="alert">
-            {deleteError}
-          </Text>
-        ) : null}
+        {needsPassword && <Text style={styles.label}>Password</Text>}
         {needsPassword && (
           <TextInput
-            style={styles.passwordInput}
+            style={[styles.passwordInput, deleteError ? styles.passwordInputError : null]}
             value={deletePassword}
             onChangeText={setDeletePassword}
             placeholder="Password"
@@ -228,6 +225,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
             accessibilityLabel="Password, required to delete your account"
           />
         )}
+        {deleteError ? <SheetNotice kind="error" text={deleteError} /> : null}
       </ConfirmationModal>
     </View>
   );
@@ -235,12 +233,12 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
 
 const styles = StyleSheet.create({
   pad: { padding: 16 },
-  error: {
+  label: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: Colors.dangerDark,
-    textAlign: 'center',
-    marginBottom: 12,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginHorizontal: 4,
+    marginBottom: 6,
   },
   actions: { gap: 10 },
   passwordInput: {
@@ -254,8 +252,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     color: Colors.textPrimary,
-    // ConfirmationModal centres its children and places the buttons right after them
-    alignSelf: 'stretch',
-    marginBottom: 16,
   },
+  passwordInputError: { borderColor: Colors.dangerDark },
 });

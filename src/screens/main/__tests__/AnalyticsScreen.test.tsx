@@ -122,7 +122,7 @@ describe('AnalyticsScreen Integration', () => {
     });
 
     const paywallNotice = await findByText(
-      'Experience the full power of AI nutrition scanning and deep metabolic analytics.'
+      "You're on the free plan"
     );
     expect(paywallNotice).toBeTruthy();
   });

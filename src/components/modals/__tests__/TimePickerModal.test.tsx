@@ -70,7 +70,7 @@ describe('TimePickerModal', () => {
       expect(getByText('30')).toBeTruthy();
     });
 
-    fireEvent.press(getByText('Save Time'));
+    fireEvent.press(getByText('Save'));
     expect(onSave).toHaveBeenCalledWith('08:30');
   });
 

@@ -116,7 +116,7 @@ describe('StepReportScreen', () => {
       name: /Monthly timeframe \(Calorify Pro required\)/i,
     });
     await fireEvent.press(monthlyTab);
-    expect(await findByText(/Unlock Calorify Pro/i)).toBeTruthy();
+    expect(await findByText(/on the free plan/i)).toBeTruthy();
   });
 
   test('calls onBack when back chevron is pressed', async () => {

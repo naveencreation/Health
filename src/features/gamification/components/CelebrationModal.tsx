@@ -6,6 +6,7 @@ import { Colors } from '@/theme/colors';
 import { EvaluatedAchievement } from '../engine/AchievementEvaluator';
 import { TIER_COLORS } from '../engine/achievementRules';
 import { haptics } from '@/utils/haptics';
+import { ProfileButton, dialogCard, sheetStyles } from '@/components/profile/ProfileUI';
 
 export interface CelebrationModalProps {
   visible: boolean;
@@ -28,60 +29,57 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
 
   const { definition } = achievement;
   const tierColor = TIER_COLORS[definition.tier] || TIER_COLORS.bronze;
+  const tierLabel = definition.tier.charAt(0).toUpperCase() + definition.tier.slice(1);
 
-  const handleClaim = async () => {
+  const handleClose = async () => {
     await haptics.impactMedium();
     onClose();
   };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.dialogCard}>
-          {/* Top Confetti / Sparkle Pill */}
-          <View style={styles.sparkleWrap}>
-            <View style={styles.sparklePill}>
-              <Ionicons name="sparkles" size={14} color="#EA580C" />
-              <Text style={styles.sparkleText}>TROPHY UNLOCKED!</Text>
-            </View>
-          </View>
+      <View style={sheetStyles.centeredScrim}>
+        <Pressable
+          style={sheetStyles.backdrop}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+        />
+        <View
+          style={[dialogCard, styles.card]}
+          accessibilityViewIsModal
+          accessibilityLabel={`Badge unlocked: ${definition.title}, ${tierLabel} tier`}
+        >
+          <Text style={styles.eyebrow}>Badge unlocked</Text>
 
-          {/* Trophy Icon Sunburst */}
           <View
-            style={[
-              styles.sunburstDisc,
-              { backgroundColor: tierColor.bg, borderColor: tierColor.border },
-            ]}
+            style={[styles.disc, { backgroundColor: tierColor.bg, borderColor: tierColor.border }]}
           >
-            <Ionicons name={definition.iconName as any} size={48} color={tierColor.primary} />
+            <Ionicons
+              name={definition.iconName as keyof typeof Ionicons.glyphMap}
+              size={44}
+              color={tierColor.primary}
+            />
           </View>
 
-          {/* Tier Label */}
-          <View
-            style={[
-              styles.tierTag,
-              { backgroundColor: tierColor.bg, borderColor: tierColor.border },
-            ]}
-          >
-            <Text style={[styles.tierTagText, { color: tierColor.primary }]}>
-              {definition.tier.toUpperCase()} TIER
-            </Text>
+          {/* Tier colours are too light for text, so the label stays slate on the tier tint */}
+          <View style={[styles.tier, { backgroundColor: tierColor.bg, borderColor: tierColor.border }]}>
+            <Text style={styles.tierText}>{tierLabel}</Text>
           </View>
 
-          {/* Title & Description */}
-          <Text style={styles.title}>{definition.title}</Text>
-          <Text style={styles.description}>{definition.description}</Text>
+          <Text style={styles.title} accessibilityRole="header">
+            {definition.title}
+          </Text>
+          <Text style={[sheetStyles.dialogMessage, styles.description]}>
+            {definition.description}
+          </Text>
 
-          {/* Claim Trophy Button */}
-          <Pressable
-            style={({ pressed }) => [styles.claimBtn, pressed && styles.btnPressed]}
-            onPress={handleClaim}
-            accessibilityRole="button"
-            accessibilityLabel="Claim Trophy"
-          >
-            <Text style={styles.claimBtnText}>Claim Trophy</Text>
-            <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-          </Pressable>
+          <ProfileButton
+            label="Keep going"
+            variant="primary"
+            onPress={handleClose}
+            style={styles.button}
+          />
         </View>
       </View>
     </Modal>
@@ -89,103 +87,36 @@ export const CelebrationModal: React.FC<CelebrationModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-  },
-  dialogCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    elevation: 0,
-  },
-  sparkleWrap: {
-    marginBottom: 16,
-  },
-  sparklePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-  },
-  sparkleText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: '#EA580C',
-    letterSpacing: 0.8,
-  },
-  sunburstDisc: {
+  card: { alignItems: 'center', paddingTop: 28 },
+  eyebrow: { fontFamily: Fonts.urbanist.semiBold, fontSize: 13, color: Colors.textSecondary },
+  disc: {
     width: 96,
     height: 96,
     borderRadius: 48,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 14,
+    elevation: 0,
   },
-  tierTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  tierTagText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-  },
-  title: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 6,
-  },
-  description: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 24,
+  tier: {
     paddingHorizontal: 8,
-  },
-  claimBtn: {
-    width: '100%',
-    height: 50,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
+    paddingVertical: 3,
+    borderRadius: 6,
     borderCurve: 'continuous',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    borderWidth: 1,
   },
-  btnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+  tierText: { fontFamily: Fonts.urbanist.bold, fontSize: 12, color: Colors.textSlate700 },
+  title: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 24,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginTop: 12,
   },
-  claimBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
-  },
+  description: { marginTop: 6, paddingHorizontal: 8 },
+  button: { alignSelf: 'stretch', marginTop: 24 },
 });
 
 export default CelebrationModal;

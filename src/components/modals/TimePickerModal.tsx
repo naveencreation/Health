@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { haptics } from '@/utils/haptics';
+import { ProfileButton, dialogCard, sheetStyles } from '@/components/profile/ProfileUI';
 
 export interface TimePickerModalProps {
   visible: boolean;
@@ -20,6 +14,23 @@ export interface TimePickerModalProps {
   onSave: (time: string) => void;
   onClose: () => void;
 }
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const StepButton: React.FC<{ up?: boolean; label: string; onPress: () => void }> = ({
+  up,
+  label,
+  onPress,
+}) => (
+  <Pressable
+    style={({ pressed }) => [styles.step, pressed && styles.pressed]}
+    onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={label}
+  >
+    <Ionicons name={up ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.textPrimary} />
+  </Pressable>
+);
 
 export const TimePickerModal: React.FC<TimePickerModalProps> = ({
   visible,
@@ -59,98 +70,71 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
     }
   };
 
+  const formatted = `${pad(hour)}:${pad(minute)}`;
+
   const handleSave = () => {
     haptics.impactLight();
-    const formatted = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     onSave(formatted);
     onClose();
   };
 
-  const formattedDisplay = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={sheetStyles.centeredScrim}>
+        <Pressable
+          style={sheetStyles.backdrop}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss time picker"
+        />
+        <View style={[dialogCard, styles.card]} accessibilityViewIsModal>
+          <View>
+            <Text style={sheetStyles.dialogTitle} accessibilityRole="header">
+              {title}
+            </Text>
+            <Text style={styles.subtitle}>24-hour time</Text>
+          </View>
 
-          {/* Time Spinner Display */}
-          <View style={styles.spinnerContainer}>
-            {/* Hours */}
+          <View style={styles.spinner} accessible={false}>
             <View style={styles.col}>
-              <Pressable
-                style={({ pressed }) => [styles.arrowBtn, pressed && styles.btnPressed]}
-                onPress={() => adjustHour(1)}
-                accessibilityLabel="Increase hour"
-              >
-                <Ionicons name="chevron-up" size={24} color={Colors.textPrimary} />
-              </Pressable>
-              <Text style={styles.digits}>{String(hour).padStart(2, '0')}</Text>
-              <Pressable
-                style={({ pressed }) => [styles.arrowBtn, pressed && styles.btnPressed]}
-                onPress={() => adjustHour(-1)}
-                accessibilityLabel="Decrease hour"
-              >
-                <Ionicons name="chevron-down" size={24} color={Colors.textPrimary} />
-              </Pressable>
-              <Text style={styles.colLabel}>HOUR</Text>
+              <StepButton up label="Increase hour" onPress={() => adjustHour(1)} />
+              <Text style={styles.digits} accessibilityLabel={`${hour} hours`}>
+                {pad(hour)}
+              </Text>
+              <StepButton label="Decrease hour" onPress={() => adjustHour(-1)} />
+              <Text style={styles.colLabel}>Hour</Text>
             </View>
-
-            <Text style={styles.colon}>:</Text>
-
-            {/* Minutes */}
+            <Text style={[styles.digits, styles.colon]}>:</Text>
             <View style={styles.col}>
-              <Pressable
-                style={({ pressed }) => [styles.arrowBtn, pressed && styles.btnPressed]}
-                onPress={() => adjustMinute(5)}
-                accessibilityLabel="Increase minutes"
-              >
-                <Ionicons name="chevron-up" size={24} color={Colors.textPrimary} />
-              </Pressable>
-              <Text style={styles.digits}>{String(minute).padStart(2, '0')}</Text>
-              <Pressable
-                style={({ pressed }) => [styles.arrowBtn, pressed && styles.btnPressed]}
-                onPress={() => adjustMinute(-5)}
-                accessibilityLabel="Decrease minutes"
-              >
-                <Ionicons name="chevron-down" size={24} color={Colors.textPrimary} />
-              </Pressable>
-              <Text style={styles.colLabel}>MIN</Text>
+              <StepButton up label="Increase minutes" onPress={() => adjustMinute(5)} />
+              <Text style={styles.digits} accessibilityLabel={`${minute} minutes`}>
+                {pad(minute)}
+              </Text>
+              <StepButton label="Decrease minutes" onPress={() => adjustMinute(-5)} />
+              <Text style={styles.colLabel}>Minute</Text>
             </View>
           </View>
 
-          {/* Preset Buttons */}
           {presets.length > 0 && (
-            <View style={styles.presetsContainer}>
-              <Text style={styles.presetsLabel}>Quick Presets:</Text>
+            <View>
+              <Text style={[styles.colLabel, styles.presetsLabel]}>Suggested</Text>
               <View style={styles.presetsRow}>
                 {presets.map(p => {
-                  const isSelected = p === formattedDisplay;
+                  const selected = p === formatted;
                   return (
                     <Pressable
                       key={p}
-                      style={[
-                        styles.presetChip,
-                        isSelected && styles.presetChipSelected,
+                      style={({ pressed }) => [
+                        styles.chip,
+                        selected && styles.chipSelected,
+                        pressed && styles.pressed,
                       ]}
                       onPress={() => selectPreset(p)}
                       accessibilityRole="button"
+                      accessibilityState={{ selected }}
                       accessibilityLabel={`Preset ${p}`}
                     >
-                      <Text
-                        style={[
-                          styles.presetChipText,
-                          isSelected && styles.presetChipTextSelected,
-                        ]}
-                      >
-                        {p}
-                      </Text>
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{p}</Text>
                     </Pressable>
                   );
                 })}
@@ -158,20 +142,15 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
             </View>
           )}
 
-          {/* Action Buttons */}
           <View style={styles.btnRow}>
-            <Pressable
-              style={({ pressed }) => [styles.cancelBtn, pressed && styles.btnPressed]}
-              onPress={onClose}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.saveBtn, pressed && styles.btnPressed]}
+            <ProfileButton label="Cancel" onPress={onClose} style={styles.flex} />
+            <ProfileButton
+              label="Save"
+              variant="primary"
               onPress={handleSave}
-            >
-              <Text style={styles.saveBtnText}>Save Time</Text>
-            </Pressable>
+              accessibilityLabel={`Save ${formatted}`}
+              style={styles.flex}
+            />
           </View>
         </View>
       </View>
@@ -180,145 +159,56 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+  card: { maxWidth: 360, gap: 20 },
+  subtitle: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  spinner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
+  col: { alignItems: 'center', gap: 6, minWidth: 72 },
+  step: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: Colors.card,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    padding: 24,
-    alignItems: 'center',
+    backgroundColor: Colors.surfaceLow,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.borderSubtle,
     elevation: 0,
   },
-  title: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  spinnerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 20,
-  },
-  col: {
-    alignItems: 'center',
-    width: 72,
-  },
-  colon: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 36,
-    color: Colors.textPrimary,
-    marginTop: -20,
-  },
-  arrowBtn: {
-    width: 44,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceLow,
-  },
-  btnPressed: {
-    opacity: 0.7,
-  },
+  pressed: { opacity: 0.85 },
   digits: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 32,
-    fontWeight: '700',
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 48,
+    lineHeight: 56,
     color: Colors.textPrimary,
-    marginVertical: 8,
+    fontVariant: ['tabular-nums'],
   },
-  colLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-  presetsContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  presetsLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 8,
-  },
-  presetsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  presetChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceLow,
+  colon: { marginBottom: 22 },
+  colLabel: { fontFamily: Fonts.urbanist.semiBold, fontSize: 12, color: Colors.textSecondary },
+  presetsLabel: { marginBottom: 8 },
+  presetsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    justifyContent: 'center',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.borderSubtle,
   },
-  presetChipSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  presetChipText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  presetChipTextSelected: {
-    color: '#FFFFFF',
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceLow,
-  },
-  cancelBtnText: {
+  chipSelected: { backgroundColor: Colors.textPrimary, borderColor: Colors.textPrimary },
+  chipText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: Colors.textSlate700,
+    fontVariant: ['tabular-nums'],
   },
-  saveBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-  },
-  saveBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
+  chipTextSelected: { color: Colors.textInverse },
+  btnRow: { flexDirection: 'row', gap: 10 },
+  flex: { flex: 1 },
 });

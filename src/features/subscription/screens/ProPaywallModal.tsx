@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
@@ -20,6 +12,15 @@ import {
 } from '@/services/payments/paymentService';
 import { usePro } from '../hooks/usePro';
 import { haptics } from '@/utils/haptics';
+import {
+  ProfileButton,
+  SettingsRow,
+  SettingsSection,
+  SheetHeader,
+  SheetNotice,
+  profileCard,
+  sheetStyles,
+} from '@/components/profile/ProfileUI';
 
 export interface ProPaywallModalProps {
   visible: boolean;
@@ -27,23 +28,42 @@ export interface ProPaywallModalProps {
   highlightFeature?: string;
 }
 
-const PRO_BENEFITS = [
+const PRO_BENEFITS: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  title: string;
+  description: string;
+}[] = [
   {
-    icon: 'camera',
-    title: 'Unlimited AI Meal Vision',
-    description: 'Instant photo nutrition recognition & portion estimation with Ria AI.',
+    icon: 'camera-outline',
+    title: 'Unlimited food photos',
+    description: 'Snap any meal and Ria estimates it',
   },
   {
-    icon: 'sparkles',
-    title: 'Adaptive Macro Coaching',
-    description: 'Dynamic daily calorie and metabolic adjustments tailored to your progress.',
+    icon: 'sparkles-outline',
+    title: 'Adaptive coaching',
+    description: 'Targets adjust to your real progress',
   },
   {
-    icon: 'stats-chart',
-    title: 'Deep Metabolic Trends',
-    description: 'Consolidated 30-day, monthly, and annual nutrition & energy expenditure graphs.',
+    icon: 'stats-chart-outline',
+    title: 'Long-term trends',
+    description: '30-day, monthly and yearly reports',
   },
 ];
+
+const BenefitsSection: React.FC<{ title: string; checked?: boolean }> = ({ title, checked }) => (
+  <SettingsSection title={title}>
+    {PRO_BENEFITS.map(b => (
+      <SettingsRow
+        key={b.title}
+        icon={checked ? 'checkmark' : b.icon}
+        iconColor={Colors.primary}
+        iconBackground={Colors.primaryLight}
+        title={b.title}
+        subtitle={checked ? undefined : b.description}
+      />
+    ))}
+  </SettingsSection>
+);
 
 export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   visible,
@@ -55,7 +75,10 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>('pro_annual');
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [trialEndsOn, setTrialEndsOn] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(
+    null
+  );
 
   useEffect(() => {
     if (visible) {
@@ -80,12 +103,17 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
       const res = await purchasePlan(selectedPlanId);
       if (res.success) {
         await haptics.success();
+        setTrialEndsOn(
+          selectedPlan.trialDays
+            ? new Date(Date.now() + selectedPlan.trialDays * 86400000).toLocaleDateString()
+            : null
+        );
         setPurchaseSuccess(true);
       } else {
-        setStatusMessage(res.error || 'Purchase failed');
+        setStatusMessage({ kind: 'error', text: res.error || 'Purchase failed' });
       }
     } catch {
-      setStatusMessage('Payment could not be completed.');
+      setStatusMessage({ kind: 'error', text: 'Payment could not be completed.' });
     } finally {
       setPurchasing(false);
     }
@@ -97,13 +125,13 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     try {
       const res = await restorePurchases();
       if (res.restored) {
-        setStatusMessage('Subscription restored successfully!');
+        setStatusMessage({ kind: 'ok', text: 'Subscription restored.' });
         closeTimer.current = setTimeout(() => onClose(), 1200);
       } else {
-        setStatusMessage('No active subscription found to restore.');
+        setStatusMessage({ kind: 'error', text: 'No active subscription found to restore.' });
       }
     } catch {
-      setStatusMessage('Restore operation failed.');
+      setStatusMessage({ kind: 'error', text: 'Restore failed. Try again.' });
     } finally {
       setPurchasing(false);
     }
@@ -111,6 +139,65 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
   const selectedPlan =
     SUBSCRIPTION_PACKAGES.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PACKAGES[0];
+  const ctaLabel = selectedPlan.trialDays
+    ? `Start ${selectedPlan.trialDays}-day free trial`
+    : 'Unlock Calorify Pro';
+
+  const renderMember = (welcome: boolean) => {
+    const planName = welcome ? PLAN_NAMES[selectedPlan.id] : activePlanId ? PLAN_NAMES[activePlanId] : 'Pro';
+    const planDetail = welcome
+      ? trialEndsOn
+        ? `Free trial for ${selectedPlan.trialDays} days, then billed on ${trialEndsOn} unless you cancel`
+        : 'Active now'
+      : formatExpiry(expiresAt);
+    return (
+      <View style={styles.page} testID={welcome ? 'pro-celebration-card' : 'pro-status-view'}>
+        <SheetHeader
+          title="Calorify Pro"
+          subtitle="Your membership"
+          onClose={onClose}
+          closeLabel={welcome ? 'Close Paywall' : 'Close'}
+        />
+        <ScrollView contentContainerStyle={sheetStyles.body} showsVerticalScrollIndicator={false}>
+          <View style={[profileCard, styles.hero]}>
+            <View style={styles.heroIcon}>
+              <Ionicons name={welcome ? 'sparkles' : 'star'} size={24} color={Colors.warningDark} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.heroTitle} accessibilityRole="header">
+                {welcome ? 'Welcome to Calorify Pro!' : 'Pro is active'}
+              </Text>
+              <Text style={styles.heroSubtitle}>Every Pro feature is unlocked</Text>
+            </View>
+          </View>
+
+          <SettingsSection
+            title="Plan"
+            footer="Calorify can't change your subscription from inside the app."
+          >
+            <SettingsRow icon="calendar-outline" title={planName} subtitle={planDetail} />
+            <SettingsRow
+              icon="information-circle-outline"
+              title="Change or cancel"
+              subtitle="Managed in Google Play or the App Store"
+            />
+          </SettingsSection>
+
+          <BenefitsSection title="Included" checked />
+        </ScrollView>
+        <View style={[sheetStyles.footer, styles.footer]}>
+          <ProfileButton
+            label={welcome ? 'Explore Pro features' : 'Done'}
+            variant={welcome ? 'primary' : 'secondary'}
+            onPress={async () => {
+              await haptics.selection();
+              onClose();
+            }}
+          />
+        </View>
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -121,628 +208,184 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     >
       <SafeAreaView style={styles.safeArea}>
         {purchaseSuccess ? (
-          <View style={styles.celebrationWrapper} testID="pro-celebration-card">
-            {/* Top Bar with Close Button */}
-            <View style={styles.topBar}>
-              <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
-                onPress={onClose}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close Paywall"
-              >
-                <Ionicons name="close" size={20} color={Colors.textPrimary} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.celebrationScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.celebrationBadgeCircle}>
-                <Ionicons name="sparkles" size={42} color={Colors.warningDark} />
-              </View>
-
-              <View style={styles.celebrationPill}>
-                <Text style={styles.celebrationPillText}>VIP ACCESS ACTIVATED</Text>
-              </View>
-
-              <Text style={styles.celebrationHeadline}>Welcome to Calorify Pro!</Text>
-              <Text style={styles.celebrationTagline}>
-                {selectedPlan.trialDays
-                  ? `Your ${selectedPlan.trialDays}-day free trial is now active. Billed on ${new Date(Date.now() + selectedPlan.trialDays * 86400000).toLocaleDateString()} unless canceled.`
-                  : 'Your unlimited VIP membership is now fully active.'}
-              </Text>
-
-              {/* Unlocked Perks List */}
-              <View style={styles.unlockedBox}>
-                <View style={styles.unlockedRow}>
-                  <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color={Colors.success} />
-                  </View>
-                  <View style={styles.unlockedTextWrap}>
-                    <Text style={styles.unlockedTitle}>Unlimited AI Meal Vision</Text>
-                    <Text style={styles.unlockedDesc}>No daily scan limits. Snap photos of every dish and snack.</Text>
-                  </View>
-                </View>
-
-                <View style={styles.unlockedRow}>
-                  <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color={Colors.success} />
-                  </View>
-                  <View style={styles.unlockedTextWrap}>
-                    <Text style={styles.unlockedTitle}>Dynamic Adaptive Coaching</Text>
-                    <Text style={styles.unlockedDesc}>Weekly calorie & macro recalculation with Ria AI.</Text>
-                  </View>
-                </View>
-
-                <View style={styles.unlockedRow}>
-                  <View style={styles.checkCircle}>
-                    <Ionicons name="checkmark" size={15} color={Colors.success} />
-                  </View>
-                  <View style={styles.unlockedTextWrap}>
-                    <Text style={styles.unlockedTitle}>Deep 30-Day & Yearly Trends</Text>
-                    <Text style={styles.unlockedDesc}>Full historical analytics, expenditure curves & projections.</Text>
-                  </View>
-                </View>
-
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [styles.exploreBtn, pressed && styles.btnPressed]}
-                onPress={async () => {
-                  await haptics.selection();
-                  onClose();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Explore Pro Features"
-              >
-                <Text style={styles.exploreBtnText}>Explore Pro Features</Text>
-                <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
-              </Pressable>
-            </ScrollView>
-          </View>
+          renderMember(true)
         ) : isPro ? (
-          <View style={styles.celebrationWrapper} testID="pro-status-view">
-            <View style={styles.topBar}>
-              <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
-                onPress={onClose}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <Ionicons name="close" size={20} color={Colors.textPrimary} />
-              </Pressable>
-            </View>
-            <ScrollView
-              contentContainerStyle={styles.celebrationScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.celebrationBadgeCircle}>
-                <Ionicons name="star" size={42} color={Colors.warningDark} />
-              </View>
-              <Text style={styles.celebrationHeadline}>Calorify Pro is active</Text>
-              <Text style={styles.celebrationTagline}>
-                {activePlanId ? `${PLAN_NAMES[activePlanId]} plan • ` : ''}
-                {formatExpiry(expiresAt)}
-              </Text>
-              <Text style={styles.termsNote}>
-                To change or cancel, use subscriptions in your Google Play Store or App Store
-                settings.
-              </Text>
-              <Pressable
-                style={({ pressed }) => [styles.exploreBtn, pressed && styles.btnPressed]}
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Done"
-              >
-                <Text style={styles.exploreBtnText}>Done</Text>
-              </Pressable>
-            </ScrollView>
-          </View>
+          renderMember(false)
         ) : (
-          <>
-            {/* Top Bar with Close Button */}
-            <View style={styles.topBar}>
+          <View style={styles.page}>
+            <SheetHeader
+              title="Calorify Pro"
+              subtitle="You're on the free plan"
+              onClose={onClose}
+              closeLabel="Close Paywall"
+            />
+            <ScrollView contentContainerStyle={sheetStyles.body} showsVerticalScrollIndicator={false}>
+              {highlightFeature ? (
+                <View style={styles.highlight}>
+                  <Ionicons name="lock-open-outline" size={16} color={Colors.textSlate700} />
+                  <Text style={styles.highlightText}>Unlocks: {highlightFeature}</Text>
+                </View>
+              ) : null}
+
+              <BenefitsSection title="What you get" />
+
+              <SettingsSection title="Choose a plan">
+                {SUBSCRIPTION_PACKAGES.map(plan => {
+                  const isSelected = selectedPlanId === plan.id;
+                  const detail = [
+                    plan.priceFormatted,
+                    // Skip the per-month figure when it only repeats the price ($4.99 / month)
+                    plan.pricePerMonthFormatted &&
+                    plan.pricePerMonthFormatted.split(' ')[0] !== plan.priceFormatted.split(' ')[0]
+                      ? plan.pricePerMonthFormatted
+                      : null,
+                    plan.trialDays ? `${plan.trialDays}-day free trial` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+                  return (
+                    <Pressable
+                      key={plan.id}
+                      style={({ pressed }) => [
+                        styles.planRow,
+                        isSelected && styles.planRowSelected,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() => handleSelectPlan(plan.id)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: isSelected, checked: isSelected }}
+                      accessibilityLabel={`${plan.title}, ${detail}${plan.badge ? `, ${plan.badge}` : ''}`}
+                    >
+                      <View style={styles.flex}>
+                        <View style={styles.planTitleRow}>
+                          <Text style={styles.planTitle}>{plan.title}</Text>
+                          {plan.badge ? (
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>{plan.badge}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text style={styles.planDetail}>{detail}</Text>
+                      </View>
+                      <View style={[styles.radio, isSelected && styles.radioOn]}>
+                        {isSelected ? <View style={styles.radioDot} /> : null}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </SettingsSection>
+
+              {statusMessage ? <SheetNotice kind={statusMessage.kind} text={statusMessage.text} /> : null}
+            </ScrollView>
+
+            <View style={[sheetStyles.footer, styles.footer]}>
+              <ProfileButton
+                label={ctaLabel}
+                variant="primary"
+                onPress={handlePurchase}
+                loading={purchasing}
+              />
               <Pressable
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.btnPressed]}
-                onPress={onClose}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={({ pressed }) => [styles.restore, pressed && styles.pressed]}
+                onPress={handleRestore}
+                disabled={purchasing}
                 accessibilityRole="button"
-                accessibilityLabel="Close Paywall"
+                accessibilityLabel="Restore Purchases"
               >
-                <Ionicons name="close" size={20} color={Colors.textPrimary} />
+                <Text style={styles.restoreText}>Restore purchases</Text>
               </Pressable>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-          {/* Hero Crown Badge */}
-          <View style={styles.crownWrap}>
-            <View style={styles.crownCircle}>
-              <Ionicons name="star" size={32} color={Colors.onPrimary} />
+              <Text style={styles.terms}>
+                Renews automatically unless you cancel at least 24 hours before the period ends.
+                Cancel any time in Google Play or the App Store.
+              </Text>
             </View>
           </View>
-
-          {/* Headline & Subtitle */}
-          <Text style={styles.headline}>Unlock Calorify Pro</Text>
-          <Text style={styles.subtitle}>
-            Experience the full power of AI nutrition scanning and deep metabolic analytics.
-          </Text>
-
-          {highlightFeature && (
-            <View style={styles.highlightPill}>
-              <Ionicons name="lock-open" size={14} color={Colors.primary} />
-              <Text style={styles.highlightText}>Unlocks: {highlightFeature}</Text>
-            </View>
-          )}
-
-          {/* Benefits List */}
-          <View style={styles.benefitsList}>
-            {PRO_BENEFITS.map((b, idx) => (
-              <View key={idx} style={styles.benefitCard}>
-                <View style={styles.benefitIconWrap}>
-                  <Ionicons name={b.icon as any} size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.benefitTextWrap}>
-                  <Text style={styles.benefitTitle}>{b.title}</Text>
-                  <Text style={styles.benefitDescription}>{b.description}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Subscription Plans */}
-          <Text style={styles.choosePlanTitle}>Choose Your Plan</Text>
-          <View style={styles.planList}>
-            {SUBSCRIPTION_PACKAGES.map(plan => {
-              const isSelected = selectedPlanId === plan.id;
-              return (
-                <Pressable
-                  key={plan.id}
-                  style={[styles.planCard, isSelected && styles.planCardSelected]}
-                  onPress={() => handleSelectPlan(plan.id)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                >
-                  {plan.badge && (
-                    <View style={styles.planBadge}>
-                      <Text style={styles.planBadgeText}>{plan.badge}</Text>
-                    </View>
-                  )}
-
-                  <View style={styles.planCardHeader}>
-                    <View style={styles.planRadioCircle}>
-                      {isSelected && <View style={styles.planRadioInner} />}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.planTitle}>{plan.title}</Text>
-                      <Text style={styles.planBillingPeriod}>{plan.billingPeriod}</Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={styles.planPrice}>{plan.priceFormatted}</Text>
-                      {plan.pricePerMonthFormatted && (
-                        <Text style={styles.planPerMonth}>{plan.pricePerMonthFormatted}</Text>
-                      )}
-                    </View>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Status Message */}
-          {statusMessage && (
-            <View style={styles.statusBox}>
-              <Text style={styles.statusText}>{statusMessage}</Text>
-            </View>
-          )}
-
-          {/* Action Button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.purchaseBtn,
-              (purchasing || pressed) && styles.btnPressed,
-            ]}
-            onPress={handlePurchase}
-            disabled={purchasing}
-            accessibilityRole="button"
-            accessibilityLabel="Unlock Calorify Pro"
-          >
-            {purchasing ? (
-              <ActivityIndicator color={Colors.onPrimary} />
-            ) : (
-              <>
-                <Text style={styles.purchaseBtnText}>
-                  {selectedPlan.trialDays
-                    ? `Start ${selectedPlan.trialDays}-Day Free Trial`
-                    : 'Unlock Calorify Pro'}
-                </Text>
-                <Ionicons name="arrow-forward" size={18} color={Colors.onPrimary} />
-              </>
-            )}
-          </Pressable>
-
-          {/* Restore Purchases */}
-          <Pressable
-            style={styles.restoreBtn}
-            onPress={handleRestore}
-            disabled={purchasing}
-            accessibilityRole="button"
-            accessibilityLabel="Restore Purchases"
-          >
-            <Text style={styles.restoreBtnText}>Restore Purchases</Text>
-          </Pressable>
-
-          {/* Terms and Privacy Footnote */}
-          <Text style={styles.termsNote}>
-            Cancel anytime in your Google Play Store or App Store settings. Subscription
-            automatically renews unless canceled at least 24 hours before the end of the current
-            period.
-          </Text>
-          </ScrollView>
-        </>
-      )}
+        )}
       </SafeAreaView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  topBar: {
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
+  safeArea: { flex: 1, backgroundColor: Colors.background, alignItems: 'center' },
+  // Web shows the app in a 480 px phone frame; keep the sheet inside it
+  page: { flex: 1, width: '100%', maxWidth: 480 },
+  flex: { flex: 1 },
+  footer: { paddingBottom: 16 },
+  pressed: { opacity: 0.85 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.warningLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 40,
-    alignItems: 'center',
-  },
-  crownWrap: {
-    marginBottom: 16,
-  },
-  crownCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.warning,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 0,
-  },
-  headline: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 26,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  subtitle: {
+  heroTitle: { fontFamily: Fonts.urbanist.extraBold, fontSize: 20, color: Colors.textPrimary },
+  heroSubtitle: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 12,
-  },
-  highlightPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.stepsLight,
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    marginBottom: 20,
-  },
-  highlightText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.primary,
-  },
-  benefitsList: {
-    width: '100%',
-    gap: 10,
-    marginBottom: 24,
-  },
-  benefitCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderWhisper,
-    gap: 12,
-  },
-  benefitIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.stepsLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  benefitTextWrap: {
-    flex: 1,
-  },
-  benefitTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  benefitDescription: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.textSecondary,
-  },
-  choosePlanTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.textPrimary,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  planList: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 20,
-  },
-  planCard: {
-    width: '100%',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: Colors.borderSubtle,
-    position: 'relative',
-  },
-  planCardSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight,
-  },
-  planBadge: {
-    position: 'absolute',
-    top: -10,
-    right: 14,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  planBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: Colors.onPrimary,
-    letterSpacing: 0.5,
-  },
-  planCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  planRadioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  planRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-  },
-  planTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-  planBillingPeriod: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  planPrice: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-  planPerMonth: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
-    color: Colors.weightLoss,
-  },
-  statusBox: {
-    width: '100%',
-    padding: 12,
-    backgroundColor: Colors.surfaceInset,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  statusText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textSlate700,
-    textAlign: 'center',
-  },
-  purchaseBtn: {
-    width: '100%',
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  purchaseBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.onPrimary,
-  },
-  restoreBtn: {
-    paddingVertical: 8,
-    marginBottom: 20,
-  },
-  restoreBtnText: {
-    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.textSecondary,
-  },
-  termsNote: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    lineHeight: 16,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  celebrationWrapper: {
-    flex: 1,
-  },
-  celebrationScroll: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 40,
-  },
-  celebrationBadgeCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: Colors.carbsLight,
-    borderWidth: 2,
-    borderColor: Colors.carbsBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    elevation: 0,
-  },
-  celebrationPill: {
-    backgroundColor: Colors.carbsLight,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.carbsBorder,
-    marginBottom: 12,
-  },
-  celebrationPillText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: Colors.warningDark,
-    letterSpacing: 0.6,
-  },
-  celebrationHeadline: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 28,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  celebrationTagline: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-    paddingHorizontal: 8,
-  },
-  unlockedBox: {
-    width: '100%',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    gap: 16,
-    marginBottom: 28,
-  },
-  unlockedRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  checkCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.proteinLight,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginTop: 2,
   },
-  unlockedTextWrap: {
-    flex: 1,
-  },
-  unlockedTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  unlockedDesc: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.textSecondary,
-  },
-  exploreBtn: {
-    width: '100%',
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    borderCurve: 'continuous',
+  highlight: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
-    elevation: 0,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.primaryLight,
   },
-  exploreBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.onPrimary,
+  highlightText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textSlate700 },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  planRowSelected: { backgroundColor: Colors.surfaceLow },
+  planTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  planTitle: { fontFamily: Fonts.urbanist.semiBold, fontSize: 15, color: Colors.textPrimary },
+  planDetail: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  badge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.warningLight,
+  },
+  badgeText: { fontFamily: Fonts.urbanist.bold, fontSize: 11, color: Colors.warningDark },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: Colors.borderMedium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOn: { borderColor: Colors.primary },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary },
+  restore: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  restoreText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textSecondary },
+  terms: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
 });
 
