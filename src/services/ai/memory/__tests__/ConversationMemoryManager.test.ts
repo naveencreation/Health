@@ -62,4 +62,16 @@ describe('ConversationMemoryManager', () => {
     const all = await ConversationMemoryManager.loadAllConversations(UID);
     expect(all.map(c => c.id)).toEqual(['c1', 'c2']);
   });
+
+  it('archives the oldest chat past 10 instead of deleting it', async () => {
+    for (let n = 1; n <= 11; n++) {
+      await ConversationMemoryManager.saveConversation(conversation(`c${n}`), UID);
+    }
+
+    const active = await ConversationMemoryManager.loadConversations(UID);
+    const all = await ConversationMemoryManager.loadAllConversations(UID);
+    expect(active).toHaveLength(10);
+    expect(active.map(c => c.id)).not.toContain('c1');
+    expect(all.find(c => c.id === 'c1')?.archived).toBe(true);
+  });
 });

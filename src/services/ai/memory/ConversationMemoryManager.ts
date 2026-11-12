@@ -194,7 +194,11 @@ class ConversationMemoryManagerService {
       // Saving a reopened archived chat makes it active again instead of keeping two copies
       const archived = existingAll.filter(item => item.archived && item.id !== conversation.id);
       const active = existingAll.filter(item => !item.archived && item.id !== conversation.id);
-      const next = [conversation, ...active].slice(0, 10).concat(archived);
+      // Past 10 active chats the oldest move to Archived instead of being deleted.
+      // shortcut: archived chats are capped at 40 to bound storage; add paging if users need more
+      const ordered = [conversation, ...active];
+      const overflow = ordered.slice(10).map(item => ({ ...item, archived: true }));
+      const next = ordered.slice(0, 10).concat(overflow, archived).slice(0, 50);
       await AsyncStorage.setItem(this.getConversationsKey(userId), JSON.stringify(next));
     } catch (err) {
       console.warn('ConversationMemoryManager: Failed to save conversation', err);

@@ -42,6 +42,33 @@ export class GeminiProvider {
   /**
    * Executes an HTTP request with exponential backoff and jitter for retryable errors.
    */
+  /**
+   * Waits out a short block (the 3 s send cooldown) instead of failing; otherwise throws
+   * an error that carries the real wait, or QUOTA_EXCEEDED for the local daily cap.
+   */
+  private static async passRateLimit(): Promise<void> {
+    let status = await AIRateLimiter.checkRateLimit();
+    if (
+      !status.allowed &&
+      !status.isDailyWarning &&
+      status.waitMs <= AI_CONFIG.RATE_LIMIT.MIN_SEND_COOLDOWN_MS
+    ) {
+      await new Promise(res => setTimeout(res, status.waitMs));
+      status = await AIRateLimiter.checkRateLimit();
+    }
+    if (status.allowed) return;
+    if (status.isDailyWarning) {
+      throw AIErrorMapper.createError('QUOTA_EXCEEDED', status.reason || 'Daily limit reached.');
+    }
+    throw AIErrorMapper.createError(
+      'RATE_LIMIT',
+      status.reason || 'Please wait a moment before sending.',
+      undefined,
+      true,
+      Math.ceil(status.waitMs / 1000)
+    );
+  }
+
   private static async fetchWithRetry(
     url: string,
     options: RequestInit,
@@ -177,10 +204,14 @@ export class GeminiProvider {
       const errorText = await response.text();
       const err = AIErrorMapper.fromRawError({ statusCode: response.status, message: errorText });
 
-      if (err.type === 'INVALID_KEY' && !sanitized.startsWith('AIza')) {
-        err.message =
-          'Key rejected by Google. Google Gemini API keys start with "AIza...". Please get your free key from Google AI Studio.';
-        err.userMessage = 'Please enter a valid Google Gemini API key starting with "AIza...".';
+      if (err.type === 'INVALID_KEY') {
+        // Show Google's own reason (never the key itself), plus the prefix hint when it applies
+        const reason = err.message.split(sanitized).join('•••');
+        const hint = sanitized.startsWith('AIza')
+          ? ''
+          : ' Gemini keys from Google AI Studio start with "AIza".';
+        err.message = `Google rejected this key: ${reason}${hint}`;
+        err.userMessage = err.message;
       }
 
       AIObservability.recordMetric({
@@ -212,14 +243,7 @@ export class GeminiProvider {
     const startTime = Date.now();
 
     // 1. Rate Limit Check
-    const rateStatus = await AIRateLimiter.checkRateLimit();
-    if (!rateStatus.allowed) {
-      const err = AIErrorMapper.createError(
-        'RATE_LIMIT',
-        rateStatus.reason || 'Please wait a moment before sending.'
-      );
-      throw err;
-    }
+    await this.passRateLimit();
 
     // 2. Input Validation & Clinical Safety Interceptor
     const validation = AIInputValidator.validateUserText(prompt);
@@ -258,10 +282,17 @@ export class GeminiProvider {
 
     // Short-term conversation history
     for (const msg of trimmedHistory) {
-      if (!msg.isError) {
+      if (msg.isError) continue;
+      if (msg.sender === 'ria') {
+        contents.push({ role: 'model', parts: [{ text: msg.text }] });
+        continue;
+      }
+      // Earlier user turns are as untrusted as the current one
+      const safeText = AIInputValidator.validateUserText(msg.text).sanitizedText;
+      if (safeText) {
         contents.push({
-          role: msg.sender === 'ria' ? 'model' : 'user',
-          parts: [{ text: msg.text }],
+          role: 'user',
+          parts: [{ text: AIInputValidator.wrapUntrustedInput(safeText) }],
         });
       }
     }
@@ -444,13 +475,7 @@ export class GeminiProvider {
     }
 
     // 2. Rate Limit Check
-    const rateStatus = await AIRateLimiter.checkRateLimit();
-    if (!rateStatus.allowed) {
-      throw AIErrorMapper.createError(
-        'RATE_LIMIT',
-        rateStatus.reason || 'Please wait a moment before sending.'
-      );
-    }
+    await this.passRateLimit();
 
     const prompt = `Analyze this food image accurately for a calorie tracking mobile app.
 Identify the primary dish or food plate shown.
@@ -652,6 +677,10 @@ Output strictly the 3-sentence summary. No bullet points or conversational fille
 
     const endpoint = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent`;
 
+    // Background work: skip rather than wait or push the user's next message into a 429
+    const rateStatus = await AIRateLimiter.checkRateLimit();
+    if (!rateStatus.allowed) return existingSummary || '';
+
     try {
       const response = await this.fetchWithRetry(
         endpoint,
@@ -671,6 +700,7 @@ Output strictly the 3-sentence summary. No bullet points or conversational fille
         },
         1
       );
+      await AIRateLimiter.recordRequest();
 
       if (!response.ok) return existingSummary || '';
       const data = await response.json();

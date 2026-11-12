@@ -3,6 +3,7 @@ import { ConversationMemoryManager } from './memory/ConversationMemoryManager';
 import { FastLoopMemoryExtractor } from './memory/FastLoopMemoryExtractor';
 import { GeminiProvider } from './providers/GeminiProvider';
 import { AIErrorMapper } from './errors/AIErrorMapper';
+import { AI_CONFIG } from './config/AIConfig';
 import { AIObservability } from './observability/AIObservability';
 import {
   ChatMessage,
@@ -103,20 +104,31 @@ class AIServiceFacade {
     };
 
     const summaryText = activeSummary?.text || '';
+    // Turns already folded into the summary aren't sent again.
+    // shortcut: the index can drift if the 30-message cap trims a reloaded chat; key it to message ids if that matters
+    const summarizedUpTo = Math.min(activeSummary?.lastSummarizedIndex ?? 0, history.length);
+    const recentHistory = summaryText ? history.slice(summarizedUpTo) : history;
 
     const completedText = await GeminiProvider.streamChat(
       apiKey,
       prompt,
-      history,
+      recentHistory,
       enrichedContext,
       onChunk,
       signal,
       summaryText
     );
 
-    // Trigger non-blocking background summarization if history is getting long
-    if (history.length >= 10) {
-      this.triggerBackgroundSummarization(apiKey, history, summaryText, userId).catch(() => {});
+    // Fold the oldest unsummarized turns into the summary once enough have piled up,
+    // so this second call runs about every 6 messages instead of on every turn
+    if (history.length - summarizedUpTo >= AI_CONFIG.MEMORY.SUMMARIZATION_THRESHOLD) {
+      this.triggerBackgroundSummarization(
+        apiKey,
+        history,
+        summaryText,
+        summaryText ? summarizedUpTo : 0,
+        userId
+      ).catch(() => {});
     }
 
     return completedText;
@@ -221,20 +233,23 @@ class AIServiceFacade {
     apiKey: string,
     history: ChatMessage[],
     existingSummary: string,
+    fromIndex: number,
     userId?: string
   ): Promise<void> {
     try {
-      const oldestTurns = history.slice(0, 6);
+      const SUMMARY_BATCH = 6;
+      const oldestTurns = history.slice(fromIndex, fromIndex + SUMMARY_BATCH);
       const newSummary = await GeminiProvider.generateConversationSummary(
         apiKey,
         oldestTurns,
         existingSummary
       );
-      if (newSummary) {
+      // Unchanged text means the call was skipped or failed; don't mark those turns as summarized
+      if (newSummary && newSummary !== existingSummary) {
         await ConversationMemoryManager.saveSummary(
           {
             text: newSummary,
-            lastSummarizedIndex: 6,
+            lastSummarizedIndex: fromIndex + SUMMARY_BATCH,
             updatedAt: new Date().toISOString(),
           },
           userId
