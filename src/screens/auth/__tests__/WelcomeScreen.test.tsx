@@ -152,6 +152,14 @@ describe('WelcomeScreen (Consolidated Phase 0)', () => {
     expect(parsedData.goal).toBe('gain');
   });
 
+  it('shows the thali headline and no guest button for new users', async () => {
+    const { getByText, queryByTestId } = await render(<WelcomeScreen />);
+
+    expect(getByText('counted.')).toBeTruthy();
+    expect(queryByTestId('btn-welcome-demo')).toBeNull();
+    expect(queryByTestId('btn-welcome-start-over')).toBeNull();
+  });
+
   it('opens SignInScreen when tapping Sign In', async () => {
     const { getByTestId } = await render(<WelcomeScreen />);
 
@@ -173,7 +181,8 @@ describe('WelcomeScreen (Consolidated Phase 0)', () => {
     const { getByText, getByTestId } = await render(<WelcomeScreen />);
 
     await waitFor(() => {
-      expect(getByText('Continue setup (Naveen)')).toBeTruthy();
+      expect(getByText('Welcome back, Naveen')).toBeTruthy();
+      expect(getByText('Continue setup')).toBeTruthy();
       expect(getByTestId('btn-welcome-start-over')).toBeTruthy();
     });
 

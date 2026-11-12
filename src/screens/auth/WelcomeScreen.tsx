@@ -4,19 +4,27 @@ import {
   View,
   Text,
   Pressable,
-  Platform,
-  ActivityIndicator,
   ScrollView,
   BackHandler,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
+import Animated, {
+  useReducedMotion,
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { Image as ExpoImage } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { useAuth } from '@/context/HealthContext';
 import { ScreenTransitionContainer } from '@/components/common/ScreenTransitionContainer';
-import { BouncingDotsLoader } from '@/components/common/BouncingDotsLoader';
 import { SignInScreen } from './SignInScreen';
 import { SignUpScreen } from './SignUpScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
@@ -31,12 +39,7 @@ import {
 } from '@/features/onboarding';
 
 export type AuthScreenMode =
-  | 'welcome'
-  | 'onboarding'
-  | 'signin'
-  | 'signup'
-  | 'forgot_password'
-  | 'age';
+  'welcome' | 'onboarding' | 'signin' | 'signup' | 'forgot_password' | 'age';
 
 interface WelcomeScreenProps {
   onLoginSuccess?: () => void;
@@ -46,6 +49,38 @@ interface WelcomeScreenProps {
   onOnboardingEnd?: () => void;
 }
 
+const HERO_IMAGE = require('../../../assets/welcome/thali_arch.jpg');
+const HERO_ASPECT = 1200 / 1350;
+
+// Positions are fractions of the hero illustration so the labels track the dishes at any size.
+const HERO_TAGS = [
+  { label: 'Dal tadka', kcal: 180, x: 0.06, y: 0.575, align: 'left' },
+  { label: 'Paneer', kcal: 290, x: 0.92, y: 0.474, align: 'right' },
+  { label: '2 Roti', kcal: 240, x: 0.945, y: 0.883, align: 'right' },
+] as const;
+
+const Reveal: React.FC<{
+  delay?: number;
+  rise?: number;
+  style?: StyleProp<ViewStyle>;
+  children: React.ReactNode;
+}> = ({ delay = 0, rise = 10, style, children }) => {
+  const reduceMotion = useReducedMotion();
+  const progress = useSharedValue(reduceMotion ? 1 : 0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    progress.value = withDelay(
+      delay,
+      withTiming(1, { duration: MotionDurations.sheet, easing: MotionCurves.decelerate })
+    );
+  }, [delay, progress, reduceMotion]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ translateY: (1 - progress.value) * rise }],
+  }));
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
+};
+
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onLoginSuccess,
   initialMode = 'welcome',
@@ -53,13 +88,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOnboardingStart,
   onOnboardingEnd,
 }) => {
-  const { loginDemo, applyOnboardingPlan } = useAuth();
+  const { applyOnboardingPlan } = useAuth();
   const normalizeMode = (m: AuthScreenMode): AuthScreenMode => (m === 'age' ? 'onboarding' : m);
   const [history, setHistory] = useState<AuthScreenMode[]>([normalizeMode(initialMode)]);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
   const mode = history[history.length - 1] || 'welcome';
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
-  const [demoError, setDemoError] = useState<string | null>(null);
+  const [heroSize, setHeroSize] = useState({ width: 0, height: 0 });
   const [draft, setDraft] = useState<OnboardingDraft | null>(null);
 
   useEffect(() => {
@@ -174,19 +208,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     gender: 'male',
   });
 
-  const handleDemoSignIn = async () => {
-    setIsDemoLoading(true);
-    setDemoError(null);
-    try {
-      await loginDemo();
-      if (onLoginSuccess) onLoginSuccess();
-    } catch (e: any) {
-      setDemoError(e.message || 'Demo login failed');
-    } finally {
-      setIsDemoLoading(false);
-    }
-  };
-
   const renderContent = () => {
     // 1. Sign In Screen
     if (mode === 'signin') {
@@ -298,6 +319,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
 
     const hasActiveDraft = Boolean(draft?.step && draft.step !== 'name');
+    const draftName = draft?.name?.trim();
+
+    // Rendered rect of the illustration: contain-fitted and bottom-anchored in the hero box.
+    const heroWidth = Math.min(heroSize.width, heroSize.height * HERO_ASPECT);
+    const heroHeight = heroWidth / HERO_ASPECT;
+    const heroLeft = (heroSize.width - heroWidth) / 2;
+    const heroTop = heroSize.height - heroHeight;
 
     // Default: Welcome Landing Screen
     return (
@@ -308,7 +336,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           bounces={false}
         >
           <View style={styles.container}>
-            {/* Top Header Wordmark */}
             <View style={styles.topHeader}>
               {onClose ? (
                 <Pressable
@@ -321,53 +348,102 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Close welcome screen"
                 >
-                  <Ionicons name="close" size={20} color="#64748B" />
+                  <Ionicons name="close" size={20} color={Colors.textSecondary} />
                 </Pressable>
               ) : null}
-              <View style={styles.logoRow}>
-                <View style={styles.logoIconBadge}>
-                  <Ionicons name="flame" size={18} color="#FFFFFF" />
-                </View>
-                <Text style={styles.logoText}>Calorify</Text>
+              <View style={styles.logoRow} accessible accessibilityRole="header">
+                <ExpoImage
+                  source={require('../../../assets/flame-icon.png')}
+                  style={styles.logoFlame}
+                  contentFit="contain"
+                  priority="high"
+                />
+                <Text style={styles.logoText} maxFontSizeMultiplier={1.2}>
+                  Calorify
+                </Text>
               </View>
             </View>
 
-            {/* Hero Visual Area */}
-            <View style={styles.heroSection}>
-              <View style={styles.heroGlowRing}>
-                <View style={styles.heroImageContainer}>
-                  <ExpoImage
-                    source={require('../../../assets/ria_avatar.webp')}
-                    style={styles.heroImage}
-                    contentFit="cover"
-                    transition={200}
-                    cachePolicy="memory-disk"
-                    priority="high"
-                  />
-                </View>
+            <Reveal style={styles.heroSection} rise={16}>
+              <View
+                style={styles.heroFrame}
+                onLayout={e => {
+                  const { width, height } = e.nativeEvent.layout;
+                  setHeroSize({ width, height });
+                }}
+              >
+                <ExpoImage
+                  source={HERO_IMAGE}
+                  style={StyleSheet.absoluteFill}
+                  contentFit="contain"
+                  contentPosition="bottom"
+                  priority="high"
+                  cachePolicy="memory-disk"
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel="A thali with dal, paneer, raita, rice and roti, each labelled with its calories"
+                />
+                {heroWidth > 0
+                  ? HERO_TAGS.map((tag, index) => (
+                      <Reveal
+                        key={tag.label}
+                        delay={MotionDurations.sheet + index * 80}
+                        rise={6}
+                        style={[
+                          styles.tag,
+                          { top: heroTop + heroHeight * tag.y },
+                          tag.align === 'left'
+                            ? { left: Math.max(4, heroLeft + heroWidth * tag.x) }
+                            : {
+                                right: Math.max(4, heroSize.width - (heroLeft + heroWidth * tag.x)),
+                              },
+                        ]}
+                      >
+                        <View
+                          style={styles.tagInner}
+                          importantForAccessibility="no-hide-descendants"
+                          accessibilityElementsHidden
+                        >
+                          <View style={styles.tagDot} />
+                          <Text style={styles.tagLabel} maxFontSizeMultiplier={1.2}>
+                            {tag.label}
+                          </Text>
+                          <Text style={styles.tagKcal} maxFontSizeMultiplier={1.2}>
+                            {tag.kcal} kcal
+                          </Text>
+                        </View>
+                      </Reveal>
+                    ))
+                  : null}
               </View>
-            </View>
+            </Reveal>
 
-            {/* Messaging & Value Proposition */}
-            <View style={styles.contentSection}>
-              <Text style={styles.mainHeading}>Your Personal Nutrition Coach</Text>
-              <Text style={styles.headlineTagline}>Built around the food you actually eat.</Text>
-              <Text style={styles.subHeading}>
-                Track Indian meals, understand your nutrition, and get simple daily guidance that
-                fits your lifestyle.
+            <Reveal delay={MotionDurations.sheet * 2} style={styles.contentSection}>
+              <Text
+                style={styles.mainHeading}
+                accessibilityRole="header"
+                maxFontSizeMultiplier={1.3}
+              >
+                {hasActiveDraft ? (
+                  draftName ? (
+                    `Welcome back, ${draftName}`
+                  ) : (
+                    'Welcome back'
+                  )
+                ) : (
+                  <>
+                    Your thali, <Text style={styles.mainHeadingAccent}>counted.</Text>
+                  </>
+                )}
               </Text>
-            </View>
+              <Text style={styles.subHeading} maxFontSizeMultiplier={1.4}>
+                {hasActiveDraft
+                  ? 'Your answers are saved. Pick up where you left off.'
+                  : 'From dal to dosa, log what you really eat and get a calorie plan made for you.'}
+              </Text>
+            </Reveal>
 
-            {/* Action Controls */}
-            <View style={styles.ctaSection}>
-              {demoError ? (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle" size={16} color="#DC2626" />
-                  <Text style={styles.errorText}>{demoError}</Text>
-                </View>
-              ) : null}
-
-              {/* Primary CTA */}
+            <Reveal delay={MotionDurations.sheet * 2 + 80} style={styles.ctaSection}>
               <Pressable
                 style={({ pressed }) => [
                   styles.primaryButton,
@@ -376,24 +452,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onPress={() => pushMode('onboarding')}
                 testID="btn-welcome-get-started"
                 accessibilityRole="button"
-                accessibilityLabel={
-                  hasActiveDraft ? 'Continue setup' : 'Get Started with Calorify'
-                }
+                accessibilityLabel={hasActiveDraft ? 'Continue setup' : 'Get Started with Calorify'}
               >
-                <Text style={styles.primaryButtonText}>
-                  {hasActiveDraft
-                    ? draft?.name?.trim()
-                      ? `Continue setup (${draft.name.trim()})`
-                      : 'Continue setup'
-                    : 'Get Started'}
+                <Text style={styles.primaryButtonText} maxFontSizeMultiplier={1.3}>
+                  {hasActiveDraft ? 'Continue setup' : 'Get started'}
                 </Text>
+                <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
               </Pressable>
 
-              {/* Start Over Button if active draft exists */}
               {hasActiveDraft ? (
                 <Pressable
                   style={({ pressed }) => [
-                    styles.startOverButton,
+                    styles.textButton,
                     pressed ? styles.pressedSubtle : null,
                   ]}
                   onPress={handleStartOver}
@@ -401,44 +471,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Start over onboarding from the beginning"
                 >
-                  <Text style={styles.startOverButtonText}>Start over</Text>
+                  <Text style={styles.startOverButtonText} maxFontSizeMultiplier={1.3}>
+                    Start over
+                  </Text>
                 </Pressable>
               ) : null}
 
-              {/* Secondary CTA */}
               <Pressable
-                style={({ pressed }) => [
-                  styles.demoButton,
-                  pressed ? styles.pressedSecondary : null,
-                ]}
-                onPress={handleDemoSignIn}
-                disabled={isDemoLoading}
-                testID="btn-welcome-demo"
+                onPress={() => pushMode('signin')}
+                style={({ pressed }) => [styles.textButton, pressed ? styles.pressedSubtle : null]}
+                testID="btn-welcome-signin"
                 accessibilityRole="button"
-                accessibilityLabel="Explore as guest"
+                accessibilityLabel="Sign in to existing account"
               >
-                {isDemoLoading ? (
-                  <BouncingDotsLoader color={Colors.primary} size={6} gap={5} />
-                ) : (
-                  <Text style={styles.demoButtonText}>Explore as Guest</Text>
-                )}
+                <Text style={styles.signInPromptText} maxFontSizeMultiplier={1.3}>
+                  Have an account? <Text style={styles.signInLinkText}>Sign in</Text>
+                </Text>
               </Pressable>
-
-              {/* Returning User Access Link */}
-              <View style={styles.signInRow}>
-                <Text style={styles.signInPromptText}>Already have an account? </Text>
-                <Pressable
-                  onPress={() => pushMode('signin')}
-                  style={({ pressed }) => [pressed ? styles.pressedSubtle : null]}
-                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-                  testID="btn-welcome-signin"
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign in to existing account"
-                >
-                  <Text style={styles.signInLinkText}>Sign In</Text>
-                </Pressable>
-              </View>
-            </View>
+            </Reveal>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -464,39 +514,39 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
   },
   container: {
+    flex: 1,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 16 : 8,
-    paddingBottom: Platform.OS === 'android' ? 24 : 16,
-    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   topHeader: {
     alignItems: 'center',
-    position: 'relative',
+    justifyContent: 'center',
     width: '100%',
-    marginBottom: 16,
+    minHeight: 44,
+    paddingHorizontal: 20,
   },
   headerCloseBtn: {
     position: 'absolute',
-    right: 0,
-    top: 0,
+    right: 20,
+    top: 3,
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 0,
     zIndex: 10,
   },
   logoRow: {
@@ -504,164 +554,128 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  logoIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoFlame: {
+    width: 21,
+    height: 29,
   },
   logoText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    fontFamily: Fonts.kurale,
+    fontSize: 26,
+    lineHeight: 34,
+    color: Colors.textPrimary,
   },
   heroSection: {
+    flex: 1,
+    minHeight: 260,
+    marginTop: 4,
+  },
+  heroFrame: {
+    flex: 1,
+  },
+  tag: {
+    position: 'absolute',
+  },
+  tagInner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  heroGlowRing: {
-    padding: 10,
-    borderRadius: 125,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1.5,
-    borderColor: '#FFEDD5',
-  },
-  heroImageContainer: {
-    width: 216,
-    height: 216,
-    borderRadius: 108,
-    overflow: 'hidden',
+    gap: 6,
+    height: 30,
+    paddingLeft: 9,
+    paddingRight: 12,
+    borderRadius: ControlRadii.pill,
+    borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
+    backgroundColor: Colors.card,
     elevation: 0,
-    shadowOpacity: 0,
-    backgroundColor: '#FED7AA',
   },
-  heroImage: {
-    width: '100%',
-    height: '100%',
+  tagDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  tagLabel: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  tagKcal: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   contentSection: {
     alignItems: 'center',
-    paddingHorizontal: 8,
-    marginBottom: 26,
+    paddingHorizontal: 28,
+    paddingTop: 16,
   },
   mainHeading: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 25,
-    color: '#0F172A',
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 32,
+    lineHeight: 38,
+    color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 4,
-    letterSpacing: -0.5,
-    lineHeight: 33,
+    letterSpacing: -0.8,
   },
-  headlineTagline: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15,
-    color: Colors.primary,
-    textAlign: 'center',
-    marginBottom: 10,
-    letterSpacing: -0.2,
+  mainHeadingAccent: {
+    color: Colors.primaryDeep,
   },
   subHeading: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 16,
+    lineHeight: 24,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    marginTop: 10,
     maxWidth: 340,
   },
   ctaSection: {
     width: '100%',
-    gap: 12,
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    padding: 10,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    gap: 8,
-  },
-  errorText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: '#DC2626',
-    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    gap: 4,
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: Colors.textPrimary,
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 4,
     elevation: 0,
     shadowOpacity: 0,
   },
   pressedButton: {
-    opacity: 0.92,
+    opacity: 0.9,
     transform: [{ scale: 0.985 }],
   },
   primaryButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 16,
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 17,
+    color: Colors.textInverse,
   },
-  demoButton: {
-    height: 52,
-    borderRadius: 10,
-    borderCurve: 'continuous',
+  textButton: {
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-  },
-  pressedSecondary: {
-    backgroundColor: Colors.surfaceLow,
-    borderColor: Colors.borderMedium,
-    transform: [{ scale: 0.985 }],
-  },
-  demoButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15,
-    color: '#334155',
-  },
-  signInRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 4,
-    paddingBottom: 4,
   },
   signInPromptText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    color: Colors.textSecondary,
   },
   signInLinkText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: Colors.primary,
-  },
-  startOverButton: {
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: 4,
+    fontFamily: Fonts.urbanist.bold,
+    color: Colors.textPrimary,
   },
   startOverButtonText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
-    color: '#64748B',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    color: Colors.textSecondary,
     textDecorationLine: 'underline',
   },
   pressedSubtle: {
