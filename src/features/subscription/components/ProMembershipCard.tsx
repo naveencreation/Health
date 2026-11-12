@@ -4,8 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { usePro } from '../hooks/usePro';
-import { formatExpiry } from '@/services/payments/paymentService';
+import { formatExpiry, SUBSCRIPTION_PACKAGES } from '@/services/payments/paymentService';
 import { haptics } from '@/utils/haptics';
+
+// Longest trial on offer, so the promo never advertises a trial no plan has
+const TRIAL_DAYS = Math.max(0, ...SUBSCRIPTION_PACKAGES.map(p => p.trialDays ?? 0));
 
 export interface ProMembershipCardProps {
   onUpgradePress: () => void;
@@ -44,7 +47,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
       <View style={styles.cardPro} testID="pro-membership-active-card">
         <View style={styles.topRow}>
           <View style={styles.proIconBadge}>
-            <Ionicons name="star" size={16} color="#D97706" />
+            <Ionicons name="star" size={16} color={Colors.warningDark} />
           </View>
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
@@ -70,7 +73,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
             accessibilityLabel="Manage Pro Subscription"
           >
             <Text style={styles.manageBtnText}>Manage</Text>
-            <Ionicons name="chevron-forward" size={14} color="#0F172A" />
+            <Ionicons name="chevron-forward" size={14} color={Colors.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -81,14 +84,16 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
     <View style={styles.cardFree} testID="pro-membership-promo-card">
       <View style={styles.topRow}>
         <View style={styles.crownCircle}>
-          <Ionicons name="sparkles" size={20} color="#D97706" />
+          <Ionicons name="sparkles" size={20} color={Colors.warningDark} />
         </View>
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
             <Text style={styles.headline}>Unlock Calorify Pro</Text>
-            <View style={styles.trialPill}>
-              <Text style={styles.trialPillText}>7-DAY FREE TRIAL</Text>
-            </View>
+            {TRIAL_DAYS > 0 ? (
+              <View style={styles.trialPill}>
+                <Text style={styles.trialPillText}>{TRIAL_DAYS}-DAY FREE TRIAL</Text>
+              </View>
+            ) : null}
           </View>
           <Text style={styles.tagline}>
             AI food vision, adaptive calorie coaching & advanced trends.
@@ -103,7 +108,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
         accessibilityLabel="Upgrade to Calorify Pro"
       >
         <Text style={styles.upgradeBtnText}>Upgrade to Pro</Text>
-        <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+        <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} />
       </Pressable>
     </View>
   );
@@ -111,11 +116,11 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
 
 const styles = StyleSheet.create({
   cardFree: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: Colors.warningLight,
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.carbsBorder,
     gap: 12,
     shadowOpacity: 0,
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
     padding: 16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.carbsBorder,
     gap: 12,
   },
@@ -183,40 +188,40 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.regular,
     fontSize: 12,
     lineHeight: 16,
-    color: '#475569',
+    color: Colors.textSlate600,
   },
   trialPill: {
     backgroundColor: Colors.warningLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   trialPillText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9,
-    color: '#D97706',
+    fontSize: 11,
+    color: Colors.warningDark,
     letterSpacing: 0.3,
   },
   activePill: {
     backgroundColor: Colors.successLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   activePillText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 9,
+    fontSize: 11,
     color: Colors.successDark,
     letterSpacing: 0.3,
   },
   upgradeBtn: {
-    backgroundColor: '#D97706',
+    backgroundColor: Colors.textPrimary,
     borderRadius: 10,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    minHeight: 44,
     gap: 6,
   },
   upgradeBtnText: {
@@ -226,7 +231,7 @@ const styles = StyleSheet.create({
   },
   dividerPro: {
     height: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.06)',
+    backgroundColor: Colors.borderWhisper,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -242,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 4,
+    minHeight: 44,
     paddingHorizontal: 8,
   },
   manageBtnText: {

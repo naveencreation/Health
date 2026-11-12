@@ -9,7 +9,7 @@ import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 import { ProfileScreen } from '../ProfileScreen';
-import { PreferencesScreen, GoalsScreen } from '@/screens/profile';
+import { AccountScreen, GoalsScreen } from '@/screens/profile';
 import { useAuth, useGoals } from '@/context/HealthContext';
 import { usePro } from '@/features/subscription';
 
@@ -143,7 +143,7 @@ describe('ProfileScreen Integration', () => {
   it('renders profile identity and Pro promo card for standard tier user', async () => {
     const { getByText, getAllByText } = await render(<ProfileScreen />);
 
-    expect(getByText('Profile & Account')).toBeTruthy();
+    expect(getByText('Profile')).toBeTruthy();
     expect(getAllByText('Naveen Kumar').length).toBeGreaterThan(0);
     expect(getByText('Unlock Calorify Pro')).toBeTruthy();
     expect(getByText('7-DAY FREE TRIAL')).toBeTruthy();
@@ -164,10 +164,10 @@ describe('ProfileScreen Integration', () => {
     expect(getByRole('button', { name: 'Manage Pro Subscription' })).toBeTruthy();
   });
 
-  it('opens AchievementCenterScreen when user taps Awards in quick navigation', async () => {
+  it('opens AchievementCenterScreen from the Achievements row', async () => {
     const { getByRole, findByText } = await render(<ProfileScreen />);
 
-    const awardsBtn = getByRole('button', { name: /Awards, 14 day streak/i });
+    const awardsBtn = getByRole('button', { name: /Achievements, 14 day streak/i });
     fireEvent.press(awardsBtn);
 
     const achievementsTitle = await findByText('Achievements');
@@ -193,7 +193,7 @@ describe('ProfileScreen Integration', () => {
       logout,
       deleteAccount: jest.fn(),
     });
-    const { getByRole, findByRole } = await render(<PreferencesScreen onBack={jest.fn()} />);
+    const { getByRole, findByRole } = await render(<AccountScreen onBack={jest.fn()} />);
 
     await fireEvent.press(getByRole('button', { name: 'Sign out of Calorify' }));
     await act(async () => {
@@ -229,7 +229,7 @@ describe('ProfileScreen Integration', () => {
       deleteAccount,
     });
     const { getByRole, findByRole, getByLabelText, findByText } = await render(
-      <PreferencesScreen onBack={jest.fn()} />
+      <AccountScreen onBack={jest.fn()} />
     );
 
     await fireEvent.press(await findByRole('button', { name: 'Delete Account Permanently' }));
@@ -245,5 +245,31 @@ describe('ProfileScreen Integration', () => {
       await fireEvent.press(getByRole('button', { name: 'Delete Permanently' }));
     });
     expect(deleteAccount).toHaveBeenCalledWith('secret-pw');
+  });
+
+  it('shows the plan summary and opens each settings sub-screen from its row', async () => {
+    const screen = await render(<ProfileScreen />);
+
+    expect(screen.getByText('2,100')).toBeTruthy();
+    expect(screen.getByText('BMI 23.7 · Healthy weight')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: /^Ria coach/ }));
+    expect(await screen.findByText('Coaching style')).toBeTruthy();
+  });
+
+  it('offers sign-in instead of sign-out to a guest', async () => {
+    (useAuth as jest.Mock).mockReturnValue({
+      currentUser: { name: 'Guest', isGuest: true },
+      logout: jest.fn(),
+      deleteAccount: jest.fn(),
+    });
+    const onSignIn = jest.fn();
+    const onBack = jest.fn();
+    const screen = await render(<AccountScreen onBack={onBack} onSignIn={onSignIn} />);
+
+    expect(screen.queryByRole('button', { name: 'Sign out of Calorify' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sign in or create account' }));
+    expect(onBack).toHaveBeenCalled();
+    expect(onSignIn).toHaveBeenCalled();
   });
 });

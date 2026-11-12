@@ -16,6 +16,7 @@ import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useGoals, useDailyLog } from '@/context/HealthContext';
 import { ConfirmationModal } from '@/components/common/ConfirmationModal';
+import { SubScreenHeader } from '@/components/profile/ProfileUI';
 import {
   toGoalsForm,
   validateGoalsForm,
@@ -32,8 +33,6 @@ import type { GoalType } from '@/features/onboarding/services/onboardingCalculat
 interface GoalsScreenProps {
   onBack: () => void;
 }
-
-const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   const { userGoals, updateGoals } = useGoals();
@@ -182,29 +181,11 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         }}
         onCancel={() => setConfirmDiscard(false)}
       />
-      {/* 1. Unified Top Navigation Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerMainRow}>
-          <Pressable
-            style={({ pressed }) => [styles.headerBackBtn, pressed ? styles.btnPressed : null]}
-            onPress={handleBack}
-            hitSlop={HIT_SLOP_10}
-            accessibilityRole="button"
-            accessibilityLabel="Go back to profile"
-          >
-            <Ionicons name="chevron-back" size={20} color={Colors.iconNavy} />
-          </Pressable>
-
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              Nutrition & Goals
-            </Text>
-            <Text style={styles.headerSubtitle} numberOfLines={1}>
-              Calorie budget, macro splits & biometrics
-            </Text>
-          </View>
-
-          {/* Quick Header Save Action */}
+      <SubScreenHeader
+        title="My goals"
+        subtitle={dirty ? 'Unsaved changes' : 'Calories, macros, activity, body'}
+        onBack={handleBack}
+        right={
           <Pressable
             style={({ pressed }) => [
               styles.headerSaveBtn,
@@ -212,26 +193,14 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
               pressed ? styles.btnPressed : null,
             ]}
             onPress={handleSave}
-            hitSlop={HIT_SLOP_10}
             accessibilityRole="button"
             accessibilityLabel="Save nutrition and activity goals"
           >
-            <Ionicons
-              name={savedSuccess ? 'checkmark' : 'save-outline'}
-              size={15}
-              color={savedSuccess ? Colors.protein : Colors.primary}
-            />
-            <Text
-              style={[
-                styles.headerSaveBtnText,
-                savedSuccess ? styles.headerSaveBtnTextSuccess : null,
-              ]}
-            >
-              {savedSuccess ? 'Saved' : 'Save'}
-            </Text>
+            {savedSuccess ? <Ionicons name="checkmark" size={16} color={Colors.textInverse} /> : null}
+            <Text style={styles.headerSaveBtnText}>{savedSuccess ? 'Saved' : 'Save'}</Text>
           </Pressable>
-        </View>
-      </View>
+        }
+      />
 
       {/* 2. Scrollable Body Content */}
       <ScrollView
@@ -242,7 +211,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Goal Presets Row */}
-        <Text style={styles.sectionHeader}>Goal Presets</Text>
+        <Text style={styles.sectionHeader}>Goal</Text>
         {teenNotice && (
           <View style={styles.teenNoticeContainer}>
             <Ionicons name="information-circle" size={16} color={Colors.water} />
@@ -274,7 +243,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
               />
             </View>
             <Text style={[styles.presetName, isTeen ? styles.presetTextDisabled : null]}>
-              Fat Loss
+              Lose weight
             </Text>
             <Text style={styles.presetMeta}>
               {isTeen ? 'Locked' : `${presets.lose_weight.dailyCalorieBudget.toLocaleString()} kcal`}
@@ -295,7 +264,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <View style={[styles.presetIconBox, styles.presetIconMuscle]}>
               <Ionicons name="barbell" size={16} color={Colors.protein} />
             </View>
-            <Text style={styles.presetName}>Muscle Gain</Text>
+            <Text style={styles.presetName}>Build muscle</Text>
             <Text style={styles.presetMeta}>
               {`${presets.gain_muscle.dailyCalorieBudget.toLocaleString()} kcal`}
             </Text>
@@ -364,7 +333,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
               <Text style={styles.diffWarningText}>{errors.macros}</Text>
               <Pressable
                 onPress={balanceCarbs}
-                hitSlop={HIT_SLOP_10}
+                style={styles.balanceBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Adjust carbs to match the calorie budget"
               >
@@ -375,7 +344,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         </View>
 
         {/* Nutritional Targets Section */}
-        <Text style={styles.sectionHeader}>Nutritional Targets</Text>
+        <Text style={styles.sectionHeader}>Daily nutrition</Text>
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
@@ -507,7 +476,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         </View>
 
         {/* Activity & Habits Section */}
-        <Text style={styles.sectionHeader}>Activity & Habits</Text>
+        <Text style={styles.sectionHeader}>Activity</Text>
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
@@ -561,7 +530,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
         </View>
 
         {/* Body Metrics Section */}
-        <Text style={styles.sectionHeader}>Body Measurements</Text>
+        <Text style={styles.sectionHeader}>Body</Text>
         <View style={styles.inputCard}>
           <View style={styles.fieldRow}>
             <View style={styles.fieldIconContainer}>
@@ -657,7 +626,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             color={Colors.onPrimary}
           />
           <Text style={styles.saveBtnText}>
-            {savedSuccess ? 'Goals Saved Successfully' : 'Save Goals'}
+            {savedSuccess ? 'Goals saved' : 'Save goals'}
           </Text>
         </Pressable>
       </ScrollView>
@@ -670,83 +639,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  headerContainer: {
-    backgroundColor: Colors.background,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
-    minHeight: 56,
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  headerMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 42,
-  },
-  headerBackBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
   headerSaveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.dangerLight,
+    gap: 4,
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
   },
   headerSaveBtnSuccess: {
-    backgroundColor: Colors.proteinLight,
-    borderColor: 'rgba(103, 189, 110, 0.35)',
+    backgroundColor: Colors.primaryDark,
   },
   headerSaveBtnText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: Colors.primary,
-  },
-  headerSaveBtnTextSuccess: {
-    color: Colors.successDark,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 15,
+    color: Colors.textInverse,
   },
   btnPressed: {
     opacity: 0.88,
     transform: [{ scale: 0.97 }],
-  },
-  headerTitleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    marginLeft: 12,
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    lineHeight: 28,
-    color: Colors.textPrimary,
-    letterSpacing: -0.5,
-    includeFontPadding: false,
-  },
-  headerSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.textSecondary,
-    marginTop: 1,
-    includeFontPadding: false,
   },
   scrollContainer: {
     flex: 1,
@@ -755,15 +667,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 120,
+    paddingBottom: 48,
     gap: 16,
   },
   sectionHeader: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    letterSpacing: -0.2,
-    paddingHorizontal: 2,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    paddingHorizontal: 4,
+    marginBottom: -8,
   },
   presetsRow: {
     flexDirection: 'row',
@@ -804,12 +716,12 @@ const styles = StyleSheet.create({
   },
   presetName: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
+    fontSize: 14,
     color: Colors.textPrimary,
   },
   presetMeta: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
+    fontSize: 12,
     color: Colors.textSecondary,
     marginTop: 1,
   },
@@ -884,7 +796,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
+    fontSize: 12,
     color: Colors.textSecondary,
   },
   diffWarning: {
@@ -897,10 +809,11 @@ const styles = StyleSheet.create({
   },
   diffWarningText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
+    fontSize: 13,
     color: Colors.carbsDark,
     flex: 1,
   },
+  balanceBtn: { minHeight: 44, minWidth: 44, justifyContent: 'center', paddingHorizontal: 4 },
   balanceBtnText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12,
@@ -909,7 +822,7 @@ const styles = StyleSheet.create({
   },
   fieldError: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.dangerDark,
     marginTop: -4,
     marginBottom: 8,
@@ -944,28 +857,28 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
+    fontSize: 15,
     color: Colors.textPrimary,
   },
   fieldSub: {
     fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textMuted,
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   fieldInput: {
-    width: 75,
+    width: 84,
     height: 44,
-    backgroundColor: Colors.surfaceLow,
+    backgroundColor: Colors.background,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 0,
     textAlign: 'center',
     textAlignVertical: 'center',
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.borderInset,
+    borderColor: Colors.borderMedium,
     includeFontPadding: false,
   },
   fieldUnit: {
@@ -994,11 +907,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtnSuccess: {
-    backgroundColor: Colors.success,
+    backgroundColor: Colors.primaryDark,
   },
   saveBtnText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
+    fontSize: 16,
     color: Colors.onPrimary,
   },
   pressedSubtle: {
@@ -1015,7 +928,7 @@ const styles = StyleSheet.create({
   teenNoticeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${Colors.water}15`,
+    backgroundColor: Colors.waterLight,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1024,8 +937,8 @@ const styles = StyleSheet.create({
   },
   teenNoticeText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.water,
+    fontSize: 13,
+    color: Colors.waterDark,
     flex: 1,
   },
 });

@@ -14,21 +14,38 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useGoals } from '@/context/HealthContext';
-import { ProfileHeaderCard } from '@/components/profile/ProfileHeaderCard';
-import { ProfileQuickNavGrid } from '@/components/profile/ProfileQuickNavGrid';
-import { ProfileMetricInspector } from '@/components/profile/ProfileMetricInspector';
 import { AvatarPickerModal } from '@/components/modals/AvatarPickerModal';
 import { SlideInSubScreen } from '@/components/common/SlideInSubScreen';
-
-import { MetabolicSummaryScreen, PreferencesScreen, GoalsScreen } from '@/screens/profile';
+import { UserAvatar } from '@/components/common/UserAvatar';
+import {
+  HeaderIconButton,
+  SettingsSection,
+  SettingsRow,
+  profileCard,
+} from '@/components/profile/ProfileUI';
+import {
+  MetabolicSummaryScreen,
+  GoalsScreen,
+  RiaCoachScreen,
+  RemindersScreen,
+  AccountScreen,
+  RIA_TONE_LABELS,
+} from '@/screens/profile';
 import { AchievementCenterScreen } from '@/features/gamification';
 import { usePro, ProMembershipCard, ProPaywallModal } from '@/features/subscription';
 import { DEFAULT_AVATAR_URL } from '@/data/avatars';
 import { getTodayBMICategory } from '@/features/weight/utils/bmiCalculator';
+import { planFor, LBS_PER_KG } from '@/features/onboarding/services/goalsForm';
 
-const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
-
-export type ProfileSubView = 'main' | 'awards' | 'summary' | 'preferences' | 'goals';
+export type ProfileSubView =
+  | 'main'
+  | 'awards'
+  | 'summary'
+  | 'goals'
+  | 'ria'
+  | 'reminders'
+  | 'account';
+type SubView = Exclude<ProfileSubView, 'main'>;
 
 interface ProfileScreenProps {
   onSignIn?: () => void;
@@ -46,19 +63,17 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   onScrollPositionChange,
 }) => {
   const { width: screenWidth } = useWindowDimensions();
-
   const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
   const { isPro } = usePro();
 
-  // Navigation Sub-View Stack ('awards' | 'summary' | 'preferences' | 'goals')
-  const [navStack, setNavStack] = useState<Exclude<ProfileSubView, 'main'>[]>([]);
-  const [closingView, setClosingView] = useState<Exclude<ProfileSubView, 'main'> | null>(null);
+  const [navStack, setNavStack] = useState<SubView[]>([]);
+  const [closingView, setClosingView] = useState<SubView | null>(null);
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
 
   const handleOpenSubView = useCallback(
-    (view: Exclude<ProfileSubView, 'main'>, nested = false) => {
+    (view: SubView, nested = false) => {
       if (closingView) return;
       setNavStack(prev => {
         if (prev[prev.length - 1] === view) return prev;
@@ -72,11 +87,10 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
 
   const handleBack = useCallback(() => {
     if (navStack.length === 0 || closingView) return;
-    const topView = navStack[navStack.length - 1];
-    setClosingView(topView);
+    setClosingView(navStack[navStack.length - 1]);
   }, [navStack, closingView]);
 
-  const handleClosed = useCallback((view: Exclude<ProfileSubView, 'main'>) => {
+  const handleClosed = useCallback((view: SubView) => {
     setNavStack(prev => prev.filter(item => item !== view));
     setClosingView(prev => (prev === view ? null : prev));
   }, []);
@@ -97,20 +111,17 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
     [onScrollPositionChange]
   );
 
-  // Hardware Back Handler on Android
+  // Android back pops the sub-screen stack first
   useEffect(() => {
-    const onBackPress = () => {
-      if (navStack.length > 0) {
-        handleBack();
-        return true;
-      }
-      return false;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (navStack.length === 0) return false;
+      handleBack();
+      return true;
+    });
     return () => sub.remove();
   }, [navStack.length, handleBack]);
 
-  const renderSubScreenContent = (view: Exclude<ProfileSubView, 'main'>) => {
+  const renderSubScreenContent = (view: SubView) => {
     switch (view) {
       case 'awards':
         return <AchievementCenterScreen onBack={handleBack} />;
@@ -121,122 +132,235 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
             onOpenGoals={() => handleOpenSubView('goals', true)}
           />
         );
-      case 'preferences':
-        return <PreferencesScreen onBack={handleBack} onSignIn={onSignIn} onSignOut={onSignOut} />;
       case 'goals':
         return <GoalsScreen onBack={handleBack} />;
-      default:
-        return null;
+      case 'ria':
+        return <RiaCoachScreen onBack={handleBack} />;
+      case 'reminders':
+        return <RemindersScreen onBack={handleBack} />;
+      case 'account':
+        return <AccountScreen onBack={handleBack} onSignIn={onSignIn} onSignOut={onSignOut} />;
     }
   };
 
-  // Derived biometrics; BMI only when a height is on file (no invented 175 cm)
-  const weightNum = userGoals.currentWeightKg;
-  const targetWeightNum = userGoals.targetWeightKg || weightNum;
-  const startWeight = userGoals.startWeightKg || weightNum;
-  const heightNum = userGoals.heightCm;
-  const bmiNum = heightNum && weightNum ? weightNum / (heightNum / 100) ** 2 : NaN;
-  const bmi = Number.isNaN(bmiNum) ? '--' : bmiNum.toFixed(1);
-
-  const bmiCategoryItem = getTodayBMICategory(Number.isNaN(bmiNum) ? 22 : bmiNum);
-  const bmiStatus = Number.isNaN(bmiNum)
-    ? { label: 'Height needed', color: Colors.textMuted }
-    : {
-        label: bmiCategoryItem.name === 'Normal' ? 'Healthy Weight' : bmiCategoryItem.name,
-        color: bmiCategoryItem.color,
-      };
+  const isGuest = !currentUser || Boolean(currentUser.isGuest);
+  const name = currentUser?.name || userGoals.name || (isGuest ? 'Guest' : 'Calorify member');
+  const email = currentUser?.email && currentUser.email !== name ? currentUser.email : '';
   const streakDays = userGoals.streakDays ?? 0;
+
+  const isLbs = userGoals.weightUnit === 'lbs';
+  const unit = isLbs ? 'lbs' : 'kg';
+  const fmtW = (kg: number) => (Math.round((isLbs ? kg * LBS_PER_KG : kg) * 10) / 10).toFixed(1);
+  const weightKg = userGoals.currentWeightKg;
+  const targetKg = userGoals.targetWeightKg || weightKg;
+  const startKg = userGoals.startWeightKg || weightKg;
+  const totalChange = Math.abs(targetKg - startKg);
+  const doneChange = Math.min(totalChange, Math.max(0, Math.abs(weightKg - startKg)));
+  // Moving away from the target (gaining on a loss plan) counts as no progress
+  const movingRight = Math.sign(targetKg - startKg) === Math.sign(weightKg - startKg);
+  const progress = totalChange > 0 && movingRight ? doneChange / totalChange : 0;
+
+  // BMI only when a height is on file (no invented 175 cm)
+  const heightCm = userGoals.heightCm;
+  const bmi = heightCm && weightKg ? weightKg / (heightCm / 100) ** 2 : null;
+  const bmiCategory = bmi ? getTodayBMICategory(bmi) : null;
+  const bmiLabel = bmiCategory?.name === 'Normal' ? 'Healthy weight' : bmiCategory?.name;
+
+  const plan = planFor(userGoals);
+  const budget = userGoals.dailyCalorieBudget;
+  const balance = budget ? plan.tdee - budget : 0;
+  const summarySubtitle = budget
+    ? `Burn ${plan.tdee.toLocaleString()} kcal · ${Math.abs(balance).toLocaleString()} kcal ${balance >= 0 ? 'deficit' : 'surplus'}`
+    : `Burn ${plan.tdee.toLocaleString()} kcal a day`;
+  const fmtInt = (n?: number) => (n ? n.toLocaleString() : '—');
+
   // The base screen stays mounted under sub-screens; keep screen readers out of it
   const baseA11y = navStack.length
     ? { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const }
     : {};
 
   return (
-    <View style={styles.rootContainer}>
-      {/* 0. Dedicated Profile & Account Top App Bar - Completely blended with background */}
-      <View style={styles.headerContainer} {...baseA11y}>
-        <View style={styles.headerMainRow}>
-          {/* Title: Clean static header title */}
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              Profile & Account
-            </Text>
-          </View>
-
-          {/* Right Action: Settings Gear Button */}
-          <Pressable
-            style={({ pressed }) => [styles.headerCircleBtn, pressed ? styles.btnPressed : null]}
-            onPress={() => handleOpenSubView('preferences')}
-            hitSlop={HIT_SLOP_8}
-            accessibilityRole="button"
-            accessibilityLabel="Open settings and preferences"
-          >
-            <Ionicons name="settings-outline" size={20} color={Colors.iconNavy} />
-          </Pressable>
-        </View>
+    <View style={styles.root}>
+      <View style={styles.header} {...baseA11y}>
+        <Text style={styles.title} accessibilityRole="header">
+          Profile
+        </Text>
+        <HeaderIconButton
+          icon="settings-outline"
+          label="Account and settings"
+          onPress={() => handleOpenSubView('account')}
+        />
       </View>
 
-      {/* Main Scrollable Content */}
       <ScrollView
         ref={scrollRef}
-        style={styles.container}
+        style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         onMomentumScrollEnd={handleScrollEnd}
         onScrollEndDrag={handleScrollEnd}
         {...baseA11y}
       >
-        {/* 1. User Identity Card (Avatar + Name + Status + Streak) */}
-        <ProfileHeaderCard
-          name={currentUser?.name || userGoals.name || ''}
-          email={currentUser?.email || ''}
-          avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
-          onEditAvatar={() => setAvatarPickerVisible(true)}
-          isGuest={currentUser?.isGuest}
-          onOpenSettings={() => handleOpenSubView('preferences')}
-          streakDays={streakDays}
-          showNav={false}
-          isPro={isPro}
-          onPressPro={() => setPaywallVisible(true)}
-        />
+        <View style={[profileCard, styles.identity]}>
+          <Pressable
+            style={({ pressed }) => [styles.avatarBtn, pressed && styles.pressed]}
+            onPress={() => setAvatarPickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Change avatar"
+          >
+            <UserAvatar avatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL} size={64} />
+            <View style={styles.cameraBadge}>
+              <Ionicons name="camera" size={12} color={Colors.textInverse} />
+            </View>
+          </Pressable>
+          <View style={styles.flex1}>
+            <Text style={styles.name} numberOfLines={1}>
+              {name}
+            </Text>
+            {email ? (
+              <Text style={styles.email} numberOfLines={1}>
+                {email}
+              </Text>
+            ) : null}
+            <View style={styles.chips}>
+              <View
+                style={[styles.chip, styles.chipStreak]}
+                accessible
+                accessibilityLabel={`${streakDays} day streak`}
+              >
+                <Ionicons name="flame" size={12} color={Colors.steps} />
+                <Text style={[styles.chipText, styles.chipStreakText]}>
+                  {streakDays}-day streak
+                </Text>
+              </View>
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>
+                  {isGuest ? 'Guest' : isPro ? 'Pro member' : 'Free plan'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
 
-        {/* 1.5. Pro Membership or Upgrade Banner Card */}
+        <Pressable
+          style={({ pressed }) => [profileCard, styles.plan, pressed && styles.pressed]}
+          onPress={() => handleOpenSubView('goals')}
+          accessibilityRole="button"
+          accessibilityLabel={`Your plan: ${fmtInt(budget)} kilocalories a day, weight ${fmtW(weightKg)} ${unit}, goal ${fmtW(targetKg)} ${unit}. Edit goals`}
+        >
+          <View style={styles.planHead}>
+            <Text style={styles.planTitle}>Your plan</Text>
+            <Text style={styles.planEdit}>Edit</Text>
+          </View>
+          <View>
+            <View style={styles.planWeightRow}>
+              <Text style={styles.planMeta}>
+                {fmtW(weightKg)} {unit} now
+              </Text>
+              <Text style={styles.planMeta}>
+                Goal {fmtW(targetKg)} {unit}
+              </Text>
+            </View>
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${Math.round(progress * 100)}%` }]} />
+            </View>
+            {totalChange > 0 ? (
+              <Text style={[styles.planMeta, styles.mt6]}>
+                {progress >= 1
+                  ? 'Goal reached'
+                  : `${fmtW(movingRight ? doneChange : 0)} of ${fmtW(totalChange)} ${unit} done`}
+              </Text>
+            ) : null}
+          </View>
+          <View style={styles.statRow}>
+            <View style={styles.stat}>
+              <Text style={[styles.statValue, styles.statCalories]}>{fmtInt(budget)}</Text>
+              <Text style={styles.statLabel}>kcal / day</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>
+                {userGoals.targetProtein ? `${userGoals.targetProtein} g` : '—'}
+              </Text>
+              <Text style={styles.statLabel}>protein</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{fmtInt(userGoals.stepGoal)}</Text>
+              <Text style={styles.statLabel}>steps</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>
+                {userGoals.waterGoalMl ? `${(userGoals.waterGoalMl / 1000).toFixed(1)} L` : '—'}
+              </Text>
+              <Text style={styles.statLabel}>water</Text>
+            </View>
+          </View>
+          <View style={styles.bmiRow}>
+            <View
+              style={[styles.bmiDot, { backgroundColor: bmiCategory?.color ?? Colors.textMuted }]}
+            />
+            <Text style={styles.planMeta}>
+              {bmi ? `BMI ${bmi.toFixed(1)} · ${bmiLabel}` : 'Add your height to see BMI'}
+            </Text>
+          </View>
+        </Pressable>
+
         <ProMembershipCard
           onUpgradePress={() => setPaywallVisible(true)}
           onManagePress={() => setPaywallVisible(true)}
         />
 
-        {/* 2. 2×2 Quick Navigation Matrix */}
-        <ProfileQuickNavGrid
-          streakDays={streakDays}
-          calorieBudget={userGoals.dailyCalorieBudget}
-          riaTone={userGoals.riaTone}
-          onOpenAwards={() => handleOpenSubView('awards')}
-          onOpenSummary={() => handleOpenSubView('summary')}
-          onOpenPreferences={() => handleOpenSubView('preferences')}
-          onOpenGoals={() => handleOpenSubView('goals')}
-        />
+        <SettingsSection title="Health">
+          <SettingsRow
+            icon="locate-outline"
+            iconColor={Colors.primaryDark}
+            iconBackground={Colors.burnLight}
+            title="My goals"
+            subtitle="Calories, macros, activity, body"
+            onPress={() => handleOpenSubView('goals')}
+          />
+          <SettingsRow
+            icon="pulse-outline"
+            title="Metabolic summary"
+            subtitle={summarySubtitle}
+            onPress={() => handleOpenSubView('summary')}
+          />
+          <SettingsRow
+            icon="trophy-outline"
+            iconColor={Colors.warningDark}
+            iconBackground={Colors.warningLight}
+            title="Achievements"
+            subtitle={`${streakDays}-day streak`}
+            onPress={() => handleOpenSubView('awards')}
+            accessibilityLabel={`Achievements, ${streakDays} day streak`}
+          />
+        </SettingsSection>
 
-        {/* 3. Interactive Biometric Telemetry Inspector */}
-        <ProfileMetricInspector
-          bmi={bmi}
-          bmiStatus={bmiStatus}
-          heightCm={heightNum ?? '--'}
-          weightNum={weightNum}
-          targetWeightNum={targetWeightNum}
-          startWeight={startWeight}
-          calorieBudget={userGoals.dailyCalorieBudget}
-          targetProtein={userGoals.targetProtein}
-          targetCarbs={userGoals.targetCarbs}
-          targetFat={userGoals.targetFat}
-          stepGoal={userGoals.stepGoal}
-          waterGoal={userGoals.waterGoalMl}
-          weightUnit={userGoals.weightUnit === 'lbs' ? 'lbs' : 'kg'}
-          onOpenGoalsModal={() => handleOpenSubView('goals')}
-        />
+        <SettingsSection title="App">
+          <SettingsRow
+            icon="sparkles-outline"
+            iconColor={Colors.primaryDark}
+            iconBackground={Colors.burnLight}
+            title="Ria coach"
+            subtitle={RIA_TONE_LABELS[userGoals.riaTone || 'supportive']}
+            onPress={() => handleOpenSubView('ria')}
+          />
+          <SettingsRow
+            icon="notifications-outline"
+            iconColor={Colors.waterDark}
+            iconBackground={Colors.waterTrack}
+            title="Reminders"
+            subtitle="Meals, water, steps, quiet hours"
+            onPress={() => handleOpenSubView('reminders')}
+          />
+          <SettingsRow
+            icon="shield-checkmark-outline"
+            title="Account & security"
+            subtitle={isGuest ? 'Guest · not backed up' : 'Sign out, delete account'}
+            onPress={() => handleOpenSubView('account')}
+          />
+        </SettingsSection>
       </ScrollView>
 
-      {/* Avatar Picker Modal */}
       <AvatarPickerModal
         visible={avatarPickerVisible}
         currentAvatarUrl={userGoals.avatarUrl || DEFAULT_AVATAR_URL}
@@ -244,10 +368,8 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
         onSelectAvatar={newUrl => updateGoals({ avatarUrl: newUrl })}
       />
 
-      {/* Pro Paywall Modal */}
       <ProPaywallModal visible={paywallVisible} onClose={() => setPaywallVisible(false)} />
 
-      {/* Full-Page Native Stack Sub-Screens (Awards, Summary, Preferences, Goals) */}
       {navStack.map((view, index) => (
         <SlideInSubScreen
           key={view}
@@ -264,64 +386,89 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  rootContainer: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  headerContainer: {
-    backgroundColor: Colors.background,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
-    minHeight: 56,
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  headerMainRow: {
+  root: { flex: 1, backgroundColor: Colors.background },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 42,
-  },
-  headerTitleContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 28,
-    lineHeight: 34,
-    color: Colors.textPrimary,
-    letterSpacing: -0.5,
-    includeFontPadding: false,
-  },
-  headerCircleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  btnPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
-  },
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 120, // Clear bottom nav bar
-    gap: 16,
+    paddingBottom: 8,
+    backgroundColor: Colors.background,
+    zIndex: 10,
   },
+  title: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 28,
+    letterSpacing: -0.4,
+    color: Colors.textPrimary,
+  },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 120, gap: 24 },
+  flex1: { flex: 1, minWidth: 0 },
+  pressed: { opacity: 0.88 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+  avatarBtn: { width: 64, height: 64, borderRadius: 32 },
+  cameraBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.textPrimary,
+    borderWidth: 2,
+    borderColor: Colors.card,
+  },
+  name: { fontFamily: Fonts.urbanist.bold, fontSize: 20, color: Colors.textPrimary },
+  email: {
+    fontFamily: Fonts.urbanist.regular,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    height: 24,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  chipText: { fontFamily: Fonts.urbanist.bold, fontSize: 12, color: Colors.textSlate600 },
+  chipStreak: { backgroundColor: Colors.stepsLight },
+  chipStreakText: { color: Colors.stepsDark },
+  plan: { padding: 16, gap: 14 },
+  planHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  planTitle: { fontFamily: Fonts.urbanist.bold, fontSize: 15, color: Colors.textPrimary },
+  planEdit: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.primaryDark },
+  planWeightRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  planMeta: { fontFamily: Fonts.urbanist.regular, fontSize: 13, color: Colors.textSecondary },
+  mt6: { marginTop: 6 },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.weightLight,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  fill: { height: 8, borderRadius: 4, backgroundColor: Colors.weight },
+  statRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderWhisper,
+    paddingTop: 12,
+  },
+  stat: { flex: 1 },
+  statValue: { fontFamily: Fonts.urbanist.bold, fontSize: 18, color: Colors.textPrimary },
+  statCalories: { color: Colors.primaryDark },
+  statLabel: { fontFamily: Fonts.urbanist.regular, fontSize: 12, color: Colors.textSecondary },
+  bmiRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bmiDot: { width: 8, height: 8, borderRadius: 4 },
 });
 
 export const ProfileScreen = React.memo(ProfileScreenComponent);

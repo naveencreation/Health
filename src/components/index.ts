@@ -72,11 +72,6 @@ export { BYOKSetupModal } from './modals/BYOKSetupModal';
 export { Header } from './navigation/Header';
 export { BottomNavBar, TabType } from './navigation/BottomNavBar';
 
-// Profile Primitives
-export { ProfileHeaderCard } from './profile/ProfileHeaderCard';
-export { ProfileQuickNavGrid } from './profile/ProfileQuickNavGrid';
-export { ProfileMetricInspector } from './profile/ProfileMetricInspector';
-
 // Common Components & Motion Primitives
 export { ErrorBoundary } from './common/ErrorBoundary';
 export { UserAvatar } from './common/UserAvatar';

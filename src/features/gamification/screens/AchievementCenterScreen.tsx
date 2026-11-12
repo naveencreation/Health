@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { useAuth, useDailyLog, useGoals } from '@/context/HealthContext';
 import { AchievementBadge } from '../components/AchievementBadge';
-import { StreakFlameBadge } from '../components/StreakFlameBadge';
 import { CelebrationModal } from '../components/CelebrationModal';
 import {
   AchievementEvaluator,
@@ -15,6 +12,12 @@ import {
 } from '../engine/AchievementEvaluator';
 import { BadgeCategory } from '../engine/achievementRules';
 import { haptics } from '@/utils/haptics';
+import {
+  SubScreenHeader,
+  ProfileButton,
+  profileCard,
+  profileScreenStyles,
+} from '@/components/profile/ProfileUI';
 
 export interface AchievementCenterScreenProps {
   onBack?: () => void;
@@ -22,7 +25,7 @@ export interface AchievementCenterScreenProps {
 
 type FilterCategory = 'all' | BadgeCategory;
 
-const CATEGORY_TABS: Array<{ id: FilterCategory; label: string }> = [
+const CATEGORY_TABS: { id: FilterCategory; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'consistency', label: 'Streaks' },
   { id: 'nutrition', label: 'Nutrition' },
@@ -36,6 +39,8 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
   const uid = useAuth().currentUser?.id;
 
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [celebrationAchievement, setCelebrationAchievement] = useState<EvaluatedAchievement | null>(
@@ -59,13 +64,15 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
 
         if (isMounted) {
           setEvaluation(result);
+          setFailed(false);
           // Auto-trigger celebration if any new badge was unlocked
           if (result.newlyUnlocked.length > 0) {
             setCelebrationAchievement(result.newlyUnlocked[0]);
           }
         }
       } catch (err) {
-        console.error('[AchievementCenter] Failed to evaluate achievements', err);
+        if (__DEV__) console.error('[AchievementCenter] Failed to evaluate achievements', err);
+        if (isMounted) setFailed(true);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -76,7 +83,7 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
     return () => {
       isMounted = false;
     };
-  }, [dailyLogs, currentLog, userGoals, uid]);
+  }, [dailyLogs, currentLog, userGoals, uid, attempt]);
 
   const filteredAchievements = useMemo(() => {
     if (!evaluation) return [];
@@ -89,86 +96,79 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
     setSelectedCategory(cat);
   };
 
-  const handleBack = async () => {
-    await haptics.impactLight();
-    if (onBack) onBack();
-  };
-
-  const unlockedCount = evaluation?.totalUnlockedCount || 0;
-  const totalCount = evaluation?.totalAchievementsCount || 1;
-  const overallPercent = Math.round((unlockedCount / totalCount) * 100);
+  const streakDays = userGoals.streakDays || 0;
+  const unlockedCount = evaluation?.totalUnlockedCount ?? 0;
+  const totalCount = evaluation?.totalAchievementsCount ?? 0;
+  const overallPercent = totalCount ? Math.round((unlockedCount / totalCount) * 100) : 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Top Header */}
-      <View style={styles.headerBar}>
-        {onBack ? (
-          <Pressable
-            style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
-            onPress={handleBack}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={20} color="#0F172A" />
-          </Pressable>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
-
-        <Text style={styles.headerTitle}>Achievements</Text>
-
-        <StreakFlameBadge streakDays={userGoals.streakDays || 0} size="small" />
-      </View>
+    <View style={profileScreenStyles.root}>
+      <SubScreenHeader
+        title="Achievements"
+        subtitle={`${streakDays}-day streak`}
+        onBack={() => onBack?.()}
+        backLabel="Go back"
+      />
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Auditing trophies & streaks...</Text>
+        <View style={styles.center}>
+          <ActivityIndicator color={Colors.primary} />
+          <Text style={styles.centerText}>Checking your badges…</Text>
+        </View>
+      ) : failed && !evaluation ? (
+        <View style={styles.center}>
+          <Text style={styles.centerText}>{"Couldn't load your achievements."}</Text>
+          <ProfileButton
+            label="Try again"
+            onPress={() => {
+              setLoading(true);
+              setAttempt(a => a + 1);
+            }}
+          />
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          style={profileScreenStyles.scroll}
+          contentContainerStyle={profileScreenStyles.content}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Banner Card */}
-          <View style={styles.heroBanner}>
-            <View style={styles.heroLeft}>
-              <Text style={styles.heroLabel}>OVERALL COMPLETION</Text>
-              <View style={styles.heroScoreRow}>
-                <Text style={styles.heroScoreText}>{unlockedCount}</Text>
-                <Text style={styles.heroTotalText}>/ {totalCount} Trophies</Text>
-              </View>
-
-              {/* Progress Bar */}
-              <View style={styles.heroProgressTrack}>
-                <View style={[styles.heroProgressFill, { width: `${overallPercent}%` }]} />
-              </View>
-              <Text style={styles.heroPercentText}>{overallPercent}% Mastered</Text>
+          <View
+            style={[profileCard, styles.hero]}
+            accessible
+            accessibilityLabel={`${unlockedCount} of ${totalCount} achievements unlocked, ${overallPercent} percent`}
+          >
+            <Text style={styles.heroLabel}>OVERALL COMPLETION</Text>
+            <View style={styles.heroScoreRow}>
+              <Text style={styles.heroScore}>{unlockedCount}</Text>
+              <Text style={styles.heroTotal}>of {totalCount} unlocked</Text>
             </View>
-
-            <View style={styles.trophyIconCircle}>
-              <Ionicons name="trophy" size={32} color="#F59E0B" />
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${overallPercent}%` }]} />
             </View>
           </View>
 
-          {/* Category Filter Pills */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabsRow}
+            accessibilityRole="tablist"
           >
             {CATEGORY_TABS.map(tab => {
               const isActive = selectedCategory === tab.id;
               return (
                 <Pressable
                   key={tab.id}
-                  style={[styles.tabPill, isActive && styles.activeTabPill]}
+                  style={({ pressed }) => [
+                    styles.tab,
+                    isActive && styles.tabActive,
+                    pressed && styles.pressed,
+                  ]}
                   onPress={() => handleSelectTab(tab.id)}
-                  accessibilityRole="button"
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
                   accessibilityLabel={`Filter by ${tab.label}`}
                 >
-                  <Text style={[styles.tabPillText, isActive && styles.activeTabPillText]}>
+                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
                     {tab.label}
                   </Text>
                 </Pressable>
@@ -176,178 +176,74 @@ export const AchievementCenterScreen: React.FC<AchievementCenterScreenProps> = (
             })}
           </ScrollView>
 
-          {/* Badge List */}
-          <View style={styles.badgeList}>
-            {filteredAchievements.map(item => (
-              <AchievementBadge
-                key={item.definition.id}
-                achievement={item}
-                onPress={a => {
-                  if (a.isUnlocked) {
-                    setCelebrationAchievement(a);
-                  }
-                }}
-              />
-            ))}
-          </View>
+          {filteredAchievements.length === 0 ? (
+            <Text style={styles.centerText}>No badges in this category yet.</Text>
+          ) : (
+            <View style={styles.badgeList}>
+              {filteredAchievements.map(item => (
+                <AchievementBadge
+                  key={item.definition.id}
+                  achievement={item}
+                  onPress={a => {
+                    if (a.isUnlocked) setCelebrationAchievement(a);
+                  }}
+                />
+              ))}
+            </View>
+          )}
         </ScrollView>
       )}
 
-      {/* Celebration Modal */}
       <CelebrationModal
         visible={!!celebrationAchievement}
         achievement={celebrationAchievement}
         onClose={() => setCelebrationAchievement(null)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FAF9F6',
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(15, 23, 42, 0.05)',
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-  headerTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: '#0F172A',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
+  centerText: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: 15,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  heroBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    marginBottom: 20,
-  },
-  heroLeft: {
-    flex: 1,
-    marginRight: 16,
-  },
+  hero: { padding: 16 },
   heroLabel: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: '#94A3B8',
-    letterSpacing: 0.8,
-    marginBottom: 6,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    color: Colors.textSecondary,
   },
-  heroScoreRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-    marginBottom: 10,
-  },
-  heroScoreText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 32,
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
-  heroTotalText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
-    color: '#64748B',
-  },
-  heroProgressTrack: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
+  heroScoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 },
+  heroScore: { fontFamily: Fonts.urbanist.extraBold, fontSize: 32, color: Colors.textPrimary },
+  heroTotal: { fontFamily: Fonts.urbanist.medium, fontSize: 15, color: Colors.textSecondary },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.surfaceContainer,
     overflow: 'hidden',
-    marginBottom: 6,
+    marginTop: 10,
   },
-  heroProgressFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 3,
-  },
-  heroPercentText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    color: Colors.primary,
-  },
-  trophyIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    alignItems: 'center',
+  fill: { height: 8, borderRadius: 4, backgroundColor: Colors.primary },
+  tabsRow: { flexDirection: 'row', gap: 8 },
+  tab: {
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     justifyContent: 'center',
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  tabPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderColor: Colors.borderSubtle,
   },
-  activeTabPill: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
-  },
-  tabPillText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: '#64748B',
-  },
-  activeTabPillText: {
-    color: '#FFFFFF',
-  },
-  badgeList: {
-    gap: 2,
-  },
+  tabActive: { backgroundColor: Colors.textPrimary, borderColor: Colors.textPrimary },
+  tabText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textSlate600 },
+  tabTextActive: { color: Colors.textInverse },
+  pressed: { opacity: 0.85 },
+  badgeList: { gap: 2 },
 });
 
 export default AchievementCenterScreen;
