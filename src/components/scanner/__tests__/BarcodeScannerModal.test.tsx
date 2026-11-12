@@ -123,12 +123,34 @@ describe('BarcodeScannerModal', () => {
       <BarcodeScannerModal visible={true} onClose={mockOnClose} />
     );
 
-    expect(getByText('Camera Access Required')).toBeTruthy();
+    expect(getByText('Camera access needed')).toBeTruthy();
     expect(getByRole('button', { name: 'Grant camera permission' })).toBeTruthy();
 
     const grantBtn = getByRole('button', { name: 'Grant camera permission' });
     fireEvent.press(grantBtn);
     expect(mockRequestPermission).toHaveBeenCalled();
+  });
+
+  it('offers Settings when access was denied for good, and a search fallback', async () => {
+    (useBarcodeScanner as jest.Mock).mockReturnValue({
+      ...(useBarcodeScanner as jest.Mock)(),
+      permission: { granted: false, status: 'denied', canAskAgain: false },
+    });
+    const onOpenManualSearch = jest.fn();
+
+    const { getByRole } = await render(
+      <BarcodeScannerModal
+        visible={true}
+        onClose={mockOnClose}
+        onOpenManualSearch={onOpenManualSearch}
+      />
+    );
+
+    expect(getByRole('button', { name: 'Open settings' })).toBeTruthy();
+    fireEvent.press(getByRole('button', { name: 'Search foods instead' }));
+    expect(mockOnClose).toHaveBeenCalled();
+    expect(onOpenManualSearch).toHaveBeenCalled();
+    expect(mockRequestPermission).not.toHaveBeenCalled();
   });
 
   it('renders live camera viewfinder when permission is granted and no item is scanned', async () => {
@@ -137,8 +159,8 @@ describe('BarcodeScannerModal', () => {
     );
 
     expect(getByTestId('mock-camera-view')).toBeTruthy();
-    expect(getByText('Scan Barcode')).toBeTruthy();
-    expect(getByText('Align barcode inside the frame')).toBeTruthy();
+    expect(getByText('Scan barcode')).toBeTruthy();
+    expect(getByText('Hold steady. It scans on its own.')).toBeTruthy();
 
     const closeBtn = getByRole('button', { name: 'Close scanner' });
     fireEvent.press(closeBtn);
@@ -182,14 +204,14 @@ describe('BarcodeScannerModal', () => {
     );
 
     // Viewfinder overlay text should NOT be present on full-screen logging card
-    expect(queryByText('Align barcode inside the frame')).toBeNull();
+    expect(queryByText('Hold steady. It scans on its own.')).toBeNull();
 
     // Dedicated Full-Screen Header and Content
-    expect(getByText('Log Scanned Item')).toBeTruthy();
+    expect(getByText('Scanned item')).toBeTruthy();
     expect(getByText('Greek Yogurt Plain')).toBeTruthy();
-    expect(getByText('EPIGAMIA')).toBeTruthy();
-    expect(getByText('Assign to meal')).toBeTruthy();
-    expect(getByText('Portion Size')).toBeTruthy();
+    expect(getByText('Epigamia')).toBeTruthy();
+    expect(getByText('Meal')).toBeTruthy();
+    expect(getByText('Portion')).toBeTruthy();
 
     // Log the meal
     const logButton = getByRole('button', { name: /Add to Breakfast/i });
@@ -262,7 +284,7 @@ describe('BarcodeScannerModal', () => {
       />
     );
 
-    expect(getByText('Packaged Item Not Found')).toBeTruthy();
+    expect(getByText("We don't know this one yet")).toBeTruthy();
     expect(getByText('1234567890')).toBeTruthy();
 
     const manualBtn = getByRole('button', { name: 'Enter food details manually' });

@@ -103,6 +103,7 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
         onClose={closeModal}
         initialMealType={activeMealType}
         onEnterManually={handleBarcodeEnterManually}
+        onOpenManualSearch={handleFoodVisionToModal}
       />
 
       {/* 4. BYOK Setup Modal */}

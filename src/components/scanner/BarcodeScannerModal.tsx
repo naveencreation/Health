@@ -1,23 +1,16 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  useWindowDimensions,
-} from 'react-native';
-import { CameraView, BarcodeScanningResult } from 'expo-camera';
+import { View, Text, StyleSheet, Modal, Pressable, ActivityIndicator, Linking } from 'react-native';
+import { CameraView } from 'expo-camera';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { MealType } from '@/types';
-import { normalizedFoodToFoodItem } from '@/types/barcode';
-import { useDailyLog } from '@/context/HealthContext';
+import { NormalizedFoodItem, normalizedFoodToFoodItem } from '@/types/barcode';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
+import { useNutrition } from '@/features/nutrition/hooks/useNutrition';
+import { ProfileButton, SheetHeader } from '@/components/profile/ProfileUI';
 import { ScannedProductCard } from './ScannedProductCard';
 import { haptics } from '@/utils/haptics';
 
@@ -27,7 +20,11 @@ interface BarcodeScannerModalProps {
   initialMealType?: MealType;
   onMealLogged?: (mealType: MealType, foodName: string, calories: number) => void;
   onEnterManually?: (barcode: string) => void;
+  onOpenManualSearch?: () => void;
 }
+
+const FRAME_W = 280;
+const FRAME_H = 180;
 
 export function BarcodeScannerModal({
   visible,
@@ -35,10 +32,10 @@ export function BarcodeScannerModal({
   initialMealType = 'lunch',
   onMealLogged,
   onEnterManually,
+  onOpenManualSearch,
 }: BarcodeScannerModalProps) {
   const insets = useSafeAreaInsets();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const { addMealItem } = useDailyLog();
+  const { addMealItem, mealCalories, calorieBudget, caloriesBurned } = useNutrition();
 
   const {
     permission,
@@ -55,13 +52,10 @@ export function BarcodeScannerModal({
     reset,
   } = useBarcodeScanner();
 
-  // Reset scanner state when modal opens or closes
+  // Reset scanner state when the modal opens or closes
   useEffect(() => {
-    if (visible) {
-      scanAgain();
-    } else {
-      reset();
-    }
+    if (visible) scanAgain();
+    else reset();
   }, [visible, scanAgain, reset]);
 
   const handleClose = () => {
@@ -70,30 +64,29 @@ export function BarcodeScannerModal({
     onClose();
   };
 
-  const handleAddMeal = (
-    mealType: MealType,
-    product: any,
-    multiplier: number
-  ) => {
+  const handleAddMeal = (mealType: MealType, product: NormalizedFoodItem, multiplier: number) => {
+    // One serving per quantity unit; the converter scales per-100 g values (TD-H19)
     const foodItem = normalizedFoodToFoodItem(product);
     addMealItem(mealType, foodItem, multiplier);
-
-    if (onMealLogged) {
-      const cals = Math.round(product.caloriesPer100g * multiplier);
-      onMealLogged(mealType, foodItem.name, cals);
-    }
-
+    onMealLogged?.(mealType, foodItem.name, Math.round(foodItem.calories * multiplier));
     handleClose();
   };
 
   const handleManualEntry = (code: string) => {
     handleClose();
-    if (onEnterManually) {
-      onEnterManually(code);
-    }
+    onEnterManually?.(code);
   };
 
+  const handleManualSearch = onOpenManualSearch
+    ? () => {
+        handleClose();
+        onOpenManualSearch();
+      }
+    : undefined;
+
   const isSheetOpen = !!scannedProduct || !!scanError;
+  // Denied for good: the OS won't show the prompt again, only Settings can grant it
+  const blocked = permission?.status === 'denied' && permission.canAskAgain === false;
 
   return (
     <Modal
@@ -103,409 +96,234 @@ export function BarcodeScannerModal({
       onRequestClose={handleClose}
       statusBarTranslucent={true}
     >
-      <View style={styles.container}>
-        {/* Camera or Permission Fallback */}
-        {!permission?.granted ? (
-          <SafeAreaView style={styles.permissionContainer} edges={['top', 'bottom']}>
-            <View style={styles.permissionHeader}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.headerCircleBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                onPress={handleClose}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                accessibilityRole="button"
-                accessibilityLabel="Close camera"
-              >
-                <Ionicons name="close" size={20} color="#0F172A" />
-              </Pressable>
+      <StatusBar style={permission?.granted && !isSheetOpen ? 'light' : 'dark'} />
+      {!permission?.granted ? (
+        // 3A · Camera permission
+        <SafeAreaView style={styles.light} edges={['top']}>
+          <SheetHeader
+            title="Scan packaged food"
+            subtitle="Barcodes on packs and labels"
+            onClose={handleClose}
+            closeLabel="Close camera"
+          />
+          <View style={styles.permissionBody}>
+            <View style={styles.permissionIcon}>
+              <Ionicons name="barcode-outline" size={34} color={Colors.primaryDark} />
             </View>
-
-            <View style={styles.permissionCard}>
-              <View style={styles.permissionIconCircle}>
-                <Ionicons name="camera-outline" size={36} color={Colors.primary} />
-              </View>
-
-              <Text style={styles.permissionTitle}>Camera Access Required</Text>
-              <Text style={styles.permissionDescription}>
-                Calorify uses your device camera to scan barcodes on packaged foods for instant macro logging.
-              </Text>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.grantButton,
-                  pressed ? styles.btnPressedPrimary : null,
-                ]}
-                onPress={() => {
-                  haptics.selection().catch(() => {});
-                  requestPermission();
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Grant camera permission"
-              >
-                <Text style={styles.grantButtonText}>Grant Camera Permission</Text>
-              </Pressable>
-            </View>
-          </SafeAreaView>
-        ) : (
-          <View style={StyleSheet.absoluteFill}>
-            {/* Live Camera View */}
-            <CameraView
-              style={StyleSheet.absoluteFill}
-              facing="back"
-              enableTorch={isTorchOn}
-              barcodeScannerSettings={{
-                barcodeTypes: [
-                  'ean13',
-                  'ean8',
-                  'upc_a',
-                  'upc_e',
-                  'qr',
-                  'code128',
-                  'code39',
-                ],
+            <Text style={styles.permissionTitle} accessibilityRole="header">
+              Camera access needed
+            </Text>
+            <Text style={styles.permissionText}>
+              {blocked
+                ? 'Camera access is off for Calorify. Turn it on in Settings to scan barcodes.'
+                : 'Calorify uses the camera only while this screen is open, to read barcodes.'}
+            </Text>
+          </View>
+          <View style={[styles.footer, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>
+            <ProfileButton
+              label={blocked ? 'Open settings' : 'Allow camera'}
+              variant="primary"
+              onPress={() => {
+                haptics.selection().catch(() => {});
+                if (blocked) Linking.openSettings().catch(() => {});
+                else requestPermission();
               }}
-              onBarcodeScanned={
-                isScanningLocked || isSheetOpen ? undefined : handleBarcodeScanned
-              }
+              accessibilityLabel={blocked ? 'Open settings' : 'Grant camera permission'}
             />
+            {handleManualSearch ? (
+              <ProfileButton label="Search foods instead" onPress={handleManualSearch} />
+            ) : null}
+          </View>
+        </SafeAreaView>
+      ) : (
+        <View style={styles.dark}>
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            facing="back"
+            enableTorch={isTorchOn}
+            barcodeScannerSettings={{
+              barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'qr', 'code128', 'code39'],
+            }}
+            onBarcodeScanned={isScanningLocked || isSheetOpen ? undefined : handleBarcodeScanned}
+          />
 
-            {/* Viewfinder Translucent Mask & Corner Frame */}
-            {!isSheetOpen ? (
-              <View style={styles.overlayContainer} pointerEvents="box-none">
-                {/* Top Mask */}
-                <View style={[styles.maskBlock, { height: (windowHeight - 200) / 2 - 30 }]} />
-
-                {/* Center Cutout Row */}
+          {!isSheetOpen ? (
+            // 3B · Scanning
+            <>
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <View style={styles.mask} />
                 <View style={styles.cutoutRow}>
-                  <View style={styles.maskSideBlock} />
-
-                  {/* Viewfinder Box */}
-                  <View style={styles.viewfinderFrame}>
-                    {/* 4 Corner Accents */}
-                    <View style={[styles.cornerGuide, styles.cornerTopLeft]} />
-                    <View style={[styles.cornerGuide, styles.cornerTopRight]} />
-                    <View style={[styles.cornerGuide, styles.cornerBottomLeft]} />
-                    <View style={[styles.cornerGuide, styles.cornerBottomRight]} />
-
-                    {/* Loading Spinner during lookup */}
-                    {isLoading ? (
-                      <View style={styles.loadingSpinnerContainer}>
-                        <ActivityIndicator size="large" color="#FFFFFF" />
-                        <Text style={styles.loadingText}>Looking up food...</Text>
-                      </View>
-                    ) : null}
+                  <View style={styles.mask} />
+                  <View style={styles.frame}>
+                    <View style={[styles.corner, styles.cornerTL]} />
+                    <View style={[styles.corner, styles.cornerTR]} />
+                    <View style={[styles.corner, styles.cornerBL]} />
+                    <View style={[styles.corner, styles.cornerBR]} />
                   </View>
-
-                  <View style={styles.maskSideBlock} />
+                  <View style={styles.mask} />
                 </View>
-
-                {/* Bottom Mask with Help Text */}
-                <View style={styles.maskBottomBlock}>
-                  <View style={styles.instructionPill}>
-                    <Ionicons name="scan" size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.instructionText}>
-                      Align barcode inside the frame
-                    </Text>
+                <View style={[styles.mask, styles.maskBottom]}>
+                  <View style={styles.pill} accessibilityLiveRegion="polite">
+                    {isLoading ? (
+                      <>
+                        <ActivityIndicator size="small" color={Colors.textInverse} />
+                        <Text style={styles.pillText}>
+                          {`Looking up ${scannedCode ?? 'food'}…`}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text style={styles.pillText}>Hold steady. It scans on its own.</Text>
+                    )}
                   </View>
                 </View>
               </View>
-            ) : null}
 
-            {/* Floating Top Controls Header */}
-            {!isSheetOpen ? (
-              <View style={[styles.topHeader, { top: Math.max(insets.top, 16) }]}>
+              <View style={[styles.topBar, { top: insets.top + 10 }]}>
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.headerCircleBtn,
-                    pressed ? styles.btnPressedSubtle : null,
-                  ]}
+                  style={({ pressed }) => [styles.glassBtn, pressed && styles.pressed]}
                   onPress={handleClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
                   accessibilityLabel="Close scanner"
                 >
-                  <Ionicons name="close" size={20} color="#0F172A" />
+                  <Ionicons name="close" size={22} color={Colors.textInverse} />
                 </Pressable>
-
-                <View style={styles.headerTitleContainer}>
-                  <Text style={styles.headerTitleText}>Scan Barcode</Text>
+                <View style={styles.topTitle}>
+                  <Text style={styles.topTitleText} accessibilityRole="header">
+                    Scan barcode
+                  </Text>
+                  <Text style={styles.topSubText}>
+                    Adding to {initialMealType.charAt(0).toUpperCase() + initialMealType.slice(1)}
+                  </Text>
                 </View>
-
                 <Pressable
                   style={({ pressed }) => [
-                    styles.headerCircleBtn,
-                    isTorchOn ? styles.headerCircleBtnTorchActive : null,
-                    pressed ? styles.btnPressedSubtle : null,
+                    styles.glassBtn,
+                    isTorchOn && styles.glassBtnOn,
+                    pressed && styles.pressed,
                   ]}
                   onPress={toggleTorch}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
+                  accessibilityState={{ selected: isTorchOn }}
                   accessibilityLabel={isTorchOn ? 'Turn torch off' : 'Turn torch on'}
                 >
                   <Ionicons
                     name={isTorchOn ? 'flash' : 'flash-outline'}
                     size={20}
-                    color={isTorchOn ? '#B45309' : '#0F172A'}
+                    color={isTorchOn ? Colors.warningDark : Colors.textInverse}
                   />
                 </Pressable>
               </View>
-            ) : null}
-
-            {/* Dedicated Full-Screen Food Logging Experience */}
-            {isSheetOpen ? (
-              <View style={styles.fullScreenCardWrapper}>
-                <ScannedProductCard
-                  product={scannedProduct}
-                  error={scanError}
-                  scannedCode={scannedCode}
-                  initialMealType={initialMealType}
-                  onAddMeal={handleAddMeal}
-                  onScanAgain={scanAgain}
-                  onEnterManually={handleManualEntry}
-                  onClose={handleClose}
-                />
-              </View>
-            ) : null}
-          </View>
-        )}
-      </View>
+            </>
+          ) : (
+            <View style={styles.sheet}>
+              <ScannedProductCard
+                product={scannedProduct}
+                error={scanError}
+                scannedCode={scannedCode}
+                initialMealType={initialMealType}
+                onAddMeal={handleAddMeal}
+                onScanAgain={scanAgain}
+                onEnterManually={handleManualEntry}
+                onClose={handleClose}
+                mealCalories={mealCalories}
+                allowance={mealCalories ? calorieBudget + caloriesBurned : undefined}
+              />
+            </View>
+          )}
+        </View>
+      )}
     </Modal>
   );
 }
 
+const MASK = 'rgba(15, 23, 42, 0.62)';
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
+  light: { flex: 1, backgroundColor: Colors.background },
+  dark: { flex: 1, backgroundColor: Colors.inverseSurface },
+  pressed: { opacity: 0.85 },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderWhisper,
+    backgroundColor: Colors.background,
   },
 
-  // Permission View
-  permissionContainer: {
-    flex: 1,
-    backgroundColor: '#FAF9F6',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-  },
-  permissionHeader: {
-    paddingTop: 12,
-  },
-  permissionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  permissionIconCircle: {
+  permissionBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 8 },
+  permissionIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#FFEDD5',
-    justifyContent: 'center',
+    backgroundColor: Colors.primaryContainer,
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   permissionTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    color: '#0F172A',
-    letterSpacing: -0.4,
-    marginBottom: 8,
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 20,
+    color: Colors.textPrimary,
     textAlign: 'center',
   },
-  permissionDescription: {
-    fontFamily: Fonts.urbanist.medium,
+  permissionText: {
+    fontFamily: Fonts.urbanist.regular,
     fontSize: 15,
     lineHeight: 22,
-    color: '#64748B',
+    color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  grantButton: {
-    width: '100%',
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  grantButtonText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
   },
 
-  // Viewfinder Overlay
-  overlayContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+  mask: { flex: 1, backgroundColor: MASK },
+  maskBottom: { alignItems: 'center', paddingTop: 24 },
+  cutoutRow: { flexDirection: 'row', height: FRAME_H },
+  frame: { width: FRAME_W, height: FRAME_H },
+  corner: { position: 'absolute', width: 28, height: 28, borderColor: Colors.textInverse },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 10 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 10 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 10 },
+  cornerBR: {
     bottom: 0,
+    right: 0,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderBottomRightRadius: 10,
   },
-  maskBlock: {
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    width: '100%',
-  },
-  cutoutRow: {
-    flexDirection: 'row',
-    height: 200,
-  },
-  maskSideBlock: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-  },
-  viewfinderFrame: {
-    width: 280,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  maskBottomBlock: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    alignItems: 'center',
-    paddingTop: 24,
-  },
-  instructionPill: {
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: Colors.overlayDark,
   },
-  instructionText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
+  pillText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textInverse },
 
-  // Corner Guides
-  cornerGuide: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderColor: Colors.primary,
-  },
-  cornerTopLeft: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 3.5,
-    borderLeftWidth: 3.5,
-    borderTopLeftRadius: 8,
-  },
-  cornerTopRight: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 3.5,
-    borderRightWidth: 3.5,
-    borderTopRightRadius: 8,
-  },
-  cornerBottomLeft: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 3.5,
-    borderLeftWidth: 3.5,
-    borderBottomLeftRadius: 8,
-  },
-  cornerBottomRight: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 3.5,
-    borderRightWidth: 3.5,
-    borderBottomRightRadius: 8,
-  },
-
-  loadingSpinnerContainer: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-  },
-  loadingText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: '#FFFFFF',
-    marginTop: 8,
-  },
-
-  // Top Floating Controls Header
-  topHeader: {
+  topBar: {
     position: 'absolute',
     left: 16,
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 10,
+    gap: 12,
   },
-  headerCircleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFFFFF',
+  glassBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.overlayDark,
     borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    justifyContent: 'center',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.12,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    justifyContent: 'center',
+    elevation: 0,
   },
-  headerCircleBtnTorchActive: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-  },
-  headerTitleContainer: {
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  headerTitleText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-  },
+  glassBtnOn: { backgroundColor: Colors.warningLight, borderColor: Colors.warningLight },
+  topTitle: { flex: 1, alignItems: 'center' },
+  topTitleText: { fontFamily: Fonts.urbanist.bold, fontSize: 17, color: Colors.textInverse },
+  topSubText: { fontFamily: Fonts.urbanist.medium, fontSize: 13, color: Colors.borderMedium },
 
-  // Dedicated Full Screen Card Container
-  fullScreenCardWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FAF9F6',
-    zIndex: 20,
-  },
-
-  btnPressedPrimary: {
-    opacity: 0.88,
-    transform: [{ scale: 0.985 }],
-  },
-  btnPressedSubtle: {
-    opacity: 0.88,
-    transform: [{ scale: 0.98 }],
-  },
+  sheet: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: Colors.background },
 });

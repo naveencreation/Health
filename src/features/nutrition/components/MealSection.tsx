@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MealCard } from './MealCard';
 import { MealType } from '@/types';
 import { useNutrition } from '../hooks/useNutrition';
+import { getMealTarget } from '../services/nutritionAnalytics';
 import { Fonts } from '@/theme/typography';
 import { Colors } from '@/theme/colors';
 
@@ -23,10 +24,10 @@ const MealSectionComponent: React.FC<MealSectionProps> = ({ onAddFood, title = '
   // Split the same allowance the hero card uses: budget + burned
   const allowance = calorieBudget + caloriesBurned;
   const recommended = {
-    breakfast: Math.round(allowance * 0.25),
-    lunch: Math.round(allowance * 0.35),
-    snacks: Math.round(allowance * 0.12),
-    dinner: Math.round(allowance * 0.28),
+    breakfast: getMealTarget(allowance, 'breakfast'),
+    lunch: getMealTarget(allowance, 'lunch'),
+    snacks: getMealTarget(allowance, 'snacks'),
+    dinner: getMealTarget(allowance, 'dinner'),
   };
 
   return (

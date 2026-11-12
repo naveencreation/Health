@@ -59,7 +59,7 @@ describe('ScannedProductCard', () => {
   });
 
   it('renders product details and macros accurately', async () => {
-    const { getByText } = await render(
+    const { getByText, getByLabelText } = await render(
       <ScannedProductCard
         product={mockProduct}
         initialMealType="breakfast"
@@ -69,20 +69,31 @@ describe('ScannedProductCard', () => {
       />
     );
 
-    // Product identity
     expect(getByText('Greek Yogurt Plain')).toBeTruthy();
-    expect(getByText('EPIGAMIA')).toBeTruthy();
-    expect(getByText('100 g')).toBeTruthy();
+    expect(getByText('Epigamia')).toBeTruthy();
+    expect(getByText('serving · 100 g')).toBeTruthy();
 
-    // 4 Bento Macro Cells
-    expect(getByText('85')).toBeTruthy(); // Calories
-    expect(getByText('6')).toBeTruthy(); // Protein
-    expect(getByText('7.5')).toBeTruthy(); // Carbs
-    expect(getByText('3.2')).toBeTruthy(); // Fat
+    expect(getByLabelText('85 calories')).toBeTruthy();
+    expect(getByLabelText('Protein 6 grams')).toBeTruthy();
+    expect(getByLabelText('Carbs 7.5 grams')).toBeTruthy();
+    expect(getByLabelText('Fat 3.2 grams')).toBeTruthy();
+  });
+
+  it('shows one labelled serving, not 100 g (TD-H19)', async () => {
+    const { getByLabelText, getByText } = await render(
+      <ScannedProductCard
+        product={{ ...mockProduct, servingSize: '30 g', servingSizeGrams: 30, caloriesPer100g: 500 }}
+        onAddMeal={mockAddMeal}
+        onScanAgain={mockScanAgain}
+      />
+    );
+
+    expect(getByLabelText('150 calories')).toBeTruthy();
+    expect(getByText('serving · 30 g')).toBeTruthy();
   });
 
   it('updates macros and calories when portion multiplier changes', async () => {
-    const { getByText, getByRole } = await render(
+    const { getByLabelText, getByRole } = await render(
       <ScannedProductCard
         product={mockProduct}
         initialMealType="breakfast"
@@ -91,14 +102,13 @@ describe('ScannedProductCard', () => {
       />
     );
 
-    const preset2x = getByRole('button', { name: 'Set portion to 2 times' });
-    fireEvent.press(preset2x);
+    fireEvent.press(getByRole('button', { name: 'Select 2 servings' }));
 
     await waitFor(() => {
-      expect(getByText('170')).toBeTruthy();
-      expect(getByText('12')).toBeTruthy();
-      expect(getByText('15')).toBeTruthy();
-      expect(getByText('6.4')).toBeTruthy();
+      expect(getByLabelText('170 calories')).toBeTruthy();
+      expect(getByLabelText('Protein 12 grams')).toBeTruthy();
+      expect(getByLabelText('Carbs 15 grams')).toBeTruthy();
+      expect(getByLabelText('Fat 6.4 grams')).toBeTruthy();
     });
   });
 
@@ -112,22 +122,19 @@ describe('ScannedProductCard', () => {
       />
     );
 
-    const snacksTab = getByRole('button', { name: 'Select Snacks' });
-    fireEvent.press(snacksTab);
+    fireEvent.press(getByRole('tab', { name: 'Select Snacks' }));
 
     await waitFor(() => {
       expect(getByRole('button', { name: /Add to Snacks/i })).toBeTruthy();
     });
 
-    const addPortionBtn = getByRole('button', { name: 'Increase portion' });
-    fireEvent.press(addPortionBtn);
+    fireEvent.press(getByRole('button', { name: 'Increase portion by 0.25' }));
 
     await waitFor(() => {
-      expect(getByText('1.25x')).toBeTruthy();
+      expect(getByText('1.25')).toBeTruthy();
     });
 
-    const addBtn = getByRole('button', { name: /Add to Snacks/i });
-    fireEvent.press(addBtn);
+    fireEvent.press(getByRole('button', { name: /Add to Snacks/i }));
 
     await waitFor(() => {
       expect(mockAddMeal).toHaveBeenCalledWith('snacks', mockProduct, 1.25);
@@ -147,23 +154,36 @@ describe('ScannedProductCard', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('Packaged Item Not Found')).toBeTruthy();
+      expect(getByText("We don't know this one yet")).toBeTruthy();
       expect(getByText('9999999999999')).toBeTruthy();
     });
 
-    const manualBtn = getByRole('button', { name: 'Enter food details manually' });
-    fireEvent.press(manualBtn);
+    fireEvent.press(getByRole('button', { name: 'Enter food details manually' }));
 
     await waitFor(() => {
       expect(mockEnterManually).toHaveBeenCalledWith('9999999999999');
     });
 
-    const scanAgainBtn = getByRole('button', { name: 'Scan another barcode' });
-    fireEvent.press(scanAgainBtn);
+    fireEvent.press(getByRole('button', { name: 'Scan another barcode' }));
 
     await waitFor(() => {
       expect(mockScanAgain).toHaveBeenCalled();
     });
+  });
+
+  it('shows the lookup error text when the failure is not a missing product', async () => {
+    const { getByText } = await render(
+      <ScannedProductCard
+        product={null}
+        error="Request timed out while contacting Open Food Facts."
+        scannedCode="123"
+        onAddMeal={mockAddMeal}
+        onScanAgain={mockScanAgain}
+      />
+    );
+
+    expect(getByText("Couldn't look this up")).toBeTruthy();
+    expect(getByText('Request timed out while contacting Open Food Facts.')).toBeTruthy();
   });
 
   it('renders estimated banner when product has isEstimated true', async () => {
@@ -186,8 +206,8 @@ describe('ScannedProductCard', () => {
     );
 
     expect(getByText(/Estimated from Buttermilk/i)).toBeTruthy();
-    expect(getByText(/Open Food Facts lacks nutrition table for this barcode/i)).toBeTruthy();
-    expect(getByRole('button', { name: 'Adjust macros from packaging' })).toBeTruthy();
+    expect(getByText(/Open Food Facts has no nutrition table for this barcode/i)).toBeTruthy();
+    expect(getByRole('button', { name: 'Edit nutrition from label' })).toBeTruthy();
   });
 
   it('allows editing packaging values and applies overridden macros to onAddMeal', async () => {
@@ -201,7 +221,7 @@ describe('ScannedProductCard', () => {
       fatGrams: 1.2,
     };
 
-    const { getByRole, getByTestId, getByText } = await render(
+    const { getByRole, getByTestId, getByLabelText } = await render(
       <ScannedProductCard
         product={estimatedProduct}
         initialMealType="lunch"
@@ -210,15 +230,12 @@ describe('ScannedProductCard', () => {
       />
     );
 
-    // Open inline editor
-    const adjustBtn = getByRole('button', { name: 'Adjust macros from packaging' });
-    fireEvent.press(adjustBtn);
+    fireEvent.press(getByRole('button', { name: 'Edit nutrition from label' }));
 
     await waitFor(() => {
       expect(getByTestId('input-calories')).toBeTruthy();
     });
 
-    // Change calories to 35, protein to 2.2
     const calInput = getByTestId('input-calories');
     fireEvent.changeText(calInput, '35');
 
@@ -226,17 +243,13 @@ describe('ScannedProductCard', () => {
       expect(calInput.props.value).toBe('35');
     });
 
-    // Save package values
-    const saveBtn = getByRole('button', { name: 'Save package values' });
-    fireEvent.press(saveBtn);
+    fireEvent.press(getByRole('button', { name: 'Save package values' }));
 
     await waitFor(() => {
-      expect(getByText('35')).toBeTruthy();
+      expect(getByLabelText('35 calories')).toBeTruthy();
     });
 
-    // Add meal with updated packaging macros
-    const addBtn = getByRole('button', { name: /Add to Lunch/i });
-    fireEvent.press(addBtn);
+    fireEvent.press(getByRole('button', { name: /Add to Lunch/i }));
 
     await waitFor(() => {
       expect(mockAddMeal).toHaveBeenCalledWith(
@@ -261,13 +274,12 @@ describe('ScannedProductCard', () => {
       />
     );
 
-    const closeBtn = getByRole('button', { name: 'Close' });
-    fireEvent.press(closeBtn);
+    fireEvent.press(getByRole('button', { name: 'Close' }));
 
     expect(mockClose).toHaveBeenCalled();
   });
 
-  it('renders verified barcode pill in hero card meta', async () => {
+  it('shows the barcode in the product meta line', async () => {
     const { getByText } = await render(
       <ScannedProductCard
         product={mockProduct}

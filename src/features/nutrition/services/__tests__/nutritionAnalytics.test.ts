@@ -1,4 +1,5 @@
 import {
+  getMealTarget,
   extractLogNutrition,
   computeCalorieDays,
   computeMacroRatioDays,
@@ -167,5 +168,18 @@ describe('nutritionAnalytics', () => {
       expect(res[0].proteinPct).toBe(0);
       expect(res[0].fatPct).toBe(0);
     });
+  });
+});
+
+describe('getMealTarget', () => {
+  it('splits the allowance 25/35/12/28 across meals', () => {
+    expect(getMealTarget(2000, 'breakfast')).toBe(500);
+    expect(getMealTarget(2000, 'lunch')).toBe(700);
+    expect(getMealTarget(2000, 'snacks')).toBe(240);
+    expect(getMealTarget(2000, 'dinner')).toBe(560);
+  });
+
+  it('never returns a negative target', () => {
+    expect(getMealTarget(-50, 'lunch')).toBe(0);
   });
 });

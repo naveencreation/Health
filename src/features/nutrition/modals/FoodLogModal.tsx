@@ -13,26 +13,40 @@ import {
   AccessibilityInfo,
   Alert,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
-import { MotionDurations, MotionCurves } from '@/theme/motion';
-import { IconSizes, ActionIcons } from '@/theme/icons';
+import { MotionDurations } from '@/theme/motion';
 import { Fonts } from '@/theme/typography';
 import { FoodItem, MealType, LoggedMealItem } from '@/types';
-import { useFoodData, useDailyLog, useGoals } from '@/context/HealthContext';
+import { useFoodData, useDailyLog } from '@/context/HealthContext';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodIconBadge } from '@/components/common/FoodIconBadge';
-import { FoodImage } from '@/components/common/FoodImage';
 import { getFoodDescription } from '@/data/foodDatabase';
-import { getFoodImageSource } from '@/assets/foodImages';
+import {
+  HeaderIconButton,
+  ProfileButton,
+  SheetHeader,
+  SubScreenHeader,
+} from '@/components/profile/ProfileUI';
+import { FULL_DAY_NAMES, SHORT_MONTHS, parseDateString } from '@/utils/dateUtils';
+import { useNutrition } from '../hooks/useNutrition';
+import { getMealTarget } from '../services/nutritionAnalytics';
+import {
+  LabeledInput,
+  MacroSummary,
+  MealBudgetBar,
+  MealImpact,
+  MealSwitcher,
+  PortionStepper,
+  SectionLabel,
+  foodUiStyles as ui,
+  formatQty,
+  mealLabel,
+} from '../components/FoodLogUI';
 
 interface FoodLogModalProps {
   visible: boolean;
@@ -43,474 +57,181 @@ interface FoodLogModalProps {
   prefillBarcode?: string | null;
 }
 
-interface CategoryItem {
-  id: string;
-  label: string;
-  iconFamily: 'ion' | 'mci';
-  iconName: string;
-  hasDropdown?: boolean;
-  activeColor?: string;
-  inactiveColor?: string;
-}
+type Category = { id: string; label: string };
 
-const CategoryPill = React.memo(function CategoryPill({
-  cat,
-  isSelected,
-  onPress,
-}: {
-  cat: CategoryItem;
-  isSelected: boolean;
-  onPress: () => void;
-}) {
-  const iconColor = isSelected
-    ? cat.activeColor || Colors.textInverse
-    : cat.inactiveColor || Colors.textSecondary;
+const COMMON_HEAD: Category[] = [
+  { id: 'popular', label: 'Popular' },
+  { id: 'recent', label: 'Recent' },
+  { id: 'yesterday', label: 'Yesterday' },
+  { id: 'all', label: 'All' },
+];
+const HIGH_PROTEIN: Category = { id: 'high_protein', label: 'High protein' };
+const MY_FOODS: Category = { id: 'custom', label: 'My foods' };
 
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.categoryPill,
-        isSelected ? styles.categoryPillActive : null,
-        pressed ? styles.btnPressedPill : null,
-      ]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Filter by ${cat.label}`}
-    >
-      {cat.iconFamily === 'mci' ? (
-        <MaterialCommunityIcons name={cat.iconName as any} size={15} color={iconColor} />
-      ) : (
-        <Ionicons
-          name={
-            cat.id === 'popular'
-              ? isSelected
-                ? 'star'
-                : 'star-outline'
-              : (cat.iconName as any)
-          }
-          size={15}
-          color={iconColor}
-        />
-      )}
-      <Text style={[styles.categoryText, isSelected ? styles.categoryTextActive : null]}>
-        {cat.label}
-      </Text>
-    </Pressable>
-  );
-});
-
-// Meal-Contextual Categories to eliminate decision fatigue
-const MEAL_CATEGORIES: Record<MealType, CategoryItem[]> = {
+// Meal-specific chips keep the list short for the slot the user is logging
+const MEAL_CATEGORIES: Record<MealType, Category[]> = {
   breakfast: [
-    {
-      id: 'popular',
-      label: 'Popular',
-      iconFamily: 'ion',
-      iconName: 'star-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'recent',
-      label: 'Recent',
-      iconFamily: 'ion',
-      iconName: 'time-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'yesterday',
-      label: 'Yesterday',
-      iconFamily: 'ion',
-      iconName: 'refresh-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'all',
-      label: 'All',
-      iconFamily: 'ion',
-      iconName: 'pricetag-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'south_indian',
-      label: 'South Indian',
-      iconFamily: 'mci',
-      iconName: 'pot-steam-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'breads',
-      label: 'Breads & Toast',
-      iconFamily: 'mci',
-      iconName: 'bread-slice-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'high_protein',
-      label: 'High Protein',
-      iconFamily: 'ion',
-      iconName: 'flash-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'fruits',
-      label: 'Fruits & Nuts',
-      iconFamily: 'ion',
-      iconName: 'nutrition-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
+    ...COMMON_HEAD,
+    { id: 'south_indian', label: 'South Indian' },
+    { id: 'breads', label: 'Breads & toast' },
+    HIGH_PROTEIN,
+    MY_FOODS,
+    { id: 'fruits', label: 'Fruits & nuts' },
   ],
   lunch: [
-    {
-      id: 'popular',
-      label: 'Popular',
-      iconFamily: 'ion',
-      iconName: 'star-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'recent',
-      label: 'Recent',
-      iconFamily: 'ion',
-      iconName: 'time-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'yesterday',
-      label: 'Yesterday',
-      iconFamily: 'ion',
-      iconName: 'refresh-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'all',
-      label: 'All',
-      iconFamily: 'ion',
-      iconName: 'pricetag-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'curries',
-      label: 'Dals & Curries',
-      iconFamily: 'mci',
-      iconName: 'bowl-mix-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'rice',
-      label: 'Rice & Grains',
-      iconFamily: 'mci',
-      iconName: 'rice',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'breads',
-      label: 'Breads & Rotis',
-      iconFamily: 'mci',
-      iconName: 'bread-slice-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'high_protein',
-      label: 'High Protein',
-      iconFamily: 'ion',
-      iconName: 'flash-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
+    ...COMMON_HEAD,
+    { id: 'curries', label: 'Dals & curries' },
+    { id: 'rice', label: 'Rice & grains' },
+    { id: 'breads', label: 'Breads & rotis' },
+    HIGH_PROTEIN,
+    MY_FOODS,
   ],
   dinner: [
-    {
-      id: 'popular',
-      label: 'Popular',
-      iconFamily: 'ion',
-      iconName: 'star-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'recent',
-      label: 'Recent',
-      iconFamily: 'ion',
-      iconName: 'time-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'yesterday',
-      label: 'Yesterday',
-      iconFamily: 'ion',
-      iconName: 'refresh-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'all',
-      label: 'All',
-      iconFamily: 'ion',
-      iconName: 'pricetag-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'curries',
-      label: 'Dals & Curries',
-      iconFamily: 'mci',
-      iconName: 'bowl-mix-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'breads',
-      label: 'Breads',
-      iconFamily: 'mci',
-      iconName: 'bread-slice-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'south_indian',
-      label: 'South Indian',
-      iconFamily: 'mci',
-      iconName: 'pot-steam-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'high_protein',
-      label: 'High Protein',
-      iconFamily: 'ion',
-      iconName: 'flash-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
+    ...COMMON_HEAD,
+    { id: 'curries', label: 'Dals & curries' },
+    { id: 'breads', label: 'Breads' },
+    { id: 'south_indian', label: 'South Indian' },
+    HIGH_PROTEIN,
+    MY_FOODS,
   ],
   snacks: [
-    {
-      id: 'popular',
-      label: 'Popular',
-      iconFamily: 'ion',
-      iconName: 'star-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'recent',
-      label: 'Recent',
-      iconFamily: 'ion',
-      iconName: 'time-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'yesterday',
-      label: 'Yesterday',
-      iconFamily: 'ion',
-      iconName: 'refresh-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'all',
-      label: 'All',
-      iconFamily: 'ion',
-      iconName: 'pricetag-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'snacks',
-      label: 'Snacks',
-      iconFamily: 'mci',
-      iconName: 'cookie-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'fruits',
-      label: 'Fruits & Nuts',
-      iconFamily: 'ion',
-      iconName: 'nutrition-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'high_protein',
-      label: 'High Protein',
-      iconFamily: 'ion',
-      iconName: 'flash-outline',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
-    {
-      id: 'custom',
-      label: 'My Custom',
-      iconFamily: 'mci',
-      iconName: 'chef-hat',
-      activeColor: Colors.textInverse,
-      inactiveColor: Colors.textSecondary,
-    },
+    ...COMMON_HEAD,
+    { id: 'snacks', label: 'Snacks' },
+    { id: 'fruits', label: 'Fruits & nuts' },
+    HIGH_PROTEIN,
+    MY_FOODS,
   ],
 };
 
-interface MealTabItem {
-  id: MealType;
-  label: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-}
+const HIT_SLOP_4 = { top: 4, bottom: 4, left: 4, right: 4 };
+const TOAST_MS = 4500;
 
-const MEAL_TABS: MealTabItem[] = [
-  { id: 'breakfast', label: 'Breakfast', iconName: 'partly-sunny-outline' },
-  { id: 'lunch', label: 'Lunch', iconName: 'sunny-outline' },
-  { id: 'snacks', label: 'Snacks', iconName: 'cafe-outline' },
-  { id: 'dinner', label: 'Dinner', iconName: 'moon-outline' },
-];
-
-const HIT_SLOP_8 = { top: 8, bottom: 8, left: 8, right: 8 };
-const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
-
+/** '100g' stays '100g', 'katori' becomes '1 katori'. */
 const formatServingUnit = (unit?: string): string => {
   if (!unit) return '1 serving';
   const trimmed = unit.trim();
-  if (/^\d/.test(trimmed)) return trimmed; // '100g' -> '100g', '250ml' -> '250ml'
-  return `1 ${trimmed}`; // 'egg' -> '1 egg', 'piece' -> '1 piece'
+  return /^\d/.test(trimmed) ? trimmed : `1 ${trimmed}`;
 };
 
-const formatStepperUnit = (unit?: string): string => {
-  if (!unit) return 'x';
-  const firstWord = unit.split(/[\s(]/)[0].toLowerCase();
-  if (firstWord.length <= 7) return firstWord;
-  return 'x';
+/** Unit word under the stepper value: 'katori', '× 100g', or 'serving' for long units. */
+const portionUnit = (unit?: string): string => {
+  if (!unit) return 'serving';
+  const trimmed = unit.trim();
+  if (/^\d/.test(trimmed)) return `× ${trimmed}`;
+  const firstWord = trimmed.split(/[\s(]/)[0].toLowerCase();
+  return firstWord.length <= 9 ? firstWord : 'serving';
+};
+
+const formatDay = (date: string): string => {
+  const d = parseDateString(date);
+  return `${FULL_DAY_NAMES[d.getDay()]}, ${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
+};
+
+const shiftDate = (date: string, daysBack: number): string => {
+  const d = parseDateString(date);
+  d.setDate(d.getDate() - daysBack);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 interface FoodItemRowProps {
   item: FoodItem;
-  loggedCount?: number;
+  loggedCount: number;
+  isFirst: boolean;
+  isLast: boolean;
   onSelect: (item: FoodItem) => void;
   onQuickAdd: (item: FoodItem) => void;
 }
 
-const FoodItemRow = React.memo<FoodItemRowProps>(({ item, loggedCount, onSelect, onQuickAdd }) => {
-  const pressScale = useSharedValue(1);
-  const pressStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
-  const handlePressIn = useCallback(() => {
-    pressScale.value = withTiming(0.985, { duration: MotionDurations.instant });
-  }, [pressScale]);
-
-  const handlePressOut = useCallback(() => {
-    pressScale.value = withTiming(1, { duration: MotionDurations.instant });
-  }, [pressScale]);
-
-  const foodImg = getFoodImageSource(item);
-
-  return (
-    <Pressable onPress={() => onSelect(item)} onPressIn={handlePressIn} onPressOut={handlePressOut}>
-      <Animated.View style={[styles.foodItemCard, pressStyle]}>
-        {/* Food Dish Photo Thumbnail */}
-        <View style={styles.foodThumbWrapper}>
-          {foodImg ? (
-            <Image
-              source={foodImg}
-              style={styles.foodItemImg}
-              contentFit="cover"
-              transition={150}
-            />
-          ) : (
-            <FoodIconBadge item={item} size={48} style={styles.foodItemBadge} />
-          )}
-        </View>
-
-        {/* Clean Food Details (Name + Serving Unit) */}
-        <View style={styles.foodItemMain}>
-          <View style={styles.foodItemNameRow}>
-            <Text style={styles.foodItemName} numberOfLines={1}>
-              {item.name}
-            </Text>
-            {(loggedCount ?? 0) > 0 ? (
-              <View style={styles.loggedCountBadge}>
-                <Text style={styles.loggedCountBadgeText}>✓ {loggedCount}x</Text>
+const FoodItemRow = React.memo<FoodItemRowProps>(
+  ({ item, loggedCount, isFirst, isLast, onSelect, onQuickAdd }) => {
+    const logged = loggedCount > 0;
+    return (
+      <View
+        style={[
+          styles.listCardSlice,
+          isFirst && styles.listCardTop,
+          isLast && styles.listCardBottom,
+        ]}
+      >
+        {!isFirst ? <View style={ui.divider} /> : null}
+        {/* Quick add is a sibling, not a child: nested buttons are invalid on web and for screen readers */}
+        <View style={styles.foodRowWrap}>
+          <Pressable
+            style={({ pressed }) => [styles.foodRow, pressed && styles.rowPressed]}
+            onPress={() => onSelect(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.name}, ${formatServingUnit(item.servingUnit)}, ${item.calories} calories${logged ? `, logged ${formatQty(loggedCount)} times` : ''}. Opens details`}
+          >
+            <FoodIconBadge item={item} size={48} />
+            <View style={styles.foodText}>
+              <View style={styles.foodNameRow}>
+                <Text style={styles.foodName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                {logged ? (
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>×{formatQty(loggedCount)}</Text>
+                  </View>
+                ) : null}
               </View>
-            ) : null}
-            {item.isCustom ? (
-              <View style={styles.customBadge}>
-                <Text style={styles.customBadgeText}>Custom</Text>
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.foodItemUnit} numberOfLines={1}>
-            {formatServingUnit(item.servingUnit)}
-          </Text>
-        </View>
-
-        {/* Calories Stack + Prominent Circular Plus Action */}
-        <View style={styles.foodItemRight}>
-          <View style={styles.caloriesStack}>
-            <Text style={styles.foodItemCals}>{item.calories}</Text>
-            <Text style={styles.foodItemCalUnit}>kcal</Text>
-          </View>
-
+              <Text style={ui.rowSubtitle} numberOfLines={1}>
+                {formatServingUnit(item.servingUnit)} ·{' '}
+                <Text style={styles.foodKcal}>{item.calories} kcal</Text>
+                {item.protein >= 1 ? ` · ${Math.round(item.protein)} g protein` : ''}
+              </Text>
+            </View>
+          </Pressable>
           <Pressable
             style={({ pressed }) => [
-              styles.quickAddButton,
-              pressed ? styles.quickAddButtonPressed : null,
+              styles.addBtn,
+              logged && styles.addBtnLogged,
+              pressed && ui.pressed,
             ]}
-            onPress={e => {
-              e.stopPropagation && e.stopPropagation();
-              onQuickAdd(item);
-            }}
-            hitSlop={HIT_SLOP_8}
+            onPress={() => onQuickAdd(item)}
             accessibilityRole="button"
             accessibilityLabel={`Quick add 1 serving of ${item.name}`}
           >
-            <Ionicons name={ActionIcons.add} size={IconSizes.standard} color={Colors.onPrimary} />
+            <Ionicons name="add" size={22} color={logged ? Colors.primary : Colors.onPrimary} />
           </Pressable>
         </View>
-      </Animated.View>
-    </Pressable>
-  );
-});
+      </View>
+    );
+  }
+);
 FoodItemRow.displayName = 'FoodItemRow';
+
+/** One tappable row inside an options card (no-match and empty states). */
+const OptionRow: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  accessibilityLabel: string;
+  divider?: boolean;
+}> = ({ icon, title, subtitle, onPress, accessibilityLabel, divider }) => (
+  <>
+    {divider ? <View style={ui.divider} /> : null}
+    <Pressable
+      style={({ pressed }) => [ui.row, pressed && styles.rowPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <View style={[ui.tile, { backgroundColor: Colors.primaryContainer }]}>
+        <Ionicons name={icon} size={18} color={Colors.primaryDark} />
+      </View>
+      <View style={styles.flex1}>
+        <Text style={ui.rowTitle} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={ui.rowSubtitle}>{subtitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+    </Pressable>
+  </>
+);
+
+type Toast = { title: string; detail: string };
 
 const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
   visible,
@@ -522,8 +243,9 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { foodDatabase, addCustomFood } = useFoodData();
-  const { addMealItem, removeMealItem, mealCalories, mealsByType, dailyLogs, selectedDate, remainingCalories } = useDailyLog();
-  const { userGoals } = useGoals();
+  const { dailyLogs, selectedDate } = useDailyLog();
+  const { addMealItem, removeMealItem, mealCalories, mealsByType, calorieBudget, caloriesBurned } =
+    useNutrition();
 
   const [selectedMealType, setSelectedMealType] = useState<MealType>(mealType);
   const [searchQuery, setSearchQuery] = useState('');
@@ -531,34 +253,40 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isCustomMode, setIsCustomMode] = useState(false);
-  const [favoriteFoodIds, setFavoriteFoodIds] = useState<Record<string, boolean>>({});
-
-  const toggleFavorite = useCallback((id: string) => {
-    setFavoriteFoodIds(prev => ({ ...prev, [id]: !prev[id] }));
-  }, []);
 
   useEffect(() => {
     setSelectedMealType(mealType);
   }, [mealType, visible]);
 
-  const mealTitle = selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1);
+  const mealTitle = mealLabel(selectedMealType);
   const categoriesList = MEAL_CATEGORIES[selectedMealType] || MEAL_CATEGORIES.breakfast;
 
+  // Custom food form state
+  const [customName, setCustomName] = useState('');
+  const [customUnit, setCustomUnit] = useState('serving');
+  const [customCals, setCustomCals] = useState('');
+  const [customCarbs, setCustomCarbs] = useState('');
+  const [customProtein, setCustomProtein] = useState('');
+  const [customFat, setCustomFat] = useState('');
+  const [customFiber, setCustomFiber] = useState('');
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | null>(null);
+  const [customBarcode, setCustomBarcode] = useState<string | null>(null);
+
+  // A barcode Open Food Facts didn't know: the user types the label in; the code is context, not a name
   useEffect(() => {
     if (prefillBarcode) {
-      setCustomName(prefillBarcode);
+      setCustomBarcode(prefillBarcode);
       setIsCustomMode(true);
     }
   }, [prefillBarcode]);
 
-  // In-modal Toast & Undo State for 2-Speed Fast Path
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [lastAddedMeal, setLastAddedMeal] = useState<LoggedMealItem | null>(null);
-  const [toastTimer, setToastTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  // In-modal toast with undo
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [lastAdded, setLastAdded] = useState<LoggedMealItem[]>([]);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toastSlideAnim = useSharedValue(20);
   const toastFadeAnim = useSharedValue(0);
-
   const toastStyle = useAnimatedStyle(() => ({
     opacity: toastFadeAnim.value,
     transform: [{ translateY: toastSlideAnim.value }],
@@ -571,69 +299,62 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     });
   }, []);
 
-  const handleDismissDrawer = useCallback(() => {
-    setSelectedFood(null);
-    setQuantity(1);
-  }, []);
-
   useEffect(() => {
-    if (toastMessage) {
-      if (isReducedMotion.current) {
-        toastSlideAnim.value = 0;
-        toastFadeAnim.value = 1;
-        return;
-      }
-      toastSlideAnim.value = 20;
-      toastFadeAnim.value = 0;
-      toastFadeAnim.value = withTiming(1, { duration: MotionDurations.standard });
-      toastSlideAnim.value = withTiming(0, { duration: MotionDurations.standard });
+    if (!toast) return;
+    if (isReducedMotion.current) {
+      toastSlideAnim.value = 0;
+      toastFadeAnim.value = 1;
+      return;
     }
-  }, [toastMessage, toastSlideAnim, toastFadeAnim]);
+    toastSlideAnim.value = 20;
+    toastFadeAnim.value = 0;
+    toastFadeAnim.value = withTiming(1, { duration: MotionDurations.standard });
+    toastSlideAnim.value = withTiming(0, { duration: MotionDurations.standard });
+  }, [toast, toastSlideAnim, toastFadeAnim]);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    []
+  );
+
+  const clearToast = useCallback(() => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(null);
+    setLastAdded([]);
+  }, []);
 
   const handleDismissToast = useCallback(() => {
     if (isReducedMotion.current) {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-      if (toastTimer) clearTimeout(toastTimer);
+      clearToast();
       return;
     }
     toastFadeAnim.value = withTiming(0, { duration: MotionDurations.micro });
-    setTimeout(() => {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-      if (toastTimer) clearTimeout(toastTimer);
-    }, MotionDurations.micro);
-  }, [toastFadeAnim, toastTimer]);
+    setTimeout(clearToast, MotionDurations.micro);
+  }, [toastFadeAnim, clearToast]);
 
-  useEffect(() => {
-    return () => {
-      if (toastTimer) clearTimeout(toastTimer);
-    };
-  }, [toastTimer]);
-
-  // Live Meal Target Budget Anchor
-  const budget = userGoals.dailyCalorieBudget || 2350;
-  const mealRatio =
-    {
-      breakfast: 0.25,
-      lunch: 0.35,
-      snacks: 0.12,
-      dinner: 0.28,
-    }[selectedMealType] || 0.25;
-
-  const mealTarget = Math.round(budget * mealRatio);
+  // Meal target: this meal's share of the day's allowance (budget + burned)
+  const mealTarget = getMealTarget(calorieBudget + caloriesBurned, selectedMealType);
   const currentMealLogged = mealCalories[selectedMealType] || 0;
-  const mealRemaining = mealTarget - currentMealLogged;
 
-  // Custom food form state
-  const [customName, setCustomName] = useState('');
-  const [customUnit, setCustomUnit] = useState('serving');
-  const [customCals, setCustomCals] = useState('');
-  const [customCarbs, setCustomCarbs] = useState('');
-  const [customProtein, setCustomProtein] = useState('');
-  const [customFat, setCustomFat] = useState('');
-  const [customFiber, setCustomFiber] = useState('');
-  const [customPhotoUri, setCustomPhotoUri] = useState<string | null>(null);
+  const showToast = useCallback(
+    (title: string, addedCals: number, items: LoggedMealItem[]) => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      const left = mealTarget - (currentMealLogged + addedCals);
+      const tail =
+        left >= 0
+          ? `${left} left for ${selectedMealType}`
+          : `${-left} over for ${selectedMealType}`;
+      setToast({ title, detail: `+${addedCals} kcal · ${tail}` });
+      setLastAdded(items);
+      toastTimer.current = setTimeout(() => {
+        setToast(null);
+        setLastAdded([]);
+      }, TOAST_MS);
+    },
+    [mealTarget, currentMealLogged, selectedMealType]
+  );
 
   const handlePickCustomPhoto = async () => {
     try {
@@ -661,7 +382,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 
   // Context-aware food list based on mealType and active category
   const filteredFoods = useMemo(() => {
-    let list = foodDatabase;
+    const list = foodDatabase;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -671,40 +392,25 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     }
 
     if (selectedCategory === 'recent' || selectedCategory === 'yesterday') {
-      const getPastLog = (daysBack: number) => {
-        if (!selectedDate) return undefined;
-        const parts = selectedDate.split('-');
-        if (parts.length !== 3) return undefined;
-        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        d.setDate(d.getDate() - daysBack);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return dailyLogs[`${y}-${m}-${day}`];
-      };
-
+      if (!selectedDate) return [];
       if (selectedCategory === 'yesterday') {
-        const log = getPastLog(1);
+        const log = dailyLogs[shiftDate(selectedDate, 1)];
         if (log && log.meals) {
-           const pastItems = log.meals.filter(m => m.mealType === selectedMealType);
-           const ids = pastItems.map(m => m.foodId);
-           return list.filter(f => ids.includes(f.id));
+          const ids = log.meals.filter(m => m.mealType === selectedMealType).map(m => m.foodId);
+          return list.filter(f => ids.includes(f.id));
         }
         return [];
-      } else {
-        // recent
-        const recentIds = new Set<string>();
-        for(let i = 1; i <= 7; i++){
-          const log = getPastLog(i);
-          if (log && log.meals) {
-            log.meals.filter(m => m.mealType === selectedMealType).forEach(m => recentIds.add(m.foodId));
-          }
-        }
-        return list.filter(f => recentIds.has(f.id));
       }
+      const recentIds = new Set<string>();
+      for (let i = 1; i <= 7; i++) {
+        const log = dailyLogs[shiftDate(selectedDate, i)];
+        log?.meals
+          ?.filter(m => m.mealType === selectedMealType)
+          .forEach(m => recentIds.add(m.foodId));
+      }
+      return list.filter(f => recentIds.has(f.id));
     }
 
-    // Category filtering
     if (selectedCategory === 'popular') {
       if (selectedMealType === 'breakfast') {
         const priorityIds = [
@@ -721,14 +427,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
         ];
         return list
           .filter(item => priorityIds.includes(item.id))
-          .sort((a, b) => {
-            const aIdx = priorityIds.indexOf(a.id);
-            const bIdx = priorityIds.indexOf(b.id);
-            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-            if (aIdx !== -1) return -1;
-            if (bIdx !== -1) return 1;
-            return 0;
-          });
+          .sort((a, b) => priorityIds.indexOf(a.id) - priorityIds.indexOf(b.id));
       }
 
       if (selectedMealType === 'lunch') {
@@ -768,7 +467,6 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
         );
       }
 
-      // Snacks
       return list.filter(item => item.category === 'snacks' || item.category === 'fruits');
     }
 
@@ -783,93 +481,57 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     setQuantity(1);
   }, []);
 
+  const handleBackFromDetail = useCallback(() => {
+    setSelectedFood(null);
+    setQuantity(1);
+  }, []);
+
   const handleUndo = () => {
-    if (lastAddedMeal) {
-      removeMealItem(lastAddedMeal.id);
-      handleDismissToast();
-    }
+    lastAdded.forEach(item => removeMealItem(item.id));
+    handleDismissToast();
   };
 
   const handleConfirmLog = () => {
     if (!selectedFood) return;
-    if (toastTimer) clearTimeout(toastTimer);
-    const cals = Math.round(selectedFood.calories * quantity);
-    const addedItem = addMealItem(selectedMealType, selectedFood, quantity);
-    setLastAddedMeal(addedItem);
-    
-    const rem = remainingCalories - cals;
-    const proteinStr = (selectedFood.protein * quantity).toFixed(0);
-    setToastMessage(
-      `+${cals} kcal, ${proteinStr}g protein • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
-    );
+    const added = addMealItem(selectedMealType, selectedFood, quantity);
+    showToast(`Added ${selectedFood.name}`, Math.round(selectedFood.calories * quantity), [added]);
     setSelectedFood(null);
-
-    const timer = setTimeout(() => {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-    }, 4500);
-    setToastTimer(timer);
   };
 
-  // Speed 1 (Fast Path): 1-Tap Quick Add logs immediately without drawer friction
   const handleQuickAdd = useCallback(
     (food: FoodItem) => {
-      if (toastTimer) clearTimeout(toastTimer);
-      const addedItem = addMealItem(selectedMealType, food, 1);
-      setLastAddedMeal(addedItem);
-      
-      const cals = food.calories;
-      const rem = remainingCalories - cals;
-      const proteinStr = food.protein.toFixed(0);
-      setToastMessage(
-        `+${cals} kcal, ${proteinStr}g protein • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
-      );
-
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-        setLastAddedMeal(null);
-      }, 4500);
-      setToastTimer(timer);
+      const added = addMealItem(selectedMealType, food, 1);
+      showToast(`Added ${food.name}`, food.calories, [added]);
     },
-    [addMealItem, selectedMealType, toastTimer, remainingCalories]
+    [addMealItem, selectedMealType, showToast]
   );
 
-  const currentMealItems = mealsByType[selectedMealType] || [];
+  const currentMealItems = mealsByType[selectedMealType];
   const loggedMap = useMemo(() => {
     const map = new Map<string, number>();
-    currentMealItems.forEach(m => {
+    (currentMealItems || []).forEach(m => {
       map.set(m.foodId, (map.get(m.foodId) || 0) + m.quantity);
     });
     return map;
   }, [currentMealItems]);
 
-  // Yesterday meal items for 1-tap quick repeat
   const yesterdayMealItems = useMemo(() => {
     if (!selectedDate) return [];
-    const parts = selectedDate.split('-');
-    if (parts.length !== 3) return [];
-    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    d.setDate(d.getDate() - 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const log = dailyLogs[`${y}-${m}-${day}`];
-    if (log && Array.isArray(log.meals)) {
-      return log.meals.filter(meal => meal.mealType === selectedMealType);
-    }
-    return [];
+    const log = dailyLogs[shiftDate(selectedDate, 1)];
+    return log && Array.isArray(log.meals)
+      ? log.meals.filter(meal => meal.mealType === selectedMealType)
+      : [];
   }, [dailyLogs, selectedDate, selectedMealType]);
 
-  const yesterdayMealTotalCals = useMemo(() => {
-    return yesterdayMealItems.reduce((sum, item) => sum + (item.calories || 0), 0);
-  }, [yesterdayMealItems]);
+  const yesterdayMealTotalCals = useMemo(
+    () => yesterdayMealItems.reduce((sum, item) => sum + (item.calories || 0), 0),
+    [yesterdayMealItems]
+  );
 
   const handleRepeatYesterdayMeal = useCallback(() => {
     if (yesterdayMealItems.length === 0) return;
-    if (toastTimer) clearTimeout(toastTimer);
-
     let totalAddedCals = 0;
-    yesterdayMealItems.forEach(meal => {
+    const added = yesterdayMealItems.map(meal => {
       const existingFood = foodDatabase.find(f => f.id === meal.foodId);
       const foodToLog: FoodItem = existingFood || {
         id: meal.foodId,
@@ -885,221 +547,186 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
         fiber: 0,
         icon: '🍱',
       };
-      addMealItem(selectedMealType, foodToLog, meal.quantity || 1);
       totalAddedCals += meal.calories;
+      return addMealItem(selectedMealType, foodToLog, meal.quantity || 1);
     });
+    showToast(`Logged yesterday's ${selectedMealType}`, totalAddedCals, added);
+  }, [yesterdayMealItems, foodDatabase, addMealItem, selectedMealType, showToast]);
 
-    const rem = remainingCalories - totalAddedCals;
-    setToastMessage(
-      `Repeated yesterday's ${selectedMealType} (+${totalAddedCals} kcal) • ${rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`}`
-    );
+  const openCustom = useCallback((name = '') => {
+    setCustomName(name);
+    setIsCustomMode(true);
+  }, []);
 
-    const timer = setTimeout(() => {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-    }, 4500);
-    setToastTimer(timer);
-  }, [
-    yesterdayMealItems,
-    foodDatabase,
-    addMealItem,
-    selectedMealType,
-    remainingCalories,
-    toastTimer,
-  ]);
+  const closeCustom = () => {
+    setIsCustomMode(false);
+    setCustomBarcode(null);
+  };
+
+  const query = searchQuery.trim();
+  const listTitle = query
+    ? `Results for "${query}"`
+    : selectedCategory === 'popular'
+      ? `Popular for ${selectedMealType}`
+      : categoriesList.find(c => c.id === selectedCategory)?.label || 'Foods';
 
   const renderFoodItem = useCallback(
-    ({ item }: { item: FoodItem }) => (
+    ({ item, index }: { item: FoodItem; index: number }) => (
       <FoodItemRow
         item={item}
         loggedCount={loggedMap.get(item.id) || 0}
+        isFirst={index === 0}
+        isLast={index === filteredFoods.length - 1}
         onSelect={handleSelectFood}
         onQuickAdd={handleQuickAdd}
       />
     ),
-    [handleSelectFood, handleQuickAdd, loggedMap]
+    [handleSelectFood, handleQuickAdd, loggedMap, filteredFoods.length]
   );
 
-  const renderListHeader = useCallback(() => {
-    if (yesterdayMealItems.length === 0 || searchQuery.trim() || selectedCategory === 'yesterday') {
-      return null;
-    }
-    return (
-      <View style={styles.repeatYesterdayCard}>
-        <View style={styles.repeatYesterdayHeader}>
-          <View style={styles.repeatIconBadge}>
-            <Ionicons name="refresh-outline" size={16} color={Colors.primary} />
+  const showRepeat = yesterdayMealItems.length > 0 && !query && selectedCategory !== 'yesterday';
+
+  const renderListHeader = () => (
+    <View>
+      {showRepeat ? (
+        <View style={styles.repeatCard}>
+          <View style={[ui.tile, styles.repeatTile]}>
+            <Ionicons name="refresh" size={18} color={Colors.primaryDark} />
           </View>
-          <View style={styles.repeatTextCol}>
-            <Text style={styles.repeatTitle}>
-              Repeat Yesterday's {mealTitle}
+          <View style={styles.flex1}>
+            <Text style={ui.rowTitle} numberOfLines={1}>
+              {`Same as yesterday's ${selectedMealType}`}
             </Text>
-            <Text style={styles.repeatSubtitle}>
-              {yesterdayMealItems.length} item{yesterdayMealItems.length > 1 ? 's' : ''} • {yesterdayMealTotalCals} kcal
+            <Text style={ui.rowSubtitle}>
+              {yesterdayMealItems.length} item{yesterdayMealItems.length > 1 ? 's' : ''} ·{' '}
+              {yesterdayMealTotalCals} kcal
             </Text>
           </View>
           <Pressable
-            style={({ pressed }) => [
-              styles.repeatActionBtn,
-              pressed && styles.btnPressedSubtle,
-            ]}
+            style={({ pressed }) => [styles.repeatBtn, pressed && ui.pressed]}
             onPress={handleRepeatYesterdayMeal}
             accessibilityRole="button"
-            accessibilityLabel={`Repeat yesterday's ${mealTitle}`}
+            accessibilityLabel={`Log all of yesterday's ${mealTitle}, ${yesterdayMealTotalCals} calories`}
           >
-            <Ionicons name="flash" size={13} color={Colors.onPrimary} />
-            <Text style={styles.repeatActionBtnText}>Log All</Text>
+            <Text style={styles.repeatBtnText}>Log all</Text>
           </Pressable>
         </View>
-      </View>
-    );
-  }, [
-    yesterdayMealItems,
-    searchQuery,
-    selectedCategory,
-    mealTitle,
-    yesterdayMealTotalCals,
-    handleRepeatYesterdayMeal,
-  ]);
+      ) : null}
+      {filteredFoods.length > 0 ? <SectionLabel title={listTitle} /> : null}
+    </View>
+  );
 
-  const renderListEmpty = useCallback(() => {
-    if (searchQuery.trim()) {
-      return (
-        <View style={styles.emptyListContainer}>
-          <View style={styles.emptyIconBadge}>
-            <Ionicons name="search-outline" size={26} color={Colors.textMuted} />
-          </View>
-          <Text style={styles.emptyTitle}>No foods matching "{searchQuery.trim()}"</Text>
-          <Text style={styles.emptySubtitle}>
-            Can't find what you're looking for? Add it as a custom food or scan the packaging.
-          </Text>
-          <View style={styles.emptyActionsRow}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.emptyActionBtnPrimary,
-                pressed && styles.btnPressedSubtle,
-              ]}
-              onPress={() => {
-                setCustomName(searchQuery.trim());
-                setIsCustomMode(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Create custom food"
-            >
-              <Ionicons name="add-circle-outline" size={16} color={Colors.onPrimary} />
-              <Text style={styles.emptyActionBtnPrimaryText}>Create Custom Food</Text>
-            </Pressable>
+  const renderListFooter = () =>
+    filteredFoods.length > 0 ? (
+      <Pressable
+        style={({ pressed }) => [styles.createRow, pressed && ui.pressed]}
+        onPress={() => openCustom(query)}
+        accessibilityRole="button"
+        accessibilityLabel="Create custom food"
+      >
+        <Ionicons name="add-circle-outline" size={18} color={Colors.primaryDark} />
+        <Text style={styles.createRowText}>Not listed? Create a food</Text>
+      </Pressable>
+    ) : null;
 
-            {onOpenBarcodeScanner ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.emptyActionBtnSecondary,
-                  pressed && styles.btnPressedSubtle,
-                ]}
-                onPress={onOpenBarcodeScanner}
-                accessibilityRole="button"
-                accessibilityLabel="Scan barcode"
-              >
-                <Ionicons name="barcode-outline" size={16} color={Colors.textPrimary} />
-                <Text style={styles.emptyActionBtnSecondaryText}>Scan Barcode</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
-      );
+  const renderListEmpty = () => {
+    const searching = Boolean(query);
+    const empty = searching
+      ? {
+          icon: 'search' as const,
+          title: `No match for "${query}"`,
+          body: 'Log it another way. It takes under a minute.',
+        }
+      : selectedCategory === 'yesterday'
+        ? {
+            icon: 'time-outline' as const,
+            title: `No ${selectedMealType} logged yesterday`,
+            body: 'What you log today shows up here tomorrow for one-tap logging.',
+          }
+        : selectedCategory === 'recent'
+          ? {
+              icon: 'time-outline' as const,
+              title: 'No recent foods yet',
+              body: `Foods you log for ${selectedMealType} over the past 7 days appear here.`,
+            }
+          : selectedCategory === 'custom'
+            ? {
+                icon: 'create-outline' as const,
+                title: 'No foods of your own yet',
+                body: 'Foods you create are saved here for next time.',
+              }
+            : {
+                icon: 'restaurant-outline' as const,
+                title: 'Nothing in this category',
+                body: 'Try another category, or search above.',
+              };
+
+    const options: React.ComponentProps<typeof OptionRow>[] = [];
+    if (searching && onOpenFoodVision) {
+      options.push({
+        icon: 'camera-outline',
+        title: 'Snap a photo',
+        subtitle: 'Ria estimates it from your plate',
+        onPress: onOpenFoodVision,
+        accessibilityLabel: 'Scan food with AI camera',
+      });
     }
-
-    if (selectedCategory === 'yesterday') {
-      return (
-        <View style={styles.emptyListContainer}>
-          <View style={styles.emptyIconBadge}>
-            <Ionicons name="time-outline" size={26} color={Colors.textMuted} />
-          </View>
-          <Text style={styles.emptyTitle}>No {mealTitle} Logged Yesterday</Text>
-          <Text style={styles.emptySubtitle}>
-            Foods you log today will automatically appear here tomorrow for 1-tap logging.
-          </Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.emptyActionBtnPrimary,
-              pressed && styles.btnPressedSubtle,
-            ]}
-            onPress={() => setSelectedCategory('popular')}
-            accessibilityRole="button"
-            accessibilityLabel="Browse popular foods"
-          >
-            <Ionicons name="star-outline" size={16} color={Colors.onPrimary} />
-            <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
-          </Pressable>
-        </View>
-      );
+    if (searching && onOpenBarcodeScanner) {
+      options.push({
+        icon: 'barcode-outline',
+        title: 'Scan a barcode',
+        subtitle: 'For packaged food',
+        onPress: onOpenBarcodeScanner,
+        accessibilityLabel: 'Scan barcode',
+      });
     }
-
-    if (selectedCategory === 'recent') {
-      return (
-        <View style={styles.emptyListContainer}>
-          <View style={styles.emptyIconBadge}>
-            <Ionicons name="hourglass-outline" size={26} color={Colors.textMuted} />
-          </View>
-          <Text style={styles.emptyTitle}>No Recent Foods Yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Foods you log over the past 7 days will appear here for fast re-logging.
-          </Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.emptyActionBtnPrimary,
-              pressed && styles.btnPressedSubtle,
-            ]}
-            onPress={() => setSelectedCategory('popular')}
-            accessibilityRole="button"
-            accessibilityLabel="Browse popular foods"
-          >
-            <Ionicons name="star-outline" size={16} color={Colors.onPrimary} />
-            <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
-          </Pressable>
-        </View>
-      );
+    if (!searching && selectedCategory !== 'custom') {
+      options.push({
+        icon: 'star-outline',
+        title: 'Browse popular foods',
+        subtitle: `Common picks for ${selectedMealType}`,
+        onPress: () => setSelectedCategory('popular'),
+        accessibilityLabel: 'Browse popular foods',
+      });
     }
+    options.push({
+      icon: 'add',
+      title: searching ? `Create "${query}"` : 'Create a food',
+      subtitle: 'Enter calories once, reuse it later',
+      onPress: () => openCustom(query),
+      accessibilityLabel: 'Create custom food',
+    });
 
     return (
-      <View style={styles.emptyListContainer}>
-        <View style={styles.emptyIconBadge}>
-          <Ionicons name="restaurant-outline" size={26} color={Colors.textMuted} />
+      <View style={styles.empty}>
+        <View style={styles.emptyIcon}>
+          <Ionicons name={empty.icon} size={24} color={Colors.textSecondary} />
         </View>
-        <Text style={styles.emptyTitle}>No Foods Found</Text>
-        <Text style={styles.emptySubtitle}>
-          Try choosing another category or search for an ingredient above.
+        <Text style={styles.emptyTitle} accessibilityRole="header">
+          {empty.title}
         </Text>
-        <Pressable
-          style={({ pressed }) => [
-            styles.emptyActionBtnPrimary,
-            pressed && styles.btnPressedSubtle,
-          ]}
-          onPress={() => setSelectedCategory('popular')}
-          accessibilityRole="button"
-          accessibilityLabel="Browse popular foods"
-        >
-          <Text style={styles.emptyActionBtnPrimaryText}>Browse Popular Foods</Text>
-        </Pressable>
+        <Text style={[ui.body, styles.center]}>{empty.body}</Text>
+        <View style={[ui.card, styles.emptyCard]}>
+          {options.map((o, i) => (
+            <OptionRow key={o.title} {...o} divider={i > 0} />
+          ))}
+        </View>
       </View>
     );
-  }, [
-    searchQuery,
-    selectedCategory,
-    mealTitle,
-    onOpenBarcodeScanner,
-  ]);
+  };
+
+  const customCalories = parseInt(customCals, 10);
+  const canSaveCustom = customName.trim().length > 0 && customCalories > 0;
 
   const handleCreateCustomFood = () => {
-    if (!customName.trim() || !customCals) return;
-    if (toastTimer) clearTimeout(toastTimer);
+    if (!canSaveCustom) return;
     const newFood = addCustomFood({
       name: customName.trim(),
       category: 'snacks',
       categoryLabel: 'Custom',
       servingUnit: customUnit.trim() || 'serving',
       defaultServingSize: 1,
-      calories: parseInt(customCals, 10) || 100,
+      calories: customCalories,
       carbs: parseFloat(customCarbs) || 0,
       protein: parseFloat(customProtein) || 0,
       fat: parseFloat(customFat) || 0,
@@ -1108,18 +735,12 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       imageUrl: customPhotoUri || undefined,
     });
 
-    const addedItem = addMealItem(selectedMealType, newFood, 1);
-    setLastAddedMeal(addedItem);
-    setToastMessage(`Added ${newFood.name} (${newFood.calories} kcal)`);
+    const added = addMealItem(selectedMealType, newFood, 1);
+    showToast(`Added ${newFood.name}`, newFood.calories, [added]);
 
-    const timer = setTimeout(() => {
-      setToastMessage(null);
-      setLastAddedMeal(null);
-    }, 4500);
-    setToastTimer(timer);
-
-    setIsCustomMode(false);
+    closeCustom();
     setCustomName('');
+    setCustomUnit('serving');
     setCustomPhotoUri(null);
     setCustomCals('');
     setCustomCarbs('');
@@ -1128,746 +749,360 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
     setCustomFiber('');
   };
 
-  // Projected Live Budget Impact for Speed 2 Portion Drawer
+  const footerPad = { paddingBottom: Math.max(16, insets.bottom + 8) };
   const projectedAddedCals = selectedFood ? Math.round(selectedFood.calories * quantity) : 0;
-  const projectedTotal = currentMealLogged + projectedAddedCals;
-  const projectedRemaining = mealTarget - projectedTotal;
-  const projectedPct = Math.min(100, Math.round((projectedTotal / (mealTarget || 1)) * 100));
-  const isProjectedOver = projectedRemaining < 0;
-  const heroImageSource = selectedFood ? getFoodImageSource(selectedFood) : undefined;
-  const foodDescription = selectedFood ? getFoodDescription(selectedFood) : '';
-  const isFav = selectedFood ? !!favoriteFoodIds[selectedFood.id] : false;
+
+  const renderDetail = (food: FoodItem) => {
+    const unit = portionUnit(food.servingUnit);
+    return (
+      <SafeAreaView style={styles.root} edges={['top']}>
+        <View style={styles.detailTopBar}>
+          <HeaderIconButton
+            icon="chevron-back"
+            label="Back to food list"
+            onPress={handleBackFromDetail}
+          />
+        </View>
+        <ScrollView
+          style={styles.flex1}
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.detailHero}>
+            <FoodIconBadge item={food} size={84} />
+            <View style={styles.flex1}>
+              <Text style={ui.title} numberOfLines={2} accessibilityRole="header">
+                {food.name}
+              </Text>
+              <Text style={styles.detailServing}>
+                {formatServingUnit(food.servingUnit)} · {food.calories} kcal
+              </Text>
+              {food.categoryLabel ? (
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>
+                    {food.isCustom ? 'My food' : food.categoryLabel}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          <View>
+            <SectionLabel title={`Nutrition (for ${formatQty(quantity)} ${unit})`} />
+            <MacroSummary
+              calories={projectedAddedCals}
+              protein={food.protein * quantity}
+              carbs={food.carbs * quantity}
+              fat={food.fat * quantity}
+            />
+          </View>
+
+          <View>
+            <SectionLabel title="Portion" />
+            <PortionStepper value={quantity} unit={unit} onChange={setQuantity} />
+          </View>
+
+          <Text style={[ui.body, styles.descText]}>{getFoodDescription(food)}</Text>
+        </ScrollView>
+
+        <View style={[styles.footer, footerPad]}>
+          <MealImpact logged={currentMealLogged} adding={projectedAddedCals} target={mealTarget} />
+          <ProfileButton
+            label={`Add to ${mealTitle} · ${projectedAddedCals} kcal`}
+            variant="primary"
+            onPress={handleConfirmLog}
+            accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  };
+
+  const renderCustomForm = () => (
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <SubScreenHeader
+        title="New food"
+        subtitle={
+          customBarcode
+            ? `Barcode ${customBarcode} · saved to My foods`
+            : 'Saved to My foods for next time'
+        }
+        onBack={closeCustom}
+        backLabel="Back to food list"
+      />
+      <KeyboardAvoidingView
+        style={styles.flex1}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          style={styles.flex1}
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
+          {customPhotoUri ? (
+            <View style={styles.photoPreview}>
+              <Image source={{ uri: customPhotoUri }} style={styles.photoImg} contentFit="cover" />
+              <Pressable
+                style={({ pressed }) => [styles.photoRemove, pressed && ui.pressed]}
+                onPress={() => setCustomPhotoUri(null)}
+                hitSlop={HIT_SLOP_4}
+                accessibilityRole="button"
+                accessibilityLabel="Remove photo"
+              >
+                <Ionicons name="close" size={16} color={Colors.textInverse} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.photoSlot, pressed && styles.rowPressed]}
+              onPress={handlePickCustomPhoto}
+              accessibilityRole="button"
+              accessibilityLabel="Pick photo for custom food"
+            >
+              <Ionicons name="image-outline" size={22} color={Colors.primaryDark} />
+              <Text style={styles.photoSlotText}>Add a photo (optional)</Text>
+            </Pressable>
+          )}
+
+          <View style={styles.formGroup}>
+            <LabeledInput
+              label="Name"
+              placeholder="e.g. Mom's besan chilla"
+              value={customName}
+              onChangeText={setCustomName}
+              autoFocus={!!customBarcode}
+            />
+            <LabeledInput
+              label="Serving"
+              placeholder="piece, katori, bowl"
+              value={customUnit}
+              onChangeText={setCustomUnit}
+            />
+            <LabeledInput
+              label="Calories per serving"
+              unit="kcal"
+              keyboardType="numeric"
+              placeholder="150"
+              value={customCals}
+              onChangeText={setCustomCals}
+            />
+          </View>
+
+          <View>
+            <SectionLabel title="Macros (optional)" />
+            <View style={styles.macroGrid}>
+              {(
+                [
+                  ['Protein', customProtein, setCustomProtein, '6'],
+                  ['Carbs', customCarbs, setCustomCarbs, '20'],
+                  ['Fat', customFat, setCustomFat, '4'],
+                  ['Fibre', customFiber, setCustomFiber, '2'],
+                ] as const
+              ).map(([label, value, setter, placeholder]) => (
+                <View key={label} style={styles.macroCell}>
+                  <LabeledInput
+                    label={label}
+                    unit="g"
+                    keyboardType="numeric"
+                    placeholder={placeholder}
+                    value={value}
+                    onChangeText={setter}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+        <View style={[styles.footer, footerPad]}>
+          <ProfileButton
+            label={`Save and add to ${mealTitle}`}
+            variant="primary"
+            onPress={handleCreateCustomFood}
+            disabled={!canSaveCustom}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+
+  const noMatch = Boolean(query) && filteredFoods.length === 0;
+
+  const renderCatalog = () => (
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <SheetHeader
+        title="Log food"
+        subtitle={selectedDate ? formatDay(selectedDate) : undefined}
+        onClose={onClose}
+        closeLabel="Close food logger"
+      />
+      <View style={styles.top}>
+        <MealSwitcher
+          value={selectedMealType}
+          onChange={m => {
+            setSelectedMealType(m);
+            setSelectedCategory('popular');
+          }}
+        />
+        <View
+          style={styles.budgetRow}
+          accessible
+          accessibilityLabel={`${mealTitle}: ${currentMealLogged} of ${mealTarget} calories`}
+        >
+          <MealBudgetBar logged={currentMealLogged} target={mealTarget} />
+          <Text style={styles.budgetText}>
+            <Text style={styles.budgetStrong}>{currentMealLogged}</Text> of {mealTarget} kcal
+          </Text>
+        </View>
+
+        <View style={[styles.search, noMatch && styles.searchActive]}>
+          <Ionicons name="search" size={18} color={Colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={
+              selectedMealType === 'breakfast'
+                ? 'Search idli, dosa, eggs, oats'
+                : 'Search roti, dal, paneer, rice'
+            }
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={Colors.textMuted}
+            returnKeyType="search"
+            accessibilityLabel="Search foods"
+          />
+          {searchQuery.length > 0 ? (
+            <Pressable
+              style={styles.searchIconBtn}
+              onPress={() => setSearchQuery('')}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search input"
+            >
+              <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+            </Pressable>
+          ) : (
+            <>
+              {onOpenBarcodeScanner || onOpenFoodVision ? (
+                <View style={styles.searchDivider} />
+              ) : null}
+              {onOpenBarcodeScanner ? (
+                <Pressable
+                  style={({ pressed }) => [styles.searchIconBtn, pressed && ui.pressed]}
+                  onPress={onOpenBarcodeScanner}
+                  accessibilityRole="button"
+                  accessibilityLabel="Scan barcode on packaged food"
+                >
+                  <Ionicons name="barcode-outline" size={21} color={Colors.textPrimary} />
+                </Pressable>
+              ) : null}
+              {onOpenFoodVision ? (
+                <Pressable
+                  style={({ pressed }) => [styles.searchIconBtn, pressed && ui.pressed]}
+                  onPress={onOpenFoodVision}
+                  accessibilityRole="button"
+                  accessibilityLabel="Scan food with AI camera"
+                >
+                  <Ionicons name="camera-outline" size={21} color={Colors.primary} />
+                </Pressable>
+              ) : null}
+            </>
+          )}
+        </View>
+      </View>
+
+      {query ? null : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScroll}
+          contentContainerStyle={styles.chips}
+        >
+          {categoriesList.map(cat => {
+            const on = selectedCategory === cat.id;
+            return (
+              <Pressable
+                key={cat.id}
+                style={({ pressed }) => [styles.chip, on && styles.chipOn, pressed && ui.pressed]}
+                onPress={() => setSelectedCategory(cat.id)}
+                hitSlop={HIT_SLOP_4}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={`Filter by ${cat.label}`}
+              >
+                <Text style={[styles.chipText, on && styles.chipTextOn]}>{cat.label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      <FlatList
+        style={styles.flex1}
+        data={filteredFoods}
+        keyExtractor={item => item.id}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        renderItem={renderFoodItem}
+        ListHeaderComponent={renderListHeader()}
+        ListFooterComponent={renderListFooter()}
+        ListEmptyComponent={renderListEmpty()}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
+    </SafeAreaView>
+  );
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
       presentationStyle="fullScreen"
-      onRequestClose={onClose}
+      onRequestClose={selectedFood ? handleBackFromDetail : isCustomMode ? closeCustom : onClose}
       statusBarTranslucent={true}
     >
       <StatusBar style="dark" />
-      <View style={styles.modalRoot}>
-        {selectedFood ? (
-          /* =======================================================
-             1. FULL-SCREEN DEDICATED FOOD PRODUCT DETAIL PAGE
-             ======================================================= */
-          <View style={styles.fullScreenProductContainer}>
-            {/* Top Bar: Floating Back & Favorite Buttons */}
-            <View
-              style={[
-                styles.productTopNavRow,
-                { top: insets.top + (Platform.OS === 'web' ? 14 : 10) },
-              ]}
-            >
-              <Pressable
-                style={({ pressed }) => [
-                  styles.productNavCircleBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                onPress={handleDismissDrawer}
-                hitSlop={HIT_SLOP_10}
-                accessibilityRole="button"
-                accessibilityLabel="Back to food list"
-              >
-                <Ionicons name="arrow-back" size={20} color={Colors.textPrimary} />
-              </Pressable>
+      <View style={styles.root}>
+        {selectedFood
+          ? renderDetail(selectedFood)
+          : isCustomMode
+            ? renderCustomForm()
+            : renderCatalog()}
 
-              <Pressable
-                style={({ pressed }) => [
-                  styles.productNavCircleBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                onPress={() => toggleFavorite(selectedFood.id)}
-                hitSlop={HIT_SLOP_10}
-                accessibilityRole="button"
-                accessibilityLabel={isFav ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                <Ionicons
-                  name={isFav ? 'heart' : 'heart-outline'}
-                  size={21}
-                  color={isFav ? Colors.danger : Colors.textPrimary}
-                />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              bounces={true}
-              alwaysBounceVertical={false}
-              style={styles.fullScreenScrollView}
-              contentContainerStyle={[
-                styles.fullScreenScrollContent,
-                { paddingBottom: 100 + insets.bottom },
-              ]}
-            >
-              {/* 2. First: The Food Image — 4:3 container, subject centered via contain */}
-              <View
-                style={[
-                  styles.productHeroStage,
-                  { paddingTop: insets.top + (Platform.OS === 'web' ? 50 : 54) },
-                ]}
-              >
-                <FoodImage
-                  source={heroImageSource}
-                  aspectRatio={4 / 3}
-                  contentFit="contain"
-                  width="100%"
-                  style={styles.productHeroImage}
-                  backgroundColor={Colors.card}
-                  fallback={<FoodIconBadge item={selectedFood} size={160} />}
-                />
-              </View>
-
-              {/* 3. Product Information Card */}
-              <View style={styles.productDetailCard}>
-                {/* Category Pill + Health Tag */}
-                <View style={styles.productHeaderMetaRow}>
-                  <View style={styles.productCategoryWrap}>
-                    <MaterialCommunityIcons name="bowl-mix-outline" size={15} color={Colors.textSecondary} />
-                    <Text style={styles.productCategoryLabel} numberOfLines={1}>
-                      {(
-                        selectedFood.categoryLabel ||
-                        selectedFood.category ||
-                        'WHOLESOME'
-                      ).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.productHealthBadgePill}>
-                    <Ionicons name="leaf-outline" size={13} color={Colors.fiber} style={{ marginRight: 4 }} />
-                    <Text style={styles.productHealthBadgeText} numberOfLines={1}>
-                      {selectedFood.badge || 'Gut Friendly'}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Dish Name */}
-                <Text style={styles.productMainTitle} numberOfLines={2}>
-                  {selectedFood.name}
-                </Text>
-
-                {/* Serving Unit & Base Calories */}
-                <Text style={styles.productBaseServingText}>
-                  1 {selectedFood.servingUnit} · {selectedFood.calories} kcal
-                </Text>
-
-                {/* Description */}
-                <Text style={styles.productDescriptionText}>{foodDescription}</Text>
-
-                {/* Nutrition Breakdown */}
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeaderLabel}>NUTRITION BREAKDOWN</Text>
-                  <Text style={styles.sectionHeaderSub}>
-                    Per {selectedFood.servingUnit}
-                  </Text>
-                </View>
-
-                <View style={styles.nutritionMatrixGrid}>
-                  {/* Calories */}
-                  <View style={[styles.nutriCard, styles.nutriCardCalories]}>
-                    <View style={styles.nutriCardIconWrap}>
-                      <Ionicons name="flame-outline" size={20} color={Colors.primary} />
-                    </View>
-                    <Text
-                      style={styles.nutriVal}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.72}
-                    >
-                      {projectedAddedCals}
-                    </Text>
-                    <Text style={styles.nutriKey} numberOfLines={1}>Calories</Text>
-                  </View>
-
-                  {/* Protein */}
-                  <View style={[styles.nutriCard, styles.nutriCardProtein]}>
-                    <View style={styles.nutriCardIconWrap}>
-                      <MaterialCommunityIcons
-                        name="dumbbell"
-                        size={20}
-                        color={Colors.water}
-                        style={{ transform: [{ rotate: '-45deg' }] }}
-                      />
-                    </View>
-                    <Text
-                      style={styles.nutriVal}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.72}
-                    >
-                      {(selectedFood.protein * quantity).toFixed(1)} g
-                    </Text>
-                    <Text style={styles.nutriKey} numberOfLines={1}>Protein</Text>
-                  </View>
-
-                  {/* Carbs */}
-                  <View style={[styles.nutriCard, styles.nutriCardCarbs]}>
-                    <View style={styles.nutriCardIconWrap}>
-                      <MaterialCommunityIcons name="barley" size={20} color={Colors.carbsDark} />
-                    </View>
-                    <Text
-                      style={styles.nutriVal}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.72}
-                    >
-                      {(selectedFood.carbs * quantity).toFixed(1)} g
-                    </Text>
-                    <Text style={styles.nutriKey} numberOfLines={1}>Carbs</Text>
-                  </View>
-
-                  {/* Fat */}
-                  <View style={[styles.nutriCard, styles.nutriCardFat]}>
-                    <View style={styles.nutriCardIconWrap}>
-                      <Ionicons name="water-outline" size={20} color={Colors.water} />
-                    </View>
-                    <Text
-                      style={styles.nutriVal}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.72}
-                    >
-                      {(selectedFood.fat * quantity).toFixed(1)} g
-                    </Text>
-                    <Text style={styles.nutriKey} numberOfLines={1}>Fat</Text>
-                  </View>
-                </View>
-
-                {/* Quick Portion Chips */}
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeaderLabel}>QUICK PORTIONS</Text>
-                </View>
-
-                <View style={styles.distributionChipsRow}>
-                  {[1, 2, 3, 5].map(val => (
-                    <Pressable
-                      key={val}
-                      style={({ pressed }) => [
-                        styles.distributionChip,
-                        quantity === val ? styles.distributionChipActive : null,
-                        pressed ? styles.btnPressedPill : null,
-                      ]}
-                      onPress={() => setQuantity(val)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select ${val} servings`}
-                    >
-                      <Text
-                        style={[
-                          styles.distributionChipText,
-                          quantity === val ? styles.distributionChipTextActive : null,
-                        ]}
-                      >
-                        {val}x
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            </ScrollView>
-
-            {/* Sticky Bottom Stepper & CTA Footer with Integrated Live Budget Impact */}
-            <View
-              style={[styles.productStickyFooter, { paddingBottom: Math.max(insets.bottom, 16) }]}
-            >
-              {/* Live Budget Impact Ticker Strip */}
-              <View style={styles.footerImpactStrip}>
-                <View style={styles.footerImpactMetaRow}>
-                  <View style={styles.footerImpactLeft}>
-                    <Ionicons name="speedometer-outline" size={15} color={Colors.textSecondary} />
-                    <Text
-                      style={styles.footerImpactLabel}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.82}
-                    >
-                      {mealTitle} Target:{' '}
-                      <Text style={styles.footerImpactBold}>{mealTarget} kcal</Text>
-                      <Text style={styles.footerImpactSub}> · {projectedTotal} total</Text>
-                    </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.footerImpactBadge,
-                      isProjectedOver ? styles.footerImpactBadgeOver : styles.footerImpactBadgeOk,
-                    ]}
-                  >
-                    <Ionicons
-                      name="time-outline"
-                      size={12}
-                      color={isProjectedOver ? Colors.dangerDark : Colors.success}
-                      style={{ marginRight: 3 }}
-                    />
-                    <Text
-                      style={[
-                        styles.footerImpactBadgeText,
-                        isProjectedOver
-                          ? styles.footerImpactBadgeTextOver
-                          : styles.footerImpactBadgeTextOk,
-                      ]}
-                    >
-                      {projectedRemaining >= 0
-                        ? `${projectedRemaining} kcal left`
-                        : `${Math.abs(projectedRemaining)} kcal over`}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Hairline 3.5px Micro-Progress Track */}
-                <View style={styles.footerImpactTrack}>
-                  <View
-                    style={[
-                      styles.footerImpactBar,
-                      { width: `${projectedPct}%` },
-                      isProjectedOver ? styles.footerImpactBarOver : styles.footerImpactBarOk,
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {/* Action Controls: Stepper Pill & Add CTA */}
-              <View style={styles.footerActionRow}>
-                {/* Left: Quantity Stepper Pill */}
-                <View style={styles.footerStepperPill}>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.footerStepBtn,
-                      pressed ? styles.btnPressedSubtle : null,
-                    ]}
-                    hitSlop={HIT_SLOP_8}
-                    onPress={() =>
-                      setQuantity(prev => Math.max(0.5, Math.round((prev - 0.5) * 10) / 10))
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel="Decrease portion by 0.5"
-                  >
-                    <Ionicons name="remove" size={18} color={Colors.textPrimary} />
-                  </Pressable>
-
-                  <View style={styles.footerStepperValueWrap}>
-                    <Text
-                      style={styles.footerStepperValue}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.75}
-                    >
-                      <Text style={styles.footerStepperNumber}>{quantity}</Text>
-                      <Text style={styles.footerStepperUnit}>
-                        {' '}
-                        {formatStepperUnit(selectedFood.servingUnit)}
-                      </Text>
-                    </Text>
-                  </View>
-
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.footerStepBtn,
-                      pressed ? styles.btnPressedSubtle : null,
-                    ]}
-                    hitSlop={HIT_SLOP_8}
-                    onPress={() => setQuantity(prev => Math.round((prev + 0.5) * 10) / 10)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Increase portion by 0.5"
-                  >
-                    <Ionicons name="add" size={18} color={Colors.textPrimary} />
-                  </Pressable>
-                </View>
-
-                {/* Right: Add to Meal Action Button */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.confirmAddBtn,
-                    pressed ? styles.btnPressedPrimary : null,
-                  ]}
-                  onPress={handleConfirmLog}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Add to ${mealTitle}, ${projectedAddedCals} calories`}
-                >
-                  <View style={styles.ctaCheckBadge}>
-                    <Ionicons name="checkmark" size={14} color={Colors.primary} />
-                  </View>
-                  <View style={styles.ctaTextCol}>
-                    <Text
-                      style={styles.confirmAddBtnTitle}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={true}
-                      minimumFontScale={0.8}
-                    >
-                      Add to {mealTitle}
-                    </Text>
-                    <Text style={styles.confirmAddBtnSub} numberOfLines={1}>
-                      {projectedAddedCals} kcal
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        ) : (
-          /* =======================================================
-             2. CATALOG / SEARCH PAGE
-             ======================================================= */
-          <SafeAreaView style={styles.phoneScreenContainer} edges={['top', 'bottom']}>
-            {/* 1. Header — Back button | Title | Create button */}
-            <View style={styles.header}>
-              {/* Left: Context-aware back button */}
-              <Pressable
-                onPress={isCustomMode ? () => setIsCustomMode(false) : onClose}
-                style={({ pressed }) => [styles.closeBtn, pressed ? styles.btnPressedSubtle : null]}
-                hitSlop={HIT_SLOP_10}
-                accessibilityRole="button"
-                accessibilityLabel={isCustomMode ? 'Back to food list' : 'Close food logger'}
-              >
-                <Ionicons name={ActionIcons.arrowBack} size={IconSizes.standard} color={Colors.textPrimary} />
-              </Pressable>
-
-              {/* Center: Clean title only — no budget clutter */}
-              <View style={styles.headerTitleCenter}>
-                <Text style={styles.headerTitle}>
-                  {isCustomMode ? 'Create Dish' : `Log ${mealTitle}`}
-                </Text>
-              </View>
-
-              {/* Right: Create (opens custom form) — hidden when already in create mode */}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.customToggleBtn,
-                  isCustomMode ? styles.customToggleBtnHidden : null,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                onPress={() => setIsCustomMode(true)}
-                hitSlop={HIT_SLOP_8}
-                accessibilityRole="button"
-                accessibilityLabel="Create custom food"
-                disabled={isCustomMode}
-              >
-                <Text style={styles.customToggleText}>+ Create</Text>
-              </Pressable>
-            </View>
-
-            {/* Meal Switcher Strip (Breakfast | Lunch | Snacks | Dinner) */}
-            <View style={styles.mealSwitcherRow}>
-              {MEAL_TABS.map(slot => {
-                const isSelected = selectedMealType === slot.id;
-                const iconColor = isSelected ? Colors.textInverse : Colors.textSecondary;
-                return (
-                  <Pressable
-                    key={slot.id}
-                    style={({ pressed }) => [
-                      styles.mealTabPill,
-                      isSelected ? styles.mealTabPillActive : null,
-                      pressed ? styles.btnPressedPill : null,
-                    ]}
-                    onPress={() => {
-                      setSelectedMealType(slot.id);
-                      setSelectedCategory('popular');
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select ${slot.label}`}
-                  >
-                    <Ionicons
-                        name={slot.iconName as any}
-                        size={IconSizes.compact}
-                        color={iconColor}
-                      />
-                    <Text
-                      style={[styles.mealTabLabel, isSelected ? styles.mealTabLabelActive : null]}
-                      numberOfLines={1}
-                    >
-                      {slot.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
-            >
-              {isCustomMode ? (
-                /* Custom Food Form */
-                <ScrollView
-                  style={styles.customForm}
-                  contentContainerStyle={{ paddingBottom: 140 }}
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="on-drag"
-                  showsVerticalScrollIndicator={false}
-                >
-                  <Text style={styles.customFormDesc}>
-                    Add homemade recipes or items not in the database.
-                  </Text>
-
-                  {/* Photo Picker */}
-                  <View style={styles.customPhotoRow}>
-                    {customPhotoUri ? (
-                      <View style={styles.customPhotoPreviewContainer}>
-                        <Image
-                          source={{ uri: customPhotoUri }}
-                          style={styles.customPhotoPreviewImg}
-                          contentFit="cover"
-                        />
-                        <Pressable
-                          style={styles.customPhotoRemoveBtn}
-                          onPress={() => setCustomPhotoUri(null)}
-                          hitSlop={HIT_SLOP_8}
-                          accessibilityLabel="Remove photo"
-                        >
-                          <Ionicons name="close" size={14} color={Colors.textInverse} />
-                        </Pressable>
-                      </View>
-                    ) : (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.customAddPhotoBtn,
-                          pressed ? styles.btnPressedSubtle : null,
-                        ]}
-                        onPress={handlePickCustomPhoto}
-                        accessibilityLabel="Pick photo for custom food"
-                      >
-                        <Ionicons name="camera-outline" size={20} color={Colors.primary} />
-                        <Text style={styles.customAddPhotoText}>Add Dish Photo (Optional)</Text>
-                      </Pressable>
-                    )}
-                  </View>
-
-                  <Text style={styles.inputLabel}>Food / Dish Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Mom's Besan Chilla"
-                    value={customName}
-                    onChangeText={setCustomName}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-
-                  <Text style={styles.inputLabel}>Serving Unit (e.g. piece, katori, bowl)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="piece"
-                    value={customUnit}
-                    onChangeText={setCustomUnit}
-                    placeholderTextColor={Colors.textMuted}
-                  />
-
-                  <View style={styles.grid2}>
-                    <View style={styles.flex1}>
-                      <Text style={styles.inputLabel}>Calories (kcal) *</Text>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="150"
-                        value={customCals}
-                        onChangeText={setCustomCals}
-                        placeholderTextColor={Colors.textMuted}
-                      />
-                    </View>
-                    <View style={styles.flex1}>
-                      <Text style={styles.inputLabel}>Protein (g)</Text>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="6.5"
-                        value={customProtein}
-                        onChangeText={setCustomProtein}
-                        placeholderTextColor={Colors.textMuted}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.grid3}>
-                    <View style={styles.flex1}>
-                      <Text style={styles.inputLabel}>Carbs (g)</Text>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="20"
-                        value={customCarbs}
-                        onChangeText={setCustomCarbs}
-                        placeholderTextColor={Colors.textMuted}
-                      />
-                    </View>
-                    <View style={styles.flex1}>
-                      <Text style={styles.inputLabel}>Fat (g)</Text>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="4"
-                        value={customFat}
-                        onChangeText={setCustomFat}
-                        placeholderTextColor={Colors.textMuted}
-                      />
-                    </View>
-                    <View style={styles.flex1}>
-                      <Text style={styles.inputLabel}>Fiber (g)</Text>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="numeric"
-                        placeholder="2"
-                        value={customFiber}
-                        onChangeText={setCustomFiber}
-                        placeholderTextColor={Colors.textMuted}
-                      />
-                    </View>
-                  </View>
-
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.saveCustomBtn,
-                      pressed ? styles.btnPressedPrimary : null,
-                    ]}
-                    onPress={handleCreateCustomFood}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.saveCustomBtnText}>Save & Log Dish</Text>
-                  </Pressable>
-                </ScrollView>
-              ) : (
-                <>
-                  {/* 2. Search Input Bar */}
-                  <View style={styles.searchBarContainer}>
-                    <Ionicons
-                      name="search-outline"
-                      size={19}
-                      color={Colors.textSecondary}
-                      style={{ marginRight: 8 }}
-                    />
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder={`Search ${selectedMealType === 'breakfast' ? 'idli, dosa, eggs, oats, coffee...' : 'roti, dal, paneer, rice...'}`}
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                      placeholderTextColor={Colors.textMuted}
-                      clearButtonMode="while-editing"
-                    />
-                    {searchQuery.length > 0 ? (
-                      <Pressable
-                        onPress={() => setSearchQuery('')}
-                        hitSlop={HIT_SLOP_8}
-                        accessibilityRole="button"
-                        accessibilityLabel="Clear search input"
-                      >
-                        <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-                      </Pressable>
-                    ) : (
-                      <View style={styles.searchActionRow}>
-                        {onOpenBarcodeScanner ? (
-                          <Pressable
-                            onPress={onOpenBarcodeScanner}
-                            style={({ pressed }) => [
-                              styles.barcodeScanBtn,
-                              pressed ? styles.btnPressedSubtle : null,
-                            ]}
-                            hitSlop={HIT_SLOP_8}
-                            accessibilityRole="button"
-                            accessibilityLabel="Scan barcode on packaged food"
-                          >
-                            <Ionicons name="barcode-outline" size={20} color={Colors.primary} />
-                          </Pressable>
-                        ) : null}
-                        {onOpenFoodVision ? (
-                          <Pressable
-                            onPress={onOpenFoodVision}
-                            style={({ pressed }) => [
-                              styles.cameraScanBtn,
-                              pressed ? styles.btnPressedSubtle : null,
-                            ]}
-                            hitSlop={HIT_SLOP_8}
-                            accessibilityRole="button"
-                            accessibilityLabel="Scan food with AI camera"
-                          >
-                            <Ionicons name="camera-outline" size={20} color={Colors.primary} />
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    )}
-                  </View>
-
-                  {/* 3. Non-Clipped Category Filter Tabs */}
-                  <View style={styles.categoryWrapper}>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.categoryScroll}
-                    >
-                      {categoriesList.map(cat => (
-                        <CategoryPill
-                          key={cat.id}
-                          cat={cat}
-                          isSelected={selectedCategory === cat.id}
-                          onPress={() => setSelectedCategory(cat.id)}
-                        />
-                      ))}
-                    </ScrollView>
-                  </View>
-
-                  {/* 4. Food List */}
-                  <FlatList
-                    data={filteredFoods}
-                    keyExtractor={item => item.id}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={renderFoodItem}
-                    ListHeaderComponent={renderListHeader}
-                    ListEmptyComponent={renderListEmpty}
-                    initialNumToRender={10}
-                    maxToRenderPerBatch={10}
-                    windowSize={5}
-                  />
-                </>
-              )}
-            </KeyboardAvoidingView>
-          </SafeAreaView>
-        )}
-
-        {/* Floating In-Modal Toast Snackbar with Undo */}
-        {toastMessage ? (
+        {toast ? (
           <Animated.View
-            style={[
-              styles.toastContainer,
-              { bottom: Math.max(insets.bottom + 12, 20) },
-              toastStyle,
-            ]}
+            style={[styles.toast, { bottom: Math.max(insets.bottom + 12, 20) }, toastStyle]}
+            accessibilityLiveRegion="polite"
           >
-            <View style={styles.toastContent}>
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color={Colors.success}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.toastText} numberOfLines={1}>
-                {toastMessage}
+            <Ionicons name="checkmark-circle" size={20} color={Colors.primaryMuted} />
+            <View style={styles.flex1}>
+              <Text style={styles.toastTitle} numberOfLines={1}>
+                {toast.title}
+              </Text>
+              <Text style={styles.toastDetail} numberOfLines={1}>
+                {toast.detail}
               </Text>
             </View>
-            <View style={styles.toastActions}>
-              {lastAddedMeal ? (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.toastUndoBtn,
-                    pressed ? styles.btnPressedSubtle : null,
-                  ]}
-                  onPress={handleUndo}
-                  hitSlop={HIT_SLOP_8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Undo food log"
-                >
-                  <Text style={styles.toastUndoText}>Undo</Text>
-                </Pressable>
-              ) : null}
+            {lastAdded.length > 0 ? (
               <Pressable
-                style={({ pressed }) => [
-                  styles.toastCloseBtn,
-                  pressed ? styles.btnPressedSubtle : null,
-                ]}
-                onPress={handleDismissToast}
-                hitSlop={HIT_SLOP_8}
+                style={({ pressed }) => [styles.toastBtn, pressed && ui.pressed]}
+                onPress={handleUndo}
                 accessibilityRole="button"
-                accessibilityLabel="Dismiss toast"
+                accessibilityLabel="Undo food log"
               >
-                <Ionicons name="close" size={16} color={Colors.textMuted} />
+                <Text style={styles.toastUndo}>Undo</Text>
               </Pressable>
-            </View>
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [styles.toastClose, pressed && ui.pressed]}
+              onPress={handleDismissToast}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss toast"
+            >
+              <Ionicons name="close" size={16} color={Colors.textMuted} />
+            </Pressable>
           </Animated.View>
         ) : null}
       </View>
@@ -1876,1179 +1111,257 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalRoot: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  phoneScreenContainer: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 480,
-    alignSelf: 'center',
-    backgroundColor: Colors.background,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.background,
+  root: { flex: 1, backgroundColor: Colors.background },
+  flex1: { flex: 1, minWidth: 0 },
+  center: { textAlign: 'center' },
+  rowPressed: { backgroundColor: Colors.surfaceLow },
+  body: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 24 },
+  footer: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 12,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderWhisper,
+    backgroundColor: Colors.background,
   },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-  },
-  customToggleBtnHidden: {
-    opacity: 0,
-    pointerEvents: 'none',
-  },
-  headerTitleCenter: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  headerTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 20,
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-  },
-  headerBudgetRow: {
+
+  // Catalog
+  top: { paddingHorizontal: 16, gap: 14 },
+  budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 2 },
+  budgetText: { fontFamily: Fonts.urbanist.medium, fontSize: 13, color: Colors.textSecondary },
+  budgetStrong: { fontFamily: Fonts.urbanist.bold, color: Colors.textPrimary },
+  search: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  headerSubtitleText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 11,
-    color: Colors.textSecondary,
-  },
-  headerBoldVal: {
-    fontFamily: Fonts.urbanist.bold,
-    color: Colors.textPrimary,
-  },
-  headerBudgetBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  budgetBadgeOk: {
-    backgroundColor: Colors.proteinLight,
-    borderColor: Colors.fiberBorder,
-  },
-  budgetBadgeOver: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.stepsBorder,
-  },
-  headerBudgetBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-  },
-  budgetTextOk: {
-    color: Colors.fiberDark,
-  },
-  budgetTextOver: {
-    color: Colors.primaryDark,
-  },
-  customToggleBtn: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.stepsBorder,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 16,
-  },
-  customToggleText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: Colors.primaryDark,
-  },
-  mealSwitcherRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+    height: 48,
+    paddingLeft: 14,
+    paddingRight: 2,
     gap: 8,
-  },
-  mealSwitcherScroll: {
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 16,
-  },
-  mealTabPill: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 6,
-    borderRadius: 16,
-    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
-    gap: 5,
-  },
-  mealTabPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-    borderWidth: 1.5,
-  },
-  mealTabEmoji: {
-    fontSize: 13,
-  },
-  mealTabLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  mealTabLabelActive: {
-    color: Colors.textInverse,
-    fontFamily: Fonts.urbanist.bold,
-  },
-  searchBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: Colors.card,
-    marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
   },
+  searchActive: { borderColor: Colors.primary },
   searchInput: {
     flex: 1,
+    height: '100%',
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.textPrimary,
-    paddingVertical: 4,
   },
-  categoryWrapper: {
-    flexShrink: 0,
-    height: 48,
-    marginVertical: 6,
-  },
-  categoryScroll: {
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    gap: 8,
-  },
-  categoryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchDivider: { width: 1, height: 22, backgroundColor: Colors.borderSubtle },
+  searchIconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  chipsScroll: { flexGrow: 0, marginTop: 14 },
+  chips: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
+  chip: {
+    height: 36,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: Colors.card,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
-    gap: 6,
-  },
-  categoryPillActive: {
-    backgroundColor: Colors.inverseSurface,
-    borderColor: Colors.textPrimary,
-  },
-  categoryText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: Colors.textPrimary,
-  },
-  categoryTextActive: {
-    color: Colors.textInverse,
-    fontFamily: Fonts.urbanist.bold,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-    paddingTop: 6,
-  },
-  foodItemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: Colors.borderWhisper,
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-  foodThumbWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: Colors.surfaceLow,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderWhisper,
-  },
-  foodItemImg: {
-    width: '100%',
-    height: '100%',
-  },
-  foodItemBadge: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  foodItemMain: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  foodItemNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  foodItemName: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    lineHeight: 20,
-    color: Colors.textPrimary,
-    flexShrink: 1,
-  },
-  customBadge: {
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  customBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 9,
-    color: Colors.primaryDark,
-    letterSpacing: 0.3,
-  },
-  loggedCountBadge: {
-    backgroundColor: Colors.proteinLight,
-    borderWidth: 1,
-    borderColor: Colors.fiberBorder,
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  loggedCountBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 10,
-    color: Colors.fiberDark,
-  },
-  searchActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  barcodeScanBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.stepsBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraScanBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.stepsBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  foodItemUnit: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 17,
-    color: Colors.textSecondary,
-  },
-  macroPillRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
-  },
-  macroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3.5,
-  },
-  macroDot: {
-    width: 5.5,
-    height: 5.5,
-    borderRadius: 3,
-  },
-  macroDotProtein: {
-    backgroundColor: Colors.success,
-  },
-  macroDotCarbs: {
-    backgroundColor: Colors.carbs,
-  },
-  macroDotFat: {
-    backgroundColor: Colors.steps,
-  },
-  foodItemCardPressed: {
-    backgroundColor: Colors.surfaceLow,
-    borderColor: Colors.borderMedium,
-  },
-  macroText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textSecondary,
-  },
-  foodItemRight: {
+  chipOn: { backgroundColor: Colors.inverseSurface, borderColor: Colors.inverseSurface },
+  chipText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 13, color: Colors.textSecondary },
+  chipTextOn: { color: Colors.textInverse },
+  listContent: { paddingHorizontal: 16, paddingTop: 16, flexGrow: 1 },
+
+  repeatCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginLeft: 10,
+    padding: 12,
+    paddingLeft: 14,
+    marginBottom: 24,
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.primaryMuted,
+    elevation: 0,
   },
-  caloriesStack: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 36,
-  },
-  foodItemCals: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    lineHeight: 20,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-  },
-  foodItemCalUnit: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    lineHeight: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 1,
-  },
-  quickAddButton: {
-    width: 36,
-    height: 36,
+  repeatTile: { backgroundColor: Colors.primaryContainer },
+  repeatBtn: {
+    minHeight: 36,
+    paddingHorizontal: 14,
     borderRadius: 18,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickAddButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.97 }],
-  },
-  fullScreenProductContainer: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 480,
-    alignSelf: 'center',
+  repeatBtnText: { fontFamily: Fonts.urbanist.bold, fontSize: 13, color: Colors.onPrimary },
+
+  // One card split across FlatList rows
+  listCardSlice: {
     backgroundColor: Colors.card,
-    position: 'relative',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: Colors.borderSubtle,
     overflow: 'hidden',
   },
-  fullScreenScrollView: {
-    flex: 1,
-    backgroundColor: Colors.card,
-  },
-  fullScreenScrollContent: {
-    backgroundColor: Colors.card,
-    flexGrow: 1,
-  },
-  productTopNavRow: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 20,
-  },
-  productNavCircleBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  productHeroStage: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.card,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-    position: 'relative',
-  },
-  productHeroImage: {
-    maxHeight: 230,
-  },
-  productDetailCard: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+  listCardTop: {
+    borderTopWidth: 1,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     borderCurve: 'continuous',
-    marginTop: -24,
-    backgroundColor: Colors.card,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 4,
   },
-  productStickyFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+  listCardBottom: {
+    borderBottomWidth: 1,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
     borderCurve: 'continuous',
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 12,
-    zIndex: 20,
   },
-  footerStepperPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    borderRadius: 14,
-    height: 52,
-    paddingHorizontal: 4,
-    width: 136,
-    flexShrink: 0,
-  },
-  footerStepBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.shadowColor,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-  footerStepperValueWrap: {
+  foodRowWrap: { flexDirection: 'row', alignItems: 'center', paddingRight: 10 },
+  foodRow: {
     flex: 1,
-    paddingHorizontal: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerStepperValue: {
-    textAlign: 'center',
-  },
-  footerStepperNumber: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.textPrimary,
-  },
-  footerStepperUnit: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  productHeaderMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 6,
-    marginBottom: 4,
+    gap: 12,
+    paddingLeft: 12,
+    paddingRight: 12,
+    paddingVertical: 10,
   },
-  productCategoryWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  foodText: { flex: 1, minWidth: 0 },
+  foodNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  foodName: {
     flexShrink: 1,
-  },
-  productCategoryLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    letterSpacing: 0.8,
-  },
-  productHealthBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.proteinLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-    flexShrink: 0,
-  },
-  productHealthBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: Colors.fiberDark,
-  },
-  productMainTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 22,
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-    marginTop: 6,
-    lineHeight: 28,
-  },
-  productBaseServingText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 3,
-    marginBottom: 8,
-  },
-  productDescriptionText: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 14,
-    color: Colors.textSlate600,
-    lineHeight: 21,
-    marginBottom: 16,
-  },
-  distributionChipsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-  },
-  distributionChip: {
-    flex: 1,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  distributionChipActive: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.primary,
-    borderWidth: 1.5,
-  },
-  distributionChipText: {
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    color: Colors.textSlate600,
+    color: Colors.textPrimary,
   },
-  distributionChipTextActive: {
-    fontFamily: Fonts.urbanist.bold,
-    color: Colors.primaryDark,
+  foodKcal: { fontFamily: Fonts.urbanist.bold, color: Colors.textPrimary },
+  countBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    backgroundColor: Colors.primaryLight,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 4,
-  },
-  sectionHeaderLabel: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: Colors.textSecondary,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  sectionHeaderSub: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  stepperContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.surfaceLow,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    marginBottom: 8,
-  },
-  stepButton: {
+  countBadgeText: { fontFamily: Fonts.urbanist.bold, fontSize: 11, color: Colors.primaryDark },
+  addBtn: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderMedium,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  quantityDisplayContainer: {
-    alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 8,
-  },
-  quantityDisplay: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  quantityUnitText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 1,
-  },
-  presetRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  presetBtn: {
-    flex: 1,
-    backgroundColor: Colors.surfaceLow,
-    minHeight: 40,
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-  },
-  presetBtnActive: {
-    backgroundColor: Colors.inverseSurface,
-    borderColor: Colors.textPrimary,
-  },
-  presetBtnText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSlate600,
-  },
-  presetBtnTextActive: {
-    color: Colors.textInverse,
-    fontFamily: Fonts.urbanist.bold,
-  },
-  nutritionMatrixGrid: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 14,
-  },
-  nutriCard: {
-    flex: 1,
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 3,
-    minHeight: 84,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  nutriCardCalories: {
-    backgroundColor: Colors.primaryLight,
-    borderColor: Colors.stepsBorder,
-  },
-  nutriCardProtein: {
-    backgroundColor: Colors.waterLight,
-    borderColor: Colors.waterTrack,
-  },
-  nutriCardCarbs: {
-    backgroundColor: Colors.carbsLight,
-    borderColor: 'rgba(234, 179, 8, 0.28)',
-  },
-  nutriCardFat: {
-    backgroundColor: Colors.waterLight,
-    borderColor: Colors.waterBorder,
-  },
-  nutriCardIconWrap: {
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  nutriKey: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  nutriVal: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.textPrimary,
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  footerImpactStrip: {
-    marginBottom: 12,
-  },
-  footerImpactMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  footerImpactLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    marginRight: 8,
-    overflow: 'hidden',
-  },
-  footerImpactLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  footerImpactBold: {
-    fontFamily: Fonts.urbanist.bold,
-    color: Colors.textPrimary,
-  },
-  footerImpactSub: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  footerImpactBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    flexShrink: 0,
-  },
-  footerImpactBadgeOk: {
-    backgroundColor: Colors.proteinLight,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-  },
-  footerImpactBadgeOver: {
-    backgroundColor: Colors.errorLight,
-    borderWidth: 1,
-    borderColor: Colors.dangerLight,
-  },
-  footerImpactDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginRight: 4,
-  },
-  footerImpactDotOk: {
-    backgroundColor: Colors.success,
-  },
-  footerImpactDotOver: {
-    backgroundColor: Colors.danger,
-  },
-  footerImpactBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-  },
-  footerImpactBadgeTextOk: {
-    color: Colors.success,
-  },
-  footerImpactBadgeTextOver: {
-    color: Colors.dangerDark,
-  },
-  footerImpactTrack: {
-    height: 3.5,
-    backgroundColor: Colors.surfaceInset,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  footerImpactBar: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  footerImpactBarOk: {
-    backgroundColor: Colors.weightLoss,
-  },
-  footerImpactBarOver: {
-    backgroundColor: Colors.danger,
-  },
-  footerActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  btnPressedSubtle: {
-    opacity: 0.88,
-    transform: [{ scale: 0.98 }],
-  },
-  btnPressedPill: {
-    opacity: 0.9,
-    transform: [{ scale: 0.985 }],
-  },
-  btnPressedPrimary: {
-    opacity: 0.92,
-    transform: [{ scale: 0.985 }],
-  },
-  confirmAddBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 22,
     backgroundColor: Colors.primary,
-    height: 52,
-    borderRadius: 16,
-    gap: 8,
-    paddingHorizontal: 12,
-  },
-  ctaCheckBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+    elevation: 0,
   },
-  ctaTextCol: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  confirmAddBtnTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    color: Colors.textInverse,
-    fontSize: 15,
-    lineHeight: 18,
-  },
-  confirmAddBtnSub: {
-    fontFamily: Fonts.urbanist.medium,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 12,
-    lineHeight: 15,
-  },
-  toastContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
-    backgroundColor: Colors.inverseSurface,
-    borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 12,
-    zIndex: 10002,
-  },
-  toastContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  toastText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textInverse,
-    flexShrink: 1,
-  },
-  toastActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  toastUndoBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  toastUndoText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.warning,
-  },
-  toastCloseBtn: {
-    padding: 4,
-  },
-  customForm: {
-    padding: 20,
-  },
-  customPhotoRow: {
-    marginBottom: 12,
-  },
-  customAddPhotoBtn: {
+  addBtnLogged: { backgroundColor: Colors.primaryLight },
+  createRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    borderRadius: 12,
-    paddingVertical: 12,
-    borderStyle: 'dashed',
+    minHeight: 48,
+    marginTop: 12,
   },
-  customAddPhotoText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: Colors.primaryDark,
-  },
-  customPhotoPreviewContainer: {
-    position: 'relative',
-    width: 64,
-    height: 64,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    overflow: 'hidden',
-  },
-  customPhotoPreviewImg: {
-    width: 64,
-    height: 64,
-  },
-  customPhotoRemoveBtn: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  customFormTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  customFormDesc: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 16,
-    marginTop: 2,
-  },
-  inputLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  input: {
-    fontFamily: Fonts.urbanist.regular,
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: Colors.textPrimary,
-  },
-  grid2: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  grid3: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  flex1: {
-    flex: 1,
-  },
-  saveCustomBtn: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  saveCustomBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    color: Colors.textInverse,
-    fontSize: 15,
-  },
-  // Repeat Yesterday Banner
-  repeatYesterdayCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  repeatYesterdayHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  repeatIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  repeatTextCol: {
-    flex: 1,
-  },
-  repeatTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-  },
-  repeatSubtitle: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 1,
-  },
-  repeatActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  repeatActionBtnText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 12,
-    color: Colors.textInverse,
-  },
+  createRowText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.primaryDark },
 
-  // Empty List View
-  emptyListContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  emptyIconBadge: {
+  empty: { alignItems: 'center', paddingTop: 16, gap: 6 },
+  emptyIcon: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.surfaceInset,
+    backgroundColor: Colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: 8,
   },
   emptyTitle: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 18,
     color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 6,
   },
-  emptySubtitle: {
+  emptyCard: { alignSelf: 'stretch', marginTop: 18 },
+
+  // Detail
+  detailTopBar: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
+  detailHero: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  detailServing: {
     fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-    maxWidth: 280,
+    marginTop: 2,
   },
-  emptyActionsRow: {
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: Colors.surfaceContainer,
+  },
+  categoryBadgeText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  descText: { marginHorizontal: 4 },
+
+  // Custom form
+  photoSlot: {
+    height: 96,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Colors.borderMedium,
+    backgroundColor: Colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  photoSlotText: { fontFamily: Fonts.urbanist.semiBold, fontSize: 14, color: Colors.textSecondary },
+  photoPreview: { alignSelf: 'flex-start' },
+  photoImg: { width: 96, height: 96, borderRadius: 10, borderCurve: 'continuous' },
+  photoRemove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.overlayDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formGroup: { gap: 16 },
+  macroGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  macroCell: { flexBasis: '45%', flexGrow: 1 },
+
+  // Toast
+  toast: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    maxWidth: 448,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    paddingLeft: 14,
+    paddingRight: 4,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.inverseSurface,
+    elevation: 0,
   },
-  emptyActionBtnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  toastTitle: { fontFamily: Fonts.urbanist.bold, fontSize: 14, color: Colors.textInverse },
+  toastDetail: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 1,
   },
-  emptyActionBtnPrimaryText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: Colors.textInverse,
-  },
-  emptyActionBtnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.surfaceInset,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
-  },
-  emptyActionBtnSecondaryText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: Colors.textPrimary,
-  },
+  toastBtn: { minHeight: 44, paddingHorizontal: 10, justifyContent: 'center' },
+  toastUndo: { fontFamily: Fonts.urbanist.bold, fontSize: 14, color: Colors.primaryMuted },
+  toastClose: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
 });
 
 export const FoodLogModal = React.memo(FoodLogModalComponent);

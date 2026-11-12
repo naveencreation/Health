@@ -1,4 +1,4 @@
-import { DailyLog, UserGoals } from '@/types';
+import { DailyLog, MealType, UserGoals } from '@/types';
 import { DayCalorieIntakeData, DayMacroRatioData } from '@/components/report';
 
 export interface DayBucketItem {
@@ -168,4 +168,17 @@ export function computeMacroRatioDays(
       fiber: fiberG,
     };
   });
+}
+
+/** Share of the day's calorie allowance each meal aims for. */
+export const MEAL_SHARE: Record<MealType, number> = {
+  breakfast: 0.25,
+  lunch: 0.35,
+  snacks: 0.12,
+  dinner: 0.28,
+};
+
+/** Calorie target for one meal from the day's allowance (budget + burned). */
+export function getMealTarget(allowance: number, meal: MealType): number {
+  return Math.round(Math.max(0, allowance) * MEAL_SHARE[meal]);
 }
