@@ -107,8 +107,12 @@ describe('onboardingCalculator (Mifflin-St Jeor & Pace Engine)', () => {
       expect(previews.steady.pace).toBe('steady');
       expect(previews.faster.pace).toBe('faster');
 
-      expect(previews.gentle.dailyCalorieBudget).toBeGreaterThan(previews.steady.dailyCalorieBudget);
-      expect(previews.steady.dailyCalorieBudget).toBeGreaterThan(previews.faster.dailyCalorieBudget);
+      expect(previews.gentle.dailyCalorieBudget).toBeGreaterThan(
+        previews.steady.dailyCalorieBudget
+      );
+      expect(previews.steady.dailyCalorieBudget).toBeGreaterThan(
+        previews.faster.dailyCalorieBudget
+      );
 
       expect(previews.gentle.estimatedWeeksToGoal).toBeGreaterThan(
         previews.steady.estimatedWeeksToGoal!
@@ -180,7 +184,7 @@ describe('onboardingCalculator (Mifflin-St Jeor & Pace Engine)', () => {
       const policy = evaluateAgePolicy(12);
       expect(policy.allowed).toBe(false);
       expect(policy.forceMaintain).toBe(false);
-      expect(policy.message).toContain('13 and older');
+      expect(policy.message).toContain('13 and up');
     });
 
     it('forces goal to maintain for teens 13 to 17', () => {

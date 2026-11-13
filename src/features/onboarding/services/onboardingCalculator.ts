@@ -58,7 +58,7 @@ export function evaluateAgePolicy(age: number): AgePolicyResult {
     return {
       allowed: false,
       forceMaintain: false,
-      message: 'Calorify is designed for users aged 13 and older.',
+      message: 'Calorify is for ages 13 and up.',
     };
   }
   if (age >= 13 && age <= 17) {
@@ -66,7 +66,7 @@ export function evaluateAgePolicy(age: number): AgePolicyResult {
       allowed: true,
       forceMaintain: true,
       message:
-        "Because you're still growing, we'll set a healthy maintenance budget to support your energy and development.",
+        "Since you're still growing, I'll keep your plan at maintenance to support your energy.",
     };
   }
   return {
@@ -152,8 +152,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   }
 
   // Safety floor: 1200 kcal female, 1500 kcal male, 1350 kcal midpoint
-  const safeFloor =
-    gender === 'female' ? 1200 : gender === 'male' ? 1500 : 1350;
+  const safeFloor = gender === 'female' ? 1200 : gender === 'male' ? 1500 : 1350;
   const isAtSafeFloor = dailyCalorieBudget < safeFloor;
   dailyCalorieBudget = Math.max(safeFloor, dailyCalorieBudget);
 
@@ -231,9 +230,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
  * Returns preview plans for all three paces ('gentle', 'steady', 'faster') in one call.
  * Used for Screen 9 (Pace selection).
  */
-export function previewPlans(
-  input: UserBiometricsInput
-): Record<Pace, CalculatedHealthPlan> {
+export function previewPlans(input: UserBiometricsInput): Record<Pace, CalculatedHealthPlan> {
   return {
     gentle: calculateHealthPlan({ ...input, pace: 'gentle' }),
     steady: calculateHealthPlan({ ...input, pace: 'steady' }),

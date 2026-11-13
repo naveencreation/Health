@@ -138,6 +138,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [goal, setGoal] = useState<GoalType>(initialBiometrics?.goal ?? 'lose_weight');
   const [goalIntent, setGoalIntent] = useState<GoalIntent>('lose');
   const [goalChosen, setGoalChosen] = useState(false);
+  const [aboutChosen, setAboutChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -190,6 +191,15 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 
       // A draft at name/goal means nothing was picked yet; goalIntent there is just the default.
       if (draft.step && draft.step !== 'name' && draft.step !== 'goal') setGoalChosen(true);
+      if (
+        draft.step &&
+        draft.step !== 'name' &&
+        draft.step !== 'goal' &&
+        draft.step !== 'struggles' &&
+        draft.step !== 'about_you'
+      ) {
+        setAboutChosen(true);
+      }
 
       if (draft.step && draft.step !== 'name' && isMounted) {
         const reconstructed = buildReconstructedHistory(
@@ -421,13 +431,14 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return (
       <View style={styles.container}>
         <AboutYouScreen
-          initialSex={sex}
+          initialSex={aboutChosen ? sex : undefined}
           initialAge={age}
           onBack={popStep}
           onContinue={(chosenSex, chosenAge) => {
             setSex(chosenSex);
             setAge(chosenAge);
-            pushStep('height');
+            setAboutChosen(true);
+            pushStep('height', { sex: chosenSex, age: chosenAge });
           }}
           onSkip={onSkip}
           sectionIndex={0}

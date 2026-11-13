@@ -4,19 +4,29 @@ import {
   View,
   Text,
   Pressable,
-  Platform,
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  AccessibilityActionEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
 import { Sex, evaluateAgePolicy } from '../services/onboardingCalculator';
+
+const RIA_AVATAR = require('../../../../assets/ria_avatar.webp');
 
 interface AboutYouScreenProps {
   onBack?: () => void;
@@ -31,41 +41,55 @@ interface AboutYouScreenProps {
 
 const MIN_AGE = 10;
 const MAX_AGE = 99;
-const ITEM_HEIGHT = 44;
+const ITEM_HEIGHT = 40;
 const VISIBLE_ITEMS = 5;
-const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 220px
+const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 200px
 const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
 const SNAP_OFFSETS = AGES.map((_, i) => i * ITEM_HEIGHT);
 
-const SEX_OPTIONS: { id: Sex; label: string; icon: string }[] = [
-  { id: 'female', label: 'Female', icon: 'female' },
-  { id: 'male', label: 'Male', icon: 'male' },
-  { id: 'prefer_not_to_say', label: 'Prefer not to say', icon: 'person' },
+const GENDER_OPTIONS: { id: Sex; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
+  { id: 'female', label: 'Female', iconName: 'female' },
+  { id: 'male', label: 'Male', iconName: 'male' },
 ];
 
 export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
   onBack,
   onContinue,
   onSkip,
-  initialSex = 'female',
+  initialSex,
   initialAge = 25,
   sectionIndex = 0,
   totalSections = 4,
   sectionProgress = 0.8,
 }) => {
-  const [selectedSex, setSelectedSex] = useState<Sex>(initialSex);
+  const [selectedSex, setSelectedSex] = useState<Sex | null>(initialSex ?? null);
   const [selectedAge, setSelectedAge] = useState<number>(initialAge);
   const scrollViewRef = useRef<ScrollView>(null);
   const isLayoutReadyRef = useRef(false);
+  const reduceMotion = useReducedMotion();
 
   const initialOffset = Math.max(0, (initialAge - MIN_AGE) * ITEM_HEIGHT);
 
+  const agePolicy = evaluateAgePolicy(selectedAge);
+  const showTeenReply = agePolicy.allowed && agePolicy.forceMaintain;
+  const teenReply = useSharedValue(showTeenReply ? 1 : 0);
+  const teenReplyStyle = useAnimatedStyle(() => ({
+    opacity: teenReply.value,
+    transform: [{ translateY: (1 - teenReply.value) * 8 }],
+  }));
+
   useEffect(() => {
-    if (isLayoutReadyRef.current) {
-      const offset = Math.max(0, (selectedAge - MIN_AGE) * ITEM_HEIGHT);
-      scrollViewRef.current?.scrollTo({ y: offset, animated: false });
+    if (!showTeenReply) return;
+    if (reduceMotion) {
+      teenReply.value = 1;
+      return;
     }
-  }, []);
+    teenReply.value = 0;
+    teenReply.value = withTiming(1, {
+      duration: MotionDurations.sheet,
+      easing: MotionCurves.decelerate,
+    });
+  }, [showTeenReply, reduceMotion, teenReply]);
 
   const handleLayout = useCallback(() => {
     if (!isLayoutReadyRef.current) {
@@ -88,18 +112,29 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
   const handleSelectAge = (age: number) => {
     haptics.selection();
     setSelectedAge(age);
-    const offset = (age - MIN_AGE) * ITEM_HEIGHT;
-    scrollViewRef.current?.scrollTo({ y: offset, animated: true });
+    scrollViewRef.current?.scrollTo({ y: (age - MIN_AGE) * ITEM_HEIGHT, animated: true });
   };
 
-  const agePolicy = evaluateAgePolicy(selectedAge);
-  const canContinue = agePolicy.allowed;
+  const handleWheelAction = (e: AccessibilityActionEvent) => {
+    const delta = e.nativeEvent.actionName === 'increment' ? 1 : -1;
+    const next = Math.max(MIN_AGE, Math.min(MAX_AGE, selectedAge + delta));
+    if (next !== selectedAge) handleSelectAge(next);
+  };
+
+  const canContinue = selectedSex !== null && agePolicy.allowed;
 
   const handleContinue = () => {
-    if (!canContinue) return;
+    if (!canContinue || selectedSex === null) return;
     haptics.selection();
     onContinue(selectedSex, selectedAge);
   };
+
+  const pickSex = (id: Sex) => {
+    haptics.selection();
+    setSelectedSex(id);
+  };
+
+  const preferNot = selectedSex === 'prefer_not_to_say';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -118,47 +153,40 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
           showsVerticalScrollIndicator={false}
           onLayout={handleLayout}
         >
-          <View style={styles.titleContainer}>
-            <Text style={styles.screenTitle}>A little about you.</Text>
-            <Text style={styles.screenSubtitle}>
-              Helps calibrate your base metabolic rate accurately.
-            </Text>
-          </View>
+          <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+            A little about you
+          </Text>
+          <Text style={styles.subtitle}>
+            Bodies burn energy differently, so this tunes your calorie estimate.
+          </Text>
 
-          {/* Biological Sex Selection */}
-          <View style={styles.sectionBlock}>
-            <Text style={styles.sectionLabel}>Biological Sex</Text>
+          <Text style={styles.sectionLabel}>Sex</Text>
+          <View accessibilityRole="radiogroup">
             <View style={styles.sexRow}>
-              {SEX_OPTIONS.map(opt => {
+              {GENDER_OPTIONS.map(opt => {
                 const isSelected = selectedSex === opt.id;
                 return (
                   <Pressable
                     key={opt.id}
-                    onPress={() => {
-                      haptics.selection();
-                      setSelectedSex(opt.id);
-                    }}
+                    onPress={() => pickSex(opt.id)}
                     style={({ pressed }) => [
-                      styles.sexPill,
-                      isSelected ? styles.sexPillSelected : styles.sexPillUnselected,
-                      pressed && styles.sexPillPressed,
+                      styles.sexTile,
+                      isSelected && styles.sexTileSelected,
+                      pressed && styles.pressed,
                     ]}
                     accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
+                    accessibilityState={{ selected: isSelected, checked: isSelected }}
                     accessibilityLabel={opt.label}
                     testID={`sex-option-${opt.id}`}
                   >
                     <Ionicons
-                      name={opt.icon as any}
-                      size={16}
-                      color={isSelected ? '#F47551' : '#64748B'}
-                      style={styles.sexIcon}
+                      name={opt.iconName}
+                      size={20}
+                      color={isSelected ? Colors.primaryDeep : Colors.textPrimary}
                     />
                     <Text
-                      style={[
-                        styles.sexText,
-                        isSelected ? styles.sexTextSelected : styles.sexTextUnselected,
-                      ]}
+                      style={[styles.sexLabel, isSelected && styles.selectedText]}
+                      maxFontSizeMultiplier={1.3}
                     >
                       {opt.label}
                     </Text>
@@ -166,96 +194,133 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
                 );
               })}
             </View>
-            <Text style={styles.privacyNote}>
-              Only used for calorie math. Never shown on your profile or shared.
-            </Text>
-          </View>
-
-          {/* Age Selection Wheel */}
-          <View style={styles.sectionBlock}>
-            <Text style={styles.sectionLabel}>Age</Text>
-            <View style={styles.wheelContainer}>
-              <View style={styles.wheelHighlight} />
-              <ScrollView
-                ref={scrollViewRef}
-                style={styles.wheelScrollView}
-                contentContainerStyle={styles.wheelContent}
-                showsVerticalScrollIndicator={false}
-                snapToOffsets={SNAP_OFFSETS}
-                snapToAlignment="center"
-                decelerationRate="fast"
-                onMomentumScrollEnd={handleMomentumScrollEnd}
-                testID="age-scroll-wheel"
-              >
-                {AGES.map(age => {
-                  const isSelected = age === selectedAge;
-                  return (
-                    <Pressable
-                      key={age}
-                      onPress={() => handleSelectAge(age)}
-                      style={styles.wheelItem}
-                      testID={`age-item-${age}`}
-                    >
-                      <Text
-                        style={[
-                          styles.wheelItemText,
-                          isSelected ? styles.wheelItemTextSelected : styles.wheelItemTextDim,
-                        ]}
-                      >
-                        {age}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </View>
-
-          {/* Age Policy Notification Banner */}
-          {agePolicy.message && (
-            <Animated.View
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(150)}
-              style={[
-                styles.policyCard,
-                !agePolicy.allowed ? styles.policyCardBlocked : styles.policyCardNotice,
+            <Pressable
+              onPress={() => pickSex('prefer_not_to_say')}
+              style={({ pressed }) => [
+                styles.preferTile,
+                preferNot && styles.preferTileSelected,
+                pressed && styles.pressed,
               ]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: preferNot, checked: preferNot }}
+              accessibilityLabel="Prefer not to say"
+              testID="sex-option-prefer_not_to_say"
+            >
+              <Text
+                style={[styles.preferLabel, preferNot && styles.selectedText]}
+                maxFontSizeMultiplier={1.3}
+              >
+                Prefer not to say
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.noteRow}>
+            {preferNot ? (
+              <Text style={styles.noteText}>{"No problem. I'll use an average of both."}</Text>
+            ) : (
+              <>
+                <Ionicons name="lock-closed-outline" size={14} color={Colors.textMuted} />
+                <Text style={styles.noteText}>
+                  Only used for your calorie maths. Never shown or shared.
+                </Text>
+              </>
+            )}
+          </View>
+
+          <Text style={styles.sectionLabel}>Age</Text>
+          <View
+            style={styles.wheelContainer}
+            accessible
+            accessibilityRole="adjustable"
+            accessibilityLabel="Age"
+            accessibilityValue={{ text: `${selectedAge} years` }}
+            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+            onAccessibilityAction={handleWheelAction}
+            testID="age-scroll-wheel-container"
+          >
+            <View style={styles.wheelHighlight} />
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.wheelScrollView}
+              contentContainerStyle={styles.wheelContent}
+              showsVerticalScrollIndicator={false}
+              snapToOffsets={SNAP_OFFSETS}
+              snapToAlignment="center"
+              decelerationRate="fast"
+              onMomentumScrollEnd={handleMomentumScrollEnd}
+              testID="age-scroll-wheel"
+            >
+              {AGES.map(age => {
+                const isSelected = age === selectedAge;
+                const isNear = Math.abs(age - selectedAge) === 1;
+                return (
+                  <Pressable
+                    key={age}
+                    onPress={() => handleSelectAge(age)}
+                    style={styles.wheelItem}
+                    accessible={false}
+                    testID={`age-item-${age}`}
+                  >
+                    <Text
+                      style={
+                        isSelected ? styles.itemSelected : isNear ? styles.itemNear : styles.itemFar
+                      }
+                    >
+                      {age}
+                      {isSelected ? <Text style={styles.itemUnit}> yrs</Text> : null}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {showTeenReply ? (
+            <Animated.View
+              style={[styles.replyRow, teenReplyStyle]}
+              accessibilityLiveRegion="polite"
               testID="age-policy-banner"
             >
-              <Ionicons
-                name={!agePolicy.allowed ? 'alert-circle' : 'information-circle'}
-                size={18}
-                color={!agePolicy.allowed ? '#DC2626' : '#D97706'}
-                style={styles.policyIcon}
-              />
-              <Text
-                style={[
-                  styles.policyText,
-                  !agePolicy.allowed ? styles.policyTextBlocked : styles.policyTextNotice,
-                ]}
-              >
-                {agePolicy.message}
-              </Text>
+              <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+              <View style={styles.bubble}>
+                <Text style={styles.bubbleText}>{agePolicy.message}</Text>
+              </View>
             </Animated.View>
-          )}
+          ) : null}
+
+          {!agePolicy.allowed ? (
+            <View
+              style={styles.blocked}
+              accessibilityLiveRegion="polite"
+              testID="age-policy-banner"
+            >
+              <Ionicons name="alert-circle-outline" size={18} color={Colors.danger} />
+              <Text style={styles.blockedText}>{agePolicy.message}</Text>
+            </View>
+          ) : null}
         </ScrollView>
 
-        <View style={styles.footerContainer}>
+        <View style={styles.footer}>
           <Pressable
+            onPress={handleContinue}
+            disabled={!canContinue}
             style={({ pressed }) => [
               styles.continueButton,
               !canContinue && styles.continueButtonDisabled,
-              pressed && canContinue && styles.continueButtonPressed,
+              pressed && styles.continueButtonPressed,
             ]}
-            onPress={handleContinue}
-            disabled={!canContinue}
             accessibilityRole="button"
-            accessibilityLabel="Continue to body metrics"
+            accessibilityLabel="Continue"
+            accessibilityState={{ disabled: !canContinue }}
             testID="about-you-continue-button"
           >
-            <Text style={[styles.continueButtonText, !canContinue && styles.continueButtonTextDisabled]}>
+            <Text style={[styles.continueText, !canContinue && styles.continueTextDisabled]}>
               Continue
             </Text>
+            {canContinue ? (
+              <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
+            ) : null}
           </Pressable>
         </View>
       </View>
@@ -266,104 +331,122 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 22,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 22,
     paddingBottom: 20,
   },
-  titleContainer: {
-    marginBottom: 20,
-  },
-  screenTitle: {
-    fontFamily: Fonts.kurale,
+  question: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 28,
-    lineHeight: 36,
-    color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 8,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+    color: Colors.textPrimary,
   },
-  screenSubtitle: {
+  subtitle: {
+    marginTop: 8,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.textSecondary ?? '#64748B',
-  },
-  sectionBlock: {
-    marginBottom: 24,
+    color: Colors.textSecondary,
   },
   sectionLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 15,
-    color: Colors.textPrimary ?? '#1E293B',
+    marginTop: 22,
     marginBottom: 10,
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 13,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
   },
   sexRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
-  sexPill: {
+  sexTile: {
     flex: 1,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: 14,
+    gap: 8,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+    elevation: 0,
+  },
+  sexTileSelected: {
     borderWidth: 1.5,
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
   },
-  sexPillSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#FFFBF9',
+  sexLabel: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16,
+    color: Colors.textPrimary,
   },
-  sexPillUnselected: {
-    borderColor: '#E2E8F0',
-  },
-  sexPillPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
-  },
-  sexIcon: {
-    marginRight: 6,
-  },
-  sexText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-  },
-  sexTextSelected: {
-    color: '#1E293B',
-    fontFamily: Fonts.urbanist.semiBold,
-  },
-  sexTextUnselected: {
-    color: '#64748B',
-  },
-  privacyNote: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#94A3B8',
+  preferTile: {
     marginTop: 8,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    elevation: 0,
+  },
+  preferTileSelected: {
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  preferLabel: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 14.5,
+    color: Colors.textSecondary,
+  },
+  selectedText: {
+    color: Colors.primaryDeep,
+  },
+  pressed: {
+    opacity: 0.85,
+  },
+  noteRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  noteText: {
+    flexShrink: 1,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13,
+    color: Colors.textMuted,
   },
   wheelContainer: {
     height: CONTAINER_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
     overflow: 'hidden',
-    position: 'relative',
-    justifyContent: 'center',
+    elevation: 0,
   },
   wheelHighlight: {
     position: 'absolute',
@@ -371,10 +454,9 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: ITEM_HEIGHT,
-    backgroundColor: '#FFF7ED',
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderCurve: 'continuous',
+    backgroundColor: Colors.primaryLight,
   },
   wheelScrollView: {
     flex: 1,
@@ -387,75 +469,102 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  wheelItemText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 18,
+  itemSelected: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 28,
+    color: Colors.primaryDeep,
   },
-  wheelItemTextSelected: {
-    fontSize: 22,
+  itemUnit: {
     fontFamily: Fonts.urbanist.bold,
-    color: '#F47551',
+    fontSize: 14,
+    color: Colors.primaryDeep,
+    marginLeft: 4,
   },
-  wheelItemTextDim: {
-    color: '#94A3B8',
+  itemNear: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 21,
+    color: Colors.textMuted,
   },
-  policyCard: {
+  itemFar: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 18,
+    color: Colors.textLight,
+  },
+  replyRow: {
+    marginTop: 18,
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  avatarSmall: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+  },
+  bubble: {
+    flexShrink: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    marginTop: 6,
+    borderColor: Colors.borderSubtle,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
   },
-  policyCardBlocked: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+  bubbleText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textPrimary,
   },
-  policyCardNotice: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
+  blocked: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.dangerLight,
   },
-  policyIcon: {
-    marginRight: 10,
-    marginTop: 2,
-  },
-  policyText: {
+  blockedText: {
     flex: 1,
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 18,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textPrimary,
   },
-  policyTextBlocked: {
-    color: '#991B1B',
-  },
-  policyTextNotice: {
-    color: '#92400E',
-  },
-  footerContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+  footer: {
     paddingTop: 12,
+    paddingBottom: 16,
   },
   continueButton: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    paddingVertical: 18,
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.textPrimary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    elevation: 0,
   },
   continueButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: Colors.borderInset,
   },
   continueButtonPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.985 }],
   },
-  continueButtonText: {
+  continueText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 17,
+    color: Colors.textInverse,
   },
-  continueButtonTextDisabled: {
-    color: '#94A3B8',
+  continueTextDisabled: {
+    color: Colors.textMuted,
   },
 });
