@@ -1955,12 +1955,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     baseGoals: UserGoals = userGoals
   ): UserGoals => {
     const userAge = data.age && data.age > 0 ? data.age : baseGoals.age || 24;
-    const rawWeight =
-      data.weight && data.weight > 0 ? data.weight : baseGoals.currentWeightKg || 68;
     const weightUnit = data.weightUnit || baseGoals.weightUnit || 'kg';
 
-    // Normalize weight to kilograms
-    const weightKg = weightUnit === 'lbs' ? Math.round((rawWeight / 2.20462) * 10) / 10 : rawWeight;
+    // `data.weight` is always kilograms; weightUnit is only the display preference.
+    const weightKg = data.weight && data.weight > 0 ? data.weight : baseGoals.currentWeightKg || 68;
 
     const gender = data.gender || baseGoals.gender || 'male';
     const rawGoal = data.goal || baseGoals.goal || 'maintain';

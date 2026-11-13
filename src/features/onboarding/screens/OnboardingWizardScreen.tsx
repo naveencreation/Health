@@ -94,6 +94,8 @@ export interface OnboardingWizardScreenProps {
 const AVG_HEIGHT_CM_FEMALE = 162;
 const AVG_HEIGHT_CM_MALE = 176;
 const DEFAULT_HEIGHT_CM = 170;
+// Weight wheel starts at the weight giving this BMI for the chosen height.
+const TYPICAL_BMI = 24;
 
 export const buildReconstructedHistory = (
   targetStep: OnboardingStep,
@@ -145,6 +147,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [goalChosen, setGoalChosen] = useState(false);
   const [aboutChosen, setAboutChosen] = useState(false);
   const [heightChosen, setHeightChosen] = useState(false);
+  const [weightChosen, setWeightChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -206,6 +209,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       ) {
         setAboutChosen(true);
         if (draft.step !== 'height') setHeightChosen(true);
+        if (draft.step !== 'height' && draft.step !== 'weight') setWeightChosen(true);
       }
 
       if (draft.step && draft.step !== 'name' && isMounted) {
@@ -492,16 +496,19 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return (
       <View style={styles.container}>
         <WeightSelectionScreen
-          initialWeightKg={weightKg}
+          initialWeightKg={
+            weightChosen ? weightKg : Math.round(TYPICAL_BMI * (heightCm / 100) ** 2)
+          }
+          initialUnit={weightUnit}
           onBack={popStep}
-          onContinue={(val, unit) => {
-            setWeightKg(val);
-            if (unit) setWeightUnit(unit);
-            if (shouldAskTargetAndPace) {
-              pushStep('target_weight');
-            } else {
-              pushStep('activity');
-            }
+          onContinue={(kg, unit) => {
+            setWeightKg(kg);
+            setWeightUnit(unit);
+            setWeightChosen(true);
+            pushStep(shouldAskTargetAndPace ? 'target_weight' : 'activity', {
+              weightKg: kg,
+              units: { height: heightUnit, weight: unit },
+            });
           }}
           onSkip={onSkip}
           sectionIndex={1}
