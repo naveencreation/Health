@@ -1,96 +1,110 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
-import { TargetWeightScreen } from '../TargetWeightScreen';
+import {
+  TargetWeightScreen,
+  targetRange,
+  healthyRange,
+  riaTargetMessage,
+} from '../TargetWeightScreen';
 
-jest.mock('react-native-reanimated', () => {
-  const ReactNative = require('react-native');
-  return {
-    __esModule: true,
-    default: {
-      View: ReactNative.View,
-      ScrollView: ReactNative.ScrollView,
-    },
-    useSharedValue: (value: number) => ({ value }),
-    useAnimatedStyle: (factory: () => unknown) => factory(),
-    useAnimatedScrollHandler: () => () => {},
-    withTiming: (value: number) => value,
-    FadeIn: { duration: () => ({}) },
-    FadeOut: { duration: () => ({}) },
-  };
-});
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('@/utils/haptics', () => ({ haptics: { selection: jest.fn() } }));
 
-jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
-  MaterialCommunityIcons: 'MaterialCommunityIcons',
-}));
+const press = async (el: unknown) => {
+  await act(async () => {
+    fireEvent.press(el as never);
+  });
+};
 
-jest.mock('@/utils/haptics', () => ({
-  haptics: {
-    selection: jest.fn(),
-  },
-}));
-
-describe('TargetWeightScreen (S7)', () => {
-  it('renders target weight stepper and live timeline feedback card', async () => {
-    const onContinue = jest.fn();
-    const { getByText, getByTestId } = await render(
+describe('TargetWeightScreen', () => {
+  it('renders the drum, delta pill and healthy range for a lose goal', async () => {
+    const { getByTestId, getByText } = await render(
       <TargetWeightScreen
-        currentWeightKg={70}
-        heightCm={175}
+        onContinue={jest.fn()}
+        currentWeightKg={63}
+        heightCm={162}
         goal="lose_weight"
-        onContinue={onContinue}
       />
     );
-
-    expect(getByText('Where would you like to be?')).toBeTruthy();
-    expect(getByTestId('live-feedback-card')).toBeTruthy();
-    expect(getByTestId('decrease-weight-button')).toBeTruthy();
-    expect(getByTestId('increase-weight-button')).toBeTruthy();
+    expect(getByTestId('target-weight-wheel')).toBeTruthy();
+    expect(getByText('5 kg less than today')).toBeTruthy();
+    expect(getByText('Healthy range for your height: 49–65 kg')).toBeTruthy();
+    expect(getByTestId('target-weight-ria-reply')).toBeTruthy();
   });
 
-  it('adjusts target weight and provides safe target to onContinue', async () => {
+  it('continues with the default target in kg', async () => {
     const onContinue = jest.fn();
     const { getByTestId } = await render(
       <TargetWeightScreen
-        currentWeightKg={75}
-        heightCm={175}
-        goal="lose_weight"
         onContinue={onContinue}
+        currentWeightKg={63}
+        heightCm={162}
+        goal="lose_weight"
       />
     );
-
-    await act(async () => {
-      fireEvent.press(getByTestId('decrease-weight-button'));
-    });
-    await act(async () => {
-      fireEvent.press(getByTestId('target-weight-continue-button'));
-    });
-
-    expect(onContinue).toHaveBeenCalledWith(69);
+    await press(getByTestId('target-weight-continue-button'));
+    expect(onContinue).toHaveBeenCalledWith(58);
   });
 
-  it('triggers guardrail warning when target falls below BMI 18.5 limit', async () => {
+  it('shows lb and "more than today" for a gain goal in lbs, and returns kg', async () => {
     const onContinue = jest.fn();
-    // For 175cm, BMI 18.5 is ~56.7 kg -> minSafe is 57 kg
-    const { getByTestId, getByText } = await render(
+    const { getByTestId, getByText, getAllByText } = await render(
       <TargetWeightScreen
-        currentWeightKg={60}
-        heightCm={175}
-        goal="lose_weight"
-        initialTargetWeightKg={50} // Below 57 kg!
         onContinue={onContinue}
+        currentWeightKg={63}
+        heightCm={162}
+        goal="gain_muscle"
+        weightUnit="lbs"
       />
     );
+    expect(getByText(/more than today/)).toBeTruthy();
+    expect(getAllByText(/ lb/).length).toBeGreaterThan(0);
+    await press(getByTestId('target-weight-continue-button'));
+    const kg = onContinue.mock.calls[0][0];
+    // default 63 + 3 kg = 66 kg = 145.5 lb -> 146 lb whole
+    expect(Math.abs(kg - 146 / 2.20462)).toBeLessThan(0.1);
+  });
 
-    expect(getByTestId('guardrail-warning-banner')).toBeTruthy();
-    expect(
-      getByText("That's below a healthy range for your height, so let's aim for 56.7 kg.")
-    ).toBeTruthy();
+  it('shows the lean card and continues with the current weight', async () => {
+    const onContinue = jest.fn();
+    const { getByTestId, queryByTestId } = await render(
+      <TargetWeightScreen
+        onContinue={onContinue}
+        currentWeightKg={48}
+        heightCm={162}
+        goal="lose_weight"
+      />
+    );
+    expect(getByTestId('target-weight-lean-card')).toBeTruthy();
+    expect(queryByTestId('target-weight-wheel')).toBeNull();
+    expect(queryByTestId('target-weight-delta')).toBeNull();
+    await press(getByTestId('target-weight-continue-button'));
+    expect(onContinue).toHaveBeenCalledWith(48);
+  });
+});
 
-    await act(async () => {
-      fireEvent.press(getByTestId('target-weight-continue-button'));
-    });
-    // Clamped safely to 56.7 kg
-    expect(onContinue).toHaveBeenCalledWith(56.7);
+describe('targetRange', () => {
+  it('lose: max is strictly below current, min is the ceiled safe floor', () => {
+    expect(targetRange(63, 162, 'lose_weight', 'kg')).toEqual({ min: 49, max: 62 });
+  });
+  it('returns null when already lean', () => {
+    expect(targetRange(48, 162, 'lose_weight', 'kg')).toBeNull();
+  });
+  it('gain: from just above current to +20 kg', () => {
+    expect(targetRange(63, 162, 'gain_muscle', 'kg')).toEqual({ min: 64, max: 83 });
+  });
+});
+
+describe('healthyRange', () => {
+  it('computes BMI 18.5-24.9 bounds', () => {
+    expect(healthyRange(162, 'kg')).toEqual({ lo: 49, hi: 65 });
+  });
+});
+
+describe('riaTargetMessage', () => {
+  it('categorises gain, realistic loss and big loss', () => {
+    expect(riaTargetMessage('gain_muscle', 63, 66)).toMatch(/Slow and steady/);
+    expect(riaTargetMessage('lose_weight', 100, 90)).toMatch(/realistic/);
+    expect(riaTargetMessage('lose_weight', 100, 89)).toMatch(/big goal/);
   });
 });

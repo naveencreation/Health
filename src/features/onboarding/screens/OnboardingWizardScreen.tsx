@@ -532,7 +532,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           onBack={popStep}
           onContinue={val => {
             setTargetWeightKg(val);
-            pushStep('activity');
+            pushStep('activity', { targetWeightKg: val });
           }}
           onSkip={onSkip}
           sectionIndex={1}
@@ -552,7 +552,10 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           onBack={popStep}
           onContinue={val => {
             setActivityLevel(val);
-            if (shouldAskTargetAndPace) {
+            // Lean case (target >= today): no deficit, so pace is meaningless.
+            const leanTarget =
+              goal === 'lose_weight' && targetWeightKg !== undefined && targetWeightKg >= weightKg;
+            if (shouldAskTargetAndPace && !leanTarget) {
               pushStep('pace');
             } else {
               pushStep('food_style');

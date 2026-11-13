@@ -116,6 +116,14 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   if (agePolicy.forceMaintain && goal === 'lose_weight') {
     goal = 'maintain';
   }
+  // A lose goal at or above today's weight means no deficit.
+  if (
+    goal === 'lose_weight' &&
+    input.targetWeightKg !== undefined &&
+    input.targetWeightKg >= weight
+  ) {
+    goal = 'maintain';
+  }
 
   // 1. Mifflin-St Jeor BMR Formula
   let bmr = 10 * weight + 6.25 * height - 5 * age;

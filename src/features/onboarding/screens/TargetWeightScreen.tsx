@@ -1,31 +1,27 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-  ScrollView,
-  PanResponder,
-} from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
   withTiming,
-  FadeIn,
-  FadeOut,
 } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
-import {
-  minSafeTargetKg,
-  calculateGoalDate,
-  GoalType,
-} from '../services/onboardingCalculator';
+import { WheelPicker } from '../components/WheelPicker';
+import { LBS_PER_KG } from '../services/goalsForm';
+import { GoalType, minSafeTargetKg } from '../services/onboardingCalculator';
+
+const RIA_AVATAR = require('../../../../assets/ria_avatar.webp');
+
+type Unit = 'kg' | 'lbs';
 
 interface TargetWeightScreenProps {
   onBack?: () => void;
@@ -35,14 +31,82 @@ interface TargetWeightScreenProps {
   heightCm: number;
   goal: GoalType;
   initialTargetWeightKg?: number;
-  weightUnit?: 'kg' | 'lbs';
+  weightUnit?: Unit;
   sectionIndex?: number;
   totalSections?: number;
   sectionProgress?: number;
 }
 
-const RULER_STEP_PX = 10; // Drag pixels to change 1 unit
-const VISIBLE_TICKS_COUNT = 33;
+const toUnit = (kg: number, unit: Unit) => (unit === 'kg' ? kg : kg * LBS_PER_KG);
+const toKg = (v: number, unit: Unit) => Math.round((unit === 'kg' ? v : v / LBS_PER_KG) * 10) / 10;
+
+/** Whole-number drum range in the display unit, or null when no lower goal is safe. */
+export const targetRange = (
+  currentKg: number,
+  heightCm: number,
+  goal: GoalType,
+  unit: Unit
+): { min: number; max: number } | null => {
+  if (goal === 'lose_weight') {
+    const min = Math.ceil(toUnit(minSafeTargetKg(heightCm), unit));
+    const max = Math.ceil(toUnit(currentKg, unit)) - 1;
+    return max < min ? null : { min, max };
+  }
+  return {
+    min: Math.floor(toUnit(currentKg, unit)) + 1,
+    max: Math.floor(toUnit(currentKg + 20, unit)),
+  };
+};
+
+/** Whole-number BMI 18.5-24.9 weights in the display unit. */
+export const healthyRange = (heightCm: number, unit: Unit) => {
+  const h = heightCm / 100;
+  return {
+    lo: Math.ceil(toUnit(18.5 * h * h, unit)),
+    hi: Math.floor(toUnit(24.9 * h * h, unit)),
+  };
+};
+
+export const riaTargetMessage = (goal: GoalType, currentKg: number, targetKg: number) => {
+  if (goal === 'gain_muscle') {
+    return 'Slow and steady works best for muscle. I’ll pair this with a protein target.';
+  }
+  return (currentKg - targetKg) / currentKg <= 0.1
+    ? 'A realistic goal. Even 5% can make a real difference to how you feel.'
+    : 'A big goal, and you can get there. We’ll take it a week at a time.';
+};
+
+const RiaBubble: React.FC<{ text: string; testID: string }> = ({ text, testID }) => {
+  const reduceMotion = useReducedMotion();
+  const reply = useSharedValue(reduceMotion ? 1 : 0);
+
+  // Re-runs only when the message changes, so the live region fires once per category.
+  useEffect(() => {
+    if (reduceMotion) {
+      reply.value = 1;
+      return;
+    }
+    reply.value = 0;
+    reply.value = withTiming(1, {
+      duration: MotionDurations.sheet,
+      easing: MotionCurves.decelerate,
+    });
+  }, [text, reduceMotion, reply]);
+
+  const replyStyle = useAnimatedStyle(() => ({
+    opacity: reply.value,
+    transform: [{ translateY: (1 - reply.value) * 8 }],
+  }));
+
+  return (
+    <Animated.View style={[styles.replyRow, replyStyle]}>
+      <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+      <View style={styles.bubble} accessibilityLiveRegion="polite" testID={testID}>
+        <Text style={styles.bubbleText}>{text}</Text>
+      </View>
+    </Animated.View>
+  );
+};
 
 export const TargetWeightScreen: React.FC<TargetWeightScreenProps> = ({
   onBack,
@@ -57,133 +121,34 @@ export const TargetWeightScreen: React.FC<TargetWeightScreenProps> = ({
   totalSections = 4,
   sectionProgress = 0.75,
 }) => {
-  const isLoss = goal === 'lose_weight';
-  const minSafe = useMemo(() => minSafeTargetKg(heightCm), [heightCm]);
+  const unit = weightUnit;
+  const unitLabel = unit === 'kg' ? 'kg' : 'lb';
+  const range = useMemo(
+    () => targetRange(currentWeightKg, heightCm, goal, unit),
+    [currentWeightKg, heightCm, goal, unit]
+  );
+  const minSafe = minSafeTargetKg(heightCm);
+  const currentDisplay = toUnit(currentWeightKg, unit);
 
-  // Sensible default: 5 kg loss or 3 kg gain
-  const defaultTarget = useMemo(() => {
-    if (initialTargetWeightKg) return initialTargetWeightKg;
-    if (isLoss) {
-      const suggested = Math.max(minSafe, currentWeightKg - 5);
-      return Math.round(suggested);
-    } else {
-      return Math.round(currentWeightKg + 3);
-    }
-  }, [initialTargetWeightKg, isLoss, minSafe, currentWeightKg]);
-
-  const [targetKg, setTargetKg] = useState<number>(defaultTarget);
-
-  // Check if target is below safe BMI 18.5 floor for weight loss
-  const isBelowSafeFloor = isLoss && targetKg < minSafe;
-  const effectiveTarget = isBelowSafeFloor ? minSafe : targetKg;
-
-  const diffKg = Math.abs(currentWeightKg - effectiveTarget);
-
-  // Estimate weeks at steady pace: ~0.5 kg/week for loss, 0.25 kg/week for gain
-  const estimatedWeeks = useMemo(() => {
-    if (diffKg === 0) return 0;
-    const weeklyRate = isLoss ? 0.5 : 0.25;
-    return Math.max(1, Math.round(diffKg / weeklyRate));
-  }, [diffKg, isLoss]);
-
-  const goalDateStr = useMemo(() => {
-    return calculateGoalDate(estimatedWeeks);
-  }, [estimatedWeeks]);
-
-  const displayTarget =
-    weightUnit === 'kg' ? targetKg : Math.round(targetKg * 2.20462);
-
-  const displayCurrent =
-    weightUnit === 'kg' ? currentWeightKg : Math.round(currentWeightKg * 2.20462);
-
-  const displayDiff =
-    weightUnit === 'kg' ? diffKg : Math.round(diffKg * 2.20462);
-
-  const adjustWeight = useCallback((deltaKg: number) => {
-    haptics.selection();
-    setTargetKg(prev => {
-      const next = prev + deltaKg;
-      return Math.max(30, Math.min(250, next));
-    });
-  }, []);
-
-  // Sync refs for gesture slider
-  const startTargetRef = useRef<number>(targetKg);
-  const currentTargetRef = useRef<number>(targetKg);
-
-  useEffect(() => {
-    currentTargetRef.current = targetKg;
-  }, [targetKg]);
-
-  const dragAnimX = useSharedValue(0);
-  const dragStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: dragAnimX.value }],
-  }));
-
-  const updateTargetWeight = useCallback((val: number) => {
-    const clamped = Math.max(30, Math.min(250, val));
-    if (clamped !== currentTargetRef.current) {
-      currentTargetRef.current = clamped;
-      haptics.selection();
-      setTargetKg(clamped);
-    }
-  }, []);
-
-  // Horizontal pan responder for ruler
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 3,
-      onPanResponderGrant: () => {
-        startTargetRef.current = currentTargetRef.current;
-        dragAnimX.value = 0;
-      },
-      onPanResponderMove: (_, g) => {
-        const steps = Math.trunc(-g.dx / RULER_STEP_PX);
-        const targetVal = Math.max(30, Math.min(250, startTargetRef.current + steps));
-        if (targetVal !== currentTargetRef.current) {
-          updateTargetWeight(targetVal);
-        }
-        const remainder = g.dx + steps * RULER_STEP_PX;
-        dragAnimX.value = remainder * 0.45;
-      },
-      onPanResponderRelease: (_, g) => {
-        if (g.vx < -0.5) {
-          updateTargetWeight(currentTargetRef.current + 2);
-        } else if (g.vx > 0.5) {
-          updateTargetWeight(currentTargetRef.current - 2);
-        }
-        dragAnimX.value = withTiming(0, { duration: 200 });
-      },
-      onPanResponderTerminate: () => {
-        dragAnimX.value = withTiming(0, { duration: 200 });
-      },
-    })
-  ).current;
-
-  // Web wheel / trackpad support
-  const handleWheel = (e: any) => {
-    if (Platform.OS === 'web') {
-      const deltaX = e.nativeEvent?.deltaX ?? e.deltaX ?? 0;
-      const deltaY = e.nativeEvent?.deltaY ?? e.deltaY ?? 0;
-      const effectiveDelta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
-      if (Math.abs(effectiveDelta) > 8) {
-        const direction = effectiveDelta > 0 ? 1 : -1;
-        updateTargetWeight(currentTargetRef.current + direction);
-      }
-    }
-  };
+  const [value, setValue] = useState<number>(() => {
+    if (!range) return 0;
+    const raw =
+      initialTargetWeightKg !== undefined
+        ? toUnit(initialTargetWeightKg, unit)
+        : goal === 'lose_weight'
+          ? toUnit(Math.max(minSafe, currentWeightKg - 5), unit)
+          : toUnit(currentWeightKg + 3, unit);
+    return Math.min(range.max, Math.max(range.min, Math.round(raw)));
+  });
 
   const handleContinue = () => {
     haptics.selection();
-    onContinue(effectiveTarget);
+    onContinue(range ? toKg(value, unit) : currentWeightKg);
   };
 
-  // Generate ruler ticks around targetKg
-  const halfSpan = Math.floor(VISIBLE_TICKS_COUNT / 2);
-  const ticks = Array.from({ length: VISIBLE_TICKS_COUNT }, (_, i) => {
-    return targetKg - halfSpan + i;
-  });
+  const diff = Math.round(Math.abs(value - currentDisplay));
+  const healthy = healthyRange(heightCm, unit);
+  const message = range ? riaTargetMessage(goal, currentWeightKg, toKg(value, unit)) : '';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -201,216 +166,72 @@ export const TargetWeightScreen: React.FC<TargetWeightScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Title */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.screenTitle}>Where would you like to be?</Text>
-            <Text style={styles.screenSubtitle}>
-              Starting at {displayCurrent} {weightUnit}. We'll adjust your calorie budget to get you there safely.
-            </Text>
-          </View>
+          <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+            What’s your goal weight?
+          </Text>
+          <Text style={styles.subtitle}>
+            {`You’re at ${currentDisplay.toFixed(1)} ${unitLabel} today.`}
+          </Text>
 
-          {/* Goal Instrument Card */}
-          <View style={styles.instrumentCard}>
-            <View style={styles.startingNodeBadge}>
-              <Ionicons name="flag-outline" size={13} color="#64748B" />
-              <Text style={styles.startingNodeText}>
-                STARTING AT {displayCurrent} {weightUnit.toUpperCase()}
-              </Text>
-            </View>
-
-            {/* Hero Value Row with Nudge Controls */}
-            <View style={styles.heroRow}>
-              <Pressable
-                onPress={() => adjustWeight(-1)}
-                style={({ pressed }) => [styles.nudgeButton, pressed && styles.nudgeButtonPressed]}
-                accessibilityRole="button"
-                accessibilityLabel="Decrease target weight by 1"
-                testID="decrease-weight-button"
-              >
-                <Ionicons name="remove" size={20} color="#1E293B" />
-              </Pressable>
-
-              <View style={styles.displayTargetContainer}>
-                <Text style={styles.displayTargetNumber}>{displayTarget}</Text>
-                <Text style={styles.displayTargetUnit}>{weightUnit}</Text>
+          {range ? (
+            <>
+              <View style={styles.wheel}>
+                <WheelPicker
+                  min={range.min}
+                  max={range.max}
+                  value={value}
+                  onChange={setValue}
+                  unit={unitLabel}
+                  accessibilityLabel="Goal weight"
+                  testID="target-weight-wheel"
+                />
               </View>
 
-              <Pressable
-                onPress={() => adjustWeight(1)}
-                style={({ pressed }) => [styles.nudgeButton, pressed && styles.nudgeButtonPressed]}
-                accessibilityRole="button"
-                accessibilityLabel="Increase target weight by 1"
-                testID="increase-weight-button"
-              >
-                <Ionicons name="add" size={20} color="#1E293B" />
-              </Pressable>
-            </View>
+              <View style={styles.pill} testID="target-weight-delta">
+                <Ionicons
+                  name={goal === 'lose_weight' ? 'arrow-down' : 'arrow-up'}
+                  size={13}
+                  color={Colors.primaryDeep}
+                />
+                <Text style={styles.pillText}>
+                  {`${diff} ${unitLabel} ${goal === 'lose_weight' ? 'less' : 'more'} than today`}
+                </Text>
+              </View>
 
-            {/* Delta Tag */}
-            <View style={styles.deltaTag}>
-              <Ionicons
-                name={isLoss ? 'arrow-down' : 'arrow-up'}
-                size={12}
-                color="#F47551"
+              <Text style={styles.hint} testID="target-weight-healthy-range">
+                {`Healthy range for your height: ${healthy.lo}–${healthy.hi} ${unitLabel}`}
+              </Text>
+
+              <RiaBubble text={message} testID="target-weight-ria-reply" />
+            </>
+          ) : (
+            <>
+              <View style={styles.leanCard} testID="target-weight-lean-card">
+                <Text style={styles.leanText}>
+                  {`You’re already at the lowest healthy weight for your height (${Math.round(toUnit(minSafe, unit))} ${unitLabel}), so I won’t set a lower goal.`}
+                </Text>
+              </View>
+              <RiaBubble
+                text={`Let’s keep you at ${Math.round(currentDisplay)} ${unitLabel} and focus on eating well. You can change this later in Goals.`}
+                testID="target-weight-ria-reply"
               />
-              <Text style={styles.deltaTagText}>
-                {isLoss ? 'Lose' : 'Gain'} {displayDiff} {weightUnit}
-              </Text>
-            </View>
-
-            {/* Interactive Horizontal Ruler */}
-            <View
-              style={styles.rulerFrame}
-              {...panResponder.panHandlers}
-              // @ts-ignore Web wheel
-              onWheel={handleWheel}
-            >
-              {/* Stationary Center Coral Needle */}
-              <View style={styles.needleContainer}>
-                <View style={styles.centerNeedle} />
-              </View>
-
-              {/* Slidable Ticks Tape */}
-              <Animated.View style={[styles.ticksTape, dragStyle]}>
-                {ticks.map(tickVal => {
-                  const isMajor = tickVal % 5 === 0;
-                  const isCenter = tickVal === targetKg;
-
-                  return (
-                    <Pressable
-                      key={tickVal}
-                      onPress={() => updateTargetWeight(tickVal)}
-                      style={styles.tickSlot}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Set target weight to ${tickVal}`}
-                    >
-                      <View
-                        style={[
-                          styles.tickLineBase,
-                          isMajor ? styles.tickLineMajor : styles.tickLineMinor,
-                          isCenter ? styles.tickLineCenter : null,
-                        ]}
-                      />
-                      {isMajor ? (
-                        <Text
-                          style={[
-                            styles.tickLabel,
-                            isCenter ? styles.tickLabelCenter : styles.tickLabelDefault,
-                          ]}
-                        >
-                          {tickVal}
-                        </Text>
-                      ) : (
-                        <View style={styles.tickLabelSpacer} />
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </Animated.View>
-
-              {/* Edge Gradient Fades */}
-              <View style={styles.rulerFadeLeft} />
-              <View style={styles.rulerFadeRight} />
-            </View>
-
-            {/* Quick Offset Milestone Chips */}
-            <View style={styles.quickChipsRow}>
-              {isLoss ? (
-                <>
-                  <Pressable
-                    onPress={() => setTargetKg(Math.max(minSafe, currentWeightKg - 3))}
-                    style={({ pressed }) => [
-                      styles.quickChip,
-                      pressed && styles.quickChipPressed,
-                    ]}
-                  >
-                    <Text style={styles.quickChipText}>-3 {weightUnit}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setTargetKg(Math.max(minSafe, currentWeightKg - 5))}
-                    style={({ pressed }) => [
-                      styles.quickChip,
-                      pressed && styles.quickChipPressed,
-                    ]}
-                  >
-                    <Text style={styles.quickChipText}>-5 {weightUnit}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setTargetKg(Math.max(minSafe, currentWeightKg - 10))}
-                    style={({ pressed }) => [
-                      styles.quickChip,
-                      pressed && styles.quickChipPressed,
-                    ]}
-                  >
-                    <Text style={styles.quickChipText}>-10 {weightUnit}</Text>
-                  </Pressable>
-                </>
-              ) : (
-                <>
-                  <Pressable
-                    onPress={() => setTargetKg(currentWeightKg + 2)}
-                    style={({ pressed }) => [
-                      styles.quickChip,
-                      pressed && styles.quickChipPressed,
-                    ]}
-                  >
-                    <Text style={styles.quickChipText}>+2 {weightUnit}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setTargetKg(currentWeightKg + 5)}
-                    style={({ pressed }) => [
-                      styles.quickChip,
-                      pressed && styles.quickChipPressed,
-                    ]}
-                  >
-                    <Text style={styles.quickChipText}>+5 {weightUnit}</Text>
-                  </Pressable>
-                </>
-              )}
-            </View>
-          </View>
-
-          {/* Live Feedback Card */}
-          <View style={styles.feedbackCard} testID="live-feedback-card">
-            <View style={styles.feedbackHeader}>
-              <Ionicons name="trending-up-outline" size={18} color="#F47551" />
-              <Text style={styles.feedbackTitle}>Projected Timeline</Text>
-            </View>
-            <Text style={styles.feedbackBody}>
-              {isLoss ? '-' : '+'}
-              {displayDiff} {weightUnit} · about {estimatedWeeks} {estimatedWeeks === 1 ? 'week' : 'weeks'} at a steady pace · around {goalDateStr}
-            </Text>
-          </View>
-
-          {/* Safety Guardrail Alert Banner */}
-          {isBelowSafeFloor && (
-            <Animated.View
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(150)}
-              style={styles.guardrailBanner}
-              testID="guardrail-warning-banner"
-            >
-              <Ionicons name="heart-outline" size={18} color="#D97706" style={styles.guardrailIcon} />
-              <Text style={styles.guardrailText}>
-                That's below a healthy range for your height, so let's aim for {minSafe} kg.
-              </Text>
-            </Animated.View>
+            </>
           )}
         </ScrollView>
 
-        {/* Footer CTA */}
-        <View style={styles.footerContainer}>
+        <View style={styles.footer}>
           <Pressable
+            onPress={handleContinue}
             style={({ pressed }) => [
               styles.continueButton,
               pressed && styles.continueButtonPressed,
             ]}
-            onPress={handleContinue}
             accessibilityRole="button"
-            accessibilityLabel="Continue to activity level"
+            accessibilityLabel="Continue"
             testID="target-weight-continue-button"
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueText}>Continue</Text>
+            <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
           </Pressable>
         </View>
       </View>
@@ -419,339 +240,115 @@ export const TargetWeightScreen: React.FC<TargetWeightScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FAF9F6',
-  },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 22,
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  titleContainer: {
-    marginBottom: 16,
-  },
-  screenTitle: {
-    fontFamily: Fonts.kurale,
+  scroll: { flex: 1 },
+  scrollContent: { paddingTop: 22, paddingBottom: 20 },
+  question: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 28,
-    lineHeight: 36,
-    color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 8,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+    color: Colors.textPrimary,
   },
-  screenSubtitle: {
+  subtitle: {
+    marginTop: 8,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.textSecondary ?? '#64748B',
+    color: Colors.textSecondary,
   },
-
-  // Target Instrument Card
-  instrumentCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    marginBottom: 14,
-  },
-  startingNodeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    marginBottom: 12,
-  },
-  startingNodeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    color: '#64748B',
-  },
-
-  // Hero Row: [-] 91 kg [+]
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 6,
-  },
-  nudgeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-  },
-  nudgeButtonPressed: {
-    backgroundColor: '#E2E8F0',
-    transform: [{ scale: 0.94 }],
-  },
-  displayTargetContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    minWidth: 130,
-  },
-  displayTargetNumber: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 54,
-    lineHeight: 62,
-    color: '#0F172A',
-    letterSpacing: -1,
-  },
-  displayTargetUnit: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 20,
-    color: '#64748B',
-    marginLeft: 6,
-  },
-
-  // Delta Tag: Lose 4 kg
-  deltaTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    backgroundColor: '#FFF1ED',
-    marginBottom: 16,
-  },
-  deltaTagText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
-    color: '#F47551',
-  },
-
-  // Horizontal Tape-Ruler
-  rulerFrame: {
-    width: '100%',
-    height: 94,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
+  wheel: { marginTop: 18 },
+  pill: {
+    marginTop: 12,
     alignSelf: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 8,
-    marginBottom: 16,
-    ...(Platform.OS === 'web'
-      ? ({
-          cursor: 'grab',
-          userSelect: 'none',
-        } as any)
-      : {}),
-  },
-  needleContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    zIndex: 10,
-    pointerEvents: 'none',
-  },
-  centerNeedle: {
-    width: 3.5,
-    height: 52,
-    backgroundColor: '#F47551',
-    borderRadius: 2,
-  },
-  ticksTape: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    height: 80,
-  },
-  tickSlot: {
-    width: 10,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  tickLineBase: {
-    borderRadius: 1,
-  },
-  tickLineMinor: {
-    backgroundColor: '#CBD5E1',
-    width: 1.5,
-    height: 16,
-    marginTop: 16,
-  },
-  tickLineMajor: {
-    backgroundColor: '#64748B',
-    width: 2,
-    height: 32,
-    marginTop: 8,
-  },
-  tickLineCenter: {
-    opacity: 0,
-  },
-  tickLabel: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 11,
-    lineHeight: 16,
-    textAlign: 'center',
-    marginTop: 6,
-    width: 34,
-  },
-  tickLabelDefault: {
-    color: '#64748B',
-  },
-  tickLabelCenter: {
-    color: '#0F172A',
-    fontFamily: Fonts.urbanist.bold,
-  },
-  tickLabelSpacer: {
-    height: 16,
-    marginTop: 6,
-  },
-  rulerFadeLeft: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 44,
-    zIndex: 5,
-    pointerEvents: 'none',
-    ...(Platform.OS === 'web'
-      ? ({
-          backgroundImage: 'linear-gradient(to right, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
-        } as any)
-      : {}),
-  },
-  rulerFadeRight: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 44,
-    zIndex: 5,
-    pointerEvents: 'none',
-    ...(Platform.OS === 'web'
-      ? ({
-          backgroundImage: 'linear-gradient(to left, #F8FAFC 0%, rgba(248, 250, 252, 0) 100%)',
-        } as any)
-      : {}),
-  },
-
-  // Milestone Quick Chips
-  quickChipsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  quickChip: {
-    paddingHorizontal: 14,
+    gap: 5,
     paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderInset,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: Colors.primaryLight,
   },
-  quickChipPressed: {
-    backgroundColor: Colors.borderInset,
-    transform: [{ scale: 0.985 }],
-  },
-  quickChipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: '#475569',
-  },
-
-  // Live Feedback Card
-  feedbackCard: {
-    backgroundColor: '#FFFBF9',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    marginBottom: 14,
-  },
-  feedbackHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  feedbackTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: '#9A3412',
-    letterSpacing: 0.2,
-  },
-  feedbackBody: {
-    fontFamily: Fonts.urbanist.medium,
+  pillText: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 14,
-    lineHeight: 20,
-    color: '#1E293B',
+    color: Colors.primaryDeep,
   },
-
-  // Guardrail Banner
-  guardrailBanner: {
+  hint: {
+    marginTop: 10,
+    textAlign: 'center',
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 13.5,
+    color: Colors.textMuted,
+  },
+  leanCard: {
+    marginTop: 22,
+    padding: 14,
+    backgroundColor: Colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    elevation: 0,
+  },
+  leanText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+  },
+  replyRow: {
+    marginTop: 18,
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#FFFBEB',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  avatarSmall: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+  },
+  bubble: {
+    flexShrink: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  guardrailIcon: {
-    marginRight: 10,
-    marginTop: 2,
-  },
-  guardrailText: {
-    flex: 1,
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#92400E',
-  },
-
-  // Footer
-  footerContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
-    paddingTop: 12,
-  },
-  continueButton: {
-    backgroundColor: '#1E293B',
+    borderColor: Colors.borderSubtle,
     borderRadius: 16,
-    paddingVertical: 18,
+    borderBottomLeftRadius: 4,
+  },
+  bubbleText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+  },
+  footer: { paddingTop: 12, paddingBottom: 16 },
+  continueButton: {
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.textPrimary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+    gap: 8,
+    elevation: 0,
   },
-  continueButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
-  },
-  continueButtonText: {
+  continueButtonPressed: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  continueText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 17,
+    color: Colors.textInverse,
   },
 });

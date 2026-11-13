@@ -8,6 +8,19 @@ import {
 } from '../onboardingCalculator';
 
 describe('onboardingCalculator (Mifflin-St Jeor & Pace Engine)', () => {
+  it('treats a lose goal with target at or above current weight as maintain', () => {
+    const plan = calculateHealthPlan({
+      age: 28,
+      gender: 'female',
+      heightCm: 162,
+      weightKg: 48,
+      targetWeightKg: 48,
+      goal: 'lose_weight',
+      activityLevel: 'moderately_active',
+    });
+    expect(plan.dailyCalorieBudget).toBe(plan.tdee);
+  });
+
   describe('Pace and Deficit calculations for Weight Loss', () => {
     const baseMaleLoss: UserBiometricsInput = {
       age: 28,
