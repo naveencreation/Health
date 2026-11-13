@@ -4,6 +4,13 @@ export type GoalType = 'lose_weight' | 'maintain' | 'gain_muscle';
 export type Pace = 'gentle' | 'steady' | 'faster';
 export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
 
+export const STEP_GOALS: Record<ActivityLevel, number> = {
+  sedentary: 6000,
+  lightly_active: 8000,
+  moderately_active: 10000,
+  very_active: 12000,
+};
+
 export interface UserBiometricsInput {
   age: number;
   gender: GenderType;
@@ -186,13 +193,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   const targetWaterMl = Math.max(2000, Math.round(rawWaterMl / 100) * 100);
 
   // 6. Step Goal
-  const stepGoals: Record<ActivityLevel, number> = {
-    sedentary: 6000,
-    lightly_active: 8000,
-    moderately_active: 10000,
-    very_active: 12000,
-  };
-  const stepGoal = stepGoals[activity] || 10000;
+  const stepGoal = STEP_GOALS[activity] || 10000;
 
   // 7. Estimated Weeks to Goal & Goal Date
   let estimatedWeeksToGoal: number | undefined;

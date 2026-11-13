@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
-import { ActivityLevel } from '../services/onboardingCalculator';
+import { ActivityLevel, STEP_GOALS } from '../services/onboardingCalculator';
+
+const RIA_AVATAR = require('../../../../assets/ria_avatar.webp');
 
 interface ActivityLevelScreenProps {
   onBack?: () => void;
@@ -29,62 +32,86 @@ interface ActivityLevelScreenProps {
 interface ActivityOption {
   id: ActivityLevel;
   title: string;
-  description: string;
-  stepGoal: number;
-  icon: string;
+  subtitle: string;
+  iconName: keyof typeof Ionicons.glyphMap;
 }
 
 const ACTIVITY_OPTIONS: ActivityOption[] = [
   {
     id: 'sedentary',
     title: 'Mostly sitting',
-    description: 'Desk job, little intentional exercise',
-    stepGoal: 6000,
-    icon: 'desktop-outline',
+    subtitle: 'Desk job, little exercise',
+    iconName: 'desktop-outline',
   },
   {
     id: 'lightly_active',
-    title: 'Light',
-    description: 'Casual walks or 1 to 3 workouts a week',
-    stepGoal: 8000,
-    icon: 'walk-outline',
+    title: 'Lightly active',
+    subtitle: 'Walks, 1–3 workouts a week',
+    iconName: 'walk-outline',
   },
   {
     id: 'moderately_active',
-    title: 'Moderate',
-    description: '3 to 5 workouts, or on your feet most of the day',
-    stepGoal: 10000,
-    icon: 'fitness-outline',
+    title: 'Moderately active',
+    subtitle: '3–5 workouts a week',
+    iconName: 'pulse-outline',
   },
   {
     id: 'very_active',
     title: 'Very active',
-    description: 'Daily intense training or a physical job',
-    stepGoal: 12500,
-    icon: 'bicycle-outline',
+    subtitle: 'Daily training, manual job',
+    iconName: 'bicycle-outline',
   },
 ];
+
+const REPLY_LEAD: Record<ActivityLevel, string> = {
+  sedentary: 'No judgement, most desk jobs look like this.',
+  lightly_active: 'A good base to build on.',
+  moderately_active: 'Solid routine.',
+  very_active: 'I’ll make sure you eat enough to fuel that.',
+};
+
+export const activityReply = (level: ActivityLevel): string =>
+  `${REPLY_LEAD[level]} Your step goal starts at ${STEP_GOALS[level].toLocaleString('en-US')}.`;
 
 export const ActivityLevelScreen: React.FC<ActivityLevelScreenProps> = ({
   onBack,
   onContinue,
   onSkip,
-  initialActivityLevel = 'moderately_active',
+  initialActivityLevel,
   sectionIndex = 1,
   totalSections = 4,
   sectionProgress = 1.0,
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState<ActivityLevel>(initialActivityLevel);
+  const [selectedLevel, setSelectedLevel] = useState<ActivityLevel | null>(
+    initialActivityLevel ?? null
+  );
+  const reduceMotion = useReducedMotion();
+  const reply = useSharedValue(initialActivityLevel ? 1 : 0);
 
-  const selectedOption =
-    ACTIVITY_OPTIONS.find(o => o.id === selectedLevel) ?? ACTIVITY_OPTIONS[2];
+  const replyStyle = useAnimatedStyle(() => ({
+    opacity: reply.value,
+    transform: [{ translateY: (1 - reply.value) * 8 }],
+  }));
 
-  const handleSelect = (id: ActivityLevel) => {
+  const handleSelectOption = (option: ActivityOption) => {
     haptics.selection();
-    setSelectedLevel(id);
+    if (option.id === selectedLevel) return;
+    setSelectedLevel(option.id);
+    if (reduceMotion) {
+      reply.set(1);
+      return;
+    }
+    reply.set(0);
+    reply.set(
+      withTiming(1, {
+        duration: MotionDurations.sheet,
+        easing: MotionCurves.decelerate,
+      })
+    );
   };
 
   const handleContinue = () => {
+    if (!selectedLevel) return;
     haptics.selection();
     onContinue(selectedLevel);
   };
@@ -105,93 +132,91 @@ export const ActivityLevelScreen: React.FC<ActivityLevelScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.titleContainer}>
-            <Text style={styles.screenTitle}>How active is a normal week?</Text>
-            <Text style={styles.screenSubtitle}>
-              Calibrates your daily calorie expenditure and base step target.
-            </Text>
-          </View>
+          <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+            How active is a normal week?
+          </Text>
+          <Text style={styles.subtitle}>
+            Count your job and workouts together. Pick the closest.
+          </Text>
 
-          <View style={styles.cardsContainer}>
+          <View style={styles.list} accessibilityRole="radiogroup">
             {ACTIVITY_OPTIONS.map(option => {
-              const isSelected = selectedLevel === option.id;
-
+              const selected = selectedLevel === option.id;
               return (
                 <Pressable
                   key={option.id}
-                  onPress={() => handleSelect(option.id)}
+                  onPress={() => handleSelectOption(option)}
                   style={({ pressed }) => [
                     styles.card,
-                    isSelected ? styles.cardSelected : styles.cardUnselected,
+                    selected && styles.cardSelected,
                     pressed && styles.cardPressed,
                   ]}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={`${option.title}: ${option.description}`}
+                  accessibilityState={{ selected, checked: selected }}
+                  accessibilityLabel={`${option.title}, ${option.subtitle}`}
                   testID={`activity-card-${option.id}`}
                 >
-                  <View style={[styles.iconWrap, isSelected && styles.iconWrapSelected]}>
+                  <View style={[styles.iconTile, selected && styles.iconTileSelected]}>
                     <Ionicons
-                      name={option.icon as any}
-                      size={20}
-                      color={isSelected ? '#F47551' : '#64748B'}
+                      name={option.iconName}
+                      size={22}
+                      color={selected ? Colors.primaryDeep : Colors.textPrimary}
                     />
                   </View>
 
-                  <View style={styles.cardContent}>
-                    <Text
-                      style={[
-                        styles.cardTitle,
-                        isSelected ? styles.cardTitleSelected : styles.cardTitleUnselected,
-                      ]}
-                    >
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
                       {option.title}
                     </Text>
-                    <Text style={styles.cardSubtitle}>{option.description}</Text>
+                    <Text style={styles.cardSubtitle} maxFontSizeMultiplier={1.3}>
+                      {option.subtitle}
+                    </Text>
                   </View>
 
-                  <View
-                    style={[
-                      styles.radioCircle,
-                      isSelected ? styles.radioSelected : styles.radioUnselected,
-                    ]}
-                  >
-                    {isSelected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                  <View style={[styles.radio, selected && styles.radioSelected]}>
+                    {selected ? (
+                      <Ionicons name="checkmark" size={14} color={Colors.textInverse} />
+                    ) : null}
                   </View>
                 </Pressable>
               );
             })}
           </View>
 
-          {/* Dynamic Step Goal Chip */}
-          <Animated.View
-            key={selectedOption.id}
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-            style={styles.stepChipContainer}
-            testID="activity-step-chip"
-          >
-            <View style={styles.stepChip}>
-              <Ionicons name="footsteps" size={16} color="#16A34A" style={styles.stepChipIcon} />
-              <Text style={styles.stepChipText}>
-                Daily step goal: <Text style={styles.stepChipBold}>{selectedOption.stepGoal.toLocaleString()} steps</Text>
-              </Text>
-            </View>
-          </Animated.View>
+          {selectedLevel ? (
+            <Animated.View style={[styles.replyRow, replyStyle]}>
+              <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+              <View
+                style={styles.bubble}
+                accessibilityLiveRegion="polite"
+                testID="activity-ria-reply"
+              >
+                <Text style={styles.bubbleText}>{activityReply(selectedLevel)}</Text>
+              </View>
+            </Animated.View>
+          ) : null}
         </ScrollView>
 
-        <View style={styles.footerContainer}>
+        <View style={styles.footer}>
           <Pressable
+            onPress={handleContinue}
+            disabled={!selectedLevel}
             style={({ pressed }) => [
               styles.continueButton,
+              !selectedLevel && styles.continueButtonDisabled,
               pressed && styles.continueButtonPressed,
             ]}
-            onPress={handleContinue}
             accessibilityRole="button"
-            accessibilityLabel="Continue to pace selection"
+            accessibilityLabel="Continue"
+            accessibilityState={{ disabled: !selectedLevel }}
             testID="activity-continue-button"
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={[styles.continueText, !selectedLevel && styles.continueTextDisabled]}>
+              Continue
+            </Text>
+            {selectedLevel ? (
+              <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
+            ) : null}
           </Pressable>
         </View>
       </View>
@@ -202,157 +227,159 @@ export const ActivityLevelScreen: React.FC<ActivityLevelScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 22,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 22,
     paddingBottom: 20,
   },
-  titleContainer: {
-    marginBottom: 20,
-  },
-  screenTitle: {
-    fontFamily: Fonts.kurale,
+  question: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 28,
-    lineHeight: 36,
-    color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 8,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+    color: Colors.textPrimary,
   },
-  screenSubtitle: {
+  subtitle: {
+    marginTop: 8,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.textSecondary ?? '#64748B',
+    color: Colors.textSecondary,
   },
-  cardsContainer: {
-    gap: 12,
+  list: {
+    marginTop: 22,
+    gap: 10,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    gap: 14,
+    minHeight: 72,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
     borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
-    backgroundColor: '#FFFFFF',
-    shadowOpacity: 0,
     elevation: 0,
   },
   cardSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#FFFBF9',
-  },
-  cardUnselected: {
-    borderColor: '#E2E8F0',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    paddingVertical: 12.5,
+    paddingHorizontal: 13.5,
   },
   cardPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    opacity: 0.95,
   },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+  iconTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    backgroundColor: Colors.borderLight,
   },
-  iconWrapSelected: {
-    backgroundColor: '#FEE2E2',
+  iconTileSelected: {
+    backgroundColor: Colors.primaryLight,
   },
-  cardContent: {
+  cardText: {
     flex: 1,
-    marginRight: 10,
   },
   cardTitle: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  cardTitleSelected: {
-    color: '#1E293B',
-  },
-  cardTitleUnselected: {
-    color: '#334155',
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 16.5,
+    color: Colors.textPrimary,
   },
   cardSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
+    marginTop: 2,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13.5,
+    color: Colors.textMuted,
   },
-  radioCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
+    borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  radioUnselected: {
-    borderColor: '#CBD5E1',
-    backgroundColor: 'transparent',
-  },
-  stepChipContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  stepChip: {
+  replyRow: {
+    marginTop: 18,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  avatarSmall: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+  },
+  bubble: {
+    flexShrink: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: Colors.borderSubtle,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
   },
-  stepChipIcon: {
-    marginRight: 8,
+  bubbleText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textPrimary,
   },
-  stepChipText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: '#166534',
-  },
-  stepChipBold: {
-    fontFamily: Fonts.urbanist.bold,
-    color: '#15803D',
-  },
-  footerContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+  footer: {
     paddingTop: 12,
+    paddingBottom: 16,
   },
   continueButton: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    paddingVertical: 18,
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.textPrimary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    elevation: 0,
+  },
+  continueButtonDisabled: {
+    backgroundColor: Colors.borderInset,
   },
   continueButtonPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.985 }],
   },
-  continueButtonText: {
+  continueText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 17,
+    color: Colors.textInverse,
+  },
+  continueTextDisabled: {
+    color: Colors.textMuted,
   },
 });

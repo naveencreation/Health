@@ -148,6 +148,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [aboutChosen, setAboutChosen] = useState(false);
   const [heightChosen, setHeightChosen] = useState(false);
   const [weightChosen, setWeightChosen] = useState(false);
+  const [activityChosen, setActivityChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -210,6 +211,14 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         setAboutChosen(true);
         if (draft.step !== 'height') setHeightChosen(true);
         if (draft.step !== 'height' && draft.step !== 'weight') setWeightChosen(true);
+        if (
+          draft.step !== 'height' &&
+          draft.step !== 'weight' &&
+          draft.step !== 'target_weight' &&
+          draft.step !== 'activity'
+        ) {
+          setActivityChosen(true);
+        }
       }
 
       if (draft.step && draft.step !== 'name' && isMounted) {
@@ -548,17 +557,18 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return (
       <View style={styles.container}>
         <ActivityLevelScreen
-          initialActivityLevel={activityLevel}
+          initialActivityLevel={activityChosen ? activityLevel : undefined}
           onBack={popStep}
           onContinue={val => {
             setActivityLevel(val);
+            setActivityChosen(true);
             // Lean case (target >= today): no deficit, so pace is meaningless.
             const leanTarget =
               goal === 'lose_weight' && targetWeightKg !== undefined && targetWeightKg >= weightKg;
             if (shouldAskTargetAndPace && !leanTarget) {
-              pushStep('pace');
+              pushStep('pace', { activityLevel: val });
             } else {
-              pushStep('food_style');
+              pushStep('food_style', { activityLevel: val });
             }
           }}
           onSkip={onSkip}

@@ -1,23 +1,7 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
-import { ActivityLevelScreen } from '../ActivityLevelScreen';
-
-jest.mock('react-native-reanimated', () => {
-  const ReactNative = require('react-native');
-  return {
-    __esModule: true,
-    default: {
-      View: ReactNative.View,
-      ScrollView: ReactNative.ScrollView,
-    },
-    useSharedValue: (value: number) => ({ value }),
-    useAnimatedStyle: (factory: () => unknown) => factory(),
-    useAnimatedScrollHandler: () => () => {},
-    withTiming: (value: number) => value,
-    FadeIn: { duration: () => ({}) },
-    FadeOut: { duration: () => ({}) },
-  };
-});
+import { ActivityLevelScreen, activityReply } from '../ActivityLevelScreen';
+import { STEP_GOALS, ActivityLevel } from '../../services/onboardingCalculator';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
@@ -31,34 +15,54 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 describe('ActivityLevelScreen (S8)', () => {
-  it('renders all 4 activity options and initial step chip', async () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('starts with nothing selected and Continue disabled', async () => {
     const onContinue = jest.fn();
-    const { getByText, getByTestId } = await render(
+    const { getByTestId, queryByTestId, getByText } = await render(
       <ActivityLevelScreen onContinue={onContinue} />
     );
 
     expect(getByText('How active is a normal week?')).toBeTruthy();
-    expect(getByTestId('activity-card-sedentary')).toBeTruthy();
-    expect(getByTestId('activity-card-lightly_active')).toBeTruthy();
-    expect(getByTestId('activity-card-moderately_active')).toBeTruthy();
-    expect(getByTestId('activity-card-very_active')).toBeTruthy();
-    expect(getByTestId('activity-step-chip')).toBeTruthy();
+    expect(queryByTestId('activity-ria-reply')).toBeNull();
+    expect(getByTestId('activity-continue-button').props.accessibilityState.disabled).toBe(true);
+    await act(async () => {
+      fireEvent.press(getByTestId('activity-continue-button'));
+    });
+    expect(onContinue).not.toHaveBeenCalled();
   });
 
-  it('changes activity selection, updates step chip, and calls onContinue', async () => {
+  it('shows the Ria reply for a pick and continues with it', async () => {
     const onContinue = jest.fn();
-    const { getByTestId, getByText } = await render(
-      <ActivityLevelScreen onContinue={onContinue} />
-    );
+    const { getByTestId } = await render(<ActivityLevelScreen onContinue={onContinue} />);
 
     await act(async () => {
-      fireEvent.press(getByTestId('activity-card-lightly_active'));
+      fireEvent.press(getByTestId('activity-card-very_active'));
     });
-    expect(getByText('8,000 steps')).toBeTruthy();
+    expect(getByTestId('activity-ria-reply')).toHaveTextContent(/12,000/);
 
     await act(async () => {
       fireEvent.press(getByTestId('activity-continue-button'));
     });
-    expect(onContinue).toHaveBeenCalledWith('lightly_active');
+    expect(onContinue).toHaveBeenCalledWith('very_active');
+  });
+
+  it('restores initialActivityLevel', async () => {
+    const { getByTestId } = await render(
+      <ActivityLevelScreen onContinue={jest.fn()} initialActivityLevel="lightly_active" />
+    );
+
+    expect(getByTestId('activity-card-lightly_active').props.accessibilityState.selected).toBe(
+      true
+    );
+    expect(getByTestId('activity-continue-button').props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('activityReply quotes the STEP_GOALS number for each level', () => {
+    (Object.keys(STEP_GOALS) as ActivityLevel[]).forEach(level => {
+      expect(activityReply(level)).toContain(STEP_GOALS[level].toLocaleString('en-US'));
+    });
   });
 });
