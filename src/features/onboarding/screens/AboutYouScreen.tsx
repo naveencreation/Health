@@ -1,14 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  AccessibilityActionEvent,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +15,7 @@ import { ControlHeights, ControlRadii } from '@/theme/controls';
 import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
+import { WheelPicker } from '../components/WheelPicker';
 import { Sex, evaluateAgePolicy } from '../services/onboardingCalculator';
 
 const RIA_AVATAR = require('../../../../assets/ria_avatar.webp');
@@ -41,11 +33,6 @@ interface AboutYouScreenProps {
 
 const MIN_AGE = 10;
 const MAX_AGE = 99;
-const ITEM_HEIGHT = 40;
-const VISIBLE_ITEMS = 5;
-const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 200px
-const AGES = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
-const SNAP_OFFSETS = AGES.map((_, i) => i * ITEM_HEIGHT);
 
 const GENDER_OPTIONS: { id: Sex; label: string; iconName: keyof typeof Ionicons.glyphMap }[] = [
   { id: 'female', label: 'Female', iconName: 'female' },
@@ -64,11 +51,7 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
 }) => {
   const [selectedSex, setSelectedSex] = useState<Sex | null>(initialSex ?? null);
   const [selectedAge, setSelectedAge] = useState<number>(initialAge);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const isLayoutReadyRef = useRef(false);
   const reduceMotion = useReducedMotion();
-
-  const initialOffset = Math.max(0, (initialAge - MIN_AGE) * ITEM_HEIGHT);
 
   const agePolicy = evaluateAgePolicy(selectedAge);
   const showTeenReply = agePolicy.allowed && agePolicy.forceMaintain;
@@ -90,36 +73,6 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
       easing: MotionCurves.decelerate,
     });
   }, [showTeenReply, reduceMotion, teenReply]);
-
-  const handleLayout = useCallback(() => {
-    if (!isLayoutReadyRef.current) {
-      isLayoutReadyRef.current = true;
-      scrollViewRef.current?.scrollTo({ y: initialOffset, animated: false });
-    }
-  }, [initialOffset]);
-
-  const handleMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = e.nativeEvent.contentOffset.y;
-    const index = Math.round(y / ITEM_HEIGHT);
-    const clampedIndex = Math.max(0, Math.min(AGES.length - 1, index));
-    const age = AGES[clampedIndex];
-    if (age !== undefined && age !== selectedAge) {
-      haptics.selection();
-      setSelectedAge(age);
-    }
-  };
-
-  const handleSelectAge = (age: number) => {
-    haptics.selection();
-    setSelectedAge(age);
-    scrollViewRef.current?.scrollTo({ y: (age - MIN_AGE) * ITEM_HEIGHT, animated: true });
-  };
-
-  const handleWheelAction = (e: AccessibilityActionEvent) => {
-    const delta = e.nativeEvent.actionName === 'increment' ? 1 : -1;
-    const next = Math.max(MIN_AGE, Math.min(MAX_AGE, selectedAge + delta));
-    if (next !== selectedAge) handleSelectAge(next);
-  };
 
   const canContinue = selectedSex !== null && agePolicy.allowed;
 
@@ -151,7 +104,6 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          onLayout={handleLayout}
         >
           <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
             A little about you
@@ -229,52 +181,15 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
           </View>
 
           <Text style={styles.sectionLabel}>Age</Text>
-          <View
-            style={styles.wheelContainer}
-            accessible
-            accessibilityRole="adjustable"
+          <WheelPicker
+            min={MIN_AGE}
+            max={MAX_AGE}
+            value={selectedAge}
+            onChange={setSelectedAge}
+            unit="yrs"
             accessibilityLabel="Age"
-            accessibilityValue={{ text: `${selectedAge} years` }}
-            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-            onAccessibilityAction={handleWheelAction}
-            testID="age-scroll-wheel-container"
-          >
-            <View style={styles.wheelHighlight} />
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.wheelScrollView}
-              contentContainerStyle={styles.wheelContent}
-              showsVerticalScrollIndicator={false}
-              snapToOffsets={SNAP_OFFSETS}
-              snapToAlignment="center"
-              decelerationRate="fast"
-              onMomentumScrollEnd={handleMomentumScrollEnd}
-              testID="age-scroll-wheel"
-            >
-              {AGES.map(age => {
-                const isSelected = age === selectedAge;
-                const isNear = Math.abs(age - selectedAge) === 1;
-                return (
-                  <Pressable
-                    key={age}
-                    onPress={() => handleSelectAge(age)}
-                    style={styles.wheelItem}
-                    accessible={false}
-                    testID={`age-item-${age}`}
-                  >
-                    <Text
-                      style={
-                        isSelected ? styles.itemSelected : isNear ? styles.itemNear : styles.itemFar
-                      }
-                    >
-                      {age}
-                      {isSelected ? <Text style={styles.itemUnit}> yrs</Text> : null}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
+            testID="age-scroll-wheel"
+          />
 
           {showTeenReply ? (
             <Animated.View
@@ -437,58 +352,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.semiBold,
     fontSize: 13,
     color: Colors.textMuted,
-  },
-  wheelContainer: {
-    height: CONTAINER_HEIGHT,
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    overflow: 'hidden',
-    elevation: 0,
-  },
-  wheelHighlight: {
-    position: 'absolute',
-    top: ITEM_HEIGHT * 2,
-    left: 12,
-    right: 12,
-    height: ITEM_HEIGHT,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    backgroundColor: Colors.primaryLight,
-  },
-  wheelScrollView: {
-    flex: 1,
-  },
-  wheelContent: {
-    paddingVertical: ITEM_HEIGHT * 2,
-  },
-  wheelItem: {
-    height: ITEM_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemSelected: {
-    fontFamily: Fonts.urbanist.extraBold,
-    fontSize: 28,
-    color: Colors.primaryDeep,
-  },
-  itemUnit: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 14,
-    color: Colors.primaryDeep,
-    marginLeft: 4,
-  },
-  itemNear: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 21,
-    color: Colors.textMuted,
-  },
-  itemFar: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 18,
-    color: Colors.textLight,
   },
   replyRow: {
     marginTop: 18,

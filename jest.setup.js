@@ -10,16 +10,21 @@ jest.mock('react-native-reanimated', () => {
       Text: ReactNative.Text,
       ScrollView: ReactNative.ScrollView,
     },
-    useSharedValue: (value) => ({ value }),
+    useSharedValue: value => ({ value }),
     useReducedMotion: () => false,
-    useAnimatedStyle: (factory) => (typeof factory === 'function' ? factory() : {}),
-    withTiming: (value) => value,
-    withSpring: (value) => value,
-    withRepeat: (value) => value,
+    useAnimatedStyle: factory => (typeof factory === 'function' ? factory() : {}),
+    withTiming: value => value,
+    withSpring: value => value,
+    withRepeat: value => value,
     withSequence: (...values) => values[0],
     withDelay: (_delay, value) => value,
     cancelAnimation: () => {},
-    runOnJS: (fn) => fn,
+    runOnJS: fn => fn,
+    useAnimatedScrollHandler: () => () => {},
+    useAnimatedReaction: () => {},
+    useAnimatedRef: () => ({ current: null }),
+    interpolateColor: (_value, _input, output) => output?.[0],
+    Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     interpolate: (_value, _input, output) => output?.[0] ?? 0,
     Extrapolate: { CLAMP: 'clamp' },
     FadeIn: { duration: () => ({ delay: () => ({}) }) },
@@ -29,17 +34,22 @@ jest.mock('react-native-reanimated', () => {
     SlideInRight: { duration: () => ({}) },
     SlideOutRight: { duration: () => ({}) },
     Easing: {
-      out: (fn) => (t) => (typeof fn === 'function' ? 1 - fn(1 - t) : t),
-      inOut: (fn) => (t) =>
+      out: fn => t => (typeof fn === 'function' ? 1 - fn(1 - t) : t),
+      inOut: fn => t =>
         typeof fn === 'function' ? (t < 0.5 ? fn(t * 2) / 2 : 1 - fn((1 - t) * 2) / 2) : t,
-      in: (fn) => (t) => (typeof fn === 'function' ? fn(t) : t),
-      cubic: (t) => t * t * t,
-      quad: (t) => t * t,
-      linear: (t) => t,
-      bezier: () => ({ factory: () => (t) => t }),
+      in: fn => t => (typeof fn === 'function' ? fn(t) : t),
+      cubic: t => t * t * t,
+      quad: t => t * t,
+      linear: t => t,
+      bezier: () => ({ factory: () => t => t }),
     },
   };
 });
+
+// eslint-disable-next-line no-undef -- jest global; this file predates a jest env in the lint config
+jest.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn, ...args) => fn(...args),
+}));
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -63,5 +73,3 @@ jest.mock('@/services/firebase', () => ({
   auth: { currentUser: { uid: 'test_user_123' } },
   db: {},
 }));
-
-
