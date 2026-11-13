@@ -405,7 +405,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           onBack={popStep}
           onContinue={chosenStruggles => {
             setStruggles(chosenStruggles);
-            pushStep('about_you');
+            pushStep('about_you', { struggles: chosenStruggles });
           }}
           onSkip={onSkip}
           sectionIndex={0}
