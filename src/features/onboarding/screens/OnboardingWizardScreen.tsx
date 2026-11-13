@@ -35,6 +35,7 @@ import {
   Struggle,
   FoodStyle,
   PendingMeal,
+  OnboardingDraft,
 } from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 import { NotificationService, NotificationStorage } from '@/services/notifications';
@@ -136,6 +137,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [name, setName] = useState<string>(initialBiometrics?.name ?? '');
   const [goal, setGoal] = useState<GoalType>(initialBiometrics?.goal ?? 'lose_weight');
   const [goalIntent, setGoalIntent] = useState<GoalIntent>('lose');
+  const [goalChosen, setGoalChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -186,6 +188,9 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       if (typeof draft.snacks === 'boolean') setSnacks(draft.snacks);
       if (draft.firstMeal) setFirstMeal(draft.firstMeal);
 
+      // A draft at name/goal means nothing was picked yet; goalIntent there is just the default.
+      if (draft.step && draft.step !== 'name' && draft.step !== 'goal') setGoalChosen(true);
+
       if (draft.step && draft.step !== 'name' && isMounted) {
         const reconstructed = buildReconstructedHistory(
           draft.step as OnboardingStep,
@@ -202,7 +207,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   }, []);
 
   const pushStep = useCallback(
-    (next: OnboardingStep) => {
+    (next: OnboardingStep, overrides?: Partial<OnboardingDraft>) => {
       setStepHistory(prev => [...prev, next]);
       saveOnboardingDraft({
         step: next,
@@ -223,6 +228,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         skipsBreakfast,
         snacks,
         firstMeal,
+        ...overrides,
       });
     },
     [
@@ -373,13 +379,13 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       <View style={styles.container}>
         <GoalSelectionScreen
           name={name}
-          initialGoal={goal}
-          initialIntent={goalIntent}
+          initialIntent={goalChosen ? goalIntent : undefined}
           onBack={popStep}
           onContinue={(chosenGoal, chosenIntent) => {
             setGoal(chosenGoal);
             setGoalIntent(chosenIntent);
-            pushStep('struggles');
+            setGoalChosen(true);
+            pushStep('struggles', { goal: chosenGoal, goalIntent: chosenIntent });
           }}
           onSkip={onSkip}
           sectionIndex={0}

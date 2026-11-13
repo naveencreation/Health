@@ -1,23 +1,6 @@
 import React from 'react';
-import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { GoalSelectionScreen } from '../GoalSelectionScreen';
-
-jest.mock('react-native-reanimated', () => {
-  const ReactNative = require('react-native');
-  return {
-    __esModule: true,
-    default: {
-      View: ReactNative.View,
-      ScrollView: ReactNative.ScrollView,
-    },
-    useSharedValue: (value: number) => ({ value }),
-    useAnimatedStyle: (factory: () => unknown) => factory(),
-    useAnimatedScrollHandler: () => () => {},
-    withTiming: (value: number) => value,
-    FadeIn: { duration: () => ({}) },
-    FadeOut: { duration: () => ({}) },
-  };
-});
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
@@ -30,24 +13,40 @@ jest.mock('@/utils/haptics', () => ({
   },
 }));
 
+const LOSE_REPLY = "Good call. I'll set a gentle calorie budget you can actually stick to.";
+
 describe('GoalSelectionScreen (S3)', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   it('renders personalized title with user name and all 4 goal options', async () => {
-    const { getByText, getByTestId } = await render(
-      <GoalSelectionScreen name="Aarav" />
-    );
+    const { getByText, getByTestId } = await render(<GoalSelectionScreen name="Aarav" />);
 
-    expect(getByText('What brings you here, Aarav?')).toBeTruthy();
+    expect(getByText('Aarav')).toBeTruthy();
+    expect(getByText(/What brings you here,/)).toBeTruthy();
     expect(getByTestId('goal-card-lose')).toBeTruthy();
     expect(getByTestId('goal-card-maintain')).toBeTruthy();
     expect(getByTestId('goal-card-build')).toBeTruthy();
     expect(getByTestId('goal-card-understand')).toBeTruthy();
   });
 
-  it('shows reassurance banner on selection and advances when Continue is pressed', async () => {
+  it('starts with nothing selected and Continue disabled', async () => {
+    const onContinue = jest.fn();
+    const { getByTestId, queryByTestId } = await render(
+      <GoalSelectionScreen onContinue={onContinue} />
+    );
+
+    expect(getByTestId('goal-continue-button').props.accessibilityState.disabled).toBe(true);
+    await act(async () => {
+      fireEvent.press(getByTestId('goal-continue-button'));
+    });
+
+    expect(onContinue).not.toHaveBeenCalled();
+    expect(queryByTestId('goal-ria-reply')).toBeNull();
+  });
+
+  it('shows Ria reply on selection and advances when Continue is pressed', async () => {
     const onContinue = jest.fn();
     const { getByTestId, getByText } = await render(
       <GoalSelectionScreen name="Aarav" onContinue={onContinue} />
@@ -57,9 +56,7 @@ describe('GoalSelectionScreen (S3)', () => {
       fireEvent.press(getByTestId('goal-card-lose'));
     });
 
-    expect(
-      getByText("We'll set a gentle calorie budget you can actually stick to.")
-    ).toBeTruthy();
+    expect(getByText(LOSE_REPLY)).toBeTruthy();
 
     await act(async () => {
       fireEvent.press(getByTestId('goal-continue-button'));
@@ -68,11 +65,13 @@ describe('GoalSelectionScreen (S3)', () => {
     expect(onContinue).toHaveBeenCalledWith('lose_weight', 'lose');
   });
 
-  it('supports selecting "Just understand what I eat" and manual Continue', async () => {
+  it('supports selecting "Understand what I eat" and manual Continue', async () => {
     const onContinue = jest.fn();
-    const { getByTestId } = await render(
+    const { getByTestId, getByText } = await render(
       <GoalSelectionScreen onContinue={onContinue} />
     );
+
+    expect(getByText('Understand what I eat')).toBeTruthy();
 
     await act(async () => {
       fireEvent.press(getByTestId('goal-card-understand'));
@@ -83,5 +82,21 @@ describe('GoalSelectionScreen (S3)', () => {
     });
 
     expect(onContinue).toHaveBeenCalledWith('maintain', 'understand');
+  });
+
+  it('restores selection from initialIntent', async () => {
+    const onContinue = jest.fn();
+    const { getByTestId } = await render(
+      <GoalSelectionScreen initialIntent="build" onContinue={onContinue} />
+    );
+
+    expect(getByTestId('goal-continue-button').props.accessibilityState.disabled).toBe(false);
+    expect(getByTestId('goal-ria-reply')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(getByTestId('goal-continue-button'));
+    });
+
+    expect(onContinue).toHaveBeenCalledWith('gain_muscle', 'build');
   });
 });

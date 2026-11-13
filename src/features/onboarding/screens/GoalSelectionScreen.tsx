@@ -1,15 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, View, Text, Pressable, Platform, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { IconSizes } from '@/theme/icons';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { OnboardingHeader } from '../components/OnboardingHeader';
 import { GoalType } from '../services/onboardingCalculator';
 import { GoalIntent } from '../services/onboardingDraft';
+
+const RIA_AVATAR = require('../../../../assets/ria_avatar.webp');
 
 export type FitnessGoal = 'lose' | 'maintain' | 'gain' | 'lose_weight' | 'gain_muscle';
 
@@ -18,7 +27,6 @@ interface GoalSelectionScreenProps {
   onContinue?: (goal: GoalType, intent: GoalIntent) => void;
   onSkip?: () => void;
   onSignIn?: () => void;
-  initialGoal?: GoalType | 'lose' | 'gain';
   initialIntent?: GoalIntent;
   name?: string;
   sectionIndex?: number;
@@ -31,10 +39,8 @@ interface GoalCardItem {
   goal: GoalType;
   title: string;
   subtitle: string;
-  reassurance: string;
-  iconName: string;
-  iconFamily: 'ionicons' | 'mci';
-  iconColor: string;
+  reply: string;
+  iconName: keyof typeof Ionicons.glyphMap;
 }
 
 const GOAL_OPTIONS: GoalCardItem[] = [
@@ -42,41 +48,33 @@ const GOAL_OPTIONS: GoalCardItem[] = [
     id: 'lose',
     goal: 'lose_weight',
     title: 'Lose weight',
-    subtitle: 'Caloric deficit for sustainable fat loss',
-    reassurance: "We'll set a gentle calorie budget you can actually stick to.",
-    iconName: 'flame',
-    iconFamily: 'ionicons',
-    iconColor: '#F47551',
+    subtitle: 'Steadily, no crash dieting',
+    reply: "Good call. I'll set a gentle calorie budget you can actually stick to.",
+    iconName: 'trending-down-outline',
   },
   {
     id: 'maintain',
     goal: 'maintain',
     title: 'Maintain my weight',
-    subtitle: 'Equilibrium to optimize daily energy & health',
-    reassurance: "We'll help you balance what you eat without restricting.",
+    subtitle: 'Stay steady, eat better',
+    reply: "Got it. I'll help you balance your plate, no restricting.",
     iconName: 'scale-outline',
-    iconFamily: 'ionicons',
-    iconColor: '#16A34A',
   },
   {
     id: 'build',
     goal: 'gain_muscle',
     title: 'Build muscle',
-    subtitle: 'Caloric surplus and protein to build strength',
-    reassurance: "We'll set a high-protein target and surplus to fuel gains.",
-    iconName: 'barbell',
-    iconFamily: 'ionicons',
-    iconColor: '#4F46E5',
+    subtitle: 'More protein, small surplus',
+    reply: "Let's do it. I'll set a high-protein target with a small surplus.",
+    iconName: 'barbell-outline',
   },
   {
     id: 'understand',
     goal: 'maintain',
-    title: 'Just understand what I eat',
-    subtitle: 'Discover daily nutrition patterns without pressure',
-    reassurance: 'No pressure, just clear insights on what goes on your plate.',
+    title: 'Understand what I eat',
+    subtitle: 'No targets, just insights',
+    reply: "Love that. No pressure, just clear insight into what's on your plate.",
     iconName: 'eye-outline',
-    iconFamily: 'ionicons',
-    iconColor: '#0EA5E9',
   },
 ];
 
@@ -84,40 +82,45 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   onBack,
   onContinue,
   onSkip,
-  initialGoal = 'maintain',
   initialIntent,
   name,
   sectionIndex = 0,
   totalSections = 4,
   sectionProgress = 0.4,
 }) => {
-  // Normalize initialGoal into GoalIntent
-  const defaultIntent = (): GoalIntent => {
-    if (initialIntent) return initialIntent;
-    if (initialGoal === 'lose' || initialGoal === 'lose_weight') return 'lose';
-    if (initialGoal === 'gain' || initialGoal === 'gain_muscle') return 'build';
-    return 'maintain';
-  };
+  const [selectedIntent, setSelectedIntent] = useState<GoalIntent | null>(initialIntent ?? null);
+  const reduceMotion = useReducedMotion();
+  const reply = useSharedValue(initialIntent ? 1 : 0);
 
-  const [selectedIntent, setSelectedIntent] = useState<GoalIntent>(defaultIntent);
+  const replyStyle = useAnimatedStyle(() => ({
+    opacity: reply.value,
+    transform: [{ translateY: (1 - reply.value) * 8 }],
+  }));
+
+  const selectedOption = GOAL_OPTIONS.find(o => o.id === selectedIntent);
 
   const handleSelectOption = (option: GoalCardItem) => {
     haptics.selection();
+    if (option.id === selectedIntent) return;
     setSelectedIntent(option.id);
+    if (reduceMotion) {
+      reply.value = 1;
+      return;
+    }
+    reply.value = 0;
+    reply.value = withTiming(1, {
+      duration: MotionDurations.sheet,
+      easing: MotionCurves.decelerate,
+    });
   };
 
   const handleContinue = () => {
+    if (!selectedOption) return;
     haptics.selection();
-    const selectedOption = GOAL_OPTIONS.find(o => o.id === selectedIntent) ?? GOAL_OPTIONS[0];
-    if (onContinue) {
-      onContinue(selectedOption.goal, selectedOption.id);
-    }
+    onContinue?.(selectedOption.goal, selectedOption.id);
   };
 
-  const displayName = name?.trim() ? name.trim() : '';
-  const screenTitle = displayName
-    ? `What brings you here, ${displayName}?`
-    : 'What brings you here?';
+  const displayName = name?.trim() ?? '';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -135,87 +138,91 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.titleContainer}>
-            <Text style={styles.screenTitle}>{screenTitle}</Text>
-            <Text style={styles.screenSubtitle}>
-              Calibrates your daily calorie target and macro targets.
-            </Text>
-          </View>
+          <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+            {displayName ? (
+              <>
+                What brings you here, <Text style={styles.questionName}>{displayName}</Text>?
+              </>
+            ) : (
+              'What brings you here?'
+            )}
+          </Text>
+          <Text style={styles.subtitle}>This sets your calorie and protein targets.</Text>
 
-          <View style={styles.cardsContainer}>
+          <View style={styles.list} accessibilityRole="radiogroup">
             {GOAL_OPTIONS.map(option => {
-              const isSelected = selectedIntent === option.id;
-
+              const selected = selectedIntent === option.id;
               return (
-                <View key={option.id} style={styles.cardWrapper}>
-                  <Pressable
-                    onPress={() => handleSelectOption(option)}
-                    style={({ pressed }) => [
-                      styles.goalCard,
-                      isSelected ? styles.goalCardSelected : styles.goalCardUnselected,
-                      pressed ? styles.goalCardPressed : null,
-                    ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={`${option.title}: ${option.subtitle}`}
-                    testID={`goal-card-${option.id}`}
-                  >
-                    <View style={[styles.iconBadge, getGoalIconBgStyle(option.id)]}>
-                      <Ionicons name={option.iconName as any} size={IconSizes.standard} color={option.iconColor} />
-                    </View>
+                <Pressable
+                  key={option.id}
+                  onPress={() => handleSelectOption(option)}
+                  style={({ pressed }) => [
+                    styles.card,
+                    selected && styles.cardSelected,
+                    pressed && styles.cardPressed,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected, checked: selected }}
+                  accessibilityLabel={`${option.title}, ${option.subtitle}`}
+                  testID={`goal-card-${option.id}`}
+                >
+                  <View style={[styles.iconTile, selected && styles.iconTileSelected]}>
+                    <Ionicons
+                      name={option.iconName}
+                      size={22}
+                      color={selected ? Colors.primaryDeep : Colors.textPrimary}
+                    />
+                  </View>
 
-                    <View style={styles.cardTextContent}>
-                      <Text
-                        style={[
-                          styles.goalTitle,
-                          isSelected ? styles.goalTitleSelected : null,
-                        ]}
-                      >
-                        {option.title}
-                      </Text>
-                      <Text style={styles.goalSubtitle}>{option.subtitle}</Text>
-                    </View>
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle} maxFontSizeMultiplier={1.3}>
+                      {option.title}
+                    </Text>
+                    <Text style={styles.cardSubtitle} maxFontSizeMultiplier={1.3}>
+                      {option.subtitle}
+                    </Text>
+                  </View>
 
-                    <View
-                      style={[
-                        styles.radioCircle,
-                        isSelected ? styles.radioSelected : styles.radioUnselected,
-                      ]}
-                    >
-                      {isSelected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
-                    </View>
-                  </Pressable>
-
-                  {/* Reassurance Line appears when selected */}
-                  {isSelected && (
-                    <Animated.View
-                      entering={FadeIn.duration(250)}
-                      exiting={FadeOut.duration(150)}
-                      style={styles.reassuranceBanner}
-                      testID={`reassurance-${option.id}`}
-                    >
-                      <Ionicons name="sparkles" size={IconSizes.compact} color="#F47551" style={styles.reassuranceIcon} />
-                      <Text style={styles.reassuranceText}>{option.reassurance}</Text>
-                    </Animated.View>
-                  )}
-                </View>
+                  <View style={[styles.radio, selected && styles.radioSelected]}>
+                    {selected ? (
+                      <Ionicons name="checkmark" size={14} color={Colors.textInverse} />
+                    ) : null}
+                  </View>
+                </Pressable>
               );
             })}
           </View>
+
+          {selectedOption ? (
+            <Animated.View style={[styles.replyRow, replyStyle]}>
+              <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+              <View style={styles.bubble} accessibilityLiveRegion="polite" testID="goal-ria-reply">
+                <Text style={styles.bubbleText}>{selectedOption.reply}</Text>
+              </View>
+            </Animated.View>
+          ) : null}
         </ScrollView>
 
-        <View style={styles.footerContainer}>
+        <View style={styles.footer}>
           <Pressable
+            onPress={handleContinue}
+            disabled={!selectedOption}
             style={({ pressed }) => [
               styles.continueButton,
-              pressed ? styles.continueButtonPressed : null,
+              !selectedOption && styles.continueButtonDisabled,
+              pressed && styles.continueButtonPressed,
             ]}
-            onPress={handleContinue}
             accessibilityRole="button"
-            accessibilityLabel="Continue to next step"
+            accessibilityLabel="Continue"
+            accessibilityState={{ disabled: !selectedOption }}
             testID="goal-continue-button"
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={[styles.continueText, !selectedOption && styles.continueTextDisabled]}>
+              Continue
+            </Text>
+            {selectedOption ? (
+              <Ionicons name="arrow-forward" size={18} color={Colors.textInverse} />
+            ) : null}
           </Pressable>
         </View>
       </View>
@@ -223,166 +230,165 @@ export const GoalSelectionScreen: React.FC<GoalSelectionScreenProps> = ({
   );
 };
 
-const getGoalIconBgStyle = (intent: GoalIntent) => {
-  switch (intent) {
-    case 'lose':
-      return { backgroundColor: '#FEE2E2' };
-    case 'maintain':
-      return { backgroundColor: '#DCFCE7' };
-    case 'build':
-      return { backgroundColor: '#EEF2FF' };
-    case 'understand':
-      return { backgroundColor: '#E0F2FE' };
-    default:
-      return { backgroundColor: '#F1F5F9' };
-  }
-};
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF9F6',
+    backgroundColor: Colors.background,
   },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingHorizontal: 22,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 22,
     paddingBottom: 20,
   },
-  titleContainer: {
-    marginBottom: 20,
-  },
-  screenTitle: {
-    fontFamily: Fonts.kurale,
+  question: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 28,
-    lineHeight: 36,
-    color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 8,
+    lineHeight: 34,
+    letterSpacing: -0.8,
+    color: Colors.textPrimary,
   },
-  screenSubtitle: {
+  questionName: {
+    color: Colors.primaryDeep,
+  },
+  subtitle: {
+    marginTop: 8,
     fontFamily: Fonts.urbanist.medium,
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.textSecondary ?? '#64748B',
+    color: Colors.textSecondary,
   },
-  cardsContainer: {
-    gap: 14,
+  list: {
+    marginTop: 22,
+    gap: 10,
   },
-  cardWrapper: {
-    gap: 8,
-  },
-  goalCard: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    gap: 14,
+    minHeight: 72,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
     borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
-    backgroundColor: '#FFFFFF',
-    shadowOpacity: 0,
     elevation: 0,
   },
-  goalCardSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#FFFBF9',
+  cardSelected: {
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    paddingVertical: 12.5,
+    paddingHorizontal: 13.5,
   },
-  goalCardUnselected: {
-    borderColor: '#E2E8F0',
-  },
-  goalCardPressed: {
+  cardPressed: {
     opacity: 0.95,
-    transform: [{ scale: 0.99 }],
   },
-  iconBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+  iconTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    backgroundColor: Colors.borderLight,
   },
-  cardTextContent: {
+  iconTileSelected: {
+    backgroundColor: Colors.primaryLight,
+  },
+  cardText: {
     flex: 1,
-    marginRight: 10,
   },
-  goalTitle: {
+  cardTitle: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.textPrimary ?? '#1E293B',
-    marginBottom: 2,
+    fontSize: 16.5,
+    color: Colors.textPrimary,
   },
-  goalTitleSelected: {
-    color: '#1E293B',
+  cardSubtitle: {
+    marginTop: 2,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13.5,
+    color: Colors.textMuted,
   },
-  goalSubtitle: {
-    fontFamily: Fonts.urbanist.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: Colors.textSecondary ?? '#64748B',
-  },
-  radioCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
+    borderColor: Colors.borderInset,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioSelected: {
-    borderColor: '#F47551',
-    backgroundColor: '#F47551',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  radioUnselected: {
-    borderColor: '#CBD5E1',
-    backgroundColor: 'transparent',
-  },
-  reassuranceBanner: {
+  replyRow: {
+    marginTop: 18,
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    borderRadius: 12,
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  avatarSmall: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.borderSubtle,
+  },
+  bubble: {
+    flexShrink: 1,
+    paddingVertical: 11,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: '#FED7AA',
+    borderColor: Colors.borderSubtle,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
   },
-  reassuranceIcon: {
-    marginRight: 8,
+  bubbleText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textPrimary,
   },
-  reassuranceText: {
-    flex: 1,
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 17,
-    color: '#9A3412',
-  },
-  footerContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 16 : 24,
+  footer: {
     paddingTop: 12,
+    paddingBottom: 16,
   },
   continueButton: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    paddingVertical: 18,
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.textPrimary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    elevation: 0,
+  },
+  continueButtonDisabled: {
+    backgroundColor: Colors.borderInset,
   },
   continueButtonPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    transform: [{ scale: 0.985 }],
   },
-  continueButtonText: {
+  continueText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 17,
+    color: Colors.textInverse,
+  },
+  continueTextDisabled: {
+    color: Colors.textMuted,
   },
 });
