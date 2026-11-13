@@ -90,6 +90,11 @@ export interface OnboardingWizardScreenProps {
   initialStep?: OnboardingStep;
 }
 
+// Rough adult-average starting heights for the wheel until the user picks one.
+const AVG_HEIGHT_CM_FEMALE = 162;
+const AVG_HEIGHT_CM_MALE = 176;
+const DEFAULT_HEIGHT_CM = 170;
+
 export const buildReconstructedHistory = (
   targetStep: OnboardingStep,
   goal?: GoalType,
@@ -139,6 +144,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [goalIntent, setGoalIntent] = useState<GoalIntent>('lose');
   const [goalChosen, setGoalChosen] = useState(false);
   const [aboutChosen, setAboutChosen] = useState(false);
+  const [heightChosen, setHeightChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -199,6 +205,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         draft.step !== 'about_you'
       ) {
         setAboutChosen(true);
+        if (draft.step !== 'height') setHeightChosen(true);
       }
 
       if (draft.step && draft.step !== 'name' && isMounted) {
@@ -454,12 +461,22 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return (
       <View style={styles.container}>
         <HeightSelectionScreen
-          initialHeightCm={heightCm}
+          initialHeightCm={
+            heightChosen
+              ? heightCm
+              : sex === 'female'
+                ? AVG_HEIGHT_CM_FEMALE
+                : sex === 'male'
+                  ? AVG_HEIGHT_CM_MALE
+                  : DEFAULT_HEIGHT_CM
+          }
+          initialUnit={heightUnit}
           onBack={popStep}
           onContinue={(val, unit) => {
             setHeightCm(val);
-            if (unit) setHeightUnit(unit);
-            pushStep('weight');
+            setHeightUnit(unit);
+            setHeightChosen(true);
+            pushStep('weight', { heightCm: val, units: { height: unit, weight: weightUnit } });
           }}
           onSkip={onSkip}
           sectionIndex={1}
