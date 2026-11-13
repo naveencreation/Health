@@ -149,6 +149,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [heightChosen, setHeightChosen] = useState(false);
   const [weightChosen, setWeightChosen] = useState(false);
   const [activityChosen, setActivityChosen] = useState(false);
+  const [paceChosen, setPaceChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -218,6 +219,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           draft.step !== 'activity'
         ) {
           setActivityChosen(true);
+          if (draft.step !== 'pace') setPaceChosen(true);
         }
       }
 
@@ -586,11 +588,13 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       <View style={styles.container}>
         <PaceSelectionScreen
           biometrics={biometricsInput}
-          initialPace={pace}
+          initialPace={paceChosen ? pace : undefined}
+          weightUnit={weightUnit}
           onBack={popStep}
           onContinue={val => {
             setPace(val);
-            pushStep('food_style');
+            setPaceChosen(true);
+            pushStep('food_style', { pace: val });
           }}
           onSkip={onSkip}
           sectionIndex={2}

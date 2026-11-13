@@ -35,6 +35,8 @@ export interface CalculatedHealthPlan {
   stepGoal: number;
   estimatedWeeksToGoal?: number;
   goalDate?: string;
+  /** Signed kg per week (negative = loss). Undefined for maintain. */
+  weeklyChangeKg?: number;
   pace?: Pace;
   isAtSafeFloor?: boolean;
 }
@@ -84,6 +86,7 @@ export function evaluateAgePolicy(age: number): AgePolicyResult {
 
 /**
  * Formats a target date from weeks into human-readable e.g. "14 Dec"
+ * (year appended when it differs from fromDate's, e.g. "12 Mar 2027")
  */
 export function calculateGoalDate(weeks: number, fromDate: Date = new Date()): string {
   const target = new Date(fromDate.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
@@ -102,7 +105,8 @@ export function calculateGoalDate(weeks: number, fromDate: Date = new Date()): s
     'Nov',
     'Dec',
   ];
-  return `${day} ${monthNames[target.getMonth()]}`;
+  const base = `${day} ${monthNames[target.getMonth()]}`;
+  return target.getFullYear() === fromDate.getFullYear() ? base : `${base} ${target.getFullYear()}`;
 }
 
 /**
@@ -198,24 +202,24 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
   // 7. Estimated Weeks to Goal & Goal Date
   let estimatedWeeksToGoal: number | undefined;
   let goalDate: string | undefined;
+  let weeklyChangeKg: number | undefined;
 
-  if (input.targetWeightKg && input.targetWeightKg !== weight && goal !== 'maintain') {
-    const diffKg = Math.abs(weight - input.targetWeightKg);
+  if (goal === 'lose_weight') {
+    // Weekly loss from the budget after the floor
+    const actualDeficit = tdee - dailyCalorieBudget;
+    if (actualDeficit > 0) weeklyChangeKg = -((actualDeficit * 7) / 7700);
+  } else if (goal === 'gain_muscle') {
+    // Gain: fixed rates 0.15 / 0.25 / 0.35 kg per week
+    weeklyChangeKg = pace === 'gentle' ? 0.15 : pace === 'faster' ? 0.35 : 0.25;
+  }
 
-    if (goal === 'lose_weight') {
-      // Lose: diffKg / (((tdee - budget) * 7) / 7700) using the budget after the floor
-      const actualDeficit = tdee - dailyCalorieBudget;
-      if (actualDeficit > 0) {
-        const weeklyLossKg = (actualDeficit * 7) / 7700;
-        estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / weeklyLossKg));
-        goalDate = calculateGoalDate(estimatedWeeksToGoal);
-      }
-    } else if (goal === 'gain_muscle') {
-      // Gain: fixed rates 0.15 / 0.25 / 0.35 kg per week
-      const ratePerWeek = pace === 'gentle' ? 0.15 : pace === 'faster' ? 0.35 : 0.25;
-      estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / ratePerWeek));
+  if (weeklyChangeKg !== undefined) {
+    if (input.targetWeightKg && input.targetWeightKg !== weight) {
+      const diffKg = Math.abs(weight - input.targetWeightKg);
+      estimatedWeeksToGoal = Math.max(1, Math.round(diffKg / Math.abs(weeklyChangeKg)));
       goalDate = calculateGoalDate(estimatedWeeksToGoal);
     }
+    weeklyChangeKg = Math.round(weeklyChangeKg * 100) / 100;
   }
 
   return {
@@ -230,6 +234,7 @@ export function calculateHealthPlan(input: UserBiometricsInput): CalculatedHealt
     stepGoal,
     estimatedWeeksToGoal,
     goalDate,
+    weeklyChangeKg,
     pace,
     isAtSafeFloor,
   };

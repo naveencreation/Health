@@ -231,5 +231,42 @@ describe('onboardingCalculator (Mifflin-St Jeor & Pace Engine)', () => {
       const formatted = calculateGoalDate(2, baseDate);
       expect(formatted).toBe('15 Oct');
     });
+
+    it('appends the year when it differs from the start year', () => {
+      const baseDate = new Date(2026, 10, 20);
+      expect(calculateGoalDate(16, baseDate)).toBe('12 Mar 2027');
+      expect(calculateGoalDate(2, baseDate)).toBe('4 Dec');
+    });
+  });
+
+  describe('weeklyChangeKg', () => {
+    const base: UserBiometricsInput = {
+      age: 30,
+      gender: 'male',
+      heightCm: 175,
+      weightKg: 80,
+      goal: 'lose_weight',
+      activityLevel: 'moderately_active',
+    };
+
+    it('is negative for loss, even without a target weight', () => {
+      const plan = calculateHealthPlan({ ...base, pace: 'steady' });
+      const expected = -Math.round(((plan.tdee - plan.dailyCalorieBudget) * 7 * 100) / 7700) / 100;
+      expect(plan.weeklyChangeKg).toBeCloseTo(expected, 2);
+      expect(plan.weeklyChangeKg!).toBeLessThan(0);
+      expect(plan.goalDate).toBeUndefined();
+    });
+
+    it('uses the fixed rates for gain', () => {
+      const rates = { gentle: 0.15, steady: 0.25, faster: 0.35 } as const;
+      (['gentle', 'steady', 'faster'] as const).forEach(pace => {
+        const plan = calculateHealthPlan({ ...base, goal: 'gain_muscle', pace });
+        expect(plan.weeklyChangeKg).toBe(rates[pace]);
+      });
+    });
+
+    it('is undefined for maintain', () => {
+      expect(calculateHealthPlan({ ...base, goal: 'maintain' }).weeklyChangeKg).toBeUndefined();
+    });
   });
 });
