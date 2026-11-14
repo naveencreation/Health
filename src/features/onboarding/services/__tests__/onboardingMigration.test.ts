@@ -154,6 +154,23 @@ describe('onboardingMigration', () => {
       expect(remainingDraft).toBeNull();
     });
 
+    it('does not write to Firestore for guests or demo users, but still saves goals locally', async () => {
+      mockSetDoc.mockClear();
+      for (const [uid, isGuest] of [
+        ['user_real_1', true],
+        ['guest_1731000000000', false],
+        ['demo_abc', false],
+      ] as const) {
+        const result = await migrateOnboardingData(uid, '', sampleDraft, samplePlan, isGuest);
+        expect(result.success).toBe(true);
+        expect(await AsyncStorage.getItem(`@calori_user_goals_${uid}`)).toBeTruthy();
+      }
+      expect(mockSetDoc).not.toHaveBeenCalled();
+
+      await migrateOnboardingData('user_real_2', 'a@b.co', sampleDraft, samplePlan, false);
+      expect(mockSetDoc).toHaveBeenCalledTimes(1);
+    });
+
     it('works cleanly when firstMeal is undefined (user skipped meal logging)', async () => {
       const draftWithoutMeal: OnboardingDraft = {
         ...sampleDraft,

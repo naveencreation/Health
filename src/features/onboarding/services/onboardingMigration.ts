@@ -143,11 +143,14 @@ export async function migrateOnboardingData(
   try {
     const profile = buildUserProfilePayload(uid, email, draft, plan, isGuest);
 
-    // 1. Write user profile to Firestore
-    try {
-      await setDoc(doc(db, 'users', uid), profile, { merge: true });
-    } catch (fsErr) {
-      console.warn('[onboardingMigration] Firestore profile write error (offline?):', fsErr);
+    // 1. Write user profile to Firestore (guests and demo users never sync)
+    const localOnly = isGuest || uid.startsWith('demo_') || uid.startsWith('guest_');
+    if (!localOnly) {
+      try {
+        await setDoc(doc(db, 'users', uid), profile, { merge: true });
+      } catch (fsErr) {
+        console.warn('[onboardingMigration] Firestore profile write error (offline?):', fsErr);
+      }
     }
 
     // 2. Save user goals to local AsyncStorage

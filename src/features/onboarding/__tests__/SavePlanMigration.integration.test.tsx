@@ -50,6 +50,7 @@ jest.mock('react-native-reanimated', () => {
     FadeIn: { duration: () => ({ delay: () => ({}) }) },
     FadeInDown: { duration: () => ({ delay: () => ({}) }) },
     FadeOut: { duration: () => ({ delay: () => ({}) }) },
+    useReducedMotion: () => false,
   };
 });
 
@@ -317,16 +318,12 @@ describe('SavePlan Migration Integration Tests', () => {
       });
 
       // Verify collision alert
-      expect(getByText('An account with this email already exists.')).toBeTruthy();
-      expect(getByTestId('btn-switch-collision-signin')).toBeTruthy();
+      expect(
+        getByText('There’s already an account with this email. Enter its password to sign in.')
+      ).toBeTruthy();
 
-      // 4. User switches to sign-in
-      await act(async () => {
-        fireEvent.press(getByTestId('btn-switch-collision-signin'));
-      });
-
-      // Button updates to Sign In
-      expect(getByText('Sign In & Link Plan')).toBeTruthy();
+      // 4. The form switched to sign-in mode on its own
+      expect(getByText('Sign in and we’ll save this plan to your account.')).toBeTruthy();
 
       // 5. Update auth state for successful login of existing user
       mockAuthCurrentUser.uid = existingUid;
@@ -417,7 +414,7 @@ describe('SavePlan Migration Integration Tests', () => {
   });
 
   describe('5. Anonymous Guest Mode Migration', () => {
-    it('correctly flags profile as guest and stores local goals under guest UID', async () => {
+    it('skips the cloud write and stores local goals under the guest UID', async () => {
       mockAuthCurrentUser.uid = 'guest_user_999';
       mockAuthCurrentUser.email = '';
 
@@ -441,16 +438,8 @@ describe('SavePlan Migration Integration Tests', () => {
 
       expect(mockLoginAnonymous).toHaveBeenCalledWith('Guest Traveler');
 
-      // Verify Firestore payload was marked with isGuest: true
-      expect(mockSetDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: 'users/guest_user_999' }),
-        expect.objectContaining({
-          id: 'guest_user_999',
-          name: 'Guest Traveler',
-          isGuest: true,
-        }),
-        { merge: true }
-      );
+      // Guests never sync: no Firestore profile write
+      expect(mockSetDoc).not.toHaveBeenCalled();
 
       // Verify guest local goals exist
       const guestGoals = await AsyncStorage.getItem('@calori_user_goals_guest_user_999');

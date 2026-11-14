@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
-import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
+import { ControlHeights, ControlRadii } from '@/theme/controls';
+import { MotionDurations } from '@/theme/motion';
 import { haptics } from '@/utils/haptics';
 import { BouncingDotsLoader } from '@/components/common/BouncingDotsLoader';
 import { OnboardingHeader } from '../components/OnboardingHeader';
@@ -24,6 +25,7 @@ import { useAuth } from '@/context/HealthContext';
 import { CalculatedHealthPlan } from '../services/onboardingCalculator';
 import { OnboardingDraft } from '../services/onboardingDraft';
 import { migrateOnboardingData } from '../services/onboardingMigration';
+import { planGoalLine } from './PlanRevealScreen';
 import { auth } from '@/services/firebase';
 
 export interface SavePlanScreenProps {
@@ -39,6 +41,19 @@ export interface SavePlanScreenProps {
   sectionProgress?: number;
 }
 
+const isCollisionError = (err?: string) => {
+  const e = err?.toLowerCase() || '';
+  return (
+    e.includes('already registered') ||
+    e.includes('email-already-in-use') ||
+    e.includes('already in use') ||
+    e.includes('already exists')
+  );
+};
+
+// A context id that is a local placeholder is not proof of a signed-in account.
+const isRealId = (id?: string) => !!id && !id.startsWith('guest_') && !id.startsWith('demo_');
+
 export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
   name = '',
   plan,
@@ -52,9 +67,13 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
   sectionProgress = 1.0,
 }) => {
   const { register, login, loginAnonymous, currentUser } = useAuth();
+  const reduceMotion = useReducedMotion();
+
+  const wizardName = (name || draft.name || '').trim();
+  const needsNameField = wizardName.length === 0;
 
   const [formMode, setFormMode] = useState<'signup' | 'signin'>('signup');
-  const [userName, setUserName] = useState(name || draft.name || '');
+  const [typedName, setTypedName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -62,44 +81,31 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [collisionDetected, setCollisionDetected] = useState(false);
 
-  // Founder note presentation state
   const [showFounderNote, setShowFounderNote] = useState(false);
-  const founderTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const founderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Live password validation
+  const displayName = wizardName || typedName.trim();
+  const isSignup = formMode === 'signup';
+
   const hasMinLength = password.length >= 8;
   const hasNumber = /\d/.test(password);
-  const isFormValid =
-    formMode === 'signin'
-      ? email.trim().length > 3 && password.length >= 6
-      : userName.trim().length > 0 && email.trim().length > 3 && hasMinLength && hasNumber;
+  const isFormValid = isSignup
+    ? displayName.length > 0 && email.trim().length > 3 && hasMinLength && hasNumber
+    : email.trim().length > 3 && password.length >= 6;
 
-  // Clear timer on unmount
+  const goalLine = planGoalLine(plan, {
+    weightUnit,
+    targetWeightKg,
+    weightKg: draft.weightKg,
+  });
+  const kcal = plan.dailyCalorieBudget.toLocaleString('en-US');
+
   useEffect(() => {
     return () => {
-      if (founderTimerRef.current) {
-        clearTimeout(founderTimerRef.current);
-      }
+      if (founderTimerRef.current) clearTimeout(founderTimerRef.current);
     };
   }, []);
-
-  // Post-auth migration & founder note presentation
-  const handleAuthSuccess = async (uid: string, authEmail: string, isGuest = false) => {
-    try {
-      await migrateOnboardingData(uid, authEmail, draft, plan, isGuest);
-    } catch (err) {
-      console.warn('[SavePlanScreen] Migration warning:', err);
-    }
-
-    // Trigger founder note
-    haptics.success();
-    setShowFounderNote(true);
-    founderTimerRef.current = setTimeout(() => {
-      handleProceedToNext();
-    }, 4000);
-  };
 
   const handleProceedToNext = () => {
     if (founderTimerRef.current) {
@@ -110,37 +116,23 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     onSuccess();
   };
 
-  // Google sign in trigger
-  const handleGoogleSignIn = async () => {
-    haptics.impactLight();
-    setIsLoading(true);
-    setErrorMessage(null);
+  const handleAuthSuccess = async (uid: string, authEmail: string, isGuest = false) => {
     try {
-      // Check if native Google auth is configured
-      const hasGoogleConfig = Boolean(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID);
-      if (!hasGoogleConfig) {
-        setErrorMessage(
-          'Google sign-in is not configured for this build. Please sign up with email or continue as guest.'
-        );
-        return;
-      }
-      const res = await loginAnonymous(userName || name || 'Friend');
-      if (res.success) {
-        const uid = auth.currentUser?.uid || currentUser?.id || 'google_user_' + Date.now();
-        await handleAuthSuccess(uid, email || 'google_user@calorify.app', false);
-      } else {
-        setErrorMessage(
-          'Google sign-in is momentarily unavailable. Please use email or continue as guest.'
-        );
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Google sign-in failed.');
-    } finally {
-      setIsLoading(false);
+      await migrateOnboardingData(uid, authEmail, draft, plan, isGuest);
+    } catch (err) {
+      console.warn('[SavePlanScreen] Migration warning:', err);
     }
+    haptics.success();
+    setShowFounderNote(true);
+    founderTimerRef.current = setTimeout(handleProceedToNext, 4000);
   };
 
-  // Email submission handler
+  const switchMode = (mode: 'signup' | 'signin') => {
+    haptics.selection();
+    setFormMode(mode);
+    setErrorMessage(null);
+  };
+
   const handleSubmit = async () => {
     if (!isFormValid || isLoading) return;
     haptics.impactMedium();
@@ -150,46 +142,39 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      if (formMode === 'signup') {
-        const res = await register({
-          name: userName.trim(),
-          email: cleanEmail,
-          password,
-          age: draft.age,
-          weight: draft.weightKg,
-          weightUnit: draft.units?.weight || 'kg',
-          goal: draft.goal,
-          gender: draft.sex || 'male',
-          heightCm: draft.heightCm,
-        });
+      const res = isSignup
+        ? await register({
+            name: displayName,
+            email: cleanEmail,
+            password,
+            age: draft.age,
+            weight: draft.weightKg,
+            weightUnit: draft.units?.weight || 'kg',
+            goal: draft.goal,
+            gender: draft.sex || 'male',
+            heightCm: draft.heightCm,
+          })
+        : await login(cleanEmail, password);
 
-        if (res.success) {
-          const uid = auth.currentUser?.uid || currentUser?.id || 'user_' + Date.now();
-          await handleAuthSuccess(uid, cleanEmail, false);
+      if (res.success) {
+        const uid = auth.currentUser?.uid || (isRealId(currentUser?.id) ? currentUser?.id : '');
+        if (!uid) {
+          setErrorMessage('Couldn’t finish signing in. Please try again.');
         } else {
-          const lowerErr = res.error?.toLowerCase() || '';
-          const isCollision =
-            lowerErr.includes('already registered') ||
-            lowerErr.includes('email-already-in-use') ||
-            lowerErr.includes('already in use') ||
-            lowerErr.includes('already exists');
-
-          if (isCollision) {
-            setCollisionDetected(true);
-            setErrorMessage('An account with this email already exists.');
-          } else {
-            setErrorMessage(res.error || 'Registration failed. Please check your details.');
-          }
+          await handleAuthSuccess(uid, cleanEmail, false);
         }
+      } else if (isSignup && isCollisionError(res.error)) {
+        setFormMode('signin');
+        setErrorMessage(
+          'There’s already an account with this email. Enter its password to sign in.'
+        );
       } else {
-        // Sign-in mode (e.g. following account collision)
-        const res = await login(cleanEmail, password);
-        if (res.success) {
-          const uid = auth.currentUser?.uid || currentUser?.id || 'user_' + Date.now();
-          await handleAuthSuccess(uid, cleanEmail, false);
-        } else {
-          setErrorMessage(res.error || 'Incorrect email or password.');
-        }
+        setErrorMessage(
+          res.error ||
+            (isSignup
+              ? 'Registration failed. Please check your details.'
+              : 'Incorrect email or password.')
+        );
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Authentication error.');
@@ -198,16 +183,20 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     }
   };
 
-  // Anonymous guest login handler
   const handleGuestContinue = async () => {
     haptics.impactLight();
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const res = await loginAnonymous(userName || name || 'Friend');
+      const res = await loginAnonymous(displayName || 'Friend');
       if (res.success) {
-        const uid = auth.currentUser?.uid || currentUser?.id || 'guest_' + Date.now();
-        await handleAuthSuccess(uid, '', true);
+        // Anonymous auth may be off; then the context holds a local guest_<ts> id.
+        const uid = auth.currentUser?.uid || currentUser?.id;
+        if (!uid) {
+          setErrorMessage('Couldn’t finish signing in. Please try again.');
+        } else {
+          await handleAuthSuccess(uid, '', true);
+        }
       } else {
         setErrorMessage(res.error || 'Could not continue as guest.');
       }
@@ -218,20 +207,29 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
     }
   };
 
-  const formattedGoalDate = useMemo(() => {
-    if (!plan.goalDate) return null;
-    const parts = plan.goalDate.split('-');
-    if (parts.length === 3) {
-      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    return plan.goalDate;
-  }, [plan.goalDate]);
+  const submitDisabled = !isFormValid || isLoading;
+  const submitLabel = isSignup ? 'Create account' : 'Sign in';
+
+  const reqChip = (met: boolean, label: string, testID: string) => (
+    <View style={[styles.reqChip, met && styles.reqChipMet]} testID={testID}>
+      <Ionicons
+        name={met ? 'checkmark' : 'ellipse-outline'}
+        size={12}
+        color={met ? Colors.successDark : Colors.textMuted}
+      />
+      <Text
+        style={[styles.reqText, met && styles.reqTextMet]}
+        maxFontSizeMultiplier={1.3}
+        accessibilityLabel={`${label}, ${met ? 'met' : 'not met'}`}
+      >
+        {label}
+      </Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.phoneFrame}>
-        {/* 1. Header with uniform section progress bar */}
         <OnboardingHeader
           onBack={onBack}
           sectionIndex={sectionIndex}
@@ -245,300 +243,135 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
-            style={styles.scrollView}
+            style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* 2. Standardized Title Block */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>
-                Save your plan, {userName.trim() || name.trim() || 'friend'}.
-              </Text>
-              <Text style={styles.subtitle}>
-                So your calculated numbers and your first meal are never lost.
-              </Text>
-            </View>
+            <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+              {(isSignup ? 'Save your plan' : 'Welcome back') +
+                (displayName ? `, ${displayName}` : '')}
+            </Text>
+            <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+              {isSignup
+                ? 'An account backs up your plan and logs, and brings them to a new phone.'
+                : 'Sign in and we’ll save this plan to your account.'}
+            </Text>
 
-            {/* 3. Real Plan Summary Card */}
-            <View style={styles.summaryCard} testID="plan-summary-card">
-              <View style={styles.summaryTopRow}>
-                <View style={styles.calorieCol}>
-                  <Text style={styles.calorieNumber}>{plan.dailyCalorieBudget}</Text>
-                  <Text style={styles.calorieUnit}>kcal / day</Text>
-                </View>
-
-                <View style={styles.targetCol}>
-                  {formattedGoalDate && targetWeightKg ? (
-                    <View style={styles.goalDatePill}>
-                      <Ionicons name="calendar-outline" size={13} color={Colors.primaryDeep} />
-                      <Text style={styles.goalDatePillText}>
-                        {targetWeightKg} {weightUnit} by {formattedGoalDate}
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.goalDatePill}>
-                      <Ionicons
-                        name="shield-checkmark-outline"
-                        size={13}
-                        color={Colors.proteinDark}
-                      />
-                      <Text style={[styles.goalDatePillText, { color: Colors.proteinDark }]}>
-                        Daily metabolic balance
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.cardDivider} />
-
-              {/* First Meal Logged Badge */}
-              <View style={styles.mealBadgeRow}>
-                <View style={[styles.mealStatusPill, { backgroundColor: Colors.surfaceInset }]}>
-                  <Ionicons name="sparkles" size={14} color={Colors.textSecondary} />
-                  <Text style={[styles.mealStatusText, { color: Colors.textSlate600 }]}>
-                    Plan calibrated
-                  </Text>
-                </View>
-                <Text style={styles.mealDetailsText}>Ready for Day 1 tracking</Text>
-              </View>
-            </View>
-
-            {/* 4. Error / Collision Alert */}
-            {errorMessage && (
-              <View style={styles.errorBox} testID="alert-error-box">
-                <Ionicons
-                  name={collisionDetected ? 'information-circle' : 'alert-circle'}
-                  size={18}
-                  color={collisionDetected ? Colors.water : Colors.danger}
-                  style={styles.errorIcon}
-                />
-                <View style={styles.errorTextCol}>
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                  {collisionDetected && formMode === 'signup' && (
-                    <Pressable
-                      onPress={() => {
-                        haptics.selection();
-                        setFormMode('signin');
-                        setErrorMessage(null);
-                      }}
-                      style={styles.collisionActionBtn}
-                      testID="btn-switch-collision-signin"
-                    >
-                      <Text style={styles.collisionActionText}>Sign in to link your plan →</Text>
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-            )}
-
-            {/* 5. Google One-Tap Primary Button */}
-            <Pressable
-              onPress={handleGoogleSignIn}
-              disabled={isLoading}
-              style={({ pressed }) => [styles.googleButton, pressed && styles.buttonPressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Continue with Google"
-              testID="btn-continue-google"
+            <View
+              style={styles.summaryCard}
+              accessible
+              accessibilityLabel={`${kcal} calories a day${goalLine ? `. ${goalLine}` : ''}`}
+              testID="plan-summary-card"
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" style={styles.googleIcon}>
-                <Path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <Path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <Path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  fill="#FBBC05"
-                />
-                <Path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  fill="#EA4335"
-                />
-              </Svg>
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </Pressable>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or continue with email</Text>
-              <View style={styles.dividerLine} />
+              <Text style={styles.summaryKcal} maxFontSizeMultiplier={1.2}>
+                {kcal} <Text style={styles.summaryUnit}>kcal a day</Text>
+              </Text>
+              {goalLine ? (
+                <View style={styles.goalPill} testID="plan-goal-pill">
+                  <Ionicons name="flag-outline" size={14} color={Colors.primaryDeep} />
+                  <Text style={styles.goalPillText} maxFontSizeMultiplier={1.3}>
+                    {goalLine}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
-            {/* 6. Email Form */}
-            <View style={styles.formContainer}>
-              {formMode === 'signup' && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.fieldLabel}>Name</Text>
-                  <TextInput
-                    style={[styles.inputField, focusedField === 'name' && styles.inputFocused]}
-                    value={userName}
-                    onChangeText={setUserName}
-                    placeholder="Your name"
-                    placeholderTextColor={Colors.textMuted}
-                    onFocus={() => setFocusedField('name')}
-                    onBlur={() => setFocusedField(null)}
-                    autoCapitalize="words"
-                    testID="input-user-name"
-                  />
-                </View>
-              )}
+            {errorMessage ? (
+              <View style={styles.errorBox} accessibilityRole="alert" testID="alert-error-box">
+                <Text style={styles.errorText} maxFontSizeMultiplier={1.3}>
+                  {errorMessage}
+                </Text>
+              </View>
+            ) : null}
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>Email</Text>
+            {isSignup && needsNameField ? (
+              <>
+                <Text style={styles.fieldLabel}>Name</Text>
                 <TextInput
-                  style={[styles.inputField, focusedField === 'email' && styles.inputFocused]}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="name@example.com"
+                  style={[styles.input, focusedField === 'name' && styles.inputFocused]}
+                  value={typedName}
+                  onChangeText={setTypedName}
+                  placeholder="Your name"
                   placeholderTextColor={Colors.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  onFocus={() => setFocusedField('email')}
+                  onFocus={() => setFocusedField('name')}
                   onBlur={() => setFocusedField(null)}
-                  testID="input-user-email"
+                  autoCapitalize="words"
+                  accessibilityLabel="Name"
+                  testID="input-user-name"
                 />
-              </View>
+              </>
+            ) : null}
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View
-                  style={[
-                    styles.passwordWrapper,
-                    focusedField === 'password' && styles.inputFocused,
-                  ]}
-                >
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Create a strong password"
-                    placeholderTextColor={Colors.textMuted}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
-                    testID="input-user-password"
-                  />
-                  <Pressable
-                    onPress={() => {
-                      haptics.selection();
-                      setShowPassword(prev => !prev);
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    testID="btn-toggle-password-visibility"
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color={Colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-              </View>
+            <Text style={styles.fieldLabel}>Email</Text>
+            <TextInput
+              style={[styles.input, focusedField === 'email' && styles.inputFocused]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="name@example.com"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+              accessibilityLabel="Email"
+              testID="input-user-email"
+            />
 
-              {/* Live Password Requirement Checklist (Signup Mode Only) */}
-              {formMode === 'signup' && (
-                <View style={styles.checklistRow}>
-                  <View style={[styles.checkPill, hasMinLength && styles.checkPillActive]}>
-                    <Ionicons
-                      name={hasMinLength ? 'checkmark' : 'ellipse-outline'}
-                      size={13}
-                      color={hasMinLength ? Colors.proteinDark : Colors.textSecondary}
-                    />
-                    <Text
-                      style={[styles.checkPillText, hasMinLength && styles.checkPillTextActive]}
-                    >
-                      8+ characters
-                    </Text>
-                  </View>
-
-                  <View style={[styles.checkPill, hasNumber && styles.checkPillActive]}>
-                    <Ionicons
-                      name={hasNumber ? 'checkmark' : 'ellipse-outline'}
-                      size={13}
-                      color={hasNumber ? Colors.proteinDark : Colors.textSecondary}
-                    />
-                    <Text style={[styles.checkPillText, hasNumber && styles.checkPillTextActive]}>
-                      At least 1 number
-                    </Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Submit Action Button */}
-              <Pressable
-                onPress={handleSubmit}
-                disabled={!isFormValid || isLoading}
-                style={({ pressed }) => [
-                  styles.submitButton,
-                  (!isFormValid || isLoading) && styles.submitButtonDisabled,
-                  pressed && isFormValid && styles.buttonPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  formMode === 'signup' ? 'Create Account & Save Plan' : 'Sign In & Link Plan'
-                }
-                testID="btn-submit-auth"
-              >
-                {isLoading ? (
-                  <BouncingDotsLoader color={Colors.onPrimary} size={5} gap={4} />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    {formMode === 'signup' ? 'Create Account & Save Plan' : 'Sign In & Link Plan'}
-                  </Text>
-                )}
-              </Pressable>
-
-              {/* Toggle between Signup and Signin */}
+            <Text style={styles.fieldLabel}>Password</Text>
+            <View
+              style={[
+                styles.input,
+                styles.passwordRow,
+                focusedField === 'password' && styles.inputFocused,
+              ]}
+            >
+              <TextInput
+                style={styles.passwordInput}
+                value={password}
+                onChangeText={setPassword}
+                placeholder={isSignup ? 'Create a password' : 'Your password'}
+                placeholderTextColor={Colors.textMuted}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
+                accessibilityLabel="Password"
+                testID="input-user-password"
+              />
               <Pressable
                 onPress={() => {
                   haptics.selection();
-                  setFormMode(prev => (prev === 'signup' ? 'signin' : 'signup'));
-                  setErrorMessage(null);
-                  setCollisionDetected(false);
+                  setShowPassword(prev => !prev);
                 }}
-                style={styles.switchModeBtn}
-                testID="btn-toggle-auth-mode"
+                style={styles.eyeButton}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                testID="btn-toggle-password-visibility"
               >
-                <Text style={styles.switchModeText}>
-                  {formMode === 'signup'
-                    ? 'Already have an account? Sign in'
-                    : 'Need an account? Register instead'}
-                </Text>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={Colors.textSecondary}
+                />
               </Pressable>
             </View>
 
-            {/* 7. Continue as Guest Link */}
-            <Pressable
-              onPress={handleGuestContinue}
-              disabled={isLoading}
-              style={({ pressed }) => [styles.guestButton, pressed && styles.buttonPressed]}
-              testID="btn-continue-guest"
-              accessibilityRole="button"
-              accessibilityLabel="Continue without an account"
-            >
-              <Text style={styles.guestButtonText}>Continue without an account</Text>
-            </Pressable>
+            {isSignup ? (
+              <View style={styles.reqRow}>
+                {reqChip(hasMinLength, '8+ characters', 'req-length')}
+                {reqChip(hasNumber, '1 number', 'req-number')}
+              </View>
+            ) : null}
 
-            {/* 8. Privacy Commitment */}
             <View style={styles.privacyRow}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={13}
-                color={Colors.textSecondary}
-                style={styles.lockIcon}
-              />
-              <Text style={styles.privacyText}>
+              <Ionicons name="lock-closed-outline" size={13} color={Colors.textSecondary} />
+              <Text style={styles.privacyText} maxFontSizeMultiplier={1.3}>
                 Your data stays private. We never sell it.{' '}
                 <Text
                   style={styles.privacyLink}
+                  accessibilityRole="link"
                   onPress={() => Linking.openURL('https://calorify.app/privacy')}
                 >
                   Privacy
@@ -546,6 +379,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                 &{' '}
                 <Text
                   style={styles.privacyLink}
+                  accessibilityRole="link"
                   onPress={() => Linking.openURL('https://calorify.app/terms')}
                 >
                   Terms
@@ -554,47 +388,86 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
               </Text>
             </View>
           </ScrollView>
+
+          <View style={styles.footer}>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={submitDisabled}
+              style={({ pressed }) => [
+                styles.submitButton,
+                submitDisabled && styles.submitButtonDisabled,
+                pressed && !submitDisabled && styles.submitButtonPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={submitLabel}
+              accessibilityState={{ disabled: submitDisabled, busy: isLoading }}
+              testID="btn-submit-auth"
+            >
+              {isLoading ? (
+                <BouncingDotsLoader color={Colors.textInverse} size={5} gap={4} />
+              ) : (
+                <Text style={styles.submitText}>{submitLabel}</Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => switchMode(isSignup ? 'signin' : 'signup')}
+              style={styles.linkButton}
+              accessibilityRole="button"
+              testID="btn-toggle-auth-mode"
+            >
+              <Text style={styles.linkText} maxFontSizeMultiplier={1.3}>
+                {isSignup ? 'Already have an account? ' : 'New here? '}
+                <Text style={styles.linkStrong}>{isSignup ? 'Sign in' : 'Create an account'}</Text>
+              </Text>
+            </Pressable>
+
+            {isSignup ? (
+              <Pressable
+                onPress={handleGuestContinue}
+                disabled={isLoading}
+                style={styles.guestButton}
+                accessibilityRole="button"
+                accessibilityLabel="Continue without an account. Your plan stays on this phone and isn’t backed up."
+                testID="btn-continue-guest"
+              >
+                <Text style={styles.guestTitle} maxFontSizeMultiplier={1.3}>
+                  Continue without an account
+                </Text>
+                <Text style={styles.guestSub} maxFontSizeMultiplier={1.3}>
+                  Your plan stays on this phone and isn’t backed up.
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </KeyboardAvoidingView>
       </View>
 
-      {/* 9. Founder Note Modal */}
       <Modal visible={showFounderNote} transparent animationType="fade">
         <Pressable
-          style={styles.modalBackdrop}
+          style={styles.scrim}
           onPress={handleProceedToNext}
+          accessibilityRole="button"
+          accessibilityLabel="Continue"
           testID="founder-note-backdrop"
         >
-          <Animated.View entering={FadeInDown.duration(350)} style={styles.founderCard}>
-            <View style={styles.founderBadgeRow}>
-              <View style={styles.founderFlameIcon}>
-                <Ionicons name="flame" size={14} color={Colors.primary} />
-              </View>
-              <Text style={styles.founderBadgeText}>A QUICK NOTE FROM THE MAKER</Text>
-            </View>
-
-            <Text style={styles.founderTitle}>
-              Hi {userName.trim() || name.trim() || 'friend'},
-            </Text>
-
-            <Text style={styles.founderBody}>
+          <Animated.View
+            entering={reduceMotion ? undefined : FadeInDown.duration(MotionDurations.sheet)}
+            style={styles.note}
+          >
+            <Text style={styles.noteBadge}>A QUICK NOTE FROM THE MAKER</Text>
+            <Text style={styles.noteTitle}>{displayName ? `Hi ${displayName},` : 'Hi,'}</Text>
+            <Text style={styles.noteBody}>
               Thanks for trusting Calorify with your food. I built it because tracking nutrition
               should take seconds, not minutes.
             </Text>
-
-            <Text style={styles.founderBody}>
-              Your plan is ready and your first meal is secured. Tell me what&apos;s missing as you
-              go.
+            <Text style={styles.noteBody}>
+              Your plan is saved. Tell me what’s missing as you go.
             </Text>
-
-            <View style={styles.founderSignatureRow}>
-              <Text style={styles.founderSignature}>— Naveen</Text>
-              <Text style={styles.founderRole}>Founder, Calorify</Text>
-            </View>
-
-            <View style={styles.tapToContinueHint}>
-              <Text style={styles.tapToContinueText}>Tap anywhere to continue</Text>
-              <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
-            </View>
+            <Text style={styles.noteSig}>
+              — Naveen <Text style={styles.noteRole}>· Founder, Calorify</Text>
+            </Text>
+            <Text style={styles.noteTap}>Tap anywhere to continue</Text>
           </Animated.View>
         </Pressable>
       </Modal>
@@ -602,403 +475,219 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
   );
 };
 
+const cardBase = {
+  backgroundColor: Colors.card,
+  borderWidth: 1,
+  borderColor: Colors.borderSubtle,
+  borderRadius: 10,
+  borderCurve: 'continuous',
+  elevation: 0,
+} as const;
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   phoneFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
   },
-  flexOne: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
-  titleContainer: {
-    marginBottom: 20,
-  },
-  title: {
-    fontFamily: Fonts.kurale,
+  flexOne: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingTop: 22, paddingBottom: 20 },
+  question: {
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 28,
-    lineHeight: 36,
+    lineHeight: 34,
+    letterSpacing: -0.8,
     color: Colors.textPrimary,
-    marginBottom: 8,
   },
   subtitle: {
-    fontFamily: Fonts.urbanist.medium,
+    marginTop: 6,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 21,
     color: Colors.textSecondary,
   },
   summaryCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderWhisper,
-    padding: 16,
-    marginBottom: 20,
-  },
-  summaryTopRow: {
+    ...cardBase,
+    marginTop: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
-  calorieCol: {
-    flexDirection: 'column',
-  },
-  calorieNumber: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 28,
-    lineHeight: 34,
+  summaryKcal: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 24,
+    letterSpacing: -0.5,
     color: Colors.textPrimary,
-    letterSpacing: -0.02,
   },
-  calorieUnit: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 18,
+  summaryUnit: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13.5,
+    letterSpacing: 0,
     color: Colors.textSecondary,
   },
-  targetCol: {
-    alignItems: 'flex-end',
-  },
-  goalDatePill: {
+  goalPill: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: Colors.primaryLight,
   },
-  goalDatePillText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 12,
+  goalPillText: {
+    flexShrink: 1,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13,
     color: Colors.primaryDeep,
   },
-  cardDivider: {
-    height: 1,
-    backgroundColor: Colors.surfaceInset,
-    marginVertical: 12,
-  },
-  mealBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  mealStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.proteinLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  mealStatusText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    color: Colors.proteinDark,
-    letterSpacing: 0.02,
-  },
-  mealDetailsText: {
-    flex: 1,
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    color: Colors.textSlate600,
-  },
   errorBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.errorLight,
-    borderWidth: 1,
-    borderColor: Colors.dangerLight,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorIcon: {
-    marginRight: 8,
-    marginTop: 2,
-  },
-  errorTextCol: {
-    flex: 1,
+    ...cardBase,
+    marginTop: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.primaryLight,
   },
   errorText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 13,
-    lineHeight: 18,
-    color: Colors.dangerDark,
-  },
-  collisionActionBtn: {
-    marginTop: 6,
-  },
-  collisionActionText: {
     fontFamily: Fonts.urbanist.bold,
-    fontSize: 13,
-    color: Colors.water,
-  },
-  googleButton: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    marginBottom: 18,
-  },
-  googleIcon: {
-    marginRight: 10,
-  },
-  googleButtonText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 14,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.borderInset,
-  },
-  dividerText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textMuted,
-    paddingHorizontal: 12,
-  },
-  formContainer: {
-    marginTop: 8,
-  },
-  inputGroup: {
-    marginBottom: 14,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: Colors.primaryDeep,
   },
   fieldLabel: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: Colors.textSlate700,
+    marginTop: 14,
     marginBottom: 6,
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 13.5,
+    color: Colors.textPrimary,
   },
-  inputField: {
+  input: {
+    ...cardBase,
     height: 48,
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    borderRadius: 10,
-    borderCurve: 'continuous',
     paddingHorizontal: 14,
-    fontFamily: Fonts.urbanist.medium,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: Colors.textPrimary,
   },
-  passwordWrapper: {
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceLow,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    paddingHorizontal: 14,
-  },
+  inputFocused: { borderColor: Colors.primary },
+  passwordRow: { flexDirection: 'row', alignItems: 'center', paddingRight: 2 },
   passwordInput: {
     flex: 1,
-    fontFamily: Fonts.urbanist.medium,
+    height: 48,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 15,
     color: Colors.textPrimary,
-    height: 48,
   },
-  inputFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.card,
-  },
-  checklistRow: {
-    flexDirection: 'row',
+  eyeButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    gap: 8,
-    marginTop: 2,
-    marginBottom: 16,
+    justifyContent: 'center',
   },
-  checkPill: {
+  reqRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  reqChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 999,
     backgroundColor: Colors.surfaceInset,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
   },
-  checkPillActive: {
-    backgroundColor: Colors.proteinLight,
-  },
-  checkPillText: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  checkPillTextActive: {
-    color: Colors.proteinDark,
-    fontFamily: Fonts.urbanist.semiBold,
-  },
-  submitButton: {
-    height: 52,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  submitButtonDisabled: {
-    backgroundColor: Colors.borderMedium,
-  },
-  submitButtonText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 16,
-    color: Colors.onPrimary,
-  },
-  switchModeBtn: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  switchModeText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  guestButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  guestButtonText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
+  reqChipMet: { backgroundColor: Colors.successLight },
+  reqText: { fontFamily: Fonts.urbanist.bold, fontSize: 12.5, color: Colors.textSecondary },
+  reqTextMet: { color: Colors.successDark },
   privacyRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    marginTop: 16,
+    gap: 6,
+    marginTop: 20,
     paddingHorizontal: 12,
   },
-  lockIcon: {
-    marginRight: 6,
-  },
   privacyText: {
-    fontFamily: Fonts.urbanist.regular,
+    flexShrink: 1,
+    fontFamily: Fonts.urbanist.semiBold,
     fontSize: 12,
     lineHeight: 18,
     color: Colors.textSecondary,
     textAlign: 'center',
   },
   privacyLink: {
-    fontFamily: Fonts.urbanist.semiBold,
+    fontFamily: Fonts.urbanist.bold,
     color: Colors.textPrimary,
     textDecorationLine: 'underline',
   },
-  buttonPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: Colors.overlayDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  founderCard: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: Colors.card,
-    borderRadius: 16,
+  footer: { paddingTop: 12, paddingBottom: 12 },
+  submitButton: {
+    height: ControlHeights.button + 4,
+    borderRadius: ControlRadii.button,
     borderCurve: 'continuous',
-    padding: 24,
-  },
-  founderBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  founderFlameIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 0,
   },
-  founderBadgeText: {
-    fontFamily: Fonts.urbanist.bold,
-    fontSize: 11,
-    letterSpacing: 0.04,
+  submitButtonDisabled: { opacity: 0.4 },
+  submitButtonPressed: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  submitText: { fontFamily: Fonts.urbanist.bold, fontSize: 17, color: Colors.textInverse },
+  linkButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  linkText: { fontFamily: Fonts.urbanist.bold, fontSize: 14.5, color: Colors.textSecondary },
+  linkStrong: { color: Colors.primaryDeep },
+  guestButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  guestTitle: { fontFamily: Fonts.urbanist.bold, fontSize: 14.5, color: Colors.textPrimary },
+  guestSub: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 12.5,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  scrim: {
+    flex: 1,
+    backgroundColor: Colors.overlayScrim,
+    justifyContent: 'flex-end',
+    padding: 16,
+  },
+  note: { ...cardBase, width: '100%', maxWidth: 448, alignSelf: 'center', padding: 18 },
+  noteBadge: {
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 11.5,
+    letterSpacing: 0.6,
     color: Colors.primaryDeep,
   },
-  founderTitle: {
-    fontFamily: Fonts.kurale,
+  noteTitle: {
+    marginTop: 10,
+    marginBottom: 6,
+    fontFamily: Fonts.urbanist.extraBold,
     fontSize: 22,
     color: Colors.textPrimary,
-    marginBottom: 12,
   },
-  founderBody: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 14,
-    lineHeight: 22,
-    color: Colors.textSlate700,
-    marginBottom: 10,
+  noteBody: {
+    marginBottom: 8,
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 14.5,
+    lineHeight: 21,
+    color: Colors.textSecondary,
   },
-  founderSignatureRow: {
-    marginTop: 14,
-    marginBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceInset,
-    paddingTop: 14,
-  },
-  founderSignature: {
-    fontFamily: Fonts.kurale,
-    fontSize: 20,
+  noteSig: {
+    marginTop: 6,
+    fontFamily: Fonts.urbanist.extraBold,
+    fontSize: 15,
     color: Colors.textPrimary,
   },
-  founderRole: {
-    fontFamily: Fonts.urbanist.medium,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  tapToContinueHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingTop: 8,
-  },
-  tapToContinueText: {
-    fontFamily: Fonts.urbanist.semiBold,
-    fontSize: 13,
+  noteRole: { fontFamily: Fonts.urbanist.semiBold, fontSize: 13, color: Colors.textSecondary },
+  noteTap: {
+    marginTop: 12,
+    textAlign: 'center',
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 12.5,
     color: Colors.textMuted,
   },
 });

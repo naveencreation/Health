@@ -40,6 +40,7 @@ jest.mock('react-native-reanimated', () => {
     FadeIn: { duration: () => ({ delay: () => ({}) }) },
     FadeInDown: { duration: () => ({ delay: () => ({}) }) },
     FadeOut: { duration: () => ({ delay: () => ({}) }) },
+    useReducedMotion: () => false,
   };
 });
 
@@ -65,9 +66,14 @@ jest.mock('../../services/onboardingMigration', () => ({
 }));
 
 // Mock firebase auth
+const mockAuth: { currentUser: { uid?: string; email: string } | null } = {
+  currentUser: { uid: 'mock_uid_123', email: 'test@example.com' },
+};
 jest.mock('@/services/firebase', () => ({
   auth: {
-    currentUser: { uid: 'mock_uid_123', email: 'test@example.com' },
+    get currentUser() {
+      return mockAuth.currentUser;
+    },
   },
   db: {},
 }));
@@ -76,19 +82,20 @@ jest.mock('@/services/firebase', () => ({
 const mockRegister = jest.fn();
 const mockLogin = jest.fn();
 const mockLoginAnonymous = jest.fn();
+let mockContextUser: { id: string } | null = { id: 'mock_uid_123' };
 
 jest.mock('@/context/HealthContext', () => ({
   useAuth: () => ({
     register: mockRegister,
     login: mockLogin,
     loginAnonymous: mockLoginAnonymous,
-    currentUser: { id: 'mock_uid_123' },
+    currentUser: mockContextUser,
   }),
 }));
 
 describe('SavePlanScreen (S14)', () => {
   const samplePlan: CalculatedHealthPlan = {
-    dailyCalorieBudget: 2150,
+    dailyCalorieBudget: 1882,
     targetProteinG: 130,
     targetCarbsG: 240,
     targetFatG: 70,
@@ -119,55 +126,78 @@ describe('SavePlanScreen (S14)', () => {
     onSuccess: jest.fn(),
   };
 
+  const fillValidCredentials = async (
+    getByTestId: (id: string) => any,
+    email = 'aarav@example.com'
+  ) => {
+    await act(async () => {
+      fireEvent.changeText(getByTestId('input-user-email'), email);
+      fireEvent.changeText(getByTestId('input-user-password'), 'calorify2026');
+    });
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAuth.currentUser = { uid: 'mock_uid_123', email: 'test@example.com' };
+    mockContextUser = { id: 'mock_uid_123' };
     mockRegister.mockResolvedValue({ success: true });
     mockLogin.mockResolvedValue({ success: true });
     mockLoginAnonymous.mockResolvedValue({ success: true });
   });
 
-  it('renders title with user name, plan summary numbers, and plan calibrated badge', async () => {
-    const { getByText, getByTestId } = await render(<SavePlanScreen {...defaultProps} />);
+  it('renders title, subtitle, formatted summary, guest sub-line and no Google button', async () => {
+    const { getByText, getByTestId, queryByTestId, queryByText } = await render(
+      <SavePlanScreen {...defaultProps} />
+    );
 
-    expect(getByText('Save your plan, Aarav.')).toBeTruthy();
+    expect(getByText('Save your plan, Aarav')).toBeTruthy();
     expect(
-      getByText('So your calculated numbers and your first meal are never lost.')
+      getByText('An account backs up your plan and logs, and brings them to a new phone.')
     ).toBeTruthy();
-    expect(getByText('2150')).toBeTruthy(); // Calories
-    expect(getByText('Plan calibrated')).toBeTruthy();
-    expect(getByTestId('btn-continue-google')).toBeTruthy();
+    expect(getByTestId('plan-summary-card')).toBeTruthy();
+    expect(getByText(/1,882/)).toBeTruthy();
+    expect(queryByTestId('btn-continue-google')).toBeNull();
+    expect(queryByText('Plan calibrated')).toBeNull();
+    expect(getByText('Continue without an account')).toBeTruthy();
+    expect(getByText('Your plan stays on this phone and isn’t backed up.')).toBeTruthy();
   });
 
-  it('updates password checklist chips as user types', async () => {
-    const { getByTestId, getByText } = await render(<SavePlanScreen {...defaultProps} />);
-
-    const passwordInput = getByTestId('input-user-password');
-
-    // Type weak password
-    await act(async () => {
-      fireEvent.changeText(passwordInput, 'pass');
-    });
-
-    expect(getByText('8+ characters')).toBeTruthy();
-    expect(getByText('At least 1 number')).toBeTruthy();
-
-    // Type valid password
-    await act(async () => {
-      fireEvent.changeText(passwordInput, 'calorify2026');
-    });
-
-    expect(getByText('8+ characters')).toBeTruthy();
-    expect(getByText('At least 1 number')).toBeTruthy();
+  it('hides the Name field when the wizard has a name', async () => {
+    const { queryByTestId } = await render(<SavePlanScreen {...defaultProps} />);
+    expect(queryByTestId('input-user-name')).toBeNull();
   });
 
-  it('submits registration when form is valid, migrates data, and displays founder note', async () => {
-    const { getByTestId, getByText } = await render(<SavePlanScreen {...defaultProps} />);
+  it('shows the Name field when the wizard name is empty and registers with it', async () => {
+    const { getByTestId, getByText } = await render(
+      <SavePlanScreen {...defaultProps} name="" draft={{ ...sampleDraft, name: undefined }} />
+    );
+    expect(getByText('Save your plan')).toBeTruthy();
 
     await act(async () => {
-      fireEvent.changeText(getByTestId('input-user-email'), 'aarav@example.com');
-      fireEvent.changeText(getByTestId('input-user-password'), 'calorify2026');
+      fireEvent.changeText(getByTestId('input-user-name'), 'Meera');
     });
+    await fillValidCredentials(getByTestId, 'meera@example.com');
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-submit-auth'));
+    });
+    expect(mockRegister).toHaveBeenCalledWith(expect.objectContaining({ name: 'Meera' }));
+  });
 
+  it('shows the requirement chips and enables Create account only when valid', async () => {
+    const { getByTestId, getByText } = await render(<SavePlanScreen {...defaultProps} />);
+
+    expect(getByText('8+ characters')).toBeTruthy();
+    expect(getByText('1 number')).toBeTruthy();
+    expect(getByTestId('btn-submit-auth').props.accessibilityState.disabled).toBe(true);
+
+    await fillValidCredentials(getByTestId);
+    expect(getByTestId('btn-submit-auth').props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('submits registration, migrates under the real uid, and shows the maker note', async () => {
+    const { getByTestId, getByText } = await render(<SavePlanScreen {...defaultProps} />);
+
+    await fillValidCredentials(getByTestId);
     await act(async () => {
       fireEvent.press(getByTestId('btn-submit-auth'));
     });
@@ -179,49 +209,66 @@ describe('SavePlanScreen (S14)', () => {
         password: 'calorify2026',
       })
     );
-
-    expect(mockMigrateOnboardingData).toHaveBeenCalled();
-    // Founder note appears
+    expect(mockMigrateOnboardingData).toHaveBeenCalledWith(
+      'mock_uid_123',
+      'aarav@example.com',
+      expect.anything(),
+      expect.anything(),
+      false
+    );
     expect(getByText('A QUICK NOTE FROM THE MAKER')).toBeTruthy();
-    expect(getByText('— Naveen')).toBeTruthy();
+    expect(getByText('Hi Aarav,')).toBeTruthy();
+    expect(getByText(/— Naveen/)).toBeTruthy();
   });
 
-  it('handles account collision by offering inline switch to sign-in', async () => {
+  it('on email collision switches to sign-in mode, then signs in and migrates', async () => {
     mockRegister.mockResolvedValueOnce({
       success: false,
       error: 'This email is already registered. Please sign in.',
     });
 
-    const { getByTestId, getByText } = await render(<SavePlanScreen {...defaultProps} />);
+    const { getByTestId, getByText, queryByText } = await render(
+      <SavePlanScreen {...defaultProps} />
+    );
 
-    await act(async () => {
-      fireEvent.changeText(getByTestId('input-user-email'), 'existing@example.com');
-      fireEvent.changeText(getByTestId('input-user-password'), 'calorify2026');
-    });
-
+    await fillValidCredentials(getByTestId, 'existing@example.com');
     await act(async () => {
       fireEvent.press(getByTestId('btn-submit-auth'));
     });
 
-    // Collision alert appears
-    expect(getByText('An account with this email already exists.')).toBeTruthy();
-    expect(getByTestId('btn-switch-collision-signin')).toBeTruthy();
+    expect(
+      getByText('There’s already an account with this email. Enter its password to sign in.')
+    ).toBeTruthy();
+    expect(getByText('Welcome back, Aarav')).toBeTruthy();
+    expect(getByText('Sign in and we’ll save this plan to your account.')).toBeTruthy();
+    expect(getByText(/New here\?/)).toBeTruthy();
+    expect(queryByText('Continue without an account')).toBeNull();
+    expect(queryByText('8+ characters')).toBeNull();
 
-    // Tap switch to signin
-    await act(async () => {
-      fireEvent.press(getByTestId('btn-switch-collision-signin'));
-    });
-
-    // Button updates to Sign In
-    expect(getByText('Sign In & Link Plan')).toBeTruthy();
-
-    // Submit sign in
     await act(async () => {
       fireEvent.press(getByTestId('btn-submit-auth'));
     });
 
     expect(mockLogin).toHaveBeenCalledWith('existing@example.com', 'calorify2026');
-    expect(mockMigrateOnboardingData).toHaveBeenCalled();
+    expect(mockMigrateOnboardingData).toHaveBeenCalledTimes(1);
+  });
+
+  it('never invents an id: with no uid it shows an error and skips migration', async () => {
+    mockAuth.currentUser = null;
+    mockContextUser = null;
+
+    const { getByTestId, getByText, queryByText } = await render(
+      <SavePlanScreen {...defaultProps} />
+    );
+
+    await fillValidCredentials(getByTestId);
+    await act(async () => {
+      fireEvent.press(getByTestId('btn-submit-auth'));
+    });
+
+    expect(getByText('Couldn’t finish signing in. Please try again.')).toBeTruthy();
+    expect(mockMigrateOnboardingData).not.toHaveBeenCalled();
+    expect(queryByText('A QUICK NOTE FROM THE MAKER')).toBeNull();
   });
 
   it('handles guest login cleanly when user taps "Continue without an account"', async () => {
@@ -232,7 +279,13 @@ describe('SavePlanScreen (S14)', () => {
     });
 
     expect(mockLoginAnonymous).toHaveBeenCalledWith('Aarav');
-    expect(mockMigrateOnboardingData).toHaveBeenCalled();
+    expect(mockMigrateOnboardingData).toHaveBeenCalledWith(
+      'mock_uid_123',
+      '',
+      expect.anything(),
+      expect.anything(),
+      true
+    );
     expect(getByText('A QUICK NOTE FROM THE MAKER')).toBeTruthy();
   });
 
@@ -246,7 +299,6 @@ describe('SavePlanScreen (S14)', () => {
       fireEvent.press(getByTestId('btn-continue-guest'));
     });
 
-    // Tap backdrop
     await act(async () => {
       fireEvent.press(getByTestId('founder-note-backdrop'));
     });
