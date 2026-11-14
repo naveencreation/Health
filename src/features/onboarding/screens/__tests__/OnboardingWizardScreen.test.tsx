@@ -27,6 +27,11 @@ jest.mock('react-native-reanimated', () => {
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
+const mockApplyOnboardingPlan = jest.fn().mockResolvedValue(undefined);
+jest.mock('@/context', () => ({
+  useAuth: () => ({ applyOnboardingPlan: mockApplyOnboardingPlan }),
+}));
+
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
   MaterialCommunityIcons: 'MaterialCommunityIcons',
@@ -412,5 +417,19 @@ describe('OnboardingWizardScreen', () => {
     fireEvent.press(getByTestId('btn-paywall-skip'));
     const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
     expect(enableBtn).toBeTruthy();
+  });
+
+  it('applies the plan when Save plan succeeds, before reaching the paywall', async () => {
+    const onComplete = jest.fn();
+    const { getByTestId, findByRole } = await render(
+      <OnboardingWizardScreen onComplete={onComplete} initialStep="save_plan" />
+    );
+
+    fireEvent.press(await findByRole('button', { name: 'Save Plan Continue' }));
+
+    await waitFor(() => expect(getByTestId('step-paywall')).toBeTruthy());
+    expect(mockApplyOnboardingPlan).toHaveBeenCalledTimes(1);
+    expect(mockApplyOnboardingPlan.mock.calls[0][0].plan.dailyCalorieBudget).toBeGreaterThan(0);
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });

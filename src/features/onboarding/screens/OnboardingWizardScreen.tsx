@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, Platform, BackHandler } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NameInputScreen } from './NameInputScreen';
@@ -38,6 +38,7 @@ import {
 } from '../services/onboardingDraft';
 import { requestStepsPermission } from '@/features/health/healthPermissions';
 import { NotificationService, NotificationStorage } from '@/services/notifications';
+import { useAuth } from '@/context';
 
 export type OnboardingStep =
   | 'name'
@@ -136,6 +137,12 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 }) => {
   const [stepHistory, setStepHistory] = useState<OnboardingStep[]>([initialStep]);
   const currentStep = stepHistory[stepHistory.length - 1];
+  // Ref, not closure: SavePlan's onSuccess fires from a timer captured before login re-rendered.
+  const { applyOnboardingPlan } = useAuth();
+  const applyPlanRef = useRef(applyOnboardingPlan);
+  useEffect(() => {
+    applyPlanRef.current = applyOnboardingPlan;
+  }, [applyOnboardingPlan]);
 
   // User responses
   const [name, setName] = useState<string>(initialBiometrics?.name ?? '');
@@ -322,7 +329,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     [biometricsInput]
   );
 
-  const handleFinish = async () => {
+  const saveMealReminders = async () => {
     try {
       await NotificationStorage.updateSettings({
         meals: {
@@ -336,22 +343,39 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     } catch {
       // Non-blocking fallback
     }
+  };
+
+  const buildCompleteData = (): OnboardingCompleteData => ({
+    biometrics: {
+      ...biometricsInput,
+      weightUnit,
+      heightUnit,
+      name,
+      goalIntent,
+      struggles,
+      foodStyle,
+      mealTimes,
+      skipsBreakfast,
+      snacks,
+    },
+    plan: calculatedPlan,
+  });
+
+  // The account exists after Save plan, so apply the plan now; quitting on a later step must not lose it.
+  const handleSavePlanSuccess = async () => {
+    try {
+      await saveMealReminders();
+      await applyPlanRef.current?.(buildCompleteData());
+    } catch {
+      // Non-blocking: handleFinish applies it again
+    }
+    pushStep('paywall');
+  };
+
+  const handleFinish = async () => {
+    await saveMealReminders();
     await clearOnboardingDraft();
-    await onComplete({
-      biometrics: {
-        ...biometricsInput,
-        weightUnit,
-        heightUnit,
-        name,
-        goalIntent,
-        struggles,
-        foodStyle,
-        mealTimes,
-        skipsBreakfast,
-        snacks,
-      },
-      plan: calculatedPlan,
-    });
+    await onComplete(buildCompleteData());
   };
 
   const handleEnablePermissions = async () => {
@@ -723,7 +747,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           targetWeightKg={targetWeightKg}
           weightUnit={weightUnit}
           onBack={popStep}
-          onSuccess={() => pushStep('paywall')}
+          onSuccess={handleSavePlanSuccess}
           sectionIndex={3}
           totalSections={4}
           sectionProgress={1.0}

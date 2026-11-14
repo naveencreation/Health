@@ -165,7 +165,7 @@ describe('SavePlan Migration Integration Tests', () => {
   });
 
   describe('1. Full New User Registration & Migration Chain', () => {
-    it('persists draft to AsyncStorage, executes registration, and verifies Firestore and local storage writes', async () => {
+    it('persists draft to AsyncStorage, executes registration, and verifies local storage writes', async () => {
       // 1. Pre-condition: User has draft saved in storage during wizard
       await saveOnboardingDraft(sampleDraft);
       const loadedDraft = await loadOnboardingDraft();
@@ -211,24 +211,8 @@ describe('SavePlan Migration Integration Tests', () => {
         heightCm: 162,
       });
 
-      // 5. Verify Firestore writes
-      // Should write to /users/user_new_priya_101 with merge: true
-      expect(mockDoc).toHaveBeenCalledWith(expect.anything(), 'users', 'user_new_priya_101');
-      expect(mockSetDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: 'users/user_new_priya_101' }),
-        expect.objectContaining({
-          id: 'user_new_priya_101',
-          name: 'Priya Sharma',
-          email: 'priya@example.com',
-          isGuest: false,
-          goals: expect.objectContaining({
-            dailyCalorieBudget: 1550,
-            targetProtein: 95,
-            targetWaterMl: 2400,
-          }),
-        }),
-        { merge: true }
-      );
+      // 5. No profile doc write (rules reject it); goals sync via HealthContext
+      expect(mockSetDoc).not.toHaveBeenCalled();
 
       // 6. Verify Local Storage Goals
       const rawStoredGoals = await AsyncStorage.getItem('@calori_user_goals_user_new_priya_101');

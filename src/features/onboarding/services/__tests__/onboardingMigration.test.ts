@@ -121,7 +121,7 @@ describe('onboardingMigration', () => {
   });
 
   describe('migrateOnboardingData', () => {
-    it('writes profile, saves user goals, does not write the first meal, and clears draft', async () => {
+    it('saves user goals (no Firestore profile write), does not write the first meal, and clears draft', async () => {
       // Set an active draft in AsyncStorage first
       await AsyncStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(sampleDraft));
 
@@ -135,9 +135,8 @@ describe('onboardingMigration', () => {
 
       expect(result.success).toBe(true);
 
-      // Check Firestore doc writes
-      expect(mockDoc).toHaveBeenCalled();
-      expect(mockSetDoc).toHaveBeenCalled();
+      // The rules reject this profile shape, so it is never written
+      expect(mockSetDoc).not.toHaveBeenCalled();
 
       // Check user goals stored in AsyncStorage
       const storedGoals = await AsyncStorage.getItem('@calori_user_goals_user_123');
@@ -154,7 +153,7 @@ describe('onboardingMigration', () => {
       expect(remainingDraft).toBeNull();
     });
 
-    it('does not write to Firestore for guests or demo users, but still saves goals locally', async () => {
+    it('never writes to Firestore; saves goals locally for every uid kind', async () => {
       mockSetDoc.mockClear();
       for (const [uid, isGuest] of [
         ['user_real_1', true],
@@ -168,7 +167,7 @@ describe('onboardingMigration', () => {
       expect(mockSetDoc).not.toHaveBeenCalled();
 
       await migrateOnboardingData('user_real_2', 'a@b.co', sampleDraft, samplePlan, false);
-      expect(mockSetDoc).toHaveBeenCalledTimes(1);
+      expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
     it('works cleanly when firstMeal is undefined (user skipped meal logging)', async () => {

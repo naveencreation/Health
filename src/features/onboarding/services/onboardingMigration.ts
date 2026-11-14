@@ -1,6 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase';
 import { LoggedMealItem, UserGoals, MealType } from '@/types';
 import { OnboardingDraft, PendingMeal, clearOnboardingDraft } from './onboardingDraft';
 import { CalculatedHealthPlan } from './onboardingCalculator';
@@ -129,8 +127,9 @@ export function buildUserProfilePayload(
 }
 
 /**
- * Migrates onboarding draft data to the user profile and goals. The first meal is written
- * once, with the local date, by HealthContext applyOnboardingPlan.
+ * Saves onboarding goals locally and purges the draft. Goals reach the cloud via the
+ * HealthContext goals sync; the rules reject a profile doc with these fields, so none is written.
+ * The first meal is written once, with the local date, by HealthContext applyOnboardingPlan.
  * Also safely purges the local onboarding draft.
  */
 export async function migrateOnboardingData(
@@ -141,19 +140,7 @@ export async function migrateOnboardingData(
   isGuest = false
 ): Promise<MigrationResult> {
   try {
-    const profile = buildUserProfilePayload(uid, email, draft, plan, isGuest);
-
-    // 1. Write user profile to Firestore (guests and demo users never sync)
-    const localOnly = isGuest || uid.startsWith('demo_') || uid.startsWith('guest_');
-    if (!localOnly) {
-      try {
-        await setDoc(doc(db, 'users', uid), profile, { merge: true });
-      } catch (fsErr) {
-        console.warn('[onboardingMigration] Firestore profile write error (offline?):', fsErr);
-      }
-    }
-
-    // 2. Save user goals to local AsyncStorage
+    // 1. Save user goals to local AsyncStorage
     const goalsPayload: UserGoals = {
       name: draft.name || 'Friend',
       dailyCalorieBudget: plan.dailyCalorieBudget,
@@ -178,7 +165,7 @@ export async function migrateOnboardingData(
     await AsyncStorage.setItem('@calori_user_goals', JSON.stringify(goalsPayload));
     await AsyncStorage.setItem('@calori_user_goals_v1', JSON.stringify(goalsPayload));
 
-    // 3. Safely clear the onboarding draft
+    // 2. Safely clear the onboarding draft
     await clearOnboardingDraft();
 
     return { success: true };
