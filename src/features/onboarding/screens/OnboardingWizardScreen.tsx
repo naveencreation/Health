@@ -150,6 +150,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   const [weightChosen, setWeightChosen] = useState(false);
   const [activityChosen, setActivityChosen] = useState(false);
   const [paceChosen, setPaceChosen] = useState(false);
+  const [foodChosen, setFoodChosen] = useState(false);
   const [struggles, setStruggles] = useState<Struggle[]>([]);
   const [sex, setSex] = useState<Sex>(initialBiometrics?.sex ?? 'female');
   const [age, setAge] = useState<number>(initialBiometrics?.age ?? 25);
@@ -220,6 +221,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         ) {
           setActivityChosen(true);
           if (draft.step !== 'pace') setPaceChosen(true);
+          if (draft.step !== 'pace' && draft.step !== 'food_style') setFoodChosen(true);
         }
       }
 
@@ -610,9 +612,9 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     return (
       <View style={styles.container}>
         <FoodStyleScreen
-          initialFoodStyle={foodStyle}
+          initialFoodStyle={foodChosen ? foodStyle : undefined}
           initialMealTimes={mealTimes}
-          initialSkipsBreakfast={skipsBreakfast}
+          initialSkipsBreakfast={foodChosen ? skipsBreakfast : undefined}
           initialSnacks={snacks}
           onBack={popStep}
           onContinue={(data: FoodStyleData) => {
@@ -620,7 +622,13 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
             setMealTimes(data.mealTimes);
             setSkipsBreakfast(data.skipsBreakfast);
             setSnacks(data.snacks);
-            pushStep('building_plan');
+            setFoodChosen(true);
+            pushStep('building_plan', {
+              foodStyle: data.foodStyle,
+              mealTimes: data.mealTimes,
+              skipsBreakfast: data.skipsBreakfast,
+              snacks: data.snacks,
+            });
           }}
           onSkip={onSkip}
           sectionIndex={2}
