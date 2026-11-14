@@ -688,6 +688,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           firstStruggle={struggles[0]}
           targetWeightKg={targetWeightKg}
           weightUnit={weightUnit}
+          weightKg={weightKg}
           onBack={popStep}
           onLogFirstMeal={() => pushStep('first_meal')}
         />
