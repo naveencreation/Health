@@ -13,7 +13,6 @@ import { PaceSelectionScreen } from './PaceSelectionScreen';
 import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
 import { BuildingPlanScreen } from './BuildingPlanScreen';
 import { PlanRevealScreen } from './PlanRevealScreen';
-import { FirstMealWinScreen } from './FirstMealWinScreen';
 import { SavePlanScreen } from './SavePlanScreen';
 import { SoftPaywallScreen } from './SoftPaywallScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
@@ -53,7 +52,6 @@ export type OnboardingStep =
   | 'food_style'
   | 'building_plan'
   | 'plan'
-  | 'first_meal'
   | 'save_plan'
   | 'paywall'
   | 'permissions';
@@ -118,7 +116,6 @@ export const buildReconstructedHistory = (
     ...(skipWeightAndPace ? [] : (['pace'] as OnboardingStep[])),
     'food_style',
     'plan',
-    'first_meal',
     'save_plan',
     'paywall',
     'permissions',
@@ -175,13 +172,17 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   });
   const [skipsBreakfast, setSkipsBreakfast] = useState<boolean>(false);
   const [snacks, setSnacks] = useState<boolean>(true);
-  const [firstMeal, setFirstMeal] = useState<PendingMeal | undefined>(undefined);
 
   // Resume draft from AsyncStorage on mount
   useEffect(() => {
     let isMounted = true;
-    loadOnboardingDraft().then(draft => {
-      if (!isMounted || !draft) return;
+    loadOnboardingDraft().then(rawDraft => {
+      if (!isMounted || !rawDraft) return;
+      // The first_meal step was removed; drafts saved there resume at save_plan.
+      const draft =
+        (rawDraft.step as string) === 'first_meal'
+          ? { ...rawDraft, step: 'save_plan' as const }
+          : rawDraft;
       if (draft.name) setName(draft.name);
       if (draft.goal) setGoal(draft.goal);
       if (draft.goalIntent) setGoalIntent(draft.goalIntent);
@@ -199,7 +200,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       if (draft.mealTimes) setMealTimes(draft.mealTimes);
       if (typeof draft.skipsBreakfast === 'boolean') setSkipsBreakfast(draft.skipsBreakfast);
       if (typeof draft.snacks === 'boolean') setSnacks(draft.snacks);
-      if (draft.firstMeal) setFirstMeal(draft.firstMeal);
 
       // A draft at name/goal means nothing was picked yet; goalIntent there is just the default.
       if (draft.step && draft.step !== 'name' && draft.step !== 'goal') setGoalChosen(true);
@@ -261,7 +261,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         mealTimes,
         skipsBreakfast,
         snacks,
-        firstMeal,
         ...overrides,
       });
     },
@@ -283,7 +282,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       mealTimes,
       skipsBreakfast,
       snacks,
-      firstMeal,
     ]
   );
 
@@ -351,7 +349,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         mealTimes,
         skipsBreakfast,
         snacks,
-        firstMeal,
       },
       plan: calculatedPlan,
     });
@@ -670,7 +667,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
               mealTimes,
               skipsBreakfast,
               snacks,
-              firstMeal,
             });
           }}
         />
@@ -690,49 +686,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
           weightUnit={weightUnit}
           weightKg={weightKg}
           onBack={popStep}
-          onLogFirstMeal={() => pushStep('first_meal')}
-        />
-      </View>
-    );
-  }
-
-  // S13: First Meal Win (The Aha Moment)
-  if (currentStep === 'first_meal') {
-    return (
-      <View style={styles.container}>
-        <FirstMealWinScreen
-          name={name}
-          foodStyle={foodStyle}
-          dailyCalorieBudget={calculatedPlan.dailyCalorieBudget}
-          onBack={popStep}
-          onContinue={meal => {
-            setFirstMeal(meal);
-            saveOnboardingDraft({
-              step: 'first_meal',
-              name,
-              goal,
-              goalIntent,
-              struggles,
-              sex,
-              age,
-              heightCm,
-              weightKg,
-              units: { height: heightUnit, weight: weightUnit },
-              targetWeightKg,
-              activityLevel,
-              pace,
-              foodStyle,
-              mealTimes,
-              skipsBreakfast,
-              snacks,
-              firstMeal: meal,
-            });
-            pushStep('save_plan');
-          }}
-          onSkip={() => pushStep('save_plan')}
-          sectionIndex={3}
-          totalSections={4}
-          sectionProgress={0.66}
+          onContinue={() => pushStep('save_plan')}
         />
       </View>
     );
@@ -765,9 +719,7 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
             mealTimes,
             skipsBreakfast,
             snacks,
-            firstMeal,
           }}
-          firstMeal={firstMeal}
           targetWeightKg={targetWeightKg}
           weightUnit={weightUnit}
           onBack={popStep}

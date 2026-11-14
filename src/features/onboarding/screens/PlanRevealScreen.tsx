@@ -23,7 +23,7 @@ interface PlanRevealScreenProps {
   targetWeightKg?: number;
   weightUnit?: 'kg' | 'lbs';
   weightKg?: number;
-  onLogFirstMeal: () => void;
+  onContinue: () => void;
   onBack?: () => void;
 }
 
@@ -70,7 +70,7 @@ export const PlanRevealScreen: React.FC<PlanRevealScreenProps> = ({
   targetWeightKg,
   weightUnit = 'kg',
   weightKg,
-  onLogFirstMeal,
+  onContinue,
   onBack,
 }) => {
   const displayName = name?.trim();
@@ -93,7 +93,7 @@ export const PlanRevealScreen: React.FC<PlanRevealScreenProps> = ({
 
   const handleLogPress = () => {
     haptics.impactMedium();
-    onLogFirstMeal();
+    onContinue();
   };
 
   return (
@@ -230,10 +230,10 @@ export const PlanRevealScreen: React.FC<PlanRevealScreenProps> = ({
               pressed && styles.continueButtonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Log my first meal"
-            testID="btn-log-first-meal"
+            accessibilityLabel="Save my plan"
+            testID="btn-plan-continue"
           >
-            <Text style={styles.continueText}>Log my first meal</Text>
+            <Text style={styles.continueText}>Save my plan</Text>
           </Pressable>
         </View>
       </View>

@@ -119,7 +119,7 @@ describe('SavePlan Migration Integration Tests', () => {
 
   const sampleDraft: OnboardingDraft = {
     version: 1,
-    step: 'first_meal',
+    step: 'save_plan',
     startedAt: 1761000000000,
     name: 'Priya Sharma',
     goal: 'lose_weight',
@@ -179,7 +179,6 @@ describe('SavePlan Migration Integration Tests', () => {
           name="Priya Sharma"
           plan={samplePlan}
           draft={sampleDraft}
-          firstMeal={sampleFirstMeal}
           targetWeightKg={58}
           weightUnit="kg"
           onBack={jest.fn()}
@@ -300,7 +299,6 @@ describe('SavePlan Migration Integration Tests', () => {
           name="Arjun"
           plan={samplePlan}
           draft={sampleDraft}
-          firstMeal={sampleFirstMeal}
           targetWeightKg={65}
           weightUnit="kg"
           onBack={jest.fn()}
@@ -430,7 +428,6 @@ describe('SavePlan Migration Integration Tests', () => {
           name="Guest Traveler"
           plan={samplePlan}
           draft={{ ...sampleDraft, name: 'Guest Traveler' }}
-          firstMeal={sampleFirstMeal}
           targetWeightKg={58}
           weightUnit="kg"
           onBack={jest.fn()}

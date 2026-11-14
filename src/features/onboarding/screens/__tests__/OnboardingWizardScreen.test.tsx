@@ -206,44 +206,15 @@ jest.mock('../PlanRevealScreen', () => {
   const React = require('react');
   const { View, Pressable } = require('react-native');
   return {
-    PlanRevealScreen: ({ onLogFirstMeal, onBack }: any) => (
+    PlanRevealScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-plan">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Start My Journey"
-          testID="btn-log-first-meal"
-          onPress={onLogFirstMeal}
+          testID="btn-plan-continue"
+          onPress={onContinue}
         />
         <Pressable testID="btn-plan-back" onPress={onBack} />
-      </View>
-    ),
-  };
-});
-
-jest.mock('../FirstMealWinScreen', () => {
-  const React = require('react');
-  const { View, Pressable } = require('react-native');
-  return {
-    FirstMealWinScreen: ({ onContinue, onSkip }: any) => (
-      <View testID="step-first_meal">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Save my plan & continue"
-          testID="btn-first-meal-continue"
-          onPress={() =>
-            onContinue({
-              foodName: '2 Rotis with Dal',
-              calories: 340,
-              proteinG: 13,
-              carbsG: 52,
-              fatG: 8,
-              portionMultiplier: 1,
-              mealSlot: 'lunch',
-              loggedAt: Date.now(),
-            })
-          }
-        />
-        <Pressable testID="btn-first-meal-skip" onPress={onSkip} />
       </View>
     ),
   };
@@ -371,11 +342,6 @@ describe('OnboardingWizardScreen', () => {
     expect(planCta).toBeTruthy();
     fireEvent.press(planCta);
 
-    // First Meal Win
-    const firstMealCta = await findByRole('button', { name: 'Save my plan & continue' });
-    expect(firstMealCta).toBeTruthy();
-    fireEvent.press(firstMealCta);
-
     // S14 Save Plan
     const savePlanCta = await findByRole('button', { name: 'Save Plan Continue' });
     expect(savePlanCta).toBeTruthy();
@@ -406,7 +372,6 @@ describe('OnboardingWizardScreen', () => {
       expect(callData.biometrics.activityLevel).toBe('moderately_active');
       expect(callData.biometrics.pace).toBe('steady');
       expect(callData.biometrics.foodStyle).toBe('vegetarian');
-      expect(callData.biometrics.firstMeal?.foodName).toBe('2 Rotis with Dal');
       expect(callData.plan.dailyCalorieBudget).toBeGreaterThan(1200);
     });
 

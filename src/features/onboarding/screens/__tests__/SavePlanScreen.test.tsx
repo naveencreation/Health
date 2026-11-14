@@ -3,7 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import { SavePlanScreen } from '../SavePlanScreen';
 import { CalculatedHealthPlan } from '../../services/onboardingCalculator';
-import { OnboardingDraft, PendingMeal } from '../../services/onboardingDraft';
+import { OnboardingDraft } from '../../services/onboardingDraft';
 
 jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
 
@@ -100,24 +100,12 @@ describe('SavePlanScreen (S14)', () => {
     goalDate: '2026-11-20',
   };
 
-  const sampleFirstMeal: PendingMeal = {
-    foodName: 'Paneer Rice Bowl',
-    calories: 420,
-    proteinG: 18,
-    carbsG: 55,
-    fatG: 14,
-    portionMultiplier: 1.0,
-    mealSlot: 'lunch',
-    loggedAt: Date.now(),
-  };
-
   const sampleDraft: OnboardingDraft = {
     version: 1,
-    step: 'first_meal',
+    step: 'save_plan',
     startedAt: Date.now(),
     name: 'Aarav',
     goal: 'lose_weight',
-    firstMeal: sampleFirstMeal,
     targetWeightKg: 74,
   };
 
@@ -125,7 +113,6 @@ describe('SavePlanScreen (S14)', () => {
     name: 'Aarav',
     plan: samplePlan,
     draft: sampleDraft,
-    firstMeal: sampleFirstMeal,
     targetWeightKg: 74,
     weightUnit: 'kg' as const,
     onBack: jest.fn(),
@@ -139,14 +126,15 @@ describe('SavePlanScreen (S14)', () => {
     mockLoginAnonymous.mockResolvedValue({ success: true });
   });
 
-  it('renders title with user name, plan summary numbers, and 1 meal logged badge', async () => {
+  it('renders title with user name, plan summary numbers, and plan calibrated badge', async () => {
     const { getByText, getByTestId } = await render(<SavePlanScreen {...defaultProps} />);
 
     expect(getByText('Save your plan, Aarav.')).toBeTruthy();
-    expect(getByText('So your calculated numbers and your first meal are never lost.')).toBeTruthy();
+    expect(
+      getByText('So your calculated numbers and your first meal are never lost.')
+    ).toBeTruthy();
     expect(getByText('2150')).toBeTruthy(); // Calories
-    expect(getByText('1 meal logged')).toBeTruthy();
-    expect(getByText('420 kcal · Paneer Rice Bowl')).toBeTruthy();
+    expect(getByText('Plan calibrated')).toBeTruthy();
     expect(getByTestId('btn-continue-google')).toBeTruthy();
   });
 

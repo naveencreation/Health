@@ -40,14 +40,10 @@ describe('PlanRevealScreen', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('shows the title with and without a name', async () => {
-    const a = await render(
-      <PlanRevealScreen plan={mockPlan} name="Asha" onLogFirstMeal={jest.fn()} />
-    );
+    const a = await render(<PlanRevealScreen plan={mockPlan} name="Asha" onContinue={jest.fn()} />);
     expect(a.getByText('Your plan, Asha')).toBeTruthy();
     await a.unmount();
-    const b = await render(
-      <PlanRevealScreen plan={mockPlan} name="  " onLogFirstMeal={jest.fn()} />
-    );
+    const b = await render(<PlanRevealScreen plan={mockPlan} name="  " onContinue={jest.fn()} />);
     expect(b.getByText('Your plan')).toBeTruthy();
   });
 
@@ -63,17 +59,17 @@ describe('PlanRevealScreen', () => {
 
   it('renders the pill only when there is a goal line', async () => {
     const a = await render(
-      <PlanRevealScreen plan={mockPlan} targetWeightKg={65} onLogFirstMeal={jest.fn()} />
+      <PlanRevealScreen plan={mockPlan} targetWeightKg={65} onContinue={jest.fn()} />
     );
     expect(a.getByText('65 kg by 28 Nov 2026')).toBeTruthy();
     await a.unmount();
-    const b = await render(<PlanRevealScreen plan={maintainPlan} onLogFirstMeal={jest.fn()} />);
+    const b = await render(<PlanRevealScreen plan={maintainPlan} onContinue={jest.fn()} />);
     expect(b.queryByTestId('plan-goal-pill')).toBeNull();
   });
 
   it('shows the hero values immediately', async () => {
     const { getByText, getByTestId } = await render(
-      <PlanRevealScreen plan={mockPlan} onLogFirstMeal={jest.fn()} />
+      <PlanRevealScreen plan={mockPlan} onContinue={jest.fn()} />
     );
     expect(getByText('1,850')).toBeTruthy();
     expect(getByText('140 g')).toBeTruthy();
@@ -104,20 +100,20 @@ describe('PlanRevealScreen', () => {
     expect(lines[6]).toBe(lines[7]);
   });
 
-  it('calls onLogFirstMeal from the footer button', async () => {
-    const onLogFirstMeal = jest.fn();
+  it('calls onContinue from the footer button', async () => {
+    const onContinue = jest.fn();
     const { getByTestId } = await render(
-      <PlanRevealScreen plan={mockPlan} onLogFirstMeal={onLogFirstMeal} />
+      <PlanRevealScreen plan={mockPlan} onContinue={onContinue} />
     );
     await act(async () => {
-      fireEvent.press(getByTestId('btn-log-first-meal'));
+      fireEvent.press(getByTestId('btn-plan-continue'));
     });
-    expect(onLogFirstMeal).toHaveBeenCalledTimes(1);
+    expect(onContinue).toHaveBeenCalledTimes(1);
   });
 
   it('has no accordion or adjust button', async () => {
     const { queryByText } = await render(
-      <PlanRevealScreen plan={mockPlan} onLogFirstMeal={jest.fn()} />
+      <PlanRevealScreen plan={mockPlan} onContinue={jest.fn()} />
     );
     expect(queryByText('How we calculated this')).toBeNull();
     expect(queryByText('Adjust my plan')).toBeNull();
