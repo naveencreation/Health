@@ -3,6 +3,9 @@ import { auth } from '@/services/firebase';
 import { ScopedStorage } from '@/services/storage/scopedStorage';
 import { haptics } from '@/utils/haptics';
 
+// Pro is free for everyone until real store billing exists; set false to bring back the paywall.
+export const EARLY_ACCESS = true;
+
 export type SubscriptionPlanId = 'pro_monthly' | 'pro_annual' | 'pro_lifetime';
 
 export type ProFeature =

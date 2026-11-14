@@ -65,7 +65,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   const { width: screenWidth } = useWindowDimensions();
   const { userGoals, updateGoals } = useGoals();
   const { currentUser } = useAuth();
-  const { isPro } = usePro();
+  const { isPro, isEarlyAccess } = usePro();
 
   const [navStack, setNavStack] = useState<SubView[]>([]);
   const [closingView, setClosingView] = useState<SubView | null>(null);
@@ -235,7 +235,13 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
               </View>
               <View style={styles.chip}>
                 <Text style={styles.chipText}>
-                  {isGuest ? 'Guest' : isPro ? 'Pro member' : 'Free plan'}
+                  {isGuest
+                    ? 'Guest'
+                    : isEarlyAccess
+                      ? 'Early access'
+                      : isPro
+                        ? 'Pro member'
+                        : 'Free plan'}
                 </Text>
               </View>
             </View>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+  EARLY_ACCESS,
   PaymentService,
   SubscriptionPlanId,
   ProFeature,
@@ -24,7 +25,7 @@ export function usePro() {
 
   useEffect(() => {
     refreshEntitlement();
-    const unsubscribe = PaymentService.subscribe((state) => {
+    const unsubscribe = PaymentService.subscribe(state => {
       setEntitlement(state);
     });
     return unsubscribe;
@@ -54,7 +55,8 @@ export function usePro() {
   }, []);
 
   return {
-    isPro: entitlement.isPro,
+    isPro: EARLY_ACCESS || entitlement.isPro,
+    isEarlyAccess: EARLY_ACCESS,
     activePlanId: entitlement.activePlanId,
     expiresAt: entitlement.expiresAt,
     loading,

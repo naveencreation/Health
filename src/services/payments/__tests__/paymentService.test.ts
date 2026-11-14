@@ -7,6 +7,12 @@ import { PaymentService, formatExpiry } from '../paymentService';
 import { EntitlementManager } from '../entitlementManager';
 import { haptics } from '@/utils/haptics';
 
+// These tests cover the real entitlement logic, so switch the early-access override off.
+jest.mock('../paymentService', () => ({
+  ...jest.requireActual('../paymentService'),
+  EARLY_ACCESS: false,
+}));
+
 jest.mock('@/utils/haptics', () => ({
   haptics: {
     selection: jest.fn().mockResolvedValue(undefined),

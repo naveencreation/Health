@@ -1,10 +1,11 @@
-import { PaymentService, ProFeature } from './paymentService';
+import { EARLY_ACCESS, PaymentService, ProFeature } from './paymentService';
 
 export class EntitlementManager {
   /**
    * Checks whether the current user holds an active Pro subscription.
    */
   public static async isPro(): Promise<boolean> {
+    if (EARLY_ACCESS) return true;
     const entitlement = await PaymentService.getEntitlement();
     return entitlement.isPro;
   }

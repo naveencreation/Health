@@ -243,19 +243,18 @@ jest.mock('../SavePlanScreen', () => {
   };
 });
 
-jest.mock('../SoftPaywallScreen', () => {
+jest.mock('../EarlyAccessScreen', () => {
   const React = require('react');
   const { View, Pressable } = require('react-native');
   return {
-    SoftPaywallScreen: ({ onContinue, onSkip, onBack }: any) => (
+    EarlyAccessScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-paywall">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Start 7-Day Free Trial"
+          accessibilityLabel="Early access continue"
           testID="btn-paywall-continue"
           onPress={onContinue}
         />
-        <Pressable testID="btn-paywall-skip" onPress={onSkip} />
         <Pressable testID="btn-paywall-back" onPress={onBack} />
       </View>
     ),
@@ -353,7 +352,7 @@ describe('OnboardingWizardScreen', () => {
     fireEvent.press(savePlanCta);
 
     // S15 Soft Paywall
-    const paywallCta = await findByRole('button', { name: 'Start 7-Day Free Trial' });
+    const paywallCta = await findByRole('button', { name: 'Early access continue' });
     expect(paywallCta).toBeTruthy();
     fireEvent.press(paywallCta);
 
@@ -413,8 +412,8 @@ describe('OnboardingWizardScreen', () => {
       expect(getByTestId('step-paywall')).toBeTruthy();
     });
 
-    // Skip paywall -> Permission Primer
-    fireEvent.press(getByTestId('btn-paywall-skip'));
+    // Early access -> Permission Primer
+    fireEvent.press(getByTestId('btn-paywall-continue'));
     const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
     expect(enableBtn).toBeTruthy();
   });

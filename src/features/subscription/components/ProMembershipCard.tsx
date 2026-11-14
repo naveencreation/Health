@@ -19,7 +19,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
   onUpgradePress,
   onManagePress,
 }) => {
-  const { isPro, activePlanId, expiresAt } = usePro();
+  const { isPro, isEarlyAccess, activePlanId, expiresAt } = usePro();
 
   const handleUpgrade = async () => {
     await haptics.impactMedium();
@@ -41,6 +41,9 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
     if (activePlanId === 'pro_lifetime') return 'Lifetime VIP Access';
     return 'Pro Active';
   };
+
+  // Nothing to sell or manage while Pro is free for everyone
+  if (isEarlyAccess) return null;
 
   if (isPro) {
     return (

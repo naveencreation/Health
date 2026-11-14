@@ -23,7 +23,7 @@ interface AccountScreenProps {
 
 export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, onSignOut }) => {
   const { currentUser, logout, deleteAccount } = useAuth();
-  const { isPro, activePlanId } = usePro();
+  const { isPro, isEarlyAccess, activePlanId } = usePro();
   const isGuest = !currentUser || Boolean(currentUser.isGuest);
   // Email accounts must re-enter their password before deletion
   const needsPassword = Boolean(currentUser?.email) && !isGuest;
@@ -118,14 +118,22 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
             icon="star-outline"
             iconColor={Colors.warningDark}
             iconBackground={Colors.warningLight}
-            title="Membership"
+            title={isEarlyAccess ? 'Early access' : 'Membership'}
             subtitle={
-              isPro
-                ? `Calorify Pro · ${activePlanId ? PLAN_NAMES[activePlanId] : 'Active'}`
-                : 'Free plan'
+              isEarlyAccess
+                ? 'Everything is free while Calorify is new'
+                : isPro
+                  ? `Calorify Pro · ${activePlanId ? PLAN_NAMES[activePlanId] : 'Active'}`
+                  : 'Free plan'
             }
-            onPress={() => setPaywallVisible(true)}
-            accessibilityLabel={isPro ? 'Manage Pro Subscription' : 'Upgrade to Calorify Pro'}
+            onPress={isEarlyAccess ? undefined : () => setPaywallVisible(true)}
+            accessibilityLabel={
+              isEarlyAccess
+                ? 'Early access. Everything is free while Calorify is new'
+                : isPro
+                  ? 'Manage Pro Subscription'
+                  : 'Upgrade to Calorify Pro'
+            }
           />
         </SettingsSection>
 

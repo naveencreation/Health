@@ -47,7 +47,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
 }) => {
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
-  const { isPro } = usePro();
+  const { isPro, isEarlyAccess } = usePro();
   const { todayStr, selectedDate, remainingCalories } = useDailyLog();
 
   const isViewingToday = selectedDate === todayStr;
@@ -125,7 +125,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             >
               <View style={styles.welcomeRow}>
                 <Text style={styles.welcomeText}>Welcome</Text>
-                {isPro ? (
+                {isPro && !isEarlyAccess ? (
                   <View style={styles.proTag} accessibilityLabel="Calorify Pro Member">
                     <Ionicons name="sparkles" size={10} color={Colors.warningDark} style={styles.proTagIcon} />
                     <Text style={styles.proTagText}>PRO ✦</Text>

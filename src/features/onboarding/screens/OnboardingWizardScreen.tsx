@@ -14,7 +14,7 @@ import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
 import { BuildingPlanScreen } from './BuildingPlanScreen';
 import { PlanRevealScreen } from './PlanRevealScreen';
 import { SavePlanScreen } from './SavePlanScreen';
-import { SoftPaywallScreen } from './SoftPaywallScreen';
+import { EarlyAccessScreen } from './EarlyAccessScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
 import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
@@ -756,15 +756,13 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
     );
   }
 
-  // S15: Soft Paywall (Zero-Pressure Pro Offer & Free Trial)
+  // S15: Early access (step id stays 'paywall' so saved drafts resume)
   if (currentStep === 'paywall') {
     return (
       <View style={styles.container}>
-        <SoftPaywallScreen
+        <EarlyAccessScreen
           name={name}
-          plan={calculatedPlan}
           onContinue={() => pushStep('permissions')}
-          onSkip={() => pushStep('permissions')}
           onBack={popStep}
           sectionIndex={3}
           totalSections={4}
