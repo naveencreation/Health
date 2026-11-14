@@ -3,10 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SavePlanScreen } from '../screens/SavePlanScreen';
-import {
-  migrateOnboardingData,
-  buildUserProfilePayload,
-} from '../services/onboardingMigration';
+import { migrateOnboardingData, buildUserProfilePayload } from '../services/onboardingMigration';
 import {
   OnboardingDraft,
   PendingMeal,
@@ -14,10 +11,7 @@ import {
   saveOnboardingDraft,
   loadOnboardingDraft,
 } from '../services/onboardingDraft';
-import {
-  calculateHealthPlan,
-  CalculatedHealthPlan,
-} from '../services/onboardingCalculator';
+import { calculateHealthPlan, CalculatedHealthPlan } from '../services/onboardingCalculator';
 import { DailyLog } from '@/types';
 
 // Mock AsyncStorage
@@ -76,7 +70,9 @@ jest.mock('@/utils/haptics', () => ({
 
 // Mock Firestore
 const mockSetDoc = jest.fn().mockResolvedValue(undefined);
-const mockDoc = jest.fn().mockImplementation((...args: any[]) => ({ path: args.slice(1).join('/') }));
+const mockDoc = jest
+  .fn()
+  .mockImplementation((...args: any[]) => ({ path: args.slice(1).join('/') }));
 
 jest.mock('firebase/firestore', () => ({
   doc: (...args: any[]) => mockDoc(...args),
@@ -242,16 +238,15 @@ describe('SavePlan Migration Integration Tests', () => {
       expect(parsedGoals.gender).toBe('female');
       expect(parsedGoals.currentWeightKg).toBe(68);
 
-      // 7. Verify First Meal injected into today's daily log
-      const rawStoredLogs = await AsyncStorage.getItem('@calori_daily_logs_user_new_priya_101');
-      expect(rawStoredLogs).toBeTruthy();
-      const parsedLogs = JSON.parse(rawStoredLogs!);
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayMeals = parsedLogs[todayStr].meals;
-      expect(todayMeals).toHaveLength(1);
-      expect(todayMeals[0].name).toBe('Paneer Rice Bowl');
-      expect(todayMeals[0].calories).toBe(420);
-      expect(todayMeals[0].mealType).toBe('lunch');
+      // 7. The meal is no longer written here (HealthContext applyOnboardingPlan is the single writer)
+      expect(await AsyncStorage.getItem('@calori_daily_logs_user_new_priya_101')).toBeNull();
+      expect(mockDoc).not.toHaveBeenCalledWith(
+        expect.anything(),
+        'users',
+        'user_new_priya_101',
+        'dailyLogs',
+        expect.anything()
+      );
 
       // 8. Verify Onboarding Draft is completely purged
       const remainingDraft = await AsyncStorage.getItem(ONBOARDING_DRAFT_KEY);
@@ -346,22 +341,20 @@ describe('SavePlan Migration Integration Tests', () => {
 
       expect(mockLogin).toHaveBeenCalledWith('arjun@example.com', 'MySecretPass2026');
 
-      // 6. Verify Daily Logs: Both the existing morning snack AND the onboarding lunch must exist!
+      // 6. Existing daily logs are left untouched; migration does not append the first meal
       const rawLogs = await AsyncStorage.getItem(`@calori_daily_logs_${existingUid}`);
-      expect(rawLogs).toBeTruthy();
-      const parsedLogs = JSON.parse(rawLogs!);
-      const todayMeals = parsedLogs[todayStr].meals;
-
-      expect(todayMeals).toHaveLength(2);
-      expect(todayMeals[0].name).toBe('Green Apple & Almonds'); // Preserved!
-      expect(todayMeals[1].name).toBe('Paneer Rice Bowl'); // Appended!
+      const todayMeals = JSON.parse(rawLogs!)[todayStr].meals;
+      expect(todayMeals).toHaveLength(1);
+      expect(todayMeals[0].name).toBe('Green Apple & Almonds');
     });
   });
 
   describe('3. Offline Resilience & Fault Tolerance', () => {
-    it('succeeds locally when Firestore network fails, preserving goals and daily log', async () => {
+    it('succeeds locally when Firestore network fails, preserving goals', async () => {
       // Mock Firestore network rejection
-      mockSetDoc.mockRejectedValue(new Error('FirebaseError: [unavailable] Network connection failed.'));
+      mockSetDoc.mockRejectedValue(
+        new Error('FirebaseError: [unavailable] Network connection failed.')
+      );
 
       const result = await migrateOnboardingData(
         'user_offline_555',
@@ -373,17 +366,13 @@ describe('SavePlan Migration Integration Tests', () => {
 
       // Migration must succeed without throwing an uncaught exception
       expect(result.success).toBe(true);
-      expect(result.migratedMeal?.name).toBe('Paneer Rice Bowl');
 
-      // Local storage must still have goals and meal
+      // Local storage must still have goals
       const localGoals = await AsyncStorage.getItem('@calori_user_goals_user_offline_555');
       expect(localGoals).toBeTruthy();
       expect(JSON.parse(localGoals!).dailyCalorieBudget).toBe(1550);
 
-      const localLogs = await AsyncStorage.getItem('@calori_daily_logs_user_offline_555');
-      expect(localLogs).toBeTruthy();
-      const todayStr = new Date().toISOString().split('T')[0];
-      expect(JSON.parse(localLogs!)[todayStr].meals).toHaveLength(1);
+      expect(await AsyncStorage.getItem('@calori_daily_logs_user_offline_555')).toBeNull();
 
       // Draft must still be cleared
       const draft = await AsyncStorage.getItem(ONBOARDING_DRAFT_KEY);

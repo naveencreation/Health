@@ -1,13 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
-import { LoggedMealItem, DailyLog, UserGoals, MealType } from '@/types';
+import { LoggedMealItem, UserGoals, MealType } from '@/types';
 import { OnboardingDraft, PendingMeal, clearOnboardingDraft } from './onboardingDraft';
 import { CalculatedHealthPlan } from './onboardingCalculator';
 
 export interface MigrationResult {
   success: boolean;
-  migratedMeal?: LoggedMealItem;
   error?: string;
 }
 
@@ -59,6 +58,10 @@ export function convertPendingMealToLoggedMeal(meal: PendingMeal): LoggedMealIte
       : rawSlot === 'breakfast' || rawSlot === 'dinner'
         ? (rawSlot as MealType)
         : 'lunch';
+  const calories = Math.round(meal.calories);
+  const protein = Math.round(meal.proteinG);
+  const carbs = Math.round(meal.carbsG);
+  const fat = Math.round(meal.fatG);
   return {
     id: `meal_onboarding_${meal.loggedAt || Date.now()}`,
     foodId: 'onboarding_first_meal',
@@ -66,13 +69,13 @@ export function convertPendingMealToLoggedMeal(meal: PendingMeal): LoggedMealIte
     mealType: normalizedSlot,
     servingUnit: `${meal.portionMultiplier}x serving`,
     quantity: 1,
-    calories: Math.round(meal.calories),
-    protein: Math.round(meal.proteinG),
-    carbs: Math.round(meal.carbsG),
-    fat: Math.round(meal.fatG),
+    calories,
+    protein,
+    carbs,
+    fat,
     fiber: 0,
+    baseNutrition: { calories, protein, carbs, fat, fiber: 0 },
     loggedAt: new Date(meal.loggedAt || Date.now()).toISOString(),
-    imageUrl: meal.photoUri,
   };
 }
 
@@ -126,7 +129,8 @@ export function buildUserProfilePayload(
 }
 
 /**
- * Migrates onboarding draft data and the first logged meal to the user profile and daily log.
+ * Migrates onboarding draft data to the user profile and goals. The first meal is written
+ * once, with the local date, by HealthContext applyOnboardingPlan.
  * Also safely purges the local onboarding draft.
  */
 export async function migrateOnboardingData(
@@ -171,58 +175,10 @@ export async function migrateOnboardingData(
     await AsyncStorage.setItem('@calori_user_goals', JSON.stringify(goalsPayload));
     await AsyncStorage.setItem('@calori_user_goals_v1', JSON.stringify(goalsPayload));
 
-    // 3. Migrate First Meal if logged
-    let migratedMeal: LoggedMealItem | undefined;
-    if (draft.firstMeal) {
-      migratedMeal = convertPendingMealToLoggedMeal(draft.firstMeal);
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      // Retrieve existing logs or start fresh
-      let dailyLogs: Record<string, DailyLog> = {};
-      try {
-        const rawLogs = await AsyncStorage.getItem(`@calori_daily_logs_${uid}`);
-        if (rawLogs) {
-          dailyLogs = JSON.parse(rawLogs);
-        }
-      } catch (err) {
-        // Fallback to empty logs map
-      }
-
-      const existingDayLog = dailyLogs[todayStr] || {
-        date: todayStr,
-        meals: [],
-        waterMl: 0,
-        steps: 0,
-        activities: [],
-      };
-
-      const updatedMeals = [...(existingDayLog.meals || []), migratedMeal];
-      const updatedDayLog: DailyLog = {
-        ...existingDayLog,
-        meals: updatedMeals,
-      };
-
-      dailyLogs[todayStr] = updatedDayLog;
-
-      await AsyncStorage.setItem(`@calori_daily_logs_${uid}`, JSON.stringify(dailyLogs));
-      await AsyncStorage.setItem('@calori_daily_logs', JSON.stringify(dailyLogs));
-      await AsyncStorage.setItem('@calori_daily_logs_v1', JSON.stringify(dailyLogs));
-
-      // Sync meal to Firestore
-      try {
-        await setDoc(doc(db, 'users', uid, 'dailyLogs', todayStr), updatedDayLog, { merge: true });
-      } catch (fsErr) {
-        console.warn('[onboardingMigration] Firestore daily log write error:', fsErr);
-      }
-    }
-
-    // 4. Safely clear the onboarding draft
+    // 3. Safely clear the onboarding draft
     await clearOnboardingDraft();
 
-    return {
-      success: true,
-      migratedMeal,
-    };
+    return { success: true };
   } catch (error: any) {
     console.error('[onboardingMigration] Migration failed:', error);
     return {

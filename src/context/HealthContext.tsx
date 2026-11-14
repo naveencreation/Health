@@ -16,6 +16,8 @@ import {
   isFutureDate,
   getRollingSevenDays,
 } from '@/utils/dateUtils';
+import { convertPendingMealToLoggedMeal } from '@/features/onboarding/services/onboardingMigration';
+import type { PendingMeal } from '@/features/onboarding/services/onboardingDraft';
 import {
   DailyLog,
   FoodItem,
@@ -2431,29 +2433,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // 2. Inject First Meal if logged during onboarding
         if (data.biometrics.firstMeal) {
-          const fm = data.biometrics.firstMeal;
-          const rawSlot = fm.mealSlot || 'lunch';
-          const normalizedSlot: MealType =
-            rawSlot === 'snack' || rawSlot === 'snacks'
-              ? 'snacks'
-              : rawSlot === 'breakfast' || rawSlot === 'lunch' || rawSlot === 'dinner'
-                ? (rawSlot as MealType)
-                : 'lunch';
-          const newMealItem: LoggedMealItem = {
-            id: `meal_onboarding_${fm.loggedAt || Date.now()}`,
-            foodId: 'onboarding_first_meal',
-            name: fm.foodName,
-            mealType: normalizedSlot,
-            servingUnit: `${fm.portionMultiplier}x serving`,
-            quantity: 1,
-            calories: Math.round(fm.calories),
-            protein: Math.round(fm.proteinG),
-            carbs: Math.round(fm.carbsG),
-            fat: Math.round(fm.fatG),
-            fiber: 0,
-            loggedAt: new Date(fm.loggedAt || Date.now()).toISOString(),
-            imageUrl: fm.photoUri,
-          };
+          const newMealItem = convertPendingMealToLoggedMeal(
+            data.biometrics.firstMeal as PendingMeal
+          );
 
           setDailyLogs(prev => {
             const existing = prev[todayStr] || {

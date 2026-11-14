@@ -703,7 +703,6 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
         <FirstMealWinScreen
           name={name}
           foodStyle={foodStyle}
-          struggles={struggles}
           dailyCalorieBudget={calculatedPlan.dailyCalorieBudget}
           onBack={popStep}
           onContinue={meal => {

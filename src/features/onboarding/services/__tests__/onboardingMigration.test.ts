@@ -86,7 +86,14 @@ describe('onboardingMigration', () => {
       expect(logged.carbs).toBe(52);
       expect(logged.fat).toBe(8);
       expect(logged.mealType).toBe('lunch');
-      expect(logged.imageUrl).toBe('file:///photo.jpg');
+      expect(logged.imageUrl).toBeUndefined();
+      expect(logged.baseNutrition).toEqual({
+        calories: 340,
+        protein: 13,
+        carbs: 52,
+        fat: 8,
+        fiber: 0,
+      });
       expect(logged.servingUnit).toBe('1x serving');
       expect(logged.quantity).toBe(1);
     });
@@ -114,7 +121,7 @@ describe('onboardingMigration', () => {
   });
 
   describe('migrateOnboardingData', () => {
-    it('writes profile, saves user goals, adds first meal to daily logs, and clears draft', async () => {
+    it('writes profile, saves user goals, does not write the first meal, and clears draft', async () => {
       // Set an active draft in AsyncStorage first
       await AsyncStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(sampleDraft));
 
@@ -127,7 +134,6 @@ describe('onboardingMigration', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.migratedMeal?.name).toBe('2 Rotis with Dal & Sabzi');
 
       // Check Firestore doc writes
       expect(mockDoc).toHaveBeenCalled();
@@ -139,13 +145,9 @@ describe('onboardingMigration', () => {
       const parsedGoals = JSON.parse(storedGoals!);
       expect(parsedGoals.dailyCalorieBudget).toBe(1950);
 
-      // Check first meal stored in daily logs
-      const storedLogs = await AsyncStorage.getItem('@calori_daily_logs_user_123');
-      expect(storedLogs).toBeTruthy();
-      const parsedLogs = JSON.parse(storedLogs!);
-      const todayStr = new Date().toISOString().split('T')[0];
-      expect(parsedLogs[todayStr].meals).toHaveLength(1);
-      expect(parsedLogs[todayStr].meals[0].name).toBe('2 Rotis with Dal & Sabzi');
+      // The first meal is written once, by HealthContext applyOnboardingPlan
+      expect(await AsyncStorage.getItem('@calori_daily_logs_user_123')).toBeNull();
+      expect(await AsyncStorage.getItem('@calori_daily_logs')).toBeNull();
 
       // Check onboarding draft is purged
       const remainingDraft = await AsyncStorage.getItem(ONBOARDING_DRAFT_KEY);
@@ -167,7 +169,6 @@ describe('onboardingMigration', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.migratedMeal).toBeUndefined();
 
       // Check draft was cleared
       const remainingDraft = await AsyncStorage.getItem(ONBOARDING_DRAFT_KEY);
