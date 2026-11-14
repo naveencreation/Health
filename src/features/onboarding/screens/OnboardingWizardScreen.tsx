@@ -8,7 +8,7 @@ import { AboutYouScreen } from './AboutYouScreen';
 import { HeightSelectionScreen, HeightUnit } from './HeightSelectionScreen';
 import { WeightSelectionScreen } from './WeightSelectionScreen';
 import { TargetWeightScreen } from './TargetWeightScreen';
-import { ActivityLevelScreen } from './ActivityLevelScreen';
+import { ACTIVITY_OPTIONS, ActivityLevelScreen } from './ActivityLevelScreen';
 import { PaceSelectionScreen } from './PaceSelectionScreen';
 import { FoodStyleScreen, FoodStyleData } from './FoodStyleScreen';
 import { BuildingPlanScreen } from './BuildingPlanScreen';
@@ -645,6 +645,11 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
       <View style={styles.container}>
         <BuildingPlanScreen
           name={name}
+          plan={calculatedPlan}
+          activityLabel={ACTIVITY_OPTIONS.find(o => o.id === activityLevel)?.title ?? ''}
+          pace={pace}
+          weightUnit={weightUnit}
+          targetWeightKg={targetWeightKg}
           onComplete={() => {
             setStepHistory(prev => [...prev.filter(s => s !== 'building_plan'), 'plan']);
             saveOnboardingDraft({

@@ -36,7 +36,7 @@ interface ActivityOption {
   iconName: keyof typeof Ionicons.glyphMap;
 }
 
-const ACTIVITY_OPTIONS: ActivityOption[] = [
+export const ACTIVITY_OPTIONS: ActivityOption[] = [
   {
     id: 'sedentary',
     title: 'Mostly sitting',

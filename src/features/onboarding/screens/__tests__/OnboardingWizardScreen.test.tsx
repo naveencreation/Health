@@ -67,10 +67,7 @@ jest.mock('../GoalSelectionScreen', () => {
   return {
     GoalSelectionScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-goal">
-        <Pressable
-          testID="btn-goal-continue"
-          onPress={() => onContinue('lose_weight', 'lose')}
-        />
+        <Pressable testID="btn-goal-continue" onPress={() => onContinue('lose_weight', 'lose')} />
         <Pressable testID="btn-goal-back" onPress={onBack} />
       </View>
     ),
@@ -83,10 +80,7 @@ jest.mock('../StrugglesScreen', () => {
   return {
     StrugglesScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-struggles">
-        <Pressable
-          testID="btn-struggles-continue"
-          onPress={() => onContinue(['portions'])}
-        />
+        <Pressable testID="btn-struggles-continue" onPress={() => onContinue(['portions'])} />
         <Pressable testID="btn-struggles-back" onPress={onBack} />
       </View>
     ),
@@ -99,10 +93,7 @@ jest.mock('../AboutYouScreen', () => {
   return {
     AboutYouScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-about_you">
-        <Pressable
-          testID="btn-about_you-continue"
-          onPress={() => onContinue('female', 28)}
-        />
+        <Pressable testID="btn-about_you-continue" onPress={() => onContinue('female', 28)} />
         <Pressable testID="btn-about_you-back" onPress={onBack} />
       </View>
     ),
@@ -152,6 +143,7 @@ jest.mock('../ActivityLevelScreen', () => {
   const React = require('react');
   const { View, Pressable } = require('react-native');
   return {
+    ACTIVITY_OPTIONS: [{ id: 'moderately_active', title: 'Moderately active' }],
     ActivityLevelScreen: ({ onContinue, onBack }: any) => (
       <View testID="step-activity">
         <Pressable testID="btn-activity-continue" onPress={() => onContinue('moderately_active')} />
@@ -305,10 +297,7 @@ describe('OnboardingWizardScreen', () => {
     const onBackToWelcome = jest.fn();
 
     const { getByTestId, queryByTestId } = await render(
-      <OnboardingWizardScreen
-        onComplete={onComplete}
-        onBackToWelcome={onBackToWelcome}
-      />
+      <OnboardingWizardScreen onComplete={onComplete} onBackToWelcome={onBackToWelcome} />
     );
 
     expect(getByTestId('step-name')).toBeTruthy();
