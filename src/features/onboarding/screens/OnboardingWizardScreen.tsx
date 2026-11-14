@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Platform, BackHandler } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { View, StyleSheet, BackHandler } from 'react-native';
 import { NameInputScreen } from './NameInputScreen';
 import { GoalSelectionScreen } from './GoalSelectionScreen';
 import { StrugglesScreen } from './StrugglesScreen';
@@ -15,8 +14,8 @@ import { BuildingPlanScreen } from './BuildingPlanScreen';
 import { PlanRevealScreen } from './PlanRevealScreen';
 import { SavePlanScreen } from './SavePlanScreen';
 import { EarlyAccessScreen } from './EarlyAccessScreen';
+import { RemindersStepScreen } from './RemindersStepScreen';
 import { PlanCalculationStep } from '../components/PlanCalculationStep';
-import { PermissionPrimerStep } from '../components/PermissionPrimerStep';
 import {
   calculateHealthPlan,
   CalculatedHealthPlan,
@@ -36,7 +35,6 @@ import {
   PendingMeal,
   OnboardingDraft,
 } from '../services/onboardingDraft';
-import { requestStepsPermission } from '@/features/health/healthPermissions';
 import { NotificationService, NotificationStorage } from '@/services/notifications';
 import { useAuth } from '@/context';
 
@@ -380,26 +378,30 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
 
   const handleEnablePermissions = async () => {
     try {
-      await ImagePicker.requestCameraPermissionsAsync();
-    } catch {
-      // Gracefully continue
-    }
-
-    try {
-      if (Platform.OS === 'android') {
-        await requestStepsPermission();
-      }
-    } catch {
-      // Gracefully continue
-    }
-
-    try {
       await NotificationService.requestPermission();
     } catch {
       // Gracefully continue
     }
 
     await handleFinish();
+  };
+
+  // Reminders stay on in settings otherwise (older Android needs no permission), so switch
+  // them off before completing; saveMealReminders inside handleFinish would turn meals back on.
+  const handleNotNow = async () => {
+    await saveMealReminders();
+    try {
+      await NotificationStorage.updateSettings({
+        mealReminder: false,
+        waterReminder: false,
+        stepReminder: false,
+        streakReminder: false,
+      });
+    } catch {
+      // Non-blocking fallback
+    }
+    await clearOnboardingDraft();
+    await onComplete(buildCompleteData());
   };
 
   // Branching helper: determines if target weight & pace should be asked
@@ -776,10 +778,17 @@ export const OnboardingWizardScreen: React.FC<OnboardingWizardScreenProps> = ({
   if (currentStep === 'permissions') {
     return (
       <View style={styles.container}>
-        <PermissionPrimerStep
-          onEnablePermissions={handleEnablePermissions}
-          onSkip={handleFinish}
+        <RemindersStepScreen
+          name={name}
+          skipsBreakfast={Boolean(skipsBreakfast)}
+          mealTimes={mealTimes}
+          stepGoal={calculatedPlan.stepGoal}
+          onEnable={handleEnablePermissions}
+          onNotNow={handleNotNow}
           onBack={popStep}
+          sectionIndex={3}
+          totalSections={4}
+          sectionProgress={1.0}
         />
       </View>
     );

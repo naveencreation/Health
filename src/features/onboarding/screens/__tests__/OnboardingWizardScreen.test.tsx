@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import mockAsyncStorage from '@react-native-async-storage/async-storage/jest/async-storage-mock';
 import { OnboardingWizardScreen } from '../OnboardingWizardScreen';
-import * as ImagePicker from 'expo-image-picker';
 import { NotificationStorage } from '@/services/notifications';
 
 jest.mock('react-native-reanimated', () => {
@@ -45,13 +44,23 @@ jest.mock('@/utils/haptics', () => ({
   },
 }));
 
-jest.mock('expo-image-picker', () => ({
-  requestCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
-}));
-
-jest.mock('@/features/health/healthPermissions', () => ({
-  requestStepsPermission: jest.fn().mockResolvedValue(true),
-}));
+jest.mock('../RemindersStepScreen', () => {
+  const React = require('react');
+  const { View, Pressable } = require('react-native');
+  return {
+    RemindersStepScreen: ({ onEnable, onNotNow, onBack }: any) => (
+      <View testID="step-permissions">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Reminders enable"
+          onPress={onEnable}
+        />
+        <Pressable accessibilityRole="button" accessibilityLabel="Reminders not now" onPress={onNotNow} />
+        <Pressable testID="btn-reminders-back" onPress={onBack} />
+      </View>
+    ),
+  };
+});
 
 jest.mock('../NameInputScreen', () => {
   const React = require('react');
@@ -356,13 +365,12 @@ describe('OnboardingWizardScreen', () => {
     expect(paywallCta).toBeTruthy();
     fireEvent.press(paywallCta);
 
-    // Permission Primer
-    const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
+    // Reminders
+    const enableBtn = await findByRole('button', { name: 'Reminders enable' });
     expect(enableBtn).toBeTruthy();
     fireEvent.press(enableBtn);
 
     await waitFor(() => {
-      expect(ImagePicker.requestCameraPermissionsAsync).toHaveBeenCalled();
       expect(onComplete).toHaveBeenCalledTimes(1);
       const callData = onComplete.mock.calls[0][0];
       expect(callData.biometrics.name).toBe('Dev');
@@ -412,9 +420,9 @@ describe('OnboardingWizardScreen', () => {
       expect(getByTestId('step-paywall')).toBeTruthy();
     });
 
-    // Early access -> Permission Primer
+    // Early access -> Reminders
     fireEvent.press(getByTestId('btn-paywall-continue'));
-    const enableBtn = await findByRole('button', { name: 'Enable Permissions and Continue' });
+    const enableBtn = await findByRole('button', { name: 'Reminders enable' });
     expect(enableBtn).toBeTruthy();
   });
 
@@ -430,5 +438,25 @@ describe('OnboardingWizardScreen', () => {
     expect(mockApplyOnboardingPlan).toHaveBeenCalledTimes(1);
     expect(mockApplyOnboardingPlan.mock.calls[0][0].plan.dailyCalorieBudget).toBeGreaterThan(0);
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('Not now turns reminders off and still completes onboarding', async () => {
+    const onComplete = jest.fn();
+    const { getByTestId, findByRole } = await render(
+      <OnboardingWizardScreen onComplete={onComplete} initialStep="save_plan" />
+    );
+
+    fireEvent.press(await findByRole('button', { name: 'Save Plan Continue' }));
+    await waitFor(() => expect(getByTestId('step-paywall')).toBeTruthy());
+    fireEvent.press(getByTestId('btn-paywall-continue'));
+    fireEvent.press(await findByRole('button', { name: 'Reminders not now' }));
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1));
+    const s = await NotificationStorage.loadSettings();
+    expect(s.meals.enabled).toBe(false);
+    expect(s.water.enabled).toBe(false);
+    expect(s.steps.enabled).toBe(false);
+    expect(s.streak.enabled).toBe(false);
+    expect(s.meals.lunch).toBe('13:00');
   });
 });

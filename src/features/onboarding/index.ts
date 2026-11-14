@@ -1,7 +1,6 @@
 export * from './services/onboardingCalculator';
 export * from './services/onboardingDraft';
 export * from './components/PlanCalculationStep';
-export * from './components/PermissionPrimerStep';
 export * from './components/OnboardingHeader';
 export * from './screens/OnboardingWizardScreen';
 export * from './screens/NameInputScreen';
@@ -18,5 +17,6 @@ export * from './screens/BuildingPlanScreen';
 export * from './screens/PlanRevealScreen';
 export * from './screens/SavePlanScreen';
 export * from './screens/EarlyAccessScreen';
+export * from './screens/RemindersStepScreen';
 export * from './services/onboardingMigration';
 export * from './data/starterFoods';
