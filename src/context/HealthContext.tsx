@@ -70,6 +70,7 @@ import {
 } from '@/utils/stepHistoryUtils';
 import { Monitoring } from '@/services/monitoring';
 import { mealPhotoService } from '@/services/storage/mealPhotoService';
+import { userOwnedRawKeys } from '@/services/storage/accountErasure';
 import { mergeHydratedLogs } from '@/services/sync/mergeHydratedLogs';
 
 export const STORAGE_KEYS = {
@@ -2317,6 +2318,16 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (fbUser) {
         const uid = fbUser.uid;
 
+        // 0. Remove the Gemini key first: removeApiKey merge-writes users/{uid}, which would
+        // recreate the root doc if it ran after step 2
+        await SecureKeyStorage.removeApiKey(uid).catch(() => {});
+
+        // 0b. Delete this user's local meal photos (paths live in meal imageUrl)
+        const photoUris = Object.values(latestLogsRef.current).flatMap(l =>
+          (l.meals ?? []).map(m => m.imageUrl).filter((u): u is string => !!u)
+        );
+        await mealPhotoService.deleteLocalPhotos(photoUris).catch(() => {});
+
         // 1. Purge all user subcollections in Firestore before root document deletion (prevents orphaned PII)
         const subcollections = ['dailyLogs', 'customFoods', 'chatHistory'];
         for (const sub of subcollections) {
@@ -2351,9 +2362,6 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           console.warn('Error purging user photos during account deletion:', photoErr);
         }
 
-        // 2c. Remove the Gemini key while the uid still resolves to this user
-        await SecureKeyStorage.removeApiKey(uid).catch(() => {});
-
         // 3. Delete user from Firebase Auth
         try {
           await deleteUser(fbUser);
@@ -2383,6 +2391,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             ),
           ]);
           await ScopedStorage.clearUserScope(uid);
+          const rawKeys = userOwnedRawKeys(await AsyncStorage.getAllKeys(), uid);
+          if (rawKeys.length) await AsyncStorage.multiRemove(rawKeys);
         } catch (e) {}
         await NotificationScheduler.cancelAllAndReset(uid).catch(() => {});
       }

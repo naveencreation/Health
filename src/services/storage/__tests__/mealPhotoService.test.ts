@@ -203,3 +203,19 @@ describe('mealPhotoService', () => {
     });
   });
 });
+
+describe('mealPhotoService.deleteLocalPhotos', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('deletes only files inside the meals directory', async () => {
+    (FileSystem.deleteAsync as jest.Mock).mockResolvedValue(undefined);
+    const inside = 'file:///data/user/0/calori/files/meals/meal_1.jpg';
+    await mealPhotoService.deleteLocalPhotos([
+      inside,
+      'file:///data/user/0/calori/files/other/x.jpg',
+      'https://example.com/a.jpg',
+    ]);
+    expect(FileSystem.deleteAsync).toHaveBeenCalledTimes(1);
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(inside, { idempotent: true });
+  });
+});

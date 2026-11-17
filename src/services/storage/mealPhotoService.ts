@@ -140,6 +140,16 @@ export const mealPhotoService = {
     }
   },
 
+  /** Deletes local files under MEALS_DIR (e.g. on account deletion); ignores other paths and errors. */
+  async deleteLocalPhotos(uris: string[]): Promise<void> {
+    if (!FileSystem.documentDirectory) return;
+    await Promise.all(
+      uris
+        .filter(u => typeof u === 'string' && u.startsWith(MEALS_DIR))
+        .map(u => FileSystem.deleteAsync(u, { idempotent: true }).catch(() => {}))
+    );
+  },
+
   /**
    * Deletes all photos for a user from Firebase Storage (e.g. during account deletion).
    * Fully cleans up cloud assets without needing paid Cloud Functions.
