@@ -330,7 +330,9 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
             rawHealthRecords={isViewingToday ? healthRecords : []}
             customEntries={dailyLogs[selectedDate]?.stepEntries}
             dailyLogs={dailyLogs}
-            onDeleteEntry={(entry: StepLogEntry) => removeStepEntry(entry.id, selectedDate)}
+            onDeleteEntry={(entry: StepLogEntry, dateStr?: string) =>
+              removeStepEntry(entry.id, dateStr ?? selectedDate)
+            }
           />
 
           {/* Minimalist Health Connect Setup & Sync Component with Official Logo */}

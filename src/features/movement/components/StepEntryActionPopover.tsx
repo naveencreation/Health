@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, Pressable, Modal, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import { StepLogEntry } from '@/types';
 
@@ -29,7 +30,9 @@ export const StepEntryActionPopover: React.FC<StepEntryActionPopoverProps> = ({
   if (!visible || !entry) return null;
 
   const hasDetails = Boolean(onViewDetails);
-  const cardWidth = hasDetails ? 140 : 118;
+  // Entries saved before 2026-11-05 have no source; treat them as manual so they stay deletable
+  const deletable = !entry.source || entry.source === 'manual';
+  const cardWidth = !deletable ? 220 : hasDetails ? 140 : 118;
   const cardHeight = hasDetails ? 88 : 46;
 
   // Auto-flip: If anchor is close to bottom of screen, flip upwards
@@ -92,19 +95,26 @@ export const StepEntryActionPopover: React.FC<StepEntryActionPopoverProps> = ({
             </>
           )}
 
-          {/* 2. 🗑 Delete / Dismiss Action */}
-          <Pressable
-            style={({ pressed }) => [styles.menuRow, pressed && styles.rowPressed]}
-            onPress={() => {
-              onClose();
-              if (onDelete) onDelete(entry);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Delete entry"
-          >
-            <Ionicons name="trash-outline" size={18} color="#EF4444" />
-            <Text style={styles.deleteText}>Delete</Text>
-          </Pressable>
+          {/* 2. Delete (manual entries only; Health Connect owns the rest) */}
+          {deletable ? (
+            <Pressable
+              style={({ pressed }) => [styles.menuRow, pressed && styles.rowPressed]}
+              onPress={() => {
+                onClose();
+                if (onDelete) onDelete(entry);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Delete entry"
+            >
+              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              <Text style={styles.deleteText}>Delete</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.menuRow}>
+              <Ionicons name="sync-outline" size={18} color={Colors.textSecondary} />
+              <Text style={styles.syncedText}>Synced from Health Connect</Text>
+            </View>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -149,6 +159,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.urbanist.medium,
     fontSize: 13,
     color: '#0F172A',
+  },
+  syncedText: {
+    flex: 1,
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   deleteText: {
     fontFamily: Fonts.urbanist.medium,

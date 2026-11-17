@@ -120,6 +120,25 @@ describe('StepHistoryCard', () => {
     expect(getByText('No step records yet')).toBeTruthy();
   });
 
+  test('forwards the card date to onDeleteEntry from the popover', async () => {
+    const onDelete = jest.fn();
+    const manual = mockEntries.map(e => ({ ...e, source: 'manual' as const }));
+    const { getAllByLabelText, getByText } = await render(
+      <StepHistoryCard
+        dateStr="2026-10-02"
+        totalSteps={3800}
+        customEntries={manual}
+        onDeleteEntry={onDelete}
+      />
+    );
+
+    fireEvent.press(getAllByLabelText('Options for step entry')[0]);
+    await waitFor(() => expect(getByText('Delete')).toBeTruthy());
+    fireEvent.press(getByText('Delete'));
+
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'step_1' }), '2026-10-02');
+  });
+
   test('opens View All modal when View All button is pressed', async () => {
     const { getByText } = await render(
       <StepHistoryCard dateStr="2026-10-02" totalSteps={3800} customEntries={mockEntries} />

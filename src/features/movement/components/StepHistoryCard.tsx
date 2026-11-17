@@ -25,7 +25,7 @@ export interface StepHistoryCardProps {
   rawHealthRecords?: any[];
   customEntries?: StepLogEntry[];
   dailyLogs?: Record<string, DailyLog>;
-  onDeleteEntry?: (entry: StepLogEntry) => void;
+  onDeleteEntry?: (entry: StepLogEntry, dateStr?: string) => void;
   onOpenReport?: () => void;
   style?: StyleProp<ViewStyle>;
 }
@@ -98,7 +98,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
 
   const handleDelete = (entry: StepLogEntry) => {
     if (onDeleteEntry) {
-      onDeleteEntry(entry);
+      onDeleteEntry(entry, dateStr);
     }
   };
 
@@ -218,7 +218,7 @@ export const StepHistoryCard: React.FC<StepHistoryCardProps> = ({
         totalSteps={totalSteps}
         dailyLogs={dailyLogs}
         onClose={() => setIsModalOpen(false)}
-        onDeleteEntry={onDeleteEntry ? entry => onDeleteEntry(entry) : undefined}
+        onDeleteEntry={onDeleteEntry}
         onOpenReport={onOpenReport}
       />
     </View>

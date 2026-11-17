@@ -44,6 +44,7 @@ describe('StepHistoryModal', () => {
       caloriesBurned: 25 + i * 5,
       distanceKm: Number((0.4 + i * 0.1).toFixed(1)),
       loggedAt: '2024-12-22T10:00:00.000Z',
+      source: 'manual' as const,
     }));
   };
 
