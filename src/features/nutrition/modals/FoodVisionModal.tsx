@@ -30,7 +30,7 @@ import { useFoodData, useDailyLog, useAuth } from '@/context/HealthContext';
 import { AIService, FoodVisionResult, AIError, AIErrorMapper } from '@/services/ai';
 import { GeminiIcon } from '@/components/common/GeminiIcon';
 import { Monitoring } from '@/services/monitoring';
-import { mealPhotoService } from '@/services/storage/mealPhotoService';
+import { mealPhotoService, prepareMealPhoto } from '@/services/storage/mealPhotoService';
 import {
   ProfileButton,
   SettingsRow,
@@ -169,44 +169,52 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
     setIsLoggedSuccess(false);
   }, []);
 
-  const processImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
-    const requestId = ++requestIdRef.current;
-    setSelectedAsset(asset);
-    setSelectedImageUri(asset.uri);
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    setAnalysisResult(null);
+  // alreadyPrepared: a retry reuses the resized photo instead of re-encoding it again
+  const processImage = useCallback(
+    async (asset: ImagePicker.ImagePickerAsset, alreadyPrepared = false) => {
+      const requestId = ++requestIdRef.current;
+      setSelectedAsset(asset);
+      setSelectedImageUri(asset.uri);
+      setIsAnalyzing(true);
+      setAnalysisError(null);
+      setAnalysisResult(null);
 
-    try {
-      if (!asset.base64) {
-        throw AIErrorMapper.createError(
-          'INVALID_REQUEST',
-          'Image data could not be read from this photo. Please try another photo.'
-        );
+      try {
+        const prepared =
+          alreadyPrepared && asset.base64
+            ? { uri: asset.uri, base64: asset.base64, mimeType: 'image/jpeg' as const }
+            : await prepareMealPhoto(asset).catch(() => {
+                throw AIErrorMapper.createError(
+                  'INVALID_REQUEST',
+                  'Image data could not be read from this photo. Please try another photo.'
+                );
+              });
+        if (requestId !== requestIdRef.current) return;
+        setSelectedAsset({ ...asset, ...prepared });
+        setSelectedImageUri(prepared.uri);
+        const result = await AIService.analyzeFoodImage(prepared.base64, prepared.mimeType);
+        if (requestId !== requestIdRef.current) return;
+        setAnalysisResult(result);
+        Monitoring.logEvent('food_vision_success', {
+          food_name: result.name,
+          calories: result.calories,
+        });
+      } catch (err: any) {
+        if (requestId !== requestIdRef.current) return;
+        const mapped = AIErrorMapper.fromRawError(err);
+        setAnalysisError(mapped);
+        Monitoring.recordError(err, 'AIService.analyzeFoodImage failed', {
+          errorType: mapped.type,
+        });
+      } finally {
+        if (requestId === requestIdRef.current) setIsAnalyzing(false);
       }
-
-      const mimeType = asset.mimeType || 'image/jpeg';
-      const result = await AIService.analyzeFoodImage(asset.base64, mimeType);
-      if (requestId !== requestIdRef.current) return;
-      setAnalysisResult(result);
-      Monitoring.logEvent('food_vision_success', {
-        food_name: result.name,
-        calories: result.calories,
-      });
-    } catch (err: any) {
-      if (requestId !== requestIdRef.current) return;
-      const mapped = AIErrorMapper.fromRawError(err);
-      setAnalysisError(mapped);
-      Monitoring.recordError(err, 'AIService.analyzeFoodImage failed', {
-        errorType: mapped.type,
-      });
-    } finally {
-      if (requestId === requestIdRef.current) setIsAnalyzing(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleRetryAnalysis = useCallback(() => {
-    if (selectedAsset) processImage(selectedAsset);
+    if (selectedAsset) processImage(selectedAsset, true);
     else resetFlow();
   }, [selectedAsset, processImage, resetFlow]);
 

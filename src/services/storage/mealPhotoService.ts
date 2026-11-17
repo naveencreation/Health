@@ -1,6 +1,8 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { ref, uploadString, getDownloadURL, deleteObject, listAll } from 'firebase/storage';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { storage, auth } from '@/services/firebase';
+import { AI_CONFIG } from '@/services/ai/config/AIConfig';
 
 const MEALS_DIR = `${FileSystem.documentDirectory || ''}meals/`;
 
@@ -25,6 +27,38 @@ function cleanBase64Data(raw: string): string {
     return raw.slice(commaIdx + 1);
   }
   return raw;
+}
+
+/**
+ * Downscales (longer side <= MAX_DIMENSION) and re-encodes a picked photo as JPEG so it stays
+ * under the AI (2 MB) and Storage (1 MB) limits. Falls back to the picker's own data on failure.
+ */
+export async function prepareMealPhoto(asset: {
+  uri: string;
+  width?: number;
+  height?: number;
+  base64?: string | null;
+  mimeType?: string;
+}): Promise<{ uri: string; base64: string; mimeType: 'image/jpeg' }> {
+  try {
+    const { MAX_DIMENSION, JPEG_QUALITY } = AI_CONFIG.IMAGE;
+    const { width, height } = asset;
+    const context = ImageManipulator.manipulate(asset.uri);
+    if (width && height && Math.max(width, height) > MAX_DIMENSION) {
+      context.resize(width >= height ? { width: MAX_DIMENSION } : { height: MAX_DIMENSION });
+    }
+    const image = await context.renderAsync();
+    const out = await image.saveAsync({
+      format: SaveFormat.JPEG,
+      compress: JPEG_QUALITY,
+      base64: true,
+    });
+    if (!out.base64) throw new Error('no base64');
+    return { uri: out.uri, base64: out.base64, mimeType: 'image/jpeg' };
+  } catch (err) {
+    if (!asset.base64) throw err;
+    return { uri: asset.uri, base64: asset.base64, mimeType: 'image/jpeg' };
+  }
 }
 
 export const mealPhotoService = {
