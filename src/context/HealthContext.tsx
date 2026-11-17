@@ -134,6 +134,18 @@ export function sanitizeForFirestore<T>(data: T): T {
   return HealthSyncService.sanitizeForFirestore(data);
 }
 
+// Log objects are immutable per state, so identity-keyed caching avoids re-stringifying unchanged dates
+const serializedLogCache = new WeakMap<object, string>();
+function serializeLog(log: DailyLog | undefined): string {
+  if (!log) return JSON.stringify(log);
+  let s = serializedLogCache.get(log);
+  if (s === undefined) {
+    s = JSON.stringify(log);
+    serializedLogCache.set(log, s);
+  }
+  return s;
+}
+
 const DEFAULT_GOALS: UserGoals = {
   ...BIOMETRIC_DEFAULTS,
   name: 'User',
@@ -489,7 +501,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Dates identical to the cloud copy are already synced; the rest (pending, local-only) upload
       for (const [dateKey, cloudLog] of Object.entries(cloudLogs)) {
-        const serialized = JSON.stringify(merged[dateKey]);
+        const serialized = serializeLog(merged[dateKey]);
         if (!pendingLogDatesRef.current.has(dateKey) && serialized === JSON.stringify(cloudLog)) {
           lastSyncedLogsRef.current[dateKey] = serialized;
         }
@@ -798,7 +810,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let added = false;
       for (const dateKey of Object.keys(dailyLogs)) {
         if (
-          lastSyncedLogsRef.current[dateKey] !== JSON.stringify(dailyLogs[dateKey]) &&
+          lastSyncedLogsRef.current[dateKey] !== serializeLog(dailyLogs[dateKey]) &&
           !pendingLogDatesRef.current.has(dateKey)
         ) {
           pendingLogDatesRef.current.add(dateKey);
@@ -820,9 +832,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return true;
       }
       const uid = auth.currentUser.uid;
-      const datesToSync = new Set<string>([selectedDate]);
+      const datesToSync = new Set<string>();
       for (const dateKey of Object.keys(dailyLogs)) {
-        const serialized = JSON.stringify(dailyLogs[dateKey]);
+        const serialized = serializeLog(dailyLogs[dateKey]);
         if (lastSyncedLogsRef.current[dateKey] !== serialized) {
           datesToSync.add(dateKey);
         }
@@ -850,7 +862,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             log.weightEntries.length === 0;
           if (clearsWeight) Object.assign(payload, { weightKg: deleteField() });
           await setDoc(doc(db, 'users', uid, 'dailyLogs', dKey), payload, { merge: true });
-          lastSyncedLogsRef.current[dKey] = JSON.stringify(log);
+          lastSyncedLogsRef.current[dKey] = serializeLog(log);
           return true;
         } catch (err) {
           if (__DEV__) console.warn('dailyLogs setDoc error:', err);
@@ -864,7 +876,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // A date edited again during the write stays pending
           const synced =
             results[i] &&
-            JSON.stringify(latestLogsRef.current[dKey]) === lastSyncedLogsRef.current[dKey];
+            serializeLog(latestLogsRef.current[dKey]) === lastSyncedLogsRef.current[dKey];
           if (synced && pendingLogDatesRef.current.delete(dKey)) removed = true;
         });
         if (removed) persistPendingDates(uid).catch(() => {});
@@ -876,7 +888,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     firestoreLogDebounceRef.current = setTimeout(() => {
       flush();
     }, 1000);
-  }, [dailyLogs, isLoaded, selectedDate, currentUser]);
+  }, [dailyLogs, isLoaded, currentUser]);
 
   // Retry edits that failed to upload (offline, expired token) when the app returns to foreground
   useEffect(() => {

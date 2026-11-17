@@ -122,9 +122,19 @@ function MainApp() {
   );
 
   // Trigger on data changes, login status change, or initial load
+  // Debounced so rapid edits (water taps) don't reschedule the OS alarms each time
+  const lastAuthKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    syncNotifications('data_or_auth_change');
-  }, [syncNotifications]);
+    const authKey = `${isAuthenticated}:${currentUser?.id ?? ''}`;
+    const authChanged = lastAuthKeyRef.current !== authKey;
+    lastAuthKeyRef.current = authKey;
+    if (authChanged) {
+      syncNotifications('data_or_auth_change');
+      return;
+    }
+    const t = setTimeout(() => syncNotifications('data_or_auth_change'), 2000);
+    return () => clearTimeout(t);
+  }, [syncNotifications, isAuthenticated, currentUser?.id]);
 
   // Trigger on AppState change to active (cold start, foregrounding, timezone/date rollover)
   useEffect(() => {
