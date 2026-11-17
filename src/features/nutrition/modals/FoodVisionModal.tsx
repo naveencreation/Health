@@ -9,6 +9,7 @@ import {
   Alert,
   Switch,
   AccessibilityInfo,
+  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -234,7 +235,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.6,
-        base64: true,
+        base64: Platform.OS === 'web',
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
@@ -261,7 +262,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.6,
-        base64: true,
+        base64: Platform.OS === 'web',
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {

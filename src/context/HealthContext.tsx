@@ -1013,11 +1013,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         mealType,
         servingUnit: food.servingUnit,
         quantity,
-        calories: Math.round(food.calories * quantity),
-        carbs: Math.round(food.carbs * quantity * 10) / 10,
-        protein: Math.round(food.protein * quantity * 10) / 10,
-        fat: Math.round(food.fat * quantity * 10) / 10,
-        fiber: Math.round(food.fiber * quantity * 10) / 10,
+        calories: Math.round((food.calories || 0) * quantity),
+        carbs: Math.round((food.carbs || 0) * quantity * 10) / 10,
+        protein: Math.round((food.protein || 0) * quantity * 10) / 10,
+        fat: Math.round((food.fat || 0) * quantity * 10) / 10,
+        fiber: Math.round((food.fiber || 0) * quantity * 10) / 10,
         imageUrl: food.imageUrl,
         // Past days: local noon (no Z), so the timestamp stays on targetDate in every timezone
         loggedAt: isToday

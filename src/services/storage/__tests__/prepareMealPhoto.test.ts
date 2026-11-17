@@ -13,13 +13,14 @@ jest.mock('@/services/firebase', () => ({ storage: {}, auth: {} }));
 const resize = jest.fn();
 const saveAsync = jest.fn();
 const renderAsync = jest.fn();
-const ctx = { resize, renderAsync };
+const release = jest.fn();
+const ctx = { resize, renderAsync, release };
 
 beforeEach(() => {
   jest.clearAllMocks();
   resize.mockReturnValue(ctx);
   saveAsync.mockResolvedValue({ uri: 'file:///out.jpg', base64: 'NEW' });
-  renderAsync.mockResolvedValue({ saveAsync });
+  renderAsync.mockResolvedValue({ saveAsync, release });
   (ImageManipulator.manipulate as jest.Mock).mockReturnValue(ctx);
 });
 

@@ -167,12 +167,12 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
   );
 
   useAnimatedReaction(
-    () => clampIndex(Math.round(scrollY.value / itemHeight)),
+    () => Math.max(0, Math.min(lastIndex, Math.round(scrollY.value / itemHeight))),
     (current, previous) => {
       if (previous === null || previous === undefined || !ready.value) return;
       if (current !== previous) scheduleOnRN(emitIndex, current);
     },
-    [emitIndex, clampIndex, itemHeight]
+    [emitIndex, lastIndex, itemHeight]
   );
 
   // Values set from outside the wheel (e.g. a restored draft) move it; its own reports and jumps don't.

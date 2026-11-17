@@ -87,10 +87,10 @@ const HeroCalorieCardComponent: React.FC<HeroCalorieCardProps> = ({ onEditGoal }
 
       const meals = dailyLogs?.[dateStr]?.meals;
       const list = Array.isArray(meals) ? meals : [];
-      const cals = list.reduce((sum, m) => sum + m.calories, 0);
-      const carbs = Math.round(list.reduce((sum, m) => sum + m.carbs, 0));
-      const protein = Math.round(list.reduce((sum, m) => sum + m.protein, 0));
-      const fat = Math.round(list.reduce((sum, m) => sum + m.fat, 0));
+      const cals = list.reduce((sum, m) => sum + (m.calories || 0), 0);
+      const carbs = Math.round(list.reduce((sum, m) => sum + (m.carbs || 0), 0));
+      const protein = Math.round(list.reduce((sum, m) => sum + (m.protein || 0), 0));
+      const fat = Math.round(list.reduce((sum, m) => sum + (m.fat || 0), 0));
 
       days.push({
         idx: i,

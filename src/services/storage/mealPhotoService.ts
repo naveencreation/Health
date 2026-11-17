@@ -44,15 +44,25 @@ export async function prepareMealPhoto(asset: {
     const { MAX_DIMENSION, JPEG_QUALITY } = AI_CONFIG.IMAGE;
     const { width, height } = asset;
     const context = ImageManipulator.manipulate(asset.uri);
+    let image;
     if (width && height && Math.max(width, height) > MAX_DIMENSION) {
       context.resize(width >= height ? { width: MAX_DIMENSION } : { height: MAX_DIMENSION });
     }
-    const image = await context.renderAsync();
-    const out = await image.saveAsync({
-      format: SaveFormat.JPEG,
-      compress: JPEG_QUALITY,
-      base64: true,
-    });
+    let out;
+    try {
+      image = await context.renderAsync();
+      out = await image.saveAsync({
+        format: SaveFormat.JPEG,
+        compress: JPEG_QUALITY,
+        base64: true,
+      });
+    } finally {
+      // Free the native bitmaps; a release error must not mask the result
+      try {
+        image?.release();
+        context.release();
+      } catch {}
+    }
     if (!out.base64) throw new Error('no base64');
     return { uri: out.uri, base64: out.base64, mimeType: 'image/jpeg' };
   } catch (err) {

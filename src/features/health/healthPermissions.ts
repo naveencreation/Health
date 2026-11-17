@@ -1,10 +1,10 @@
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import {
   getGrantedPermissions,
   openHealthConnectSettings,
   requestPermission,
 } from 'react-native-health-connect';
-import { initializeHealthConnect } from './healthConnect';
+import { initializeHealthConnect, isHealthConnectAvailable } from './healthConnect';
 
 const STEPS_PERMISSION = {
   accessType: 'read' as const,
@@ -63,8 +63,13 @@ export async function requestStepsPermission(): Promise<boolean> {
   }
 }
 
-export function openHealthSettings() {
-  if (Platform.OS === 'android') {
+// The native call is fire-and-forget, so a missing Health Connect app crashes natively
+// where JS can't catch it; check availability first instead.
+export async function openHealthSettings() {
+  if (Platform.OS !== 'android') return;
+  if (await isHealthConnectAvailable()) {
     openHealthConnectSettings();
+  } else {
+    Linking.openURL('market://details?id=com.google.android.apps.healthdata').catch(() => {});
   }
 }
