@@ -240,7 +240,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
 
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
             style={styles.scroll}
@@ -443,7 +443,12 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
         </KeyboardAvoidingView>
       </View>
 
-      <Modal visible={showFounderNote} transparent animationType="fade">
+      <Modal
+        visible={showFounderNote}
+        transparent
+        animationType="fade"
+        onRequestClose={handleProceedToNext}
+      >
         <Pressable
           style={styles.scrim}
           onPress={handleProceedToNext}

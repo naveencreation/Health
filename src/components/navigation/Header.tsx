@@ -124,7 +124,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               ]}
             >
               <View style={styles.welcomeRow}>
-                <Text style={styles.welcomeText}>Welcome</Text>
+                <Text style={styles.welcomeText} maxFontSizeMultiplier={1.15}>
+                  Welcome
+                </Text>
                 {isPro && !isEarlyAccess ? (
                   <View style={styles.proTag} accessibilityLabel="Calorify Pro Member">
                     <Ionicons name="sparkles" size={10} color={Colors.warningDark} style={styles.proTagIcon} />
@@ -136,7 +138,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   </View>
                 ) : null}
               </View>
-              <Text style={styles.userNameText} numberOfLines={1}>
+              <Text style={styles.userNameText} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                 {currentUser?.name || userGoals.name || (currentUser?.isGuest ? 'Guest Explorer' : 'User')}
               </Text>
             </Animated.View>

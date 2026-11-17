@@ -221,7 +221,7 @@ export const CupSizeModal: React.FC<CupSizeModalProps> = ({
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <Pressable style={styles.backdrop} onPress={onClose} />
 

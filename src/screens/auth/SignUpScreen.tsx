@@ -143,7 +143,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         {/* Keyboard Avoiding Container */}
         <KeyboardAvoidingView
           style={styles.flexOne}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <ScrollView

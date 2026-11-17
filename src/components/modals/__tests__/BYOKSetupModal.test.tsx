@@ -3,6 +3,9 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { BYOKSetupModal } from '../BYOKSetupModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 jest.mock('expo-clipboard', () => ({ getStringAsync: jest.fn() }));
 
 let mockConfigured = true;

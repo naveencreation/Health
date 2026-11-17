@@ -28,6 +28,7 @@ import {
   sheetStyles,
   sheetSurface,
 } from '@/components/profile/ProfileUI';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface BYOKSetupModalProps {
   visible: boolean;
@@ -43,6 +44,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
   onKeyConfigured,
   onTakePhoto,
 }) => {
+  const insets = useSafeAreaInsets();
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -313,7 +315,12 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               ) : null}
             </ScrollView>
 
-            <View style={[sheetStyles.footer, styles.footer]}>
+            <View
+              style={[
+                sheetStyles.footer,
+                { paddingBottom: (Platform.OS === 'ios' ? 32 : 20) + insets.bottom },
+              ]}
+            >
               {isConnected && onTakePhoto ? (
                 <ProfileButton
                   label="Take a photo now"
@@ -405,6 +412,5 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: Colors.textSecondary,
   },
-  footer: { paddingBottom: Platform.OS === 'ios' ? 32 : 20 },
 });
 

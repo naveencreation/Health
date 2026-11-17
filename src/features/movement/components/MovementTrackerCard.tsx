@@ -369,7 +369,12 @@ const MovementTrackerCardComponent: React.FC<MovementTrackerCardProps> = ({
       )}
 
       {/* 5. Workout Logging Modal */}
-      <Modal visible={workoutModalVisible} transparent animationType="fade">
+      <Modal
+        visible={workoutModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWorkoutModalVisible(false)}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}

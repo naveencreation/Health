@@ -1338,6 +1338,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               value={inputQuery}
               onChangeText={setInputQuery}
               onSubmitEditing={() => handleSendMessage()}
+              submitBehavior="submit"
               returnKeyType="send"
               multiline
               maxFontSizeMultiplier={1.3}

@@ -9,6 +9,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { IconSizes, ActionIcons } from '@/theme/icons';
@@ -137,6 +138,7 @@ export interface WaterHistoryCardProps {
 }
 
 export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, style }) => {
+  const insets = useSafeAreaInsets();
   const {
     date,
     currentWaterMl: totalWaterMl,
@@ -365,7 +367,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
       >
         <View style={styles.editModalOverlay}>
           <Pressable style={styles.editModalBackdrop} onPress={() => setEditingEntry(null)} />
-          <View style={styles.editModalSheet}>
+          <View style={[styles.editModalSheet, { paddingBottom: 32 + insets.bottom }]}>
             <View style={styles.sheetHandle} />
 
             <View style={styles.editHeaderRow}>
@@ -538,7 +540,7 @@ export const WaterHistoryCard: React.FC<WaterHistoryCardProps> = ({ onViewAll, s
       >
         <View style={styles.viewAllOverlay}>
           <Pressable style={styles.viewAllBackdrop} onPress={() => setIsViewAllModalOpen(false)} />
-          <View style={styles.viewAllSheet}>
+          <View style={[styles.viewAllSheet, { paddingBottom: 32 + insets.bottom }]}>
             {/* Sheet Handle */}
             <View style={styles.sheetHandle} />
 
@@ -921,13 +923,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     borderCurve: 'continuous',
     paddingTop: 12,
-    paddingBottom: 32,
     paddingHorizontal: 20,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 20,
+    elevation: 0,
   },
   editHeaderRow: {
     flexDirection: 'row',
@@ -1052,13 +1049,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     maxHeight: '80%',
     paddingTop: 12,
-    paddingBottom: 32,
     paddingHorizontal: 20,
-    shadowColor: Colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 20,
+    elevation: 0,
   },
   sheetHandle: {
     width: 36,

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
@@ -22,6 +23,7 @@ interface NotificationModalProps {
 }
 
 const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const { userGoals } = useGoals();
   const { currentUser } = useAuth();
   const { currentLog, remainingCalories } = useDailyLog();
@@ -221,7 +223,8 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
             )}
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingBottom: 40 + insets.bottom }]}
+          >
             {notifications.length === 0 ? (
               <View style={styles.emptyState}>
                 <View style={styles.emptyIconCircle}>
@@ -302,11 +305,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     borderCurve: 'continuous',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 16,
+    elevation: 0,
     zIndex: 10000,
   },
   handleContainer: {
@@ -381,7 +380,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 40,
   },
   notifCard: {
     flexDirection: 'row',

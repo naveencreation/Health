@@ -6,6 +6,7 @@ import {
   Pressable,
   TextInput,
   Modal,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
@@ -443,7 +444,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
       >
         <KeyboardAvoidingView
           style={styles.keyboardContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
         >
           {/* 1. Header Toolbar */}
@@ -480,6 +481,11 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             )}
           </View>
 
+          <ScrollView
+            style={styles.flexSpacer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
           {/* 2. Date Quick Ribbon */}
           <View style={[styles.dateRibbonRow, isKeyboardOpen && styles.dateRibbonRowCompact]}>
             {/* Today Chip */}
@@ -704,8 +710,7 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
             </View>
           </View>
 
-          {/* Flexible Space to push button cleanly down */}
-          <View style={styles.flexSpacer} />
+          </ScrollView>
 
           {/* 5. Fixed Pinned Bottom CTA (Always visible, zero scroll) */}
           <View
