@@ -70,6 +70,7 @@ import {
 } from '@/utils/stepHistoryUtils';
 import { Monitoring } from '@/services/monitoring';
 import { mealPhotoService } from '@/services/storage/mealPhotoService';
+import { mergeHydratedLogs } from '@/services/sync/mergeHydratedLogs';
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -314,12 +315,22 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const firestoreGoalsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSyncedLogsRef = useRef<Record<string, string>>({});
   const flushLogsRef = useRef<(() => Promise<boolean>) | null>(null);
+  // Dates changed locally but not yet confirmed in Firestore; persisted so a restart can't drop them
+  const pendingLogDatesRef = useRef<Set<string>>(new Set());
+  const pendingUidRef = useRef<string | null>(null);
+  const latestLogsRef = useRef<Record<string, DailyLog>>({});
+  const persistPendingDates = (uid: string) =>
+    ScopedStorage.setItem('pending_log_dates_v1', [...pendingLogDatesRef.current], uid);
 
   // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
   const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
     if (!uid) return;
     isHydratingRef.current = true;
     try {
+      const storedPending = await ScopedStorage.getItem<string[]>('pending_log_dates_v1', uid, []);
+      pendingLogDatesRef.current = new Set(Array.isArray(storedPending) ? storedPending : []);
+      pendingUidRef.current = uid;
+      lastSyncedLogsRef.current = {};
       const userLogsKey = getUserLogsKey(uid);
       const userGoalsKey = getUserGoalsKey(uid);
 
@@ -435,32 +446,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // 4. Merge cloud logs with any local logs
       const todayKey = getTodayDateString();
-      const merged: Record<string, DailyLog> = { ...initialUserLogs };
-
-      for (const [dateKey, cloudLog] of Object.entries(cloudLogs)) {
-        const localLog = initialUserLogs[dateKey];
-        if (!localLog) {
-          merged[dateKey] = cloudLog;
-        } else {
-          const localWater = localLog.waterMl || 0;
-          const cloudWater = cloudLog.waterMl || 0;
-          const localEntries = localLog.waterEntries || [];
-          const cloudEntries = cloudLog.waterEntries || [];
-
-          merged[dateKey] = {
-            ...cloudLog,
-            meals:
-              cloudLog.meals && cloudLog.meals.length > 0 ? cloudLog.meals : localLog.meals || [],
-            waterMl: Math.max(cloudWater, localWater),
-            waterEntries: cloudEntries.length >= localEntries.length ? cloudEntries : localEntries,
-            steps: Math.max(cloudLog.steps || 0, localLog.steps || 0),
-            activities:
-              cloudLog.activities && cloudLog.activities.length > 0
-                ? cloudLog.activities
-                : localLog.activities || [],
-          };
-        }
-      }
+      const merged = mergeHydratedLogs(initialUserLogs, cloudLogs, pendingLogDatesRef.current);
 
       // Guarantee today has an entry if not present
       if (!merged[todayKey]) {
@@ -471,6 +457,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           steps: 0,
           activities: [],
         };
+      }
+
+      // Dates identical to the cloud copy are already synced; the rest (pending, local-only) upload
+      for (const [dateKey, cloudLog] of Object.entries(cloudLogs)) {
+        const serialized = JSON.stringify(merged[dateKey]);
+        if (!pendingLogDatesRef.current.has(dateKey) && serialized === JSON.stringify(cloudLog)) {
+          lastSyncedLogsRef.current[dateKey] = serialized;
+        }
       }
 
       setDailyLogs(merged);
@@ -541,6 +535,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('fetchAndHydrateUserData error:', err);
     } finally {
       isHydratingRef.current = false;
+      // The sync effect ran while hydration blocked it, so upload pending dates now, not on the next edit
+      if (hydratedUidRef.current === uid) flushLogsRef.current?.().catch(() => {});
     }
   };
 
@@ -731,6 +727,33 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       clearTimeout(firestoreLogDebounceRef.current);
     }
 
+    latestLogsRef.current = dailyLogs;
+    // Record unsent dates now (not in the debounce) so a kill within the 1s window keeps them
+    if (
+      !isLoggingOutRef.current &&
+      !isHydratingRef.current &&
+      auth.currentUser &&
+      !currentUser?.isGuest &&
+      hydratedUidRef.current === auth.currentUser.uid
+    ) {
+      const pUid = auth.currentUser.uid;
+      if (pendingUidRef.current !== pUid) {
+        pendingLogDatesRef.current = new Set();
+        pendingUidRef.current = pUid;
+      }
+      let added = false;
+      for (const dateKey of Object.keys(dailyLogs)) {
+        if (
+          lastSyncedLogsRef.current[dateKey] !== JSON.stringify(dailyLogs[dateKey]) &&
+          !pendingLogDatesRef.current.has(dateKey)
+        ) {
+          pendingLogDatesRef.current.add(dateKey);
+          added = true;
+        }
+      }
+      if (added) persistPendingDates(pUid).catch(() => {});
+    }
+
     // Syncs every date that differs from the last confirmed cloud copy; resolves true when all landed
     const flush = async (): Promise<boolean> => {
       if (
@@ -780,7 +803,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           return false;
         }
       });
-      return (await Promise.all(writes)).every(Boolean);
+      const results = await Promise.all(writes);
+      if (pendingUidRef.current === uid) {
+        let removed = false;
+        [...datesToSync].forEach((dKey, i) => {
+          // A date edited again during the write stays pending
+          const synced =
+            results[i] &&
+            JSON.stringify(latestLogsRef.current[dKey]) === lastSyncedLogsRef.current[dKey];
+          if (synced && pendingLogDatesRef.current.delete(dKey)) removed = true;
+        });
+        if (removed) persistPendingDates(uid).catch(() => {});
+      }
+      return results.every(Boolean);
     };
     flushLogsRef.current = flush;
 
