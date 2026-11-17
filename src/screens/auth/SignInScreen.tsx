@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,12 +9,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useAuth } from '@/context/HealthContext';
+import { useAuth, useDailyLog } from '@/context/HealthContext';
+import { ProfileButton, sheetStyles, sheetSurface } from '@/components/profile/ProfileUI';
+import { MotionCurves, MotionDurations } from '@/theme/motion';
+import { countGuestLoggedDays } from '@/utils/guestData';
 import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface SignInScreenProps {
@@ -24,13 +34,21 @@ interface SignInScreenProps {
   onForgotPassword?: () => void;
 }
 
+const SHEET_OFFSET = 420;
+
 export const SignInScreen: React.FC<SignInScreenProps> = ({
   onBack,
   onSuccess,
   onSwitchToRegister,
   onForgotPassword,
 }) => {
-  const { login, loginDemo } = useAuth();
+  const { login, loginDemo, currentUser } = useAuth();
+  const { dailyLogs } = useDailyLog();
+  const guestDays = currentUser?.isGuest ? countGuestLoggedDays(dailyLogs) : 0;
+  const reduceMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const progress = useSharedValue(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,9 +58,42 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
   const passwordRef = useRef<TextInput>(null);
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    if (!sheetOpen) return;
+    progress.set(
+      reduceMotion
+        ? 1
+        : withTiming(1, { duration: MotionDurations.sheet, easing: MotionCurves.decelerate })
+    );
+  }, [sheetOpen, reduceMotion, progress]);
+
+  const closeSheet = (after?: () => void) => {
+    const finish = () => {
+      setSheetOpen(false);
+      after?.();
+    };
+    if (reduceMotion) {
+      finish();
+      return;
+    }
+    progress.set(
+      withTiming(0, { duration: MotionDurations.emphasized, easing: MotionCurves.easeIn })
+    );
+    setTimeout(finish, MotionDurations.emphasized);
+  };
+
+  const scrimStyle = useAnimatedStyle(() => ({ opacity: progress.get() }));
+  const sheetAnim = useAnimatedStyle(() => ({
+    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.get()) * SHEET_OFFSET }],
+  }));
+
+  const handleLogin = async (confirmedReplace = false) => {
     if (!email.trim() || !password) {
       setErrorMessage('Please enter both email and password.');
+      return;
+    }
+    if (guestDays > 0 && confirmedReplace !== true) {
+      setSheetOpen(true);
       return;
     }
     setLoading(true);
@@ -198,7 +249,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                   returnKeyType="done"
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
-                  onSubmitEditing={handleLogin}
+                  onSubmitEditing={() => handleLogin()}
                   testID="input-signin-password"
                   accessibilityLabel="Password"
                 />
@@ -226,7 +277,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 pressed ? styles.pressedButton : null,
                 loading ? styles.disabledButton : null,
               ]}
-              onPress={handleLogin}
+              onPress={() => handleLogin()}
               disabled={loading}
               testID="btn-signin-submit"
               accessibilityRole="button"
@@ -258,11 +309,93 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
+
+      {sheetOpen ? (
+        <Modal
+          transparent
+          visible
+          animationType="none"
+          statusBarTranslucent
+          onRequestClose={() => closeSheet()}
+        >
+          <View style={styles.sheetRoot}>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, scrimStyle]} />
+            <Pressable
+              style={sheetStyles.backdrop}
+              onPress={() => closeSheet()}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss"
+            />
+            <Animated.View
+              style={[sheetSurface, styles.sheet, { paddingBottom: 24 + insets.bottom }, sheetAnim]}
+              accessibilityViewIsModal
+            >
+              <View style={sheetStyles.handle} />
+              <Text style={styles.sheetTitle} accessibilityRole="header">
+                Replace this phone’s guest logs?
+              </Text>
+              <Text style={styles.sheetBody}>
+                {`You have ${guestDays} ${guestDays === 1 ? 'day' : 'days'} logged as a guest. Signing in shows ${email.trim()}’s data instead, and the guest logs are removed from this phone.`}
+              </Text>
+              <ProfileButton
+                label="Sign in anyway"
+                variant="danger"
+                testID="btn-guest-signin-anyway"
+                onPress={() => closeSheet(() => handleLogin(true))}
+                style={styles.sheetBtn}
+              />
+              {onSwitchToRegister ? (
+                <ProfileButton
+                  label="Create an account instead"
+                  variant="secondary"
+                  testID="btn-guest-create-instead"
+                  onPress={() => closeSheet(onSwitchToRegister)}
+                  style={styles.sheetBtnGap}
+                />
+              ) : null}
+              <Pressable
+                testID="btn-guest-signin-cancel"
+                style={({ pressed }) => [styles.sheetCancel, pressed && styles.pressedSubtle]}
+                onPress={() => closeSheet()}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+              >
+                <Text style={styles.sheetCancelText}>Cancel</Text>
+              </Pressable>
+            </Animated.View>
+          </View>
+        </Modal>
+      ) : null}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  sheetRoot: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
+  scrim: { backgroundColor: Colors.overlayScrim },
+  sheet: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24 },
+  sheetTitle: {
+    fontFamily: Fonts.urbanist.bold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: Colors.textPrimary,
+    marginTop: 16,
+  },
+  sheetBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 15,
+    lineHeight: 21,
+    color: Colors.textSecondary,
+    marginTop: 6,
+  },
+  sheetBtn: { marginTop: 16 },
+  sheetBtnGap: { marginTop: 8 },
+  sheetCancel: { minHeight: 44, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  sheetCancelText: {
+    fontFamily: Fonts.urbanist.semiBold,
+    fontSize: 15,
+    color: Colors.textSecondary,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',

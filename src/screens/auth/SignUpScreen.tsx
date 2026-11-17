@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
-import { useAuth } from '@/context/HealthContext';
+import { useAuth, useDailyLog } from '@/context/HealthContext';
+import { countGuestLoggedDays } from '@/utils/guestData';
 import { BouncingDotsLoader, OnboardingHeader } from '@/components';
 
 interface SignUpScreenProps {
@@ -38,7 +39,9 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onSwitchToSignIn,
   initialData,
 }) => {
-  const { register } = useAuth();
+  const { register, currentUser } = useAuth();
+  const { dailyLogs } = useDailyLog();
+  const guestDays = currentUser?.isGuest ? countGuestLoggedDays(dailyLogs) : 0;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -175,6 +178,22 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
               <View style={styles.errorAlert}>
                 <Ionicons name="alert-circle" size={18} color={Colors.dangerDark} />
                 <Text style={styles.errorAlertText}>{errorMessage}</Text>
+              </View>
+            ) : null}
+
+            {guestDays > 0 ? (
+              <View style={styles.carryNote} testID="guest-carryover-note">
+                <View style={styles.carryIconTile}>
+                  <Ionicons name="cloud-upload-outline" size={18} color={Colors.primaryDeep} />
+                </View>
+                <View style={styles.carryTextCol}>
+                  <Text style={styles.carryTitle}>
+                    {`Your ${guestDays} ${guestDays === 1 ? 'day' : 'days'} of logs come with you`}
+                  </Text>
+                  <Text style={styles.carryBody}>
+                    Meals, water, steps, weight and your plan move into this account.
+                  </Text>
+                </View>
               </View>
             ) : null}
 
@@ -508,6 +527,38 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
+  carryNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+    elevation: 0,
+    padding: 12,
+    marginBottom: 20,
+  },
+  carryIconTile: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    backgroundColor: Colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 0,
+  },
+  carryTextCol: { flex: 1 },
+  carryTitle: { fontFamily: Fonts.urbanist.bold, fontSize: 14, color: Colors.textPrimary },
+  carryBody: {
+    fontFamily: Fonts.urbanist.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: Colors.card,

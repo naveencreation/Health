@@ -41,7 +41,6 @@ import { auth, db } from '@/services/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
@@ -309,6 +308,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const authResolvedRef = useRef(false);
   const isHydratingRef = useRef(false);
   const hydratedUidRef = useRef<string | null>(null);
+  // True while a guest's account is being created, so the auth listener doesn't hydrate over their logs
+  const guestSignUpRef = useRef(false);
   const firestoreLogDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firestoreGoalsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSyncedLogsRef = useRef<Record<string, string>>({});
@@ -657,6 +658,30 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async fbUser => {
       authResolvedRef.current = true;
+      const fromGuestSignUp = guestSignUpRef.current;
+      if (fbUser?.isAnonymous) {
+        // Legacy anonymous session: treat as a local-only guest, never hydrate or sync
+        const savedAuth = await AsyncStorage.getItem(STORAGE_KEYS.AUTH).catch(() => null);
+        let parsed: { name?: string } | null = null;
+        try {
+          parsed = savedAuth ? JSON.parse(savedAuth) : null;
+        } catch {
+          parsed = null;
+        }
+        const guestUser: AuthUser = {
+          id: fbUser.uid,
+          email: '',
+          name: parsed?.name || 'Friend',
+          isGuest: true,
+        };
+        setCurrentUser(guestUser);
+        Monitoring.setUserId(fbUser.uid);
+        Monitoring.logEvent('user_session_start', { isAnonymous: true });
+        await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(guestUser));
+        hydratedUidRef.current = fbUser.uid;
+        setIsAuthLoading(false);
+        return;
+      }
       if (fbUser) {
         const userObj: AuthUser = {
           id: fbUser.uid,
@@ -669,6 +694,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
         // Hydrate from cloud if not already hydrated for this user
+        if (fromGuestSignUp) hydratedUidRef.current = fbUser.uid;
         if (hydratedUidRef.current !== fbUser.uid) {
           await fetchAndHydrateUserData(fbUser.uid, userObj);
         }
@@ -2046,8 +2072,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
       try {
         const normalizedEmail = data.email.toLowerCase().trim();
+        // Captured before auth changes: a guest keeps their goals and logs
+        const wasGuest = Boolean(currentUser?.isGuest);
+        const guestLogs = dailyLogs;
         // Entitlement keys follow auth.currentUser, so read the guest's Pro before the switch
         const guestEntitlement = await PaymentService.getEntitlement();
+        guestSignUpRef.current = wasGuest;
         try {
           const userCredential = await createUserWithEmailAndPassword(
             auth,
@@ -2064,11 +2094,20 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             email: normalizedEmail,
             name: data.name,
           };
+          // Guest data uploads from scratch under the new uid via the debounced sync effect
+          if (wasGuest) {
+            lastSyncedLogsRef.current = {};
+            hydratedUidRef.current = fbUser.uid;
+            await AsyncStorage.setItem(getUserLogsKey(fbUser.uid), JSON.stringify(guestLogs));
+            await AsyncStorage.setItem(STORAGE_KEYS.DAILY_LOGS, JSON.stringify(guestLogs));
+          }
           setCurrentUser(userObj);
           await AsyncStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(userObj));
 
           // Scientifically calibrate personalized calorie budget and macro ratios
-          const newGoals: UserGoals = calculateCalibratedGoals(data, userGoals);
+          const newGoals: UserGoals = wasGuest
+            ? { ...userGoals, name: data.name || userGoals.name }
+            : calculateCalibratedGoals(data, userGoals);
           updateGoals(newGoals);
 
           // Save profile and goals to Cloud Firestore
@@ -2077,11 +2116,12 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               id: fbUser.uid,
               name: data.name,
               email: normalizedEmail,
-              age: data.age || newGoals.age || 24,
-              weight: data.weight || newGoals.currentWeightKg || 68,
+              age: (wasGuest ? newGoals.age : data.age) || newGoals.age || 24,
+              weight:
+                (wasGuest ? newGoals.currentWeightKg : data.weight) || newGoals.currentWeightKg || 68,
               weightUnit: data.weightUnit || newGoals.weightUnit || 'kg',
-              goal: data.goal || newGoals.goal || 'maintain',
-              gender: data.gender || newGoals.gender || 'male',
+              goal: (wasGuest ? newGoals.goal : data.goal) || newGoals.goal || 'maintain',
+              gender: (wasGuest ? newGoals.gender : data.gender) || newGoals.gender || 'male',
               heightCm: newGoals.heightCm || 175,
               startWeightKg:
                 newGoals.startWeightKg || data.weight || newGoals.currentWeightKg || 68,
@@ -2092,28 +2132,30 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             await setDoc(doc(db, 'users', fbUser.uid), profilePayload, { merge: true });
             hydratedUidRef.current = fbUser.uid;
 
-            // Initialize a fresh clean 0-kcal day for the new user
-            const todayStr = getTodayDateString();
-            const cleanLog: DailyLog = {
-              date: todayStr,
-              meals: [],
-              waterMl: 0,
-              steps: 0,
-              activities: [],
-            };
-            setDailyLogs({ [todayStr]: cleanLog });
-            await AsyncStorage.setItem(
-              STORAGE_KEYS.DAILY_LOGS,
-              JSON.stringify({ [todayStr]: cleanLog })
-            );
-            await AsyncStorage.setItem(
-              getUserLogsKey(fbUser.uid),
-              JSON.stringify({ [todayStr]: cleanLog })
-            );
-            await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, {
-              merge: true,
-            });
-            hydratedUidRef.current = fbUser.uid;
+            if (!wasGuest) {
+              // Initialize a fresh clean 0-kcal day for the new user
+              const todayStr = getTodayDateString();
+              const cleanLog: DailyLog = {
+                date: todayStr,
+                meals: [],
+                waterMl: 0,
+                steps: 0,
+                activities: [],
+              };
+              setDailyLogs({ [todayStr]: cleanLog });
+              await AsyncStorage.setItem(
+                STORAGE_KEYS.DAILY_LOGS,
+                JSON.stringify({ [todayStr]: cleanLog })
+              );
+              await AsyncStorage.setItem(
+                getUserLogsKey(fbUser.uid),
+                JSON.stringify({ [todayStr]: cleanLog })
+              );
+              await setDoc(doc(db, 'users', fbUser.uid, 'dailyLogs', todayStr), cleanLog, {
+                merge: true,
+              });
+              hydratedUidRef.current = fbUser.uid;
+            }
           } catch (fsErr) {
             console.warn('Firestore register doc write error:', fsErr);
           }
@@ -2148,9 +2190,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } catch (err: any) {
         return { success: false, error: err.message || 'Registration failed' };
+      } finally {
+        guestSignUpRef.current = false;
       }
     },
-    [userGoals, updateGoals]
+    [userGoals, updateGoals, currentUser, dailyLogs]
   );
 
   // Returns false (and stays signed in) when recent edits could not reach the cloud, unless forced
@@ -2356,13 +2400,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const loginAnonymous = useCallback(
     async (guestName?: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        let uid = 'guest_' + Date.now();
-        try {
-          const cred = await signInAnonymously(auth);
-          uid = cred.user.uid;
-        } catch (fbErr) {
-          console.warn('Firebase anonymous auth fallback to local guest ID:', fbErr);
-        }
+        const uid = 'guest_' + Date.now();
         const guestUser: AuthUser = {
           id: uid,
           email: '',
