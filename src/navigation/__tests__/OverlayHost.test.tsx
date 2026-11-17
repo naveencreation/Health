@@ -25,10 +25,21 @@ jest.mock('@/components', () => {
   return {
     FoodLogModal: ({ visible, mealType }: any) =>
       visible ? <Text testID="modal-food-log">FoodLogModal: {mealType}</Text> : null,
-    FoodVisionModal: ({ visible, initialMealType }: any) =>
-      visible ? <Text testID="modal-food-vision">FoodVisionModal: {initialMealType}</Text> : null,
-    BarcodeScannerModal: ({ visible }: any) =>
-      visible ? <Text testID="modal-barcode">BarcodeScannerModal</Text> : null,
+    FoodVisionModal: ({
+      visible,
+      initialMealType,
+      onOpenManualSearch,
+      onOpenBarcodeScanner,
+    }: any) =>
+      visible ? (
+        <>
+          <Text testID="modal-food-vision">FoodVisionModal: {initialMealType}</Text>
+          <Text testID="vision-to-search" onPress={() => onOpenManualSearch('breakfast')} />
+          <Text testID="vision-to-barcode" onPress={() => onOpenBarcodeScanner('breakfast')} />
+        </>
+      ) : null,
+    BarcodeScannerModal: ({ visible, initialMealType }: any) =>
+      visible ? <Text testID="modal-barcode">BarcodeScannerModal: {initialMealType}</Text> : null,
     BYOKSetupModal: ({ visible, onTakePhoto }: any) =>
       visible ? (
         <Text testID="modal-byok" onPress={onTakePhoto}>
@@ -96,10 +107,7 @@ describe('OverlayHost', () => {
       overlayContext.openModal({ type: 'foodLog', initialMeal: 'breakfast' });
     });
 
-    expect(getByTestId('modal-food-log').props.children).toEqual([
-      'FoodLogModal: ',
-      'breakfast',
-    ]);
+    expect(getByTestId('modal-food-log').props.children).toEqual(['FoodLogModal: ', 'breakfast']);
   });
 
   it('renders FoodVisionModal with preserved initialMeal', async () => {
@@ -135,6 +143,34 @@ describe('OverlayHost', () => {
     expect(getByTestId('modal-food-vision').props.children).toEqual([
       'FoodVisionModal: ',
       undefined,
+    ]);
+  });
+
+  it('carries the camera meal slot into search and barcode', async () => {
+    let overlayContext: any;
+    const { getByTestId } = await render(
+      <OverlayProvider>
+        <HostWrapper onTrigger={ctx => (overlayContext = ctx)} />
+      </OverlayProvider>
+    );
+
+    await act(async () => {
+      overlayContext.openModal({ type: 'foodVision' });
+    });
+    await act(async () => {
+      getByTestId('vision-to-search').props.onPress();
+    });
+    expect(getByTestId('modal-food-log').props.children).toEqual(['FoodLogModal: ', 'breakfast']);
+
+    await act(async () => {
+      overlayContext.openModal({ type: 'foodVision' });
+    });
+    await act(async () => {
+      getByTestId('vision-to-barcode').props.onPress();
+    });
+    expect(getByTestId('modal-barcode').props.children).toEqual([
+      'BarcodeScannerModal: ',
+      'breakfast',
     ]);
   });
 

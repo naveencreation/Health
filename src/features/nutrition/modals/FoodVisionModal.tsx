@@ -57,8 +57,8 @@ interface FoodVisionModalProps {
   onClose: () => void;
   initialMealType?: MealType;
   onOpenBYOKSetup: () => void;
-  onOpenManualSearch?: () => void;
-  onOpenBarcodeScanner?: () => void;
+  onOpenManualSearch?: (meal: MealType) => void;
+  onOpenBarcodeScanner?: (meal: MealType) => void;
 }
 
 const PORTIONS = [0.5, 0.75, 1, 1.5, 2];
@@ -328,8 +328,8 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
         }
       : undefined;
   const openKeySetup = openElsewhere(onOpenBYOKSetup)!;
-  const openSearch = openElsewhere(onOpenManualSearch);
-  const openScanner = openElsewhere(onOpenBarcodeScanner);
+  const openSearch = openElsewhere(onOpenManualSearch && (() => onOpenManualSearch(mealSlot)));
+  const openScanner = openElsewhere(onOpenBarcodeScanner && (() => onOpenBarcodeScanner(mealSlot)));
 
   const dayLabel = selectedDate
     ? (() => {

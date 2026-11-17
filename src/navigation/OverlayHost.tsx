@@ -47,10 +47,10 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
       : 'lunch';
 
   // Raw slot (undefined when unset) so FoodVisionModal can fall back to the time of day
-  const rawMealType = activeModal && 'initialMeal' in activeModal ? activeModal.initialMeal : undefined;
+  const rawMealType =
+    activeModal && 'initialMeal' in activeModal ? activeModal.initialMeal : undefined;
 
-  const prefillBarcode =
-    activeModal?.type === 'foodLog' ? activeModal.prefillBarcode : undefined;
+  const prefillBarcode = activeModal?.type === 'foodLog' ? activeModal.prefillBarcode : undefined;
 
   // Food modal transitions (preserve activeMealType across switching)
   const handleFoodModalToVision = useCallback(() => {
@@ -61,13 +61,20 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
     openModal({ type: 'barcodeScanner', initialMeal: activeMealType });
   }, [openModal, activeMealType]);
 
-  const handleFoodVisionToModal = useCallback(() => {
-    openModal({ type: 'foodLog', initialMeal: activeMealType });
-  }, [openModal, activeMealType]);
+  // meal is the slot picked in the camera; the barcode scanner calls this without one.
+  const handleFoodVisionToModal = useCallback(
+    (meal?: MealType) => {
+      openModal({ type: 'foodLog', initialMeal: meal ?? activeMealType });
+    },
+    [openModal, activeMealType]
+  );
 
-  const handleFoodVisionToBarcode = useCallback(() => {
-    openModal({ type: 'barcodeScanner', initialMeal: activeMealType });
-  }, [openModal, activeMealType]);
+  const handleFoodVisionToBarcode = useCallback(
+    (meal: MealType) => {
+      openModal({ type: 'barcodeScanner', initialMeal: meal });
+    },
+    [openModal]
+  );
 
   const handleBarcodeEnterManually = useCallback(
     (barcode: string) => {
