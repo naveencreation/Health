@@ -37,6 +37,8 @@ import {
   clearOnboardingDraft,
   OnboardingDraft,
 } from '@/features/onboarding';
+import { WALKTHROUGH_KEY } from '@/features/onboarding/services/firstMealWalkthrough';
+import { ScopedStorage } from '@/services/storage/scopedStorage';
 
 export type AuthScreenMode =
   'welcome' | 'onboarding' | 'signin' | 'signup' | 'forgot_password' | 'age';
@@ -88,7 +90,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onOnboardingStart,
   onOnboardingEnd,
 }) => {
-  const { applyOnboardingPlan } = useAuth();
+  const { applyOnboardingPlan, currentUser } = useAuth();
   const normalizeMode = (m: AuthScreenMode): AuthScreenMode => (m === 'age' ? 'onboarding' : m);
   const [history, setHistory] = useState<AuthScreenMode[]>([normalizeMode(initialMode)]);
   const [transitionDirection, setTransitionDirection] = useState<'forward' | 'backward'>('forward');
@@ -273,6 +275,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             if (applyOnboardingPlan) {
               await applyOnboardingPlan(data);
             }
+            // Only onboarding starts the first-meal walkthrough, so existing users never see it
+            await ScopedStorage.setItem(WALKTHROUGH_KEY, 'intro', currentUser?.id);
             onOnboardingEnd?.();
             if (onLoginSuccess) {
               onLoginSuccess();

@@ -152,6 +152,17 @@ describe('WelcomeScreen (Consolidated Phase 0)', () => {
     expect(parsedData.goal).toBe('gain');
   });
 
+  it('starts the first-meal walkthrough when onboarding completes', async () => {
+    const AsyncStorage = require('@react-native-async-storage/async-storage');
+    const { getByTestId } = await render(<WelcomeScreen />);
+    fireEvent.press(getByTestId('btn-welcome-get-started'));
+    await waitFor(() => expect(getByTestId('onboarding-wizard')).toBeTruthy());
+    fireEvent.press(getByTestId('btn-wizard-complete'));
+    await waitFor(async () => {
+      expect(await AsyncStorage.getItem('@calori_guest_first_meal_walkthrough_v1')).toBe('intro');
+    });
+  });
+
   it('shows the thali headline and no guest button for new users', async () => {
     const { getByText, queryByTestId } = await render(<WelcomeScreen />);
 

@@ -33,12 +33,15 @@ interface BYOKSetupModalProps {
   visible: boolean;
   onClose: () => void;
   onKeyConfigured?: () => void;
+  /** Offered once a key is connected, e.g. to return to the camera. */
+  onTakePhoto?: () => void;
 }
 
 export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
   visible,
   onClose,
   onKeyConfigured,
+  onTakePhoto,
 }) => {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -311,6 +314,17 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
             </ScrollView>
 
             <View style={[sheetStyles.footer, styles.footer]}>
+              {isConnected && onTakePhoto ? (
+                <ProfileButton
+                  label="Take a photo now"
+                  variant="primary"
+                  testID="btn-byok-take-photo"
+                  onPress={() => {
+                    handleClose();
+                    onTakePhoto();
+                  }}
+                />
+              ) : null}
               {showDisconnect ? (
                 <ProfileButton label="Disconnect key" variant="danger" onPress={handleDisconnect} />
               ) : (

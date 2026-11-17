@@ -25,6 +25,7 @@ import {
   buildSyncOptions,
 } from '@/services/notifications';
 import { Monitoring } from '@/services/monitoring';
+import { FirstMealWalkthrough } from '@/features/onboarding';
 
 // Structured Screens
 import { WelcomeScreen, TodayScreen, AnalyticsScreen, ProfileScreen } from '@/screens';
@@ -509,6 +510,7 @@ function MainApp() {
             />
           )}
         </SafeAreaView>
+        <FirstMealWalkthrough activeTab={activeTab} onOpenRia={() => handleTabChange('ria')} />
       </View>
     );
   };

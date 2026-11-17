@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act, waitFor } from '@testing-library/react-native';
+import { render, act, fireEvent, waitFor } from '@testing-library/react-native';
 import { OverlayProvider, useOverlay } from '../OverlayContext';
 import { OverlayHost } from '../OverlayHost';
 
@@ -29,8 +29,12 @@ jest.mock('@/components', () => {
       visible ? <Text testID="modal-food-vision">FoodVisionModal: {initialMealType}</Text> : null,
     BarcodeScannerModal: ({ visible }: any) =>
       visible ? <Text testID="modal-barcode">BarcodeScannerModal</Text> : null,
-    BYOKSetupModal: ({ visible }: any) =>
-      visible ? <Text testID="modal-byok">BYOKSetupModal</Text> : null,
+    BYOKSetupModal: ({ visible, onTakePhoto }: any) =>
+      visible ? (
+        <Text testID="modal-byok" onPress={onTakePhoto}>
+          BYOKSetupModal
+        </Text>
+      ) : null,
     NotificationModal: ({ visible }: any) =>
       visible ? <Text testID="modal-notifications">NotificationModal</Text> : null,
     AvatarPickerModal: ({ visible }: any) =>
@@ -114,6 +118,43 @@ describe('OverlayHost', () => {
       'FoodVisionModal: ',
       'dinner',
     ]);
+  });
+
+  it('leaves the camera slot unset so FoodVisionModal can use the time of day', async () => {
+    let overlayContext: any;
+    const { getByTestId } = await render(
+      <OverlayProvider>
+        <HostWrapper onTrigger={ctx => (overlayContext = ctx)} />
+      </OverlayProvider>
+    );
+
+    await act(async () => {
+      overlayContext.openModal({ type: 'foodVision' });
+    });
+
+    expect(getByTestId('modal-food-vision').props.children).toEqual([
+      'FoodVisionModal: ',
+      undefined,
+    ]);
+  });
+
+  it('returns to the camera from the key sheet via onTakePhoto', async () => {
+    let overlayContext: any;
+    const { getByTestId, queryByTestId } = await render(
+      <OverlayProvider>
+        <HostWrapper onTrigger={ctx => (overlayContext = ctx)} />
+      </OverlayProvider>
+    );
+
+    await act(async () => {
+      overlayContext.openModal({ type: 'byokSetup' });
+    });
+    await act(async () => {
+      fireEvent.press(getByTestId('modal-byok'));
+    });
+
+    expect(queryByTestId('modal-byok')).toBeNull();
+    expect(getByTestId('modal-food-vision')).toBeTruthy();
   });
 
   it('renders BYOKSetupModal when byokSetup is opened', async () => {

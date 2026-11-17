@@ -2,6 +2,8 @@ export * from './services/onboardingCalculator';
 export * from './services/onboardingDraft';
 export * from './components/PlanCalculationStep';
 export * from './components/OnboardingHeader';
+export * from './components/FirstMealWalkthrough';
+export * from './services/firstMealWalkthrough';
 export * from './screens/OnboardingWizardScreen';
 export * from './screens/NameInputScreen';
 export * from './screens/GoalSelectionScreen';

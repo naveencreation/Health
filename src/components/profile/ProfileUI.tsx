@@ -166,8 +166,9 @@ export const ProfileButton: React.FC<{
   /** Shows a spinner in place of the label and blocks presses. */
   loading?: boolean;
   accessibilityLabel?: string;
+  testID?: string;
   style?: StyleProp<ViewStyle>;
-}> = ({ label, onPress, variant = 'secondary', disabled, loading, accessibilityLabel, style }) => {
+}> = ({ label, onPress, variant = 'secondary', disabled, loading, accessibilityLabel, testID, style }) => {
   const onFill = variant === 'primary' || variant === 'dark';
   const textColor = onFill ? Colors.textInverse : variant === 'danger' ? Colors.dangerDark : Colors.textPrimary;
   return (
@@ -182,6 +183,7 @@ export const ProfileButton: React.FC<{
         style,
       ]}
       onPress={onPress}
+      testID={testID}
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}

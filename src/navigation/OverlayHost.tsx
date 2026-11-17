@@ -46,6 +46,9 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
       ? activeModal.initialMeal
       : 'lunch';
 
+  // Raw slot (undefined when unset) so FoodVisionModal can fall back to the time of day
+  const rawMealType = activeModal && 'initialMeal' in activeModal ? activeModal.initialMeal : undefined;
+
   const prefillBarcode =
     activeModal?.type === 'foodLog' ? activeModal.prefillBarcode : undefined;
 
@@ -91,7 +94,7 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
       <FoodVisionModal
         visible={isOpen('foodVision')}
         onClose={closeModal}
-        initialMealType={activeMealType}
+        initialMealType={rawMealType}
         onOpenBYOKSetup={() => openModal({ type: 'byokSetup' })}
         onOpenManualSearch={handleFoodVisionToModal}
         onOpenBarcodeScanner={handleFoodVisionToBarcode}
@@ -107,7 +110,11 @@ export const OverlayHost: React.FC<OverlayHostProps> = ({ screenWidth }) => {
       />
 
       {/* 4. BYOK Setup Modal */}
-      <BYOKSetupModal visible={isOpen('byokSetup')} onClose={closeModal} />
+      <BYOKSetupModal
+        visible={isOpen('byokSetup')}
+        onClose={closeModal}
+        onTakePhoto={() => openModal({ type: 'foodVision' })}
+      />
 
       {/* 5. Notification Center Modal */}
       <NotificationModal visible={isOpen('notifications')} onClose={closeModal} />
