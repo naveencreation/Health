@@ -121,7 +121,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
           }
         } catch {
           todayCount = await getTodaySteps();
-          records = await getTodayStepsRecords();
+          records = (await getTodayStepsRecords()) ?? [];
         }
 
         setSteps(todayCount);
@@ -245,7 +245,7 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
         }
       } catch {
         todayCount = await getTodaySteps();
-        records = await getTodayStepsRecords();
+        records = (await getTodayStepsRecords()) ?? [];
       }
       setSteps(todayCount);
       setHealthRecords(records);

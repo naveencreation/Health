@@ -68,6 +68,9 @@ export async function getStepsForDate(dateStr: string): Promise<{ steps: number;
       getStepsRecordsForDate(dateStr),
     ]);
 
+    // Aggregate failed and no records to sum: unknown, not "0 steps", so callers skip this date
+    if (!result && !records?.length) throw new Error('Health Connect read failed');
+
     const aggregateTotal = result?.COUNT_TOTAL ?? 0;
     if (aggregateTotal > 0) {
       return {

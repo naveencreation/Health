@@ -1,5 +1,6 @@
 import { StepLogEntry } from '@/types';
 import { KCAL_PER_STEP } from '@/constants/biometricDefaults';
+import { pad2, toDateString } from '@/utils/dateUtils';
 
 /**
  * Format a YYYY-MM-DD date string into the friendly date header matching the reference:
@@ -102,46 +103,51 @@ export function calculateStepMetrics(steps: number, durationMinutes?: number) {
 }
 
 /**
- * Converts raw Health Connect records into structured StepLogEntry items
+ * Buckets raw Health Connect records into one StepLogEntry per local hour (max 24 a day):
+ * Samsung Health / Google Fit write hundreds of records a day, and a day with more than 200
+ * entries is rejected by firestore.rules. Ids are deterministic per date+hour.
  */
 export function mapHealthConnectRecordsToStepEntries(records: any[]): StepLogEntry[] {
   if (!records || records.length === 0) return [];
 
-  return records
-    .filter(r => r && typeof r.count === 'number' && r.count > 0)
-    .map((record, index) => {
-      const steps = record.count;
-      const startTime = record.startTime;
-      const endTime = record.endTime;
+  const buckets = new Map<number, { hourStart: Date; steps: number; minutes: number }>();
+  for (const record of records) {
+    if (!record || typeof record.count !== 'number' || record.count <= 0) continue;
+    const start = new Date(record.startTime ?? Date.now());
+    if (isNaN(start.getTime())) continue;
+    const hourStart = new Date(start);
+    hourStart.setMinutes(0, 0, 0);
 
-      let durationMinutes = 1;
-      if (startTime && endTime) {
-        const startMs = new Date(startTime).getTime();
-        const endMs = new Date(endTime).getTime();
-        if (!isNaN(startMs) && !isNaN(endMs) && endMs > startMs) {
-          durationMinutes = Math.max(1, Math.round((endMs - startMs) / 60000));
-        } else {
-          durationMinutes = Math.max(1, Math.round(steps / 100));
-        }
-      } else {
-        durationMinutes = Math.max(1, Math.round(steps / 100));
-      }
+    let minutes = Math.max(1, Math.round(record.count / 100));
+    const endMs = new Date(record.endTime).getTime();
+    if (record.endTime && endMs > start.getTime()) {
+      minutes = Math.max(1, Math.round((endMs - start.getTime()) / 60000));
+    }
 
-      const metrics = calculateStepMetrics(steps, durationMinutes);
+    const key = hourStart.getTime();
+    const bucket = buckets.get(key) ?? { hourStart, steps: 0, minutes: 0 };
+    bucket.steps += record.count;
+    bucket.minutes += minutes;
+    buckets.set(key, bucket);
+  }
 
+  return [...buckets.values()]
+    .sort((a, b) => b.hourStart.getTime() - a.hourStart.getTime()) // newest first
+    .map(({ hourStart, steps, minutes }) => {
+      const metrics = calculateStepMetrics(steps, Math.min(60, minutes));
+      const startTime = hourStart.toISOString();
       return {
-        id: record.metadata?.id || `hc_step_${index}_${steps}`,
+        id: `hc_${toDateString(hourStart)}_${pad2(hourStart.getHours())}`,
         steps,
         durationMinutes: metrics.durationMinutes,
         caloriesBurned: metrics.calories,
         distanceKm: metrics.distanceKm,
-        loggedAt: startTime || new Date().toISOString(),
+        loggedAt: startTime,
         startTime,
-        endTime,
+        endTime: new Date(hourStart.getTime() + 3600000).toISOString(),
         source: 'health_connect' as const,
       };
-    })
-    .reverse(); // newest first
+    });
 }
 
 /**

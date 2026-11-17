@@ -112,13 +112,29 @@ describe('healthService', () => {
       expect(result.records.length).toBe(2);
     });
 
-    test('returns 0 when neither aggregate nor records exist', async () => {
+    test('throws (not 0 steps) when both reads failed', async () => {
       jest.spyOn(healthConnect, 'getStepsAggregateForDate').mockResolvedValue(null);
+      jest.spyOn(healthConnect, 'getStepsRecordsForDate').mockResolvedValue(null as any);
+
+      await expect(getStepsForDate('2026-10-02')).rejects.toThrow('Health Connect read failed');
+    });
+
+    test('returns 0 for a genuinely empty day', async () => {
+      jest
+        .spyOn(healthConnect, 'getStepsAggregateForDate')
+        .mockResolvedValue({ COUNT_TOTAL: 0 } as any);
       jest.spyOn(healthConnect, 'getStepsRecordsForDate').mockResolvedValue([]);
 
       const result = await getStepsForDate('2026-10-02');
       expect(result.steps).toBe(0);
       expect(result.records).toEqual([]);
+    });
+
+    test('throws when the aggregate read failed and there are no records', async () => {
+      jest.spyOn(healthConnect, 'getStepsAggregateForDate').mockResolvedValue(null);
+      jest.spyOn(healthConnect, 'getStepsRecordsForDate').mockResolvedValue([]);
+
+      await expect(getStepsForDate('2026-10-02')).rejects.toThrow();
     });
   });
 

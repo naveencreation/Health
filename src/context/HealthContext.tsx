@@ -72,6 +72,7 @@ import { Monitoring } from '@/services/monitoring';
 import { mealPhotoService } from '@/services/storage/mealPhotoService';
 import { userOwnedRawKeys } from '@/services/storage/accountErasure';
 import { mergeHydratedLogs } from '@/services/sync/mergeHydratedLogs';
+import { changedLogDates } from '@/services/sync/changedLogDates';
 
 export const STORAGE_KEYS = {
   DAILY_LOGS: '@calori_daily_logs_v1',
@@ -322,6 +323,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const latestLogsRef = useRef<Record<string, DailyLog>>({});
   const persistPendingDates = (uid: string) =>
     ScopedStorage.setItem('pending_log_dates_v1', [...pendingLogDatesRef.current], uid);
+  // Edits made before hydration finished (date -> latest log), re-applied over the hydrated state
+  const preHydrationEditsRef = useRef<Map<string, DailyLog>>(new Map());
+  const preHydrationEditsUidRef = useRef<string | null>(null);
+  // Log maps and goals set by hydration itself, so the persist effects don't treat them as edits
+  const hydrationLogsRef = useRef<WeakSet<object>>(new WeakSet());
+  const hydrationGoalsRef = useRef<object | null>(null);
+  const prevLogsRef = useRef<Record<string, DailyLog> | null>(null);
+  const prevGoalsRef = useRef<UserGoals | null>(null);
 
   // Unified hydration function to load profile, goals, and dailyLogs from Firestore & user-scoped cache
   const fetchAndHydrateUserData = async (uid: string, _userObj?: AuthUser | null) => {
@@ -334,6 +343,19 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       lastSyncedLogsRef.current = {};
       const userLogsKey = getUserLogsKey(uid);
       const userGoalsKey = getUserGoalsKey(uid);
+      const goalsPending = !!(await ScopedStorage.getItem<boolean>('pending_goals_v1', uid, false));
+
+      // Puts edits made while hydrating back over `logs` and queues them for upload
+      const applyPreHydrationEdits = (logs: Record<string, DailyLog>) => {
+        if (preHydrationEditsUidRef.current !== uid || preHydrationEditsRef.current.size === 0) {
+          return;
+        }
+        for (const [date, log] of preHydrationEditsRef.current) {
+          logs[date] = log;
+          pendingLogDatesRef.current.add(date);
+        }
+        ScopedStorage.setItem('pending_log_dates_v1', [...pendingLogDatesRef.current], uid).catch(() => {});
+      };
 
       // 1. Fast local cache load for this specific user
       let initialUserLogs: Record<string, DailyLog> = {};
@@ -353,9 +375,11 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           for (const [k, v] of Object.entries(parsedCachedLogs)) {
             initialUserLogs[k] = cleanDailyLog(v as DailyLog);
           }
-          if (Object.keys(initialUserLogs).length > 0) {
-            setDailyLogs(initialUserLogs);
-          }
+        }
+        applyPreHydrationEdits(initialUserLogs);
+        if (Object.keys(initialUserLogs).length > 0) {
+          hydrationLogsRef.current.add(initialUserLogs);
+          setDailyLogs(initialUserLogs);
         }
       } catch (cacheErr) {
         console.warn('User cache read error:', cacheErr);
@@ -366,7 +390,8 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          if (data?.goals) {
+          // Offline goal edits not yet uploaded win over the cloud copy; the goals effect uploads them
+          if (data?.goals && !goalsPending) {
             const mergedGoals: UserGoals = {
               ...DEFAULT_GOALS,
               ...data.goals,
@@ -378,6 +403,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               currentWeightKg: data.goals?.currentWeightKg ?? data.weight ?? 68.0,
               heightCm: data.goals?.heightCm ?? data.heightCm ?? 175,
             };
+            hydrationGoalsRef.current = mergedGoals;
             setUserGoals(mergedGoals);
             AsyncStorage.setItem(userGoalsKey, JSON.stringify(mergedGoals)).catch(() => {});
             AsyncStorage.setItem(STORAGE_KEYS.USER_GOALS, JSON.stringify(mergedGoals)).catch(
@@ -447,6 +473,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // 4. Merge cloud logs with any local logs
       const todayKey = getTodayDateString();
+      applyPreHydrationEdits(initialUserLogs); // edits made during the network wait
       const merged = mergeHydratedLogs(initialUserLogs, cloudLogs, pendingLogDatesRef.current);
 
       // Guarantee today has an entry if not present
@@ -468,7 +495,9 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
 
+      hydrationLogsRef.current.add(merged);
       setDailyLogs(merged);
+      if (goalsPending) setUserGoals(prev => ({ ...prev })); // re-run the goals effect to upload
 
       // 5. Fetch User-Scoped CustomFoods from Cloud Firestore & user-scoped cache
       const userCustomFoodsKey = getUserCustomFoodsKey(uid);
@@ -536,6 +565,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('fetchAndHydrateUserData error:', err);
     } finally {
       isHydratingRef.current = false;
+      if (preHydrationEditsUidRef.current === uid) preHydrationEditsRef.current.clear();
       // The sync effect ran while hydration blocked it, so upload pending dates now, not on the next edit
       if (hydratedUidRef.current === uid) flushLogsRef.current?.().catch(() => {});
     }
@@ -729,6 +759,29 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     latestLogsRef.current = dailyLogs;
+
+    // Edits before hydration finishes would be overwritten by it, so remember them to re-apply
+    const prevLogs = prevLogsRef.current;
+    prevLogsRef.current = dailyLogs;
+    if (
+      prevLogs &&
+      prevLogs !== dailyLogs &&
+      !hydrationLogsRef.current.has(dailyLogs) &&
+      currentUser &&
+      !currentUser.isGuest &&
+      !currentUser.id.startsWith('demo_') &&
+      !isLoggingOutRef.current &&
+      (isHydratingRef.current || hydratedUidRef.current !== currentUser.id)
+    ) {
+      if (preHydrationEditsUidRef.current !== currentUser.id) {
+        preHydrationEditsRef.current = new Map();
+        preHydrationEditsUidRef.current = currentUser.id;
+      }
+      for (const date of changedLogDates(prevLogs, dailyLogs)) {
+        preHydrationEditsRef.current.set(date, dailyLogs[date]);
+      }
+    }
+
     // Record unsent dates now (not in the debounce) so a kill within the 1s window keeps them
     if (
       !isLoggingOutRef.current &&
@@ -825,6 +878,14 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, 1000);
   }, [dailyLogs, isLoaded, selectedDate, currentUser]);
 
+  // Retry edits that failed to upload (offline, expired token) when the app returns to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') flushLogsRef.current?.().catch(() => {});
+    });
+    return () => sub.remove();
+  }, []);
+
   // Save changes & sync userGoals to Firestore (1000ms Debounced Cloud Sync)
   useEffect(() => {
     if (!isLoaded) return;
@@ -834,6 +895,22 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         : STORAGE_KEYS.USER_GOALS;
 
     AsyncStorage.setItem(targetKey, JSON.stringify(userGoals)).catch(() => {});
+
+    // A real edit (not hydration's own set) is flagged until the cloud write lands, so a restart
+    // before that doesn't let the older cloud goals overwrite it
+    const goalsChanged = prevGoalsRef.current !== userGoals;
+    prevGoalsRef.current = userGoals;
+    if (
+      goalsChanged &&
+      userGoals !== hydrationGoalsRef.current &&
+      !isLoggingOutRef.current &&
+      !isHydratingRef.current &&
+      auth.currentUser &&
+      !currentUser?.isGuest &&
+      hydratedUidRef.current === auth.currentUser.uid
+    ) {
+      ScopedStorage.setItem('pending_goals_v1', true, auth.currentUser.uid).catch(() => {});
+    }
 
     // 1000ms Debounced Cloud Firestore Sync
     if (firestoreGoalsDebounceRef.current) {
@@ -878,9 +955,17 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
 
           const payload = sanitizeForFirestore(profileUpdates);
-          setDoc(doc(db, 'users', auth.currentUser.uid), payload, { merge: true }).catch(err => {
-            if (__DEV__) console.warn('userGoals setDoc async error:', err);
-          });
+          const goalsUid = auth.currentUser.uid;
+          setDoc(doc(db, 'users', goalsUid), payload, { merge: true })
+            .then(() => {
+              // Newer edits keep the flag until their own write lands
+              if (prevGoalsRef.current === userGoals) {
+                ScopedStorage.setItem('pending_goals_v1', false, goalsUid).catch(() => {});
+              }
+            })
+            .catch(err => {
+              if (__DEV__) console.warn('userGoals setDoc async error:', err);
+            });
         } catch (err) {
           if (__DEV__) console.warn('userGoals setDoc sync error:', err);
         }
@@ -2244,6 +2329,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     isLoggingOutRef.current = true;
     hydratedUidRef.current = null;
+    preHydrationEditsRef.current.clear();
 
     // Invalidate in-memory API key cache so next login restores from Firestore
     SecureKeyStorage.invalidateCache();
@@ -2313,6 +2399,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       isLoggingOutRef.current = true;
       hydratedUidRef.current = null;
+      preHydrationEditsRef.current.clear();
       if (firestoreLogDebounceRef.current) clearTimeout(firestoreLogDebounceRef.current);
       if (firestoreGoalsDebounceRef.current) clearTimeout(firestoreGoalsDebounceRef.current);
       if (fbUser) {

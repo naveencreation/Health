@@ -105,15 +105,16 @@ export async function getStepsAggregateForDate(dateStr: string) {
   }
 }
 
+/** Returns null when the read failed, [] only for a genuinely empty day. */
 export async function getStepsRecordsForDate(dateStr: string) {
   if (Platform.OS !== 'android') {
-    return [];
+    return null;
   }
 
   try {
     const ready = await initializeHealthConnect();
     if (!ready) {
-      return [];
+      return null;
     }
 
     const { startTime, endTime } = getDateStartAndEndIso(dateStr);
@@ -129,7 +130,7 @@ export async function getStepsRecordsForDate(dateStr: string) {
     return response?.records || [];
   } catch (error) {
     console.error('[HealthConnect] Failed to read step records for:', dateStr, error);
-    return [];
+    return null;
   }
 }
 
