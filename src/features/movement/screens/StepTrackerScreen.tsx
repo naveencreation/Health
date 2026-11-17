@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -34,13 +34,6 @@ import {
 
 const HIT_SLOP_10 = { top: 10, bottom: 10, left: 10, right: 10 };
 
-const toDateString = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
 export interface StepTrackerScreenProps {
   onBack: () => void;
   onOpenSettings?: () => void;
@@ -48,7 +41,7 @@ export interface StepTrackerScreenProps {
 
 export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, onOpenSettings }) => {
   const insets = useSafeAreaInsets();
-  const { currentLog, dailyLogs, selectedDate, removeStepEntry, batchUpdateDailySteps } =
+  const { currentLog, dailyLogs, selectedDate, removeStepEntry, batchUpdateDailySteps, todayStr } =
     useDailyLog();
   const { userGoals } = useGoals();
 
@@ -66,7 +59,6 @@ export const StepTrackerScreen: React.FC<StepTrackerScreenProps> = ({ onBack, on
   const stepGoal = userGoals?.stepGoal || 10000;
 
   // Resolve steps for currently selected date
-  const todayStr = useMemo(() => toDateString(new Date()), []);
   const isViewingToday = selectedDate === todayStr;
   const historicalSteps = dailyLogs[selectedDate]?.steps ?? 0;
 

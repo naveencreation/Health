@@ -244,6 +244,21 @@ describe('planNotifications Engine', () => {
     expect(tomorrowStreak).toBeDefined();
   });
 
+  it.each([
+    ['water', { waterStats: { currentMl: 250, targetMl: 2000 } }],
+    ['weigh-in', { hasLoggedWeightToday: true }],
+    ['workout', { hasLoggedActivityToday: true }],
+  ])('drops streak reminder today if user logged %s', (_name, extra) => {
+    const planned = planNotifications({
+      settings: baseSettings,
+      now: FIXED_NOW,
+      streakDays: 4,
+      ...extra,
+    });
+    expect(planned.find(p => p.id === 'calori_streak_2026-10-10')).toBeUndefined();
+    expect(planned.find(p => p.id === 'calori_streak_2026-10-11')).toBeDefined();
+  });
+
   it('does not schedule streak if streakDays is 0', () => {
     const planned = planNotifications({
       settings: baseSettings,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -39,7 +39,7 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
-  const { selectedDate, dailyLogs, addWater } = useDailyLog();
+  const { selectedDate, dailyLogs, addWater, todayStr } = useDailyLog();
   const heroDropletRef = useRef<HeroDropletCardRef>(null);
 
   const currentWater = dailyLogs[selectedDate]?.waterMl ?? 0;
@@ -84,15 +84,6 @@ export const WaterTrackerScreen: React.FC<WaterTrackerScreenProps> = ({
       JSON.stringify({ size: newSize, beverage: newBev })
     ).catch(() => {});
   };
-
-  // Real-world today reference to guard against future date logging
-  const todayStr = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }, []);
 
   const isFutureDate = selectedDate > todayStr;
 

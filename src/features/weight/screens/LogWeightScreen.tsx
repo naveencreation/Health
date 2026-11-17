@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { IconSizes, ActionIcons } from '@/theme/icons';
-import { useDailyLog, useGoals, getTodayDateString } from '@/context/HealthContext';
+import { useDailyLog, useGoals } from '@/context/HealthContext';
+import { parseDateString, toDateString } from '@/utils/dateUtils';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 
@@ -73,16 +74,22 @@ export const LogWeightScreen: React.FC<LogWeightScreenProps> = ({
   onDelete,
 }) => {
   const insets = useSafeAreaInsets();
-  const { dailyLogs, selectedDate, logWeight, updateWeightEntry, deleteWeightEntry, currentLog } =
-    useDailyLog();
+  const {
+    dailyLogs,
+    selectedDate,
+    logWeight,
+    updateWeightEntry,
+    deleteWeightEntry,
+    currentLog,
+    todayStr,
+  } = useDailyLog();
   const { userGoals, updateGoals } = useGoals();
 
-  const todayStr = useMemo(() => getTodayDateString(new Date()), []);
   const yesterdayStr = useMemo(() => {
-    const d = new Date();
+    const d = parseDateString(todayStr);
     d.setDate(d.getDate() - 1);
-    return getTodayDateString(d);
-  }, []);
+    return toDateString(d);
+  }, [todayStr]);
 
   const [activeDate, setActiveDate] = useState<string>(() => targetDate || selectedDate);
 

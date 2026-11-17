@@ -51,6 +51,7 @@ const mockTodayStr = (() => {
 jest.mock('@/context/HealthContext', () => ({
   useDailyLog: () => ({
     selectedDate: mockTodayStr,
+    todayStr: mockTodayStr,
     currentLog: { steps: 5200 },
     dailyLogs: {
       [mockTodayStr]: { steps: 5200 },

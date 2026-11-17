@@ -6,6 +6,7 @@ import {
   getAllScheduledNotificationsAsync,
   setNotificationHandler,
   addNotificationResponseReceivedListener,
+  getLastNotificationResponseAsync,
   getPermissionsAsync,
   requestPermissionsAsync,
   SchedulableTriggerInputTypes,
@@ -206,6 +207,15 @@ export class NotificationService {
     listener: (response: NotificationResponse) => void
   ): EventSubscription {
     return addNotificationResponseReceivedListener(listener);
+  }
+
+  /** The notification tap that cold-launched the app, if any. */
+  public static async getLaunchResponse(): Promise<NotificationResponse | null> {
+    try {
+      return await getLastNotificationResponseAsync();
+    } catch {
+      return null;
+    }
   }
 }
 

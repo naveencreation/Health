@@ -13,6 +13,7 @@ export interface PlannerInput {
   };
   streakDays?: number;
   hasLoggedWeightToday?: boolean;
+  hasLoggedActivityToday?: boolean;
   stepStats?: {
     currentSteps: number;
     targetSteps: number;
@@ -245,9 +246,14 @@ export function planNotifications(input: PlannerInput): PlannedNotification[] {
     if (settings.streak.enabled && dayOffset <= 1) {
       // If streakDays === 0, do not schedule
       if (streakDays > 0) {
-        // If today and user has already logged a meal, drop today's streak reminder
-        const loggedAnyMealToday = isToday && loggedMealsSet.size > 0;
-        if (!loggedAnyMealToday) {
+        // Mirrors computeStreak: any meal, water, weigh-in or workout today keeps the streak
+        const loggedAnythingToday =
+          isToday &&
+          (loggedMealsSet.size > 0 ||
+            (waterStats?.currentMl ?? 0) > 0 ||
+            Boolean(input.hasLoggedWeightToday) ||
+            Boolean(input.hasLoggedActivityToday));
+        if (!loggedAnythingToday) {
           const fireDate = parseTimeToDate(dayDate, '21:00');
           const fireAt = fireDate.getTime();
           if (

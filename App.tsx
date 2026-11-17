@@ -25,6 +25,7 @@ import {
   buildSyncOptions,
 } from '@/services/notifications';
 import { Monitoring } from '@/services/monitoring';
+import type { NotificationResponse } from '@/services/notifications/expoNotifications';
 import { FirstMealWalkthrough } from '@/features/onboarding';
 
 // Structured Screens
@@ -81,13 +82,11 @@ function MainApp() {
     };
   }, []);
 
-  // Initialize native notifications & listen for user notification interactions (Tap Routing)
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-
-    NotificationService.initialize().catch(() => {});
-
-    const subscription = NotificationService.addResponseListener(response => {
+  // Identifier of the last routed tap; stops the launch response being routed twice
+  const lastRoutedIdRef = useRef<string | null>(null);
+  const routeNotification = useCallback(
+    (response: NotificationResponse) => {
+      lastRoutedIdRef.current = response.notification.request.identifier;
       const data = response.notification.request.content.data;
       const route = data?.route;
       const mealSlot = data?.mealSlot as MealType | undefined;
@@ -100,12 +99,22 @@ function MainApp() {
       } else if (route === 'today') {
         setActiveTab('today');
       }
-    });
+    },
+    [openModal]
+  );
+
+  // Initialize native notifications & listen for user notification interactions (Tap Routing)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    NotificationService.initialize().catch(() => {});
+
+    const subscription = NotificationService.addResponseListener(routeNotification);
 
     return () => {
       subscription.remove();
     };
-  }, [openModal]);
+  }, [routeNotification]);
 
   // Plan reminders from today's log, not the date being browsed
   const todayLog = dailyLogs[todayStr];
@@ -431,6 +440,16 @@ function MainApp() {
   }, []);
 
   const isAppReady = isDataReady && minDisplayElapsed;
+
+  // Cold start from a reminder tap: route once the main app (not Welcome/loading) is showing
+  const canRouteLaunch =
+    Platform.OS !== 'web' && isAppReady && isAuthenticated && !authModalVisible && !isOnboardingActive;
+  useEffect(() => {
+    if (!canRouteLaunch) return;
+    NotificationService.getLaunchResponse().then(r => {
+      if (r && r.notification.request.identifier !== lastRoutedIdRef.current) routeNotification(r);
+    });
+  }, [canRouteLaunch, routeNotification]);
 
   const loaderOpacity = useSharedValue(1);
   const [isOverlayMounted, setIsOverlayMounted] = useState(true);

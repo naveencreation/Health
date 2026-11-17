@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AIRateLimitStatus } from '../types/ai.types';
 import { AI_CONFIG } from '../config/AIConfig';
+import { toDateString } from '@/utils/dateUtils';
 
 class AIRateLimiterService {
   private lastRequestTimestamp = 0;
@@ -45,7 +46,7 @@ class AIRateLimiterService {
     }
 
     // 3. Daily Usage Tracker (Google AI Studio 1,500 RPD free ceiling)
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toDateString();
     if (this.cachedDailyDate !== today) {
       this.cachedDailyDate = today;
       const stored = await AsyncStorage.getItem(`@calori_ai_daily_usage_${today}`);
@@ -82,7 +83,7 @@ class AIRateLimiterService {
     this.lastRequestTimestamp = now;
     this.recentRequestTimestamps.push(now);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toDateString();
     this.cachedDailyCount += 1;
     try {
       await AsyncStorage.setItem(

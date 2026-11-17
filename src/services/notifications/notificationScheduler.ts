@@ -112,6 +112,7 @@ export interface SyncSchedulesOptions {
   targetWaterMl?: number;
   lastWaterLoggedAt?: number;
   hasLoggedWeightToday?: boolean;
+  hasLoggedActivityToday?: boolean;
   currentSteps?: number;
   stepGoal?: number;
   uid?: string;
@@ -134,6 +135,7 @@ export const buildSyncOptions = (
     ? Math.max(...log.waterEntries.map(e => new Date(e.loggedAt).getTime()))
     : undefined,
   hasLoggedWeightToday: typeof log?.weightKg === 'number' || Boolean(log?.weightEntries?.length),
+  hasLoggedActivityToday: Boolean(log?.activities?.length),
   currentSteps: log?.steps || 0,
   stepGoal: goals.stepGoal || BIOMETRIC_DEFAULTS.stepGoal,
   uid,
@@ -172,6 +174,7 @@ export class NotificationScheduler {
           : undefined,
       streakDays: options.streakDays,
       hasLoggedWeightToday: options.hasLoggedWeightToday,
+      hasLoggedActivityToday: options.hasLoggedActivityToday,
       stepStats:
         options.stepGoal !== undefined
           ? {

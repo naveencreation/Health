@@ -16,6 +16,7 @@ import { IconSizes, ActionIcons } from '@/theme/icons';
 import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 import { useDailyLog } from '@/context/HealthContext';
 import { WaterLogEntry } from '@/types';
+import { toDateString } from '@/utils/dateUtils';
 import { Colors } from '@/theme/colors';
 import { Fonts } from '@/theme/typography';
 import {
@@ -221,11 +222,11 @@ const formatTime = (isoString?: string): string => {
 const formatDateGroupHeader = (dateStr: string): string => {
   try {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = toDateString(today);
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = toDateString(yesterday);
 
     const targetDate = new Date(dateStr + 'T12:00:00');
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };

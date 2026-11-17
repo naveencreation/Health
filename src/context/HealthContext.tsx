@@ -1240,9 +1240,10 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (ml > 0) {
           NotificationStorage.updateSettings({ lastWaterLoggedAt: Date.now() }, currentUser?.id).catch(() => {});
           const now = new Date();
-          const timePart = now.toTimeString().split(' ')[0];
           const loggedAt =
-            targetDate === today ? now.toISOString() : `${targetDate}T${timePart}.000Z`;
+            targetDate === today
+              ? now.toISOString()
+              : new Date(`${targetDate}T${now.toTimeString().split(' ')[0]}`).toISOString();
 
           const newEntry: WaterLogEntry = {
             id: 'water_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -1367,7 +1368,7 @@ export const HealthProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                   id: 'water_' + Date.now(),
                   amountMl: newAmount,
                   beverageType: newType,
-                  loggedAt: `${targetDate}T08:00:00.000Z`,
+                  loggedAt: new Date(`${targetDate}T08:00:00`).toISOString(),
                 },
               ],
             },

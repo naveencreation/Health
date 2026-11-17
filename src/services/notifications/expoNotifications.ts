@@ -11,7 +11,10 @@ import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNoti
 import { cancelAllScheduledNotificationsAsync } from 'expo-notifications/build/cancelAllScheduledNotificationsAsync';
 import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getAllScheduledNotificationsAsync';
 import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
-import { addNotificationResponseReceivedListener } from 'expo-notifications/build/NotificationsEmitter';
+import {
+  addNotificationResponseReceivedListener,
+  getLastNotificationResponseAsync,
+} from 'expo-notifications/build/NotificationsEmitter';
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
 import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications/build/NotificationPermissions';
@@ -28,6 +31,7 @@ export {
   getAllScheduledNotificationsAsync,
   setNotificationHandler,
   addNotificationResponseReceivedListener,
+  getLastNotificationResponseAsync,
   setNotificationChannelAsync,
   AndroidImportance,
   getPermissionsAsync,
