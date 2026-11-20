@@ -149,6 +149,15 @@ export const Colors = {
   weightLoss: '#10B981', // Emerald for weight loss delta per DESIGN.md line 224
   weightGain: '#F43F5E', // Rose Coral for weight gain delta
 
+  // Insights hero gradient (light coral -> primary -> deep coral)
+  heroGradientStart: '#FFB38A',
+  heroGradientEnd: '#E2583A',
+
+  // Chart tokens (Insights)
+  chartGrid: '#EEF0F3', // soft horizontal grid lines
+  stepsMet: '#FDBA74', // step bars on days that met the goal
+  waterOther: '#7DD3FC', // non-water drinks in the water tooltip
+
   // Elevation & Overlays
   shadowColor: '#0F172A',
   overlayScrim: 'rgba(15, 23, 42, 0.4)',
