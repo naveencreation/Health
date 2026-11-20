@@ -39,7 +39,8 @@ interface WheelPickerProps {
 // RN types have no onKeyDown on View; react-native-web does.
 type WebKeyEvent = { key: string; preventDefault: () => void };
 
-const WEB_SNAP_DELAY_MS = 120;
+// Web has no momentum events, so it settles sooner; native waits out the platform's own snap.
+const SNAP_IDLE_MS = Platform.OS === 'web' ? 120 : 180;
 
 interface WheelItemProps {
   label: number;
@@ -192,17 +193,21 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
     []
   );
 
-  // react-native-web ignores snapToInterval and has no momentum events.
+  // Web: react-native-web ignores snapToInterval and has no momentum events, so this is the snap.
+  // Native: safety net for interrupted gestures (a parent ScrollView stealing the drag cancels the
+  // wheel's snap), re-aligning only when the wheel came to rest between two items.
   const snapAfterIdle = useCallback(() => {
     if (settleTimer.current) clearTimeout(settleTimer.current);
     settleTimer.current = setTimeout(() => {
-      scrollToIndex(Math.round(scrollY.value / itemHeight), !reduceMotion);
-    }, WEB_SNAP_DELAY_MS);
-  }, [scrollToIndex, scrollY, itemHeight, reduceMotion]);
+      const i = clampIndex(Math.round(scrollY.value / itemHeight));
+      if (Math.abs(scrollY.value - i * itemHeight) < 1) return;
+      scrollToIndex(i, !reduceMotion);
+    }, SNAP_IDLE_MS);
+  }, [clampIndex, scrollToIndex, scrollY, itemHeight, reduceMotion]);
 
   const onScroll = useAnimatedScrollHandler(event => {
     scrollY.value = event.contentOffset.y;
-    if (Platform.OS === 'web') scheduleOnRN(snapAfterIdle);
+    scheduleOnRN(snapAfterIdle);
   });
 
   const step = useCallback(
@@ -258,6 +263,7 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
         ref={scrollRef}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        nestedScrollEnabled
         onLayout={handleLayout}
         onScrollBeginDrag={() => {
           targetRef.current = null;
