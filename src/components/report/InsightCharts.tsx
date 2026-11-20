@@ -277,8 +277,11 @@ const ChartFrame: React.FC<FrameProps> = ({
         {labels.map((l, i) => (
           <View key={i} style={styles.axisCell}>
             <Text
-              numberOfLines={1}
-              style={[styles.axisLabel, i === selectedIndex && styles.axisLabelActive]}
+              style={[
+                styles.axisLabel,
+                styles.axisLabelBox,
+                i === selectedIndex && styles.axisLabelActive,
+              ]}
             >
               {l}
             </Text>
@@ -939,6 +942,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     includeFontPadding: false,
+  },
+  // Centred over its slot but wider than it, so month labels ("Nov 15") aren't clipped in thin daily slots
+  axisLabelBox: {
+    position: 'absolute',
+    left: '50%',
+    width: 48,
+    marginLeft: -24,
+    textAlign: 'center',
   },
   axisLabelActive: {
     fontFamily: Fonts.urbanist.extraBold,
