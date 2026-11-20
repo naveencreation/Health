@@ -126,7 +126,7 @@ export class AIErrorMapper {
       if (searchStr.includes('BACKGROUND')) {
         return this.createError(
           'APP_BACKGROUNDED',
-          'Generation paused because Calorify went to the background.',
+          'Generation paused because Nomzo went to the background.',
           undefined,
           false
         );
@@ -205,7 +205,7 @@ export class AIErrorMapper {
       case 'NO_KEY_CONFIGURED':
         error.userTitle = 'Gemini Key Needed';
         error.userMessage =
-          'Connect your free Google Gemini API key to unlock Ria AI coaching and instant food photo scanning.';
+          'Connect your free Google Gemini API key to unlock Nomzo AI coaching and instant food photo scanning.';
         error.actionLabel = 'Connect Key';
         break;
 
@@ -233,7 +233,7 @@ export class AIErrorMapper {
       case 'NETWORK_ERROR':
         error.userTitle = 'No Internet Connection';
         error.userMessage =
-          'Calorify could not reach Google Gemini. Please check your WiFi or mobile data connection and retry.';
+          'Nomzo could not reach Google Gemini. Please check your WiFi or mobile data connection and retry.';
         error.actionLabel = 'Retry Analysis';
         break;
 
@@ -255,21 +255,21 @@ export class AIErrorMapper {
       case 'CLINICAL_SAFETY_INTERCEPT':
         error.userTitle = 'Nourishment Safety Guidance';
         error.userMessage =
-          'Calorify encourages safe, sustainable nourishment. We cannot provide extreme starvation or deficit guidance. Please consult a healthcare professional.';
+          'Nomzo encourages safe, sustainable nourishment. We cannot provide extreme starvation or deficit guidance. Please consult a healthcare professional.';
         error.actionLabel = 'Learn More';
         break;
 
       case 'INVALID_STRUCTURED_OUTPUT':
         error.userTitle = 'Photo Analysis Incomplete';
         error.userMessage = error.message.toLowerCase().includes('no recognizable food')
-          ? 'Ria could not detect any food or drink in this photo. Please snap a clear photo of your meal.'
+          ? 'Nomzo could not detect any food or drink in this photo. Please snap a clear photo of your meal.'
           : 'We could not clearly identify the meal or calculate its nutritional macros. Please try capturing under better lighting.';
         error.actionLabel = 'Try Another Photo';
         break;
 
       case 'APP_BACKGROUNDED':
         error.userTitle = 'Stream Paused';
-        error.userMessage = 'Generation paused when you navigated away from Calorify.';
+        error.userMessage = 'Generation paused when you navigated away from Nomzo.';
         error.actionLabel = 'Resume';
         break;
 

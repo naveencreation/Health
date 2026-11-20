@@ -146,7 +146,7 @@ export class GeminiProvider {
         isValid: false,
         error: AIErrorMapper.createError(
           'INVALID_KEY',
-          'It looks like you entered an OpenAI key ("sk-..."). Calorify is powered by Google Gemini. Please get a free Gemini key from Google AI Studio (starts with "AIza...").'
+          'It looks like you entered an OpenAI key ("sk-..."). Nomzo is powered by Google Gemini. Please get a free Gemini key from Google AI Studio (starts with "AIza...").'
         ),
       };
     }
@@ -600,7 +600,7 @@ If the image clearly does not contain any food, meal, or beverage (e.g. an objec
     context: UserNutritionContext
   ): Promise<string> {
     const startTime = Date.now();
-    const prompt = `You are Ria. Based on today's telemetry:
+    const prompt = `You are Nomzo. Based on today's telemetry:
 Consumed: ${context.consumedCalories} kcal / Budget: ${context.dailyCalorieBudget} kcal (Remaining: ${context.remainingCalories} kcal).
 Protein: ${context.consumedProtein}g / Target: ${context.targetProtein}g.
 Water: ${context.consumedWaterMl} ml / Target: ${context.targetWaterMl} ml.

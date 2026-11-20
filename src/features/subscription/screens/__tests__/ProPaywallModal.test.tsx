@@ -64,7 +64,7 @@ describe('ProPaywallModal', () => {
 
     await waitFor(() => {
       expect(mockPurchasePlan).toHaveBeenCalledWith('pro_annual');
-      expect(getByText('Welcome to Calorify Pro!')).toBeTruthy();
+      expect(getByText('Welcome to Nomzo Pro!')).toBeTruthy();
     });
 
     const exploreBtn = getByRole('button', { name: 'Explore Pro features' });

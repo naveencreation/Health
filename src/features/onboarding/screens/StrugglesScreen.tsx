@@ -168,7 +168,7 @@ export const StrugglesScreen: React.FC<StrugglesScreenProps> = ({
           <Text style={styles.question} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
             What makes tracking hard for you?
           </Text>
-          <Text style={styles.subtitle}>Pick up to 3. Ria will help with these first.</Text>
+          <Text style={styles.subtitle}>Pick up to 3. Nomzo will help with these first.</Text>
 
           <View style={styles.counterRow}>
             <View style={styles.segments}>

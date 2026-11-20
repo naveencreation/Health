@@ -1,7 +1,7 @@
 import { BarcodeScanResult, NormalizedFoodItem } from '@/types/barcode';
 
 const OPEN_FOOD_FACTS_BASE_URL = 'https://world.openfoodfacts.org/api/v2/product';
-const USER_AGENT = 'CalorifyApp - Android - Version 1.0 - contact@calorify.app';
+const USER_AGENT = 'NomzoApp - Android - Version 1.0 - nomzo.app@gmail.com';
 const TIMEOUT_MS = 10000;
 
 export class BarcodeService {

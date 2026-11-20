@@ -100,7 +100,7 @@ describe('FirstMealWalkthrough', () => {
     expect(await AsyncStorage.getItem(KEY)).toBe('done');
   });
 
-  it('opens Ria when the tip body is tapped', async () => {
+  it('opens Nomzo when the tip body is tapped', async () => {
     await AsyncStorage.setItem(KEY, 'ria_tip');
     mockLogs = { '2026-01-01': { meals: [{}] } };
     const { getByTestId } = await setup();

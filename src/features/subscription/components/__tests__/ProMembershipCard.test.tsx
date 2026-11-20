@@ -37,10 +37,10 @@ describe('ProMembershipCard', () => {
       <ProMembershipCard onUpgradePress={mockUpgrade} />
     );
 
-    expect(getByText('Unlock Calorify Pro')).toBeTruthy();
+    expect(getByText('Unlock Nomzo Pro')).toBeTruthy();
     expect(getByText('7-DAY FREE TRIAL')).toBeTruthy();
 
-    const upgradeBtn = getByRole('button', { name: 'Upgrade to Calorify Pro' });
+    const upgradeBtn = getByRole('button', { name: 'Upgrade to Nomzo Pro' });
     fireEvent.press(upgradeBtn);
 
     await waitFor(() => {
@@ -60,7 +60,7 @@ describe('ProMembershipCard', () => {
       <ProMembershipCard onUpgradePress={jest.fn()} onManagePress={mockManage} />
     );
 
-    expect(getByText('Calorify Pro')).toBeTruthy();
+    expect(getByText('Nomzo Pro')).toBeTruthy();
     expect(getByText('ACTIVE')).toBeTruthy();
     expect(getByText('Annual VIP Membership')).toBeTruthy();
 

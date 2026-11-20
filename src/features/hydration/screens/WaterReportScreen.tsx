@@ -376,7 +376,7 @@ export const WaterReportScreen: React.FC<WaterReportScreenProps> = ({ onBack }) 
                 accessibilityRole="button"
                 accessibilityLabel={
                   isLocked
-                    ? `${displayLabel} timeframe (Calorify Pro required)`
+                    ? `${displayLabel} timeframe (Nomzo Pro required)`
                     : `${displayLabel} timeframe`
                 }
               >

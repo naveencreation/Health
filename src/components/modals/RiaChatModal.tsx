@@ -1026,10 +1026,10 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
       >
         <Image source={RIA_AVATAR} style={styles.connectAvatar} contentFit="cover" />
         <Text style={styles.connectTitle} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
-          Meet Ria, your nutrition coach
+          Meet Nomzo, your nutrition coach
         </Text>
         <Text style={styles.connectBody}>
-          Ria knows your goals and what you ate today, so her answers fit your day.
+          Nomzo knows your goals and what you ate today, so its answers fit your day.
         </Text>
 
         <View style={styles.featureList}>
@@ -1050,7 +1050,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
         <View style={styles.connectCard}>
           <Text style={styles.connectCardTitle}>Connect Gemini to start</Text>
           <Text style={styles.connectCardBody}>
-            Ria runs on Google Gemini with your own API key. Setup takes about a minute.
+            Nomzo runs on Google Gemini with your own API key. Setup takes about a minute.
           </Text>
           <Pressable
             style={({ pressed }) => [styles.primaryBtn, pressed ? styles.primaryBtnPressed : null]}
@@ -1079,7 +1079,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           <Image source={RIA_AVATAR} style={styles.headerAvatar} contentFit="cover" />
           <View style={styles.headerTextGroup}>
             <Text style={styles.headerName} accessibilityRole="header">
-              Ria
+              Nomzo
             </Text>
             <Text style={styles.headerSub} numberOfLines={1}>
               Your nutrition coach
@@ -1182,7 +1182,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
                           ]}
                           onPress={() => handleSendMessage(action.prompt)}
                           accessibilityRole="button"
-                          accessibilityLabel={`Ask Ria: ${action.label}`}
+                          accessibilityLabel={`Ask Nomzo: ${action.label}`}
                         >
                           <View style={[styles.starterIcon, { backgroundColor: tint.bg }]}>
                             <Ionicons name={action.icon} size={18} color={tint.fg} />
@@ -1262,7 +1262,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
                     <View style={styles.streamingIndicatorRow}>
                       <View style={styles.streamingStatusDot} />
                       <Text style={styles.streamingLabel}>
-                        {streamingText ? 'Ria is writing…' : 'Ria is thinking…'}
+                        {streamingText ? 'Nomzo is writing…' : 'Nomzo is thinking…'}
                       </Text>
                     </View>
                   </View>
@@ -1292,7 +1292,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               style={({ pressed }) => [styles.stopBtn, pressed ? styles.pressedCloseBtn : null]}
               onPress={handleStopGenerating}
               accessibilityRole="button"
-              accessibilityLabel="Stop Ria's reply"
+              accessibilityLabel="Stop Nomzo's reply"
             >
               <Ionicons name="stop-circle-outline" size={16} color={Colors.textSecondary} />
               <Text style={styles.stopBtnText}>Stop</Text>
@@ -1318,7 +1318,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
                 ]}
                 onPress={() => handleSendMessage(chip.prompt)}
                 accessibilityRole="button"
-                accessibilityLabel={`Ask Ria: ${chip.label}`}
+                accessibilityLabel={`Ask Nomzo: ${chip.label}`}
               >
                 <Text style={styles.quickChipText}>{chip.label}</Text>
               </Pressable>
@@ -1333,7 +1333,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           >
             <TextInput
               style={styles.textInput}
-              placeholder="Ask Ria or log a meal"
+              placeholder="Ask Nomzo or log a meal"
               placeholderTextColor={Colors.textMuted}
               value={inputQuery}
               onChangeText={setInputQuery}
@@ -1345,7 +1345,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               selectionColor={Colors.primary}
               cursorColor={Colors.primaryDeep}
               textAlignVertical="center"
-              accessibilityLabel="Message Ria"
+              accessibilityLabel="Message Nomzo"
               onFocus={() => {
                 setIsInputFocused(true);
                 setTimeout(() => {
@@ -1364,7 +1364,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
               disabled={!canSend}
               accessibilityRole="button"
               accessibilityState={{ disabled: !canSend }}
-              accessibilityLabel="Send message to Ria"
+              accessibilityLabel="Send message to Nomzo"
             >
               <Ionicons
                 name="arrow-up"
@@ -1384,7 +1384,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
           />
           <View style={styles.confirmCard}>
             <Text style={styles.confirmEyebrow}>NEW CONVERSATION</Text>
-            <Text style={styles.confirmTitle}>Start fresh with Ria?</Text>
+            <Text style={styles.confirmTitle}>Start fresh with Nomzo?</Text>
             <Text style={styles.confirmBody}>
               Your current conversation will be saved in recent history.
             </Text>

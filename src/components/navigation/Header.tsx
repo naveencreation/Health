@@ -128,7 +128,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
                   Welcome
                 </Text>
                 {isPro && !isEarlyAccess ? (
-                  <View style={styles.proTag} accessibilityLabel="Calorify Pro Member">
+                  <View style={styles.proTag} accessibilityLabel="Nomzo Pro Member">
                     <Ionicons name="sparkles" size={10} color={Colors.warningDark} style={styles.proTagIcon} />
                     <Text style={styles.proTagText}>PRO ✦</Text>
                   </View>

@@ -3,7 +3,7 @@ import { AIErrorMapper } from '../errors/AIErrorMapper';
 import { AI_CONFIG } from '../config/AIConfig';
 
 const CLINICAL_DISCLAIMER_TAG =
-  '\n\n*Medical Notice: Ria provides nutritional guidance only, not clinical prescriptions or medical diagnoses. Please consult your physician regarding medications or clinical conditions.*';
+  '\n\n*Medical Notice: Nomzo provides nutritional guidance only, not clinical prescriptions or medical diagnoses. Please consult your physician regarding medications or clinical conditions.*';
 
 const MEDICATION_TERMS = [
   /\b(?:insulin|metformin|ozempic|wegovy|mounjaro|statin|steroids|blood\s*pressure\s*med)\b/i,

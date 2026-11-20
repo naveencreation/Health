@@ -36,7 +36,7 @@ const PRO_BENEFITS: {
   {
     icon: 'camera-outline',
     title: 'Unlimited food photos',
-    description: 'Snap any meal and Ria estimates it',
+    description: 'Snap any meal and Nomzo estimates it',
   },
   {
     icon: 'sparkles-outline',
@@ -141,7 +141,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     SUBSCRIPTION_PACKAGES.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PACKAGES[0];
   const ctaLabel = selectedPlan.trialDays
     ? `Start ${selectedPlan.trialDays}-day free trial`
-    : 'Unlock Calorify Pro';
+    : 'Unlock Nomzo Pro';
 
   const renderMember = (welcome: boolean) => {
     const planName = welcome ? PLAN_NAMES[selectedPlan.id] : activePlanId ? PLAN_NAMES[activePlanId] : 'Pro';
@@ -153,7 +153,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     return (
       <View style={styles.page} testID={welcome ? 'pro-celebration-card' : 'pro-status-view'}>
         <SheetHeader
-          title="Calorify Pro"
+          title="Nomzo Pro"
           subtitle="Your membership"
           onClose={onClose}
           closeLabel={welcome ? 'Close Paywall' : 'Close'}
@@ -165,7 +165,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
             </View>
             <View style={styles.flex}>
               <Text style={styles.heroTitle} accessibilityRole="header">
-                {welcome ? 'Welcome to Calorify Pro!' : 'Pro is active'}
+                {welcome ? 'Welcome to Nomzo Pro!' : 'Pro is active'}
               </Text>
               <Text style={styles.heroSubtitle}>Every Pro feature is unlocked</Text>
             </View>
@@ -173,7 +173,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
           <SettingsSection
             title="Plan"
-            footer="Calorify can't change your subscription from inside the app."
+            footer="Nomzo can't change your subscription from inside the app."
           >
             <SettingsRow icon="calendar-outline" title={planName} subtitle={planDetail} />
             <SettingsRow
@@ -214,7 +214,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
         ) : (
           <View style={styles.page}>
             <SheetHeader
-              title="Calorify Pro"
+              title="Nomzo Pro"
               subtitle="You're on the free plan"
               onClose={onClose}
               closeLabel="Close Paywall"

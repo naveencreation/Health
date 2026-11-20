@@ -145,7 +145,7 @@ describe('ProfileScreen Integration', () => {
 
     expect(getByText('Profile')).toBeTruthy();
     expect(getAllByText('Naveen Kumar').length).toBeGreaterThan(0);
-    expect(getByText('Unlock Calorify Pro')).toBeTruthy();
+    expect(getByText('Unlock Nomzo Pro')).toBeTruthy();
     expect(getByText('7-DAY FREE TRIAL')).toBeTruthy();
   });
 
@@ -158,7 +158,7 @@ describe('ProfileScreen Integration', () => {
 
     const { getByText, getByRole } = await render(<ProfileScreen />);
 
-    expect(getByText('Calorify Pro')).toBeTruthy();
+    expect(getByText('Nomzo Pro')).toBeTruthy();
     expect(getByText('ACTIVE')).toBeTruthy();
     expect(getByText('Annual VIP Membership')).toBeTruthy();
     expect(getByRole('button', { name: 'Manage Pro Subscription' })).toBeTruthy();
@@ -177,7 +177,7 @@ describe('ProfileScreen Integration', () => {
   it('opens Pro paywall modal when tapping Upgrade to Pro button', async () => {
     const { getByRole, findByText } = await render(<ProfileScreen />);
 
-    const upgradeBtn = getByRole('button', { name: 'Upgrade to Calorify Pro' });
+    const upgradeBtn = getByRole('button', { name: 'Upgrade to Nomzo Pro' });
     fireEvent.press(upgradeBtn);
 
     const paywallHeadline = await findByText(
@@ -195,7 +195,7 @@ describe('ProfileScreen Integration', () => {
     });
     const { getByRole, findByRole } = await render(<AccountScreen onBack={jest.fn()} />);
 
-    await fireEvent.press(getByRole('button', { name: 'Sign out of Calorify' }));
+    await fireEvent.press(getByRole('button', { name: 'Sign out of Nomzo' }));
     await act(async () => {
       await fireEvent.press(await findByRole('button', { name: 'Sign out' }));
     });
@@ -253,7 +253,7 @@ describe('ProfileScreen Integration', () => {
     expect(screen.getByText('2,100')).toBeTruthy();
     expect(screen.getByText('BMI 23.7 · Healthy weight')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: /^Ria coach/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Nomzo coach/ }));
     expect(await screen.findByText('Coaching style')).toBeTruthy();
   });
 
@@ -267,7 +267,7 @@ describe('ProfileScreen Integration', () => {
     const onBack = jest.fn();
     const screen = await render(<AccountScreen onBack={onBack} onSignIn={onSignIn} />);
 
-    expect(screen.queryByRole('button', { name: 'Sign out of Calorify' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign out of Nomzo' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Sign in or create account' }));
     expect(onBack).toHaveBeenCalled();
     expect(onSignIn).toHaveBeenCalled();

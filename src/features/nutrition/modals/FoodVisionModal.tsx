@@ -225,7 +225,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
       if (!permission.granted) {
         Alert.alert(
           'Camera Access Required',
-          'Calorify needs camera permission to snap and analyze your meals.'
+          'Nomzo needs camera permission to snap and analyze your meals.'
         );
         return;
       }
@@ -252,7 +252,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
       if (!permission.granted) {
         Alert.alert(
           'Photo Access Required',
-          'Calorify needs library permission to select meal photos.'
+          'Nomzo needs library permission to select meal photos.'
         );
         return;
       }
@@ -372,7 +372,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
             Connect Gemini to use photos
           </Text>
           <Text style={[ui.body, styles.center]}>
-            Ria uses your own free Google Gemini key to read meals. It takes about two minutes.
+            Nomzo uses your own free Google Gemini key to read meals. It takes about two minutes.
           </Text>
           <View style={styles.keyNote}>
             <Ionicons name="lock-closed-outline" size={14} color={Colors.textSecondary} />
@@ -472,7 +472,7 @@ const FoodVisionModalComponent: React.FC<FoodVisionModalProps> = ({
       <ScrollView style={styles.flex1} contentContainerStyle={styles.body}>
         <ScanningPhoto uri={uri} scanning />
         <View style={styles.centerBlock} accessibilityLiveRegion="polite">
-          <Text style={styles.stateTitle}>Ria is reading your plate…</Text>
+          <Text style={styles.stateTitle}>Nomzo is reading your plate…</Text>
           <Text style={[ui.body, styles.center]}>Finding the dishes, then estimating portions</Text>
         </View>
       </ScrollView>

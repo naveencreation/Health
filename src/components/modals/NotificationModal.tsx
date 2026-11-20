@@ -135,7 +135,7 @@ const NotificationModalComponent: React.FC<NotificationModalProps> = ({ visible,
     notifs.push({
       id: 'n_ria',
       type: 'ria',
-      title: '✨ Ria AI Insight',
+      title: '✨ Nomzo AI Insight',
       description:
         'Adding 10g more dietary fiber at dinner slows glucose spikes and improves sleep quality.',
       timeAgo: 'Yesterday',

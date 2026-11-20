@@ -40,7 +40,7 @@ describe('StrugglesScreen (S4)', () => {
     expect(onContinue).not.toHaveBeenCalled();
   });
 
-  it('shows the Ria reply and counter for a pick, then continues', async () => {
+  it('shows the Nomzo reply and counter for a pick, then continues', async () => {
     const onContinue = jest.fn();
     const { getByTestId, getByText } = await render(<StrugglesScreen onContinue={onContinue} />);
 

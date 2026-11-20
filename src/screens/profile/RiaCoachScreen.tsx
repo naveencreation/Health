@@ -73,7 +73,7 @@ export const RiaCoachScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => 
 
   return (
     <View style={profileScreenStyles.root}>
-      <SubScreenHeader title="Ria coach" subtitle="Tone and AI connection" onBack={onBack} />
+      <SubScreenHeader title="Nomzo coach" subtitle="Tone and AI connection" onBack={onBack} />
       <ScrollView
         style={profileScreenStyles.scroll}
         contentContainerStyle={profileScreenStyles.content}
@@ -118,8 +118,8 @@ export const RiaCoachScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => 
           title="Gemini API key"
           footer={
             Platform.OS === 'web'
-              ? 'On web the key is kept in this browser and sent only to Google. Ria needs it for chat, food photos and daily insights.'
-              : 'The key is encrypted on this device and sent only to Google. Ria needs it for chat, food photos and daily insights.'
+              ? 'On web the key is kept in this browser and sent only to Google. Nomzo needs it for chat, food photos and daily insights.'
+              : 'The key is encrypted on this device and sent only to Google. Nomzo needs it for chat, food photos and daily insights.'
           }
         >
           <View style={styles.keyCard}>

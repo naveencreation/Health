@@ -372,7 +372,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                 <Text
                   style={styles.privacyLink}
                   accessibilityRole="link"
-                  onPress={() => Linking.openURL('https://calorify.app/privacy')}
+                  onPress={() => Linking.openURL('https://calori-dba00.web.app/privacy')}
                 >
                   Privacy
                 </Text>{' '}
@@ -380,7 +380,7 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
                 <Text
                   style={styles.privacyLink}
                   accessibilityRole="link"
-                  onPress={() => Linking.openURL('https://calorify.app/terms')}
+                  onPress={() => Linking.openURL('https://calori-dba00.web.app/terms')}
                 >
                   Terms
                 </Text>
@@ -463,14 +463,14 @@ export const SavePlanScreen: React.FC<SavePlanScreenProps> = ({
             <Text style={styles.noteBadge}>A QUICK NOTE FROM THE MAKER</Text>
             <Text style={styles.noteTitle}>{displayName ? `Hi ${displayName},` : 'Hi,'}</Text>
             <Text style={styles.noteBody}>
-              Thanks for trusting Calorify with your food. I built it because tracking nutrition
+              Thanks for trusting Nomzo with your food. I built it because tracking nutrition
               should take seconds, not minutes.
             </Text>
             <Text style={styles.noteBody}>
               Your plan is saved. Tell me what’s missing as you go.
             </Text>
             <Text style={styles.noteSig}>
-              — Naveen <Text style={styles.noteRole}>· Founder, Calorify</Text>
+              — Naveen <Text style={styles.noteRole}>· Founder, Nomzo</Text>
             </Text>
             <Text style={styles.noteTap}>Tap anywhere to continue</Text>
           </Animated.View>

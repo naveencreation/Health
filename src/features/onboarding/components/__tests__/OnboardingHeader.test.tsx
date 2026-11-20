@@ -13,7 +13,7 @@ describe('OnboardingHeader', () => {
       <OnboardingHeader onBack={onBack} testID="header" />
     );
 
-    expect(queryByText('Calorify')).toBeNull();
+    expect(queryByText('Nomzo')).toBeNull();
 
     const backBtn = getByTestId('header-back');
     fireEvent.press(backBtn);

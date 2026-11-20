@@ -147,7 +147,7 @@ export function planNotifications(input: PlannerInput): PlannedNotification[] {
             fireAt,
             channelId: NOTIFICATION_CHANNELS_MAP.meal_lunch,
             title: '🥗 Fuel Your Afternoon',
-            body: 'Midday meal? Snap a quick photo with Ria AI for effortless macro tracking.',
+            body: 'Midday meal? Snap a quick photo with Nomzo AI for effortless macro tracking.',
             data: {
               route: 'food_vision',
               reminderType: 'meal_lunch',

@@ -24,11 +24,11 @@ const SHARED_ROWS: Row[] = [
   {
     icon: 'camera-outline',
     title: 'Photo logging',
-    description: 'Snap a meal and Ria counts it, using your own Gemini key.',
+    description: 'Snap a meal and Nomzo counts it, using your own Gemini key.',
   },
   {
     icon: 'chatbubble-outline',
-    title: 'Ria, your coach',
+    title: 'Nomzo, your coach',
     description: 'Ask about swaps, portions and your plan.',
   },
   {
@@ -94,7 +94,7 @@ export const EarlyAccessScreen: React.FC<EarlyAccessScreenProps> = ({
             {displayName ? `It’s all free for now, ${displayName}` : 'It’s all free for now'}
           </Text>
           <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
-            Calorify is new, so every feature is open while we build it. No card, no trial.
+            Nomzo is new, so every feature is open while we build it. No card, no trial.
           </Text>
 
           <View style={styles.card}>

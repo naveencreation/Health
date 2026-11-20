@@ -19,7 +19,7 @@ interface AppLoadingScreenProps {
   pointerEvents?: 'box-none' | 'none' | 'box-only' | 'auto';
 }
 
-const LETTERS = ['C', 'a', 'l', 'o', 'r', 'i', 'f', 'y'] as const;
+const LETTERS = ['N', 'o', 'm', 'z', 'o'] as const;
 
 interface AnimatedLetterProps {
   char: string;
@@ -84,15 +84,13 @@ export const AppLoadingScreen: React.FC<AppLoadingScreenProps> = ({
   const fontSize = Math.round(32 * scale);
   const lineHeight = Math.round(42 * scale);
 
-  // Optical centering for the full lockup (Flame + "Calorify"):
-  // Visible flame inside splash-icon.png is ~54dp * scale; gap is ~12dp * scale; wordmark is ~136dp * scale.
-  // Total brand lockup width = ~202dp * scale.
-  // When centered around screen origin (0, 0):
-  // - Flame visual center rests at -72dp * scale
-  // - Wordmark left edge starts at -34dp * scale
-  // Resulting lockup span: [-99dp, +102dp] -> perfectly optically centered on any display width.
-  const targetFlameTranslateX = Math.round(-72 * scale);
-  const wordmarkMarginLeft = Math.round(-34 * scale);
+  // Optical centering for the full lockup (Flame + "Nomzo"):
+  // Visible flame inside splash-icon.png is ~54dp * scale; gap is ~12dp * scale; wordmark is ~120dp * scale.
+  // Total brand lockup width = ~186dp * scale, centered on the screen origin:
+  // - Flame visual center rests at -66dp * scale
+  // - Wordmark left edge starts at -27dp * scale
+  const targetFlameTranslateX = Math.round(-66 * scale);
+  const wordmarkMarginLeft = Math.round(-27 * scale);
   const wordmarkMarginTop = Math.round(-lineHeight / 2);
 
   // Flame horizontal glide: starts at 0 (exact native splash center), moves to targetFlameTranslateX

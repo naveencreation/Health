@@ -52,7 +52,7 @@ describe('BarcodeService', () => {
         'https://world.openfoodfacts.org/api/v2/product/8901030383748.json',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'User-Agent': expect.stringContaining('CalorifyApp'),
+            'User-Agent': expect.stringContaining('NomzoApp'),
           }),
         })
       );

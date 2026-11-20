@@ -666,7 +666,7 @@ const FoodLogModalComponent: React.FC<FoodLogModalProps> = ({
       options.push({
         icon: 'camera-outline',
         title: 'Snap a photo',
-        subtitle: 'Ria estimates it from your plate',
+        subtitle: 'Nomzo estimates it from your plate',
         onPress: onOpenFoodVision,
         accessibilityLabel: 'Scan food with AI camera',
       });

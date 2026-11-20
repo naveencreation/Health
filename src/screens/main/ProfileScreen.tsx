@@ -144,7 +144,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
   };
 
   const isGuest = !currentUser || Boolean(currentUser.isGuest);
-  const name = currentUser?.name || userGoals.name || (isGuest ? 'Guest' : 'Calorify member');
+  const name = currentUser?.name || userGoals.name || (isGuest ? 'Guest' : 'Nomzo member');
   const email = currentUser?.email && currentUser.email !== name ? currentUser.email : '';
   const streakDays = userGoals.streakDays ?? 0;
 
@@ -346,7 +346,7 @@ const ProfileScreenComponent: React.FC<ProfileScreenProps> = ({
             icon="sparkles-outline"
             iconColor={Colors.primaryDark}
             iconBackground={Colors.burnLight}
-            title="Ria coach"
+            title="Nomzo coach"
             subtitle={RIA_TONE_LABELS[userGoals.riaTone || 'supportive']}
             onPress={() => handleOpenSubView('ria')}
           />

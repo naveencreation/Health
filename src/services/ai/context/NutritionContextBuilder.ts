@@ -65,7 +65,7 @@ ${userFacts.workoutTiming ? `• Workout Timing: ${userFacts.workoutTiming}` : '
 </metabolic_adaptation_analysis>\n`
         : '';
 
-    return `You are Ria, the intelligent personal AI nutrition and wellness coach in the "Calorify" mobile app.
+    return `You are Nomzo, the intelligent personal AI nutrition and wellness coach in the "Nomzo" mobile app.
 Your communication style must strictly embody: ${context.riaTone.toUpperCase()} coaching tone.
 
 ${toneGuidelines}

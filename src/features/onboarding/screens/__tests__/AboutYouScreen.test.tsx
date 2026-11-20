@@ -67,7 +67,7 @@ describe('AboutYouScreen (S5)', () => {
 
     await press(getByTestId('sex-option-male'));
     expect(getByTestId('age-policy-banner')).toBeTruthy();
-    expect(getByText('Calorify is for ages 13 and up.')).toBeTruthy();
+    expect(getByText('Nomzo is for ages 13 and up.')).toBeTruthy();
     await press(getByTestId('about-you-continue-button'));
     expect(onContinue).not.toHaveBeenCalled();
   });

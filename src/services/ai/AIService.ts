@@ -80,7 +80,7 @@ class AIServiceFacade {
     if (!apiKey) {
       throw AIErrorMapper.createError(
         'NO_KEY_CONFIGURED',
-        'Please connect your Gemini API key in Settings to chat with Ria.'
+        'Please connect your Gemini API key in Settings to chat with Nomzo.'
       );
     }
 

@@ -54,7 +54,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
           </View>
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
-              <Text style={styles.proTitle}>Calorify Pro</Text>
+              <Text style={styles.proTitle}>Nomzo Pro</Text>
               <View style={styles.activePill}>
                 <Text style={styles.activePillText}>ACTIVE</Text>
               </View>
@@ -91,7 +91,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
         </View>
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.headline}>Unlock Calorify Pro</Text>
+            <Text style={styles.headline}>Unlock Nomzo Pro</Text>
             {TRIAL_DAYS > 0 ? (
               <View style={styles.trialPill}>
                 <Text style={styles.trialPillText}>{TRIAL_DAYS}-DAY FREE TRIAL</Text>
@@ -108,7 +108,7 @@ export const ProMembershipCard: React.FC<ProMembershipCardProps> = ({
         style={({ pressed }) => [styles.upgradeBtn, pressed && styles.btnPressed]}
         onPress={handleUpgrade}
         accessibilityRole="button"
-        accessibilityLabel="Upgrade to Calorify Pro"
+        accessibilityLabel="Upgrade to Nomzo Pro"
       >
         <Text style={styles.upgradeBtnText}>Upgrade to Pro</Text>
         <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} />

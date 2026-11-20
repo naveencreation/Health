@@ -115,8 +115,8 @@ export function BarcodeScannerModal({
             </Text>
             <Text style={styles.permissionText}>
               {blocked
-                ? 'Camera access is off for Calorify. Turn it on in Settings to scan barcodes.'
-                : 'Calorify uses the camera only while this screen is open, to read barcodes.'}
+                ? 'Camera access is off for Nomzo. Turn it on in Settings to scan barcodes.'
+                : 'Nomzo uses the camera only while this screen is open, to read barcodes.'}
             </Text>
           </View>
           <View style={[styles.footer, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>

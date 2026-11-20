@@ -39,7 +39,7 @@ const meal: MealCardData = {
   ],
 };
 
-describe('Ria cards', () => {
+describe('Nomzo cards', () => {
   it('meal: shows the total and logs or dismisses', async () => {
     const onConfirm = jest.fn();
     const onDismiss = jest.fn();

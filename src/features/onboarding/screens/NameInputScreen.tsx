@@ -130,7 +130,7 @@ export const NameInputScreen: React.FC<NameInputScreenProps> = ({
               <View style={styles.riaRow}>
                 <Image source={RIA_AVATAR} style={styles.avatarLarge} contentFit="cover" />
                 <View>
-                  <Text style={styles.riaName}>Hi, I&apos;m Ria</Text>
+                  <Text style={styles.riaName}>Hi, I&apos;m Nomzo</Text>
                   <Text style={styles.riaRole}>Your food coach</Text>
                 </View>
               </View>

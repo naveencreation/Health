@@ -154,7 +154,7 @@ const lastSaved = (): ChatMessage[] => {
 const card = (messages: ChatMessage[], id: string) =>
   messages.find(m => m.id === id)!.card!.data as any;
 
-describe('RiaChatModal (Ria tab)', () => {
+describe('RiaChatModal (Nomzo tab)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAI.isKeyConfigured.mockResolvedValue(true);
@@ -167,7 +167,7 @@ describe('RiaChatModal (Ria tab)', () => {
     ]);
   });
 
-  it('switches the selected date to today, so Ria reads and logs today', async () => {
+  it('switches the selected date to today, so Nomzo reads and logs today', async () => {
     const screen = await render(<RiaChatModal />);
     await screen.findByTestId('log-meal');
     expect(mockSetSelectedDate).toHaveBeenCalledWith('2026-11-11');

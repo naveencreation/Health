@@ -92,7 +92,7 @@ export const RiaMacroVisualizerCardView: React.FC<RiaMacroVisualizerCardViewProp
       {data.insight ? (
         <>
           <Divider />
-          <CardNote icon="sparkles" label="Ria" text={data.insight} />
+          <CardNote icon="sparkles" label="Nomzo" text={data.insight} />
         </>
       ) : null}
     </CardShell>

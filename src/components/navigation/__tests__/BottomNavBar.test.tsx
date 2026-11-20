@@ -47,7 +47,7 @@ describe('BottomNavBar Component', () => {
     );
 
     expect(getByText('Today')).toBeTruthy();
-    expect(getByText('Ria')).toBeTruthy();
+    expect(getByText('Nomzo')).toBeTruthy();
     expect(getByText('Insights')).toBeTruthy();
     expect(getByText('Profile')).toBeTruthy();
     expect(await findByTestId('center-scan-fab')).toBeTruthy();
@@ -58,7 +58,7 @@ describe('BottomNavBar Component', () => {
       <BottomNavBar activeTab="ria" onTabChange={jest.fn()} />
     );
 
-    const trackTab = getByRole('tab', { name: 'Ria, nutrition coach' });
+    const trackTab = getByRole('tab', { name: 'Nomzo, nutrition coach' });
     expect(trackTab.props.accessibilityState).toEqual({ selected: true });
 
     const todayTab = getByRole('tab', { name: 'Today' });
@@ -71,7 +71,7 @@ describe('BottomNavBar Component', () => {
       <BottomNavBar activeTab="today" onTabChange={handleTabChange} />
     );
 
-    fireEvent.press(getByText('Ria'));
+    fireEvent.press(getByText('Nomzo'));
     await waitFor(() => {
       expect(handleTabChange).toHaveBeenCalledWith('ria');
     });

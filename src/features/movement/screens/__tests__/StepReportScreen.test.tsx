@@ -113,7 +113,7 @@ describe('StepReportScreen', () => {
     const { getByRole, findByText } = await render(<StepReportScreen onBack={jest.fn()} />);
 
     const monthlyTab = getByRole('button', {
-      name: /Monthly timeframe \(Calorify Pro required\)/i,
+      name: /Monthly timeframe \(Nomzo Pro required\)/i,
     });
     await fireEvent.press(monthlyTab);
     expect(await findByText(/on the free plan/i)).toBeTruthy();

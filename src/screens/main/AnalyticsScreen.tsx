@@ -761,7 +761,7 @@ const AnalyticsScreenComponent: React.FC<AnalyticsScreenProps> = ({
                   accessibilityState={{ selected: isActive }}
                   accessibilityLabel={
                     isLocked
-                      ? `${displayLabel} timeframe (Calorify Pro required)`
+                      ? `${displayLabel} timeframe (Nomzo Pro required)`
                       : `${displayLabel} timeframe`
                   }
                 >

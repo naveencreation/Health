@@ -153,7 +153,7 @@ export const FirstMealWalkthrough: React.FC<Props> = ({ activeTab, onOpenRia }) 
               {name ? `Snap your first meal, ${name}` : 'Snap your first meal'}
             </Text>
             <Text style={styles.body}>
-              Ria reads the photo and fills in calories and protein. You check it, then log.
+              Nomzo reads the photo and fills in calories and protein. You check it, then log.
             </Text>
             <ProfileButton
               label="Try it now"
@@ -197,10 +197,10 @@ export const FirstMealWalkthrough: React.FC<Props> = ({ activeTab, onOpenRia }) 
           onOpenRia();
         }}
         accessibilityRole="button"
-        accessibilityLabel="Ask Ria about it. Try “How much protein was that?” or “What should dinner be?”. Opens Ria."
+        accessibilityLabel="Ask Nomzo about it. Try “How much protein was that?” or “What should dinner be?”. Opens Nomzo."
         style={[styles.tip, { width: cardW, left: cardLeft }]}
       >
-        <Text style={styles.tipTitle}>Ask Ria about it</Text>
+        <Text style={styles.tipTitle}>Ask Nomzo about it</Text>
         <Text style={styles.tipBody}>“How much protein was that?” or “What should dinner be?”</Text>
         <Pressable
           testID="btn-walkthrough-got-it"

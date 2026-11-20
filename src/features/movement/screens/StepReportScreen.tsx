@@ -406,7 +406,7 @@ export const StepReportScreen: React.FC<StepReportScreenProps> = ({ onBack }) =>
                   accessibilityRole="button"
                   accessibilityLabel={
                     isLocked
-                      ? `${displayLabel} timeframe (Calorify Pro required)`
+                      ? `${displayLabel} timeframe (Nomzo Pro required)`
                       : `${displayLabel} timeframe`
                   }
                 >

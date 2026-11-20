@@ -363,7 +363,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   priority="high"
                 />
                 <Text style={styles.logoText} maxFontSizeMultiplier={1.2}>
-                  Calorify
+                  Nomzo
                 </Text>
               </View>
             </View>
@@ -456,7 +456,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onPress={() => pushMode('onboarding')}
                 testID="btn-welcome-get-started"
                 accessibilityRole="button"
-                accessibilityLabel={hasActiveDraft ? 'Continue setup' : 'Get Started with Calorify'}
+                accessibilityLabel={hasActiveDraft ? 'Continue setup' : 'Get Started with Nomzo'}
               >
                 <Text style={styles.primaryButtonText} maxFontSizeMultiplier={1.3}>
                   {hasActiveDraft ? 'Continue setup' : 'Get started'}

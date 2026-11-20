@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Calorify",
+    "name": "Nomzo",
     "slug": "calori",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -55,15 +55,15 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Calorify to access your photos to select meal images.",
-          "cameraPermission": "Allow Calorify to access your camera to snap meal photos.",
+          "photosPermission": "Allow Nomzo to access your photos to select meal images.",
+          "cameraPermission": "Allow Nomzo to access your camera to snap meal photos.",
           "microphonePermission": false
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Calorify to access your camera to scan packaged food barcodes.",
+          "cameraPermission": "Allow Nomzo to access your camera to scan packaged food barcodes.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true

@@ -70,7 +70,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
           style={({ pressed }) => [styles.tabButton, pressed ? styles.pressedTab : null]}
           onPress={() => handleTabPress('ria')}
           accessibilityRole="tab"
-          accessibilityLabel="Ria, nutrition coach"
+          accessibilityLabel="Nomzo, nutrition coach"
           accessibilityState={{ selected: activeTab === 'ria' }}
         >
           <Ionicons
@@ -79,7 +79,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
             color={activeTab === 'ria' ? Colors.textPrimary : Colors.textMuted}
           />
           <Text style={[styles.tabLabel, activeTab === 'ria' ? styles.tabLabelActive : null]}>
-            Ria
+            Nomzo
           </Text>
         </Pressable>
 
@@ -90,7 +90,7 @@ const BottomNavBarComponent: React.FC<BottomNavBarProps> = ({
             style={({ pressed }) => [styles.centerFab, pressed ? styles.fabPressed : null]}
             onPress={handleCameraPress}
             accessibilityRole="button"
-            accessibilityLabel="Snap and analyze meal with Ria AI"
+            accessibilityLabel="Snap and analyze meal with Nomzo AI"
           >
             <Ionicons name={ActionIcons.navScan} size={IconSizes.prominent} color="#FFFFFF" />
           </Pressable>

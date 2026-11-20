@@ -34,7 +34,7 @@ describe('ActivityLevelScreen (S8)', () => {
     expect(onContinue).not.toHaveBeenCalled();
   });
 
-  it('shows the Ria reply for a pick and continues with it', async () => {
+  it('shows the Nomzo reply for a pick and continues with it', async () => {
     const onContinue = jest.fn();
     const { getByTestId } = await render(<ActivityLevelScreen onContinue={onContinue} />);
 

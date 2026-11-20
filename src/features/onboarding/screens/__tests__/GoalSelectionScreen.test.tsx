@@ -46,7 +46,7 @@ describe('GoalSelectionScreen (S3)', () => {
     expect(queryByTestId('goal-ria-reply')).toBeNull();
   });
 
-  it('shows Ria reply on selection and advances when Continue is pressed', async () => {
+  it('shows Nomzo reply on selection and advances when Continue is pressed', async () => {
     const onContinue = jest.fn();
     const { getByTestId, getByText } = await render(
       <GoalSelectionScreen name="Aarav" onContinue={onContinue} />

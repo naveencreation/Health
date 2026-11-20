@@ -100,12 +100,12 @@ describe('WelcomeScreen (Consolidated Phase 0)', () => {
     jest.clearAllMocks();
   });
 
-  it('renders Calorify wordmark and Get Started with Calorify CTA', async () => {
+  it('renders Nomzo wordmark and Get Started with Nomzo CTA', async () => {
     const { getByText, getByTestId } = await render(<WelcomeScreen />);
 
-    expect(getByText('Calorify')).toBeTruthy();
+    expect(getByText('Nomzo')).toBeTruthy();
     const getStartedBtn = getByTestId('btn-welcome-get-started');
-    expect(getStartedBtn.props.accessibilityLabel).toBe('Get Started with Calorify');
+    expect(getStartedBtn.props.accessibilityLabel).toBe('Get Started with Nomzo');
   });
 
   it('delegates onboarding flow directly to OnboardingWizardScreen single orchestrator', async () => {

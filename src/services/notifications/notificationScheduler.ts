@@ -56,7 +56,7 @@ export const STANDARD_REMINDERS: ReminderPlan[] = [
   {
     type: 'meal_lunch',
     title: '🥗 Fuel Your Afternoon',
-    body: 'Midday meal? Snap a quick photo with Ria AI for effortless macro tracking.',
+    body: 'Midday meal? Snap a quick photo with Nomzo AI for effortless macro tracking.',
     hour: 13,
     minute: 0,
     channelId: NOTIFICATION_CHANNELS.MEALS.id,

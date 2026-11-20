@@ -81,7 +81,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
   };
 
   const deleteMessage =
-    'This permanently erases your account, logs, weight history, custom foods, Ria chats and streak, in the cloud and on this device.';
+    'This permanently erases your account, logs, weight history, custom foods, Nomzo chats and streak, in the cloud and on this device.';
 
   return (
     <View style={profileScreenStyles.root}>
@@ -102,7 +102,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
             subtitle={
               isGuest
                 ? 'Nothing is backed up yet'
-                : currentUser?.email || currentUser?.name || 'Calorify member'
+                : currentUser?.email || currentUser?.name || 'Nomzo member'
             }
           />
           {!isGuest ? (
@@ -121,18 +121,18 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
             title={isEarlyAccess ? 'Early access' : 'Membership'}
             subtitle={
               isEarlyAccess
-                ? 'Everything is free while Calorify is new'
+                ? 'Everything is free while Nomzo is new'
                 : isPro
-                  ? `Calorify Pro · ${activePlanId ? PLAN_NAMES[activePlanId] : 'Active'}`
+                  ? `Nomzo Pro · ${activePlanId ? PLAN_NAMES[activePlanId] : 'Active'}`
                   : 'Free plan'
             }
             onPress={isEarlyAccess ? undefined : () => setPaywallVisible(true)}
             accessibilityLabel={
               isEarlyAccess
-                ? 'Early access. Everything is free while Calorify is new'
+                ? 'Early access. Everything is free while Nomzo is new'
                 : isPro
                   ? 'Manage Pro Subscription'
-                  : 'Upgrade to Calorify Pro'
+                  : 'Upgrade to Nomzo Pro'
             }
           />
         </SettingsSection>
@@ -161,7 +161,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
                 setConfirmAction('logout');
               }}
               disabled={busy}
-              accessibilityLabel="Sign out of Calorify"
+              accessibilityLabel="Sign out of Nomzo"
             />
             <ProfileButton
               label="Delete account"
@@ -182,7 +182,7 @@ export const AccountScreen: React.FC<AccountScreenProps> = ({ onBack, onSignIn, 
 
       <ConfirmationModal
         visible={confirmAction === 'logout'}
-        title="Sign out of Calorify?"
+        title="Sign out of Nomzo?"
         message={
           logoutError ??
           (logoutUnsynced

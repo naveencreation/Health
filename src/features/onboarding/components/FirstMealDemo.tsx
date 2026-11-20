@@ -28,9 +28,9 @@ const SAMPLE_FRACTION = SAMPLE_KCAL / SAMPLE_BUDGET;
 const NBSP = '\u00A0';
 
 export const DEMO_A11Y_LABEL =
-  'Demo: take a photo of your meal, Ria estimates the calories, you check them, and it’s added to your day.';
+  'Demo: take a photo of your meal, Nomzo estimates the calories, you check them, and it’s added to your day.';
 
-const CAPTIONS = ['Snap your plate', 'Ria reads it', 'Check the numbers', 'It’s on your day'];
+const CAPTIONS = ['Snap your plate', 'Nomzo reads it', 'Check the numbers', 'It’s on your day'];
 
 const SceneLayer: React.FC<{ active: boolean; children: React.ReactNode }> = ({
   active,
@@ -111,7 +111,7 @@ const ScanScene: React.FC<{ active: boolean; reduceMotion: boolean }> = ({
         <View style={styles.chipPill}>
           <Image source={RIA_AVATAR} style={styles.chipAvatar} contentFit="cover" />
           <Text style={styles.chipText} maxFontSizeMultiplier={1.1}>
-            Ria is reading your plate…
+            Nomzo is reading your plate…
           </Text>
         </View>
       </View>

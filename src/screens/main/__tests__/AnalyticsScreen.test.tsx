@@ -115,7 +115,7 @@ describe('AnalyticsScreen Integration', () => {
     const { getByRole, findByText } = await render(<AnalyticsScreen />);
 
     const monthlyTab = getByRole('tab', {
-      name: /Month timeframe \(Calorify Pro required\)/i,
+      name: /Month timeframe \(Nomzo Pro required\)/i,
     });
     await act(async () => {
       fireEvent.press(monthlyTab);
@@ -139,7 +139,7 @@ describe('AnalyticsScreen Integration', () => {
     fireEvent.press(monthlyTab);
 
     // Paywall should not be open
-    expect(queryByText('Unlock Calorify Pro')).toBeNull();
+    expect(queryByText('Unlock Nomzo Pro')).toBeNull();
   });
 
   it('shows the week average and reads out the tapped day', async () => {

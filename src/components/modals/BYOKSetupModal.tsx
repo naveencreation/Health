@@ -202,8 +202,8 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
               title={isConnected ? 'Gemini key' : 'Connect Gemini'}
               subtitle={
                 isConnected
-                  ? 'Ria and food photos are on'
-                  : 'Your own key powers Ria and food photos'
+                  ? 'Nomzo and food photos are on'
+                  : 'Your own key powers Nomzo and food photos'
               }
               onClose={handleClose}
             />
@@ -295,8 +295,8 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
                     />
                     <Text style={styles.privacyText}>
                       {Platform.OS === 'web'
-                        ? 'Stored only in this browser. It goes straight to Google, never to Calorify.'
-                        : 'Stored encrypted on this phone only. It goes straight to Google, never to Calorify.'}
+                        ? 'Stored only in this browser. It goes straight to Google, never to us.'
+                        : 'Stored encrypted on this phone only. It goes straight to Google, never to us.'}
                     </Text>
                   </View>
                 ) : null}
@@ -350,7 +350,7 @@ export const BYOKSetupModal: React.FC<BYOKSetupModalProps> = ({
       <ConfirmationModal
         visible={confirmDisconnect}
         title="Disconnect Gemini key?"
-        message="Ria and food photo analysis stop working until you connect a key again."
+        message="Nomzo and food photo analysis stop working until you connect a key again."
         confirmText="Disconnect"
         confirmStyle="destructive"
         iconName="key-outline"

@@ -83,7 +83,7 @@ export class AIInputValidator {
           sanitizedText: cleaned,
           isEmergencyIntervention: true,
           clinicalSafetyWarning:
-            'Calorify strongly prioritizes healthy, sustainable nourishment. We cannot provide instructions for severe caloric deprivation or purging. If you or someone you know is struggling with eating or body image, support is available via the National Eating Disorders Association (NEDA) at nationaleatingdisorders.org.',
+            'Nomzo strongly prioritizes healthy, sustainable nourishment. We cannot provide instructions for severe caloric deprivation or purging. If you or someone you know is struggling with eating or body image, support is available via the National Eating Disorders Association (NEDA) at nationaleatingdisorders.org.',
           error: AIErrorMapper.createError(
             'CLINICAL_SAFETY_INTERCEPT',
             'Severe caloric restriction or purging query intercepted for user safety.',

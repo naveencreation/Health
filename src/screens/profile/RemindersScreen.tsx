@@ -303,7 +303,7 @@ export const RemindersScreen: React.FC<{ onBack: () => void }> = ({ onBack }) =>
       >
         {permissionDenied ? (
           <View style={styles.banner} accessibilityRole="alert">
-            <Text style={styles.bannerText}>Notifications are blocked for Calorify.</Text>
+            <Text style={styles.bannerText}>Notifications are blocked for Nomzo.</Text>
             <Pressable
               style={({ pressed }) => [styles.bannerBtn, pressed && styles.pressedOpacity]}
               onPress={() => Linking.openSettings()}

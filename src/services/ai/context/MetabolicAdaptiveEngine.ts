@@ -50,7 +50,7 @@ export class MetabolicAdaptiveEngineService {
         adaptationRatePct: 0,
         recommendedCalorieBudget: currentCalorieTarget,
         recommendationReason:
-          'Log consistently for at least 5 to 7 days so Ria can measure your personal metabolic rate.',
+          'Log consistently for at least 5 to 7 days so Nomzo can measure your personal metabolic rate.',
       };
     }
 

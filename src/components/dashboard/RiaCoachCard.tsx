@@ -120,7 +120,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           {/* Coach Name & Role */}
           <View style={styles.nameContainer}>
             <View style={styles.nameRow}>
-              <Text style={styles.coachName}>Ria</Text>
+              <Text style={styles.coachName}>Nomzo</Text>
               <View style={styles.aiTag}>
                 <Ionicons name="sparkles" size={10} color="#F47551" />
                 <Text style={styles.aiTagText}>AI COACH</Text>
@@ -136,7 +136,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           onPress={() => (onOpenChat ? onOpenChat() : setActivePromptId(null))}
           hitSlop={HIT_SLOP_8}
           accessibilityRole="button"
-          accessibilityLabel="Open chat with Ria"
+          accessibilityLabel="Open chat with Nomzo"
         >
           <Ionicons name="chatbubble-ellipses-outline" size={18} color="#F47551" />
         </Pressable>
@@ -151,7 +151,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
           style={({ pressed }) => [styles.bubbleCard, pressed ? styles.bubbleCardPressed : null]}
           onPress={() => onOpenChat?.(`Tell me more about this tip: ${activeMessage}`)}
           accessibilityRole="button"
-          accessibilityLabel="Ask Ria about this insight"
+          accessibilityLabel="Ask Nomzo about this insight"
         >
           {/* Subtle Insight Tag */}
           <View style={styles.insightTagRow}>
@@ -174,7 +174,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
 
       {/* Suggestion Chips: Quick Prompt Carousel */}
       <View style={styles.chipsSection}>
-        <Text style={styles.chipsLabel}>Ask Ria for recommendations:</Text>
+        <Text style={styles.chipsLabel}>Ask Nomzo for recommendations:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -192,7 +192,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
                 ]}
                 onPress={() => setActivePromptId(isSelected ? null : prompt.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`Ask Ria: ${prompt.label}`}
+                accessibilityLabel={`Ask Nomzo: ${prompt.label}`}
               >
                 <Text style={styles.chipIcon}>{prompt.icon}</Text>
                 <Text style={[styles.chipText, isSelected ? styles.chipTextSelected : null]}>

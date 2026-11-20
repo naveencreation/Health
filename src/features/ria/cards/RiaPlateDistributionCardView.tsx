@@ -124,7 +124,7 @@ export const RiaPlateDistributionCardView: React.FC<RiaPlateDistributionCardView
       {data.recommendation ? (
         <>
           <Divider />
-          <CardNote icon="sparkles" label="Ria" text={data.recommendation} />
+          <CardNote icon="sparkles" label="Nomzo" text={data.recommendation} />
         </>
       ) : null}
     </CardShell>

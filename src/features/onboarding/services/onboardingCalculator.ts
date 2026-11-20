@@ -67,7 +67,7 @@ export function evaluateAgePolicy(age: number): AgePolicyResult {
     return {
       allowed: false,
       forceMaintain: false,
-      message: 'Calorify is for ages 13 and up.',
+      message: 'Nomzo is for ages 13 and up.',
     };
   }
   if (age >= 13 && age <= 17) {

@@ -82,7 +82,7 @@ describe('PlanRevealScreen', () => {
     expect(getByText('6,000')).toBeTruthy();
   });
 
-  it('picks the Ria line per struggle', () => {
+  it('picks the Nomzo line per struggle', () => {
     const all: (Struggle | undefined)[] = [
       'portions',
       'protein',

@@ -362,7 +362,7 @@ export const WeightReportScreen: React.FC<WeightReportScreenProps> = ({ onBack }
                 accessibilityRole="button"
                 accessibilityLabel={
                   isLocked
-                    ? `${displayLabel} timeframe (Calorify Pro required)`
+                    ? `${displayLabel} timeframe (Nomzo Pro required)`
                     : `${displayLabel} timeframe`
                 }
               >
