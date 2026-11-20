@@ -23,6 +23,12 @@
       "ios": {
         "simulator": false
       }
+    },
+    "indus": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
