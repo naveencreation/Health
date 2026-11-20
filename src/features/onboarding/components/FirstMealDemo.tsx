@@ -109,7 +109,7 @@ const ScanScene: React.FC<{ active: boolean; reduceMotion: boolean }> = ({
       <Animated.View style={[styles.sweep, sweepStyle]} />
       <View style={styles.chip}>
         <View style={styles.chipPill}>
-          <Image source={RIA_AVATAR} style={styles.chipAvatar} contentFit="cover" />
+          <Image source={RIA_AVATAR} style={styles.chipAvatar} contentFit="contain" />
           <Text style={styles.chipText} maxFontSizeMultiplier={1.1}>
             Nomzo is reading your plate…
           </Text>
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: Colors.card,
   },
-  chipAvatar: { width: 20, height: 20, borderRadius: 10 },
+  chipAvatar: { width: 20, height: 20 },
   chipText: {
     fontFamily: Fonts.urbanist.bold,
     fontSize: 12.5,

@@ -110,7 +110,7 @@ const RiaCoachCardComponent: React.FC<RiaCoachCardProps> = ({ onOpenChat }) => {
             <Image
               source={require('../../../assets/ria_avatar.webp')}
               style={styles.avatarImg}
-              contentFit="cover"
+              contentFit="contain"
               transition={150}
             />
             {/* Active Online Pulse Dot */}
@@ -235,16 +235,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 48,
     height: 48,
-    borderRadius: 24,
-    borderCurve: 'continuous',
-    borderWidth: 2,
-    borderColor: '#F47551',
   },
   avatarImg: {
     width: '100%',
     height: '100%',
-    borderRadius: 24,
-    borderCurve: 'continuous',
   },
   onlineDot: {
     position: 'absolute',

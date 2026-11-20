@@ -1024,7 +1024,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
         contentContainerStyle={styles.connectContent}
         showsVerticalScrollIndicator={false}
       >
-        <Image source={RIA_AVATAR} style={styles.connectAvatar} contentFit="cover" />
+        <Image source={RIA_AVATAR} style={styles.connectAvatar} contentFit="contain" />
         <Text style={styles.connectTitle} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
           Meet Nomzo, your nutrition coach
         </Text>
@@ -1076,7 +1076,7 @@ const RiaChatModalComponent: React.FC<RiaChatModalProps> = ({ onOpenBYOKSetup })
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         {/* Header */}
         <View style={styles.header}>
-          <Image source={RIA_AVATAR} style={styles.headerAvatar} contentFit="cover" />
+          <Image source={RIA_AVATAR} style={styles.headerAvatar} contentFit="contain" />
           <View style={styles.headerTextGroup}>
             <Text style={styles.headerName} accessibilityRole="header">
               Nomzo
@@ -1636,8 +1636,6 @@ const styles = StyleSheet.create({
   connectAvatar: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    borderCurve: 'continuous',
     marginBottom: 16,
   },
   connectTitle: {
@@ -1755,8 +1753,6 @@ const styles = StyleSheet.create({
   headerAvatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    borderCurve: 'continuous',
   },
   headerTextGroup: {
     flex: 1,

@@ -128,7 +128,7 @@ export const NameInputScreen: React.FC<NameInputScreenProps> = ({
 
             <View style={styles.content}>
               <View style={styles.riaRow}>
-                <Image source={RIA_AVATAR} style={styles.avatarLarge} contentFit="cover" />
+                <Image source={RIA_AVATAR} style={styles.avatarLarge} contentFit="contain" />
                 <View>
                   <Text style={styles.riaName}>Hi, I&apos;m Nomzo</Text>
                   <Text style={styles.riaRole}>Your food coach</Text>
@@ -164,7 +164,7 @@ export const NameInputScreen: React.FC<NameInputScreenProps> = ({
 
               {submitted ? (
                 <Animated.View style={[styles.replyRow, bubbleStyle]}>
-                  <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+                  <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="contain" />
                   <View
                     style={styles.bubble}
                     accessibilityLiveRegion="polite"
@@ -235,9 +235,6 @@ const styles = StyleSheet.create({
   avatarLarge: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
   },
   riaName: {
     fontFamily: Fonts.urbanist.bold,
@@ -286,9 +283,6 @@ const styles = StyleSheet.create({
   avatarSmall: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
   },
   bubble: {
     flexShrink: 1,

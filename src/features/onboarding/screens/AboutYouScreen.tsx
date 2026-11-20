@@ -197,7 +197,7 @@ export const AboutYouScreen: React.FC<AboutYouScreenProps> = ({
               accessibilityLiveRegion="polite"
               testID="age-policy-banner"
             >
-              <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+              <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="contain" />
               <View style={styles.bubble}>
                 <Text style={styles.bubbleText}>{agePolicy.message}</Text>
               </View>
@@ -362,9 +362,6 @@ const styles = StyleSheet.create({
   avatarSmall: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
   },
   bubble: {
     flexShrink: 1,

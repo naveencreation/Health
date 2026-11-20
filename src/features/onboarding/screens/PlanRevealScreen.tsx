@@ -211,7 +211,7 @@ export const PlanRevealScreen: React.FC<PlanRevealScreenProps> = ({
           </View>
 
           <View style={styles.replyRow}>
-            <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="cover" />
+            <Image source={RIA_AVATAR} style={styles.avatarSmall} contentFit="contain" />
             <View style={styles.bubble} testID="plan-ria-line">
               <Text style={styles.bubbleText}>{planRiaLine(firstStruggle, plan)}</Text>
             </View>
@@ -405,9 +405,6 @@ const styles = StyleSheet.create({
   avatarSmall: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
   },
   bubble: {
     flexShrink: 1,
